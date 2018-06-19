@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="./style/main.css">
+
+    <style>
+        .main-content {
+            margin-top: 20px;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            empty-cells: show;
+            table-layout: fixed;
+            margin: auto;
+        }
+        td, th {
+            text-align: left;
+        }
+        td {
+            border: 5px solid white;
+        }
+
+        th.rotate {
+            text-align:center;
+            white-space:nowrap;
+            g-origin:50% 50%;
+            -webkit-transform: rotate(270deg);
+            -moz-transform: rotate(270deg);
+            -ms-transform: rotate(270deg);
+            -o-transform: rotate(270deg);
+            transform: rotate(270deg);
+
+        }
+        th.rotate p {
+            margin:0 -100% ;
+            display:inline-block;
+        }
+        th.rotate p:before{
+            content:'';
+            width:0;
+            padding-top:100%;/* takes width as reference */
+            display:inline-block;
+            vertical-align:middle;
+        }
+
+        .square {
+            width: 35px;
+            height: 35px;
+            overflow: hidden;
+        }
+        .square p {
+            width: 35px;
+        }
+    </style>
+
+    <meta name="keywords"
+          content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
+
+
+    <meta name="description"
+          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
+
+
+    <meta property="og:title" content="Brain-Score Benchmark">
+    <meta property="og:type" content="website">
+    <meta property="og:description"
+          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
+    <meta property="og:url" content="https://brain-score.org">
+    <meta property="og:image" content="https://">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Brain-Score">
+    <meta name="twitter:description"
+          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
+    <meta name="twitter:image" content="https://.png">
+
+
+    <title>Brain-Score</title>
+</head>
+<body class="page-leaderboard">
+<header class="main-header">
+    <div class="main-header__wrap">
+        <a href="https://brain-score.org/" class="main-header__title">
+            <h1>Brain-Score</h1>
+        </a>
+        <nav class="main-header__nav nav nav--main">
+            <ul class="nav__list">
+
+
+                <li class="nav__item"><a class="nav__link nav--main__link  nav__link--active"
+                                         href="https://brain-score.org/"><span>Model Scores</span></a></li>
+
+                <li class="nav__item"><a class="nav__link nav--main__link " href="https://brain-score.org/about/"><span>About</span></a>
+                </li>
+
+                <li class="nav__item"><a class="nav__link nav--main__link "
+                                         href="https://brain-score.org/q-and-a/"><span>Q&amp;A</span></a></li>
+
+                <li class="nav__item"><a class="nav__link nav--main__link " href="https://brain-score.org/participate/"><span>Participate</span></a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+</header>
+
+
+<main class="main-content">
+    {% if models %}
+    <table>
+        <tr>
+            <th class="rotate"><p>Model</p></th>
+            <th class="square rotate"><p>Brain-Score</p></th>
+            <th class="square rotate"><p>V4</p></th>
+            <th class="square rotate"><p>IT</p></th>
+            <th class="square rotate"><p>Behavior</p></th>
+            <th class="square rotate"><p>Imagenet performance</p></th>
+        </tr>
+        {% for model in models %}
+        <tr>
+            <td>{{model.name}}</td>
+            <td class="square" bgcolor="{{model.brain_score_color}}" title="{{model.brain_score}}"></td>
+            <td class="square" bgcolor="{{model.v4_color}}" title="{{model.v4}}"></td>
+            <td class="square" bgcolor="{{model.it_color}}" title="{{model.it}}"></td>
+            <td class="square" bgcolor="{{model.behavior_color}}" title="{{model.behavior}}"></td>
+            <td class="square" bgcolor="{{model.imagenet_top1_color}}" title="{{model.imagenet_top1}}"></td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% else %}
+    <p>No data.</p>
+    {% endif %}
+
+
+</main>
+
+<footer class="main-footer">
+    <div class="main-footer__wrap">
+        <div class="content-wrapper">
+            <p><a href="http://dicarlolab.mit.edu">DiCarlo lab</a></p><a href="http://dicarlolab.mit.edu">
+        </a></div>
+        <a href="http://dicarlolab.mit.edu">
+        </a></div>
+    <a href="http://dicarlolab.mit.edu">
+    </a></footer>
+<a href="http://dicarlolab.mit.edu">
+
+
+</a></body>
+</html>
