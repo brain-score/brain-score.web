@@ -22,6 +22,9 @@
             table-layout: fixed;
             margin: auto;
         }
+        th {
+            font-weight: normal;
+        }
         td, th {
             text-align: left;
         }
@@ -29,36 +32,48 @@
             border: 5px solid white;
         }
 
-        th.rotate {
-            text-align:center;
-            white-space:nowrap;
-            g-origin:50% 50%;
+        th.rotate{
+            white-space: nowrap;
+            -webkit-transform-origin: 70px 85px;
+            -moz-transform-origin: 70px 85px;
+            -o-transform-origin: 70px 85px;
+            -ms-transform-origin: 70px 85px;
+            transform-origin: 70px 85px;
+
             -webkit-transform: rotate(270deg);
             -moz-transform: rotate(270deg);
             -ms-transform: rotate(270deg);
             -o-transform: rotate(270deg);
             transform: rotate(270deg);
-
         }
         th.rotate p {
-            margin:0 -100% ;
             display:inline-block;
-        }
-        th.rotate p:before{
-            content:'';
-            width:0;
-            padding-top:100%;/* takes width as reference */
-            display:inline-block;
-            vertical-align:middle;
+            height:100px;
         }
 
         .square {
-            width: 35px;
-            height: 35px;
+            width: 40px;
+            height: 40px;
             overflow: hidden;
         }
         .square p {
-            width: 35px;
+            width: 40px;
+        }
+        th {
+            height: 150px;
+        }
+        th p {
+            width: 40px;
+        }
+
+        tr:nth-child(4) td {
+            border-top: 1em solid white;
+        }
+        tr td:nth-child(3), td:nth-child(8) {
+            border-left: 1em solid white;
+        }
+        tr th:nth-child(3), th:nth-child(8) {
+            border-top: 1em solid white;
         }
     </style>
 
@@ -117,17 +132,43 @@
     {% if models %}
     <table>
         <tr>
-            <th class="rotate"><p>Model</p></th>
-            <th class="square rotate"><p>Brain-Score</p></th>
-            <th class="square rotate"><p>V4</p></th>
-            <th class="square rotate"><p>IT</p></th>
-            <th class="square rotate"><p>Behavior</p></th>
-            <th class="square rotate"><p>Imagenet performance</p></th>
+            <th class="rotate"><p></p></th>
+            <th class="rotate"><p></p></th>
+            <th class="rotate"><p>V1</p></th>
+            <th class="rotate"><p>V2</p></th>
+            <th class="rotate"><p>V4</p></th>
+            <th class="rotate"><p>IT</p></th>
+            <th class="rotate"><p>Behavior</p></th>
+            <th class="rotate"><p>performance</p></th>
         </tr>
+        <tr>
+            <th class="rotate"><p></p></th>
+            <th class="rotate"><p><strong>Brain-Score</strong></p></th>
+            <th class="rotate"><p><em>Your data here!</em></p></th>
+            <th class="rotate"><p><em>Your data here!</em></p></th>
+            <th class="rotate"><p>dicarlo.Majaj2015</p></th>
+            <th class="rotate"><p>dicarlo.Majaj2015</p></th>
+            <th class="rotate"><p>dicarlo.Raja...2015</p></th>
+            <th class="rotate"><p>Imagenet2012</p></th>
+        </tr>
+        <!-- data -->
+        <tr>
+            <td><strong>Data Ceiling</strong></td>
+            <td class="square" bgcolor="green"></td>
+            <td class="square" bgcolor="gray"></td>
+            <td class="square" bgcolor="gray"></td>
+            <td class="square" bgcolor="#7aad00"></td>
+            <td class="square" bgcolor="yellow"></td>
+            <td class="square" bgcolor="orange"></td>
+            <td class="square" bgcolor="green"></td>
+        </tr>
+        <!-- models -->
         {% for model in models %}
         <tr>
             <td>{{model.name}}</td>
             <td class="square" bgcolor="{{model.brain_score_color}}" title="{{model.brain_score}}"></td>
+            <td class="square" bgcolor="gray" title="{{model.it}}"></td>
+            <td class="square" bgcolor="gray" title="{{model.it}}"></td>
             <td class="square" bgcolor="{{model.v4_color}}" title="{{model.v4}}"></td>
             <td class="square" bgcolor="{{model.it_color}}" title="{{model.it}}"></td>
             <td class="square" bgcolor="{{model.behavior_color}}" title="{{model.behavior}}"></td>
