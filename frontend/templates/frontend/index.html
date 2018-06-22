@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+
+{% load static %}
+{% load compress %}
+
+{% with "Brain-Score" as title %}
+{% with "Brain-Score Benchmark" as title_long %}
+{% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
+{% with "https://brain-score.org" as url %}
+{% with "/static/frontend/img/logo.png" as image_url %}
+
 <html lang="en">
 <head>
 
@@ -8,171 +18,82 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="./style/main.css">
+    {% compress css %}
+    <link type="text/less" rel="stylesheet" href="{% static "/frontend/css/header.less" %}" charset="utf-8">
+    <link type="text/less" rel="stylesheet" href="{% static "/frontend/css/page-main.less" %}" charset="utf-8">
+    {% endcompress %}
 
-    <style>
-        .main-content {
-            margin-top: 20px;
-        }
+    <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
 
-        table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            empty-cells: show;
-            table-layout: fixed;
-            margin: auto;
-        }
-        th {
-            font-weight: normal;
-        }
-        td, th {
-            text-align: left;
-        }
-        td {
-            border: 5px solid white;
-        }
+    <meta name="description" content="{{description}}">
+    <link rel="icon" href="{{image_url}}">
 
-        th.rotate{
-            white-space: nowrap;
-            -webkit-transform-origin: 70px 85px;
-            -moz-transform-origin: 70px 85px;
-            -o-transform-origin: 70px 85px;
-            -ms-transform-origin: 70px 85px;
-            transform-origin: 70px 85px;
-
-            -webkit-transform: rotate(270deg);
-            -moz-transform: rotate(270deg);
-            -ms-transform: rotate(270deg);
-            -o-transform: rotate(270deg);
-            transform: rotate(270deg);
-        }
-        th.rotate p {
-            display:inline-block;
-            height:100px;
-        }
-
-        .square {
-            width: 40px;
-            height: 40px;
-            overflow: hidden;
-        }
-        .square p {
-            width: 40px;
-        }
-        th {
-            height: 150px;
-        }
-        th p {
-            width: 40px;
-        }
-
-        tr:nth-child(4) td {
-            border-top: 1em solid white;
-        }
-        tr td:nth-child(3), td:nth-child(8) {
-            border-left: 1em solid white;
-        }
-        tr th:nth-child(3), th:nth-child(8) {
-            border-top: 1em solid white;
-        }
-    </style>
-
-    <meta name="keywords"
-          content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
-
-
-    <meta name="description"
-          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
-
-
-    <meta property="og:title" content="Brain-Score Benchmark">
+    <meta property="og:title" content="{{title}}">
     <meta property="og:type" content="website">
-    <meta property="og:description"
-          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
-    <meta property="og:url" content="https://brain-score.org">
-    <meta property="og:image" content="https://">
+    <meta property="og:description" content="{{description}}">
+    <meta property="og:url" content="{{url}}">
+    <meta property="og:image" content="{{image_url}}">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Brain-Score">
-    <meta name="twitter:description"
-          content="The Brain-Score Benchmark is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.">
-    <meta name="twitter:image" content="https://.png">
+    <meta name="twitter:title" content="{{title}}">
+    <meta name="twitter:description" content="{{description}}">
+    <meta name="twitter:image" content="{{image_url}}">
 
-
-    <title>Brain-Score</title>
+    <title>{{title}}</title>
 </head>
-<body class="page-leaderboard">
+<body class="page-main">
 <header class="main-header">
     <div class="main-header__wrap">
         <a href="https://brain-score.org/" class="main-header__title">
-            <h1>Brain-Score</h1>
+            <img src="{{image_url}}" />
+            <h1>{{title}}</h1>
         </a>
         <nav class="main-header__nav nav nav--main">
-            <ul class="nav__list">
-
-
-                <li class="nav__item"><a class="nav__link nav--main__link  nav__link--active"
-                                         href="https://brain-score.org/"><span>Model Scores</span></a></li>
-
-                <li class="nav__item"><a class="nav__link nav--main__link " href="https://brain-score.org/about/"><span>About</span></a>
-                </li>
-
-                <li class="nav__item"><a class="nav__link nav--main__link "
-                                         href="https://brain-score.org/q-and-a/"><span>Q&amp;A</span></a></li>
-
-                <li class="nav__item"><a class="nav__link nav--main__link " href="https://brain-score.org/participate/"><span>Participate</span></a>
-                </li>
-
+            <ul class="c-nav c-nav--inline u-highest">
+                <li class="c-nav__item active"><a class="nav__link nav--main__link" href="{{url}}"><span>Benchmarks</span></a></li>
+                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/about/"><span>About</span></a></li>
+                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/q-and-a/"><span>Q&amp;A</span></a></li>
+                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/participate/"><span>Participate</span></a></li>
             </ul>
         </nav>
     </div>
 </header>
 
 
-<main class="main-content">
+<main class="content">
     {% if models %}
     <table>
         <tr>
             <th class="rotate"><p></p></th>
-            <th class="rotate"><p></p></th>
-            <th class="rotate"><p>V1</p></th>
-            <th class="rotate"><p>V2</p></th>
-            <th class="rotate"><p>V4</p></th>
-            <th class="rotate"><p>IT</p></th>
-            <th class="rotate"><p>Behavior</p></th>
-            <th class="rotate"><p>performance</p></th>
-        </tr>
-        <tr>
-            <th class="rotate"><p></p></th>
             <th class="rotate"><p><strong>Brain-Score</strong></p></th>
-            <th class="rotate"><p><em>Your data here!</em></p></th>
-            <th class="rotate"><p><em>Your data here!</em></p></th>
-            <th class="rotate"><p>dicarlo.Majaj2015</p></th>
-            <th class="rotate"><p>dicarlo.Majaj2015</p></th>
-            <th class="rotate"><p>dicarlo.Raja...2015</p></th>
-            <th class="rotate"><p>Imagenet2012</p></th>
+            <th class="rotate"><p><strong>V1</strong>: <em>Your data here!</em></p></th>
+            <th class="rotate"><p><strong>V2</strong>: <em>Your data here!</em></p></th>
+            <th class="rotate"><p><strong>V4</strong>: dicarlo.Majaj2015</p></th>
+            <th class="rotate"><p><strong>IT</strong>: dicarlo.Majaj2015</p></th>
+            <th class="rotate"><p><strong>behavior</strong>: dicarlo.Raja...2018</p></th>
+            <th class="rotate"><p><strong>performance</strong>: Imagenet2012</p></th>
         </tr>
         <!-- data -->
         <tr>
-            <td><strong>Data Ceiling</strong></td>
-            <td class="square" bgcolor="green"></td>
-            <td class="square" bgcolor="gray"></td>
-            <td class="square" bgcolor="gray"></td>
-            <td class="square" bgcolor="#7aad00"></td>
-            <td class="square" bgcolor="yellow"></td>
-            <td class="square" bgcolor="orange"></td>
-            <td class="square" bgcolor="green"></td>
+            <td><strong>Max</strong></td>
+            <td class="square" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
+            <td class="square" style="background-color:#e0e1e2"></td>
+            <td class="square" style="background-color:#e0e1e2"></td>
+            <td class="square" style="background-color:{{data.v4_color}}">{{data.v4}}</td>
+            <td class="square" style="background-color:{{data.it_color}}">{{data.it}}</td>
+            <td class="square" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
+            <td class="square" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
         </tr>
         <!-- models -->
         {% for model in models %}
         <tr>
             <td>{{model.name}}</td>
-            <td class="square" bgcolor="{{model.brain_score_color}}" title="{{model.brain_score}}"></td>
-            <td class="square" bgcolor="gray" title="{{model.it}}"></td>
-            <td class="square" bgcolor="gray" title="{{model.it}}"></td>
-            <td class="square" bgcolor="{{model.v4_color}}" title="{{model.v4}}"></td>
-            <td class="square" bgcolor="{{model.it_color}}" title="{{model.it}}"></td>
-            <td class="square" bgcolor="{{model.behavior_color}}" title="{{model.behavior}}"></td>
-            <td class="square" bgcolor="{{model.imagenet_top1_color}}" title="{{model.imagenet_top1}}"></td>
+            <td class="square" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
+            <td class="square" style="background-color:#e0e1e2"></td>
+            <td class="square" style="background-color:#e0e1e2"></td>
+            <td class="square" style="background-color:{{model.v4_color}}">{{model.v4}}</td>
+            <td class="square" style="background-color:{{model.it_color}}">{{model.it}}</td>
+            <td class="square" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
+            <td class="square" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
         </tr>
         {% endfor %}
     </table>
@@ -198,3 +119,9 @@
 
 </a></body>
 </html>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
