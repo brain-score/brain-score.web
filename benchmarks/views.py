@@ -34,7 +34,7 @@ def index(request):
             color = representative_color(value, alpha_max=max_value)
             setattr(model, field + color_suffix, color)
     context = {'models': models, 'data': data}
-    return render(request, 'frontend/index.html', context)
+    return render(request, 'benchmarks/index.html', context)
 
 
 def normalize(value, min_value):
