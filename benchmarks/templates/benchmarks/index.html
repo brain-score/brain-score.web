@@ -1,65 +1,6 @@
-<!DOCTYPE html>
+{% extends "benchmarks/base.html" %}
 
-{% load static %}
-{% load compress %}
-
-{% with "Brain-Score" as title %}
-{% with "Brain-Score Benchmark" as title_long %}
-{% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
-{% with "https://brain-score.org" as url %}
-{% with "/static/benchmarks/img/logo.png" as image_url %}
-
-<html lang="en">
-<head>
-
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    {% compress css %}
-    <link type="text/less" rel="stylesheet" href="{% static "/benchmarks/css/header.less" %}" charset="utf-8">
-    <link type="text/less" rel="stylesheet" href="{% static "/benchmarks/css/page-main.less" %}" charset="utf-8">
-    {% endcompress %}
-
-    <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
-
-    <meta name="description" content="{{description}}">
-    <link rel="icon" href="{{image_url}}">
-
-    <meta property="og:title" content="{{title}}">
-    <meta property="og:type" content="website">
-    <meta property="og:description" content="{{description}}">
-    <meta property="og:url" content="{{url}}">
-    <meta property="og:image" content="{{image_url}}">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="{{title}}">
-    <meta name="twitter:description" content="{{description}}">
-    <meta name="twitter:image" content="{{image_url}}">
-
-    <title>{{title}}</title>
-</head>
-<body class="page-main">
-<header class="main-header">
-    <div class="main-header__wrap">
-        <a href="https://brain-score.org/" class="main-header__title">
-            <img src="{{image_url}}" />
-            <h1>{{title}}</h1>
-        </a>
-        <nav class="main-header__nav nav nav--main">
-            <ul class="c-nav c-nav--inline u-highest">
-                <li class="c-nav__item active"><a class="nav__link nav--main__link" href="{{url}}"><span>Benchmarks</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/about/"><span>About</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/q-and-a/"><span>Q&amp;A</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/participate/"><span>Participate</span></a></li>
-            </ul>
-        </nav>
-    </div>
-</header>
-
-
-<main class="content">
+{% block content %}
     {% if models %}
     <table>
         <tr>
@@ -101,27 +42,4 @@
     {% else %}
     <p>No data.</p>
     {% endif %}
-
-
-</main>
-
-<footer class="main-footer">
-    <div class="main-footer__wrap">
-        <div class="content-wrapper">
-            <p><a href="http://dicarlolab.mit.edu">DiCarlo lab</a></p><a href="http://dicarlolab.mit.edu">
-        </a></div>
-        <a href="http://dicarlolab.mit.edu">
-        </a></div>
-    <a href="http://dicarlolab.mit.edu">
-    </a></footer>
-<a href="http://dicarlolab.mit.edu">
-
-
-</a></body>
-</html>
-
-{% endwith %}
-{% endwith %}
-{% endwith %}
-{% endwith %}
-{% endwith %}
+{% endblock %}
