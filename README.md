@@ -1,6 +1,6 @@
 ## Setup
-`conda env create -f environment.yml && conda activate brain-score.web`
+Create environment: `conda env create -f environment.yml && conda activate brain-score.web`
 
-Install less: `npm install less`
+Install node dependencies: `npm install`
 
 Run server: `python manage.py runserver &`

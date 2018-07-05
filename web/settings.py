@@ -130,4 +130,5 @@ STATICFILES_FINDERS = (
 # compress
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
+    ('text/x-sass', 'sass {infile} {outfile}'),
 )

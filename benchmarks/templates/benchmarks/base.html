@@ -7,8 +7,9 @@
 {% with "Brain-Score Benchmark" as title_long %}
 {% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
 <!--{ % with "https://brain-score.org" as url %}-->
-{% with "http://127.0.0.1:8000/" as url %}
-{% with "/static/benchmarks/img/logo.png" as image_url %}
+{% with "http://127.0.0.1:8000" as url %}
+{% with "/static/benchmarks/img/icon.png" as icon_url %}
+{% with "/static/benchmarks/img/logo.png" as logo_url %}
 
 <html lang="en">
 <head>
@@ -19,66 +20,75 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">#}
     {% compress css %}
-    <link type="text/less" rel="stylesheet" href="{% static "/benchmarks/css/header.less" %}" charset="utf-8">
-    <link type="text/less" rel="stylesheet" href="{% static "/benchmarks/css/page-main.less" %}" charset="utf-8">
+    <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/bulma.sass" %}" charset="utf-8">
+    <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
+    {% endcompress %}
+
+    {% compress js %}
+    <script src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
     {% endcompress %}
 
     <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
 
     <meta name="description" content="{{description}}">
-    <link rel="icon" href="{{image_url}}">
+    <link rel="icon" href="{{icon_url}}">
 
     <meta property="og:title" content="{{title}}">
     <meta property="og:type" content="website">
     <meta property="og:description" content="{{description}}">
     <meta property="og:url" content="{{url}}">
-    <meta property="og:image" content="{{image_url}}">
+    <meta property="og:image" content="{{logo_url}}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{title}}">
     <meta name="twitter:description" content="{{description}}">
-    <meta name="twitter:image" content="{{image_url}}">
+    <meta name="twitter:image" content="{{logo_url}}">
 
     <title>{{title}}</title>
 </head>
 <body class="page-main">
-<header class="main-header">
-    <div class="main-header__wrap">
-        <a href="https://brain-score.org/" class="main-header__title">
-            <img src="{{image_url}}" />
-            <h1>{{title}}</h1>
+
+<nav class="navbar is-fixed-top is-transparent" role="navigation">
+<div class="container">
+    <div class="navbar-brand">
+        <a href="{{url}}" class="navbar-item">
+            <img src="{{logo_url}}" />
         </a>
-        <nav class="main-header__nav nav nav--main">
-            <ul class="c-nav c-nav--inline u-highest">
-                <li class="c-nav__item active"><a class="nav__link nav--main__link" href="{{url}}"><span>Benchmarks</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/about/"><span>About</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/q-and-a/"><span>Q&amp;A</span></a></li>
-                <li class="c-nav__item"><a class="nav__link nav--main__link" href="{{url}}/participate/"><span>Participate</span></a></li>
-            </ul>
-        </nav>
+
+        <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
     </div>
-</header>
+    <div id="navMenu" class="navbar-menu">
+        <div class="navbar-end">
+            <a class="navbar-item" href="#benchmarks">Benchmarks</a>
+            <a class="navbar-item" href="#about">About</a>
+            <a class="navbar-item" href="{{url}}/participate/">Participate</a>
+        </div>
+    </div>
+</div>
+</nav>
 
 
 <main class="content">
+<section class="section">
     {% block content %}{% endblock %}
+</section>
 </main>
 
-<footer class="main-footer">
-    <div class="main-footer__wrap">
-        <div class="content-wrapper">
-            <p><a href="http://dicarlolab.mit.edu">DiCarlo lab</a></p><a href="http://dicarlolab.mit.edu">
-        </a></div>
-        <a href="http://dicarlolab.mit.edu">
-        </a></div>
-    <a href="http://dicarlolab.mit.edu">
-    </a></footer>
-<a href="http://dicarlolab.mit.edu">
+<footer>
+    <div class="content has-text-centered">
+        <p><a href="http://dicarlolab.mit.edu">DiCarlo lab @ MIT</a></p>
+    </div>
+</footer>
 
-
-</a></body>
+</body>
 </html>
 
+{% endwith %}
 {% endwith %}
 {% endwith %}
 {% endwith %}

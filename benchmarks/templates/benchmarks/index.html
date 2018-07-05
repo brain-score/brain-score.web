@@ -1,45 +1,15 @@
 {% extends "benchmarks/base.html" %}
 
 {% block content %}
-    {% if models %}
-    <table>
-        <tr>
-            <th class="rotate"><p></p></th>
-            <th class="rotate"><p><strong>Brain-Score</strong></p></th>
-            <th class="rotate"><p><strong>V1</strong>: <em>Your data here!</em></p></th>
-            <th class="rotate"><p><strong>V2</strong>: <em>Your data here!</em></p></th>
-            <th class="rotate"><p><strong>V4</strong>: dicarlo.Majaj2015</p></th>
-            <th class="rotate"><p><strong>IT</strong>: dicarlo.Majaj2015</p></th>
-            <th class="rotate"><p><strong>behavior</strong>: dicarlo.Raja...2018</p></th>
-            <th class="rotate"><p><strong>performance</strong>: Imagenet2012</p></th>
-        </tr>
-        <!-- data -->
-        <tr>
-            <td><strong>Max</strong></td>
-            <td class="square" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:{{data.v4_color}}">{{data.v4}}</td>
-            <td class="square" style="background-color:{{data.it_color}}">{{data.it}}</td>
-            <td class="square" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
-            <td class="square" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
-        </tr>
-        <!-- models -->
-        {% for model in models %}
-        <tr>
-            <td>{{model.name}}</td>
-            <td class="square" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:{{model.v4_color}}">{{model.v4}}</td>
-            <td class="square" style="background-color:{{model.it_color}}">{{model.it}}</td>
-            <td class="square" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
-            <td class="square" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
-        </tr>
-        {% endfor %}
-    </table>
 
-    {% else %}
-    <p>No data.</p>
-    {% endif %}
+<div class="container">
+<a class="anchor" name="benchmarks"></a>
+{% include "benchmarks/table.html" %}
+</div>
+
+<div class="container about">
+<a class="anchor" name="about"><h2>About</h2></a>
+{% include "benchmarks/about.html" %}
+</div>
+
 {% endblock %}

@@ -1,0 +1,23 @@
+{
+  "name": "brain-score.web",
+  "version": "0.1.0",
+  "description": "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements",
+  "main": "index.js",
+  "dependencies": {
+    "bulma": "^0.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mschrimpf/brain-score.web.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mschrimpf/brain-score.web/issues"
+  },
+  "homepage": "http://brain-score.org"
+}
