@@ -30,6 +30,10 @@ def view(request):
             value = getattr(model, field) / ceilings[field]
             setattr(model, field, represent(value))
 
+            if field == 'brain_score':
+                rank = values.index(value)
+                setattr(model, 'rank', rank + 1)
+
             value = normalize(value, min_value)
             color = representative_color(value, alpha_max=max_value)
             setattr(model, field + color_suffix, color)

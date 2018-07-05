@@ -1,65 +1,64 @@
-table
+table.benchmarks
   font-family: arial, sans-serif
   border-collapse: collapse
   empty-cells: show
   table-layout: fixed
   margin: auto
 
-th
-  font-weight: normal
+  th
+    font-weight: normal
+    vertical-align: bottom
+    text-align: center
 
-td, th
-  text-align: left
+  td
+    border: 5px solid white
+    vertical-align: middle
+    text-align: left
 
-td:nth-child(n+2)
-  text-align: center
-  color: #00000099
+  td:nth-child(n+2)
+    text-align: center
+    color: #00000099
 
-td
-  border: 5px solid white
+  // header rotation
+  $rotate_transform_origin: 0px 0px
+  $rotate_transform_rotate: 315deg
+  $rotate_transform_translateX: -80px
+  $rotate_transform_translateY: 80px
+  th.rotate
+    text-align: left
 
-// header rotation
-$rotate_transform_origin: 0px 0px
-$rotate_transform_rotate: 315deg
-$rotate_transform_translateX: -80px
-$rotate_transform_translateY: 80px
-th.rotate
-  white-space: nowrap
-  -webkit-transform-origin: $rotate_transform_origin
-  -moz-transform-origin: $rotate_transform_origin
-  -o-transform-origin: $rotate_transform_origin
-  -ms-transform-origin: $rotate_transform_origin
-  transform-origin: $rotate_transform_origin
+    white-space: nowrap
+    -webkit-transform-origin: $rotate_transform_origin
+    -moz-transform-origin: $rotate_transform_origin
+    -o-transform-origin: $rotate_transform_origin
+    -ms-transform-origin: $rotate_transform_origin
+    transform-origin: $rotate_transform_origin
 
-  -webkit-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
-  -moz-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
-  -ms-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
-  -o-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
-  transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
+    -webkit-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
+    -moz-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
+    -ms-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
+    -o-transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
+    transform: rotate($rotate_transform_rotate) translateX($rotate_transform_translateX) translateY($rotate_transform_translateY)
 
-th.rotate p
-  display: inline-block
-  height: 100px
+    p
+      display: inline-block
+      height: 100px
+      width: 40px
 
-// goodness indicators
-.square
-  width: 40px
-  height: 40px
-  overflow: hidden
+  // goodness indicators
+  .square
+    width: 40px
+    height: 40px
+    overflow: hidden
 
-.square p
-  width: 40px
+    p
+      width: 40px
 
-th p
-  width: 40px
+  // distance
+  tr:nth-child(3) td
+    border-top: 1em solid white
 
-// distance
-tr:nth-child(3) td
-  border-top: 1em solid white
-
-tr td:nth-child(3), td:nth-child(8)
-  border-left: 1em solid white
-
-tr th:nth-child(3), th:nth-child(8)
-  border-top: 1em solid white
+  tr
+    td:nth-child(4), td:nth-child(9), th:nth-child(4), th:nth-child(9)
+      border-left: 1em solid white
 
