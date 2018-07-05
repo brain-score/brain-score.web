@@ -1,5 +1,6 @@
 {% if models %}
-    <table class="benchmarks">
+    <table id="benchmarks" class="benchmarks">
+        <thead>
         <tr>
             <th><p><strong>Rank</strong></p></th>
             <th><p><strong>Model</strong></p></th>
@@ -23,7 +24,9 @@
             <td class="square" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
             <td class="square" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
         </tr>
+        </thead>
         <!-- models -->
+        <tbody>
         {% for model in models %}
             <tr>
                 <td class="square"><strong>{{model.rank}}</strong></td>
@@ -37,6 +40,7 @@
                 <td class="square" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
             </tr>
         {% endfor %}
+        </tbody>
     </table>
 
 {% else %}

@@ -20,13 +20,15 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">#}
     {% compress css %}
     <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/bulma.sass" %}" charset="utf-8">
     <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
     {% endcompress %}
 
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" type="text/javascript" charset="utf-8"></script>
     {% compress js %}
+    <script src="{% static "/benchmarks/js/jquery.tablesorter.min.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script src="{% static "/benchmarks/js/table.js" %}" type="text/javascript" charset="utf-8"></script>
     <script src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
     {% endcompress %}
 
