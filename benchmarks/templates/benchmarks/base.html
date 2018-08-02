@@ -6,8 +6,7 @@
 {% with "Brain-Score" as title %}
 {% with "Brain-Score Benchmark" as title_long %}
 {% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
-<!--{ % with "https://brain-score.org" as url %}-->
-{% with "http://127.0.0.1:8000" as url %}
+{% with "http://brain-score.org" as url %}
 {% with "/static/benchmarks/img/icon.png" as icon_url %}
 {% with "/static/benchmarks/img/logo.png" as logo_url %}
 
@@ -21,7 +20,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     {% compress css %}
-    <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/bulma.sass" %}" charset="utf-8">
     <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
     {% endcompress %}
 
@@ -66,9 +64,9 @@
     </div>
     <div id="navMenu" class="navbar-menu">
         <div class="navbar-end">
-            <a class="navbar-item" href="#benchmarks">Benchmarks</a>
-            <a class="navbar-item" href="#about">About</a>
-            <a class="navbar-item" href="{{url}}/participate/">Participate</a>
+            <a class="navbar-item" href="{{url}}#leaderboard">Leaderboard</a>
+            <a class="navbar-item" href="{{url}}#about">About</a>
+            <a class="navbar-item" href="mailto:jjpr@mit.edu,msch@mit.edu?subject=Brain-Score submission">Participate</a>
         </div>
     </div>
 </div>

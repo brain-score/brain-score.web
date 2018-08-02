@@ -1,9 +1,9 @@
 {% if models %}
-    <table id="benchmarks" class="benchmarks">
+    <table id="leaderboard" class="benchmarks">
         <thead>
         <tr>
-            <th><p><strong>Rank</strong></p></th>
-            <th><p><strong>Model</strong></p></th>
+            <th><p><strong>Brain Rank</strong></p></th>
+            <th class="model"><p><strong>Model</strong></p></th>
             <th class="rotate"><p><strong>Brain-Score</strong></p></th>
             <th class="rotate"><p><strong>V1</strong>: <em>Your data here!</em></p></th>
             <th class="rotate"><p><strong>V2</strong>: <em>Your data here!</em></p></th>
@@ -14,30 +14,30 @@
         </tr>
         <!-- data -->
         <tr>
-            <td class="square"></td>
-            <td><strong>Max</strong></td>
-            <td class="square" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:#e0e1e2"></td>
-            <td class="square" style="background-color:{{data.v4_color}}">{{data.v4}}</td>
-            <td class="square" style="background-color:{{data.it_color}}">{{data.it}}</td>
-            <td class="square" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
-            <td class="square" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
+            <td class=""></td>
+            <td class="model"><strong>Max</strong></td>
+            <td class="score_cell" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
+            <td class="score_cell" style="background-color:#e0e1e2"></td>
+            <td class="score_cell" style="background-color:#e0e1e2"></td>
+            <td class="score_cell" style="background-color:{{data.v4_color}}">{{data.v4}}</td>
+            <td class="score_cell" style="background-color:{{data.it_color}}">{{data.it}}</td>
+            <td class="score_cell" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
+            <td class="score_cell" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
         </tr>
         </thead>
         <!-- models -->
         <tbody>
         {% for model in models %}
             <tr>
-                <td class="square"><strong>{{model.rank}}</strong></td>
-                <td>{{model.name}}</td>
-                <td class="square" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
-                <td class="square" style="background-color:#e0e1e2"></td>
-                <td class="square" style="background-color:#e0e1e2"></td>
-                <td class="square" style="background-color:{{model.v4_color}}">{{model.v4}}</td>
-                <td class="square" style="background-color:{{model.it_color}}">{{model.it}}</td>
-                <td class="square" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
-                <td class="square" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
+                <td class="score_cell"><strong>{{model.rank}}</strong></td>
+                <td class="model">{{model.name}}</td>
+                <td class="score_cell" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
+                <td class="score_cell" style="background-color:#e0e1e2"></td>
+                <td class="score_cell" style="background-color:#e0e1e2"></td>
+                <td class="score_cell" style="background-color:{{model.v4_color}}">{{model.v4}}</td>
+                <td class="score_cell" style="background-color:{{model.it_color}}">{{model.it}}</td>
+                <td class="score_cell" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
+                <td class="score_cell" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
             </tr>
         {% endfor %}
         </tbody>
