@@ -8,6 +8,8 @@ class CandidateModel(models.Model):
     v4 = models.FloatField()
     it = models.FloatField()
     behavior = models.FloatField()
+    paper_link = models.CharField(max_length=200)
+    paper_identifier = models.CharField(max_length=200)
 
     def __str__(self):
         return self.__class__.__name__ \
