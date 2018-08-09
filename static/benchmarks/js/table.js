@@ -1,5 +1,5 @@
 $(document).ready(function () {
-        $("table#benchmarks").tablesorter({
+        $("table#leaderboard").tablesorter({
             sortInitialOrder: 'desc',
             sortList: [[0, 0]]
         });
