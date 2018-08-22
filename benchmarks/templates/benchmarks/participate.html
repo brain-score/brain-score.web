@@ -1,0 +1,26 @@
+{% with '<a href="mailto:jjpr@mit.edu,msch@mit.edu?subject=Brain-Score submission">please get in touch with us</a>' as contact %}
+
+<h4>Challenge the data: Score a model</h4>
+There are two ways to score a model on Brain-Score:
+<ol>
+    <li>clone the <a href="">GitHub repository</a> and follow the steps described there to evaluate the model locally</li>
+    <li>{{ contact }} to hand us your model (we are working on automating this step)</li>
+</ol>
+
+<h4>Challenge the models: Submit a benchmark</h4>
+If you have neural or behavioral recordings that you would like models to compete on, {{ contact }}.
+
+<h4>Citation</h4>
+If you use this in your work, please cite
+<em>Brain-Score: Which Artifical Neural Network Best Emulates the Brain’s Neural Network?</em>
+<br/>
+<pre>
+@article{Schrimpf2018BrainScore,
+title={Brain-Score: Which Artifical Neural Network Best Emulates the Brain’s Neural Network?},
+author={Martin Schrimpf and Jonas Kubilius and James DiCarlo},
+journal={arXiv preprint},
+year={2018}
+}
+</pre>
+
+{% endwith %}

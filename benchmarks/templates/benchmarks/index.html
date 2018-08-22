@@ -2,14 +2,24 @@
 
 {% block content %}
 
-<div class="container">
-<a class="anchor" name="benchmarks"></a>
-{% include "benchmarks/table.html" %}
-</div>
+    <div class="container">
+        <a class="anchor" name="benchmarks"></a>
+        {% include "benchmarks/table.html" %}
+    </div>
 
-<div class="container about">
-<a class="anchor" name="about"><h2>About</h2></a>
-{% include "benchmarks/about.html" %}
-</div>
+    <div class="container section">
+        <a class="anchor" name="about"><h2>About</h2></a>
+        {% include "benchmarks/about.html" %}
+    </div>
+
+    <div class="container section">
+        <a class="anchor" name="analysis"><h2>Analysis</h2></a>
+        {% include "benchmarks/analysis.html" %}
+    </div>
+
+    <div class="container section">
+        <a class="anchor" name="participate"><h2>Participate</h2></a>
+        {% include "benchmarks/participate.html" %}
+    </div>
 
 {% endblock %}
