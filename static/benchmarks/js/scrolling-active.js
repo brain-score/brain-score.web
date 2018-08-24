@@ -4,7 +4,7 @@ var sections = $('section')
     , nav = $('.navbar-item')
     , nav_height = nav.outerHeight();
 
-$(window).on('scroll', function () {
+$(window).on('scroll load', function () {
     var cur_pos = $(this).scrollTop();
 
     sections.each(function() {
