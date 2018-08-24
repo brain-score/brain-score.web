@@ -1,7 +1,14 @@
-div.section
-  max-width: $max-page-width
+section
+  &.center
+    max-width: 600px
   padding: 1rem 0.5rem
 
 .content
   p
     font-weight: normal
+
+// offset anchor target to counteract fixed header (https://stackoverflow.com/a/11842865/2225200)
+$anchor_offset: 50px
+section
+  > :first-child
+    margin-top: $anchor_offset

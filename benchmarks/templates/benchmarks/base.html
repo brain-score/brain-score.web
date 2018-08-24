@@ -34,9 +34,10 @@
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" type="text/javascript" charset="utf-8"></script>
     {% compress js %}
-    <script src="{% static "/benchmarks/js/jquery.tablesorter.min.js" %}" type="text/javascript" charset="utf-8"></script>
-    <script src="{% static "/benchmarks/js/table.js" %}" type="text/javascript" charset="utf-8"></script>
-    <script src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/scrolling-active.js" %}" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/jquery.tablesorter.min.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/table.js" %}" type="text/javascript" charset="utf-8"></script>
     {% endcompress %}
 
     <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
@@ -84,9 +85,7 @@
 
 
 <main class="content">
-<section class="section">
-    {% block content %}{% endblock %}
-</section>
+{% block content %}{% endblock %}
 </main>
 
 <footer>
