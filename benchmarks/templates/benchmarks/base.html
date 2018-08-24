@@ -32,12 +32,15 @@
     <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
     {% endcompress %}
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" type="text/javascript" charset="utf-8"></script>
+    <script defer src="https://code.jquery.com/jquery-3.3.1.slim.min.js" type="text/javascript" charset="utf-8"></script>
+    <script defer src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script defer src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
     {% compress js %}
     <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
     <script defer src="{% static "/benchmarks/js/scrolling-active.js" %}" charset="utf-8"></script>
     <script defer src="{% static "/benchmarks/js/jquery.tablesorter.min.js" %}" type="text/javascript" charset="utf-8"></script>
     <script defer src="{% static "/benchmarks/js/table.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/analysis.js" %}" charset="utf-8"></script>
     {% endcompress %}
 
     <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
