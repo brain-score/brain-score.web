@@ -1,4 +1,5 @@
 @import "../../../node_modules/bulma/sass/utilities/mixins"
+@import "rotate"
 
 table.benchmarks
   font-family: arial, sans-serif
@@ -18,30 +19,12 @@ table.benchmarks
     text-align: left
 
   // header rotation
-  @mixin transform_origin($origin)
-    -webkit-transform-origin: $origin
-    -moz-transform-origin: $origin
-    -o-transform-origin: $origin
-    -ms-transform-origin: $origin
-    transform-origin: $origin
-
-  @mixin rotate($rotation, $translateX, $translateY)
-    -webkit-transform: rotate($rotation) translateX($translateX) translateY($translateY)
-    -moz-transform: rotate($rotation) translateX($translateX) translateY($translateY)
-    -ms-transform: rotate($rotation) translateX($translateX) translateY($translateY)
-    -o-transform: rotate($rotation) translateX($translateX) translateY($translateY)
-    transform: rotate($rotation) translateX($translateX) translateY($translateY)
-
-  $rotate_transform_origin: 0px 0px
-  $rotate_transform_rotate: 315deg
-  $rotate_transform_translateX: -80px
-  $rotate_transform_translateY: 80px
   th.rotate
     text-align: left
 
     white-space: nowrap
-    @include transform_origin($rotate_transform_origin)
-    @include rotate($rotate_transform_rotate, $rotate_transform_translateX, $rotate_transform_translateY)
+    @include transform_origin(0px 0px)
+    @include rotate(315deg, -80px, 80px)
 
     p
       display: inline-block
