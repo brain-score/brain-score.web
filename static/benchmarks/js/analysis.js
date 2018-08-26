@@ -6,6 +6,9 @@ var margin = { top: 0, right: 0, bottom: 20, left: 60 },
     width = outerWidth - margin.left - margin.right,
     height = outerHeight - margin.top - margin.bottom;
 
+var dot_size = 8,
+    color = '#078930';
+
 var idKey = "name",
     xKey = null,
     yKey = null;
@@ -21,8 +24,7 @@ var container_selector = "#analysis div#brain-score",
     figure_selector = "#analysis #brain-score-fig",
     xlabel_selector = figure_selector + ' #xlabel',
     ylabel_selector = figure_selector + ' #ylabel',
-    label_description_selector = figure_selector + " figcaption #label-description",
-    dot_size = 8;
+    label_description_selector = figure_selector + " figcaption #label-description";
 
 d3.json("/static/benchmarks/fixture.json", function(data) {
     data = data.map(function(row) {return row.fields});
@@ -50,7 +52,9 @@ d3.json("/static/benchmarks/fixture.json", function(data) {
     var updatePlot = function() {
         xKey = $(xlabel_selector).prop('value');
         yKey = $(ylabel_selector).prop('value');
-        $(label_description_selector).text(xKey + ' vs ' + yKey);
+        var xName = $(xlabel_selector).find('option:selected').text(),
+            yName = $(ylabel_selector).find('option:selected').text();
+        $(label_description_selector).text(xName + ' vs ' + yName);
 
 
         d3.selectAll("svg > *").remove();
@@ -132,7 +136,7 @@ d3.json("/static/benchmarks/fixture.json", function(data) {
             .classed("dot", true)
             .attr("r", dot_size)
             .attr("transform", transform)
-            .style("fill", '#006600')
+            .style("fill", color)
             .on("mouseover", tip.show)
             .on("mouseout", tip.hide);
     };
