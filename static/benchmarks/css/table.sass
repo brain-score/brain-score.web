@@ -13,23 +13,49 @@ table.benchmarks
     vertical-align: bottom
     text-align: center
 
+    // sorting
+    &.header
+      cursor: pointer
+
+      &:after
+        box-sizing: border-box
+        display: inline
+        position: absolute
+        left: -285px
+        top: 165px
+
+        font-size: 15px
+        width: 100%
+        line-height: 1
+        color: rgba(0, 0, 0, 0.8)
+        text-align: center
+
+      &.rotate:after
+        @include rotate(45deg, 105px, -290px)
+
+      &.headerSortUp:after
+        content: "▲"
+
+      &.headerSortDown:after
+        content: "▼"
+
+    // header rotation
+    &.rotate
+      text-align: left
+
+      white-space: nowrap
+      @include transform_origin(0px 0px)
+      @include rotate(315deg, -80px, 80px)
+
+      p
+        display: inline-block
+        height: 100px
+        width: 40px
+
   td
     border: 5px solid white
     vertical-align: middle
     text-align: left
-
-  // header rotation
-  th.rotate
-    text-align: left
-
-    white-space: nowrap
-    @include transform_origin(0px 0px)
-    @include rotate(315deg, -80px, 80px)
-
-    p
-      display: inline-block
-      height: 100px
-      width: 40px
 
   // goodness indicators
   .score_cell
