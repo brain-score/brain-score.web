@@ -1,8 +1,23 @@
+@import "rotate"
+
 #analysis
+  // containers
+  figure
+    margin: 0
+
+  .xlabel-container, .ylabel-container
+    text-align: center
+
+  .ylabel-container
+    @include transform_origin(0px 0px)
+    @include rotate(270deg, 0px, 0px)
+    width: 500px
+
   rect
     fill: transparent
     shape-rendering: crispEdges
 
+  // plot
   .axis path,
   .axis line
     fill: none

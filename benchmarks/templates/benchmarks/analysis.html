@@ -1,1 +1,30 @@
-<div id="brain-score"></div>
+<figure id="brain-score-fig">
+    <div id="brain-score"></div>
+
+    <div class="xlabel-container">
+        <select id="xlabel">
+            <option value="imagenet_top1" selected>ImageNet top-1</option>
+            <option value="brain_score">Brain-Score</option>
+            <option value="v4">V4</option>
+            <option value="it">IT</option>
+            <option value="behavior">Behavior</option>
+        </select>
+    </div>
+
+    <div class="ylabel-container">
+        <select id="ylabel">
+            <option value="imagenet_top1">ImageNet top-1</option>
+            <option value="brain_score" selected>Brain-Score</option>
+            <option value="v4">V4</option>
+            <option value="it">IT</option>
+            <option value="behavior">Behavior</option>
+        </select>
+    </div>
+
+    <figcaption>
+        <span id="label-description">ImageNet top-1 performance vs Brain-Score</span>.
+        <br />
+        Hover over dots to reveal model details.
+        Scrolling zooms in and out.
+    </figcaption>
+</figure>
