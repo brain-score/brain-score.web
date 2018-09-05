@@ -2,729 +2,794 @@
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.244529425,
-      "name": "alexnet",
-      "imagenet_top1": 57.67,
-      "v4": 0.6307446378073716,
-      "it": 0.5888612176972574,
-      "behavior": 0.244529425,
-      "paper_link": "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks",
-      "paper_identifier": "Krizhevsky et al. 2012"
+      "brain_score": 0.5217353744688654,
+      "name": "mobilenet_v2_1.0_192",
+      "imagenet_top1": 70.7,
+      "v4": 0.6007362204669524,
+      "it": 0.5953208059396436,
+      "behavior": 0.36914909700000004,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.36934431100000004,
-      "name": "densenet-121",
-      "imagenet_top1": 74.5,
-      "v4": 0.6565624565552335,
-      "it": 0.5972631398732047,
-      "behavior": 0.36934431100000004,
-      "paper_link": "https://arxiv.org/abs/1608.06993",
-      "paper_identifier": "Huang et al. 2016"
+      "brain_score": 0.4646110976683948,
+      "name": "mobilenet_v2_0.35_96",
+      "imagenet_top1": 45.5,
+      "v4": 0.6100306977228721,
+      "it": 0.5398343502823122,
+      "behavior": 0.243968245,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.37792339399999997,
-      "name": "densenet-169",
-      "imagenet_top1": 75.9,
-      "v4": 0.6626765695241777,
-      "it": 0.6056243084435015,
-      "behavior": 0.37792339399999997,
-      "paper_link": "https://arxiv.org/abs/1608.06993",
-      "paper_identifier": "Huang et al. 2016"
+      "brain_score": 0.5306009873034647,
+      "name": "resnet-18",
+      "imagenet_top1": 69.76,
+      "v4": 0.6446804237088892,
+      "it": 0.5832847542015049,
+      "behavior": 0.363837784,
+      "paper_link": "https://arxiv.org/abs/1512.03385",
+      "paper_identifier": "He et al., 2015"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.36781284399999997,
-      "name": "densenet-201",
-      "imagenet_top1": 77.0,
-      "v4": 0.6547249948543018,
-      "it": 0.6007032069149808,
-      "behavior": 0.36781284399999997,
-      "paper_link": "https://arxiv.org/abs/1608.06993",
-      "paper_identifier": "Huang et al. 2016"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.352379734,
-      "name": "inception_resnet_v2",
-      "imagenet_top1": 80.4,
-      "v4": 0.6387642691533619,
-      "it": 0.5929310450603813,
-      "behavior": 0.352379734,
-      "paper_link": "https://arxiv.org/abs/1602.07261",
-      "paper_identifier": "Szegedy et al. 2016"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.361635919,
-      "name": "inception_v1",
-      "imagenet_top1": 69.8,
-      "v4": 0.6494514419384386,
-      "it": 0.5834922856250877,
-      "behavior": 0.361635919,
-      "paper_link": "https://arxiv.org/abs/1409.4842",
-      "paper_identifier": "Szegedy et al. 2014"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.356874149,
-      "name": "inception_v2",
-      "imagenet_top1": 73.9,
-      "v4": 0.6458807285927486,
-      "it": 0.5932801192132933,
-      "behavior": 0.356874149,
-      "paper_link": "https://arxiv.org/abs/1512.00567",
-      "paper_identifier": "Szegedy et al. 2015"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.334889408,
+      "brain_score": 0.5227190065017765,
       "name": "inception_v3",
       "imagenet_top1": 78.0,
       "v4": 0.6464528424645819,
       "it": 0.5868147690407477,
       "behavior": 0.334889408,
       "paper_link": "https://arxiv.org/abs/1512.00567",
-      "paper_identifier": "Szegedy et al. 2015"
+      "paper_identifier": "Szegedy et al., 2015"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.370860325,
-      "name": "inception_v4",
-      "imagenet_top1": 80.2,
-      "v4": 0.6280691895847528,
-      "it": 0.5745397780415141,
-      "behavior": 0.370860325,
-      "paper_link": "https://arxiv.org/abs/1602.07261",
-      "paper_identifier": "Szegedy et al. 2016"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.220368134,
-      "name": "mobilenet_v1_0.25_128",
-      "imagenet_top1": 41.5,
-      "v4": 0.6190882889937911,
-      "it": 0.526583753415921,
-      "behavior": 0.220368134,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.227679587,
-      "name": "mobilenet_v1_0.25_160",
-      "imagenet_top1": 45.5,
-      "v4": 0.6050937330697697,
-      "it": 0.5439472240485099,
-      "behavior": 0.227679587,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.24185083899999998,
-      "name": "mobilenet_v1_0.25_192",
-      "imagenet_top1": 47.7,
-      "v4": 0.599544104581025,
-      "it": 0.55108718969977,
-      "behavior": 0.24185083899999998,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.240127557,
-      "name": "mobilenet_v1_0.25_224",
-      "imagenet_top1": 49.8,
-      "v4": 0.6190783067458023,
-      "it": 0.5744915843346659,
-      "behavior": 0.240127557,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.255760278,
-      "name": "mobilenet_v1_0.5_128",
-      "imagenet_top1": 56.3,
-      "v4": 0.6232163901365518,
-      "it": 0.5575784216485931,
-      "behavior": 0.255760278,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.288707408,
-      "name": "mobilenet_v1_0.5_160",
-      "imagenet_top1": 59.099999999999994,
-      "v4": 0.6208974428521137,
-      "it": 0.5757951809964534,
-      "behavior": 0.288707408,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.318241214,
-      "name": "mobilenet_v1_0.5_192",
-      "imagenet_top1": 61.7,
-      "v4": 0.6138105240716085,
-      "it": 0.5784046887690141,
-      "behavior": 0.318241214,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.32626642699999997,
-      "name": "mobilenet_v1_0.5_224",
-      "imagenet_top1": 63.3,
-      "v4": 0.6042368872196041,
-      "it": 0.5847856907975617,
-      "behavior": 0.32626642699999997,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.284347379,
-      "name": "mobilenet_v1_0.75_128",
-      "imagenet_top1": 62.1,
-      "v4": 0.6362229315388002,
-      "it": 0.5726269920870426,
-      "behavior": 0.284347379,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.30101946,
-      "name": "mobilenet_v1_0.75_160",
-      "imagenet_top1": 65.3,
-      "v4": 0.6231801823583053,
-      "it": 0.5808751290508793,
-      "behavior": 0.30101946,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.340058095,
-      "name": "mobilenet_v1_0.75_192",
-      "imagenet_top1": 67.2,
-      "v4": 0.6203010379690065,
-      "it": 0.5917856452484301,
-      "behavior": 0.340058095,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.345916954,
-      "name": "mobilenet_v1_0.75_224",
-      "imagenet_top1": 68.4,
-      "v4": 0.618235406676434,
-      "it": 0.592147807852926,
-      "behavior": 0.345916954,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.307915493,
-      "name": "mobilenet_v1_1.0_128",
-      "imagenet_top1": 65.2,
-      "v4": 0.6233938743682039,
-      "it": 0.5748064314839196,
-      "behavior": 0.307915493,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.326747881,
-      "name": "mobilenet_v1_1.0_160",
-      "imagenet_top1": 68.0,
-      "v4": 0.6315824602958684,
-      "it": 0.591704855352277,
-      "behavior": 0.326747881,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.324912841,
-      "name": "mobilenet_v1_1.0_192",
-      "imagenet_top1": 70.0,
-      "v4": 0.6288519026205153,
-      "it": 0.5942274867910313,
-      "behavior": 0.324912841,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.347430029,
-      "name": "mobilenet_v1_1.0_224",
-      "imagenet_top1": 70.9,
-      "v4": 0.6228023779142522,
-      "it": 0.6012414586943555,
-      "behavior": 0.347430029,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.253032539,
-      "name": "mobilenet_v2_0.35_128",
-      "imagenet_top1": 50.8,
-      "v4": 0.6131298799023528,
-      "it": 0.5496334461394164,
-      "behavior": 0.253032539,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.303056709,
-      "name": "mobilenet_v2_0.35_160",
-      "imagenet_top1": 55.7,
-      "v4": 0.6192730727327902,
-      "it": 0.5767506564829178,
-      "behavior": 0.303056709,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.290038213,
-      "name": "mobilenet_v2_0.35_192",
-      "imagenet_top1": 58.20000000000001,
-      "v4": 0.6290821304589146,
-      "it": 0.5791477622245969,
-      "behavior": 0.290038213,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.314382677,
-      "name": "mobilenet_v2_0.35_224",
-      "imagenet_top1": 60.3,
-      "v4": 0.6267804129098336,
-      "it": 0.579557621310028,
-      "behavior": 0.314382677,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.243968245,
-      "name": "mobilenet_v2_0.35_96",
-      "imagenet_top1": 45.5,
-      "v4": 0.6100298379087608,
-      "it": 0.5398343502823122,
-      "behavior": 0.243968245,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.287122522,
-      "name": "mobilenet_v2_0.5_128",
-      "imagenet_top1": 57.70000000000001,
-      "v4": 0.6067315614792982,
-      "it": 0.5744997215774658,
-      "behavior": 0.287122522,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.309841732,
-      "name": "mobilenet_v2_0.5_160",
-      "imagenet_top1": 61.0,
-      "v4": 0.6252796467194954,
-      "it": 0.5818768201436063,
-      "behavior": 0.309841732,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.328691664,
-      "name": "mobilenet_v2_0.5_192",
-      "imagenet_top1": 63.9,
-      "v4": 0.615696726589254,
-      "it": 0.5862193161768179,
-      "behavior": 0.328691664,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.332379305,
-      "name": "mobilenet_v2_0.5_224",
-      "imagenet_top1": 65.4,
-      "v4": 0.6215335550272447,
-      "it": 0.5879554540841071,
-      "behavior": 0.332379305,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.261922315,
-      "name": "mobilenet_v2_0.5_96",
-      "imagenet_top1": 51.2,
-      "v4": 0.6112784459562504,
-      "it": 0.5549635639724196,
-      "behavior": 0.261922315,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.302342028,
-      "name": "mobilenet_v2_0.75_128",
-      "imagenet_top1": 63.2,
-      "v4": 0.6076140209591389,
-      "it": 0.5778554369046185,
-      "behavior": 0.302342028,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.327736718,
-      "name": "mobilenet_v2_0.75_160",
-      "imagenet_top1": 66.4,
-      "v4": 0.6054859161351784,
-      "it": 0.5936226569561087,
-      "behavior": 0.327736718,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.359357474,
-      "name": "mobilenet_v2_0.75_192",
-      "imagenet_top1": 68.7,
-      "v4": 0.6132449577039302,
-      "it": 0.5940068017504962,
-      "behavior": 0.359357474,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.37661762,
-      "name": "mobilenet_v2_0.75_224",
-      "imagenet_top1": 69.8,
-      "v4": 0.6128413801424499,
-      "it": 0.5904227546093064,
-      "behavior": 0.37661762,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.28561521300000003,
-      "name": "mobilenet_v2_0.75_96",
-      "imagenet_top1": 58.8,
-      "v4": 0.6198976637276123,
-      "it": 0.5751869263577956,
-      "behavior": 0.28561521300000003,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.310204992,
-      "name": "mobilenet_v2_1.0_128",
-      "imagenet_top1": 65.3,
-      "v4": 0.6013834704518015,
-      "it": 0.5906935774025454,
-      "behavior": 0.310204992,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.336943603,
-      "name": "mobilenet_v2_1.0_160",
-      "imagenet_top1": 68.8,
-      "v4": 0.6016305845991481,
-      "it": 0.5992523990811044,
-      "behavior": 0.336943603,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.36914909700000004,
-      "name": "mobilenet_v2_1.0_192",
-      "imagenet_top1": 70.7,
-      "v4": 0.6007393315100045,
-      "it": 0.5953205880449675,
-      "behavior": 0.36914909700000004,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.34751149,
-      "name": "mobilenet_v2_1.0_224",
-      "imagenet_top1": 71.8,
-      "v4": 0.6118381293406642,
-      "it": 0.591030871937029,
-      "behavior": 0.34751149,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.297085021,
-      "name": "mobilenet_v2_1.0_96",
-      "imagenet_top1": 60.3,
-      "v4": 0.6130490486432812,
-      "it": 0.5784541561563439,
-      "behavior": 0.297085021,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.35572948299999996,
-      "name": "mobilenet_v2_1.3_224",
-      "imagenet_top1": 74.4,
-      "v4": 0.6191562560123298,
-      "it": 0.5952262154602173,
-      "behavior": 0.35572948299999996,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.34832800799999997,
-      "name": "mobilenet_v2_1.4_224",
-      "imagenet_top1": 75.0,
-      "v4": 0.6261989224531371,
-      "it": 0.6004430095965811,
-      "behavior": 0.34832800799999997,
-      "paper_link": "https://arxiv.org/abs/1704.04861",
-      "paper_identifier": "Howard et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.338544875,
-      "name": "nasnet_large",
-      "imagenet_top1": 82.7,
-      "v4": 0.6501390075864929,
-      "it": 0.5914497195666929,
-      "behavior": 0.338544875,
-      "paper_link": "https://arxiv.org/abs/1707.07012",
-      "paper_identifier": "Zoph et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.342017421,
-      "name": "nasnet_mobile",
-      "imagenet_top1": 74.0,
-      "v4": 0.6502248680539737,
-      "it": 0.5978475713369434,
-      "behavior": 0.342017421,
-      "paper_link": "https://arxiv.org/abs/1707.07012",
-      "paper_identifier": "Zoph et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.350724562,
-      "name": "pnasnet_large",
-      "imagenet_top1": 82.9,
-      "v4": 0.644438505537408,
-      "it": 0.5896513746322689,
-      "behavior": 0.350724562,
-      "paper_link": "https://arxiv.org/abs/1712.00559",
-      "paper_identifier": "Liu et al. 2017"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.389477175,
-      "name": "resnet-101_v2",
-      "imagenet_top1": 77.0,
-      "v4": 0.6525502989170329,
-      "it": 0.5847226311550136,
-      "behavior": 0.389477175,
-      "paper_link": "https://arxiv.org/abs/1512.03385",
-      "paper_identifier": "He et al. 2015"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.376567353,
-      "name": "resnet-152_v2",
-      "imagenet_top1": 77.8,
-      "v4": 0.6575117094035291,
-      "it": 0.5885858495722821,
-      "behavior": 0.376567353,
-      "paper_link": "https://arxiv.org/abs/1512.03385",
-      "paper_identifier": "He et al. 2015"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.377464769,
-      "name": "resnet-50_v2",
-      "imagenet_top1": 75.6,
-      "v4": 0.6525672348066289,
-      "it": 0.588866242018601,
-      "behavior": 0.377464769,
-      "paper_link": "https://arxiv.org/abs/1512.03385",
-      "paper_identifier": "He et al. 2015"
-    }
-  },
-  {
-    "model": "benchmarks.CandidateModel",
-    "fields": {
-      "brain_score": 0.321200396,
+      "brain_score": 0.5206882299337857,
       "name": "vgg-16",
       "imagenet_top1": 71.5,
       "v4": 0.668700545664949,
       "it": 0.5721637481364082,
       "behavior": 0.321200396,
       "paper_link": "https://arxiv.org/abs/1409.1556",
-      "paper_identifier": "Simonyan et al. 2014"
+      "paper_identifier": "Simonyan et al., 2014"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.337596515,
+      "brain_score": 0.532011665602014,
+      "name": "inception_v2",
+      "imagenet_top1": 73.9,
+      "v4": 0.6458807285927486,
+      "it": 0.5932801192132933,
+      "behavior": 0.356874149,
+      "paper_link": "https://arxiv.org/abs/1512.00567",
+      "paper_identifier": "Szegedy et al., 2015"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5020381570814525,
+      "name": "mobilenet_v1_1.0_128",
+      "imagenet_top1": 65.2,
+      "v4": 0.6233937182693591,
+      "it": 0.5748052599749987,
+      "behavior": 0.307915493,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5187666275535253,
+      "name": "mobilenet_v1_0.75_224",
+      "imagenet_top1": 68.4,
+      "v4": 0.6182351815781211,
+      "it": 0.5921477470824549,
+      "behavior": 0.345916954,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.500760679951449,
+      "name": "mobilenet_v2_1.0_128",
+      "imagenet_top1": 65.3,
+      "v4": 0.6013834704518015,
+      "it": 0.5906935774025454,
+      "behavior": 0.310204992,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5487414620874401,
+      "name": "densenet-169",
+      "imagenet_top1": 75.9,
+      "v4": 0.6626766557636573,
+      "it": 0.6056243364986629,
+      "behavior": 0.37792339399999997,
+      "paper_link": "https://arxiv.org/abs/1608.06993",
+      "paper_identifier": "Huang et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.49356660102846933,
+      "name": "mobilenet_v2_0.75_96",
+      "imagenet_top1": 58.8,
+      "v4": 0.6198976637276123,
+      "it": 0.5751869263577956,
+      "behavior": 0.28561521300000003,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.47605477497622334,
+      "name": "mobilenet_v2_0.5_96",
+      "imagenet_top1": 51.2,
+      "v4": 0.6112784459562504,
+      "it": 0.5549635639724196,
+      "behavior": 0.261922315,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.49969347940523606,
+      "name": "mobilenet_v2_0.35_160",
+      "imagenet_top1": 55.7,
+      "v4": 0.6192730727327902,
+      "it": 0.5767506564829178,
+      "behavior": 0.303056709,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5069069037399538,
+      "name": "mobilenet_v2_0.35_224",
+      "imagenet_top1": 60.3,
+      "v4": 0.6267804129098336,
+      "it": 0.579557621310028,
+      "behavior": 0.314382677,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5250789918863783,
       "name": "vgg-19",
       "imagenet_top1": 71.1,
       "v4": 0.671551450092943,
       "it": 0.5660890105661919,
       "behavior": 0.337596515,
       "paper_link": "https://arxiv.org/abs/1409.1556",
-      "paper_identifier": "Simonyan et al. 2014"
+      "paper_identifier": "Simonyan et al., 2014"
     }
   },
   {
     "model": "benchmarks.CandidateModel",
     "fields": {
-      "brain_score": 0.361446007,
+      "brain_score": 0.5126088622267507,
+      "name": "mobilenet_v2_1.0_160",
+      "imagenet_top1": 68.8,
+      "v4": 0.6016305845991481,
+      "it": 0.5992523990811044,
+      "behavior": 0.336943603,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.48806023528760584,
+      "name": "alexnet",
+      "imagenet_top1": 57.70000000000001,
+      "v4": 0.6307502640060862,
+      "it": 0.5889010168567312,
+      "behavior": 0.244529425,
+      "paper_link": "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks",
+      "paper_identifier": "Krizhevsky et al., 2012"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5280237194563391,
+      "name": "inception_resnet_v2",
+      "imagenet_top1": 80.4,
+      "v4": 0.6387641495345012,
+      "it": 0.5929272748345162,
+      "behavior": 0.352379734,
+      "paper_link": "https://arxiv.org/abs/1602.07261",
+      "paper_identifier": "Szegedy et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5440640275860259,
+      "name": "cornet_s",
+      "imagenet_top1": 74.7,
+      "v4": 0.6499003878538285,
+      "it": 0.600291694904249,
+      "behavior": 0.382,
+      "paper_link": "https://www.biorxiv.org/content/early/2018/09/04/408385",
+      "paper_identifier": "Kubilius et al., 2018"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.49773232279233,
+      "name": "mobilenet_v1_0.75_128",
+      "imagenet_top1": 62.1,
+      "v4": 0.6362228976421445,
+      "it": 0.5726266917348455,
+      "behavior": 0.284347379,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.47885161140051685,
+      "name": "mobilenet_v1_0.5_128",
+      "imagenet_top1": 56.3,
+      "v4": 0.6232164401633926,
+      "it": 0.557578116038158,
+      "behavior": 0.255760278,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5249899800165727,
+      "name": "mobilenet_v2_1.4_224",
+      "imagenet_top1": 75.0,
+      "v4": 0.6261989224531371,
+      "it": 0.6004430095965811,
+      "behavior": 0.34832800799999997,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5173816087579006,
+      "name": "mobilenet_v1_0.75_192",
+      "imagenet_top1": 67.2,
+      "v4": 0.6203011166422991,
+      "it": 0.5917856146314027,
+      "behavior": 0.340058095,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.47193117738354723,
+      "name": "mobilenet_v2_0.35_128",
+      "imagenet_top1": 50.8,
+      "v4": 0.6131275470112251,
+      "it": 0.5496334461394164,
+      "behavior": 0.253032539,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4589068480394265,
+      "name": "mobilenet_v1_0.25_160",
+      "imagenet_top1": 45.5,
+      "v4": 0.6050937330697697,
+      "it": 0.5439472240485099,
+      "behavior": 0.227679587,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5233702249822885,
+      "name": "mobilenet_v2_1.3_224",
+      "imagenet_top1": 74.4,
+      "v4": 0.6191526051031234,
+      "it": 0.595228586843742,
+      "behavior": 0.35572948299999996,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5325125625060104,
       "name": "xception",
       "imagenet_top1": 79.0,
       "v4": 0.6706893521061001,
       "it": 0.5654023284119313,
       "behavior": 0.361446007,
       "paper_link": "https://arxiv.org/abs/1610.02357",
-      "paper_identifier": "Chollet et al. 2016"
+      "paper_identifier": "Chollet et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4778991493601561,
+      "name": "mobilenet_v1_0.25_224",
+      "imagenet_top1": 49.8,
+      "v4": 0.6190783067458023,
+      "it": 0.5744915843346659,
+      "behavior": 0.240127557,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4951332480894446,
+      "name": "mobilenet_v1_0.5_160",
+      "imagenet_top1": 59.099999999999994,
+      "v4": 0.6208973825034729,
+      "it": 0.5757949537648608,
+      "behavior": 0.288707408,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.503485415960625,
+      "name": "mobilenet_v1_0.5_192",
+      "imagenet_top1": 61.7,
+      "v4": 0.6138104005085991,
+      "it": 0.5784046333732759,
+      "behavior": 0.318241214,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5159973664121874,
+      "name": "mobilenet_v1_1.0_192",
+      "imagenet_top1": 70.0,
+      "v4": 0.6288517923284525,
+      "it": 0.5942274659081096,
+      "behavior": 0.324912841,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5410803485897608,
+      "name": "densenet-201",
+      "imagenet_top1": 77.2,
+      "v4": 0.6547249948543018,
+      "it": 0.6007032069149808,
+      "behavior": 0.36781284399999997,
+      "paper_link": "https://arxiv.org/abs/1608.06993",
+      "paper_identifier": "Huang et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4994227018945037,
+      "name": "mobilenet_v2_0.35_192",
+      "imagenet_top1": 58.20000000000001,
+      "v4": 0.6290821304589146,
+      "it": 0.5791477622245969,
+      "behavior": 0.290038213,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5422500350240155,
+      "name": "resnet-101_v2",
+      "imagenet_top1": 77.37,
+      "v4": 0.6525502989170329,
+      "it": 0.5847226311550136,
+      "behavior": 0.389477175,
+      "paper_link": "https://arxiv.org/abs/1512.03385",
+      "paper_identifier": "He et al., 2015"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5016913996130937,
+      "name": "mobilenet_v1_0.75_160",
+      "imagenet_top1": 65.3,
+      "v4": 0.6231800016285648,
+      "it": 0.5808747372107165,
+      "behavior": 0.30101946,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5410566218007465,
+      "name": "densenet-121",
+      "imagenet_top1": 74.5,
+      "v4": 0.6565623848391551,
+      "it": 0.5972631695630843,
+      "behavior": 0.36934431100000004,
+      "paper_link": "https://arxiv.org/abs/1608.06993",
+      "paper_identifier": "Huang et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4542119380883944,
+      "name": "squeezenet1_0",
+      "imagenet_top1": 57.49999999999999,
+      "v4": 0.6405218586813295,
+      "it": 0.5423569145838535,
+      "behavior": 0.179757041,
+      "paper_link": "https://arxiv.org/abs/1602.07360",
+      "paper_identifier": "Iandola et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4959382800967249,
+      "name": "mobilenet_v2_0.75_128",
+      "imagenet_top1": 63.2,
+      "v4": 0.6076144026291856,
+      "it": 0.5778584096609891,
+      "behavior": 0.302342028,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.46852133165842985,
+      "name": "squeezenet1_1",
+      "imagenet_top1": 57.49999999999999,
+      "v4": 0.6515242770983589,
+      "it": 0.5526415808769307,
+      "behavior": 0.201398137,
+      "paper_link": "https://arxiv.org/abs/1602.07360",
+      "paper_identifier": "Iandola et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5050962786786781,
+      "name": "mobilenet_v1_0.5_224",
+      "imagenet_top1": 63.3,
+      "v4": 0.6042367116738385,
+      "it": 0.5847856973621959,
+      "behavior": 0.32626642699999997,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5244897699057804,
+      "name": "inception_v4",
+      "imagenet_top1": 80.2,
+      "v4": 0.6280691813508387,
+      "it": 0.5745398033665027,
+      "behavior": 0.370860325,
+      "paper_link": "https://arxiv.org/abs/1602.07261",
+      "paper_identifier": "Szegedy et al., 2016"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5396327486084099,
+      "name": "resnet-50_v2",
+      "imagenet_top1": 75.6,
+      "v4": 0.6525672348066289,
+      "it": 0.588866242018601,
+      "behavior": 0.377464769,
+      "paper_link": "https://arxiv.org/abs/1512.03385",
+      "paper_identifier": "He et al., 2015"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.455346719839033,
+      "name": "mobilenet_v1_0.25_128",
+      "imagenet_top1": 41.5,
+      "v4": 0.6190881571361035,
+      "it": 0.5265838683809955,
+      "behavior": 0.220368134,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.513958015035731,
+      "name": "mobilenet_v2_0.5_224",
+      "imagenet_top1": 65.4,
+      "v4": 0.6215402034967017,
+      "it": 0.5879545366104915,
+      "behavior": 0.332379305,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5220601326607727,
+      "name": "resnet-34",
+      "imagenet_top1": 73.3,
+      "v4": 0.6291250009148502,
+      "it": 0.5591851370674675,
+      "behavior": 0.37787026,
+      "paper_link": "https://arxiv.org/abs/1512.03385",
+      "paper_identifier": "He et al., 2015"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5315265488545088,
+      "name": "inception_v1",
+      "imagenet_top1": 69.8,
+      "v4": 0.6494514419384386,
+      "it": 0.5834922856250877,
+      "behavior": 0.361635919,
+      "paper_link": "https://arxiv.org/abs/1409.4842",
+      "paper_identifier": "Szegedy et al., 2014"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5089476913632714,
+      "name": "mobilenet_v2_0.75_160",
+      "imagenet_top1": 66.4,
+      "v4": 0.6054867171206153,
+      "it": 0.593619638969199,
+      "behavior": 0.327736718,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.49619607526654175,
+      "name": "mobilenet_v2_1.0_96",
+      "imagenet_top1": 60.3,
+      "v4": 0.6130490486432812,
+      "it": 0.5784541561563439,
+      "behavior": 0.297085021,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.4894466489922736,
+      "name": "mobilenet_v2_0.5_128",
+      "imagenet_top1": 57.70000000000001,
+      "v4": 0.6067265277966011,
+      "it": 0.5744908971802197,
+      "behavior": 0.287122522,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5238246218695358,
+      "name": "mobilenet_v1_1.0_224",
+      "imagenet_top1": 70.9,
+      "v4": 0.6228023779142522,
+      "it": 0.6012414586943555,
+      "behavior": 0.347430029,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.46416071109359835,
+      "name": "mobilenet_v1_0.25_192",
+      "imagenet_top1": 47.7,
+      "v4": 0.599544104581025,
+      "it": 0.55108718969977,
+      "behavior": 0.24185083899999998,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5102025689220239,
+      "name": "mobilenet_v2_0.5_192",
+      "imagenet_top1": 63.9,
+      "v4": 0.615696726589254,
+      "it": 0.5862193161768179,
+      "behavior": 0.328691664,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5266272515839188,
+      "name": "mobilenet_v2_0.75_224",
+      "imagenet_top1": 69.8,
+      "v4": 0.6128413801424499,
+      "it": 0.5904227546093064,
+      "behavior": 0.37661762,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5167934970925644,
+      "name": "mobilenet_v2_1.0_224",
+      "imagenet_top1": 71.8,
+      "v4": 0.6118381293406642,
+      "it": 0.591030871937029,
+      "behavior": 0.34751149,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5282714807232257,
+      "name": "pnasnet_large",
+      "imagenet_top1": 82.9,
+      "v4": 0.644438505537408,
+      "it": 0.5896513746322689,
+      "behavior": 0.350724562,
+      "paper_link": "https://arxiv.org/abs/1712.00559",
+      "paper_identifier": "Liu et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5267112007177286,
+      "name": "nasnet_large",
+      "imagenet_top1": 82.7,
+      "v4": 0.6501390075864929,
+      "it": 0.5914497195666929,
+      "behavior": 0.338544875,
+      "paper_link": "https://arxiv.org/abs/1707.07012",
+      "paper_identifier": "Zoph et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5056687047799912,
+      "name": "mobilenet_v2_0.5_160",
+      "imagenet_top1": 61.0,
+      "v4": 0.6252819604987059,
+      "it": 0.5818824218412676,
+      "behavior": 0.309841732,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5408883039919371,
+      "name": "resnet-152_v2",
+      "imagenet_top1": 77.8,
+      "v4": 0.6575117094035291,
+      "it": 0.5885858495722821,
+      "behavior": 0.376567353,
+      "paper_link": "https://arxiv.org/abs/1512.03385",
+      "paper_identifier": "He et al., 2015"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5166784034746489,
+      "name": "mobilenet_v1_1.0_160",
+      "imagenet_top1": 68.0,
+      "v4": 0.6315824656703132,
+      "it": 0.5917048637536336,
+      "behavior": 0.326747881,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.530029953463639,
+      "name": "nasnet_mobile",
+      "imagenet_top1": 74.0,
+      "v4": 0.6502248680539737,
+      "it": 0.5978475713369434,
+      "behavior": 0.342017421,
+      "paper_link": "https://arxiv.org/abs/1707.07012",
+      "paper_identifier": "Zoph et al., 2017"
+    }
+  },
+  {
+    "model": "benchmarks.CandidateModel",
+    "fields": {
+      "brain_score": 0.5222113581395937,
+      "name": "mobilenet_v2_0.75_192",
+      "imagenet_top1": 68.7,
+      "v4": 0.6132687747869375,
+      "it": 0.5940078256318436,
+      "behavior": 0.359357474,
+      "paper_link": "https://arxiv.org/abs/1704.04861",
+      "paper_identifier": "Howard et al., 2017"
     }
   }
 ]
