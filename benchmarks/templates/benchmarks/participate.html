@@ -1,32 +1,25 @@
-{% with '<a href="mailto:jjpr@mit.edu,msch@mit.edu?subject=Brain-Score submission">please get in touch with us</a>' as contact %}
+{% with '<a href="mailto:jjpr@mit.edu,msch@mit.edu?subject=Brain-Score submission">get in touch with us</a>' as contact %}
 {% with '<a href="">models GitHub repository</a>' as models_github %}
 {% with '<a href="">Brain-Score GitHub repository</a>' as brain_github %}
 
-    <h4>Challenge the data: Score a model</h4>
-    There are two ways to score a model on Brain-Score:
-    <ol>
-        <li>clone the {{ models_github }} and follow the steps described there to evaluate the model
-            locally
-        </li>
-        <li>{{ contact }} to hand us your model (we are working on automating this step)</li>
-    </ol>
+    <h4>Challenge the data: Submit a model</h4>
+    Please {{ contact }} to have us score your model (we are working on automating this step).
 
-    <h4>Challenge the models: Submit a benchmark</h4>
-    If you have neural or behavioral recordings that you would like models to compete on, {{ contact }}.
+    <h4>Challenge the models: Submit data</h4>
+    If you have neural or behavioral recordings that you would like models to compete on, please {{ contact }}.
 
     <h4>Change the evaluation: Submit a metric</h4>
     If you have an idea for a different way of comparing brain and machine,
-    either fork the {{ brain_github }} to implement your metric and submit a pull request to us,
-    or {{ contact }}.
+    please {{ contact }}.
 
     <h4>Citation</h4>
     If you use Brain-Score in your work, please cite
-    <em>Brain-Score: Which Artifical Neural Network Best Emulates the Brain’s Neural Network?</em>
+    <em>Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?</em>
     <br/>
     <pre>
 @article{SchrimpfKubilius2018BrainScore,
-title={Brain-Score: Which Artifical Neural Network Best Emulates the Brain’s Neural Network?},
-author={Martin Schrimpf and Jonas Kubilius and James DiCarlo},
+title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},
+author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan Prescott-Roy and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},
 journal={bioRxiv preprint},
 year={2018}
 }
