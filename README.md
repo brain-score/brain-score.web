@@ -6,6 +6,13 @@ Install node dependencies: `npm install`
 Run server: `python manage.py runserver &`
 
 
+## Update data
+```
+echo "from benchmarks.models import CandidateModel; CandidateModel.objects.all().delete()" | python manage.py shell
+python manage.py loaddata static/benchmarks/fixture.json
+```
+
+
 ## Export
 
 1. replace `http://localhost:8000/#*` with `#`
