@@ -24,7 +24,7 @@ def view(request):
     is_ie = _is_ie(user_agent)
     models = CandidateModel.objects.order_by('-brain_score')
     data = {}
-    for field in ['brain_score', 'v4', 'it', 'behavior', 'imagenet_top1']:
+    for field in ['brain_score', 'V4', 'IT', 'behavior', 'imagenet_top1']:
         ceiling = ceilings[field] if field in ceilings else None
         values = [getattr(model, field) for model in models]
         min_value, max_value = min(values), max(values)

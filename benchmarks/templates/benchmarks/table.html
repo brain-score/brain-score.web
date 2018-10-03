@@ -10,7 +10,7 @@
             <th class="rotate"><p><strong>V4</strong>: <a href="http://www.jneurosci.org/content/35/39/13402.short">dicarlo.Majaj2015</a></p></th>
             <th class="rotate"><p><strong>IT</strong>: <a href="http://www.jneurosci.org/content/35/39/13402.short">dicarlo.Majaj2015</a></p></th>
             <th class="rotate"><p><strong>Behavior</strong>: <a href="https://www.biorxiv.org/content/early/2018/02/12/240614">dicarlo.Raja...2018</a></p></th>
-            <th class="rotate"><p><strong>Performance</strong>: <a href="https://ieeexplore.ieee.org/abstract/document/5206848/">Imagenet2012</a></p></th>
+            <th class="rotate"><p><strong>Classification</strong>: <a href="https://ieeexplore.ieee.org/abstract/document/5206848/">Imagenet2012</a></p></th>
         </tr>
         <!-- data -->
         <tr>
@@ -19,8 +19,8 @@
             <td class="score_cell" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
             <td class="score_cell" style="background-color:#e0e1e2"></td>
             <td class="score_cell" style="background-color:#e0e1e2"></td>
-            <td class="score_cell" style="background-color:{{data.v4_color}}">{{data.v4}}</td>
-            <td class="score_cell" style="background-color:{{data.it_color}}">{{data.it}}</td>
+            <td class="score_cell" style="background-color:{{data.V4_color}}">{{data.V4}}</td>
+            <td class="score_cell" style="background-color:{{data.IT_color}}">{{data.IT}}</td>
             <td class="score_cell" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
             <td class="score_cell" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
         </tr>
@@ -34,9 +34,9 @@
                 <td class="score_cell" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
                 <td class="score_cell" style="background-color:#e0e1e2"></td>
                 <td class="score_cell" style="background-color:#e0e1e2"></td>
-                <td class="score_cell" style="background-color:{{model.v4_color}}">{{model.v4}}</td>
-                <td class="score_cell" style="background-color:{{model.it_color}}">{{model.it}}</td>
-                <td class="score_cell" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
+                <td title="{{model.V4_layer}}" class="score_cell" style="background-color:{{model.V4_color}}">{{model.V4}}</td>
+                <td title="{{model.IT_layer}}" class="score_cell" style="background-color:{{model.IT_color}}">{{model.IT}}</td>
+                <td title="{{model.behavior_layer}}" class="score_cell" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
                 <td class="score_cell" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
             </tr>
         {% endfor %}
@@ -45,6 +45,7 @@
 	
 	Model scores on brain benchmarks.
 	The more green and bright a cell, the better the model's score.
+    Hover over cells to see the model layer.
 	Scores are un-ceiled, but ceiling is factored into the coloring.
 
 {% else %}
