@@ -16,13 +16,13 @@
         <tr>
             <td class=""></td>
             <td class="model"><strong>Max</strong></td>
-            <td class="score_cell" style="background-color: {{data.brain_score_color}}">{{data.brain_score}}</td>
+            <td class="score_cell" style=" {{data.brain_score_color}}">{{data.brain_score}}</td>
             <td class="score_cell" style="background-color:#e0e1e2"></td>
             <td class="score_cell" style="background-color:#e0e1e2"></td>
-            <td class="score_cell" style="background-color:{{data.V4_color}}">{{data.V4}}</td>
-            <td class="score_cell" style="background-color:{{data.IT_color}}">{{data.IT}}</td>
-            <td class="score_cell" style="background-color:{{data.behavior_color}}">{{data.behavior}}</td>
-            <td class="score_cell" style="background-color:{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
+            <td class="score_cell" style="{{data.V4_color}}">{{data.V4}}</td>
+            <td class="score_cell" style="{{data.IT_color}}">{{data.IT}}</td>
+            <td class="score_cell" style="{{data.behavior_color}}">{{data.behavior}}</td>
+            <td class="score_cell" style="{{data.imagenet_top1_color}}">{{data.imagenet_top1}}</td>
         </tr>
         </thead>
         <!-- models -->
@@ -31,13 +31,13 @@
             <tr>
                 <td class="score_cell"><strong>{{model.rank}}</strong></td>
                 <td class="model"><a target="_blank" rel="noopener noreferrer" href="{{model.paper_link}}">{{model.name}}</a><br><em>{{model.paper_identifier}}</em></td>
-                <td class="score_cell" style="background-color:{{model.brain_score_color}}">{{model.brain_score}}</td>
+                <td class="score_cell" style="{{model.brain_score_color}}">{{model.brain_score}}</td>
                 <td class="score_cell" style="background-color:#e0e1e2"></td>
                 <td class="score_cell" style="background-color:#e0e1e2"></td>
-                <td title="{{model.V4_layer}}" class="score_cell" style="background-color:{{model.V4_color}}">{{model.V4}}</td>
-                <td title="{{model.IT_layer}}" class="score_cell" style="background-color:{{model.IT_color}}">{{model.IT}}</td>
-                <td title="{{model.behavior_layer}}" class="score_cell" style="background-color:{{model.behavior_color}}">{{model.behavior}}</td>
-                <td class="score_cell" style="background-color:{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
+                <td title="{{model.V4_layer}}" class="score_cell" style="{{model.V4_color}}">{{model.V4}}</td>
+                <td title="{{model.IT_layer}}" class="score_cell" style="{{model.IT_color}}">{{model.IT}}</td>
+                <td title="{{model.behavior_layer}}" class="score_cell" style="{{model.behavior_color}}">{{model.behavior}}</td>
+                <td class="score_cell" style="{{model.imagenet_top1_color}}">{{model.imagenet_top1}}</td>
             </tr>
         {% endfor %}
         </tbody>
