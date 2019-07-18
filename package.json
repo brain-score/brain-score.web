@@ -4,7 +4,8 @@
   "description": "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements",
   "main": "index.js",
   "dependencies": {
-    "bulma": "^0.7.1"
+    "bulma": "^0.7.1",
+    "sass": "^1.22.5"
   },
   "devDependencies": {},
   "scripts": {
