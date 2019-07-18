@@ -10,3 +10,4 @@ dependencies:
   - pip:
     - django_compressor
     - colour
+    - tqdm

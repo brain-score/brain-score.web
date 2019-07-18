@@ -3,26 +3,22 @@
 
     <div class="xlabel-container">
         <select id="xlabel">
-            <option value="imagenet_top1" selected>ImageNet top-1</option>
-            <option value="brain_score">Brain-Score</option>
-            <option value="V4">V4</option>
-            <option value="IT">IT</option>
-            <option value="behavior">Behavior</option>
+            {% for benchmark in benchmarks %}
+                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+            {% endfor %}
         </select>
     </div>
 
     <div class="ylabel-container">
         <select id="ylabel">
-            <option value="imagenet_top1">ImageNet top-1</option>
-            <option value="brain_score" selected>Brain-Score</option>
-            <option value="V4">V4</option>
-            <option value="IT">IT</option>
-            <option value="behavior">Behavior</option>
+            {% for benchmark in benchmarks %}
+                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+            {% endfor %}
         </select>
     </div>
 
     <figcaption>
-        <span id="label-description">ImageNet top-1 performance vs Brain-Score</span>.
+        <span id="label-description">x vs y</span>.
         <br />
         Hover over dots to reveal model details.
         Scrolling zooms in and out.

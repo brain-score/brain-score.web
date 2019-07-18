@@ -1,46 +1,91 @@
+from tqdm import tqdm
+import re
+from collections import namedtuple
+
 import numpy as np
 from colour import Color
 from django.shortcuts import render
 
-from benchmarks.models import CandidateModel
+from benchmarks.models import Score, Benchmark, ModelReference
 
 colors = list(Color('red').range_to(Color('green'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
 a, b = .002270617, 2.321928  # fit to (0, 0), (50, 20), (100, 100)
 colors = [colors[int(a * np.power(i, b))] for i in range(len(colors))]
 color_suffix = '_color'
-
-ceilings = {
-    'V4': .892,
-    'IT': .817,
-    'behavior': .479,
-    'imagenet_top1': 100,
-}
-ceilings['brain_score'] = np.mean([ceilings[field] for field in ['V4', 'IT', 'behavior']])
+color_None = '#e0e1e2'
 
 
 def view(request):
-    models = CandidateModel.objects.order_by('-brain_score')
-    data = {}
-    for field in ['brain_score', 'V4', 'IT', 'behavior', 'imagenet_top1']:
-        ceiling = ceilings[field] if field in ceilings else None
-        values = [getattr(model, field) for model in models]
-        data[field] = represent(ceiling)
-        data[field + color_suffix] = representative_color(ceiling, ceiling=ceiling)  # ceiling is 100% by definition
-        min_value, max_value = min(values), max(values)
-
-        for model in models:
-            value = getattr(model, field)
-            setattr(model, field, represent(value))
-
-            if field == 'brain_score':
-                rank = values.index(value)
-                setattr(model, 'rank', rank + 1)
-
-            color = representative_color(value, ceiling=ceiling, alpha_min=min_value, alpha_max=max_value)
-            setattr(model, field + color_suffix, color)
-    context = {'models': models, 'data': data}
+    benchmarks = _collect_benchmarks()
+    models = _collect_models(benchmarks)
+    for benchmark in benchmarks:  # remove lab for more compactness
+        benchmark.name = re.match(r'[^\.]+\.(.+)', benchmark.name).group(1)
+        benchmark.ceiling = represent(benchmark.ceiling)
+    context = {'models': models, 'benchmarks': benchmarks}
     return render(request, 'benchmarks/index.html', context)
+
+
+def _collect_benchmarks():
+    benchmarks = Benchmark.objects.all()
+    # filter to benchmarks that we have scores for
+    score_benchmarks = Score.objects.values_list('benchmark', flat=True).distinct()
+    benchmarks = [benchmark for benchmark in benchmarks if benchmark.name in score_benchmarks]
+    # sort benchmarks
+    parent_order = [None, 'V1', 'V2', 'V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
+    benchmarks = [benchmark for parent_index, name, benchmark in sorted(zip(
+        [parent_order.index(benchmark.parent) for benchmark in benchmarks],
+        [benchmark.name for benchmark in benchmarks], benchmarks))]
+    return benchmarks
+
+
+def _collect_models(benchmarks):
+    # pre-compute aggregates
+    benchmarks_meta = {}
+    for benchmark in [benchmark.name for benchmark in benchmarks]:
+        benchmark_scores = Score.objects.filter(benchmark=benchmark)
+        benchmark_scores = [score.score if score.score is not None else 0 for score in benchmark_scores]
+        min_value, max_value = min(benchmark_scores), max(benchmark_scores)
+        ceiling = Benchmark.objects.filter(name=benchmark)[0].ceiling
+        benchmarks_meta[benchmark] = {'ceiling': ceiling, 'min': min_value, 'max': max_value}
+
+    scores = Score.objects.all().select_related()
+    ModelRow = namedtuple('ModelRow', field_names=['name', 'reference_identifier', 'reference_link', 'rank', 'scores'])
+    ScoreDisplay = namedtuple('ScoreDiplay', field_names=['benchmark', 'score', 'color', 'layer'])
+
+    data = {}
+    for score in tqdm(scores, desc='scores'):
+        if score.model not in data:
+            index = re.search(r'(--)', score.model)
+            model_base_identifier = score.model[:index.start()] if index else score.model
+            reference = ModelReference.objects.filter(model=model_base_identifier)
+            reference = reference[0] if len(reference) > 0 else None
+            data[score.model] = ModelRow(name=score.model,
+                                         reference_identifier=reference.short_reference if reference else None,
+                                         reference_link=reference.link if reference else None,
+                                         rank=1,  # TODO
+                                         scores={})
+
+        benchmark_meta = benchmarks_meta[score.benchmark]
+        color = representative_color(score.score, ceiling=benchmark_meta['ceiling'],
+                                     alpha_min=benchmark_meta['min'], alpha_max=benchmark_meta['max'])
+        score_value = represent(score.score)
+        score_display = ScoreDisplay(benchmark=score.benchmark, score=score_value, color=color, layer=score.layer)
+        data[score.model].scores[score.benchmark] = score_display
+
+    # sort score benchmarks
+    no_score = {}
+    for benchmark in benchmarks:
+        meta = benchmarks_meta[benchmark.name]
+        no_score[benchmark.name] = ScoreDisplay(
+            benchmark=benchmark.name, score="", color=representative_color(
+                None, ceiling=meta['ceiling'], alpha_min=meta['min'], alpha_max=meta['max']),
+            layer="not yet run")
+    data = [model_row._replace(scores=[
+        model_row.scores[benchmark.name] if benchmark.name in model_row.scores else no_score[benchmark.name]
+        for benchmark in benchmarks])
+        for model_row in tqdm(data.values(), desc='sort benchmarks')]
+    return data
 
 
 def normalize(value, min_value, max_value):
@@ -53,10 +98,14 @@ def normalize(value, min_value, max_value):
 
 
 def represent(value):
+    if value is None:
+        return "X"
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
 
 def representative_color(value, ceiling, alpha_min=None, alpha_max=None):
+    if value is None:
+        return f"background-color: {color_None}"
     step = int(100 * value / ceiling)
     color = colors[step]
     color = tuple(c * 255 for c in color.rgb)

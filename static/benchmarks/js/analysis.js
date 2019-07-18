@@ -9,7 +9,7 @@ var margin = { top: 0, right: 0, bottom: 20, left: 60 },
 var dot_size = 8,
     color = '#078930';
 
-var idKey = "name",
+var idKey = "model",
     xKey = null,
     yKey = null;
 
@@ -26,9 +26,7 @@ var container_selector = "#analysis div#brain-score",
     ylabel_selector = figure_selector + ' #ylabel',
     label_description_selector = figure_selector + " figcaption #label-description";
 
-d3.json("/static/benchmarks/fixture.json", function(data) {
-    data = data.map(function(row) {return row.fields});
-
+d3.json("/static/benchmarks/fixture-scores-javascript.json", function(error, data) {
     var svg = d3.select(container_selector)
         .append("svg")
         .attr("width", outerWidth)
@@ -50,8 +48,8 @@ d3.json("/static/benchmarks/fixture.json", function(data) {
     // from http://bl.ocks.org/williaster/10ef968ccfdc71c30ef8
     // Handler for dropdown value change
     var updatePlot = function() {
-        xKey = $(xlabel_selector).prop('value');
-        yKey = $(ylabel_selector).prop('value');
+        xKey = $(xlabel_selector).prop('value') + "-score";
+        yKey = $(ylabel_selector).prop('value') + "-score";
         var xName = $(xlabel_selector).find('option:selected').text(),
             yName = $(ylabel_selector).find('option:selected').text();
         $(label_description_selector).text(xName + ' vs ' + yName);
@@ -123,6 +121,13 @@ d3.json("/static/benchmarks/fixture.json", function(data) {
         g.append("g")
             .classed("y axis", true)
             .call(yAxis);
+
+        // g.append("g")
+        //     .append("text")
+        //     .attr("x", 375)
+        //     .attr("y", 350)
+        //     .text("r=" + 3 + " (p=" + 0.05 + ")")
+        //     .attr("font-size", "18px");
 
         // data
         var objects = g.append("svg")

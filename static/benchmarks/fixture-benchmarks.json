@@ -1,0 +1,72 @@
+[
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.8950300216674805,
+      "ceiling_error": 0.0006182539189773819,
+      "link": "http://www.jneurosci.org/content/35/39/13402.short",
+      "name": "dicarlo.Majaj2015.V4-pls",
+      "parent": "V4"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.8218406438827515,
+      "ceiling_error": 0.00058712737191322,
+      "link": "http://www.jneurosci.org/content/35/39/13402.short",
+      "name": "dicarlo.Majaj2015.IT-pls",
+      "parent": "IT"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.8736567542821909,
+      "ceiling_error": 0.003592410347494883,
+      "link": "https://www.nature.com/articles/nn.3402",
+      "name": "movshon.FreemanZiemba2013.V1-pls",
+      "parent": "V1"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.8248361574747418,
+      "ceiling_error": 0.0017617471233464287,
+      "link": "https://www.nature.com/articles/nn.3402",
+      "name": "movshon.FreemanZiemba2013.V2-pls",
+      "parent": "V2"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.79,
+      "ceiling_error": NaN,
+      "link": "https://www.nature.com/articles/s41593-019-0392-5",
+      "name": "dicarlo.Kar2019-ost",
+      "parent": "IT-temporal"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 0.4848398631810774,
+      "ceiling_error": 0.003951294268384253,
+      "link": "https://www.biorxiv.org/content/early/2018/02/12/240614",
+      "name": "dicarlo.Rajalingham2018-i2n",
+      "parent": "behavior"
+    }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "ceiling": 1.0,
+      "ceiling_error": NaN,
+      "link": "https://ieeexplore.ieee.org/abstract/document/5206848",
+      "name": "fei-fei.Deng2009-top1",
+      "parent": "ImageNet"
+    }
+  }
+]
