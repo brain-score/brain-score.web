@@ -8,9 +8,17 @@ Run server: `python manage.py runserver &`
 
 ## Update data
 ```
-echo "from benchmarks.models import CandidateModel; CandidateModel.objects.all().delete()" | python manage.py shell
-python manage.py loaddata static/benchmarks/fixture.json
+python manage.py flush
+
+python manage.py loaddata static/benchmarks/fixture-bibs.json
+python manage.py loaddata static/benchmarks/fixture-benchmarks.json
+python manage.py loaddata static/benchmarks/fixture-scores.json
 ```
+
+If you need to reset the database and all migrations (relevant after changing `models.py`):
+1. delete `db.sqlite3`
+2. `python manage.py makemigrations`
+3. `python manage.py migrate`
 
 
 ## Export
