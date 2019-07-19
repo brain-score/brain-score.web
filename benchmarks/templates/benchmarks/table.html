@@ -2,11 +2,16 @@
     <table id="leaderboard" class="benchmarks">
         <thead>
         <tr>
-            <th><p><strong>Brain Rank</strong></p></th>
+            <th><p><strong>Rank</strong></p></th>
             <th class="model"><p><strong>Model</strong></p></th>
             {% for benchmark in benchmarks %}
-            <th title="ceiling: {{ benchmark.ceiling }}" class="rotate"><p><strong>{{ benchmark.parent }}</strong>:
-                <a href="{{ benchmark.link }}">{{ benchmark.name }}</a></p>
+            <th title="ceiling: {{ benchmark.ceiling }}" class="rotate"><p>
+                {% if benchmark.parent %}<strong>{{ benchmark.parent }}</strong>: {% endif %}
+                {% if benchmark.link %}
+                    <a href="{{ benchmark.link }}">{{ benchmark.name }}</a></p>
+                {% else %}
+                    {{ benchmark.name }}
+                {% endif %}
             </th>
             {% endfor %}
         </tr>
