@@ -68,5 +68,14 @@
       "name": "fei-fei.Deng2009-top1",
       "parent": "ImageNet"
     }
+  },
+  {
+    "model": "benchmarks.Benchmark",
+    "fields": {
+      "name": "average",
+      "ceiling": null,
+      "ceiling_error": null,
+      "link": null
+    }
   }
 ]
