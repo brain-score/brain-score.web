@@ -8,7 +8,7 @@ def generic_repr(obj):
 
 class Benchmark(models.Model):
     name = models.CharField(max_length=200, primary_key=True)
-    ceiling = models.FloatField(default=0)
+    ceiling = models.FloatField(default=0, null=True)  # null for average "benchmark"
     ceiling_error = models.FloatField(default=0, null=True)
     parent = models.CharField(max_length=200, null=True)
     link = models.CharField(max_length=1000, null=True)
@@ -32,7 +32,8 @@ class Score(models.Model):
         unique_together = (('model', 'benchmark'),)
     model = models.CharField(max_length=200, db_index=True)
     benchmark = models.CharField(max_length=200, db_index=True)
-    score = models.FloatField(default=0, null=True)  # models incapable of performing the benchmark can be null
+    score_raw = models.FloatField(default=0, null=True)
+    score_ceiled = models.FloatField(default=0, null=True)
     error = models.FloatField(default=0, null=True)
     layer = models.CharField(max_length=200, default=None, null=True)
 

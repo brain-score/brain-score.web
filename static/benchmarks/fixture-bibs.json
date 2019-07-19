@@ -236,6 +236,42 @@
   {
     "model": "benchmarks.ModelReference",
     "fields": {
+      "model": "vggface",
+      "short_reference": "Parkhi et al., 2015",
+      "link": "https://www.robots.ox.ac.uk/~vgg/publications/2015/Parkhi15/parkhi15.pdf",
+      "bibtex": "@inproceedings{parkhi2015deep,\r\n  title={Deep face recognition.},\r\n  author={Parkhi, Omkar M and Vedaldi, Andrea and Zisserman, Andrew and others},\r\n  booktitle={British Machine Vision Conference},\r\n  year={2015},\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.ModelReference",
+    "fields": {
+      "model": "bagnet9",
+      "short_reference": "Brendel et al., 2019",
+      "link": "https://openreview.net/forum?id=SkfMWhAqYQ",
+      "bibtex": "@inproceedings{\r\nbrendel2018approximating,\r\ntitle={Approximating {CNN}s with Bag-of-local-Features models works surprisingly well on ImageNet},\r\nauthor={Wieland Brendel and Matthias Bethge},\r\nbooktitle={International Conference on Learning Representations},\r\nyear={2019},\r\nurl={https://openreview.net/forum?id=SkfMWhAqYQ},\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.ModelReference",
+    "fields": {
+      "model": "bagnet17",
+      "short_reference": "Brendel et al., 2019",
+      "link": "https://openreview.net/forum?id=SkfMWhAqYQ",
+      "bibtex": "@inproceedings{\r\nbrendel2018approximating,\r\ntitle={Approximating {CNN}s with Bag-of-local-Features models works surprisingly well on ImageNet},\r\nauthor={Wieland Brendel and Matthias Bethge},\r\nbooktitle={International Conference on Learning Representations},\r\nyear={2019},\r\nurl={https://openreview.net/forum?id=SkfMWhAqYQ},\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.ModelReference",
+    "fields": {
+      "model": "bagnet33",
+      "short_reference": "Brendel et al., 2019",
+      "link": "https://openreview.net/forum?id=SkfMWhAqYQ",
+      "bibtex": "@inproceedings{\r\nbrendel2018approximating,\r\ntitle={Approximating {CNN}s with Bag-of-local-Features models works surprisingly well on ImageNet},\r\nauthor={Wieland Brendel and Matthias Bethge},\r\nbooktitle={International Conference on Learning Representations},\r\nyear={2019},\r\nurl={https://openreview.net/forum?id=SkfMWhAqYQ},\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.ModelReference",
+    "fields": {
       "model": "nasnet_mobile",
       "short_reference": "Zoph et al., 2017",
       "link": "https://arxiv.org/abs/1707.07012",
