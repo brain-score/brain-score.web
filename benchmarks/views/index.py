@@ -10,7 +10,7 @@ from benchmarks.models import Score, Benchmark, ModelReference
 
 colors = list(Color('red').range_to(Color('green'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
-a, b = .002270617, 2.321928  # fit to (0, 0), (50, 20), (100, 100)
+a,  b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
 colors = [colors[int(a * np.power(i, b))] for i in range(len(colors))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
