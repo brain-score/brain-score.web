@@ -27,7 +27,7 @@ If you need to reset the database and all migrations (relevant after changing `m
 2. replace `http://localhost:8000/#*` with `#` (when saved with Chrome)
 3. replace `http://localhost:8000/static/benchmarks/img/icon.png` with `https://s3.amazonaws.com/www.brain-score.org/icon.png`
 4. delete the svg from `<div id="brain-score">`
-5. In `analysis.js`, replace the static json link `/static/benchmarks/fixture.json`
-    with `https://s3.us-east-2.amazonaws.com/brain-score.web-mock/fixture.json`
-    or `fixture.json`
-6. upload `Brain-Score.html`, `Brain-Score_files` and `fixture.json` to S3
+5. In `analysis.js`, replace the static json link `/static/benchmarks/fixture-scores-javascript.json`
+    with `https://s3.us-east-2.amazonaws.com/brain-score.web-mock/fixture-scores-javascript.json`
+    or `fixture-scores-javascript.json`
+6. upload `Brain-Score.html`, `Brain-Score_files` and `fixture-scores-javascript.json` to S3
