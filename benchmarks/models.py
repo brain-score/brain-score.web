@@ -27,6 +27,17 @@ class ModelReference(models.Model):
         return generic_repr(self)
 
 
+class ModelMeta(models.Model):
+    class Meta:
+        unique_together = (('model', 'key'),)
+    model = models.CharField(max_length=200)
+    key = models.CharField(max_length=200)
+    value = models.CharField(max_length=200)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+
 class Score(models.Model):
     class Meta:
         unique_together = (('model', 'benchmark'),)

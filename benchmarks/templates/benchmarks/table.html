@@ -21,7 +21,7 @@
         {% for model in models %}
             <tr>
                 <td class="score_cell"><strong>{{model.rank}}</strong></td>
-                <td class="model"><a target="_blank" rel="noopener noreferrer" href="{{model.reference_link}}">{{model.name}}</a><br><em>{{model.reference_identifier}}</em></td>
+                <td class="model" title="{{model.meta}}"><a target="_blank" rel="noopener noreferrer" href="{{model.reference_link}}">{{model.name}}</a><br><em>{{model.reference_identifier}}</em></td>
                 {% for score_row in model.scores %}
                     <td title="{{ score_row.benchmark }} unceiled: {{score_row.score_raw}}" class="score_cell" style="{{score_row.color}}">{{score_row.score_ceiled}}</td>
                 {% endfor %}

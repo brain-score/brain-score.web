@@ -6,14 +6,16 @@ import numpy as np
 from colour import Color
 from django.shortcuts import render
 
-from benchmarks.models import Score, Benchmark, ModelReference
+from benchmarks.models import Score, Benchmark, ModelReference, ModelMeta
 
 colors = list(Color('red').range_to(Color('green'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
-a,  b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
+a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
 colors = [colors[int(a * np.power(i, b))] for i in range(len(colors))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
+
+benchmark_order = [None, 'V1', 'V2', 'V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
 
 
 def view(request):
@@ -34,10 +36,7 @@ def _collect_benchmarks():
     score_benchmarks = Score.objects.values_list('benchmark', flat=True).distinct()
     benchmarks = [benchmark for benchmark in benchmarks if benchmark.name in score_benchmarks]
     # sort benchmarks
-    parent_order = [None, 'V1', 'V2', 'V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
-    benchmarks = [benchmark for parent_index, name, benchmark in sorted(zip(
-        [parent_order.index(benchmark.parent) for benchmark in benchmarks],
-        [benchmark.name for benchmark in benchmarks], benchmarks))]
+    benchmarks = _order(benchmarks, identifier_fnc=lambda benchmark: benchmark.parent)
     return benchmarks
 
 
@@ -51,23 +50,32 @@ def _collect_models(benchmarks):
         ceiling = Benchmark.objects.filter(name=benchmark)[0].ceiling
         benchmarks_meta[benchmark] = {'ceiling': ceiling, 'min': min_value, 'max': max_value}
 
+    # arrange scores
     scores = Score.objects.all().select_related()
-    ModelRow = namedtuple('ModelRow', field_names=['name', 'reference_identifier', 'reference_link', 'rank', 'scores'])
-    ScoreDisplay = namedtuple('ScoreDiplay', field_names=['benchmark', 'score_raw', 'score_ceiled', 'color', 'layer'])
+    ModelRow = namedtuple('ModelRow', field_names=[
+        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores'])
+    ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
+        'benchmark', 'score_raw', 'score_ceiled', 'color', 'layer'])
 
     data = {}
     for score in tqdm(scores, desc='scores'):
         if score.benchmark not in benchmarks_meta:
             continue
 
+        # if model information is not present yet, fill it
         if score.model not in data:
             index = re.search(r'(--)', score.model)
             model_base_identifier = score.model[:index.start()] if index else score.model
             reference = ModelReference.objects.filter(model=model_base_identifier)
             reference = reference[0] if len(reference) > 0 else None
+            meta = ModelMeta.objects.filter(model=model_base_identifier)
+            meta = _order(meta, identifier_fnc=lambda meta_row: [
+                prefix for prefix in benchmark_order if isinstance(prefix, str) and meta_row.key.startswith(prefix)][0])
+            meta = '\n'.join([f"{meta_row.key}: {meta_row.value}" for meta_row in meta])
             data[score.model] = ModelRow(name=score.model,
                                          reference_identifier=reference.short_reference if reference else None,
                                          reference_link=reference.link if reference else None,
+                                         meta=meta,
                                          rank=None,
                                          scores={})
 
@@ -104,6 +112,12 @@ def _collect_models(benchmarks):
     ranks = {model: all_scores.index(score) + 1 for model, score in average_scores.items()}
     data = [model_row._replace(rank=ranks[model_row.name]) for model_row in tqdm(data, desc='ranking')]
     return data
+
+
+def _order(values, identifier_fnc):
+    return [value for parent_index, value in sorted(zip(
+        [benchmark_order.index(identifier_fnc(value)) for value in values],
+        values))]
 
 
 def normalize(value, min_value, max_value):

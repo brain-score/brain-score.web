@@ -11,6 +11,7 @@ Run server: `python manage.py runserver &`
 python manage.py flush
 
 python manage.py loaddata static/benchmarks/fixture-bibs.json
+python manage.py loaddata static/benchmarks/fixture-models_meta.json
 python manage.py loaddata static/benchmarks/fixture-benchmarks.json
 python manage.py loaddata static/benchmarks/fixture-scores.json
 ```
@@ -31,3 +32,4 @@ If you need to reset the database and all migrations (relevant after changing `m
     with `https://s3.us-east-2.amazonaws.com/brain-score.web-mock/fixture-scores-javascript.json`
     or `fixture-scores-javascript.json`
 6. upload `Brain-Score.html`, `Brain-Score_files` and `fixture-scores-javascript.json` to S3
+    (account id ****75, bucket www.brain-score.org)
