@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+from django.apps import apps
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -26,6 +26,13 @@ SECRET_KEY = '3fx6&=8_k117#7r2*i4=sxv-_$_to1k*=b)$3@$7$)w@9i%n_%'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# Allows E-mail use
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'clittlejohn268@gmail.com'
+EMAIL_HOST_PASSWORD = 'newtab15'
 
 
 # Application definition
@@ -132,3 +139,5 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
     ('text/x-sass', 'sass {infile} {outfile}'),
 )
+
+AUTH_USER_MODEL = 'benchmarks.User'

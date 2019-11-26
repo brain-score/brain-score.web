@@ -1,16 +1,21 @@
 {% if models %}
-    <table id="leaderboard" class="benchmarks">
+    <table id="leaderboard" class="benchmarks fixed_header" style="margin-top: 120px">
+        <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their parent is. This allows for QuerySelecting and using some of the filters from index.py>
         <thead>
         <tr>
-            <th><p><strong>Rank</strong></p></th>
-            <th class="model"><p><strong>Model</strong></p></th>
+            <th><p><span class="want_to_click"><strong class="want_to_click" style="padding: 5px">Rank</strong></span></p></th>
+            <th class="model want_to_click"><p><span class="want_to_click"><strong class="want_to_click" style="padding: 5px">Model</strong></span></p></th>
             {% for benchmark in benchmarks %}
-            <th title="ceiling: {{ benchmark.ceiling }}" class="rotate"><p>
-                {% if benchmark.parent %}<strong>{{ benchmark.parent }}</strong>: {% endif %}
+            <th title="ceiling: {{ benchmark.ceiling }}" data-benchmark="{{ benchmark.name }}" data-parent="{{ benchmark_parents|get_parent_item:benchmark.name }}" class="rotate" style="display: {{ not_shown_set|in_set:benchmark.name }}"><p>
+                {% if benchmark.parent %}<strong style="padding: 5px; font-size: 26px" class="want_to_click">{{ benchmark_parents|get_initial_characters:benchmark.name }}</strong>
+                    {% if benchmark.name in uniform_parents %}<strong data-benchmark="{{ benchmark.name }}" style="font-size: 10px" class="headerExpand clicker want_to_click"></strong>{% endif %}
+                    <strong class="want_to_click" style="padding: 5px; display: {{ benchmark_parents|in_set_hidden:benchmark.name }}">{{ benchmark.parent }}:</strong>{% endif %}
+                    
                 {% if benchmark.link %}
                     <a href="{{ benchmark.link }}">{{ benchmark.name }}</a></p>
                 {% else %}
-                    {{ benchmark.name }}
+                <span class="want_to_click">{{ benchmark.name }}</span>
+
                 {% endif %}
             </th>
             {% endfor %}
@@ -23,18 +28,104 @@
                 <td class="score_cell"><strong>{{model.rank}}</strong></td>
                 <td class="model" title="{{model.meta}}"><a target="_blank" rel="noopener noreferrer" href="{{model.reference_link}}">{{model.name}}</a><br><em>{{model.reference_identifier}}</em></td>
                 {% for score_row in model.scores %}
-                    <td title="{{ score_row.benchmark }} unceiled: {{score_row.score_raw}}" class="score_cell" style="{{score_row.color}}">{{score_row.score_ceiled}}</td>
+                    <td title="{{ score_row.benchmark }} unceiled: {{score_row.score_raw}}" data-benchmark="{{ uniform_benchmarks|get_item:score_row.benchmark }}" data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}" class="score_cell {{benchmark_parents.score_row.benchmark}} displaySquare depth_{{ benchmark_parents|get_depth_number:score_row.benchmark }} clicker" style="{{score_row.color}}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{score_row.score_ceiled}}</td>
                 {% endfor %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
-	
-	Model scores on brain benchmarks.
-    Hover over model name to see layer commitments.
-	The more green and bright a cell, the better the model's score.
-    Scores are ceiled, hover the benchmark to see ceilings.
+	<div>
+    	Model scores on brain benchmarks.
+        Hover over model name to see layer commitments.
+    	The more green and bright a cell, the better the model's score.
+        Scores are ceiled, hover the benchmark to see ceilings.
+    </div>
 
 {% else %}
     <p>No data.</p>
 {% endif %}
+
+
+<script>
+    // This script functions by finding all the elements whose parents the benchmark that is clicked and setting them to
+    // visible or invisible. (And doing it recursively for all of its children)
+    var coll = document.getElementsByClassName("clicker");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        // This allows the current value of i to be saved to the assigned function.
+        assignFunction(coll, i)
+    }
+
+    function recursiveChildren(all_coll){
+        // Performs recursiveChildren on the current benchmark and checking for all of its children and
+        // then setting each child's benchmark to be the current benchmark. (Making them invisible in the meantime).
+        var used_set = new Set();
+        for(var i = 0; i < all_coll.length; i++){
+            const benchmark = all_coll[i].dataset.benchmark;
+            if (!used_set.has(benchmark)){
+                used_set.add(all_coll[i].dataset.benchmark)
+                changeChildSymbol(benchmark)
+                child_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark)}]`);
+                for(j = 0; j < child_coll.length; j++){
+                    if (child_coll[j].style.display === ""){
+                        child_coll[j].style.display = "none";
+                    }
+                }
+                recursiveChildren(child_coll)
+            }
+        }
+    }
+
+    function assignFunction (coll, i){
+        // Simple hide/show function onClick(). Determines what to show by finding all elements with their
+        // data-parent value == the current benchmark.
+        console.log(coll[i]);
+        coll[i].onclick = function() {
+        var j;
+        const benchmark = coll[i].dataset.benchmark;
+        var all_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark)}]`);
+        changeParentSymbol(benchmark)
+        recursiveChildren(all_coll);
+        for(j = 0; j < all_coll.length; j++){
+            if (all_coll[j].style.display === "none"){
+                all_coll[j].style.display = "";
+            } else {
+              all_coll[j].style.display = "none";
+            }
+        }
+        var table = document.getElementById("leaderboard");
+        table.style.margin = "auto";
+      };
+    }
+
+    function changeParentSymbol(parentName){
+        // Changes the plus to a minus and a minus to a plus upon clicking the column
+        var allParentsExpand = document.getElementsByClassName("headerExpand");
+        var allParentContract = document.getElementsByClassName("headerContract");
+
+        for(var i = 0; i < allParentsExpand.length; i++){
+            if (allParentsExpand[i].dataset.benchmark == parentName){
+                allParentsExpand[i].className = "headerContract clicker";
+                return null
+            }
+        }
+        for (var i = 0; i < allParentContract.length; i++){
+            if (allParentContract[i].dataset.benchmark == parentName){
+                allParentContract[i].className = "headerExpand clicker";
+                return null
+            }
+        }
+    }
+
+    function changeChildSymbol(childName){
+        // Only changes the minus to a plus for the children (since the children shouldn't automatically expand.)
+        var allParentContract = document.getElementsByClassName("headerContract");
+        for (var i = 0; i < allParentContract.length; i++){
+            if (allParentContract[i].dataset.benchmark == childName){
+                allParentContract[i].className = "headerExpand clicker";
+                return null
+            }
+        }
+    }
+</script>

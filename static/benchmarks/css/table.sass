@@ -6,12 +6,46 @@ table.benchmarks
   border-collapse: collapse
   empty-cells: show
   table-layout: fixed
-  margin: auto
+  table-height: fixed
+  display: table
+
+  div
+    &.hiddencontent
+      padding: 0px
+
+  button
+    
+  div
+    overflow: hidden
+
+  tr
+    &.activation
+      display: none
+
+  a
+    &.rotate
+      text-align: left
+
+      white-space: nowrap
+      @include transform_origin(0px 0px)
+      @include rotate(270deg, -80px, 80px)
+
+    &.rotate:after
+        @include rotate(90deg, 75px, -265px)
 
   th
     font-weight: normal
     vertical-align: bottom
     text-align: center
+
+    &.hidden
+      display: ""
+
+    &.hiddencontent 
+      padding: 0 18px
+      display: ""
+      overflow: hidden
+      background-color: #f1f1f1
 
     // sorting
     &.header
@@ -21,9 +55,8 @@ table.benchmarks
         box-sizing: border-box
         display: inline
         position: absolute
-        left: -250px
+        left: -40.5%
         top: 165px
-
         font-size: 15px
         width: 100%
         line-height: 1
@@ -32,12 +65,15 @@ table.benchmarks
 
       &.rotate:after
         @include rotate(45deg, 75px, -265px)
+        left: -250px
 
       &.headerSortUp:after
-        content: "▲"
+        content: "\25b2"
 
       &.headerSortDown:after
-        content: "▼"
+        content: "\25bc"
+
+      
 
     // header rotation
     &.rotate
@@ -45,12 +81,14 @@ table.benchmarks
 
       white-space: nowrap
       @include transform_origin(0px 0px)
-      @include rotate(315deg, -80px, 80px)
+      @include rotate(315deg, -30px, 30px)
 
       p
         display: inline-block
-        height: 100px
+        height: 40px
         width: 40px
+        padding: 1%
+        margin-top: 0
 
   td
     border: 5px solid white
@@ -62,8 +100,8 @@ table.benchmarks
     text-align: center
     color: #00000099
 
-    width: 40px
-    height: 40px
+    width: auto
+    height: auto
     +tablet
       width: 50px
       height: 50px
@@ -71,7 +109,22 @@ table.benchmarks
 
     p
       width: 40px
+  .depth_one
+    outline: 5px white solid
+    font-size: 11pt
+  .depth_two 
+    outline: 7px white solid
+    font-size: 10pt
+    
+  .depth_three 
+    outline: 9px white solid
+    font-size: 8pt
 
+  .depth_four 
+    outline: 10px white solid
+    font-size: 7pt
+    
+    
   // distance
   tr:nth-child(1) td
     border-top: 1em solid white
@@ -84,6 +137,22 @@ table.benchmarks
       &.rotate
         @include transform_origin(5px 5px)
 
+    &.hiddencontent
+      &.hiddencontent 
+      padding: 0 18px
+      display: ""
+      overflow: hidden
+      background-color: #f1f1f1
+
   thead, tbody
     .model
       text-align: right
+
+  strong
+    &.headerExpand:before
+      font-size: 10px
+      content: "\229E"
+
+    &.headerContract:before
+      font-size: 10px
+      content: "\229F"

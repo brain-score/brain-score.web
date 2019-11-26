@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "bulma": "^0.7.1",
+    "datatables.net-dt": "^1.10.19",
     "sass": "^1.22.5"
   },
   "devDependencies": {},
