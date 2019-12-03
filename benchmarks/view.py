@@ -11,6 +11,9 @@ from .tokens import account_activation_token
 from django.core.mail import EmailMessage
 from django.urls import reverse
 from urllib.request import Request, urlopen
+import requests
+import json
+import time
 
 User = get_user_model()
 
@@ -53,6 +56,7 @@ class Signup(View):
             # Create an inactive user with no password:
             user = form.save()
             user.is_active = False
+            to_email = form.cleaned_data.get('email')
             user.save()
             # Send an email to the user with the token:
             mail_subject = 'Activate your account.'
@@ -61,7 +65,6 @@ class Signup(View):
             token = account_activation_token.make_token(user)
             activation_link = "{0}/activate/{1}/{2}".format(current_site, uid, token)
             message = "Hello {0}".format(activation_link)
-            to_email = form.cleaned_data.get('email')
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             return HttpResponse('Please confirm your email address to complete the registration')
@@ -90,8 +93,79 @@ class Upload(View):
     def post(self, request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            """fileobj = open(request.FILES['zip_file'], 'rb')
-            s = urlopen(r)"""
+            
+            json_info = {
+                "model_type": "BaseModel",
+                "name": "DiCarloLab",
+                "email": "calebl@mit.edu",
+                "gpu_size": "8000",
+                "type": "zip"
+            }
+
+            with open('result.json', 'w') as fp:
+                json.dump(json_info, fp)
+
+            print(request.user.get_full_name())
+
+            jenkins_url = "http://braintree.mit.edu:8080"
+            auth = ("caleb", "BrownFoxTree")
+            job_name = "endpoint_copy"
+            request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel".format(
+                jenkins_url,
+                job_name
+            )
+
+            print(request_url)
+
+            print("Determining next build number")
+            current_url = "{0:s}/job/{1:s}/api/json".format(
+                    jenkins_url,
+                    job_name,
+                )
+
+            job = requests.get(
+                current_url,
+                auth=auth,
+            ).json()
+
+            next_build_number = job['nextBuildNumber']
+            next_build_url = "{0:s}/job/{1:s}/{2:d}/api/json".format(
+                jenkins_url,
+                job_name,
+                next_build_number,
+            )
+            print(request.FILES)
+            params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
+            print(params)
+            print("Triggering build: {0:s} #{1:d}".format(job_name, next_build_number))
+            response = requests.post(request_url, files=params, auth=auth)
+
+            print(response)
+
+            response.raise_for_status()
+            print("Job triggered successfully")
+
+            while True:
+                print("Querying Job current status...")
+                try:
+                    build_data = requests.get(next_build_url, auth=auth).json()
+                except ValueError:
+                    print("No data, build still in queue")
+                    print("Sleep for 20 sec")
+                    time.sleep(20)
+                    continue
+
+                print("Building: {0}".format(build_data['building']))
+                building = build_data['building']
+                if building is False:
+                    break
+                else:
+                    print("Sleep for 60 sec")
+                    time.sleep(60)
+
+            print("Job finished with status: {0:s}".format(build_data['result']))
+
+
             return render(request, 'benchmarks/upload.html')
         else:
             return HttpResponse("Form is invalid")

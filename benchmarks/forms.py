@@ -31,8 +31,7 @@ class UploadPlaceHolder(forms.Form):
 
 class UploadFileForm(forms.Form):
 	zip_file = forms.FileField(help_text='Required')
-	config_file = forms.FileField(help_text='Required')
 
 	class Meta:
 		model = UploadPlaceHolder
-		fields = ('zip_file', 'config_file')
+		fields = ('zip_file')
