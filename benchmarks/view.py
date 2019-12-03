@@ -96,7 +96,7 @@ class Upload(View):
             
             json_info = {
                 "model_type": "BaseModel",
-                "name": "DiCarloLab",
+                "name": request.POST['name'],
                 "email": "calebl@mit.edu",
                 "gpu_size": "8000",
                 "type": "zip"
@@ -110,9 +110,10 @@ class Upload(View):
             jenkins_url = "http://braintree.mit.edu:8080"
             auth = ("caleb", "BrownFoxTree")
             job_name = "endpoint_copy"
-            request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel".format(
+            request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel&email={2:s}".format(
                 jenkins_url,
-                job_name
+                job_name,
+                request.user.get_full_name()
             )
 
             print(request_url)
@@ -134,9 +135,8 @@ class Upload(View):
                 job_name,
                 next_build_number,
             )
-            print(request.FILES)
+
             params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
-            print(params)
             print("Triggering build: {0:s} #{1:d}".format(job_name, next_build_number))
             response = requests.post(request_url, files=params, auth=auth)
 
