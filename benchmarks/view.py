@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from .forms import SignupForm, LoginForm, UploadFileForm
 from django.contrib.sites.shortcuts import get_current_site
-from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash
+from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -85,8 +85,15 @@ class Login(View):
         else:
             return HttpResponse("Something went Wrong!")
 
+class Logout(View):
+    def get(self, request):
+        logout(request)
+        return HttpResponseRedirect('../../')
+
 class Upload(View):
     def get(self, request):
+        if str(request.user) == "AnonymousUser":
+            return HttpResponseRedirect('../profile/')
         form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
 
@@ -170,3 +177,19 @@ class Upload(View):
         else:
             return HttpResponse("Form is invalid")
 
+class Profile(View):
+    def get(self, request):
+        if str(request.user) == "AnonymousUser":
+            form = LoginForm()
+            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+        else:
+            return render(request, 'benchmarks/profile.html')
+
+    def post(self, request):
+        form = LoginForm(data=request.POST)
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            return render(request, 'benchmarks/profile.html')
+        else:
+            return HttpResponse("Something went Wrong!")

@@ -1,13 +1,14 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-<div class="container">
+<section id="upload" class="container center">
 	<h1>Welcome</h1>
 	Welcome! You can upload files here to test. For an example of what your submission should include, please visit <a href="http://www.google.com">this website</a>.
 	<form action="" method="post" enctype="multipart/form-data">
 		{% csrf_token %}
+
 		{% for field in form %}
-      <p>
+      <p class="special">
         {{ field.label_tag }}<br>
         {{ field }}
         {% if field.help_text %}
@@ -18,7 +19,29 @@
         {% endfor %}
       </p>
       {% endfor %}
-		<button type="submit">Submit Model</button>
+    <p><button id="upload_button" class="submission">Click here to select file</button></p>
+		<button type="submit" class="submission">Submit Model</button>
 	</form>
-</div>
+</section>
+
+<script>
+  var button = document.getElementById('upload_button');
+  var input  = document.getElementById('id_zip_file');
+
+  // Making input invisible, but leaving shown fo graceful degradation
+  input.style.display = 'none';
+  button.style.display = 'initial';
+
+  button.addEventListener('click', function (e) {
+      e.preventDefault();
+      
+      input.click();
+  });
+
+  input.addEventListener('change', function () {
+     button.innerText = this.value; 
+  });
+</script>
+
+
 {% endblock %}

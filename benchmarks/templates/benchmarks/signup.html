@@ -1,7 +1,7 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-<div class="container">
+<section id="signup" class="container center">
   <h2>Sign up</h2>
   <form method="post">
     {% csrf_token %}
@@ -14,7 +14,7 @@
         {% endfor %}
       </p>
       {% endfor %}
-    <button type="submit">Sign up</button>
+    <button type="submit" class="submission">Sign up</button>
   </form>
-</div>
+</section>
 {% endblock %}

@@ -1,11 +1,12 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-<div class="container">
+<section id="login" class="container center">
 	<h1>Welcome</h1>
 	Welcome! You can login here!
 	<form method="post">
 		{% csrf_token %}
+    
 		{% for field in form %}
       <p>
         {{ field.label_tag }}<br>
@@ -18,7 +19,9 @@
         {% endfor %}
       </p>
       {% endfor %}
-		<button type="submit">Login</button>
+		<button type="submit" class="submission">Login</button>
 	</form>
-</div>
+  <br />
+  <p>Not a current participant? Sign up <a href='/signup'>here</a>.</p>
+</section>
 {% endblock %}
