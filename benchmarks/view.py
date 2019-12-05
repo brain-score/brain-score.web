@@ -33,7 +33,7 @@ class Activate(View):
 
             form = PasswordChangeForm(request.user)
 
-            return render(request, 'benchmarks/activation.html', {'form': form})
+            return HttpResponseRedirect('../../profile/')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -152,28 +152,8 @@ class Upload(View):
             response.raise_for_status()
             print("Job triggered successfully")
 
-            while True:
-                print("Querying Job current status...")
-                try:
-                    build_data = requests.get(next_build_url, auth=auth).json()
-                except ValueError:
-                    print("No data, build still in queue")
-                    print("Sleep for 20 sec")
-                    time.sleep(20)
-                    continue
-
-                print("Building: {0}".format(build_data['building']))
-                building = build_data['building']
-                if building is False:
-                    break
-                else:
-                    print("Sleep for 60 sec")
-                    time.sleep(60)
-
-            print("Job finished with status: {0:s}".format(build_data['result']))
-
-
-            return render(request, 'benchmarks/upload.html')
+            
+            return render(request, 'benchmarks/success.html')
         else:
             return HttpResponse("Form is invalid")
 
