@@ -2,6 +2,9 @@
 
 {% block content %}
 <section id="login" class="container center">
+  {% if email %}
+    <p style="font-weight: bold">A confirmation email has been sent.</p>
+  {% endif %}
 	<h1>Welcome</h1>
 	Welcome! You can login here!
 	<form method="post">
@@ -21,6 +24,9 @@
       {% endfor %}
 		<button type="submit" class="submission">Login</button>
 	</form>
+  {% if Incorrect %}
+    <p style="color: red;">The username or password was incorrect</p>
+  {% endif %}
   <br />
   <p>Not a current participant? Sign up <a href='/signup'>here</a>.</p>
 </section>

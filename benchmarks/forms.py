@@ -31,6 +31,7 @@ class UploadPlaceHolder(forms.Form):
 
 class UploadFileForm(forms.Form):
 	name = forms.CharField(max_length=200, help_text='Required')
+	model_type = forms.ChoiceField(choices=[("BaseModel", "BaseModel"), ("BrainModel", "BrainModel")])
 	zip_file = forms.FileField(help_text='Required')
 
 

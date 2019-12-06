@@ -64,12 +64,15 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
             activation_link = "{0}/activate/{1}/{2}".format(current_site, uid, token)
-            message = "Hello {0}".format(activation_link)
+            message = "Hello {0}!\n\nPlease click or paste the following link to activate your account:\n{1}".format(
+                user.get_full_name(), activation_link)
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            return HttpResponse('Please confirm your email address to complete the registration')
+            context = {"email": True, 'form': LoginForm}
+            return render(request, 'benchmarks/login.html', context)
         else:
-            return HttpResponse('Please confirm your email address to complete the registration')
+            context = {"email": True, 'form': LoginForm}
+            return render(request, 'benchmarks/login.html', context)
 
 class Login(View):
     def get(self, request):
@@ -83,7 +86,8 @@ class Login(View):
             login(request, user)
             return render(request, 'benchmarks/profile.html')
         else:
-            return HttpResponse("Something went Wrong!")
+            context = {"Incorrect": True}
+            return render(request, 'benchmarks/login.html', context)
 
 class Logout(View):
     def get(self, request):
@@ -102,9 +106,9 @@ class Upload(View):
         if form.is_valid():
             
             json_info = {
-                "model_type": "BaseModel",
+                "model_type": request.POST['model_type'],
                 "name": request.POST['name'],
-                "email": "calebl@mit.edu",
+                "email": request.user.get_full_name(),
                 "gpu_size": "8000",
                 "type": "zip"
             }
@@ -172,4 +176,5 @@ class Profile(View):
             login(request, user)
             return render(request, 'benchmarks/profile.html')
         else:
-            return HttpResponse("Something went Wrong!")
+            context = {"Incorrect": True, 'form': LoginForm}
+            return render(request, 'benchmarks/login.html', context)
