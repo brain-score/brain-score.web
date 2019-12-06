@@ -43,6 +43,23 @@
     <script defer src="{% static "/benchmarks/js/compare.js" %}" charset="utf-8"></script>
     {% endcompress %}
 
+    <script type="application/ld+json">
+        {
+            "@context":"https://schema.org/",
+            "@type":"Dataset",
+            "name":"Brain-Score neural and behavioral benchmarks",
+            "alternateName":["Brain-Score.ventral-stream", "Brain-Score.vision"],
+            "description":"Brain-Score evaluates models of the brain's ventral stream on their quantitative match to neural recordings and behavioral measurements",
+            "url":"http://www.brain-score.org",
+            "keywords":[
+                "computational neuroscience",
+                "human and primate vision",
+                "artificial neural networks",
+                "deep learning"
+            ],
+        }
+    </script>
+
     <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
 
     <meta name="description" content="{{description}}">
