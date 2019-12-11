@@ -9,6 +9,7 @@ class SignupForm(UserCreationForm):
 
     def save(self, commit=True):
 	    user = super(SignupForm, self).save(commit=False)
+	    # Uses the email from this custom form password1 from the UserCreation Form it extends from.
 	    user.email = self.cleaned_data['email']
 	    user.set_password(self.cleaned_data["password1"])
 	    if commit:
@@ -16,6 +17,7 @@ class SignupForm(UserCreationForm):
 	    return user
 
     class Meta:
+    	# Uses the password1 and password2 fields from the UserCreation Form
         model = User
         fields = ('email',)
 

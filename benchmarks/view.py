@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 import requests
 import json
 import time
+import datetime
 
 User = get_user_model()
 
@@ -102,62 +103,67 @@ class Upload(View):
         return render(request, 'benchmarks/upload.html', {'form': form})
 
     def post(self, request):
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            
-            json_info = {
-                "model_type": request.POST['model_type'],
-                "name": request.POST['name'],
-                "email": request.user.get_full_name(),
-                "gpu_size": "8000",
-                "type": "zip"
-            }
+        if request.user.get_lowest_datefield() < datetime.date.today() - datetime.timedelta(7):
 
-            with open('result.json', 'w') as fp:
-                json.dump(json_info, fp)
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                
+                json_info = {
+                    "model_type": request.POST['model_type'],
+                    "name": request.POST['name'],
+                    "email": request.user.get_full_name(),
+                    "gpu_size": "8000",
+                    "type": "zip"
+                }
 
-            print(request.user.get_full_name())
+                with open('result.json', 'w') as fp:
+                    json.dump(json_info, fp)
 
-            jenkins_url = "http://braintree.mit.edu:8080"
-            auth = ("caleb", "BrownFoxTree")
-            job_name = "endpoint_copy"
-            request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel&email={2:s}".format(
-                jenkins_url,
-                job_name,
-                request.user.get_full_name()
-            )
+                print(request.user.get_full_name())
 
-            print(request_url)
-
-            print("Determining next build number")
-            current_url = "{0:s}/job/{1:s}/api/json".format(
+                jenkins_url = "http://braintree.mit.edu:8080"
+                auth = ("caleb", "BrownFoxTree")
+                job_name = "endpoint_copy"
+                request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel&email={2:s}".format(
                     jenkins_url,
                     job_name,
+                    request.user.get_full_name()
                 )
 
-            job = requests.get(
-                current_url,
-                auth=auth,
-            ).json()
+                print(request_url)
 
-            next_build_number = job['nextBuildNumber']
-            next_build_url = "{0:s}/job/{1:s}/{2:d}/api/json".format(
-                jenkins_url,
-                job_name,
-                next_build_number,
-            )
+                print("Determining next build number")
+                current_url = "{0:s}/job/{1:s}/api/json".format(
+                        jenkins_url,
+                        job_name,
+                    )
 
-            params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
-            print("Triggering build: {0:s} #{1:d}".format(job_name, next_build_number))
-            response = requests.post(request_url, files=params, auth=auth)
+                job = requests.get(
+                    current_url,
+                    auth=auth,
+                ).json()
 
-            print(response)
+                next_build_number = job['nextBuildNumber']
+                next_build_url = "{0:s}/job/{1:s}/{2:d}/api/json".format(
+                    jenkins_url,
+                    job_name,
+                    next_build_number,
+                )
 
-            response.raise_for_status()
-            print("Job triggered successfully")
+                params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
+                print("Triggering build: {0:s} #{1:d}".format(job_name, next_build_number))
+                response = requests.post(request_url, files=params, auth=auth)
 
-            
-            return render(request, 'benchmarks/success.html')
+                print(response)
+
+                response.raise_for_status()
+                print("Job triggered successfully")
+
+                request.user.set_lowest_datefield(datetime.date.today())
+                
+                return render(request, 'benchmarks/success.html')
+            else:
+                return HttpResponse("Too many submission attempts")
         else:
             return HttpResponse("Form is invalid")
 

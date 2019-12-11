@@ -34,6 +34,8 @@ class MyUserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
     def get_by_natural_key(self, username):
+        # __iexact is a filter that gives a case-insensitive representation of a field. 
+        # Permits mismatched casing for usernames.
         case_insensitive_username_field = '{}__iexact'.format(self.model.USERNAME_FIELD)
         return self.get(**{case_insensitive_username_field: username})
 
@@ -70,6 +72,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.email
 
+    def get_lowest_datefield(self):
+        lowest_date = self.datefield1
+        if lowest_date < self.datefield2:
+            lowest_date = self.datefield2
+        if lowest_date < self.datefield3:
+            lowest_date = self.datefield3
+        return lowest_date
+
+    def set_lowest_datefield(self, date):
+        lowest_date = self.get_lowest_datefield()
+        if lowest_date == self.datefield1:
+            self.datefield1 = models.DateField(("Date"), default=date)
+        elif lowest_date == self.datefield2:
+            self.datefield2 = models.DateField(("Date"), default=date)
+        elif lowest_date < self.datefield3:
+            self.datefield3 = models.DateField(("Date"), default=date)
+
 def generic_repr(obj):
     return obj.__class__.__name__ \
            + "[" + ",".join("{}={}".format(field, value) for field, value in vars(obj).items()) + "]"
@@ -84,9 +103,6 @@ class Benchmark(models.Model):
 
     def __repr__(self):
         return generic_repr(self)
-
-    def __lt__(self, other):
-        return True
 
 
 class ModelReference(models.Model):
