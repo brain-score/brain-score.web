@@ -1,6 +1,15 @@
+$break-large: 1200px
+
 .navbar
   .container
-    max-width: $max-page-width
+    max-width: 100vw
+    position: absolute
+
+    @media only screen and (min-width: $break-large)
+      max-width: $max-page-width
+      position: relative
+    
+  
 
   &.is-transparent
     background-color: rgba(255, 255, 255, 0.9)
