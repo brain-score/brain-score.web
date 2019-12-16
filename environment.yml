@@ -8,6 +8,7 @@ dependencies:
   - pip
   - django
   - numpy
+  - nodejs
   - pip:
     - django_compressor
     - colour

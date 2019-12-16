@@ -1,18 +1,11 @@
-FROM ubuntu
+FROM continuumio/miniconda3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
-        wget \
-        ca-certificates \
+        && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-SHELL ["/bin/bash", "-c"]
-
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-RUN bash Miniconda3-latest-Linux-x86_64.sh -b -f -p /opt/conda
-RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 
 COPY ./environment.yml /app/
 COPY ./manage.py /app/
@@ -24,10 +17,8 @@ COPY ./web /app/
 RUN /opt/conda/bin/conda env create -f environment.yml
 RUN echo "conda activate brain-score.web" >> ~/.bashrc
 
-EXPOSE 80
+SHELL ["/bin/bash", "-c"]
 
-#ENTRYPOINT python manage.py runserver
-#CMD python manage.py runserver
-#CMD conda info
-#CMD cat ~/.bashrc
-CMD /bin/bash
+RUN . ~/.bashrc && npm install --no-optional
+
+EXPOSE 80
