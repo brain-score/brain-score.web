@@ -10,6 +10,7 @@ WORKDIR /app
 COPY environment.yml /app/
 COPY manage.py /app/
 COPY package.json /app/
+COPY db.sqlite3 /app/
 COPY benchmarks /app/benchmarks
 COPY static /app/static
 COPY web /app/web
@@ -20,6 +21,7 @@ RUN echo "conda activate brain-score.web" >> ~/.bashrc
 SHELL ["/bin/bash", "-c"]
 
 RUN . ~/.bashrc && npm install --no-optional
+RUN . ~/.bashrc && npm install -g sass
 
 EXPOSE 80
 
