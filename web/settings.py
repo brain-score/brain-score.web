@@ -25,7 +25,7 @@ SECRET_KEY = '3fx6&=8_k117#7r2*i4=sxv-_$_to1k*=b)$3@$7$)w@9i%n_%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "brain-score-web-dev.us-east-2.elasticbeanstalk.com"]
 
 
 # Application definition
