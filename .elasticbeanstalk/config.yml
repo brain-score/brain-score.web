@@ -1,12 +1,12 @@
 branch-defaults:
   aws:
-    environment: null
+    environment: brain-score-web-dev
 global:
   application_name: brain-score.web
   branch: null
   default_ec2_keyname: jjpr
   default_platform: Docker 18.09.9-ce
-  default_region: us-east-1
+  default_region: us-east-2
   include_git_submodules: true
   instance_profile: null
   platform_name: null

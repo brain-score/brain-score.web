@@ -10,6 +10,7 @@ dependencies:
   - numpy
   - psycopg2
   - nodejs
+  - boto3
   - pip:
     - django_compressor
     - colour
