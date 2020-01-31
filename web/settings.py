@@ -93,7 +93,7 @@ try:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': secrets["dbInstanceIdentifier"],
+            'NAME': "dev",
             'USER': secrets["username"],
             'PASSWORD': secrets["password"],
             'HOST': secrets["host"],
