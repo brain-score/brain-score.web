@@ -1,0 +1,31 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+
+{% block content %}
+<section id="upload" class="container center">
+	<h1>Welcome</h1>
+	Welcome! You can upload files here to test. For an example of what your submission should include, please visit <a href="https://github.com/brain-score/sample-model-submission/">this website</a>.
+	<form action="" method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+
+		{% for field in form %}
+      <p class="special">
+        {{ field.label_tag }}<br>
+        {{ field }}
+        {% if field.help_text %}
+          <small style="display: none">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+      {% endfor %}
+    <p><button id="upload_button" class="submission">Click here to select file</button></p>
+		<button type="submit" class="submission">Submit Model</button>
+	</form>
+</section>
+
+<script defer src="{% static "/benchmarks/js/upload-format.js" %}"></script>
+
+
+{% endblock %}

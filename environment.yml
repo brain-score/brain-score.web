@@ -16,3 +16,4 @@ dependencies:
     - colour
     - tqdm
     - awsebcli
+    - requests
