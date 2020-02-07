@@ -31,8 +31,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "brain-score-web-dev.us-east-2.elasticbeanstalk.com"]
 
-ALLOWED_HOSTS = []
-
 # Allows E-mail use
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
