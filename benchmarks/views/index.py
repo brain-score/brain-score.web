@@ -210,7 +210,7 @@ def setup_uniform_dictionary(dictionary, score_row):
         dictionary[score_row.benchmark] = score_row.benchmark
 
 def representative_color(value, alpha_min=None, alpha_max=None):
-    if value is None:
+    if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
         return f"background-color: {color_None}"
     step = int(100 * value)
     color = colors[step]
