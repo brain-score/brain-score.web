@@ -67,10 +67,14 @@ class Signup(View):
             message = (f"Hello {user.get_full_name()}!\n\n"
                        f"Please click or paste the following link to activate your account:\n{activation_link}")
             email = EmailMessage(mail_subject, message, to=[to_email])
+            _logger.debug(f"from_email: {email.from_email}")
+            _logger.debug(f"to: {email.to}")
+            _logger.debug(f"subject: {email.subject}")
             email.send()
             context = {"email": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
         else:
+            _logger.debug("Signup form was not valid.")
             context = {"email": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 

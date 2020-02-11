@@ -17,6 +17,21 @@ import boto3
 
 from django.apps import apps
 
+
+def get_secret(secret_name, region_name):
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+    get_secret_value_response = client.get_secret_value(
+        SecretId=secret_name
+    )
+    return json.loads(get_secret_value_response['SecretString'])
+
+
+REGION_NAME = "us-east-2"
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -32,11 +47,12 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "brain-score-web-dev.us-east-2.elasticbeanstalk.com"]
 
 # Allows E-mail use
+email_secrets = get_secret("brainscore-email", REGION_NAME)
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = email_secrets["host"]
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'clittlejohn268@gmail.com'
-EMAIL_HOST_PASSWORD = '********'
+EMAIL_HOST_USER = email_secrets["address"]
+EMAIL_HOST_PASSWORD = email_secrets["password"]
 
 LOGOUT_REDIRECT_URL = '/'
 
@@ -87,47 +103,42 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-try:
-    secret_name = "brainscore-1-ohio-cred"
-    region_name = "us-east-2"
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-    get_secret_value_response = client.get_secret_value(
-        SecretId=secret_name
-    )
-    secrets = json.loads(get_secret_value_response['SecretString'])
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': "dev",
-            'USER': secrets["username"],
-            'PASSWORD': secrets["password"],
-            'HOST': secrets["host"],
-            'PORT': secrets["port"]
-        }
-    }
-except:
-    if 'RDS_DB_NAME' in os.environ:  # when deployed to AWS, use environment settings for database
+def get_db_info():
+    try:
+        db_secret_name = "brainscore-1-ohio-cred"
+        secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': os.environ['RDS_DB_NAME'],
-                'USER': os.environ['RDS_USERNAME'],
-                'PASSWORD': os.environ['RDS_PASSWORD'],
-                'HOST': os.environ['RDS_HOSTNAME'],
-                'PORT': os.environ['RDS_PORT'],
+                'NAME': "dev",
+                'USER': secrets["username"],
+                'PASSWORD': secrets["password"],
+                'HOST': secrets["host"],
+                'PORT': secrets["port"]
             }
         }
-    else:  # for deployment, use local sqlite
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    except:
+        if 'RDS_DB_NAME' in os.environ:  # when deployed to AWS, use environment settings for database
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                    'NAME': os.environ['RDS_DB_NAME'],
+                    'USER': os.environ['RDS_USERNAME'],
+                    'PASSWORD': os.environ['RDS_PASSWORD'],
+                    'HOST': os.environ['RDS_HOSTNAME'],
+                    'PORT': os.environ['RDS_PORT'],
+                }
             }
-        }
+        else:  # for deployment, use local sqlite
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+                }
+            }
+    return DATABASES
+
+DATABASES = get_db_info()
 
 
 # Password validation
@@ -181,3 +192,26 @@ COMPRESS_PRECOMPILERS = (
 )
 
 AUTH_USER_MODEL = 'benchmarks.User'
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/django.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
