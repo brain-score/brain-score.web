@@ -121,12 +121,9 @@ class Upload(View):
 
                 jenkins_url = "http://braintree.mit.edu:8080"
                 auth = ("caleb", "BrownFoxTree")
-                job_name = "endpoint_copy"
-                request_url = "{0:s}/job/{1:s}/buildWithParameters?TOKEN=trigger2scoreAmodel&email={2:s}".format(
-                    jenkins_url,
-                    job_name,
-                    request.user.get_full_name()
-                )
+                job_name = "run_benchmarks"
+                request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters?TOKEN=trigger2scoreAmodel" \
+                              f"&email={request.user.get_full_name()}"
 
                 _logger.debug(f"request_url: {request_url}")
 
