@@ -2,9 +2,9 @@ import numpy as np
 import re
 from collections import namedtuple
 from django.template.defaulttags import register
-import numpy as np
 from colour import Color
 from django.shortcuts import render
+from tqdm import tqdm
 
 from benchmarks.models import Score, Benchmark, ModelReference, ModelMeta
 
