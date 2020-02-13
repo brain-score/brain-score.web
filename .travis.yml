@@ -9,6 +9,7 @@ before_install:
   - pip install --upgrade pip
 install:
   - pip install .
+  - npm install --no-optional
   - pip list # list installed package versions
 script:
   - python manage.py test
