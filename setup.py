@@ -13,6 +13,7 @@ requirements = [
     "colour",
     "tqdm",
     "requests",
+    "six",
 ]
 
 setup(
