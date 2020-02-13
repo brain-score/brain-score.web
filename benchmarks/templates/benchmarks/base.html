@@ -94,10 +94,10 @@
     </div>
     <div id="navMenu" class="navbar-menu">
         <div class="navbar-end">
-            <a class="navbar-item" href="http://www.brain-score.org/#leaderboard">Leaderboard</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#about">About</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#analysis">Compare</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#participate">Participate</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#leaderboard">Leaderboard</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#about">About</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#analysis">Compare</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#participate">Participate</a>
         </div>
     </div>
 </div>
