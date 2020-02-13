@@ -70,7 +70,8 @@ class Signup(View):
             _logger.debug(f"from_email: {email.from_email}")
             _logger.debug(f"to: {email.to}")
             _logger.debug(f"subject: {email.subject}")
-            email.send()
+            sent_messages = email.send()
+            assert sent_messages == 1
             context = {"email": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
         else:
@@ -115,7 +116,8 @@ class Upload(View):
                     "name": request.POST['name'],
                     "email": request.user.get_full_name(),
                     "gpu_size": "8000",
-                    "type": "zip"
+                    "type": "zip",
+                    "zip_filename": request.FILES['zip_file'].name,
                 }
 
                 with open('result.json', 'w') as fp:

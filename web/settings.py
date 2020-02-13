@@ -193,6 +193,7 @@ COMPRESS_PRECOMPILERS = (
 
 AUTH_USER_MODEL = 'benchmarks.User'
 
+
 # Logging
 LOGGING = {
     'version': 1,
@@ -204,7 +205,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/django.log',
+            'filename': os.path.join(BASE_DIR, 'django.log'),
         },
     },
     'loggers': {
