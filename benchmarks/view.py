@@ -67,7 +67,8 @@ class Signup(View):
             message = (f"Hello {user.get_full_name()}!\n\n"
                        f"Please click or paste the following link to activate your account:\n{activation_link}")
             email = EmailMessage(mail_subject, message, to=[to_email])
-            email.send()
+            sent_messages = email.send()
+            assert sent_messages == 1
             context = {"email": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
         else:
@@ -111,7 +112,8 @@ class Upload(View):
                     "name": request.POST['name'],
                     "email": request.user.get_full_name(),
                     "gpu_size": "8000",
-                    "type": "zip"
+                    "type": "zip",
+                    "zip_filename": request.FILES['zip_file'].name,
                 }
 
                 with open('result.json', 'w') as fp:
