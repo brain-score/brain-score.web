@@ -27,34 +27,34 @@ def view(request):
             benchmark.name = match.group(1)
         benchmark.ceiling = represent(benchmark.ceiling)
 
-    # There was previously no way to find the parent of a benchmark from a model score because it did not save that as a value.
-    #   Now, using get_item with benchmark_parents allows the HTML to know the parent of that benchmark.
-    benchmark_parents = {}
-
-    # The benchmark names in the score cells were altered from the original, so this dictionary allows the new values to map to the originals.
-    #   Used for some checks
-    uniform_benchmarks = {}
-
-    for i in benchmarks:
-        setup_parent_dictionary(benchmark_parents, i)
-
-    for i in models:
-        for score_row in i.scores:
-            setup_uniform_dictionary(uniform_benchmarks, score_row)
-
-    for i in uniform_benchmarks:
-        benchmark_parents[i] = benchmark_parents[uniform_benchmarks[i]]
-
-    uniform_parents = set()
-    for i in benchmark_parent_order:
-        if i in uniform_benchmarks:
-            uniform_parents.add(uniform_benchmarks[i])
-        uniform_parents.add(i)
+    benchmark_parents, uniform_benchmarks, uniform_parents = _align_benchmarks(benchmarks, models)
 
     context = {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents,
                "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks,
                "not_shown_set": not_shown_set}
     return render(request, 'benchmarks/index.html', context)
+
+
+def _align_benchmarks(benchmarks, models):
+    # There was previously no way to find the parent of a benchmark from a model score because it did not save that as a value.
+    #   Now, using get_item with benchmark_parents allows the HTML to know the parent of that benchmark.
+    benchmark_parents = {}
+    # The benchmark names in the score cells were altered from the original, so this dictionary allows the new values to map to the originals.
+    #   Used for some checks
+    uniform_benchmarks = {}
+    for benchmark in benchmarks:
+        setup_parent_dictionary(benchmark_parents, benchmark)
+    for model in models:
+        for score_row in model.scores:
+            setup_uniform_dictionary(uniform_benchmarks, score_row)
+    for benchmark in uniform_benchmarks:
+        benchmark_parents[benchmark] = benchmark_parents[uniform_benchmarks[benchmark]]
+    uniform_parents = set()
+    for parent in benchmark_parent_order:
+        if parent in uniform_benchmarks:
+            uniform_parents.add(uniform_benchmarks[parent])
+        uniform_parents.add(parent)
+    return benchmark_parents, uniform_benchmarks, uniform_parents
 
 
 def _collect_benchmarks():
