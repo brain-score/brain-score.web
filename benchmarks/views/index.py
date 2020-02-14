@@ -141,17 +141,13 @@ def _collect_models(benchmarks):
         data[score.model].scores[score.benchmark] = score_display
 
     # sort score benchmarks
-    no_score, error_score = {}, {}
+    no_score = {}
     for benchmark in benchmarks:
         meta = benchmarks_meta[benchmark.name]
         no_score[benchmark.name] = ScoreDisplay(
             benchmark=benchmark.name, score_ceiled="", score_raw="",
             color=representative_color(None, alpha_min=meta['min'], alpha_max=meta['max']),
             layer="not yet run")
-        error_score[benchmark.name] = ScoreDisplay(
-            benchmark=benchmark.name, score_ceiled="X", score_raw="X",
-            color=representative_color(None, alpha_min=meta['min'], alpha_max=meta['max']),
-            layer=None)
     data = [model_row._replace(scores=[
         model_row.scores[benchmark.name] if benchmark.name in model_row.scores else no_score[benchmark.name]
         for benchmark in benchmarks])
@@ -192,12 +188,10 @@ def normalize(value, min_value, max_value):
 
 
 def represent(value):
-    if value is None:
+    if value is None or np.isnan(value):
         return "X"
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
-
-# Caleb Littlejohn Code here.
 
 def setup_parent_dictionary(dictionary, benchmark):
     dictionary[benchmark.name] = benchmark.parent
