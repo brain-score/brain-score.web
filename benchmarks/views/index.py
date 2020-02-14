@@ -8,15 +8,18 @@ from tqdm import tqdm
 
 from benchmarks.models import Score, Benchmark, ModelReference, ModelMeta
 
-colors = list(Color('red').range_to(Color('green'), 101))
+colors_redgreen = list(Color('red').range_to(Color('green'), 101))
+colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
 a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
-colors = [colors[int(a * np.power(i, b))] for i in range(len(colors))]
+colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
+colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
 benchmark_parent_order = [None, 'V1', 'V2', 'V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
 benchmark_order = []
 not_shown_set = set()
+nonbrain_benchmarks = ['ImageNet']
 
 def view(request):
     benchmarks = _collect_benchmarks()
@@ -95,12 +98,13 @@ def recursive_benchmarks(parent, benchmarks):
 def _collect_models(benchmarks):
     # pre-compute aggregates
     benchmarks_meta = {}
-    for benchmark in [benchmark.name for benchmark in benchmarks]:
-        benchmark_scores = Score.objects.filter(benchmark=benchmark)
+    for benchmark in benchmarks:
+        benchmark_scores = Score.objects.filter(benchmark=benchmark.name)
         benchmark_scores = [score.score_ceiled if score.score_ceiled is not None else 0 for score in benchmark_scores]
         min_value, max_value = min(benchmark_scores), max(benchmark_scores)
-        ceiling = Benchmark.objects.filter(name=benchmark)[0].ceiling
-        benchmarks_meta[benchmark] = {'ceiling': ceiling, 'min': min_value, 'max': max_value}
+        ceiling = Benchmark.objects.filter(name=benchmark.name)[0].ceiling
+        benchmarks_meta[benchmark.name] = {'ceiling': ceiling, 'min': min_value, 'max': max_value,
+                                           'parent': benchmark.parent}
 
     # arrange scores
     scores = Score.objects.all().select_related()
@@ -134,6 +138,8 @@ def _collect_models(benchmarks):
 
         benchmark_meta = benchmarks_meta[score.benchmark]
         color = representative_color(score.score_ceiled,
+                                     colors=colors_gray if benchmark_meta['parent'] in nonbrain_benchmarks
+                                     else colors_redgreen,
                                      alpha_min=benchmark_meta['min'], alpha_max=benchmark_meta['max'])
         score_ceiled, score_raw = represent(score.score_ceiled), represent(score.score_raw)
         score_display = ScoreDisplay(benchmark=score.benchmark, score_ceiled=score_ceiled, score_raw=score_raw,
@@ -213,7 +219,7 @@ def setup_uniform_dictionary(dictionary, score_row):
         dictionary[score_row.benchmark] = score_row.benchmark
 
 
-def representative_color(value, alpha_min=None, alpha_max=None):
+def representative_color(value, alpha_min=None, alpha_max=None, colors=colors_redgreen):
     if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
         return f"background-color: {color_None}"
     step = int(100 * value)
