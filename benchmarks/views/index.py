@@ -188,7 +188,7 @@ def normalize(value, min_value, max_value):
 
 
 def represent(value):
-    if value is None or np.isnan(value):
+    if value is None or np.isnan(value):  # None in sqlite, nan in postgres
         return "X"
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
