@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
                 ('ceiling_error', models.FloatField(default=0, null=True)),
                 ('parent', models.CharField(max_length=200, null=True)),
                 ('link', models.CharField(max_length=1000, null=True)),
+                ('version', models.IntegerField(null=True)),
             ],
         ),
         migrations.CreateModel(
