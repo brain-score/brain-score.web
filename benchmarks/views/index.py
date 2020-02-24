@@ -137,10 +137,12 @@ def _collect_models(benchmarks):
                                          scores={})
 
         benchmark_meta = benchmarks_meta[score.benchmark]
-        color = representative_color(score.score_ceiled,
-                                     colors=colors_gray if benchmark_meta['parent'] in nonbrain_benchmarks
-                                     else colors_redgreen,
-                                     alpha_min=benchmark_meta['min'], alpha_max=benchmark_meta['max'])
+        color = representative_color(
+            score.score_ceiled,
+            colors=colors_redgreen if benchmark_meta['parent'] not in nonbrain_benchmarks else colors_gray,
+            alpha_min=benchmark_meta['min'],
+            alpha_max=benchmark_meta['max'] if benchmark_meta['parent'] not in nonbrain_benchmarks
+            else 2.5 * benchmark_meta['max'])
         score_ceiled, score_raw = represent(score.score_ceiled), represent(score.score_raw)
         score_display = ScoreDisplay(benchmark=score.benchmark, score_ceiled=score_ceiled, score_raw=score_raw,
                                      color=color, layer=score.layer)
