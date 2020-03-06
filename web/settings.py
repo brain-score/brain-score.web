@@ -44,7 +44,7 @@ SECRET_KEY = get_secret("brainscore-django-secret-key", REGION_NAME)["SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost,brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
+ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 
 # Allows E-mail use
 email_secrets = get_secret("brainscore-email", REGION_NAME)
