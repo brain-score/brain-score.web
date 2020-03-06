@@ -39,12 +39,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '3fx6&=8_k117#7r2*i4=sxv-_$_to1k*=b)$3@$7$)w@9i%n_%'
+SECRET_KEY = get_secret("brainscore-django-secret-key", REGION_NAME)["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost", "brain-score-web-dev.us-east-2.elasticbeanstalk.com"]
+ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost,brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(",")
 
 # Allows E-mail use
 email_secrets = get_secret("brainscore-email", REGION_NAME)
@@ -104,8 +104,8 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
+    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
     try:
-        db_secret_name = "brainscore-1-ohio-cred"
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
             'default': {
