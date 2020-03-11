@@ -26,4 +26,4 @@ EXPOSE 80
 
 RUN . ~/.bashrc && python manage.py collectstatic --noinput
 
-CMD . ~/.bashrc && python manage.py runserver 0.0.0.0:80
+CMD . ~/.bashrc && python manage.py runserver --insecure 0.0.0.0:80
