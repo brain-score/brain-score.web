@@ -27,12 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Allows E-mail use
+# Allows E-mail used
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'clittlejohn268@gmail.com'
-EMAIL_HOST_PASSWORD = '********'
+EMAIL_HOST_PASSWORD = 'newtab15'
 
 LOGOUT_REDIRECT_URL = '/'
 

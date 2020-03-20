@@ -13,8 +13,6 @@ table.benchmarks
     &.hiddencontent
       padding: 0px
 
-  button
-    
   div
     overflow: hidden
 
@@ -31,7 +29,7 @@ table.benchmarks
       @include rotate(270deg, -80px, 80px)
 
     &.rotate:after
-        @include rotate(90deg, 75px, -265px)
+      @include rotate(90deg, 75px, -265px)
 
   th
     font-weight: normal
@@ -41,7 +39,7 @@ table.benchmarks
     &.hidden
       display: ""
 
-    &.hiddencontent 
+    &.hiddencontent
       padding: 0 18px
       display: ""
       overflow: hidden
@@ -73,7 +71,6 @@ table.benchmarks
       &.headerSortDown:after
         content: "\25bc"
 
-      
 
     // header rotation
     &.rotate
@@ -110,22 +107,24 @@ table.benchmarks
 
     p
       width: 40px
+
   .depth_one
     outline: 5px white solid
     font-size: 11pt
-  .depth_two 
+
+  .depth_two
     outline: 7px white solid
     font-size: 10pt
-    
-  .depth_three 
+
+  .depth_three
     outline: 9px white solid
     font-size: 8pt
 
-  .depth_four 
+  .depth_four
     outline: 10px white solid
     font-size: 7pt
-    
-    
+
+
   // distance
   tr:nth-child(1) td
     border-top: 1em solid white
@@ -139,7 +138,6 @@ table.benchmarks
         @include transform_origin(5px 5px)
 
     &.hiddencontent
-      &.hiddencontent 
       padding: 0 18px
       display: ""
       overflow: hidden
