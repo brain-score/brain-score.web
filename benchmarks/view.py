@@ -12,7 +12,6 @@ from django.core.mail import EmailMessage
 import requests
 import json
 import datetime
-<<<<<<< HEAD
 from .views.index import get_context
 
 User = get_user_model()
@@ -75,14 +74,14 @@ class Signup(View):
                        f"Please click or paste the following link to activate your account:\n{activation_link}")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            context = {"activation_email": False, "password_email": True, 'form': LoginForm}
+            context = {"activation_email": True, "password_email": False, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/signup.html', context)
         else:
             context = {'form': LoginForm}
-            return render(request, 'benchmarks/login.html', context)
+            return render(request, 'benchmarks/profile.html', context)
 
 
 class Login(View):
@@ -216,7 +215,7 @@ class Password(View):
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             context = {"activation_email": False, "password_email": True, 'form': LoginForm}
-            return render(request, 'benchmarks/login.html', context)
+            return render(request, 'benchmarks/password-confirm.html')
         elif form.errors:
             context = { 'form': form }
             return render(request, 'benchmarks/password.html', context)
