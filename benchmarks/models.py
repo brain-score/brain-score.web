@@ -51,7 +51,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         _('active'),
         default=False,
         help_text=_(
-            'Designates whether this user should be treated as active. '
+            'Designates whether this user should be treated as active.'
             'Unselect this instead of deleting accounts.'
         ),
     )
@@ -59,6 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = MyUserManager()
 
+    # Last three model submission dates (To limit number of submissions per time interval).
     datefield1 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
     datefield2 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
     datefield3 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
@@ -110,6 +111,7 @@ class ModelReference(models.Model):
     short_reference = models.CharField(max_length=200)
     link = models.CharField(max_length=200)
     bibtex = models.CharField(max_length=2000)
+    user = models.CharField(max_length=200)
 
     def __repr__(self):
         return generic_repr(self)

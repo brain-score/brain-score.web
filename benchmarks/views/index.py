@@ -19,6 +19,10 @@ benchmark_order = []
 not_shown_set = set()
 
 def view(request):
+    context = get_context()
+    return render(request, 'benchmarks/index.html', context)
+
+def get_context(user=None):
     benchmarks = _collect_benchmarks() 
     models = _collect_models(benchmarks)
     for benchmark in benchmarks:  # remove lab for more compactness
@@ -51,8 +55,12 @@ def view(request):
             uniform_parents.add(uniform_benchmarks[i])
         uniform_parents.add(i)
 
-    context = {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set}
-    return render(request, 'benchmarks/index.html', context)
+    if user != None:
+        for i in list(models):
+            if i.user != str(user):
+                models.remove(i)
+
+    return {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set}
 
 
 def _collect_benchmarks():
@@ -101,7 +109,7 @@ def _collect_models(benchmarks):
     # arrange scores
     scores = Score.objects.all().select_related()
     ModelRow = namedtuple('ModelRow', field_names=[
-        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores'])
+        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores', 'user'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'score_raw', 'score_ceiled', 'color', 'layer'])
 
@@ -125,7 +133,8 @@ def _collect_models(benchmarks):
                                          reference_link=reference.link if reference else None,
                                          meta=meta,
                                          rank=None,
-                                         scores={})
+                                         scores={},
+                                         user=reference.user)
 
         benchmark_meta = benchmarks_meta[score.benchmark]
         color = representative_color(score.score_ceiled,

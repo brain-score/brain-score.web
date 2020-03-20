@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -40,3 +40,17 @@ class UploadFileForm(forms.Form):
 	class Meta:
 		model = UploadPlaceHolder
 		fields = ( 'name', 'zip_file')
+
+class FeedbackForm(forms.Form):
+	Subject = forms.CharField(max_length=200, help_text='Required')
+	Feedback = forms.CharField(max_length=1000, help_text='Required')
+	Feedback.widget = forms.Textarea()
+
+class ChangePasswordForm(PasswordChangeForm):
+	def __init__(self, *args, **kwargs):
+		super(ChangePasswordForm, self).__init__(*args, **kwargs)
+		self.fields.pop('old_password')
+
+	class Meta:
+		fields=('new_password1', 'new_password2')
+

@@ -3,8 +3,8 @@
 
 {% block content %}
 <section id="upload" class="container center">
-	<h1>Welcome</h1>
-	Welcome! You can upload files here to test. For an example of what your submission should include, please visit <a href="https://github.com/brain-score/sample-model-submission/">this website</a>.
+	<h1>Model Submission</h1>
+	You can upload files here to test. For an example of what your submission should include, please visit <a href="https://github.com/brain-score/sample-model-submission/">this website</a>.
 	<form action="" method="post" enctype="multipart/form-data">
 		{% csrf_token %}
 
@@ -22,6 +22,7 @@
       {% endfor %}
     <p><button id="upload_button" class="submission">Click here to select file</button></p>
 		<button type="submit" class="submission">Submit Model</button>
+    <!<p style="font-size: 12px"Having issues? Please let us know <a href="../feedback/"here</a.</p>
 	</form>
 </section>
 

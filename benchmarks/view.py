@@ -1,10 +1,10 @@
 from django.views import View
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from .forms import SignupForm, LoginForm, UploadFileForm
+from .forms import *
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .tokens import account_activation_token
@@ -15,8 +15,12 @@ import requests
 import json
 import time
 import datetime
+from .views.index import get_context
 
 User = get_user_model()
+
+# Lookup django convention for this!
+#_logger = logging.getLogger(__name__)
 
 class Activate(View):
     def get(self, request, uidb64, token):
@@ -59,6 +63,7 @@ class Signup(View):
             user.is_active = False
             to_email = form.cleaned_data.get('email')
             user.save()
+
             # Send an email to the user with the token:
             mail_subject = 'Activate your account.'
             current_site = get_current_site(request)
@@ -69,10 +74,13 @@ class Signup(View):
                 user.get_full_name(), activation_link)
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            context = {"email": True, 'form': LoginForm}
+            context = {"activation_email": False, "password_email": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
+        elif form.errors:
+            context = {'form': form}
+            return render(request, 'benchmarks/signup.html', context)
         else:
-            context = {"email": True, 'form': LoginForm}
+            context = {'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
 class Login(View):
@@ -87,7 +95,7 @@ class Login(View):
             login(request, user)
             return render(request, 'benchmarks/profile.html')
         else:
-            context = {"Incorrect": True}
+            context = {"Incorrect": True, 'form': form}
             return render(request, 'benchmarks/login.html', context)
 
 class Logout(View):
@@ -119,7 +127,7 @@ class Upload(View):
                 with open('result.json', 'w') as fp:
                     json.dump(json_info, fp)
 
-                print(request.user.get_full_name())
+                _loggerprint(request.user.get_full_name())
 
                 jenkins_url = "http://braintree.mit.edu:8080"
                 auth = ("caleb", "BrownFoxTree")
@@ -173,14 +181,117 @@ class Profile(View):
             form = LoginForm()
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            return render(request, 'benchmarks/profile.html')
+            context = get_context(request.user)
+            return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
         form = LoginForm(data=request.POST)
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            return render(request, 'benchmarks/profile.html')
+
+            # Currently, there are no model submissions with user fields, so for testing
+            # purposes, trying to get the model named "xception" will allow an easy change to the user models.
+            
+            context = get_context(user) # Change to username once we change the submission model.
+
+            return render(request, 'benchmarks/profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
+
+class Password(View):
+    def get(self, request):
+        form = PasswordResetForm()
+        return render(request, 'benchmarks/password.html', {'form': form})
+
+    def post(self, request):
+        form = PasswordResetForm(request.POST)
+        username = request.POST["email"]
+        if form.is_valid() and User._default_manager.get_by_natural_key(username) != None:
+            # Create an inactive user with no password:
+            username = request.POST["email"]
+            user = User._default_manager.get_by_natural_key(username)
+            to_email = username
+
+            # Send an email to the user with the token:
+            mail_subject = 'Change Password Request'
+            current_site = get_current_site(request)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = account_activation_token.make_token(user)
+            activation_link = "{0}/password-change/{1}/{2}".format(current_site, uid, token)
+            message = "Hello {0}!\n\nPlease click or paste the following link to change your password:\n{1}".format(
+                user.get_full_name(), activation_link)
+            email = EmailMessage(mail_subject, message, to=[to_email])
+            email.send()
+            context = {"activation_email": False, "password_email": True, 'form': LoginForm}
+            return render(request, 'benchmarks/login.html', context)
+        elif form.errors:
+            context = { 'form': form }
+            return render(request, 'benchmarks/password.html', context)
+        else:
+            context = {"activation_email": False, 'password_email': False, 'form': LoginForm}
+            return render(request, 'benchmarks/login.html', context)
+
+class ChangePassword(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_text(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        form = ChangePasswordForm(user=user)
+        if user is not None and account_activation_token.check_token(user, token):
+            # activate user and login:
+            form = ChangePasswordForm(user=user)
+
+            return render(request, 'benchmarks/password.html', { 'form': form })
+
+        else:
+            return HttpResponse('Password change link is invalid!')
+
+    def post(self, request, uidb64, token):
+        try:
+            uid = force_text(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+        form = ChangePasswordForm(user=user, data=request.POST)
+        if form.is_valid():
+            user.set_password(request.POST["new_password1"])
+            user.save()
+            user.is_active = True
+            return HttpResponseRedirect('../../profile/')
+        elif form.errors:
+            context = { 'form': form }
+            return render(request, 'benchmarks/password.html', context)
+        else:
+            context = {"email": True, 'form': form}
+            return render(request, 'benchmarks/password.html', {'form': form})
+
+"""
+Feedback Form (email)
+
+class Feedback(View):
+    def get(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseRedirect("../profile")
+
+        form = FeedbackForm(request.POST)
+        return render(request, 'benchmarks/feedback.html', {'form': form})
+
+    def post(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseRedirect("../profile")
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            # Send an email to the user with the token:
+            mail_subject = request.POST['Subject']
+            message = "{0}\n{1}".format(request.user, request.POST['Feedback'])
+            email = EmailMessage(mail_subject, message, to=['clittlejohn268@gmail.com'])
+            email.send()
+            context = {"activation_email": False, "password_email": False, 'form': LoginForm}
+            return HttpResponseRedirect("../profile")
+        else:
+            return HttpResponseRedirect("../profile")"""
