@@ -6,7 +6,8 @@
       "ceiling_error": 0.0006182539189773819,
       "link": "http://www.jneurosci.org/content/35/39/13402.short",
       "name": "dicarlo.Majaj2015.V4-pls",
-      "parent": "V4"
+      "parent": "V4",
+      "version": 3
     }
   },
   {
@@ -16,7 +17,8 @@
       "ceiling_error": 0.00058712737191322,
       "link": "http://www.jneurosci.org/content/35/39/13402.short",
       "name": "dicarlo.Majaj2015.IT-pls",
-      "parent": "IT"
+      "parent": "IT",
+      "version": 3
     }
   },
   {
@@ -26,7 +28,8 @@
       "ceiling_error": 0.003592410347494883,
       "link": "https://www.nature.com/articles/nn.3402",
       "name": "movshon.FreemanZiemba2013.V1-pls",
-      "parent": "V1"
+      "parent": "V1",
+      "version": 2
     }
   },
   {
@@ -36,7 +39,8 @@
       "ceiling_error": 0.0017617471233464287,
       "link": "https://www.nature.com/articles/nn.3402",
       "name": "movshon.FreemanZiemba2013.V2-pls",
-      "parent": "V2"
+      "parent": "V2",
+      "version": 2
     }
   },
   {
@@ -46,7 +50,8 @@
       "ceiling_error": NaN,
       "link": "https://www.nature.com/articles/s41593-019-0392-5",
       "name": "dicarlo.Kar2019-ost",
-      "parent": "IT-temporal"
+      "parent": "IT-temporal",
+      "version": 2
     }
   },
   {
@@ -56,7 +61,8 @@
       "ceiling_error": 0.003951294268384253,
       "link": "https://www.biorxiv.org/content/early/2018/02/12/240614",
       "name": "dicarlo.Rajalingham2018-i2n",
-      "parent": "behavior"
+      "parent": "behavior",
+      "version": 2
     }
   },
   {
@@ -66,7 +72,8 @@
       "ceiling_error": NaN,
       "link": "https://ieeexplore.ieee.org/abstract/document/5206848",
       "name": "fei-fei.Deng2009-top1",
-      "parent": "ImageNet"
+      "parent": "ImageNet",
+      "version": 1
     }
   },
   {

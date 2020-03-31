@@ -1,5 +1,7 @@
+[![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
+
 ## Setup
-Create environment: `conda env create -f environment.yml && conda activate brain-score.web`
+Install dependencies: `pip install .`
 
 Install node dependencies: `npm install --no-optional`
 

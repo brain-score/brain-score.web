@@ -87,6 +87,12 @@ table.benchmarks
         padding: 1%
         margin-top: 0
 
+    // benchmark version
+    .benchmark-version
+      background-color: #eff0f1
+      color: #a4a49f
+      margin-left: 5px
+
   td
     border: 5px solid white
     vertical-align: middle
@@ -126,12 +132,20 @@ table.benchmarks
 
   // distance
   tr:nth-child(1) td
-    border-top: 1em solid white
+    border-top: 0.25em solid white
 
   tr
-    td:nth-child(4), td:nth-last-child(1), td:nth-last-child(2),
-    th:nth-child(4), th:nth-last-child(1), th:nth-last-child(2)
+    // V1 + behavior
+    td:nth-child(4), th:nth-child(4),
+    td:nth-last-child(2), th:nth-last-child(2)
       border-left: 1em solid white
+
+      &.rotate
+        @include transform_origin(5px 5px)
+
+    // ImageNet
+    td:nth-last-child(1), th:nth-last-child(1)
+      border-left: 1.5em solid white
 
       &.rotate
         @include transform_origin(5px 5px)
