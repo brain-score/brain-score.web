@@ -259,29 +259,3 @@ class ChangePassword(View):
         else:
             context = {"email": True, 'form': form}
             return render(request, 'benchmarks/password.html', {'form': form})
-
-"""
-Feedback Form (email)
-
-class Feedback(View):
-    def get(self, request):
-        if request.user.is_anonymous:
-            return HttpResponseRedirect("../profile")
-
-        form = FeedbackForm(request.POST)
-        return render(request, 'benchmarks/feedback.html', {'form': form})
-
-    def post(self, request):
-        if request.user.is_anonymous:
-            return HttpResponseRedirect("../profile")
-        form = FeedbackForm(request.POST)
-        if form.is_valid():
-            # Send an email to the user with the token:
-            mail_subject = request.POST['Subject']
-            message = "{0}\n{1}".format(request.user, request.POST['Feedback'])
-            email = EmailMessage(mail_subject, message, to=['clittlejohn268@gmail.com'])
-            email.send()
-            context = {"activation_email": False, "password_email": False, 'form': LoginForm}
-            return HttpResponseRedirect("../profile")
-        else:
-            return HttpResponseRedirect("../profile")"""

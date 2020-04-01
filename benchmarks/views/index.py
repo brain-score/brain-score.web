@@ -24,7 +24,7 @@ def view(request):
 
 def get_context(user=None):
     benchmarks = _collect_benchmarks() 
-    models = _collect_models(benchmarks)
+    models = _collect_models(benchmarks, user)
     for benchmark in benchmarks:  # remove lab for more compactness
         match = re.match(r'[^\.]+\.(.+)', benchmark.name)
         if match:
@@ -96,7 +96,7 @@ def recursive_benchmarks(parent, benchmarks):
             benchmark_order.append(benchmark.name)
             recursive_benchmarks(benchmark.name, benchmarks)
 
-def _collect_models(benchmarks):
+def _collect_models(benchmarks, user=None):
     # pre-compute aggregates
     benchmarks_meta = {}
     for benchmark in [benchmark.name for benchmark in benchmarks]:
@@ -109,7 +109,7 @@ def _collect_models(benchmarks):
     # arrange scores
     scores = Score.objects.all().select_related()
     ModelRow = namedtuple('ModelRow', field_names=[
-        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores', 'user'])
+        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores', 'user', 'public'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'score_raw', 'score_ceiled', 'color', 'layer'])
 
@@ -134,7 +134,9 @@ def _collect_models(benchmarks):
                                          meta=meta,
                                          rank=None,
                                          scores={},
-                                         user=reference.user)
+                                         user=reference.user,
+                                         public=reference.public
+                                         )
 
         benchmark_meta = benchmarks_meta[score.benchmark]
         color = representative_color(score.score_ceiled,
@@ -161,11 +163,22 @@ def _collect_models(benchmarks):
         for benchmark in benchmarks])
         for model_row in tqdm(data.values(), desc='sort benchmarks')]
 
+    # Remove all non-public models from the sorting and ranking. Allow user to see their own models in the ranking.
+    i = 0
+    while i < len(data):
+        print(data[i].user, " ", str(user))
+        if not data[i].public and data[i].user != str(user):
+            data.pop(i)
+        else:
+            i += 1
+
+
     # infer rank
     average_scores = {model_row.name: [score.score_ceiled for score in model_row.scores
                                        if score.benchmark == 'average'][0]
                       for model_row in data}
     all_scores = list(sorted(average_scores.values(), reverse=True))
+
     ranks = {model: all_scores.index(score) + 1 for model, score in average_scores.items()}
     data = [model_row._replace(rank=ranks[model_row.name]) for model_row in tqdm(data, desc='ranking')]
     return data

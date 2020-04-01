@@ -112,6 +112,7 @@ class ModelReference(models.Model):
     link = models.CharField(max_length=200)
     bibtex = models.CharField(max_length=2000)
     user = models.CharField(max_length=200)
+    public = models.BooleanField(default=True)
 
     def __repr__(self):
         return generic_repr(self)

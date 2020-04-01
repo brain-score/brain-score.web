@@ -45,13 +45,6 @@ class UploadFileForm(forms.Form):
 	class Meta:
 		model = UploadPlaceHolder
 		fields = ( 'name', 'zip_file')
-"""
-Feedback Form (email)
-
-class FeedbackForm(forms.Form):
-Subject = forms.CharField(max_length=200, help_text='Required')
-Feedback = forms.CharField(max_length=1000, help_text='Required')
-Feedback.widget = forms.Textarea()"""
 
 class ChangePasswordForm(PasswordChangeForm):
 	def __init__(self, *args, **kwargs):
