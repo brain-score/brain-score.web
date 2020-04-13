@@ -14,6 +14,7 @@ requirements = [
     "tqdm",
     "requests",
     "six",
+    "boto3",
 ]
 
 setup(
