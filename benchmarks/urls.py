@@ -1,6 +1,10 @@
 from django.urls import path
+<<<<<<< HEAD
 from . import view
+=======
+>>>>>>> upstream/master
 from . import views
+from . import view
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -11,5 +15,3 @@ urlpatterns = [
     path('upload/', view.Upload.as_view(), name='upload'),
     path('password/', view.Password.as_view(), name='password'),
     path('password-change/<str:uidb64>/<str:token>', view.ChangePassword.as_view(), name='change-password'),
-    #path('feedback/', view.Feedback.as_view(), name='feedback'),
-]

@@ -1,22 +1,29 @@
-from tqdm import tqdm
+import numpy as np
 import re
 from collections import namedtuple
 from django.template.defaulttags import register
+<<<<<<< HEAD
 import numpy as np
+=======
+>>>>>>> upstream/master
 from colour import Color
 from django.shortcuts import render
+from tqdm import tqdm
 
 from benchmarks.models import Score, Benchmark, ModelReference, ModelMeta
 
-colors = list(Color('red').range_to(Color('green'), 101))
+colors_redgreen = list(Color('red').range_to(Color('green'), 101))
+colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
 a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
-colors = [colors[int(a * np.power(i, b))] for i in range(len(colors))]
+colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
+colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
 benchmark_parent_order = [None, 'V1', 'V2','V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
 benchmark_order = []
 not_shown_set = set()
+nonbrain_benchmarks = ['ImageNet']
 
 def view(request):
     context = get_context()
@@ -30,7 +37,6 @@ def get_context(user=None):
         if match:
             benchmark.name = match.group(1)
         benchmark.ceiling = represent(benchmark.ceiling)
-
     # There was previously no way to find the parent of a benchmark from a model score because it did not save that as a value.
     #   Now, using get_item with benchmark_parents allows the HTML to know the parent of that benchmark.
     benchmark_parents = {}
@@ -63,6 +69,28 @@ def get_context(user=None):
     return {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set}
 
 
+def _align_benchmarks(benchmarks, models):
+    # There was previously no way to find the parent of a benchmark from a model score because it did not save that as a value.
+    #   Now, using get_item with benchmark_parents allows the HTML to know the parent of that benchmark.
+    benchmark_parents = {}
+    # The benchmark names in the score cells were altered from the original, so this dictionary allows the new values to map to the originals.
+    #   Used for some checks
+    uniform_benchmarks = {}
+    for benchmark in benchmarks:
+        setup_parent_dictionary(benchmark_parents, benchmark)
+    for model in models:
+        for score_row in model.scores:
+            setup_uniform_dictionary(uniform_benchmarks, score_row)
+    for benchmark in uniform_benchmarks:
+        benchmark_parents[benchmark] = benchmark_parents[uniform_benchmarks[benchmark]]
+    uniform_parents = set()
+    for parent in benchmark_parent_order:
+        if parent in uniform_benchmarks:
+            uniform_parents.add(uniform_benchmarks[parent])
+        uniform_parents.add(parent)
+    return benchmark_parents, uniform_benchmarks, uniform_parents
+
+
 def _collect_benchmarks():
     benchmarks = sorted(Benchmark.objects.all(), key=lambda benchmark: benchmark.name)
 
@@ -78,7 +106,7 @@ def _collect_benchmarks():
                 not_shown_set.add(add_name)
             else:
                 not_shown_set.add(benchmark.name)
-                
+
     for parent in benchmark_parent_order:
         recursive_benchmarks(parent, benchmarks)
     # filter to benchmarks that we have scores for
@@ -99,12 +127,13 @@ def recursive_benchmarks(parent, benchmarks):
 def _collect_models(benchmarks, user=None):
     # pre-compute aggregates
     benchmarks_meta = {}
-    for benchmark in [benchmark.name for benchmark in benchmarks]:
-        benchmark_scores = Score.objects.filter(benchmark=benchmark)
+    for benchmark in benchmarks:
+        benchmark_scores = Score.objects.filter(benchmark=benchmark.name)
         benchmark_scores = [score.score_ceiled if score.score_ceiled is not None else 0 for score in benchmark_scores]
         min_value, max_value = min(benchmark_scores), max(benchmark_scores)
-        ceiling = Benchmark.objects.filter(name=benchmark)[0].ceiling
-        benchmarks_meta[benchmark] = {'ceiling': ceiling, 'min': min_value, 'max': max_value}
+        ceiling = Benchmark.objects.filter(name=benchmark.name)[0].ceiling
+        benchmarks_meta[benchmark.name] = {'ceiling': ceiling, 'min': min_value, 'max': max_value,
+                                           'parent': benchmark.parent}
 
     # arrange scores
     scores = Score.objects.all().select_related()
@@ -139,25 +168,25 @@ def _collect_models(benchmarks, user=None):
                                          )
 
         benchmark_meta = benchmarks_meta[score.benchmark]
-        color = representative_color(score.score_ceiled,
-                                     alpha_min=benchmark_meta['min'], alpha_max=benchmark_meta['max'])
+        color = representative_color(
+            score.score_ceiled,
+            colors=colors_redgreen if benchmark_meta['parent'] not in nonbrain_benchmarks else colors_gray,
+            alpha_min=benchmark_meta['min'],
+            alpha_max=benchmark_meta['max'] if benchmark_meta['parent'] not in nonbrain_benchmarks
+            else 2.5 * benchmark_meta['max'])
         score_ceiled, score_raw = represent(score.score_ceiled), represent(score.score_raw)
         score_display = ScoreDisplay(benchmark=score.benchmark, score_ceiled=score_ceiled, score_raw=score_raw,
                                      color=color, layer=score.layer)
         data[score.model].scores[score.benchmark] = score_display
 
     # sort score benchmarks
-    no_score, error_score = {}, {}
+    no_score = {}
     for benchmark in benchmarks:
         meta = benchmarks_meta[benchmark.name]
         no_score[benchmark.name] = ScoreDisplay(
             benchmark=benchmark.name, score_ceiled="", score_raw="",
             color=representative_color(None, alpha_min=meta['min'], alpha_max=meta['max']),
             layer="not yet run")
-        error_score[benchmark.name] = ScoreDisplay(
-            benchmark=benchmark.name, score_ceiled="X", score_raw="X",
-            color=representative_color(None, alpha_min=meta['min'], alpha_max=meta['max']),
-            layer=None)
     data = [model_row._replace(scores=[
         model_row.scores[benchmark.name] if benchmark.name in model_row.scores else no_score[benchmark.name]
         for benchmark in benchmarks])
@@ -196,6 +225,13 @@ def _order_models(values, identifier_fnc):
             [benchmark_parent_order.index(identifier_fnc(value)) for value in values],
             values))]
 
+# Model ordering is unchanged.
+def _order_models(values, identifier_fnc):
+    return [value for parent_index, value in sorted(zip(
+        [benchmark_parent_order.index(identifier_fnc(value)) for value in values],
+        values))]
+
+
 def normalize(value, min_value, max_value):
     # intercept and slope equations are from solving `y = slope * x + intercept`
     # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
@@ -206,15 +242,13 @@ def normalize(value, min_value, max_value):
 
 
 def represent(value):
-    if value is None:
+    if value is None or np.isnan(value):  # None in sqlite, nan in postgres
         return "X"
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
-
-# Caleb Littlejohn Code here.
-
 def setup_parent_dictionary(dictionary, benchmark):
     dictionary[benchmark.name] = benchmark.parent
+
 
 # At some point, the Score Cells have their name changed to remove the name before the
 # actual test, so a dictionary is necessary to provide a uniform name for both cases.
@@ -231,8 +265,8 @@ def setup_uniform_dictionary(dictionary, score_row):
     else:
         dictionary[score_row.benchmark] = score_row.benchmark
 
-def representative_color(value, alpha_min=None, alpha_max=None):
-    if value is None:
+def representative_color(value, alpha_min=None, alpha_max=None, colors=colors_redgreen):
+    if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
         return f"background-color: {color_None}"
     step = int(100 * value)
     color = colors[step]

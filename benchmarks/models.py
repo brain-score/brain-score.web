@@ -59,11 +59,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = MyUserManager()
 
-    # Last three model submission dates (To limit number of submissions per time interval).
-    datefield1 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-    datefield2 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-    datefield3 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-
     def __str__(self):
         return self.email
 
@@ -73,26 +68,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.email
 
-    def get_lowest_datefield(self):
-        lowest_date = self.datefield1
-        if lowest_date < self.datefield2:
-            lowest_date = self.datefield2
-        if lowest_date < self.datefield3:
-            lowest_date = self.datefield3
-        return lowest_date
-
-    def set_lowest_datefield(self, date):
-        lowest_date = self.get_lowest_datefield()
-        if lowest_date == self.datefield1:
-            self.datefield1 = models.DateField(("Date"), default=date)
-        elif lowest_date == self.datefield2:
-            self.datefield2 = models.DateField(("Date"), default=date)
-        elif lowest_date < self.datefield3:
-            self.datefield3 = models.DateField(("Date"), default=date)
-
 def generic_repr(obj):
     return obj.__class__.__name__ \
-           + "[" + ",".join("{}={}".format(field, value) for field, value in vars(obj).items()) + "]"
+           + "[" + ",".join(f"{field}={value}" for field, value in vars(obj).items()) + "]"
 
 
 class Benchmark(models.Model):
@@ -101,6 +79,7 @@ class Benchmark(models.Model):
     ceiling_error = models.FloatField(default=0, null=True)
     parent = models.CharField(max_length=200, null=True)
     link = models.CharField(max_length=1000, null=True)
+    version = models.IntegerField(null=True)
 
     def __repr__(self):
         return generic_repr(self)
@@ -121,6 +100,7 @@ class ModelReference(models.Model):
 class ModelMeta(models.Model):
     class Meta:
         unique_together = (('model', 'key'),)
+
     model = models.CharField(max_length=200)
     key = models.CharField(max_length=200)
     value = models.CharField(max_length=200)
@@ -132,6 +112,7 @@ class ModelMeta(models.Model):
 class Score(models.Model):
     class Meta:
         unique_together = (('model', 'benchmark'),)
+
     model = models.CharField(max_length=200, db_index=True)
     benchmark = models.CharField(max_length=200, db_index=True)
     score_raw = models.FloatField(default=0, null=True)

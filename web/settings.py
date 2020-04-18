@@ -27,12 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Allows E-mail used
+# Allows E-mail use
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'clittlejohn268@gmail.com'
-EMAIL_HOST_PASSWORD = 'newtab15'
+EMAIL_HOST_PASSWORD = '********'
 
 LOGOUT_REDIRECT_URL = '/'
 
@@ -142,3 +142,27 @@ COMPRESS_PRECOMPILERS = (
 )
 
 AUTH_USER_MODEL = 'benchmarks.User'
+
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django.log'),
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

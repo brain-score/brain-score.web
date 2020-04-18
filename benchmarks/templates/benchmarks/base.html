@@ -94,10 +94,10 @@
     </div>
     <div id="navMenu" class="navbar-menu">
         <div class="navbar-end">
-            <a class="navbar-item" href="http://www.brain-score.org/#leaderboard">Leaderboard</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#about">About</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#analysis">Compare</a>
-            <a class="navbar-item" href="http://www.brain-score.org/#participate">Participate</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#leaderboard">Leaderboard</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#about">About</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#analysis">Compare</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#participate">Participate</a>
         </div>
     </div>
 </div>
@@ -111,7 +111,7 @@
 <footer>
     <br />
     <div class="content has-text-centered">
-        <p><a href="http://dicarlolab.mit.edu">DiCarlo lab</a>, 77 Massachusetts Ave, 46-6161, Cambridge, MA 02139</p>
+        <p><a href="https://github.com/brain-score">Brain-Score team</a></p>
     </div>
 </footer>
 
