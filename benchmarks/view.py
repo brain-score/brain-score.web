@@ -163,6 +163,7 @@ class Upload(View):
 
 class Profile(View):
     def get(self, request):
+        print(request)
         if str(request.user) == "AnonymousUser":
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:

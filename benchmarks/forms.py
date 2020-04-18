@@ -1,8 +1,5 @@
 from django import forms
-<<<<<<< HEAD
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
-=======
->>>>>>> upstream/master
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 

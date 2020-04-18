@@ -2,10 +2,7 @@ import numpy as np
 import re
 from collections import namedtuple
 from django.template.defaulttags import register
-<<<<<<< HEAD
 import numpy as np
-=======
->>>>>>> upstream/master
 from colour import Color
 from django.shortcuts import render
 from tqdm import tqdm
@@ -195,7 +192,6 @@ def _collect_models(benchmarks, user=None):
     # Remove all non-public models from the sorting and ranking. Allow user to see their own models in the ranking.
     i = 0
     while i < len(data):
-        print(data[i].user, " ", str(user))
         if not data[i].public and data[i].user != str(user):
             data.pop(i)
         else:
