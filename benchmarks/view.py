@@ -140,18 +140,9 @@ class Upload(View):
                       f"&submission={submission.id}"
         _logger.debug(f"request_url: {request_url}")
 
-        # determine next build number
-        _logger.debug("Determining next build number")
-        current_url = f"{jenkins_url}/job/{job_name}/api/json"
-        job = requests.get(
-            current_url,
-            auth=auth,
-        ).json()
-        next_build_number = job['nextBuildNumber']
-
         # submit to jenkins
         params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
-        _logger.debug(f"Triggering build: {job_name:s} #{next_build_number:d}")
+        _logger.debug(f"Triggering build: {job_name}")
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 
@@ -174,7 +165,6 @@ def may_submit(user, delay):
     latest_submission = submissions.latest('timestamp')
     latest_timestamp = latest_submission.timestamp
     if latest_timestamp < datetime.datetime.now(tz=latest_timestamp.tzinfo) - delay:
-        # TODO: how to restrict this per model?
         return True  # last submission >1 week ago
     return False
 
