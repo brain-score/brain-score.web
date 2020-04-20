@@ -1,9 +1,8 @@
-from django.db import models
-from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
-import datetime
 
 
 class MyUserManager(BaseUserManager):
@@ -61,35 +60,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = MyUserManager()
 
-    datefield1 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-    datefield2 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-    datefield3 = models.DateField(("Date"), default=datetime.datetime(2019, 1, 1))
-
-    def __str__(self):
-        return self.email
-
     def get_full_name(self):
         return self.email
 
     def get_short_name(self):
         return self.email
 
-    def get_lowest_datefield(self):
-        lowest_date = self.datefield1
-        if lowest_date < self.datefield2:
-            lowest_date = self.datefield2
-        if lowest_date < self.datefield3:
-            lowest_date = self.datefield3
-        return lowest_date
-
-    def set_lowest_datefield(self, date):
-        lowest_date = self.get_lowest_datefield()
-        if lowest_date == self.datefield1:
-            self.datefield1 = models.DateField(("Date"), default=date)
-        elif lowest_date == self.datefield2:
-            self.datefield2 = models.DateField(("Date"), default=date)
-        elif lowest_date < self.datefield3:
-            self.datefield3 = models.DateField(("Date"), default=date)
+    def __repr__(self):
+        return generic_repr(self)
 
 
 def generic_repr(obj):
@@ -109,8 +87,9 @@ class Benchmark(models.Model):
         return generic_repr(self)
 
 
-class ModelReference(models.Model):
+class Model(models.Model):
     model = models.CharField(max_length=200, primary_key=True)
+    owner = models.ForeignKey(User, on_delete=models.PROTECT)
     short_reference = models.CharField(max_length=200)
     link = models.CharField(max_length=200)
     bibtex = models.CharField(max_length=2000)
@@ -123,9 +102,23 @@ class ModelMeta(models.Model):
     class Meta:
         unique_together = (('model', 'key'),)
 
-    model = models.CharField(max_length=200)
+    model = models.ForeignKey(Model, on_delete=models.PROTECT)
     key = models.CharField(max_length=200)
     value = models.CharField(max_length=200)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+
+class Submission(models.Model):
+    class Status:
+        PENDING = 'pending'
+        SUBMITTED = 'submitted'
+        SUBMISSION_FAILED = 'submission_failed'
+
+    submitter = models.ForeignKey(User, on_delete=models.PROTECT)
+    timestamp = models.DateTimeField(auto_now_add=True, blank=True)
+    status = models.CharField(max_length=50, null=True)
 
     def __repr__(self):
         return generic_repr(self)
@@ -135,12 +128,11 @@ class Score(models.Model):
     class Meta:
         unique_together = (('model', 'benchmark'),)
 
-    model = models.CharField(max_length=200, db_index=True)
-    benchmark = models.CharField(max_length=200, db_index=True)
+    benchmark = models.ForeignKey(Benchmark, on_delete=models.PROTECT)
+    model = models.ForeignKey(Model, on_delete=models.PROTECT)
     score_raw = models.FloatField(default=0, null=True)
     score_ceiled = models.FloatField(default=0, null=True)
     error = models.FloatField(default=0, null=True)
-    layer = models.CharField(max_length=200, default=None, null=True)
 
     def __repr__(self):
         return generic_repr(self)

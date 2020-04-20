@@ -6,7 +6,7 @@ from colour import Color
 from django.shortcuts import render
 from tqdm import tqdm
 
-from benchmarks.models import Score, Benchmark, ModelReference, ModelMeta
+from benchmarks.models import Score, Benchmark, Model, ModelMeta
 
 colors_redgreen = list(Color('red').range_to(Color('green'), 101))
 colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
@@ -122,7 +122,7 @@ def _collect_models(benchmarks):
         if score.model not in data:
             index = re.search(r'(--)', score.model)
             model_base_identifier = score.model[:index.start()] if index else score.model
-            reference = ModelReference.objects.filter(model=model_base_identifier)
+            reference = Model.objects.filter(model=model_base_identifier)
             reference = reference[0] if len(reference) > 0 else None
             meta = ModelMeta.objects.filter(model=model_base_identifier)
             meta = _order_models(meta, identifier_fnc=lambda meta_row: [
@@ -273,7 +273,6 @@ def get_initial_characters(dictionary, key):
 # Used to assign columns to a certain css profile to alter the perceived size. (Children look smaller than parents)
 @register.filter
 def get_depth_number(dictionary, key):
-
     number_of_characters = -1
     checking_key = key
     while checking_key in dictionary:

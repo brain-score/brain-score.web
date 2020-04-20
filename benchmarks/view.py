@@ -1,18 +1,20 @@
-from django.views import View
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-from .forms import SignupForm, LoginForm, UploadFileForm
-from django.contrib.sites.shortcuts import get_current_site
+import datetime
+import json
+import logging
+import requests
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMessage
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views import View
+
+from .forms import SignupForm, LoginForm, UploadFileForm
+from .models import Submission
 from .tokens import account_activation_token
-from django.core.mail import EmailMessage
-import requests
-import json
-import datetime
-import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -104,56 +106,77 @@ class Upload(View):
         return render(request, 'benchmarks/upload.html', {'form': form})
 
     def post(self, request):
-        if request.user.get_lowest_datefield() < datetime.date.today() - datetime.timedelta(7):
-            form = UploadFileForm(request.POST, request.FILES)
-            if form.is_valid():
-                json_info = {
-                    "model_type": request.POST['model_type'],
-                    "name": request.POST['name'],
-                    "email": request.user.get_full_name(),
-                    "gpu_size": "8000",
-                    "type": "zip",
-                    "zip_filename": request.FILES['zip_file'].name,
-                }
+        form = UploadFileForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return HttpResponse("Form is invalid", status=400)
 
-                with open('result.json', 'w') as fp:
-                    json.dump(json_info, fp)
+        if not may_submit(request.user, delay=datetime.timedelta(days=7)):  # user has already submitted recently
+            return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed",
+                                status=403)
 
-                _logger.debug(f"request user: {request.user.get_full_name()}")
+        # setup jenkins submission
+        submission = Submission.objects.create(submitter=request.user, status=Submission.Status.PENDING)
 
-                jenkins_url = "http://braintree.mit.edu:8080"
-                auth = ("caleb", "BrownFoxTree")
-                job_name = "run_benchmarks"
-                request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters?TOKEN=trigger2scoreAmodel" \
-                              f"&email={request.user.get_full_name()}"
+        json_info = {
+            "name": request.POST['name'],
+            "model_type": request.POST['model_type'],
+            "email": request.user.get_full_name(),
+            "type": "zip",
+            "zip_filename": request.FILES['zip_file'].name,
+        }
 
-                _logger.debug(f"request_url: {request_url}")
+        with open('result.json', 'w') as fp:
+            json.dump(json_info, fp)
 
-                _logger.debug("Determining next build number")
-                current_url = f"{jenkins_url:s}/job/{job_name:s}/api/json"
+        _logger.debug(f"request user: {request.user.get_full_name()}")
 
-                job = requests.get(
-                    current_url,
-                    auth=auth,
-                ).json()
+        jenkins_url = "http://braintree.mit.edu:8080"
+        auth = get_secret("brainscore-website_jenkins_access")
+        auth = (auth['user'], auth['password'])
+        job_name = "run_benchmarks"
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?TOKEN=trigger2scoreAmodel" \
+                      f"&email={request.user.get_full_name()}" \
+                      f"&submission={submission.id}"
+        _logger.debug(f"request_url: {request_url}")
 
-                next_build_number = job['nextBuildNumber']
+        # determine next build number
+        _logger.debug("Determining next build number")
+        current_url = f"{jenkins_url}/job/{job_name}/api/json"
+        job = requests.get(
+            current_url,
+            auth=auth,
+        ).json()
+        next_build_number = job['nextBuildNumber']
 
-                params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
-                _logger.debug(f"Triggering build: {job_name:s} #{next_build_number:d}")
-                response = requests.post(request_url, files=params, auth=auth)
-                _logger.debug(f"response: {response}")
+        # submit to jenkins
+        params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
+        _logger.debug(f"Triggering build: {job_name:s} #{next_build_number:d}")
+        response = requests.post(request_url, files=params, auth=auth)
+        _logger.debug(f"response: {response}")
 
-                response.raise_for_status()
-                _logger.debug("Job triggered successfully")
+        # update database
+        submission.status = Submission.Status.SUBMITTED if response.status_code == 200 \
+            else Submission.Status.SUBMISSION_FAILED
+        submission.save()
 
-                request.user.set_lowest_datefield(datetime.date.today())
+        # update frontend
+        response.raise_for_status()
+        _logger.debug("Job triggered successfully")
+        return render(request, 'benchmarks/success.html')
 
-                return render(request, 'benchmarks/success.html')
-            else:
-                return HttpResponse("Form is invalid")
-        else:  # user has already submitted in the past x days
-            return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed")
+
+def may_submit(user, delay):
+    submissions = Submission.objects.filter(submitter=user)  # get all submissions of this user
+    submissions = submissions.exclude(status=Submission.Status.PENDING)  # exclude pendings which haven't gone through
+    if not submissions:  # no submissions so far
+        return True
+    latest_submission = submissions.latest('timestamp')
+    latest_timestamp = latest_submission.timestamp
+    if latest_timestamp < datetime.datetime.now(tz=latest_timestamp.tzinfo) - delay:
+        # TODO: how to restrict this per model?
+        return True  # last submission >1 week ago
+    return False
 
 
 class Profile(View):
