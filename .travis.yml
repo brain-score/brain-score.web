@@ -13,5 +13,8 @@ install:
   - npm install --no-optional
   - npm install -g sass
   - npm list
+before_script:
+  - python manage.py makemigrations
+  - python manage.py migrate
 script:
   - python manage.py test
