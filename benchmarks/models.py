@@ -4,13 +4,11 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-
 class MyUserManager(BaseUserManager):
     """
     A custom user manager to deal with emails as unique identifiers for auth
     instead of usernames. The default that's used is "UserManager"
     """
-
     def _create_user(self, email, password, **extra_fields):
         """
         Creates and saves a User with the given email and password.
@@ -52,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         _('active'),
         default=False,
         help_text=_(
-            'Designates whether this user should be treated as active. '
+            'Designates whether this user should be treated as active.'
             'Unselect this instead of deleting accounts.'
         ),
     )
@@ -93,6 +91,8 @@ class Model(models.Model):
     short_reference = models.CharField(max_length=200)
     link = models.CharField(max_length=200)
     bibtex = models.CharField(max_length=2000)
+    user = models.CharField(max_length=200)
+    public = models.BooleanField(default=True)
 
     def __repr__(self):
         return generic_repr(self)
