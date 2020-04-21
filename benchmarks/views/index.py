@@ -2,6 +2,7 @@ import numpy as np
 import re
 from collections import namedtuple
 from django.template.defaulttags import register
+import numpy as np
 from colour import Color
 from django.shortcuts import render
 from tqdm import tqdm
@@ -16,26 +17,53 @@ colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(c
 colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
-benchmark_parent_order = [None, 'V1', 'V2', 'V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
+benchmark_parent_order = [None, 'V1', 'V2','V4', 'IT', 'IT-temporal', 'behavior', 'ImageNet']
 benchmark_order = []
 not_shown_set = set()
 nonbrain_benchmarks = ['ImageNet']
 
 def view(request):
-    benchmarks = _collect_benchmarks()
-    models = _collect_models(benchmarks)
+    context = get_context()
+    return render(request, 'benchmarks/index.html', context)
+
+def get_context(user=None):
+    benchmarks = _collect_benchmarks() 
+    models = _collect_models(benchmarks, user)
     for benchmark in benchmarks:  # remove lab for more compactness
         match = re.match(r'[^\.]+\.(.+)', benchmark.name)
         if match:
             benchmark.name = match.group(1)
         benchmark.ceiling = represent(benchmark.ceiling)
+    # There was previously no way to find the parent of a benchmark from a model score because it did not save that as a value.
+    #   Now, using get_item with benchmark_parents allows the HTML to know the parent of that benchmark.
+    benchmark_parents = {}
 
-    benchmark_parents, uniform_benchmarks, uniform_parents = _align_benchmarks(benchmarks, models)
+    # The benchmark names in the score cells were altered from the original, so this dictionary allows the new values to map to the originals.
+    #   Used for some checks
+    uniform_benchmarks = {}
 
-    context = {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents,
-               "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks,
-               "not_shown_set": not_shown_set}
-    return render(request, 'benchmarks/index.html', context)
+    for i in benchmarks:
+        setup_parent_dictionary(benchmark_parents, i)
+
+    for i in models:
+        for score_row in i.scores:
+            setup_uniform_dictionary(uniform_benchmarks, score_row)
+
+    for i in uniform_benchmarks:
+        benchmark_parents[i] = benchmark_parents[uniform_benchmarks[i]]
+
+    uniform_parents = set()
+    for i in benchmark_parent_order:
+        if i in uniform_benchmarks:
+            uniform_parents.add(uniform_benchmarks[i])
+        uniform_parents.add(i)
+
+    if user != None:
+        for i in list(models):
+            if i.user != str(user):
+                models.remove(i)
+
+    return {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set}
 
 
 def _align_benchmarks(benchmarks, models):
@@ -85,7 +113,6 @@ def _collect_benchmarks():
     benchmarks = _order_benchmarks(benchmarks, identifier_fnc=lambda benchmark: benchmark.name)
     return benchmarks
 
-
 def recursive_benchmarks(parent, benchmarks):
     for benchmark in benchmarks:
         if benchmark.parent == parent:
@@ -94,8 +121,7 @@ def recursive_benchmarks(parent, benchmarks):
             benchmark_order.append(benchmark.name)
             recursive_benchmarks(benchmark.name, benchmarks)
 
-
-def _collect_models(benchmarks):
+def _collect_models(benchmarks, user=None):
     # pre-compute aggregates
     benchmarks_meta = {}
     for benchmark in benchmarks:
@@ -109,7 +135,7 @@ def _collect_models(benchmarks):
     # arrange scores
     scores = Score.objects.all().select_related()
     ModelRow = namedtuple('ModelRow', field_names=[
-        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores'])
+        'name', 'reference_identifier', 'reference_link', 'meta', 'rank', 'scores', 'user', 'public'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'score_raw', 'score_ceiled', 'color', 'layer'])
 
@@ -126,15 +152,17 @@ def _collect_models(benchmarks):
             reference = reference[0] if len(reference) > 0 else None
             meta = ModelMeta.objects.filter(model=model_base_identifier)
             meta = _order_models(meta, identifier_fnc=lambda meta_row: [
-                prefix for prefix in benchmark_parent_order
-                if isinstance(prefix, str) and meta_row.key.startswith(prefix)][0])
+                prefix for prefix in benchmark_parent_order if isinstance(prefix, str) and meta_row.key.startswith(prefix)][0])
             meta = '\n'.join([f"{meta_row.key}: {meta_row.value}" for meta_row in meta])
             data[score.model] = ModelRow(name=score.model,
                                          reference_identifier=reference.short_reference if reference else None,
                                          reference_link=reference.link if reference else None,
                                          meta=meta,
                                          rank=None,
-                                         scores={})
+                                         scores={},
+                                         user=reference.user,
+                                         public=reference.public
+                                         )
 
         benchmark_meta = benchmarks_meta[score.benchmark]
         color = representative_color(
@@ -161,15 +189,24 @@ def _collect_models(benchmarks):
         for benchmark in benchmarks])
         for model_row in tqdm(data.values(), desc='sort benchmarks')]
 
+    # Remove all non-public models from the sorting and ranking. Allow user to see their own models in the ranking.
+    i = 0
+    while i < len(data):
+        if not data[i].public and data[i].user != str(user):
+            data.pop(i)
+        else:
+            i += 1
+
+
     # infer rank
     average_scores = {model_row.name: [score.score_ceiled for score in model_row.scores
                                        if score.benchmark == 'average'][0]
                       for model_row in data}
     all_scores = list(sorted(average_scores.values(), reverse=True))
+
     ranks = {model: all_scores.index(score) + 1 for model, score in average_scores.items()}
     data = [model_row._replace(rank=ranks[model_row.name]) for model_row in tqdm(data, desc='ranking')]
     return data
-
 
 # Split benchmark ordering and row ordering to avoid having to redo the sorting function. Necessary because
 # the benchmarks are now explicitly ordered by name now instead of by parent.
@@ -178,6 +215,11 @@ def _order_benchmarks(values, identifier_fnc):
         [benchmark_order.index(identifier_fnc(value)) for value in values],
         values))]
 
+# Model ordering is unchanged.
+def _order_models(values, identifier_fnc):
+    return [value for parent_index, value in sorted(zip(
+            [benchmark_parent_order.index(identifier_fnc(value)) for value in values],
+            values))]
 
 # Model ordering is unchanged.
 def _order_models(values, identifier_fnc):
@@ -200,7 +242,6 @@ def represent(value):
         return "X"
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
-
 def setup_parent_dictionary(dictionary, benchmark):
     dictionary[benchmark.name] = benchmark.parent
 
@@ -220,7 +261,6 @@ def setup_uniform_dictionary(dictionary, score_row):
     else:
         dictionary[score_row.benchmark] = score_row.benchmark
 
-
 def representative_color(value, alpha_min=None, alpha_max=None, colors=colors_redgreen):
     if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
         return f"background-color: {color_None}"
@@ -233,12 +273,10 @@ def representative_color(value, alpha_min=None, alpha_max=None, colors=colors_re
     color += (normalized_value,)
     return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
 
-
 # Adds python functions so the HTML can do several things
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
-
 
 # Used to determine whether a column should be visible to begin with
 @register.filter
@@ -248,7 +286,6 @@ def in_set(hidden_set, key):
     else:
         return ""
 
-
 # Same as above, but used for headers, because their names are different than the cells.
 @register.filter
 def in_set_hidden(hidden_set, key):
@@ -256,7 +293,6 @@ def in_set_hidden(hidden_set, key):
         return "none"
     else:
         return ""
-
 
 # Allows children to have defining symbols before their names
 @register.filter
@@ -268,7 +304,6 @@ def get_initial_characters(dictionary, key):
         number_of_characters += 1
 
     return "∟" * number_of_characters
-
 
 # Used to assign columns to a certain css profile to alter the perceived size. (Children look smaller than parents)
 @register.filter
@@ -292,7 +327,6 @@ def get_depth_number(dictionary, key):
         7: "seven"
     }
     return ints_to_strings[number_of_characters]
-
 
 # Checks if the parent's name or the part of the parent's name after the first period are in the given dictionary.
 @register.filter
