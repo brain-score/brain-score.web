@@ -11,5 +11,5 @@ urlpatterns = [
     path('upload/', view.Upload.as_view(), name='upload'),
     path('password/', view.Password.as_view(), name='password'),
     path('password-change/<str:uidb64>/<str:token>', view.ChangePassword.as_view(), name='change-password'),
-    #path('feedback/', view.Feedback.as_view(), name='feedback'),
+    path('public-ajax/', view.PublicAjax.as_view(), name='PublicAjax'),
 ]

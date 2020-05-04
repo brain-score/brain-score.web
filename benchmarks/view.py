@@ -13,6 +13,9 @@ import requests
 import json
 import datetime
 from .views.index import get_context
+from django.http import JsonResponse
+from .models import ModelReference
+
 
 User = get_user_model()
 
@@ -169,6 +172,7 @@ class Upload(View):
 
 class Profile(View):
     def get(self, request):
+        print(request)
         if str(request.user) == "AnonymousUser":
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
@@ -259,3 +263,26 @@ class ChangePassword(View):
         else:
             context = {"email": True, 'form': form}
             return render(request, 'benchmarks/password.html', {'form': form})
+
+class PublicAjax(View):
+    
+    def post(self, request):
+        print(request.user)
+        request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
+
+        #Loads data as a string. Performs changes to evaluate to a python dictionary
+        data = json.loads(request.body)
+        print(data)
+        data = data.replace(":true", ":True")
+        data = data.replace(":false", ":False")
+        data = eval(data)
+
+        user_models = get_context(request.user)['models']
+        all_models = ModelReference.objects.all()
+        
+        for model in all_models:
+            if model.model in data:
+                model.public = data[model.model]
+                model.save()
+        # make sure that you serialise "request_getdata" 
+        return JsonResponse("success", safe=False) 
