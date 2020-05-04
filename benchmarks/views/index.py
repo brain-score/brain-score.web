@@ -343,7 +343,6 @@ def get_parent_item(dictionary, key):
                 return_string += "." + i
     else:
         return_string = return_value
-
     return return_string
 
 @register.filter

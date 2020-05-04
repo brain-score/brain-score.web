@@ -13,9 +13,12 @@ import requests
 import json
 import datetime
 from .views.index import get_context
+<<<<<<< HEAD
 from django.http import JsonResponse
 from .models import ModelReference
 
+=======
+>>>>>>> 94661307b4e33ac1acea856275bc957f59191d0c
 
 import logging
 
