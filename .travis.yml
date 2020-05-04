@@ -1,0 +1,20 @@
+language: python
+matrix:
+  include:
+    - name: 3.7 public
+      python: '3.7'
+      dist: xenial # python 3.7 workaround: https://github.com/travis-ci/travis-ci/issues/9815
+      sudo: true
+before_install:
+  - pip install --upgrade pip
+install:
+  - pip install .
+  - pip list # list installed package versions
+  - npm install --no-optional
+  - npm install -g sass
+  - npm list
+before_script:
+  - python manage.py makemigrations
+  - python manage.py migrate
+script:
+  - python manage.py test

@@ -3,7 +3,6 @@
 {% block content %}
 <section id="signup" class="container center">
   <h2>Sign up</h2>
-  
   <form method="post">
     {% csrf_token %}
       {% for field in form %}
@@ -17,7 +16,6 @@
       {% endfor %}
     <button type="submit" class="submission">Sign up</button>
   </form>
-  
   <br />
   <p><a href="/../profile/">Return to login</a></p>
 </section>

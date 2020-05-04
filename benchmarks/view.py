@@ -17,10 +17,6 @@ from django.http import JsonResponse
 from .models import ModelReference
 
 
-User = get_user_model()
-
-# Lookup django convention for this!
-#_logger = logging.getLogger(__name__)
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -86,7 +82,6 @@ class Signup(View):
             context = {'form': LoginForm}
             return render(request, 'benchmarks/profile.html', context)
 
-
 class Login(View):
     def get(self, request):
         return render(request, 'benchmarks/login.html', {'form': LoginForm})
@@ -140,7 +135,6 @@ class Upload(View):
                     job_name,
                     request.user.get_full_name()
                 )
-
                 _logger.debug(f"request_url: {request_url}")
 
                 _logger.debug("Determining next build number")
@@ -183,11 +177,7 @@ class Profile(View):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-
-            # Currently, there are no model submissions with user fields, so for testing
-            # purposes, trying to get the model named "xception" will allow an easy change to the user models.
-            
-            context = get_context(user) # Change to username once we change the submission model.
+            context = get_context(user)
 
             return render(request, 'benchmarks/profile.html', context)
         else:
