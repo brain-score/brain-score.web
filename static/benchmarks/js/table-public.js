@@ -10,20 +10,12 @@ $(document).ready(function(){
             checkedCheckboxes[$(this).val()] = $(this).is(':checked')
         });
 
-    // Now we have an array
-    console.log('JS Array: ');
-    console.log(checkedCheckboxes);
-
     // Convert array to standard Javascript Object Literal
     var checkedCheckboxesObject = $.extend({}, checkedCheckboxes);
-    console.log('JS Object: ');
-    console.log(checkedCheckboxesObject);
-
+    
     // Convert Object Literal to JSON
     var checkedCheckboxesJSON = JSON.stringify(checkedCheckboxesObject);
-    console.log('JSON: ');
-    console.log(checkedCheckboxesJSON);
-
+    
     function getCookie(name) {
         var cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -41,7 +33,6 @@ $(document).ready(function(){
     }
 
     var csrftoken = getCookie('csrftoken');
-    console.log(csrftoken);
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
@@ -61,9 +52,6 @@ $(document).ready(function(){
             dataType: 'json',
             contentType: 'json',
             data: JSON.stringify(checkedCheckboxesJSON),
-            success: function(msg){
-                console.log(msg);
-            },
         });
     });
 });
