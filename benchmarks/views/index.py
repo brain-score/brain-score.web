@@ -63,7 +63,9 @@ def get_context(user=None):
             if i.user != str(user):
                 models.remove(i)
 
-    return {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set}
+    return {'models': models, 'benchmarks': benchmarks, "benchmark_parents": benchmark_parents, 
+    "uniform_parents": uniform_parents, "uniform_benchmarks": uniform_benchmarks, "not_shown_set": not_shown_set,
+    "has_user":False}
 
 
 def _align_benchmarks(benchmarks, models):

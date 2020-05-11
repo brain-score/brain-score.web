@@ -169,6 +169,7 @@ class Profile(View):
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
             context = get_context(request.user)
+            context["has_user"] = True
             return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
@@ -176,7 +177,7 @@ class Profile(View):
         if user is not None:
             login(request, user)
             context = get_context(user)
-
+            context["has_user"] = True
             return render(request, 'benchmarks/profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
