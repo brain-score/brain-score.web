@@ -6,7 +6,6 @@ $(document).ready(function(){
     var checkedCheckboxes = {};
         $('input').each(function(){
 
-            console.log($(this).is(':checked'));
             checkedCheckboxes[$(this).val()] = $(this).is(':checked')
         });
 
