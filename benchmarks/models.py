@@ -4,11 +4,13 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+
 class MyUserManager(BaseUserManager):
     """
     A custom user manager to deal with emails as unique identifiers for auth
     instead of usernames. The default that's used is "UserManager"
     """
+
     def _create_user(self, email, password, **extra_fields):
         """
         Creates and saves a User with the given email and password.
@@ -73,13 +75,41 @@ def generic_repr(obj):
            + "[" + ",".join(f"{field}={value}" for field, value in vars(obj).items()) + "]"
 
 
-class Benchmark(models.Model):
+class NamedBenchmark(models.Model):
     name = models.CharField(max_length=200, primary_key=True)
-    ceiling = models.FloatField(default=0, null=True)  # null for average "benchmark"
-    ceiling_error = models.FloatField(default=0, null=True)
-    parent = models.CharField(max_length=200, null=True)
+    order = models.IntegerField(default=999)
+    parent = models.ForeignKey("self", null=True, on_delete=models.PROTECT)  # null: average benchmark has no parent
+
+    def __repr__(self):
+        return generic_repr(self)
+
+
+class BenchmarkInstance(models.Model):
+    class Meta:
+        unique_together = (('named_benchmark', 'version'),)
+
+    named_benchmark = models.ForeignKey(NamedBenchmark, on_delete=models.PROTECT)
+    ceiling = models.FloatField(default=0)
+    ceiling_error = models.FloatField(null=True)
     link = models.CharField(max_length=1000, null=True)
-    version = models.IntegerField(null=True)
+    version = models.IntegerField()
+
+    def __repr__(self):
+        return generic_repr(self)
+
+    def natural_key(self):
+        return self.named_benchmark.name, self.version
+
+    class BenchmarkInstanceManager(models.Manager):
+        def get_by_natural_key(self, name, version):
+            return self.get(named_benchmark__name=name, version=version)
+
+    objects = BenchmarkInstanceManager()
+
+
+class Submission(models.Model):
+    submitter = models.ForeignKey(User, on_delete=models.PROTECT)
+    timestamp = models.DateTimeField(auto_now_add=True, blank=True)
 
     def __repr__(self):
         return generic_repr(self)
@@ -91,11 +121,13 @@ class Model(models.Model):
     short_reference = models.CharField(max_length=200)
     link = models.CharField(max_length=200)
     bibtex = models.CharField(max_length=2000)
-    user = models.CharField(max_length=200)
     public = models.BooleanField(default=True)
 
     def __repr__(self):
         return generic_repr(self)
+
+    def natural_key(self):
+        return self.model,
 
 
 class ModelMeta(models.Model):
@@ -110,29 +142,26 @@ class ModelMeta(models.Model):
         return generic_repr(self)
 
 
-class Submission(models.Model):
-    class Status:
-        PENDING = 'pending'
-        SUBMITTED = 'submitted'
-        SUBMISSION_FAILED = 'submission_failed'
-
-    submitter = models.ForeignKey(User, on_delete=models.PROTECT)
-    timestamp = models.DateTimeField(auto_now_add=True, blank=True)
-    status = models.CharField(max_length=50, null=True)
-
-    def __repr__(self):
-        return generic_repr(self)
-
-
 class Score(models.Model):
-    class Meta:
-        unique_together = (('model', 'benchmark'),)
+    benchmark = models.ForeignKey(BenchmarkInstance, on_delete=models.PROTECT)
+    model = models.ForeignKey(Model, on_delete=models.PROTECT, db_column='model')
 
-    benchmark = models.ForeignKey(Benchmark, on_delete=models.PROTECT)
-    model = models.ForeignKey(Model, on_delete=models.PROTECT)
     score_raw = models.FloatField(default=0, null=True)
     score_ceiled = models.FloatField(default=0, null=True)
     error = models.FloatField(default=0, null=True)
+    start_timestamp = models.DateTimeField(blank=True)
+    end_timestamp = models.DateTimeField(auto_now_add=True, blank=True)
 
     def __repr__(self):
         return generic_repr(self)
+
+    def natural_key(self):
+        return self.benchmark.natural_key(), self.model.natural_key()
+
+    natural_key.dependencies = ['benchmarks.BenchmarkInstance', 'benchmarks.model']
+
+    class ScoreManager(models.Manager):
+        def get_by_natural_key(self, benchmark, model):
+            return self.get(benchmark__name=benchmark, model__name=model)
+
+    objects = ScoreManager()
