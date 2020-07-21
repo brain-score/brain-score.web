@@ -39,7 +39,7 @@
                             </strong>
                         {% endif %}
 
-                        {% if benchmark.benchmark_type.reference.url %}
+                        {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                             <a href="{{ benchmark.benchmark_type.reference.url }}">{{ benchmark.identifier }}
                                 {% if benchmark.version %}
                                     <span class="benchmark-version">v{{ benchmark.version }}</span>

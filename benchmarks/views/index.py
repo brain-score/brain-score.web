@@ -8,7 +8,7 @@ from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
-from benchmarks.models import BenchmarkInstance, Score
+from benchmarks.models import BenchmarkInstance, BenchmarkType, Score
 
 _logger = logging.getLogger(__name__)
 
@@ -33,6 +33,11 @@ def get_context(user=None):
     benchmarks = _collect_benchmarks()
     models = _collect_models(benchmarks, user)
 
+    # insert mock average benchmark
+    benchmarks.insert(0, BenchmarkInstance(
+        benchmark_type=BenchmarkType(identifier='average', order=0, parent=None, reference=None),
+        version=None, ceiling=None, ceiling_error=None))
+
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
@@ -42,10 +47,13 @@ def get_context(user=None):
         if match:
             uniform_benchmarks[benchmark.benchmark_type.identifier] = match.group(1)
             benchmark.identifier = benchmark.benchmark_type.identifier = match.group(1)
+        else:
+            benchmark.identifier = benchmark.benchmark_type.identifier
         benchmark.ceiling = represent(benchmark.ceiling)
     # map from a benchmark name to its parent name
-    benchmark_parents = {benchmark.long_name: benchmark.benchmark_type.parent.identifier
-                         for benchmark in benchmarks}
+    benchmark_parents = {
+        benchmark.long_name: benchmark.benchmark_type.parent.identifier if benchmark.benchmark_type.parent else None
+        for benchmark in benchmarks}
     # configure benchmark level shown by default
     uniform_parents = set(benchmark_parents.values())  # we're going to use the fact
     # that all benchmark instances currently point to their direct parent
@@ -151,7 +159,7 @@ def _collect_models(benchmarks, user=None):
             colors=colors_redgreen if benchmark_meta['root_parent'] != 'engineering' else colors_gray,
             alpha_min=benchmark_meta['min'],
             alpha_max=benchmark_meta['max'] if benchmark_meta['root_parent'] != 'engineering'
-            else 2.5 * benchmark_meta['max'])
+            else 2.5 * benchmark_meta['max'])  # this is a hack to make the gray less visually dominant on the page
         score_ceiled, score_raw = represent(score.score_ceiled), represent(score.score_raw)
         score_display = ScoreDisplay(benchmark=score.benchmark.benchmark_type.identifier,
                                      score_ceiled=score_ceiled, score_raw=score_raw, color=color)
@@ -183,8 +191,16 @@ def _collect_models(benchmarks, user=None):
             if benchmarks_meta[score.benchmark]['root_parent'] == 'engineering':
                 continue
             scores.append(float(score.score_ceiled) if score.score_ceiled != 'X' else 0)
-        average_score = np.mean(scores)
-        average_scores[model_row.identifier] = average_score
+        average_scores[model_row.identifier] = np.mean(scores)
+    # prepend average score to model scores
+    average_min, average_max = min(list(average_scores.values())), max(list(average_scores.values()))
+    for model_row in data:
+        average_score = average_scores[model_row.identifier]
+        color = representative_color(average_score, colors=colors_redgreen,
+                                     alpha_min=average_min, alpha_max=average_max)
+        score_ceiled = represent(average_score)
+        score_display = ScoreDisplay(benchmark="average", score_ceiled=score_ceiled, score_raw=None, color=color)
+        model_row.scores.insert(0, score_display)
     all_scores = list(sorted(average_scores.values(), reverse=True))
 
     ranks = {model: all_scores.index(score) + 1 for model, score in average_scores.items()}
