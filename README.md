@@ -12,9 +12,11 @@ Run server: `python manage.py runserver &`
 ```
 python manage.py flush
 
-python manage.py loaddata static/benchmarks/fixture-bibs.json
-python manage.py loaddata static/benchmarks/fixture-models_meta.json
-python manage.py loaddata static/benchmarks/fixture-benchmarks.json
+python manage.py loaddata static/benchmarks/fixture-benchmarkreferences.json
+python manage.py loaddata static/benchmarks/fixture-benchmarktypes.json
+python manage.py loaddata static/benchmarks/fixture-benchmarkinstances.json
+python manage.py loaddata static/benchmarks/fixture-modelreferences.json
+python manage.py loaddata static/benchmarks/fixture-models.json
 python manage.py loaddata static/benchmarks/fixture-scores.json
 ```
 

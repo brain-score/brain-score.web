@@ -1,15 +1,10 @@
-from django.views import View
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-from .forms import *
-from django.contrib.sites.shortcuts import get_current_site
 import datetime
 import json
 import logging
 import requests
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
-from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect
@@ -21,13 +16,7 @@ from django.views import View
 from .forms import SignupForm, LoginForm, UploadFileForm
 from .models import Submission
 from .tokens import account_activation_token
-from django.core.mail import EmailMessage
-import requests
-import json
-import datetime
 from .views.index import get_context
-
-import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -142,9 +131,10 @@ class Upload(View):
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
 
-        _loggerprint(request.user.get_full_name())
-                _logger.debug(f"request user: {request.user.get_full_name()}")
+        _logger.debug(request.user.get_full_name())
+        _logger.debug(f"request user: {request.user.get_full_name()}")
 
+        # submit to jenkins
         jenkins_url = "http://braintree.mit.edu:8080"
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
@@ -154,10 +144,7 @@ class Upload(View):
                       f"&email={request.user.get_full_name()}" \
                       f"&submission={submission.id}"
         _logger.debug(f"request_url: {request_url}")
-
-        # submit to jenkins
         params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
-        _logger.debug(f"Triggering build: {job_name}")
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 

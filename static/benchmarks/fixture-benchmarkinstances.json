@@ -1,0 +1,65 @@
+[
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.8950300216674805,
+      "ceiling_error": 0.0006182539189773819,
+      "version": 3,
+      "benchmark_type": "dicarlo.Majaj2015.V4-pls"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.8218406438827515,
+      "ceiling_error": 0.00058712737191322,
+      "version": 3,
+      "benchmark_type": "dicarlo.Majaj2015.IT-pls"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.8736567542821909,
+      "ceiling_error": 0.003592410347494883,
+      "version": 2,
+      "benchmark_type": "movshon.FreemanZiemba2013.V1-pls"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.8248361574747418,
+      "ceiling_error": 0.0017617471233464287,
+      "version": 2,
+      "benchmark_type": "movshon.FreemanZiemba2013.V2-pls"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.79,
+      "ceiling_error": NaN,
+      "version": 2,
+      "benchmark_type": "dicarlo.Kar2019-ost"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.4848398631810774,
+      "ceiling_error": 0.003951294268384253,
+      "version": 2,
+      "benchmark_type": "dicarlo.Rajalingham2018-i2n"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 1.0,
+      "ceiling_error": NaN,
+      "version": 1,
+      "benchmark_type": "fei-fei.Deng2009-top1"
+    }
+  }
+]

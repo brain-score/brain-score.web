@@ -4,7 +4,7 @@
     <div class="xlabel-container">
         <select id="xlabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.identifier }}</option>
             {% endfor %}
         </select>
     </div>
@@ -12,7 +12,7 @@
     <div class="ylabel-container">
         <select id="ylabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.identifier }}</option>
             {% endfor %}
         </select>
     </div>

@@ -1,0 +1,191 @@
+[
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1712.00559",
+      "author": "Liu",
+      "year": "2017",
+      "bibtex": "@article{DBLP:journals/corr/abs-1712-00559,\r\n  author    = {Chenxi Liu and\r\n               Barret Zoph and\r\n               Jonathon Shlens and\r\n               Wei Hua and\r\n               Li{-}Jia Li and\r\n               Li Fei{-}Fei and\r\n               Alan L. Yuille and\r\n               Jonathan Huang and\r\n               Kevin Murphy},\r\n  title     = {Progressive Neural Architecture Search},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1712.00559},\r\n  year      = {2017},\r\n  month = {dec},\r\n  url       = {http://arxiv.org/abs/1712.00559},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1712.00559},\r\n  timestamp = {Wed, 03 Jan 2018 12:33:17 +0100},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1712-00559},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1409.4842",
+      "bibtex": "@article{DBLP:journals/corr/SzegedyLJSRAEVR14,\r\n  author    = {Christian Szegedy and\r\n               Wei Liu and\r\n               Yangqing Jia and\r\n               Pierre Sermanet and\r\n               Scott E. Reed and\r\n               Dragomir Anguelov and\r\n               Dumitru Erhan and\r\n               Vincent Vanhoucke and\r\n               Andrew Rabinovich},\r\n  title     = {Going Deeper with Convolutions},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1409.4842},\r\n  year      = {2014},\r\n  month = {sep},\r\n  url       = {http://arxiv.org/abs/1409.4842},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1409.4842},\r\n  timestamp = {Wed, 07 Jun 2017 14:40:42 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/SzegedyLJSRAEVR14},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}",
+      "year": "2014",
+      "author": "Szegedy"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "bibtex": "@article{DBLP:journals/corr/HuangLW16a,\r\n  author    = {Gao Huang and\r\n               Zhuang Liu and\r\n               Kilian Q. Weinberger},\r\n  title     = {Densely Connected Convolutional Networks},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1608.06993},\r\n  year      = {2016},\r\n  month  = {aug},\r\n  url       = {http://arxiv.org/abs/1608.06993},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1608.06993},\r\n  timestamp = {Wed, 07 Jun 2017 14:42:40 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/HuangLW16a},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}",
+      "year": "2016",
+      "author": "Huang",
+      "url": "https://arxiv.org/abs/1608.06993"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "author": "Mahajan",
+      "year": "2018",
+      "url": "https://arxiv.org/pdf/1906.06423.pdf",
+      "bibtex": "@InProceedings{Mahajan2018ECCV,\r\nauthor = {Mahajan, Dhruv and Girshick, Ross and Ramanathan, Vignesh and He, Kaiming and Paluri, Manohar and Li, Yixuan and Bharambe, Ashwin and van der Maaten, Laurens},\r\ntitle = {Exploring the Limits of Weakly Supervised Pretraining},\r\nbooktitle = {The European Conference on Computer Vision (ECCV)},\r\nmonth = {sep},\r\nyear = {2018}\r\n} "
+    }
+  },
+  {
+    "fields": {
+      "url": "https://openreview.net/forum?id=SkfMWhAqYQ",
+      "author": "Brendel",
+      "year": "2019",
+      "bibtex": "@inproceedings{\r\nbrendel2018approximating,\r\ntitle={Approximating {CNN}s with Bag-of-local-Features models works surprisingly well on ImageNet},\r\nauthor={Wieland Brendel and Matthias Bethge},\r\nbooktitle={International Conference on Learning Representations},\r\nyear={2019},\r\nmonth={mar},\r\nurl={https://openreview.net/forum?id=SkfMWhAqYQ},\r\n}"
+    },
+    "model": "benchmarks.Reference"
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks",
+      "author": "Krizhevsky",
+      "year": "2012",
+      "bibtex": "@incollection{NIPS2012_4824,\r\ntitle = {ImageNet Classification with Deep Convolutional Neural Networks},\r\nauthor = {Alex Krizhevsky and Sutskever, Ilya and Hinton, Geoffrey E},\r\nbooktitle = {Advances in Neural Information Processing Systems 25},\r\neditor = {F. Pereira and C. J. C. Burges and L. Bottou and K. Q. Weinberger},\r\npages = {1097--1105},\r\nyear = {2012},\r\npublisher = {Curran Associates, Inc.},\r\nurl = {http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf}\r\n}\r\n"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "year": "2015",
+      "author": "Parkhi",
+      "url": "https://www.robots.ox.ac.uk/~vgg/publications/2015/Parkhi15/parkhi15.pdf",
+      "bibtex": "@inproceedings{parkhi2015deep,\r\n  title={Deep face recognition.},\r\n  author={Parkhi, Omkar M and Vedaldi, Andrea and Zisserman, Andrew and others},\r\n  booktitle={British Machine Vision Conference},\r\n  year={2015},\r\n  month = {sep},\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://www.biorxiv.org/content/early/2018/09/04/408385",
+      "year": "2018",
+      "bibtex": "@incollection{Kubilius2018CORnet,\r\ntitle = {CORnet: Modeling the Neural and Behavioral Mechanisms of Core Object Recognition},\r\nauthor = {Jonas Kubilius and Martin Schrimpf and Aran Nayebi and Daniel Bear and Daniel L. K. Yamins and James J. DiCarlo},\r\nyear = {2018},\r\nmonth={sep},\r\n}\r\n",
+      "author": "Kubilius"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1409.1556",
+      "year": "2014",
+      "author": "Simonyan",
+      "bibtex": "@article{DBLP:journals/corr/SimonyanZ14a,\r\n  author    = {Karen Simonyan and\r\n               Andrew Zisserman},\r\n  title     = {Very Deep Convolutional Networks for Large-Scale Image Recognition},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1409.1556},\r\n  year      = {2014},\r\n  month = {sep},\r\n  url       = {http://arxiv.org/abs/1409.1556},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1409.1556},\r\n  timestamp = {Wed, 07 Jun 2017 14:41:51 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/SimonyanZ14a},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "year": "2016",
+      "bibtex": "@article{SqueezeNet,\r\n    Author = {Forrest N. Iandola and Song Han and Matthew W. Moskewicz and Khalid Ashraf and William J. Dally and Kurt Keutzer},\r\n    Title = {SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and $<$0.5MB model size},\r\n    Journal = {arXiv:1602.07360},\r\n    Year = {2016},\r\n    Month = {feb}\r\n}",
+      "url": "https://arxiv.org/abs/1602.07360",
+      "author": "Iandola"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "bibtex": "@article{DBLP:journals/corr/SzegedyIV16,\r\n  author    = {Christian Szegedy and\r\n               Sergey Ioffe and\r\n               Vincent Vanhoucke},\r\n  title     = {Inception-v4, Inception-ResNet and the Impact of Residual Connections\r\n               on Learning},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1602.07261},\r\n  year      = {2016},\r\n  month = {feb},\r\n  url       = {http://arxiv.org/abs/1602.07261},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1602.07261},\r\n  timestamp = {Wed, 07 Jun 2017 14:42:58 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/SzegedyIV16},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}",
+      "url": "https://arxiv.org/abs/1602.07261",
+      "year": "2016",
+      "author": "Szegedy"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "author": "Touvron",
+      "year": "2019",
+      "bibtex": "@incollection{NIPS2019_9035,\r\ntitle = {Fixing the train-test resolution discrepancy},\r\nauthor = {Touvron, Hugo and Vedaldi, Andrea and Douze, Matthijs and Jegou, Herve},\r\nbooktitle = {Advances in Neural Information Processing Systems 32},\r\neditor = {H. Wallach and H. Larochelle and A. Beygelzimer and F. d\\textquotesingle Alch\\'{e}-Buc and E. Fox and R. Garnett},\r\npages = {8252--8262},\r\nyear = {2019},\r\npublisher = {Curran Associates, Inc.},\r\nurl = {http://papers.nips.cc/paper/9035-fixing-the-train-test-resolution-discrepancy.pdf}\r\n}",
+      "url": "http://papers.nips.cc/paper/9035-fixing-the-train-test-resolution-discrepancy"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1610.02357",
+      "year": "2016",
+      "bibtex": "@article{DBLP:journals/corr/Chollet16a,\r\n  author    = {Fran{\\c{c}}ois Chollet},\r\n  title     = {Xception: Deep Learning with Depthwise Separable Convolutions},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1610.02357},\r\n  year      = {2016},\r\n  month = {oct},\r\n  url       = {http://arxiv.org/abs/1610.02357},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1610.02357},\r\n  timestamp = {Wed, 07 Jun 2017 14:41:03 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/Chollet16a},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}",
+      "author": "Chollet"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "year": "2015",
+      "author": "Szegedy",
+      "url": "https://arxiv.org/abs/1512.00567",
+      "bibtex": "@article{DBLP:journals/corr/SzegedyVISW15,\r\n  author    = {Christian Szegedy and\r\n               Vincent Vanhoucke and\r\n               Sergey Ioffe and\r\n               Jonathon Shlens and\r\n               Zbigniew Wojna},\r\n  title     = {Rethinking the Inception Architecture for Computer Vision},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1512.00567},\r\n  year      = {2015},\r\n  month  = {dec},\r\n  url       = {http://arxiv.org/abs/1512.00567},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1512.00567},\r\n  timestamp = {Wed, 07 Jun 2017 14:40:22 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/SzegedyVISW15},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "year": "2015",
+      "author": "He",
+      "url": "https://arxiv.org/abs/1512.03385",
+      "bibtex": "@article{DBLP:journals/corr/HeZRS15,\r\n  author    = {Kaiming He and\r\n               Xiangyu Zhang and\r\n               Shaoqing Ren and\r\n               Jian Sun},\r\n  title     = {Deep Residual Learning for Image Recognition},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1512.03385},\r\n  year      = {2015},\r\n  month = {dec},\r\n  url       = {http://arxiv.org/abs/1512.03385},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1512.03385},\r\n  timestamp = {Wed, 07 Jun 2017 14:41:17 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/HeZRS15},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1707.07012",
+      "author": "Zoph",
+      "year": "2017",
+      "bibtex": "@article{DBLP:journals/corr/ZophVSL17,\r\n  author    = {Barret Zoph and\r\n               Vijay Vasudevan and\r\n               Jonathon Shlens and\r\n               Quoc V. Le},\r\n  title     = {Learning Transferable Architectures for Scalable Image Recognition},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1707.07012},\r\n  year      = {2017},\r\n  month = {jul},\r\n  url       = {http://arxiv.org/abs/1707.07012},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1707.07012},\r\n  timestamp = {Sat, 05 Aug 2017 14:56:05 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/ZophVSL17},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://papers.nips.cc/paper/9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns",
+      "year": "2018",
+      "bibtex": "@incollection{Kubilius2018CORnet,\r\ntitle = {CORnet: Modeling the Neural and Behavioral Mechanisms of Core Object Recognition},\r\nauthor = {Jonas Kubilius and Martin Schrimpf and Aran Nayebi and Daniel Bear and Daniel L. K. Yamins and James J. DiCarlo},\r\nyear = {2018},\r\nmonth={sep},\r\n}\r\n",
+      "author": "Kubilius"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "year": "2019",
+      "bibtex": "@inproceedings{santurkar2019computer,\r\n    title={Computer Vision with a Single (Robust) Classifier},\r\n    author={Shibani Santurkar and Dimitris Tsipras and Brandon Tran and Andrew Ilyas and Logan Engstrom and Aleksander Madry},\r\n    booktitle={ArXiv preprint arXiv:1906.09453},\r\n    year={2019}\r\n}",
+      "author": "Santurkar",
+      "url": "https://arxiv.org/pdf/1906.09453.pdf"
+    }
+  },
+  {
+    "fields": {
+      "author": "Mahajan",
+      "year": "2018",
+      "bibtex": "@InProceedings{Mahajan2018ECCV,\r\nauthor = {Mahajan, Dhruv and Girshick, Ross and Ramanathan, Vignesh and He, Kaiming and Paluri, Manohar and Li, Yixuan and Bharambe, Ashwin and van der Maaten, Laurens},\r\ntitle = {Exploring the Limits of Weakly Supervised Pretraining},\r\nbooktitle = {The European Conference on Computer Vision (ECCV)},\r\nmonth = {sep},\r\nyear = {2018}\r\n} ",
+      "url": "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
+    },
+    "model": "benchmarks.Reference"
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1704.04861",
+      "bibtex": "@article{DBLP:journals/corr/HowardZCKWWAA17,\r\n  author    = {Andrew G. Howard and\r\n               Menglong Zhu and\r\n               Bo Chen and\r\n               Dmitry Kalenichenko and\r\n               Weijun Wang and\r\n               Tobias Weyand and\r\n               Marco Andreetto and\r\n               Hartwig Adam},\r\n  title     = {MobileNets: Efficient Convolutional Neural Networks for Mobile Vision\r\n               Applications},\r\n  journal   = {CoRR},\r\n  volume    = {abs/1704.04861},\r\n  year      = {2017},\r\n  month = {apr},\r\n  url       = {http://arxiv.org/abs/1704.04861},\r\n  archivePrefix = {arXiv},\r\n  eprint    = {1704.04861},\r\n  timestamp = {Wed, 07 Jun 2017 14:40:11 +0200},\r\n  biburl    = {https://dblp.org/rec/bib/journals/corr/HowardZCKWWAA17},\r\n  bibsource = {dblp computer science bibliography, https://dblp.org}\r\n}",
+      "author": "Howard",
+      "year": "2017"
+    }
+  },
+  {
+    "fields": {
+      "author": "Geirhos",
+      "bibtex": "@inproceedings{\r\ngeirhos2018imagenettrained,\r\ntitle={ImageNet-trained {CNN}s are biased towards texture; increasing shape bias improves accuracy and robustness.},\r\nauthor={Robert Geirhos and Patricia Rubisch and Claudio Michaelis and Matthias Bethge and Felix A. Wichmann and Wieland Brendel},\r\nbooktitle={International Conference on Learning Representations},\r\nyear={2019},\r\nmonth={feb},\r\nurl={https://openreview.net/forum?id=Bygh9j09KX},\r\n}",
+      "year": "2019",
+      "url": "https://openreview.net/forum?id=Bygh9j09KX"
+    },
+    "model": "benchmarks.Reference"
+  }
+]
