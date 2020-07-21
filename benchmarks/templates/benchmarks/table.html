@@ -15,10 +15,12 @@
                     <strong class="want_to_click" style="padding: 5px; display: {{ benchmark_parents|in_set_hidden:benchmark.name }}">{{ benchmark.parent }}:</strong>{% endif %}
                     
                 {% if benchmark.link %}
-                    <a href="{{ benchmark.link }}">{{ benchmark.name }}</a></p>
+                    <a href="{{ benchmark.link }}">{{ benchmark.name }}{%  if benchmark.version %}
+                        <span class="benchmark-version">v{{ benchmark.version }}</span>
+                    {% endif %}
+                    </a></p>
                 {% else %}
-                <span class="want_to_click">{{ benchmark.name }}</span>
-
+                    <span class="want_to_click">{{ benchmark.name }}</span>
                 {% endif %}
             </th>
 
