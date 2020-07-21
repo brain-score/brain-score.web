@@ -8,22 +8,21 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
 from .forms import SignupForm, LoginForm, UploadFileForm
-from .models import Submission
+from .models import Model, Submission
 from .tokens import account_activation_token
 from .views.index import get_context
-from django.http import JsonResponse
-from .models import ModelReference
-import logging
 
 _logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
 
 class Activate(View):
     def get(self, request, uidb64, token):
@@ -83,6 +82,7 @@ class Signup(View):
         else:
             context = {'form': LoginForm}
             return render(request, 'benchmarks/profile.html', context)
+
 
 class Login(View):
     def get(self, request):
@@ -195,6 +195,7 @@ class Profile(View):
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
+
 class Password(View):
     def get(self, request):
         form = PasswordResetForm()
@@ -222,11 +223,12 @@ class Password(View):
             context = {"activation_email": False, "password_email": True, 'form': LoginForm}
             return render(request, 'benchmarks/password-confirm.html')
         elif form.errors:
-            context = { 'form': form }
+            context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
         else:
             context = {"activation_email": False, 'password_email': False, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
+
 
 class ChangePassword(View):
     def get(self, request, uidb64, token):
@@ -241,7 +243,7 @@ class ChangePassword(View):
             # activate user and login:
             form = ChangePasswordForm(user=user)
 
-            return render(request, 'benchmarks/password.html', { 'form': form })
+            return render(request, 'benchmarks/password.html', {'form': form})
 
         else:
             return HttpResponse('Password change link is invalid!')
@@ -259,31 +261,26 @@ class ChangePassword(View):
             user.is_active = True
             return HttpResponseRedirect('../../profile/')
         elif form.errors:
-            context = { 'form': form }
+            context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
         else:
             context = {"email": True, 'form': form}
             return render(request, 'benchmarks/password.html', {'form': form})
 
+
 class PublicAjax(View):
+    """
+    deals with asynchronous user requests to change model public visibility
+    """
 
     def post(self, request):
-        print(request.user)
-        request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
-
-        #Loads data as a string. Performs changes to evaluate to a python dictionary
+        # data contains a dictionary of model identifiers to a boolean setting of public
         data = json.loads(request.body)
-        print(data)
-        data = data.replace(":true", ":True")
-        data = data.replace(":false", ":False")
-        data = eval(data)
-
-        user_models = get_context(request.user)['models']
-        all_models = ModelReference.objects.all()
-
-        for model in all_models:
-            if model.model in data:
-                model.public = data[model.model]
-                model.save()
-        # make sure that you serialise "request_getdata"
+        model_identifier, public = data['identifier'], data['public']
+        # filter from models that this user owns
+        model = Model.objects.filter(identifier=model_identifier, owner=request.user)
+        assert len(model) == 1, f"Duplicate models found for identifier={model_identifier}, owner={request.user}"
+        model = model[0]
+        model.public = public
+        model.save(update_fields=['public'])
         return JsonResponse("success", safe=False)
