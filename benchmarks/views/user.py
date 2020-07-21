@@ -14,10 +14,10 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
-from .forms import SignupForm, LoginForm, UploadFileForm
-from .models import Model, Submission
-from .tokens import account_activation_token
-from .views.index import get_context
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
+from benchmarks.models import Model, Submission
+from benchmarks.tokens import account_activation_token
+from benchmarks.views.index import get_context
 
 _logger = logging.getLogger(__name__)
 
