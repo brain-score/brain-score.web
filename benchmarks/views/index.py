@@ -60,7 +60,7 @@ def get_context(user=None):
 
     return {'models': models, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            "uniform_benchmarks": uniform_benchmarks, "not_shown_set": set(), "has_user":False}
+            "uniform_benchmarks": uniform_benchmarks, "not_shown_set": set(), "has_user": False}
 
 
 def _collect_benchmarks():
@@ -180,8 +180,11 @@ def _collect_models(benchmarks, user=None):
         for model_row in tqdm(data.values(), desc='sort benchmarks')]
 
     # Remove all non-public models from the sorting and ranking. Allow users to see their own models in the ranking.
-    data = [row for row in data if
-            (user is not None and row.user.id == user) or row.public]  # TODO: compare user for profile table
+    data = [row for row in data
+            # if we are not in a user profile, only show rows that are public
+            if (user is None and row.public)
+            # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+            or (user is not None and row.user == user)]
 
     # compute average scores for models, infer rank by finding index in sorted average scores
     average_scores = {}
