@@ -1,0 +1,16 @@
+[
+  {
+    "model": "benchmarks.user",
+    "pk": 1,
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "email": "martin.schrimpf@outlook.com",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]

@@ -18,6 +18,7 @@ before_script:
   - python manage.py makemigrations
   - python manage.py migrate
   # load data
+  - python manage.py loaddata static/benchmarks/fixture-users.json
   - python manage.py loaddata static/benchmarks/fixture-benchmarkreferences.json
   - python manage.py loaddata static/benchmarks/fixture-benchmarktypes.json
   - python manage.py loaddata static/benchmarks/fixture-benchmarkinstances.json
