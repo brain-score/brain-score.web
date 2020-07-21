@@ -31,7 +31,7 @@ function recursiveChildren(all_coll){
 function assignFunction (coll, i){
     // Simple hide/show function onClick(). Determines what to show by finding all elements with their
     // data-parent value == the current benchmark.
-    console.log(coll[i]);
+
     coll[i].onclick = function() {
         var j;
         const benchmark = coll[i].dataset.benchmark;
