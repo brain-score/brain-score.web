@@ -1,8 +1,8 @@
 {% load static %}
 
 {% if models %}
+<form>
     <table id="leaderboard" class="benchmarks fixed_header" style="margin-top: 120px">
-        <!-- benchmarks -->
         <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their parent
         is. This allows for QuerySelecting and using some of the filters from index.py>
         <thead>
@@ -51,6 +51,9 @@
                         {% endif %}
                 </th>
             {% endfor %}
+            {% if has_user %}
+            <th><p><span style="padding-left: 5px" class="want_to_click"><b>Public</b></span></p></th>
+            {% endif %}
         </tr>
         </thead>
         <!-- models -->
@@ -74,6 +77,11 @@
                         class="score_cell displaySquare depth_{{ benchmark_parents|get_depth_number:score_row.benchmark }} clicker"
                         style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
                 {% endfor %}
+                {% if has_user %}
+                <td>
+                    <input type="checkbox" value="{{model.name}}" style="size: 300%" class="public chktest" {{model|is_public}}>
+                </td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
@@ -84,10 +92,13 @@
         The more green and bright a cell, the better the model's score.
         Scores are ceiled, hover the benchmark to see ceilings.
     </div>
-
+</form>
 {% else %}
     <p>No data.</p>
 {% endif %}
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
 
 <script defer src="{% static "/benchmarks/js/table-expansion.js" %}"></script>
+<script defer src="{% static "/benchmarks/js/table-public.js" %}"></script>

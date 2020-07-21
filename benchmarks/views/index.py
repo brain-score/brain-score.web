@@ -60,7 +60,7 @@ def get_context(user=None):
 
     return {'models': models, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            "uniform_benchmarks": uniform_benchmarks, "not_shown_set": set()}
+            "uniform_benchmarks": uniform_benchmarks, "not_shown_set": set(), "has_user":False}
 
 
 def _collect_benchmarks():
@@ -345,5 +345,12 @@ def get_parent_item(dictionary, key):
                 return_string += "." + i
     else:
         return_string = return_value
-
     return return_string
+
+
+@register.filter
+def is_public(model):
+    if model.public:
+        return "checked"
+    else:
+        return ""

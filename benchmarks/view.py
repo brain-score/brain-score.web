@@ -17,6 +17,9 @@ from .forms import SignupForm, LoginForm, UploadFileForm
 from .models import Submission
 from .tokens import account_activation_token
 from .views.index import get_context
+from django.http import JsonResponse
+from .models import ModelReference
+import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -178,6 +181,7 @@ class Profile(View):
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
             context = get_context(request.user)
+            context["has_user"] = True
             return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
@@ -185,7 +189,7 @@ class Profile(View):
         if user is not None:
             login(request, user)
             context = get_context(user)
-
+            context["has_user"] = True
             return render(request, 'benchmarks/profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
@@ -260,3 +264,26 @@ class ChangePassword(View):
         else:
             context = {"email": True, 'form': form}
             return render(request, 'benchmarks/password.html', {'form': form})
+
+class PublicAjax(View):
+
+    def post(self, request):
+        print(request.user)
+        request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
+
+        #Loads data as a string. Performs changes to evaluate to a python dictionary
+        data = json.loads(request.body)
+        print(data)
+        data = data.replace(":true", ":True")
+        data = data.replace(":false", ":False")
+        data = eval(data)
+
+        user_models = get_context(request.user)['models']
+        all_models = ModelReference.objects.all()
+
+        for model in all_models:
+            if model.model in data:
+                model.public = data[model.model]
+                model.save()
+        # make sure that you serialise "request_getdata"
+        return JsonResponse("success", safe=False)
