@@ -278,9 +278,7 @@ class PublicAjax(View):
         data = json.loads(request.body)
         model_identifier, public = data['identifier'], data['public']
         # filter from models that this user owns
-        model = Model.objects.filter(identifier=model_identifier, owner=request.user)
-        assert len(model) == 1, f"Duplicate models found for identifier={model_identifier}, owner={request.user}"
-        model = model[0]
+        model = Model.objects.get(identifier=model_identifier, owner=request.user)
         model.public = public
         model.save(update_fields=['public'])
         return JsonResponse("success", safe=False)

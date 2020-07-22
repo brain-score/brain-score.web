@@ -26,20 +26,20 @@
                     data-benchmark="{{ benchmark.identifier }}"
                     data-parent="{{ benchmark_parents|get_parent_item:benchmark.long_name }}"
                     class="rotate"
-                    style="display: {{ not_shown_set|in_set:benchmark.identifier }}">
+                    style="display: {{ not_shown_set|in_set:benchmark.long_name }}">
                 <p>
                     {% if benchmark.benchmark_type.parent %}
                         <strong style="padding: 5px; font-size: 26px" class="want_to_click">
                             {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
                         </strong>
-                        {% if benchmark.identifier in uniform_parents %}
-                            <strong data-benchmark="{{ benchmark.identifier }}" style="font-size: 10px"
-                                    class="headerExpand clicker want_to_click"></strong>
-                        {% endif %}
                         <strong class="want_to_click" style="padding: 5px;
                             display: {{ benchmark_parents|in_set_hidden:benchmark.long_name }}">
                             {{ benchmark.benchmark_type.parent.identifier }}:
                         </strong>
+                    {% endif %}
+                    {% if benchmark.identifier in uniform_parents %}
+                        <strong data-benchmark="{{ benchmark.identifier }}" style="font-size: 10px"
+                                class="headerExpand clicker want_to_click"></strong>
                     {% endif %}
 
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
@@ -47,11 +47,11 @@
                             {% if benchmark.version %}
                                 <span class="benchmark-version">v{{ benchmark.version }}</span>
                             {% endif %}
-                        </a></p>
+                        </a>
                     {% else %}
                         <span class="want_to_click">{{ benchmark.identifier }}</span>
                     {% endif %}
-            </th>
+                </p></th>
         {% endfor %}
         {% if has_user %}
             <th><p><span style="padding-left: 5px" class="want_to_click"><b>Public</b></span></p></th>
@@ -74,7 +74,7 @@
             </td>
             {% for score_row in model.scores %}
                 <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"
-                    data-benchmark="{{ uniform_benchmarks|get_item:score_row.benchmark }}"
+                    data-benchmark="{{ score_row.benchmark }}"
                     data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}"
                     class="score_cell displaySquare depth_{{ benchmark_parents|get_depth_number:score_row.benchmark }} clicker"
                     style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>

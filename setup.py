@@ -11,6 +11,7 @@ requirements = [
     "django",
     "django_compressor",
     "colour",
+    "pandas",
     "tqdm",
     "requests",
     "six",

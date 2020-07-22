@@ -32,9 +32,17 @@
     <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
     {% endcompress %}
 
+    {# libraries #}
     <script defer src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script defer src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script defer src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+    {# data #}
+    <script type="text/javascript">
+        comparison_data = {{ comparison_data|safe }};
+    </script>
+
+    {# own sources #}
     {% compress js %}
     <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
     <script defer src="{% static "/benchmarks/js/scrolling-active.js" %}" charset="utf-8"></script>
@@ -47,7 +55,7 @@
         {
             "@context":"https://schema.org/",
             "@type":"Dataset",
-            "name":"Brain-Score neural and behavioral benchmarks",
+            "name":"Brain-Score neural and behavioral brain benchmarks",
             "alternateName":["Brain-Score.ventral-stream", "Brain-Score.vision"],
             "description":"Brain-Score evaluates models of the brain's ventral stream on their quantitative match to neural recordings and behavioral measurements",
             "url":"http://www.brain-score.org",
@@ -56,7 +64,7 @@
                 "human and primate vision",
                 "artificial neural networks",
                 "deep learning"
-            ],
+            ]
         }
     </script>
 
