@@ -22,20 +22,18 @@
             </span></p></th>
         {% for benchmark in benchmarks %}
             <th
-                    title="ceiling: {{ benchmark.ceiling }}"
-                    data-benchmark="{{ benchmark.identifier }}"
-                    data-parent="{{ benchmark_parents|get_parent_item:benchmark.long_name }}"
-                    class="rotate"
-                    style="display: {{ not_shown_set|in_set:benchmark.long_name }}">
+                    {% if benchmark.ceiling %}
+                        title="ceiling: {{ benchmark.ceiling }}"
+                    {% endif %}
+                        data-benchmark="{{ benchmark.identifier }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:benchmark.long_name }}"
+                        class="rotate"
+                        style="display: {{ not_shown_set|in_set:benchmark.long_name }}">
                 <p>
                     {% if benchmark.benchmark_type.parent %}
-                        <strong style="padding: 5px; font-size: 26px" class="want_to_click">
-                            {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
-                        </strong>
-                        <strong class="want_to_click" style="padding: 5px;
-                            display: {{ benchmark_parents|in_set_hidden:benchmark.long_name }}">
-                            {{ benchmark.benchmark_type.parent.identifier }}:
-                        </strong>
+                        <span class="want_to_click benchmark_child_indent">
+                            {{ benchmark_parents|get_initial_characters:benchmark.long_name }}
+                        </span>
                     {% endif %}
                     {% if benchmark.identifier in uniform_parents %}
                         <strong data-benchmark="{{ benchmark.identifier }}" style="font-size: 10px"
@@ -43,13 +41,16 @@
                     {% endif %}
 
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                        <a href="{{ benchmark.benchmark_type.reference.url }}">{{ benchmark.identifier }}
-                            {% if benchmark.version %}
-                                <span class="benchmark-version">v{{ benchmark.version }}</span>
-                            {% endif %}
+                        <a href="{{ benchmark.benchmark_type.reference.url }}">
+                    {% endif %}
+                    <span class="want_to_click depth_{{ benchmark.depth }} {% if benchmark.version %} instance {% endif %}">
+                        {{ benchmark.identifier }}
+                    </span>
+                    {% if benchmark.version %}
+                        <span class="benchmark-version">v{{ benchmark.version }}</span>
+                    {% endif %}
+                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         </a>
-                    {% else %}
-                        <span class="want_to_click">{{ benchmark.identifier }}</span>
                     {% endif %}
                 </p></th>
         {% endfor %}

@@ -295,7 +295,7 @@ def get_initial_characters(dictionary, key):
         checking_key = dictionary[checking_key]
         number_of_characters += 1
 
-    return "∟" * number_of_characters
+    return "–" * number_of_characters
 
 
 # Checks if the parent's name or the part of the parent's name after the first period are in the given dictionary.
