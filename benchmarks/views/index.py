@@ -172,22 +172,23 @@ def _collect_models(benchmarks, user=None):
     ModelRow = namedtuple('ModelRow', field_names=[
         'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
-        'benchmark', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+        'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
     # - convert scores DataFrame into rows
     data = []
     for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = []
         for _, score in group.iterrows():
             benchmark_min, benchmark_max = minmax[score['benchmark']]
+            benchmark = benchmark_lookup[score['benchmark']]
             color = representative_color(
                 score['score_ceiled'],
-                colors=colors_redgreen if benchmark_lookup[score['benchmark']].root_parent != 'engineering'
+                colors=colors_redgreen if benchmark.root_parent != 'engineering'
                 else colors_gray,
                 alpha_min=benchmark_min, alpha_max=benchmark_max)
             score_ceiled = represent(score['score_ceiled'])
-            score_display = ScoreDisplay(benchmark=score['benchmark'],
+            score_display = ScoreDisplay(benchmark=score['benchmark'], benchmark_depth=benchmark.depth,
                                          score_ceiled=score_ceiled, score_raw=score['score_raw'], error=score['error'],
-                                         color=color, order=benchmark_lookup[score['benchmark']].overall_order)
+                                         color=color, order=benchmark.overall_order)
             model_scores.append(score_display)
         model_scores = sorted(model_scores, key=lambda score_display: score_display.order)
 
@@ -273,29 +274,6 @@ def get_initial_characters(dictionary, key):
         number_of_characters += 1
 
     return "∟" * number_of_characters
-
-
-# Used to assign columns to a certain css profile to alter the perceived size. (Children look smaller than parents)
-@register.filter
-def get_depth_number(dictionary, key):
-    number_of_characters = -1
-    checking_key = key
-    while checking_key in dictionary:
-        checking_key = dictionary[checking_key]
-        number_of_characters += 1
-
-    # CSS did not like numbers for classNames
-    ints_to_strings = {
-        0: "zero",
-        1: "one",
-        2: "two",
-        3: "three",
-        4: "four",
-        5: "five",
-        6: "six",
-        7: "seven"
-    }
-    return ints_to_strings[number_of_characters]
 
 
 # Checks if the parent's name or the part of the parent's name after the first period are in the given dictionary.

@@ -76,7 +76,7 @@
                 <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"
                     data-benchmark="{{ score_row.benchmark }}"
                     data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}"
-                    class="score_cell displaySquare depth_{{ benchmark_parents|get_depth_number:score_row.benchmark }} clicker"
+                    class="score_cell displaySquare depth_{{ score_row.benchmark_depth }} clicker"
                     style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
             {% endfor %}
             {% if has_user %}
