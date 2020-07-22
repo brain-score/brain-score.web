@@ -62,7 +62,7 @@ table.benchmarks
         text-align: center
 
       &.rotate:after
-        @include rotate(45deg, 75px, -265px)
+        @include rotate(45deg, 60px, -270px)
         left: -250px
 
       &.headerSortUp:after
@@ -78,7 +78,7 @@ table.benchmarks
 
       white-space: nowrap
       @include transform_origin(0px 0px)
-      @include rotate(315deg, -30px, 30px)
+      @include rotate(315deg, -25px, 40px)
 
       p
         display: inline-block
@@ -91,6 +91,15 @@ table.benchmarks
       background-color: #eff0f1
       color: #a4a49f
       margin-left: 5px
+
+
+    .depth_0
+      font-size: 13pt
+
+    .depth_1
+      &:not(.instance)
+        font-weight: bold
+
 
   td
     border: 5px solid white
@@ -113,25 +122,26 @@ table.benchmarks
     p
       width: 40px
 
-  .depth_0
-    outline: 2px white solid
-    font-size: 13pt
+    // with increasing depth, we 1) decrease the font sizes of scores, and 2) decrease the color box with box-shadow
+    &.depth_0
+      outline: 0
+      font-size: 13pt
 
-  .depth_1
-    outline: 5px white solid
-    font-size: 11pt
+    &.depth_1
+      box-shadow: 0 3px 0 white inset, 0 -3px 0 white inset
+      font-size: 11pt
 
-  .depth_2
-    outline: 7px white solid
-    font-size: 10pt
+    &.depth_2
+      box-shadow: 0 5px 0 white inset, 0 -5px 0 white inset
+      font-size: 10pt
 
-  .depth_3
-    outline: 9px white solid
-    font-size: 8pt
+    &.depth_3
+      box-shadow: 0 7px 0 white inset, 0 -7px 0 white inset
+      font-size: 8pt
 
-  .depth_4
-    outline: 10px white solid
-    font-size: 7pt
+    &.depth_4
+      box-shadow: 0 10px 0 white inset, 0 -10px 0 white inset
+      font-size: 7pt
 
 
   // distance
@@ -139,17 +149,22 @@ table.benchmarks
     border-top: 0.25em solid white
 
   tr
-    // V1 + behavior
-    td:nth-child(4), th:nth-child(4),
-    td:nth-last-child(2), th:nth-last-child(2)
+    // root benchmarks
+    td.depth_0
+      border-left: 2em solid white
+
+      &.rotate
+        @include transform_origin(5px 5px)
+
+    // benchmark levels
+    td.depth_1
       border-left: 1em solid white
 
       &.rotate
         @include transform_origin(5px 5px)
 
-    // ImageNet
-    td:nth-last-child(1), th:nth-last-child(1)
-      border-left: 1.5em solid white
+    td.depth_2, td.depth_3
+      border-left: .5em solid white
 
       &.rotate
         @include transform_origin(5px 5px)
