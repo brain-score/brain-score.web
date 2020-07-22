@@ -173,25 +173,39 @@ def _collect_models(benchmarks, user=None):
         'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+    # - prepare "no score" objects for when a model-benchmark score is missing
+    no_score = {}
+    for benchmark in benchmarks:
+        benchmark_identifier = benchmark.identifier
+        benchmark_min, benchmark_max = minmax[benchmark_identifier]
+        no_score[benchmark_identifier] = ScoreDisplay(
+            benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+            score_ceiled="", score_raw="", error="",
+            color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
     # - convert scores DataFrame into rows
     data = []
     for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
-        model_scores = []
-        for _, score in group.iterrows():
-            benchmark_min, benchmark_max = minmax[score['benchmark']]
-            benchmark = benchmark_lookup[score['benchmark']]
+        model_scores = {}
+        # fill in computed scores
+        for score_ceiled, score_raw, error, benchmark_identifier in zip(
+                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark']):
+            benchmark_min, benchmark_max = minmax[benchmark_identifier]
+            benchmark = benchmark_lookup[benchmark_identifier]
             color = representative_color(
-                score['score_ceiled'],
+                score_ceiled,
                 colors=colors_redgreen if benchmark.root_parent != 'engineering'
                 else colors_gray,
                 alpha_min=benchmark_min, alpha_max=benchmark_max)
-            score_ceiled = represent(score['score_ceiled'])
-            score_display = ScoreDisplay(benchmark=score['benchmark'], benchmark_depth=benchmark.depth,
-                                         score_ceiled=score_ceiled, score_raw=score['score_raw'], error=score['error'],
+            score_ceiled = represent(score_ceiled)
+            score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
+                                         score_ceiled=score_ceiled, score_raw=score_raw, error=error,
                                          color=color, order=benchmark.overall_order)
-            model_scores.append(score_display)
-        model_scores = sorted(model_scores, key=lambda score_display: score_display.order)
+            model_scores[benchmark_identifier] = score_display
+        # fill in missing scores
+        model_scores = [model_scores[benchmark.identifier] if benchmark.identifier in model_scores
+                        else no_score[benchmark.identifier] for benchmark in benchmarks]
 
+        # put everything together, adding model meta
         meta = model_meta[model_identifier]
         model_row = ModelRow(
             identifier=model_identifier,
@@ -200,6 +214,14 @@ def _collect_models(benchmarks, user=None):
             reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
+
+    # Remove all non-public models from the sorting and ranking. Allow users to see their own models in the ranking.
+    data = [model_row for model_row in data
+            # if we are not in a user profile, only show rows that are public
+            if (user is None and model_row.public)
+            # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+            or (user is not None and model_row.user == user)]
+
     return data
 
 
