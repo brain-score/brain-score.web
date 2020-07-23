@@ -37,7 +37,13 @@
                     {% endif %}
                     {% if benchmark.identifier in uniform_parents %}
                         <strong data-benchmark="{{ benchmark.identifier }}" style="font-size: 10px"
-                                class="headerExpand clicker want_to_click"></strong>
+                                class="
+                            {% if benchmark.depth == BASE_DEPTH %}
+                                headerExpand
+                            {% else %}
+                                headerContract
+                            {% endif %}
+                            clicker want_to_click"></strong>
                     {% endif %}
 
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
