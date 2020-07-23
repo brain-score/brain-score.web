@@ -55,7 +55,7 @@
                 </p></th>
         {% endfor %}
         {% if has_user %}
-            <th><p><span style="padding-left: 5px" class="want_to_click"><b>Public</b></span></p></th>
+            <th><p><span class="want_to_click"><b>Public</b></span></p></th>
         {% endif %}
     </tr>
     </thead>
@@ -81,8 +81,8 @@
                     style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
             {% endfor %}
             {% if has_user %}
-                <td>
-                    <input type="checkbox" value="{{ model.identifier }}" style="size: 300%"
+                <td class="model-public-checkbox">
+                    <input type="checkbox" value="{{ model.identifier }}"
                            class="public model-public-checkbox" {{ model|is_public }}>
                 </td>
             {% endif %}
