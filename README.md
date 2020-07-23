@@ -12,12 +12,12 @@ Run server: `python manage.py runserver &`
 ```
 python manage.py flush
 
-python manage.py loaddata static/benchmarks/fixture-benchmarkreferences.json
-python manage.py loaddata static/benchmarks/fixture-benchmarktypes.json
-python manage.py loaddata static/benchmarks/fixture-benchmarkinstances.json
-python manage.py loaddata static/benchmarks/fixture-modelreferences.json
-python manage.py loaddata static/benchmarks/fixture-models.json
-python manage.py loaddata static/benchmarks/fixture-scores.json
+python manage.py loaddata benchmarks/fixtures/fixture-benchmarkreferences.json
+python manage.py loaddata benchmarks/fixtures/fixture-benchmarktypes.json
+python manage.py loaddata benchmarks/fixtures/fixture-benchmarkinstances.json
+python manage.py loaddata benchmarks/fixtures/fixture-modelreferences.json
+python manage.py loaddata benchmarks/fixtures/fixture-models.json
+python manage.py loaddata benchmarks/fixtures/fixture-scores.json
 ```
 
 If you need to reset the database and all migrations (relevant after changing `models.py`):
@@ -26,13 +26,13 @@ If you need to reset the database and all migrations (relevant after changing `m
 3. `python manage.py migrate`
 
 
-## Export
+## Export as static html
 
 1. save website locally (Ctrl+S `http://localhost:8000`)
 2. replace `http://localhost:8000/#*` with `#` (when saved with Chrome)
-3. replace `http://localhost:8000/static/benchmarks/img/icon.png` with `https://s3.amazonaws.com/www.brain-score.org/icon.png`
+3. replace `http://localhost:8000/benchmarks/fixtures/img/icon.png` with `https://s3.amazonaws.com/www.brain-score.org/icon.png`
 4. delete the svg from `<div id="brain-score">`
-5. In `compare.js`, replace the static json link `/static/benchmarks/fixture-scores-javascript.json`
+5. In `compare.js`, replace the static json link `/benchmarks/fixtures/fixture-scores-javascript.json`
     with `https://s3.us-east-2.amazonaws.com/brain-score.web-mock/fixture-scores-javascript.json`
     or `fixture-scores-javascript.json`
 6. upload `Brain-Score.html`, `Brain-Score_files` and `fixture-scores-javascript.json` to S3
