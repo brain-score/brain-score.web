@@ -36,7 +36,7 @@ def view(request):
 
 def get_context(user=None):
     benchmarks = _collect_benchmarks()
-    models = _collect_models(benchmarks, user)
+    model_rows = _collect_models(benchmarks, user)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -60,12 +60,11 @@ def get_context(user=None):
     not_shown_set = {benchmark.long_name for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
 
     # data for javascript comparison script
-    comparison_data = _build_comparison_data(models)
+    comparison_data = _build_comparison_data(model_rows)
 
-    return {'models': models, 'benchmarks': benchmarks,
+    return {'models': model_rows, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            # "uniform_benchmarks": uniform_benchmarks,
-            "not_shown_set": not_shown_set, "has_user": False,
+            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
 
 
@@ -135,9 +134,15 @@ def _collect_models(benchmarks, user=None):
     while benchmark_todos:
         benchmark = benchmark_todos.pop(0)
         if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
-            benchmark_scores = Score.objects.filter(benchmark=benchmark).select_related('model')
+            # Remove all non-public model scores, but allow users to see their own models in the table.
+            if user is None:  # if we are not in a user profile, only show rows that are public
+                user_public = dict(model__public=True)
+            else:  # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+                user_public = dict(model__owner=user)
+            benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
             benchmark_scores = pd.DataFrame([
-                {'benchmark': benchmark.identifier, 'overall_order': benchmark.overall_order,
+                {'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
+                 'overall_order': benchmark.overall_order,
                  'model': score.model.identifier,
                  'score_ceiled': score.score_ceiled, 'score_raw': score.score_raw, 'error': score.error}
                 for score in benchmark_scores])
@@ -214,13 +219,6 @@ def _collect_models(benchmarks, user=None):
             reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
-
-    # Remove all non-public models from the sorting and ranking. Allow users to see their own models in the ranking.
-    data = [model_row for model_row in data
-            # if we are not in a user profile, only show rows that are public
-            if (user is None and model_row.public)
-            # if we are in a user profile, show all rows that this user owns (regardless of public/private)
-            or (user is not None and model_row.user == user)]
 
     return data
 
