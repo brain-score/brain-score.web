@@ -109,7 +109,7 @@ def _collect_benchmarks():
                 instance.children = [child.value.identifier for child in node.children]
                 traverse_todo = node.children + traverse_todo
             else:  # no children --> it's a specific instance
-                instance = BenchmarkInstance.objects.select_related('benchmark_type__reference') \
+                instance = BenchmarkInstance.objects.select_related('benchmark_type') \
                     .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
             instance.parent = node.parent.value if node.parent else None
             instance.root_parent = tree.value.identifier
