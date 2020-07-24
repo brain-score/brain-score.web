@@ -28,7 +28,6 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      'id' : ,
       "name": "squeezenet1_1",
       "reference": [
         "https://arxiv.org/abs/1602.07360"
