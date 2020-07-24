@@ -72,6 +72,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __repr__(self):
         return generic_repr(self)
 
+    class Meta:
+        db_table = 'brainscore_user'
+
 
 def generic_repr(obj):
     return obj.__class__.__name__ \
@@ -93,15 +96,21 @@ class Reference(models.Model):
 
     objects = ReferenceManager()
 
+    class Meta:
+        db_table = 'brainscore_reference'
+
 
 class BenchmarkType(models.Model):
-    identifier = models.CharField(max_length=200, primary_key=True)
+    name = models.CharField(db_column='identifier',max_length=200, primary_key=True)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for parents
     order = models.IntegerField(default=999)
     parent = models.ForeignKey("self", null=True, on_delete=models.PROTECT)  # null: average benchmark has no parent
 
     def __repr__(self):
         return generic_repr(self)
+
+    class Meta:
+        db_table = 'brainscore_benchmarktype'
 
 
 class BenchmarkInstance(models.Model):
@@ -125,17 +134,25 @@ class BenchmarkInstance(models.Model):
 
     objects = BenchmarkInstanceManager()
 
+    class Meta:
+        db_table = 'brainscore_benchmarkinstance'
+
 
 class Submission(models.Model):
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
-
+    model_type = models.CharField(max_length=30)
+    status = models.CharField(max_length=25)
     def __repr__(self):
         return generic_repr(self)
 
+    class Meta:
+        db_table = 'brainscore_submission'
+
 
 class Model(models.Model):
-    identifier = models.CharField(max_length=200)
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for models without publication
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
@@ -147,7 +164,7 @@ class Model(models.Model):
         return generic_repr(self)
 
     def natural_key(self):
-        return self.identifier, self.owner
+        return self.name, self.owner
 
     class ModelManager(models.Manager):
         def get_by_natural_key(self, identifier, owner=None):
@@ -157,6 +174,9 @@ class Model(models.Model):
             return self.get(**kwargs)
 
     objects = ModelManager()
+
+    class Meta:
+        db_table = 'brainscore_model'
 
 
 class Score(models.Model):
@@ -168,6 +188,7 @@ class Score(models.Model):
     error = models.FloatField(default=0, null=True)
     start_timestamp = models.DateTimeField(blank=True)
     end_timestamp = models.DateTimeField(auto_now_add=True, blank=True)
+    comment = models.CharField(max_length=1000)
 
     def __repr__(self):
         return generic_repr(self)
@@ -176,3 +197,6 @@ class Score(models.Model):
         return self.benchmark.natural_key(), self.model.natural_key()
 
     natural_key.dependencies = ['benchmarks.BenchmarkInstance', 'benchmarks.model']
+
+    class Meta:
+        db_table = 'brainscore_score'
