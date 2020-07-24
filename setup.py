@@ -15,6 +15,7 @@ requirements = [
     "tqdm",
     "requests",
     "six",
+    "psycopg2",
 ]
 
 setup(
