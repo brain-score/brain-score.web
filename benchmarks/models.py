@@ -101,7 +101,7 @@ class Reference(models.Model):
 
 
 class BenchmarkType(models.Model):
-    name = models.CharField(db_column='identifier',max_length=200, primary_key=True)
+    identifier = models.CharField(max_length=200, primary_key=True)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for parents
     order = models.IntegerField(default=999)
     parent = models.ForeignKey("self", null=True, on_delete=models.PROTECT)  # null: average benchmark has no parent
@@ -156,9 +156,7 @@ class Model(models.Model):
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for models without publication
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
-    public = models.BooleanField(default=True)
-
-    # details = models.TextField()
+    public = models.BooleanField(default=False)
 
     def __repr__(self):
         return generic_repr(self)

@@ -36,7 +36,7 @@ def view(request):
 
 def get_context(user=None):
     benchmarks = _collect_benchmarks()
-    models = _collect_models(benchmarks, user)
+    model_rows = _collect_models(benchmarks, user)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -60,12 +60,11 @@ def get_context(user=None):
     not_shown_set = {benchmark.long_name for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
 
     # data for javascript comparison script
-    comparison_data = _build_comparison_data(models)
+    comparison_data = _build_comparison_data(model_rows)
 
-    return {'models': models, 'benchmarks': benchmarks,
+    return {'models': model_rows, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            # "uniform_benchmarks": uniform_benchmarks,
-            "not_shown_set": not_shown_set, "has_user": False,
+            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
 
 
@@ -135,9 +134,15 @@ def _collect_models(benchmarks, user=None):
     while benchmark_todos:
         benchmark = benchmark_todos.pop(0)
         if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
-            benchmark_scores = Score.objects.filter(benchmark=benchmark).select_related('model')
+            # Remove all non-public model scores, but allow users to see their own models in the table.
+            if user is None:  # if we are not in a user profile, only show rows that are public
+                user_public = dict(model__public=True)
+            else:  # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+                user_public = dict(model__owner=user)
+            benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
             benchmark_scores = pd.DataFrame([
-                {'benchmark': benchmark.identifier, 'overall_order': benchmark.overall_order,
+                {'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
+                 'overall_order': benchmark.overall_order,
                  'model': score.model.identifier,
                  'score_ceiled': score.score_ceiled, 'score_raw': score.score_raw, 'error': score.error}
                 for score in benchmark_scores])
@@ -172,25 +177,40 @@ def _collect_models(benchmarks, user=None):
     ModelRow = namedtuple('ModelRow', field_names=[
         'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
-        'benchmark', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+        'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+    # - prepare "no score" objects for when a model-benchmark score is missing
+    no_score = {}
+    for benchmark in benchmarks:
+        benchmark_identifier = benchmark.identifier
+        benchmark_min, benchmark_max = minmax[benchmark_identifier]
+        no_score[benchmark_identifier] = ScoreDisplay(
+            benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+            score_ceiled="", score_raw="", error="",
+            color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
     # - convert scores DataFrame into rows
     data = []
     for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
-        model_scores = []
-        for _, score in group.iterrows():
-            benchmark_min, benchmark_max = minmax[score['benchmark']]
+        model_scores = {}
+        # fill in computed scores
+        for score_ceiled, score_raw, error, benchmark_identifier in zip(
+                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark']):
+            benchmark_min, benchmark_max = minmax[benchmark_identifier]
+            benchmark = benchmark_lookup[benchmark_identifier]
             color = representative_color(
-                score['score_ceiled'],
-                colors=colors_redgreen if benchmark_lookup[score['benchmark']].root_parent != 'engineering'
+                score_ceiled,
+                colors=colors_redgreen if benchmark.root_parent != 'engineering'
                 else colors_gray,
                 alpha_min=benchmark_min, alpha_max=benchmark_max)
-            score_ceiled = represent(score['score_ceiled'])
-            score_display = ScoreDisplay(benchmark=score['benchmark'],
-                                         score_ceiled=score_ceiled, score_raw=score['score_raw'], error=score['error'],
-                                         color=color, order=benchmark_lookup[score['benchmark']].overall_order)
-            model_scores.append(score_display)
-        model_scores = sorted(model_scores, key=lambda score_display: score_display.order)
+            score_ceiled = represent(score_ceiled)
+            score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
+                                         score_ceiled=score_ceiled, score_raw=score_raw, error=error,
+                                         color=color, order=benchmark.overall_order)
+            model_scores[benchmark_identifier] = score_display
+        # fill in missing scores
+        model_scores = [model_scores[benchmark.identifier] if benchmark.identifier in model_scores
+                        else no_score[benchmark.identifier] for benchmark in benchmarks]
 
+        # put everything together, adding model meta
         meta = model_meta[model_identifier]
         model_row = ModelRow(
             identifier=model_identifier,
@@ -199,6 +219,7 @@ def _collect_models(benchmarks, user=None):
             reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
+
     return data
 
 
@@ -272,30 +293,7 @@ def get_initial_characters(dictionary, key):
         checking_key = dictionary[checking_key]
         number_of_characters += 1
 
-    return "∟" * number_of_characters
-
-
-# Used to assign columns to a certain css profile to alter the perceived size. (Children look smaller than parents)
-@register.filter
-def get_depth_number(dictionary, key):
-    number_of_characters = -1
-    checking_key = key
-    while checking_key in dictionary:
-        checking_key = dictionary[checking_key]
-        number_of_characters += 1
-
-    # CSS did not like numbers for classNames
-    ints_to_strings = {
-        0: "zero",
-        1: "one",
-        2: "two",
-        3: "three",
-        4: "four",
-        5: "five",
-        6: "six",
-        7: "seven"
-    }
-    return ints_to_strings[number_of_characters]
+    return "–" * number_of_characters
 
 
 # Checks if the parent's name or the part of the parent's name after the first period are in the given dictionary.
