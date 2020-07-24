@@ -129,6 +129,7 @@ class BenchmarkInstance(models.Model):
 class Submission(models.Model):
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
+    model_type = models.CharField(max_length=50)
 
     def __repr__(self):
         return generic_repr(self)
@@ -140,8 +141,6 @@ class Model(models.Model):
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for models without publication
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
     public = models.BooleanField(default=True)
-
-    # details = models.TextField()
 
     def __repr__(self):
         return generic_repr(self)
