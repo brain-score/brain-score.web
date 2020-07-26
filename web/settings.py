@@ -85,35 +85,11 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-# DATABASES = {
-#
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'franzi.sqlite3'),
-#     }
-# }
-
 DATABASES = {
-    # ...
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dev',
-        'USER': 'postgres',
-        'PASSWORD': 'jH6jZ6AZ9wNxLUqGZYjR',
-        'HOST': 'brainscore-1.cw4pkymzswvx.us-east-2.rds.amazonaws.com',
-        'PORT': '5432',
-    },
-    # 'production': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'prod',
-    #     'USER': 'postgres',
-    #     'PASSWORD': 'jH6jZ6AZ9wNxLUqGZYjR',
-    #     'HOST': 'brainscore-1.cw4pkymzswvx.us-east-2.rds.amazonaws.com',
-    #     'PORT': '5432',
-    # },
-    'OPTIONS': {
-        'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE,
-    },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
 }
 
 
