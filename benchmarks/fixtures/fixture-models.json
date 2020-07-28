@@ -2,7 +2,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "alexnet",
+      "identifier": "alexnet",
       "reference": [
         "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
       ],
@@ -15,7 +15,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "squeezenet1_0",
+      "identifier": "squeezenet1_0",
       "reference": [
         "https://arxiv.org/abs/1602.07360"
       ],
@@ -28,7 +28,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "squeezenet1_1",
+      "identifier": "squeezenet1_1",
       "reference": [
         "https://arxiv.org/abs/1602.07360"
       ],
@@ -41,7 +41,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-18",
+      "identifier": "resnet-18",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -54,7 +54,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-34",
+      "identifier": "resnet-34",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -67,7 +67,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-50-pytorch",
+      "identifier": "resnet-50-pytorch",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -80,7 +80,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-50-robust",
+      "identifier": "resnet-50-robust",
       "reference": [
         "https://arxiv.org/pdf/1906.09453.pdf"
       ],
@@ -93,7 +93,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "vgg-16",
+      "identifier": "vgg-16",
       "reference": [
         "https://arxiv.org/abs/1409.1556"
       ],
@@ -106,7 +106,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "vgg-19",
+      "identifier": "vgg-19",
       "reference": [
         "https://arxiv.org/abs/1409.1556"
       ],
@@ -119,7 +119,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "vggface",
+      "identifier": "vggface",
       "reference": [
         "https://www.robots.ox.ac.uk/~vgg/publications/2015/Parkhi15/parkhi15.pdf"
       ],
@@ -132,7 +132,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "xception",
+      "identifier": "xception",
       "reference": [
         "https://arxiv.org/abs/1610.02357"
       ],
@@ -145,7 +145,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "densenet-121",
+      "identifier": "densenet-121",
       "reference": [
         "https://arxiv.org/abs/1608.06993"
       ],
@@ -158,7 +158,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "densenet-169",
+      "identifier": "densenet-169",
       "reference": [
         "https://arxiv.org/abs/1608.06993"
       ],
@@ -171,7 +171,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "densenet-201",
+      "identifier": "densenet-201",
       "reference": [
         "https://arxiv.org/abs/1608.06993"
       ],
@@ -184,7 +184,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "inception_v1",
+      "identifier": "inception_v1",
       "reference": [
         "https://arxiv.org/abs/1409.4842"
       ],
@@ -197,7 +197,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "inception_v2",
+      "identifier": "inception_v2",
       "reference": [
         "https://arxiv.org/abs/1512.00567"
       ],
@@ -210,7 +210,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "inception_v3",
+      "identifier": "inception_v3",
       "reference": [
         "https://arxiv.org/abs/1512.00567"
       ],
@@ -223,7 +223,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "inception_v4",
+      "identifier": "inception_v4",
       "reference": [
         "https://arxiv.org/abs/1602.07261"
       ],
@@ -236,7 +236,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "inception_resnet_v2",
+      "identifier": "inception_resnet_v2",
       "reference": [
         "https://arxiv.org/abs/1602.07261"
       ],
@@ -249,7 +249,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-50_v1",
+      "identifier": "resnet-50_v1",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -262,7 +262,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-101_v1",
+      "identifier": "resnet-101_v1",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -275,7 +275,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-152_v1",
+      "identifier": "resnet-152_v1",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -288,7 +288,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-50_v2",
+      "identifier": "resnet-50_v2",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -301,7 +301,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-101_v2",
+      "identifier": "resnet-101_v2",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -314,7 +314,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet-152_v2",
+      "identifier": "resnet-152_v2",
       "reference": [
         "https://arxiv.org/abs/1512.03385"
       ],
@@ -327,7 +327,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "nasnet_mobile",
+      "identifier": "nasnet_mobile",
       "reference": [
         "https://arxiv.org/abs/1707.07012"
       ],
@@ -340,7 +340,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "nasnet_large",
+      "identifier": "nasnet_large",
       "reference": [
         "https://arxiv.org/abs/1707.07012"
       ],
@@ -353,7 +353,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "pnasnet_large",
+      "identifier": "pnasnet_large",
       "reference": [
         "https://arxiv.org/abs/1712.00559"
       ],
@@ -366,7 +366,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "bagnet9",
+      "identifier": "bagnet9",
       "reference": [
         "https://openreview.net/forum?id=SkfMWhAqYQ"
       ],
@@ -379,7 +379,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "bagnet17",
+      "identifier": "bagnet17",
       "reference": [
         "https://openreview.net/forum?id=SkfMWhAqYQ"
       ],
@@ -392,7 +392,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "bagnet33",
+      "identifier": "bagnet33",
       "reference": [
         "https://openreview.net/forum?id=SkfMWhAqYQ"
       ],
@@ -405,7 +405,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet50-SIN",
+      "identifier": "resnet50-SIN",
       "reference": [
         "https://openreview.net/forum?id=Bygh9j09KX"
       ],
@@ -418,7 +418,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet50-SIN_IN",
+      "identifier": "resnet50-SIN_IN",
       "reference": [
         "https://openreview.net/forum?id=Bygh9j09KX"
       ],
@@ -431,7 +431,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnet50-SIN_IN_IN",
+      "identifier": "resnet50-SIN_IN_IN",
       "reference": [
         "https://openreview.net/forum?id=Bygh9j09KX"
       ],
@@ -444,7 +444,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnext101_32x8d_wsl",
+      "identifier": "resnext101_32x8d_wsl",
       "reference": [
         "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
       ],
@@ -457,7 +457,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnext101_32x16d_wsl",
+      "identifier": "resnext101_32x16d_wsl",
       "reference": [
         "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
       ],
@@ -470,7 +470,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnext101_32x32d_wsl",
+      "identifier": "resnext101_32x32d_wsl",
       "reference": [
         "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
       ],
@@ -483,7 +483,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "resnext101_32x48d_wsl",
+      "identifier": "resnext101_32x48d_wsl",
       "reference": [
         "https://arxiv.org/pdf/1906.06423.pdf"
       ],
@@ -496,7 +496,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "fixres_resnext101_32x48d_wsl",
+      "identifier": "fixres_resnext101_32x48d_wsl",
       "reference": [
         "http://papers.nips.cc/paper/9035-fixing-the-train-test-resolution-discrepancy"
       ],
@@ -509,7 +509,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "dcgan",
+      "identifier": "dcgan",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -520,7 +520,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "convrnn_224",
+      "identifier": "convrnn_224",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -531,7 +531,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_1.0_224",
+      "identifier": "mobilenet_v1_1.0_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -544,7 +544,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_1.0_192",
+      "identifier": "mobilenet_v1_1.0_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -557,7 +557,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_1.0_160",
+      "identifier": "mobilenet_v1_1.0_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -570,7 +570,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_1.0_128",
+      "identifier": "mobilenet_v1_1.0_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -583,7 +583,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.75_224",
+      "identifier": "mobilenet_v1_0.75_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -596,7 +596,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.75_192",
+      "identifier": "mobilenet_v1_0.75_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -609,7 +609,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.75_160",
+      "identifier": "mobilenet_v1_0.75_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -622,7 +622,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.75_128",
+      "identifier": "mobilenet_v1_0.75_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -635,7 +635,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.5_224",
+      "identifier": "mobilenet_v1_0.5_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -648,7 +648,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.5_192",
+      "identifier": "mobilenet_v1_0.5_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -661,7 +661,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.5_160",
+      "identifier": "mobilenet_v1_0.5_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -674,7 +674,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.5_128",
+      "identifier": "mobilenet_v1_0.5_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -687,7 +687,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.25_224",
+      "identifier": "mobilenet_v1_0.25_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -700,7 +700,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.25_192",
+      "identifier": "mobilenet_v1_0.25_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -713,7 +713,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.25_160",
+      "identifier": "mobilenet_v1_0.25_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -726,7 +726,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v1_0.25_128",
+      "identifier": "mobilenet_v1_0.25_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -739,7 +739,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.4_224",
+      "identifier": "mobilenet_v2_1.4_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -752,7 +752,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.3_224",
+      "identifier": "mobilenet_v2_1.3_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -765,7 +765,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.0_224",
+      "identifier": "mobilenet_v2_1.0_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -778,7 +778,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.0_192",
+      "identifier": "mobilenet_v2_1.0_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -791,7 +791,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.0_160",
+      "identifier": "mobilenet_v2_1.0_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -804,7 +804,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.0_128",
+      "identifier": "mobilenet_v2_1.0_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -817,7 +817,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_1.0_96",
+      "identifier": "mobilenet_v2_1.0_96",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -830,7 +830,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.75_224",
+      "identifier": "mobilenet_v2_0.75_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -843,7 +843,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.75_192",
+      "identifier": "mobilenet_v2_0.75_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -856,7 +856,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.75_160",
+      "identifier": "mobilenet_v2_0.75_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -869,7 +869,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.75_128",
+      "identifier": "mobilenet_v2_0.75_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -882,7 +882,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.75_96",
+      "identifier": "mobilenet_v2_0.75_96",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -895,7 +895,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.5_224",
+      "identifier": "mobilenet_v2_0.5_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -908,7 +908,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.5_192",
+      "identifier": "mobilenet_v2_0.5_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -921,7 +921,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.5_160",
+      "identifier": "mobilenet_v2_0.5_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -934,7 +934,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.5_128",
+      "identifier": "mobilenet_v2_0.5_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -947,7 +947,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.5_96",
+      "identifier": "mobilenet_v2_0.5_96",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -960,7 +960,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.35_224",
+      "identifier": "mobilenet_v2_0.35_224",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -973,7 +973,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.35_192",
+      "identifier": "mobilenet_v2_0.35_192",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -986,7 +986,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.35_160",
+      "identifier": "mobilenet_v2_0.35_160",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -999,7 +999,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.35_128",
+      "identifier": "mobilenet_v2_0.35_128",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -1012,7 +1012,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "mobilenet_v2_0.35_96",
+      "identifier": "mobilenet_v2_0.35_96",
       "reference": [
         "https://arxiv.org/abs/1704.04861"
       ],
@@ -1025,7 +1025,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-Z",
+      "identifier": "CORnet-Z",
       "reference": [
         "https://www.biorxiv.org/content/early/2018/09/04/408385"
       ],
@@ -1038,7 +1038,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S",
+      "identifier": "CORnet-S",
       "reference": [
         "https://papers.nips.cc/paper/9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns"
       ],
@@ -1051,7 +1051,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S101010",
+      "identifier": "CORnet-S101010",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -1062,7 +1062,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S222",
+      "identifier": "CORnet-S222",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -1073,7 +1073,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S444",
+      "identifier": "CORnet-S444",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -1084,7 +1084,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S484",
+      "identifier": "CORnet-S484",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
@@ -1095,7 +1095,7 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "CORnet-S10rep",
+      "identifier": "CORnet-S10rep",
       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
