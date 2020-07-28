@@ -162,7 +162,7 @@ class Model(models.Model):
         return generic_repr(self)
 
     def natural_key(self):
-        return self.name, self.owner
+        return self.identifier, self.owner
 
     class ModelManager(models.Manager):
         def get_by_natural_key(self, identifier, owner=None):
