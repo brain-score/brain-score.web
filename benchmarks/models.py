@@ -141,8 +141,8 @@ class BenchmarkInstance(models.Model):
 class Submission(models.Model):
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
-    model_type = models.CharField(max_length=30)
-    status = models.CharField(max_length=25)
+    model_type = models.CharField(max_length=3, default='BaseModel')
+    status = models.CharField(max_length=25, default='unknown')
     def __repr__(self):
         return generic_repr(self)
 
@@ -186,7 +186,7 @@ class Score(models.Model):
     error = models.FloatField(default=0, null=True)
     start_timestamp = models.DateTimeField(blank=True)
     end_timestamp = models.DateTimeField(auto_now_add=True, blank=True)
-    comment = models.CharField(max_length=1000)
+    comment = models.CharField(max_length=1000, null=True)
 
     def __repr__(self):
         return generic_repr(self)
