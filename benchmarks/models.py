@@ -82,9 +82,9 @@ def generic_repr(obj):
 
 
 class Reference(models.Model):
-    author = models.CharField(max_length=50)
+    author = models.CharField(max_length=300)
     year = models.IntegerField()
-    url = models.CharField(max_length=500, unique=True)
+    url = models.CharField(max_length=1000, unique=True)
     bibtex = models.TextField()
 
     def __repr__(self):
@@ -119,7 +119,7 @@ class BenchmarkInstance(models.Model):
 
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
     version = models.IntegerField()
-    ceiling = models.FloatField(default=0)
+    ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
 
     def __repr__(self):
@@ -141,7 +141,7 @@ class BenchmarkInstance(models.Model):
 class Submission(models.Model):
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
-    model_type = models.CharField(max_length=3, default='BaseModel')
+    model_type = models.CharField(max_length=30, default='BaseModel')
     status = models.CharField(max_length=25, default='unknown')
     def __repr__(self):
         return generic_repr(self)
@@ -185,7 +185,7 @@ class Score(models.Model):
     score_ceiled = models.FloatField(default=0, null=True)
     error = models.FloatField(default=0, null=True)
     start_timestamp = models.DateTimeField(blank=True)
-    end_timestamp = models.DateTimeField(auto_now_add=True, blank=True)
+    end_timestamp = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     comment = models.CharField(max_length=1000, null=True)
 
     def __repr__(self):
