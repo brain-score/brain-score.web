@@ -366,7 +366,6 @@ def no_children(benchmarks, models):
     for benchmark in benchmarks:
         if not hasattr(benchmark, 'children'):
             for model in models:
-                print(model.scores)
                 if not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
                     no_children.append(benchmark)
                     break

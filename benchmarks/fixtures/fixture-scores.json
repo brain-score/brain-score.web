@@ -563,6 +563,40 @@
   {
     "model": "benchmarks.Score",
     "fields": {
+      "score_ceiled": 0.2125514165586464,
+      "score_raw": 0.4027845844194801,
+      "error": 0.007280890756973997,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "movshon.FreemanZiemba2013.V1-pls",
+        2
+      ],
+      "model": [
+        "alexnet1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.2125514165586464,
+      "score_raw": 0.4027845844194801,
+      "error": 0.007280890756973997,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "movshon.FreemanZiemba2013.V1-pls",
+        2
+      ],
+      "model": [
+        "alexnet2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
       "score_ceiled": 0.20456264720805334,
       "score_raw": 0.3951427394475354,
       "error": 0.006991072071012234,
@@ -2484,6 +2518,40 @@
   {
     "model": "benchmarks.Score",
     "fields": {
+      "score_ceiled": 0.25461036842642304,
+      "score_raw": 0.41620350483345536,
+      "error": 0.01091622820437114,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "movshon.FreemanZiemba2013.V2-pls",
+        2
+      ],
+      "model": [
+        "alexnet1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.25461036842642304,
+      "score_raw": 0.41620350483345536,
+      "error": 0.01091622820437114,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "movshon.FreemanZiemba2013.V2-pls",
+        2
+      ],
+      "model": [
+        "alexnet2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
       "score_ceiled": 0.25809860188992345,
       "score_raw": 0.4190448584826815,
       "error": 0.011864193713686784,
@@ -3107,6 +3175,40 @@
       ],
       "model": [
         "alexnet"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.5823705606265349,
+      "score_raw": 0.6830261157064104,
+      "error": 0.004048994831440754,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "dicarlo.Majaj2015.V4-pls",
+        3
+      ],
+      "model": [
+        "alexnet1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.5823705606265349,
+      "score_raw": 0.6830261157064104,
+      "error": 0.004048994831440754,
+      "start_timestamp": "2018-09-01 12:00:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "dicarlo.Majaj2015.V4-pls",
+        3
+      ],
+      "model": [
+        "alexnet2"
       ]
     }
   },

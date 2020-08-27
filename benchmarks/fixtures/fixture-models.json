@@ -1,6 +1,37 @@
 [
   {
     "model": "benchmarks.Model",
+    "pk" : 1,
+    "fields": {
+      "identifier": "alexnet1",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "True",
+      "submission_id" : 33
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "pk" : 2,
+    "fields": {
+      "identifier": "alexnet2",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "True",
+      "submission_id" : 34
+    }
+  },
+
+  {
+    "model": "benchmarks.Model",
     "fields": {
       "identifier": "alexnet",
       "reference": [
