@@ -122,12 +122,11 @@ class Upload(View):
         if not may_submit(request.user, delay=datetime.timedelta(days=7)):  # user has already submitted recently
             return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed",
                                 status=403)
-
+        user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
         json_info = {
             "model_type": request.POST['model_type'],
-            "user_id": request.user,
-            "type": "zip",
-            "public": str(form.public)
+            "user_id": user_inst.id,
+            "public": str('public' in request.POST)
         }
 
         with open('result.json', 'w') as fp:
@@ -156,10 +155,7 @@ class Upload(View):
 
 
 def resubmit(request):
-    print(request)
     if request.method == 'POST':
-        print(request.POST)
-        print(request.user)
         _logger.debug(request.user.get_full_name())
         _logger.debug(f"request user: {request.user.get_full_name()}")
         user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
@@ -173,10 +169,10 @@ def resubmit(request):
             if 'benchmarks_' in key:
                 # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
                 benchmarks.append(value.split('_v')[0])
-        if len(model_ids) > 0 and len(benchmarks)>0:
+        if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
                 "user_id": user_inst.id,
-                "models" : model_ids,
+                "models": model_ids,
             }
             with open('result.json', 'w') as fp:
                 json.dump(json_info, fp)
@@ -219,7 +215,6 @@ def may_submit(user, delay):
 
 class Profile(View):
     def get(self, request):
-        print(request)
         if str(request.user) == "AnonymousUser":
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:

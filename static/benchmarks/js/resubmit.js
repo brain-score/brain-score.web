@@ -1,5 +1,3 @@
-console.log('We are here');
-window.alert('We are here');
 var benchSelected = false;
 var modelSelected = false
 

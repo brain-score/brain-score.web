@@ -36,17 +36,17 @@ class UploadPlaceHolder(forms.Form):
 
 
 class UploadFileForm(forms.Form):
-    name = forms.CharField(max_length=200, help_text='Required')
+    # name = forms.CharField(max_length=200, help_text='Required')
     model_type = forms.ChoiceField(choices=[
-        ("BaseModel", "BaseModel - to submit a standard machine learning model"),
-        ("BrainModel", "BrainModel - to change brain-transformation, e.g. layer-mapping, visual degrees etc.")])
-    public = forms.BooleanField(
-        help_text='Check if you want the results of your submitted models should be included in the public ranking.')
+        ("BaseModel", "Base model - to submit a standard machine learning model"),
+        ("BrainModel", "Brain model - to change brain-transformation, e.g. layer-mapping, visual degrees etc.")])
+    public = forms.BooleanField(label='Make model scores public:', required=False,
+        help_text='Check if you want the results of your submitted models included in the public ranking.')
     zip_file = forms.FileField(help_text='Required')
 
     class Meta:
         model = UploadPlaceHolder
-        fields = ('name', 'zip_file')
+        fields = ('zip_file', 'public')
 
 
 class ChangePasswordForm(PasswordChangeForm):

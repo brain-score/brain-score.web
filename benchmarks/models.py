@@ -139,6 +139,11 @@ class BenchmarkInstance(models.Model):
 
 
 class Submission(models.Model):
+    class Status:
+        PENDING = 'running'
+        SUCCESS = 'success'
+        FAILURE = 'failure'
+
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
     model_type = models.CharField(max_length=30, default='BaseModel')
