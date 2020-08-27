@@ -4,15 +4,14 @@
     <div class="xlabel-container">
         <select id="xlabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.long_name }}">{{ benchmark.identifier }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
             {% endfor %}
         </select>
     </div>
-
     <div class="ylabel-container">
         <select id="ylabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.long_name }}">{{ benchmark.identifier }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
             {% endfor %}
         </select>
     </div>

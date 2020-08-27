@@ -16,6 +16,7 @@ requirements = [
     "requests",
     "six",
     "psycopg2",
+    "boto3",
 ]
 
 setup(

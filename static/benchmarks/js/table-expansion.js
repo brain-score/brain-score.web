@@ -34,7 +34,8 @@ function assignFunction (coll, i){
 
     coll[i].onclick = function() {
         var j;
-        const benchmark = coll[i].dataset.benchmark;
+        let benchmark = coll[i].dataset.benchmark;
+        benchmark = benchmark + '_v0'
         var all_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark)}]`);
         changeParentSymbol(benchmark)
         recursiveChildren(all_coll);

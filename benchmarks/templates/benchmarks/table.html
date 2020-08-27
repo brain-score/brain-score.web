@@ -25,18 +25,18 @@
                     {% if benchmark.ceiling %}
                         title="ceiling: {{ benchmark.ceiling }}"
                     {% endif %}
-                        data-benchmark="{{ benchmark.identifier }}"
-                        data-parent="{{ benchmark_parents|get_parent_item:benchmark.long_name }}"
+                        data-benchmark="{{ benchmark.short_name }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
                         class="rotate"
-                        style="display: {{ not_shown_set|in_set:benchmark.long_name }}">
+                        style="display:{{not_shown_set|in_set:benchmark.identifier }}">
                 <p>
                     {% if benchmark.benchmark_type.parent %}
                         <span class="want_to_click benchmark_child_indent">
-                            {{ benchmark_parents|get_initial_characters:benchmark.long_name }}
+                            {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
                         </span>
                     {% endif %}
                     {% if benchmark.identifier in uniform_parents %}
-                        <strong data-benchmark="{{ benchmark.identifier }}" style="font-size: 10px"
+                        <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
                                 class="
                             {% if benchmark.depth == BASE_DEPTH %}
                                 headerExpand
@@ -50,7 +50,7 @@
                         <a href="{{ benchmark.benchmark_type.reference.url }}">
                     {% endif %}
                     <span class="want_to_click depth_{{ benchmark.depth }} {% if benchmark.version %} instance {% endif %}">
-                        {{ benchmark.identifier }}
+                        {{ benchmark.short_name }}
                     </span>
                     {% if benchmark.version %}
                         <span class="benchmark-version">v{{ benchmark.version }}</span>

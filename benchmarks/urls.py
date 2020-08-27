@@ -13,4 +13,5 @@ urlpatterns = [
     path('password/', user.Password.as_view(), name='password'),
     path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name='change-password'),
     path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+    path('resubmit/', user.resubmit, name='resubmit'),
 ]
