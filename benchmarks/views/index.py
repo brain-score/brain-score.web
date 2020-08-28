@@ -51,7 +51,8 @@ def get_context(user=None):
             benchmark.short_name = benchmark.benchmark_type.identifier
         benchmark.ceiling = represent(benchmark.ceiling)
         benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
-    # map from a benchmark to its parent
+    # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>, parent have always version 0 (only to match the pattern).
+    # We set here parent nodes as value -> abstract nodes so they must have version 0.
     benchmark_parents = {
         benchmark.identifier: f'{benchmark.benchmark_type.parent.identifier}_v0' if benchmark.benchmark_type.parent else None
         for benchmark in benchmarks}
@@ -180,85 +181,85 @@ def _collect_models(benchmarks, user=None):
             benchmark_todos.append(parent)
     # setup benchmark metadata for all scores
     benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
-    if scores is not None:
-        minmax = {}
-        for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
-            benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
-            bench_minmax = (
-                min(group['score_ceiled'].fillna(0)),
-                max(group['score_ceiled'].fillna(0))
-                # this is an ugly hack to make the gray less visually dominant on the page
-                * (2.5 if benchmark_lookup[benchmark_id].root_parent == 'engineering' else 1))
-            if bench_minmax[0] == bench_minmax[1]:
-                bench_minmax = (0,1)
-            minmax[benchmark_id] = bench_minmax
-
-
-
-        # arrange into per-model scores
-        # - prepare model meta
-        model_meta = Model.objects.select_related('reference')
-        model_meta = {model.identifier: model for model in model_meta}
-        # - prepare rank
-        model_ranks = scores[scores['benchmark'] == 'average']
-        model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
-        # - prepare data structures
-        ModelRow = namedtuple('ModelRow', field_names=[
-            'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
-        ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
-            'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
-        # - prepare "no score" objects for when a model-benchmark score is missing
-        no_score = {}
-        for benchmark in benchmarks:
-            benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
-            if benchmark_identifier in minmax:
-                benchmark_min, benchmark_max = minmax[benchmark_identifier]
-                no_score[benchmark_identifier] = ScoreDisplay(
-                    benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
-                    score_ceiled="", score_raw="", error="",
-                    color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
-            else:
-                no_score[benchmark_identifier] = ScoreDisplay(
-                    benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
-                    score_ceiled="", score_raw="", error="",
-                    color=representative_color(None, alpha_min=0, alpha_max=1))
-        # - convert scores DataFrame into rows
-        data = []
-        for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
-            model_scores = {}
-            # fill in computed scores
-            for score_ceiled, score_raw, error, benchmark, version in zip(
-                    group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'], group['benchmark_version']):
-                benchmark_identifier = f'{benchmark}_v{version}'
-                benchmark_min, benchmark_max = minmax[benchmark_identifier]
-                benchmark = benchmark_lookup[benchmark_identifier]
-                color = representative_color(
-                    score_ceiled,
-                    colors=colors_redgreen if benchmark.root_parent != 'engineering'
-                    else colors_gray,
-                    alpha_min=benchmark_min, alpha_max=benchmark_max)
-                score_ceiled = represent(score_ceiled)
-                score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
-                                             score_ceiled=score_ceiled, score_raw=score_raw, error=error,
-                                             color=color, order=benchmark.overall_order)
-                model_scores[benchmark_identifier] = score_display
-            # fill in missing scores
-            model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
-                            else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
-
-            # put everything together, adding model meta
-            meta = model_meta[model_identifier]
-            model_row = ModelRow(
-                identifier=model_identifier,
-                scores=model_scores, rank=model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze(),
-                reference_identifier=f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None,
-                reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
-            data.append(model_row)
-        data = list(sorted(data, key=lambda model_row: model_row.rank))
-
-        return data
-    else:
+    if scores is None:
         return []
+    minmax = {}
+    for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
+        benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
+        bench_minmax = (
+            min(group['score_ceiled'].fillna(0)),
+            max(group['score_ceiled'].fillna(0))
+            # this is an ugly hack to make the gray less visually dominant on the page
+            * (2.5 if benchmark_lookup[benchmark_id].root_parent == 'engineering' else 1))
+        if bench_minmax[0] == bench_minmax[1]:
+            bench_minmax = (0,1)
+        minmax[benchmark_id] = bench_minmax
+
+
+
+    # arrange into per-model scores
+    # - prepare model meta
+    model_meta = Model.objects.select_related('reference')
+    model_meta = {model.identifier: model for model in model_meta}
+    # - prepare rank
+    model_ranks = scores[scores['benchmark'] == 'average']
+    model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
+    # - prepare data structures
+    ModelRow = namedtuple('ModelRow', field_names=[
+        'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
+    ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
+        'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+    # - prepare "no score" objects for when a model-benchmark score is missing
+    no_score = {}
+    for benchmark in benchmarks:
+        benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
+        if benchmark_identifier in minmax:
+            benchmark_min, benchmark_max = minmax[benchmark_identifier]
+            no_score[benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+                score_ceiled="", score_raw="", error="",
+                color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
+        else:
+            no_score[benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+                score_ceiled="", score_raw="", error="",
+                color=representative_color(None, alpha_min=0, alpha_max=1))
+    # - convert scores DataFrame into rows
+    data = []
+    for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
+        model_scores = {}
+        # fill in computed scores
+        for score_ceiled, score_raw, error, benchmark, version in zip(
+                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'], group['benchmark_version']):
+            benchmark_identifier = f'{benchmark}_v{version}'
+            benchmark_min, benchmark_max = minmax[benchmark_identifier]
+            benchmark = benchmark_lookup[benchmark_identifier]
+            color = representative_color(
+                score_ceiled,
+                colors=colors_redgreen if benchmark.root_parent != 'engineering'
+                else colors_gray,
+                alpha_min=benchmark_min, alpha_max=benchmark_max)
+            score_ceiled = represent(score_ceiled)
+            score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
+                                         score_ceiled=score_ceiled, score_raw=score_raw, error=error,
+                                         color=color, order=benchmark.overall_order)
+            model_scores[benchmark_identifier] = score_display
+        # fill in missing scores
+        model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
+                        else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
+
+        # put everything together, adding model meta
+        meta = model_meta[model_identifier]
+        model_row = ModelRow(
+            identifier=model_identifier,
+            scores=model_scores, rank=model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze(),
+            reference_identifier=f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None,
+            reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
+        data.append(model_row)
+    data = list(sorted(data, key=lambda model_row: model_row.rank))
+
+    return data
+
 
 
 def normalize(value, min_value, max_value):

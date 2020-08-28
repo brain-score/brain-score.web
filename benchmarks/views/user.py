@@ -156,7 +156,6 @@ class Upload(View):
 
 def resubmit(request):
     if request.method == 'POST':
-        _logger.debug(request.user.get_full_name())
         _logger.debug(f"request user: {request.user.get_full_name()}")
         user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
         model_ids = []
@@ -340,8 +339,10 @@ def get_secret(secret_name, region_name='us-east-2'):
             _logger.error("The request was invalid due to:", e)
         elif e.response['Error']['Code'] == 'InvalidParameterException':
             _logger.error("The request had invalid params:", e)
+        raise e
     except Exception as e:
         _logger.error("The request failed with:", e)
+        raise e
     else:
         # Secrets Manager decrypts the secret value using the associated KMS CMK
         # Depending on whether the secret was a string or binary, only one of these fields will be populated

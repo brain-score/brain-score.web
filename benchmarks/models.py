@@ -141,7 +141,7 @@ class BenchmarkInstance(models.Model):
 class Submission(models.Model):
     class Status:
         PENDING = 'running'
-        SUCCESS = 'success'
+        SUCCESS = 'successful'
         FAILURE = 'failure'
 
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)

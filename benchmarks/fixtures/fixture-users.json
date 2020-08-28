@@ -33,7 +33,7 @@
     "fields" : {
       "timestamp": "2018-09-01 12:00:00",
       "model_type" : "BaseModel",
-      "status" : "successfull",
+      "status" : "successful",
       "submitter_id" : 2
     }
 
@@ -44,7 +44,7 @@
     "fields" : {
       "timestamp": "2018-09-01 12:00:00",
       "model_type" : "BaseModel",
-      "status" : "successfull",
+      "status" : "successful",
       "submitter_id" : 2
     }
 

@@ -1,7 +1,5 @@
 {% load static %}
 {% block content %}
-
-<!--<section id="submissions" class="container">-->
     <h2>Resubmit models</h2>
     <p>Rerun models on new benchmark version. Benchmarks are only executed when no score available.</p>
     <form action="{% url 'resubmit'%}" method="post">
