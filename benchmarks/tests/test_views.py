@@ -14,4 +14,4 @@ class TestTable(TestCase):
         resp = self.client.get("http://localhost:8000/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr>")
-        self.assertEqual(num_rows, 1 + 77)
+        self.assertEqual(num_rows, 1 + 79)

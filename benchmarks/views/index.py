@@ -1,17 +1,18 @@
-from collections import ChainMap
 import json
 import logging
+import re
+from collections import ChainMap
+from collections import namedtuple
+
 import numpy as np
 import pandas as pd
-import re
-from collections import namedtuple
 from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
-from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr
+from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Submission
 
 _logger = logging.getLogger(__name__)
 
@@ -35,29 +36,30 @@ def view(request):
 
 
 def get_context(user=None):
-    benchmarks = _collect_benchmarks()
+    benchmarks = _collect_benchmarks(with_versions=True if user is not None else False)
     model_rows = _collect_models(benchmarks, user)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
-        benchmark.long_name = benchmark.benchmark_type.identifier
         uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.benchmark_type.identifier
         match = re.match(r'[^\.]+\.(.+)', benchmark.benchmark_type.identifier)
         if match:
             uniform_benchmarks[benchmark.benchmark_type.identifier] = match.group(1)
-            benchmark.identifier = benchmark.benchmark_type.identifier = match.group(1)
+            benchmark.short_name= benchmark.benchmark_type.identifier = match.group(1)
         else:
-            benchmark.identifier = benchmark.benchmark_type.identifier
+            benchmark.short_name = benchmark.benchmark_type.identifier
         benchmark.ceiling = represent(benchmark.ceiling)
-    # map from a benchmark to its parent
+        benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
+    # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>, parent have always version 0 (only to match the pattern).
+    # We set here parent nodes as value -> abstract nodes so they must have version 0.
     benchmark_parents = {
-        benchmark.long_name: benchmark.benchmark_type.parent.identifier if benchmark.benchmark_type.parent else None
+        benchmark.identifier: f'{benchmark.benchmark_type.parent.identifier}_v0' if benchmark.benchmark_type.parent else None
         for benchmark in benchmarks}
     # configure benchmark level shown by default
     uniform_parents = set(
         benchmark_parents.values())  # we're going to use the fact that all benchmark instances currently point to their direct parent
-    not_shown_set = {benchmark.long_name for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
+    not_shown_set = {benchmark.identifier for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
@@ -79,7 +81,7 @@ class Tree:
         return generic_repr(self)
 
 
-def _collect_benchmarks():
+def _collect_benchmarks(with_versions=False):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     root_benchmarks = benchmark_types.filter(parent=None).order_by('order')
@@ -108,15 +110,31 @@ def _collect_benchmarks():
                 instance = BenchmarkInstance(benchmark_type=node.value, version=None, ceiling=None, ceiling_error=None)
                 instance.children = [child.value.identifier for child in node.children]
                 traverse_todo = node.children + traverse_todo
+                instance.parent = node.parent.value if node.parent else None
+                instance.root_parent = tree.value.identifier
+                instance.depth = node.depth
+                instance.overall_order = overall_order
+                instance.version = int(0)
+                benchmarks.append(instance)
             else:  # no children --> it's a specific instance
-                instance = BenchmarkInstance.objects.select_related('benchmark_type') \
-                    .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
-            instance.parent = node.parent.value if node.parent else None
-            instance.root_parent = tree.value.identifier
-            instance.depth = node.depth
-            instance.overall_order = overall_order
+                if with_versions:
+                    instances = BenchmarkInstance.objects.select_related('benchmark_type') \
+                        .filter(benchmark_type=node.value)
+                    for instance in instances:
+                        instance.parent = node.parent.value if node.parent else None
+                        instance.root_parent = tree.value.identifier
+                        instance.depth = node.depth
+                        instance.overall_order = overall_order
+                        benchmarks.append(instance)
+                else:
+                    instance = BenchmarkInstance.objects.select_related('benchmark_type') \
+                        .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
+                    instance.parent = node.parent.value if node.parent else None
+                    instance.root_parent = tree.value.identifier
+                    instance.depth = node.depth
+                    instance.overall_order = overall_order
+                    benchmarks.append(instance)
             overall_order += 1
-            benchmarks.append(instance)
     # add shortcut to identifier
     for benchmark in benchmarks:
         benchmark.identifier = benchmark.benchmark_type.identifier
@@ -140,31 +158,44 @@ def _collect_models(benchmarks, user=None):
             else:  # if we are in a user profile, show all rows that this user owns (regardless of public/private)
                 user_public = dict(model__owner=user)
             benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
-            benchmark_scores = pd.DataFrame([
-                {'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
-                 'overall_order': benchmark.overall_order,
-                 'model': score.model.identifier,
-                 'score_ceiled': score.score_ceiled, 'score_raw': score.score_raw, 'error': score.error}
-                for score in benchmark_scores])
+            if len(benchmark_scores) > 0:
+                benchmark_scores = pd.DataFrame([
+                    {'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
+                     'overall_order': benchmark.overall_order,
+                     'model': score.model.identifier,
+                     'score_ceiled': score.score_ceiled, 'score_raw': score.score_raw, 'error': score.error}
+                    for score in benchmark_scores])
+                scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
-            children_scores = scores[scores['benchmark'].isin(benchmark.children)]
-            benchmark_scores = children_scores.fillna(0).groupby('model').mean().reset_index()
-            benchmark_scores['benchmark'] = benchmark.identifier
-        scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
+            if scores is not None:
+                children_scores = scores[scores['benchmark'].isin(benchmark.children)]
+                benchmark_scores = children_scores.fillna(0).groupby('model').mean().reset_index()
+                benchmark_scores['benchmark'] = benchmark.identifier
+                benchmark_scores['benchmark_version'] = 0
+                scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         if benchmark.parent:
-            # because of copy-by-value, `benchmark.parent` does not have a `.children` attribute
-            parent = [b for b in benchmarks if b.identifier == benchmark.parent.identifier][0]
+            parent = [b for b in benchmarks if b.identifier == benchmark.parent.identifier]
+            parent = parent[0]
             if parent in benchmark_todos:
                 continue  # already in list
             benchmark_todos.append(parent)
     # setup benchmark metadata for all scores
-    benchmark_lookup = {benchmark.identifier: benchmark for benchmark in benchmarks}
-    minmax = {benchmark: (
-        min(group['score_ceiled'].fillna(0)),
-        max(group['score_ceiled'].fillna(0))
-        # this is an ugly hack to make the gray less visually dominant on the page
-        * (2.5 if benchmark_lookup[benchmark].root_parent == 'engineering' else 1))
-        for benchmark, group in scores.groupby('benchmark')}
+    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
+    if scores is None:
+        return []
+    minmax = {}
+    for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
+        benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
+        bench_minmax = (
+            min(group['score_ceiled'].fillna(0)),
+            max(group['score_ceiled'].fillna(0))
+            # this is an ugly hack to make the gray less visually dominant on the page
+            * (2.5 if benchmark_lookup[benchmark_id].root_parent == 'engineering' else 1))
+        if bench_minmax[0] == bench_minmax[1]:
+            bench_minmax = (0,1)
+        minmax[benchmark_id] = bench_minmax
+
+
 
     # arrange into per-model scores
     # - prepare model meta
@@ -181,19 +212,26 @@ def _collect_models(benchmarks, user=None):
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
-        benchmark_identifier = benchmark.identifier
-        benchmark_min, benchmark_max = minmax[benchmark_identifier]
-        no_score[benchmark_identifier] = ScoreDisplay(
-            benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
-            score_ceiled="", score_raw="", error="",
-            color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
+        benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
+        if benchmark_identifier in minmax:
+            benchmark_min, benchmark_max = minmax[benchmark_identifier]
+            no_score[benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+                score_ceiled="", score_raw="", error="",
+                color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
+        else:
+            no_score[benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+                score_ceiled="", score_raw="", error="",
+                color=representative_color(None, alpha_min=0, alpha_max=1))
     # - convert scores DataFrame into rows
     data = []
     for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
-        for score_ceiled, score_raw, error, benchmark_identifier in zip(
-                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark']):
+        for score_ceiled, score_raw, error, benchmark, version in zip(
+                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'], group['benchmark_version']):
+            benchmark_identifier = f'{benchmark}_v{version}'
             benchmark_min, benchmark_max = minmax[benchmark_identifier]
             benchmark = benchmark_lookup[benchmark_identifier]
             color = representative_color(
@@ -207,8 +245,8 @@ def _collect_models(benchmarks, user=None):
                                          color=color, order=benchmark.overall_order)
             model_scores[benchmark_identifier] = score_display
         # fill in missing scores
-        model_scores = [model_scores[benchmark.identifier] if benchmark.identifier in model_scores
-                        else no_score[benchmark.identifier] for benchmark in benchmarks]
+        model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
+                        else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
 
         # put everything together, adding model meta
         meta = model_meta[model_identifier]
@@ -221,6 +259,7 @@ def _collect_models(benchmarks, user=None):
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
     return data
+
 
 
 def normalize(value, min_value, max_value):
@@ -320,3 +359,25 @@ def is_public(model):
         return "checked"
     else:
         return ""
+
+
+@register.filter
+def no_children(benchmarks, models):
+    no_children = []
+    for benchmark in benchmarks:
+        if not hasattr(benchmark, 'children'):
+            for model in models:
+                if not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
+                    no_children.append(benchmark)
+                    break
+    return no_children
+
+@register.filter
+def no_benchmark(models, benchmarks):
+    model_filter = []
+    for model in models:
+        for benchmark in benchmarks:
+            if not hasattr(benchmark, 'children') and not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
+                model_filter.append(model)
+                break
+    return model_filter

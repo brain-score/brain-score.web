@@ -1,7 +1,10 @@
 import datetime
 import json
 import logging
+
+import boto3
 import requests
+from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.forms import PasswordResetForm
@@ -119,16 +122,11 @@ class Upload(View):
         if not may_submit(request.user, delay=datetime.timedelta(days=7)):  # user has already submitted recently
             return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed",
                                 status=403)
-
-        # setup jenkins submission
-        submission = Submission.objects.create(submitter=request.user, status=Submission.Status.PENDING)
-
+        user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
         json_info = {
-            "name": request.POST['name'],
             "model_type": request.POST['model_type'],
-            "email": request.user.get_full_name(),
-            "type": "zip"
-
+            "user_id": user_inst.id,
+            "public": str('public' in request.POST)
         }
 
         with open('result.json', 'w') as fp:
@@ -144,22 +142,62 @@ class Upload(View):
         job_name = "run_benchmarks"
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.get_full_name()}" \
-                      f"&submission={submission.id}"
+                      f"&email={request.user.get_full_name()}"
         _logger.debug(f"request_url: {request_url}")
         params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 
-        # update database
-        submission.status = Submission.Status.SUBMITTED if response.status_code == 200 \
-            else Submission.Status.SUBMISSION_FAILED
-        submission.save()
-
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
         return render(request, 'benchmarks/success.html')
+
+
+def resubmit(request):
+    if request.method == 'POST':
+        _logger.debug(f"request user: {request.user.get_full_name()}")
+        user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
+        model_ids = []
+        benchmarks = []
+        for key, value in request.POST.items():
+            if 'models_' in key:
+                # get model instance by natural key
+                model = Model.objects.get(identifier=value, owner=user_inst.id)
+                model_ids.append(model.id)
+            if 'benchmarks_' in key:
+                # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
+                benchmarks.append(value.split('_v')[0])
+        if len(model_ids) > 0 and len(benchmarks) > 0:
+            json_info = {
+                "user_id": user_inst.id,
+                "models": model_ids,
+            }
+            with open('result.json', 'w') as fp:
+                json.dump(json_info, fp)
+
+            # submit to jenkins
+            jenkins_url = "http://braintree.mit.edu:8080"
+            auth = get_secret("brainscore-website_jenkins_access")
+            auth = (auth['user'], auth['password'])
+            job_name = "run_benchmarks"
+            s = ' '
+            benchmark_string = s.join(benchmarks)
+            request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                          f"?TOKEN=trigger2scoreAmodel" \
+                          f"&email={request.user.get_full_name()}" \
+                          f"&benchmarks={benchmark_string}"
+            _logger.debug(f"request_url: {request_url}")
+            params = {'submission.config': open('result.json', 'rb')}
+            response = requests.post(request_url, files=params, auth=auth)
+            _logger.debug(f"response: {response}")
+
+            # update frontend
+            response.raise_for_status()
+            _logger.debug("Job triggered successfully")
+            return render(request, 'benchmarks/success.html')
+        else:
+            return render(request, 'benchmark/')
 
 
 def may_submit(user, delay):
@@ -176,7 +214,6 @@ def may_submit(user, delay):
 
 class Profile(View):
     def get(self, request):
-        print(request)
         if str(request.user) == "AnonymousUser":
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
@@ -282,3 +319,37 @@ class PublicAjax(View):
         model.public = public
         model.save(update_fields=['public'])
         return JsonResponse("success", safe=False)
+
+
+def get_secret(secret_name, region_name='us-east-2'):
+    session = boto3.session.Session()
+    _logger.info("Fetch secret from secret manager")
+    try:
+        client = session.client(
+            service_name='secretsmanager',
+            region_name=region_name,
+        )
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            _logger.error("The requested secret " + secret_name + " was not found")
+        elif e.response['Error']['Code'] == 'InvalidRequestException':
+            _logger.error("The request was invalid due to:", e)
+        elif e.response['Error']['Code'] == 'InvalidParameterException':
+            _logger.error("The request had invalid params:", e)
+        raise e
+    except Exception as e:
+        _logger.error("The request failed with:", e)
+        raise e
+    else:
+        # Secrets Manager decrypts the secret value using the associated KMS CMK
+        # Depending on whether the secret was a string or binary, only one of these fields will be populated
+        _logger.info(f'Secret {secret_name}successfully fetched')
+        if 'SecretString' in get_secret_value_response:
+            _logger.info("Inside string response...")
+            return json.loads(get_secret_value_response['SecretString'])
+        else:
+            _logger.info("Inside binary response...")
+            return get_secret_value_response['SecretBinary']
