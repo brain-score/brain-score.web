@@ -79,7 +79,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "neural",
+      "identifier": "V1",
       "parent": "average",
       "order": 0
     }
@@ -87,16 +87,8 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "V1",
-      "parent": "neural",
-      "order": 0
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
       "identifier": "V2",
-      "parent": "neural",
+      "parent": "average",
       "order": 1
     }
   },
@@ -104,7 +96,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V4",
-      "parent": "neural",
+      "parent": "average",
       "order": 2
     }
   },
@@ -112,7 +104,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "IT",
-      "parent": "neural",
+      "parent": "average",
       "order": 3
     }
   },
