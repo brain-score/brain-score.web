@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+
 from django.apps import apps
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -79,17 +80,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'web.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
+    # for working local:
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-}
 
+    #     For connecting shared databases: Migrate code to test and dev! Migrate to prod for production
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #         'NAME': <replace>, (test|dev|prod)
+    #         'USER': '<replace>',
+    #         'PASSWORD': '<replace>',
+    #         'HOST': '<replace>',
+    #         'PORT': '5432',
+    #         'OPTIONS': {
+    #             'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE,
+    #         },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -109,7 +121,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -122,7 +133,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -142,7 +152,6 @@ COMPRESS_PRECOMPILERS = (
 )
 
 AUTH_USER_MODEL = 'benchmarks.User'
-
 
 # Logging
 LOGGING = {

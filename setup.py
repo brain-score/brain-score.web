@@ -11,9 +11,12 @@ requirements = [
     "django",
     "django_compressor",
     "colour",
+    "pandas",
     "tqdm",
     "requests",
     "six",
+    "psycopg2",
+    "boto3",
 ]
 
 setup(

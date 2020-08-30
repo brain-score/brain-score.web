@@ -4,22 +4,21 @@
     <div class="xlabel-container">
         <select id="xlabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
             {% endfor %}
         </select>
     </div>
-
     <div class="ylabel-container">
         <select id="ylabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.name }}">{{ benchmark.name }}</option>
+                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
             {% endfor %}
         </select>
     </div>
 
     <figcaption>
         <span id="label-description">x vs y</span>.
-        <br />
+        <br/>
         Hover over dots to reveal model details.
         Scrolling zooms in and out.
         Click the dropdowns to change x-/y-axis data.
