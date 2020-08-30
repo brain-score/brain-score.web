@@ -63,8 +63,8 @@ var updatePlot = function () {
         .offset([-10, 0])
         .html(function (d) {
             return "<strong>" + d[idKey] + "</strong><br>" +
-                xKey + ": " + d[xKey].toFixed(3) + "<br>" +
-                yKey + ": " + d[yKey].toFixed(3);
+                xKey + ": " + d[xKey] + "<br>" +
+                yKey + ": " + d[yKey];
         });
 
     svg.call(tip);
