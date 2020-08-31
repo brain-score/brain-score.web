@@ -31,11 +31,11 @@ function recursiveChildren(all_coll){
 function assignFunction (coll, i){
     // Simple hide/show function onClick(). Determines what to show by finding all elements with their
     // data-parent value == the current benchmark.
-    console.log(coll[i]);
+
     coll[i].onclick = function() {
         var j;
-        const benchmark = coll[i].dataset.benchmark;
-        var all_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark)}]`);
+        let benchmark = coll[i].dataset.benchmark;
+        var all_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark + '_v0')}]`);
         changeParentSymbol(benchmark)
         recursiveChildren(all_coll);
         for(j = 0; j < all_coll.length; j++){

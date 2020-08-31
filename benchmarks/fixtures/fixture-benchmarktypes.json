@@ -1,0 +1,126 @@
+[
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "dicarlo.Majaj2015.V4-pls",
+      "parent": "V4",
+      "reference": [
+        "https://www.jneurosci.org/content/35/39/13402"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "dicarlo.Majaj2015.IT-pls",
+      "parent": "IT",
+      "reference": [
+        "https://www.jneurosci.org/content/35/39/13402"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "movshon.FreemanZiemba2013.V1-pls",
+      "parent": "V1",
+      "reference": [
+        "https://www.nature.com/articles/nn.3402"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "movshon.FreemanZiemba2013.V2-pls",
+      "parent": "V2",
+      "reference": [
+        "https://www.nature.com/articles/nn.3402"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "dicarlo.Kar2019-ost",
+      "parent": "IT",
+      "reference": [
+        "https://www.nature.com/articles/s41593-019-0392-5"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "dicarlo.Rajalingham2018-i2n",
+      "parent": "behavior",
+      "reference": [
+        "https://www.jneurosci.org/content/38/33/7255"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "fei-fei.Deng2009-top1",
+      "parent": "engineering",
+      "reference": [
+        "https://ieeexplore.ieee.org/abstract/document/5206848"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "average",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "V1",
+      "parent": "average",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "V2",
+      "parent": "average",
+      "order": 1
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "V4",
+      "parent": "average",
+      "order": 2
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "IT",
+      "parent": "average",
+      "order": 3
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "behavior",
+      "parent": "average",
+      "order": 1
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "engineering",
+      "order": 2
+    }
+  }
+]

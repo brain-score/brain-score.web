@@ -1,0 +1,1137 @@
+[
+  {
+    "model": "benchmarks.Model",
+    "pk" : 1,
+    "fields": {
+      "identifier": "alexnet1",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "True",
+      "submission_id" : 33
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "pk" : 2,
+    "fields": {
+      "identifier": "alexnet2",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "True",
+      "submission_id" : 34
+    }
+  },
+
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "alexnet",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "squeezenet1_0",
+      "reference": [
+        "https://arxiv.org/abs/1602.07360"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "squeezenet1_1",
+      "reference": [
+        "https://arxiv.org/abs/1602.07360"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-18",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-34",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-50-pytorch",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-50-robust",
+      "reference": [
+        "https://arxiv.org/pdf/1906.09453.pdf"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "vgg-16",
+      "reference": [
+        "https://arxiv.org/abs/1409.1556"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "vgg-19",
+      "reference": [
+        "https://arxiv.org/abs/1409.1556"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "vggface",
+      "reference": [
+        "https://www.robots.ox.ac.uk/~vgg/publications/2015/Parkhi15/parkhi15.pdf"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "xception",
+      "reference": [
+        "https://arxiv.org/abs/1610.02357"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "densenet-121",
+      "reference": [
+        "https://arxiv.org/abs/1608.06993"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "densenet-169",
+      "reference": [
+        "https://arxiv.org/abs/1608.06993"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "densenet-201",
+      "reference": [
+        "https://arxiv.org/abs/1608.06993"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "inception_v1",
+      "reference": [
+        "https://arxiv.org/abs/1409.4842"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "inception_v2",
+      "reference": [
+        "https://arxiv.org/abs/1512.00567"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "inception_v3",
+      "reference": [
+        "https://arxiv.org/abs/1512.00567"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "inception_v4",
+      "reference": [
+        "https://arxiv.org/abs/1602.07261"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "inception_resnet_v2",
+      "reference": [
+        "https://arxiv.org/abs/1602.07261"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-50_v1",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-101_v1",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-152_v1",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-50_v2",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-101_v2",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet-152_v2",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "nasnet_mobile",
+      "reference": [
+        "https://arxiv.org/abs/1707.07012"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "nasnet_large",
+      "reference": [
+        "https://arxiv.org/abs/1707.07012"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "pnasnet_large",
+      "reference": [
+        "https://arxiv.org/abs/1712.00559"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "bagnet9",
+      "reference": [
+        "https://openreview.net/forum?id=SkfMWhAqYQ"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "bagnet17",
+      "reference": [
+        "https://openreview.net/forum?id=SkfMWhAqYQ"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "bagnet33",
+      "reference": [
+        "https://openreview.net/forum?id=SkfMWhAqYQ"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet50-SIN",
+      "reference": [
+        "https://openreview.net/forum?id=Bygh9j09KX"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet50-SIN_IN",
+      "reference": [
+        "https://openreview.net/forum?id=Bygh9j09KX"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnet50-SIN_IN_IN",
+      "reference": [
+        "https://openreview.net/forum?id=Bygh9j09KX"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnext101_32x8d_wsl",
+      "reference": [
+        "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnext101_32x16d_wsl",
+      "reference": [
+        "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnext101_32x32d_wsl",
+      "reference": [
+        "http://openaccess.thecvf.com/content_ECCV_2018/html/Dhruv_Mahajan_Exploring_the_Limits_ECCV_2018_paper.html"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "resnext101_32x48d_wsl",
+      "reference": [
+        "https://arxiv.org/pdf/1906.06423.pdf"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "fixres_resnext101_32x48d_wsl",
+      "reference": [
+        "http://papers.nips.cc/paper/9035-fixing-the-train-test-resolution-discrepancy"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "dcgan",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "convrnn_224",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_1.0_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_1.0_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_1.0_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_1.0_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.75_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.75_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.75_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.75_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.5_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.5_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.5_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.5_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.25_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.25_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.25_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v1_0.25_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.4_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.3_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.0_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.0_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.0_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.0_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_1.0_96",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.75_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.75_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.75_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.75_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.75_96",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.5_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.5_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.5_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.5_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.5_96",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.35_224",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.35_192",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.35_160",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.35_128",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "mobilenet_v2_0.35_96",
+      "reference": [
+        "https://arxiv.org/abs/1704.04861"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-Z",
+      "reference": [
+        "https://www.biorxiv.org/content/early/2018/09/04/408385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S",
+      "reference": [
+        "https://papers.nips.cc/paper/9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S101010",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S222",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S444",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S484",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "identifier": "CORnet-S10rep",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True"
+    }
+  }
+]

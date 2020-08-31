@@ -2,8 +2,11 @@
 
 {% block content %}
 <section id="login" class="container center">
-  {% if email %}
+  {% if activation_email %}
     <p style="font-weight: bold">A confirmation email has been sent.</p>
+  {% endif %}
+  {% if password_email %}
+    <p style="font-weight: bold">A password change email has been sent.</p>
   {% endif %}
 	<h1>Welcome</h1>
 	Welcome! You can login here!
@@ -11,7 +14,7 @@
 		{% csrf_token %}
     
 		{% for field in form %}
-      <p>
+      <p class="login">
         {{ field.label_tag }}<br>
         {{ field }}
         {% if field.help_text %}
@@ -21,7 +24,8 @@
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
-      {% endfor %}
+    {% endfor %}
+    <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
 		<button type="submit" class="submission">Login</button>
 	</form>
   {% if Incorrect %}

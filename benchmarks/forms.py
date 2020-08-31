@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
@@ -15,7 +16,7 @@ class SignupForm(UserCreationForm):
         user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
-        return user
+            return user
 
     class Meta:
         # Uses the password1 and password2 fields from the UserCreation Form
@@ -35,12 +36,22 @@ class UploadPlaceHolder(forms.Form):
 
 
 class UploadFileForm(forms.Form):
-    name = forms.CharField(max_length=200, help_text='Required')
     model_type = forms.ChoiceField(choices=[
-        ("BaseModel", "BaseModel - to submit a standard machine learning model"),
-        ("BrainModel", "BrainModel - to change brain-transformation, e.g. layer-mapping, visual degrees etc.")])
+        ("BaseModel", "Base model - to submit a standard machine learning model"),
+        ("BrainModel", "Brain model - to change brain-transformation, e.g. layer-mapping, visual degrees etc.")])
+    public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
+        help_text='Check if you want the results of your submitted models included in the public ranking.')
     zip_file = forms.FileField(help_text='Required')
 
     class Meta:
         model = UploadPlaceHolder
-        fields = ('name', 'zip_file')
+        fields = ('zip_file', 'public')
+
+
+class ChangePasswordForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super(ChangePasswordForm, self).__init__(*args, **kwargs)
+        self.fields.pop('old_password')
+
+    class Meta:
+        fields = ('new_password1', 'new_password2')

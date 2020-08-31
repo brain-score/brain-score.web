@@ -1,56 +1,110 @@
 {% load static %}
 
 {% if models %}
-    <table id="leaderboard" class="benchmarks fixed_header" style="margin-top: 120px">
-        <!-- benchmarks -->
-        <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their parent is. This allows for QuerySelecting and using some of the filters from index.py>
-        <thead>
-        <tr>
-            <th><p><span class="want_to_click"><strong class="want_to_click" style="padding: 5px">Rank</strong></span></p></th>
-            <th class="model want_to_click"><p><span class="want_to_click"><strong class="want_to_click" style="padding: 5px">Model</strong></span></p></th>
-            {% for benchmark in benchmarks %}
-            <th title="ceiling: {{ benchmark.ceiling }}" data-benchmark="{{ benchmark.name }}" data-parent="{{ benchmark_parents|get_parent_item:benchmark.name }}" class="rotate" style="display: {{ not_shown_set|in_set:benchmark.name }}"><p>
-                {% if benchmark.parent %}<strong style="padding: 5px; font-size: 26px" class="want_to_click">{{ benchmark_parents|get_initial_characters:benchmark.name }}</strong>
-                    {% if benchmark.name in uniform_parents %}<strong data-benchmark="{{ benchmark.name }}" style="font-size: 10px" class="headerExpand clicker want_to_click"></strong>{% endif %}
-                    <strong class="want_to_click" style="padding: 5px; display: {{ benchmark_parents|in_set_hidden:benchmark.name }}">{{ benchmark.parent }}:</strong>{% endif %}
-                    
-                {% if benchmark.link %}
-                    <a href="{{ benchmark.link }}">{{ benchmark.name }}
-                        {%  if benchmark.version %}
+    {% if has_user %}
+        <form>
+    {% endif %}
+<table id="leaderboard" class="benchmarks fixed_header" style="margin-top: 120px">
+    <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their
+    parent
+    is. This allows for QuerySelecting and using some of the filters from index.py>
+    <thead>
+    <tr>
+        <th><p><span class="want_to_click">
+                <strong class="want_to_click" style="padding: 5px">
+                    Rank
+                </strong>
+            </span></p></th>
+        <th class="model want_to_click"><p><span class="want_to_click">
+                <strong class="want_to_click" style="padding: 5px">
+                    Model
+                </strong>
+            </span></p></th>
+        {% for benchmark in benchmarks %}
+            <th
+                    {% if benchmark.ceiling %}
+                        title="ceiling: {{ benchmark.ceiling }}"
+                    {% endif %}
+                        data-benchmark="{{ benchmark.short_name }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
+                        class="rotate"
+                        style="display:{{not_shown_set|in_set:benchmark.identifier }}">
+                <p>
+                    {% if benchmark.benchmark_type.parent %}
+                        <span class="want_to_click benchmark_child_indent">
+                            {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
+                        </span>
+                    {% endif %}
+                    {% if benchmark.identifier in uniform_parents %}
+                        <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
+                                class="
+                            {% if benchmark.depth == BASE_DEPTH %}
+                                headerExpand
+                            {% else %}
+                                headerContract
+                            {% endif %}
+                            clicker want_to_click"></strong>
+                    {% endif %}
+
+                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                        <a href="{{ benchmark.benchmark_type.reference.url }}">
+                    {% endif %}
+                    <span class="want_to_click depth_{{ benchmark.depth }} {% if benchmark.version %} instance {% endif %}">
+                        {{ benchmark.short_name }}
+                    </span>
+                    {% if benchmark.version %}
                         <span class="benchmark-version">v{{ benchmark.version }}</span>
-                        {% endif %}
-                    </a></p>
-                {% else %}
-                <span class="want_to_click">{{ benchmark.name }}</span>
-
-                {% endif %}
-            </th>
-            {% endfor %}
-        </tr>
-        </thead>
-        <!-- models -->
-        <tbody>
-        {% for model in models %}
-            <tr>
-                <td class="score_cell"><strong>{{model.rank}}</strong></td>
-                <td class="model" title="{{model.meta}}"><a target="_blank" rel="noopener noreferrer" href="{{model.reference_link}}">{{model.name}}</a><br><em>{{model.reference_identifier}}</em></td>
-                {% for score_row in model.scores %}
-                    <td title="{{ score_row.benchmark }} unceiled: {{score_row.score_raw}}" data-benchmark="{{ uniform_benchmarks|get_item:score_row.benchmark }}" data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}" class="score_cell {{benchmark_parents.score_row.benchmark}} displaySquare depth_{{ benchmark_parents|get_depth_number:score_row.benchmark }} clicker" style="{{score_row.color}}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{score_row.score_ceiled}}</td>
-                {% endfor %}
-            </tr>
+                    {% endif %}
+                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                        </a>
+                    {% endif %}
+                </p></th>
         {% endfor %}
-        </tbody>
-    </table>
-	<div>
-    	Model scores on brain benchmarks.
-        Hover over model name to see layer commitments.
-    	The more green and bright a cell, the better the model's score.
-        Scores are ceiled, hover the benchmark to see ceilings.
-    </div>
-
+        {% if has_user %}
+            <th><p><span class="want_to_click"><b>Public</b></span></p></th>
+        {% endif %}
+    </tr>
+    </thead>
+    <!-- models -->
+    <tbody>
+    {% for model in models %}
+        <tr>
+            <td class="score_cell"><strong>{{ model.rank }}</strong></td>
+            <td class="model">
+                <a target="_blank" rel="noopener noreferrer" href="{{ model.reference_link }}">
+                    {{ model.identifier }}
+                </a>
+                <br>
+                <em>
+                    {{ model.reference_identifier }}
+                </em>
+            </td>
+            {% for score_row in model.scores %}
+                <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"
+                    data-benchmark="{{ score_row.benchmark }}"
+                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}"
+                    class="score_cell displaySquare depth_{{ score_row.benchmark_depth }} clicker"
+                    style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
+            {% endfor %}
+            {% if has_user %}
+                <td class="model-public-checkbox">
+                    <input type="checkbox" value="{{ model.identifier }}"
+                           class="public model-public-checkbox" {{ model|is_public }}>
+                </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<div>
+    Model scores on brain benchmarks.
+    Hover over model name to see layer commitments.
+    The more green and bright a cell, the better the model's score.
+    Scores are ceiled, hover the benchmark to see ceilings.
+</div>
+{% if has_user %}
+    </form>
+{% endif %}
 {% else %}
     <p>No data.</p>
 {% endif %}
-
-
-<script defer src="{% static "/benchmarks/js/table-expansion.js" %}"></script>

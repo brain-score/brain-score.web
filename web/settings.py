@@ -99,7 +99,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'web.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
@@ -138,8 +137,8 @@ def get_db_info():
             }
     return DATABASES
 
-DATABASES = get_db_info()
 
+DATABASES = get_db_info()
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -159,7 +158,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -172,7 +170,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -192,7 +189,6 @@ COMPRESS_PRECOMPILERS = (
 )
 
 AUTH_USER_MODEL = 'benchmarks.User'
-
 
 # Logging
 LOGGING = {
