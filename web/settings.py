@@ -14,8 +14,6 @@ import boto3
 import json
 import os
 from botocore.exceptions import NoCredentialsError
-# noinspection PyUnresolvedReferences
-from django.apps import apps  # magic django import
 
 
 def get_secret(secret_name, region_name):
@@ -146,7 +144,6 @@ def get_db_info():
 
 
 DATABASES = get_db_info()
-print(DATABASES)
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
