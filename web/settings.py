@@ -146,6 +146,7 @@ def get_db_info():
 
 
 DATABASES = get_db_info()
+print(DATABASES)
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
