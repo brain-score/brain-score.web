@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import boto3
 import json
 import os
-from botocore.exception import NoCredentialsError
+from botocore.exceptions import NoCredentialsError
 
 
 def get_secret(secret_name, region_name):
