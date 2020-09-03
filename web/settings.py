@@ -42,7 +42,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 try:
     SECRET_KEY = get_secret("brainscore-django-secret-key", REGION_NAME)["SECRET_KEY"]
 except NoCredentialsError:
-    SECRET_KEY = None
+    SECRET_KEY = 'dummy'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
