@@ -10,12 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
-import os
-import json
-
 import boto3
-
-from django.apps import apps
+import json
+import os
+from botocore.exception import NoCredentialsError
 
 
 def get_secret(secret_name, region_name):
@@ -39,7 +37,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_secret("brainscore-django-secret-key", REGION_NAME)["SECRET_KEY"]
+try:
+    SECRET_KEY = get_secret("brainscore-django-secret-key", REGION_NAME)["SECRET_KEY"]
+except NoCredentialsError:
+    SECRET_KEY = None
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -47,7 +48,10 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 
 # Allows E-mail use
-email_secrets = get_secret("brainscore-email", REGION_NAME)
+try:
+    email_secrets = get_secret("brainscore-email", REGION_NAME)
+except NoCredentialsError:
+    email_secrets = {'host': None, 'address': None, 'password': None}
 EMAIL_USE_TLS = True
 EMAIL_HOST = email_secrets["host"]
 EMAIL_PORT = 587
@@ -99,6 +103,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'web.wsgi.application'
 
+
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
@@ -116,7 +121,7 @@ def get_db_info():
                 'PORT': secrets["port"]
             }
         }
-    except:
+    except NoCredentialsError:
         if 'RDS_DB_NAME' in os.environ:  # when deployed to AWS, use environment settings for database
             DATABASES = {
                 'default': {
