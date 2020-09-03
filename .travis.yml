@@ -15,7 +15,7 @@ install:
   - npm list
 before_script:
   # setup database
-  - python manage.py makemigrations
+  - DJANGO_ALLOW_ASYNC_UNSAFE="true" python manage.py makemigrations
   - python manage.py migrate
 script:
   - python manage.py test
