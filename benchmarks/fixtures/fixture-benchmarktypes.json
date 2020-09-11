@@ -4,6 +4,7 @@
     "fields": {
       "identifier": "dicarlo.Majaj2015.V4-pls",
       "parent": "V4",
+      "visible": "True",
       "reference": [
         "https://www.jneurosci.org/content/35/39/13402"
       ]
@@ -14,6 +15,7 @@
     "fields": {
       "identifier": "dicarlo.Majaj2015.IT-pls",
       "parent": "IT",
+      "visible": "True",
       "reference": [
         "https://www.jneurosci.org/content/35/39/13402"
       ]
@@ -24,6 +26,7 @@
     "fields": {
       "identifier": "movshon.FreemanZiemba2013.V1-pls",
       "parent": "V1",
+      "visible": "True",
       "reference": [
         "https://www.nature.com/articles/nn.3402"
       ]
@@ -34,6 +37,7 @@
     "fields": {
       "identifier": "movshon.FreemanZiemba2013.V2-pls",
       "parent": "V2",
+      "visible": "True",
       "reference": [
         "https://www.nature.com/articles/nn.3402"
       ]
@@ -44,6 +48,7 @@
     "fields": {
       "identifier": "dicarlo.Kar2019-ost",
       "parent": "IT",
+      "visible": "True",
       "reference": [
         "https://www.nature.com/articles/s41593-019-0392-5"
       ]
@@ -54,6 +59,7 @@
     "fields": {
       "identifier": "dicarlo.Rajalingham2018-i2n",
       "parent": "behavior",
+      "visible": "True",
       "reference": [
         "https://www.jneurosci.org/content/38/33/7255"
       ]
@@ -64,6 +70,7 @@
     "fields": {
       "identifier": "fei-fei.Deng2009-top1",
       "parent": "engineering",
+      "visible": "True",
       "reference": [
         "https://ieeexplore.ieee.org/abstract/document/5206848"
       ]
@@ -73,6 +80,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "average",
+      "visible": "True",
       "order": 0
     }
   },
@@ -81,6 +89,7 @@
     "fields": {
       "identifier": "V1",
       "parent": "average",
+      "visible": "True",
       "order": 0
     }
   },
@@ -89,6 +98,7 @@
     "fields": {
       "identifier": "V2",
       "parent": "average",
+      "visible": "True",
       "order": 1
     }
   },
@@ -97,6 +107,7 @@
     "fields": {
       "identifier": "V4",
       "parent": "average",
+      "visible": "True",
       "order": 2
     }
   },
@@ -105,6 +116,7 @@
     "fields": {
       "identifier": "IT",
       "parent": "average",
+      "visible": "True",
       "order": 3
     }
   },
@@ -113,6 +125,7 @@
     "fields": {
       "identifier": "behavior",
       "parent": "average",
+      "visible": "True",
       "order": 1
     }
   },
@@ -120,6 +133,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "engineering",
+      "visible": "True",
       "order": 2
     }
   }
