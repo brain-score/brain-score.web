@@ -36,7 +36,7 @@ def view(request):
 
 
 def get_context(user=None):
-    benchmarks = _collect_benchmarks(with_versions=True if user is not None else False)
+    benchmarks = _collect_benchmarks(user_page=True if user is not None else False)
     model_rows = _collect_models(benchmarks, user)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
@@ -81,9 +81,11 @@ class Tree:
         return generic_repr(self)
 
 
-def _collect_benchmarks(with_versions=False):
+def _collect_benchmarks(user_page=False):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
+    if not user_page:  # on public overview, only show visible benchmarks
+        benchmark_types = benchmark_types.filter(visible=True)
     root_benchmarks = benchmark_types.filter(parent=None).order_by('order')
     root_trees = []
     for root_benchmark in root_benchmarks:
@@ -117,7 +119,7 @@ def _collect_benchmarks(with_versions=False):
                 instance.version = int(0)
                 benchmarks.append(instance)
             else:  # no children --> it's a specific instance
-                if with_versions:
+                if user_page:
                     instances = BenchmarkInstance.objects.select_related('benchmark_type') \
                         .filter(benchmark_type=node.value)
                     for instance in instances:
