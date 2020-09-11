@@ -69,17 +69,22 @@ var updatePlot = function () {
 
     svg.call(tip);
 
+    // filter data to guard against empty "" or "X" scores turning into NaNs that mess up d3
+    var filtered_data = comparison_data.filter(row =>
+        row[xKey].length > 0 && !isNaN(row[xKey]) &&
+        row[yKey].length > 0 && !isNaN(row[yKey]));
+
     // axes range
-    var xMax = d3.max(comparison_data, function (d) {
+    var xMax = d3.max(filtered_data, function (d) {
             return d[xKey];
         }) * 1.05,
-        xMin = d3.min(comparison_data, function (d) {
+        xMin = d3.min(filtered_data, function (d) {
             return d[xKey];
         }) * .95,
-        yMax = d3.max(comparison_data, function (d) {
+        yMax = d3.max(filtered_data, function (d) {
             return d[yKey];
         }) * 1.05,
-        yMin = d3.min(comparison_data, function (d) {
+        yMin = d3.min(filtered_data, function (d) {
             return d[yKey];
         }) * .95;
 
@@ -130,14 +135,15 @@ var updatePlot = function () {
         .classed("y axis", true)
         .call(yAxis);
 
-    // data
+    // create svg objects
     var objects = g.append("svg")
         .classed("objects", true)
         .attr("width", width)
         .attr("height", height);
 
+    // fill svg with data and position
     objects.selectAll(".dot")
-        .data(comparison_data)
+        .data(filtered_data)
         .enter().append("circle")
         .classed("dot", true)
         .attr("r", dot_size)
