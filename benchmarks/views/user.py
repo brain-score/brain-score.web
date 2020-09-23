@@ -171,7 +171,7 @@ def resubmit(request):
         if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
                 "user_id": user_inst.id,
-                "models": model_ids,
+                "model_ids": model_ids,
             }
             with open('result.json', 'w') as fp:
                 json.dump(json_info, fp)
