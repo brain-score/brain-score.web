@@ -1,159 +1,161 @@
-// adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
+$(document).ready(function () {
+    // adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
 
-var margin = {top: 0, right: 0, bottom: 20, left: 60},
-    outerWidth = 600,
-    outerHeight = 400,
-    width = outerWidth - margin.left - margin.right,
-    height = outerHeight - margin.top - margin.bottom;
+    var margin = {top: 0, right: 0, bottom: 20, left: 60},
+        outerWidth = 600,
+        outerHeight = 400,
+        width = outerWidth - margin.left - margin.right,
+        height = outerHeight - margin.top - margin.bottom;
 
-var dot_size = 8,
-    color = '#078930';
+    var dot_size = 8,
+        color = '#078930';
 
-var idKey = "model",
-    xKey = null,
-    yKey = null;
+    var idKey = "model",
+        xKey = null,
+        yKey = null;
 
-var g = null,
-    xAxis = null,
-    yAxis = null;
+    var g = null,
+        xAxis = null,
+        yAxis = null;
 
-var x = null,
-    y = null;
+    var x = null,
+        y = null;
 
-var container_selector = "#analysis div#brain-score",
-    figure_selector = "#analysis #brain-score-fig",
-    xlabel_selector = figure_selector + ' #xlabel',
-    ylabel_selector = figure_selector + ' #ylabel',
-    label_description_selector = figure_selector + " figcaption #label-description";
+    var container_selector = "#analysis div#brain-score",
+        figure_selector = "#analysis #brain-score-fig",
+        xlabel_selector = figure_selector + ' #xlabel',
+        ylabel_selector = figure_selector + ' #ylabel',
+        label_description_selector = figure_selector + " figcaption #label-description";
 
 
-var svg = d3.select(container_selector)
-    .append("svg")
-    .attr("width", outerWidth)
-    .attr("height", outerHeight);
+    var svg = d3.select(container_selector)
+        .append("svg")
+        .attr("width", outerWidth)
+        .attr("height", outerHeight);
 
-function zoom() {
-    svg.select(".x.axis").call(xAxis);
-    svg.select(".y.axis").call(yAxis);
+    function zoom() {
+        svg.select(".x.axis").call(xAxis);
+        svg.select(".y.axis").call(yAxis);
 
-    svg.selectAll(".dot")
-        .attr("transform", transform)
-        .attr("r", dot_size * d3.event.scale);
-}
+        svg.selectAll(".dot")
+            .attr("transform", transform)
+            .attr("r", dot_size * d3.event.scale);
+    }
 
-function transform(d) {
-    return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
-}
+    function transform(d) {
+        return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
+    }
 
 // from http://bl.ocks.org/williaster/10ef968ccfdc71c30ef8
 // Handler for dropdown value change
-var updatePlot = function () {
-    xKey = $(xlabel_selector).prop('value') + "-score";
-    yKey = $(ylabel_selector).prop('value') + "-score";
-    var xName = $(xlabel_selector).find('option:selected').text(),
-        yName = $(ylabel_selector).find('option:selected').text();
-    $(label_description_selector).text(xName + ' vs ' + yName);
+    var updatePlot = function () {
+        xKey = $(xlabel_selector).prop('value') + "-score";
+        yKey = $(ylabel_selector).prop('value') + "-score";
+        var xName = $(xlabel_selector).find('option:selected').text(),
+            yName = $(ylabel_selector).find('option:selected').text();
+        $(label_description_selector).text(xName + ' vs ' + yName);
 
 
-    d3.selectAll("svg > *").remove();
+        d3.selectAll("svg > *").remove();
 
-    // tip
-    var tip = d3.tip()
-        .attr("class", "d3-tip")
-        .offset([-10, 0])
-        .html(function (d) {
-            return "<strong>" + d[idKey] + "</strong><br>" +
-                xKey + ": " + d[xKey] + "<br>" +
-                yKey + ": " + d[yKey];
-        });
+        // tip
+        var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-10, 0])
+            .html(function (d) {
+                return "<strong>" + d[idKey] + "</strong><br>" +
+                    xKey + ": " + d[xKey] + "<br>" +
+                    yKey + ": " + d[yKey];
+            });
 
-    svg.call(tip);
+        svg.call(tip);
 
-    // filter data to guard against empty "" or "X" scores turning into NaNs that mess up d3
-    var filtered_data = comparison_data.filter(row =>
-        row[xKey].length > 0 && !isNaN(row[xKey]) &&
-        row[yKey].length > 0 && !isNaN(row[yKey]));
+        // filter data to guard against empty "" or "X" scores turning into NaNs that mess up d3
+        var filtered_data = comparison_data.filter(row =>
+            row[xKey].length > 0 && !isNaN(row[xKey]) &&
+            row[yKey].length > 0 && !isNaN(row[yKey]));
 
-    // axes range
-    var xMax = d3.max(filtered_data, function (d) {
-            return d[xKey];
-        }) * 1.05,
-        xMin = d3.min(filtered_data, function (d) {
-            return d[xKey];
-        }) * .95,
-        yMax = d3.max(filtered_data, function (d) {
-            return d[yKey];
-        }) * 1.05,
-        yMin = d3.min(filtered_data, function (d) {
-            return d[yKey];
-        }) * .95;
+        // axes range
+        var xMax = d3.max(filtered_data, function (d) {
+                return d[xKey];
+            }) * 1.05,
+            xMin = d3.min(filtered_data, function (d) {
+                return d[xKey];
+            }) * .95,
+            yMax = d3.max(filtered_data, function (d) {
+                return d[yKey];
+            }) * 1.05,
+            yMin = d3.min(filtered_data, function (d) {
+                return d[yKey];
+            }) * .95;
 
-    x = d3.scale.linear()
-        .range([0, width]).nice();
+        x = d3.scale.linear()
+            .range([0, width]).nice();
 
-    y = d3.scale.linear()
-        .range([height, 0]).nice();
+        y = d3.scale.linear()
+            .range([height, 0]).nice();
 
-    x.domain([xMin, xMax]);
-    y.domain([yMin, yMax]);
+        x.domain([xMin, xMax]);
+        y.domain([yMin, yMax]);
 
-    // zoom
-    var zoomBeh = d3.behavior.zoom()
-        .x(x)
-        .y(y)
-        .scaleExtent([0, 500])
-        .on("zoom", zoom);
+        // zoom
+        var zoomBeh = d3.behavior.zoom()
+            .x(x)
+            .y(y)
+            .scaleExtent([0, 500])
+            .on("zoom", zoom);
 
-    g = svg
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-        .call(zoomBeh);
+        g = svg
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .call(zoomBeh);
 
-    // axes
-    xAxis = d3.svg.axis()
-        .scale(x)
-        .ticks(5)
-        .orient("bottom")
-        .tickSize(-height);
+        // axes
+        xAxis = d3.svg.axis()
+            .scale(x)
+            .ticks(5)
+            .orient("bottom")
+            .tickSize(-height);
 
-    yAxis = d3.svg.axis()
-        .scale(y)
-        .ticks(3)
-        .orient("left")
-        .tickSize(-width);
+        yAxis = d3.svg.axis()
+            .scale(y)
+            .ticks(3)
+            .orient("left")
+            .tickSize(-width);
 
-    g.append("rect")
-        .attr("width", width)
-        .attr("height", height);
+        g.append("rect")
+            .attr("width", width)
+            .attr("height", height);
 
-    g.append("g")
-        .classed("x axis", true)
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
+        g.append("g")
+            .classed("x axis", true)
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
 
-    g.append("g")
-        .classed("y axis", true)
-        .call(yAxis);
+        g.append("g")
+            .classed("y axis", true)
+            .call(yAxis);
 
-    // create svg objects
-    var objects = g.append("svg")
-        .classed("objects", true)
-        .attr("width", width)
-        .attr("height", height);
+        // create svg objects
+        var objects = g.append("svg")
+            .classed("objects", true)
+            .attr("width", width)
+            .attr("height", height);
 
-    // fill svg with data and position
-    objects.selectAll(".dot")
-        .data(filtered_data)
-        .enter().append("circle")
-        .classed("dot", true)
-        .attr("r", dot_size)
-        .attr("transform", transform)
-        .style("fill", color)
-        .on("mouseover", tip.show)
-        .on("mouseout", tip.hide);
-};
+        // fill svg with data and position
+        objects.selectAll(".dot")
+            .data(filtered_data)
+            .enter().append("circle")
+            .classed("dot", true)
+            .attr("r", dot_size)
+            .attr("transform", transform)
+            .style("fill", color)
+            .on("mouseover", tip.show)
+            .on("mouseout", tip.hide);
+    };
 
-$(xlabel_selector + ', ' + ylabel_selector)
-    .on("change", updatePlot);
+    $(xlabel_selector + ', ' + ylabel_selector)
+        .on("change", updatePlot);
 
-updatePlot();
+    updatePlot();
+});
