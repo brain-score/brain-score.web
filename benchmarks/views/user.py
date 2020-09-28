@@ -157,7 +157,7 @@ class Upload(View):
 def resubmit(request):
     if request.method == 'POST':
         _logger.debug(f"request user: {request.user.get_full_name()}")
-        user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
+        user_inst = User.objects.get_by_natural_key(request.user.get_full_name())
         model_ids = []
         benchmarks = []
         for key, value in request.POST.items():
