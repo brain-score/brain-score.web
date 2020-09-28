@@ -162,8 +162,10 @@ def resubmit(request):
         benchmarks = []
         for key, value in request.POST.items():
             if 'models_' in key:
-                # get model instance by natural key
-                model = Model.objects.get(identifier=value, owner=user_inst.id)
+                # get model instance by natural key. Ideally this natural key would return only one object --
+                # but when users submit two models with the same identifier, there will be multiple model objects
+                # returned. In that case, we just use the latest submission.
+                model = Model.objects.filter(identifier=value, owner=user_inst.id).latest('submission__timestamp')
                 model_ids.append(model.id)
             if 'benchmarks_' in key:
                 # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
