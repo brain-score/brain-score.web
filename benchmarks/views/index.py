@@ -1,22 +1,22 @@
 import json
 import logging
+import numpy as np
+import pandas as pd
 import re
 from collections import ChainMap
 from collections import namedtuple
-
-import numpy as np
-import pandas as pd
 from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
-from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Submission
+from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr
 
 _logger = logging.getLogger(__name__)
 
 BASE_DEPTH = 1
+ENGINEERING_ROOT = 'engineering'
 
 colors_redgreen = list(Color('red').range_to(Color('green'), 101))
 colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
@@ -46,7 +46,7 @@ def get_context(user=None):
         match = re.match(r'[^\.]+\.(.+)', benchmark.benchmark_type.identifier)
         if match:
             uniform_benchmarks[benchmark.benchmark_type.identifier] = match.group(1)
-            benchmark.short_name= benchmark.benchmark_type.identifier = match.group(1)
+            benchmark.short_name = benchmark.benchmark_type.identifier = match.group(1)
         else:
             benchmark.short_name = benchmark.benchmark_type.identifier
         benchmark.ceiling = represent(benchmark.ceiling)
@@ -171,12 +171,15 @@ def _collect_models(benchmarks, user=None):
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
             if scores is not None:
                 children_scores = scores[scores['benchmark'].isin(benchmark.children)]
+                # guard against multiple scores for one combination of (benchmark, version, model)
+                children_scores = children_scores.drop_duplicates()
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean().reset_index()
                 benchmark_scores['benchmark'] = benchmark.identifier
                 benchmark_scores['benchmark_version'] = 0
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         if benchmark.parent:
             parent = [b for b in benchmarks if b.identifier == benchmark.parent.identifier]
+            assert len(parent) == 1
             parent = parent[0]
             if parent in benchmark_todos:
                 continue  # already in list
@@ -192,12 +195,10 @@ def _collect_models(benchmarks, user=None):
             min(group['score_ceiled'].fillna(0)),
             max(group['score_ceiled'].fillna(0))
             # this is an ugly hack to make the gray less visually dominant on the page
-            * (2.5 if benchmark_lookup[benchmark_id].root_parent == 'engineering' else 1))
+            * (2.5 if benchmark_lookup[benchmark_id].root_parent == ENGINEERING_ROOT else 1))
         if bench_minmax[0] == bench_minmax[1]:
-            bench_minmax = (0,1)
+            bench_minmax = (0, 1)
         minmax[benchmark_id] = bench_minmax
-
-
 
     # arrange into per-model scores
     # - prepare model meta
@@ -232,13 +233,14 @@ def _collect_models(benchmarks, user=None):
         model_scores = {}
         # fill in computed scores
         for score_ceiled, score_raw, error, benchmark, version in zip(
-                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'], group['benchmark_version']):
+                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'],
+                group['benchmark_version']):
             benchmark_identifier = f'{benchmark}_v{version}'
             benchmark_min, benchmark_max = minmax[benchmark_identifier]
             benchmark = benchmark_lookup[benchmark_identifier]
             color = representative_color(
                 score_ceiled,
-                colors=colors_redgreen if benchmark.root_parent != 'engineering'
+                colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
                 else colors_gray,
                 alpha_min=benchmark_min, alpha_max=benchmark_max)
             score_ceiled = represent(score_ceiled)
@@ -247,7 +249,8 @@ def _collect_models(benchmarks, user=None):
                                          color=color, order=benchmark.overall_order)
             model_scores[benchmark_identifier] = score_display
         # fill in missing scores
-        model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
+        model_scores = [model_scores[
+                            f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
                         else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
 
         # put everything together, adding model meta
@@ -261,7 +264,6 @@ def _collect_models(benchmarks, user=None):
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
     return data
-
 
 
 def normalize(value, min_value, max_value):
@@ -374,12 +376,14 @@ def no_children(benchmarks, models):
                     break
     return no_children
 
+
 @register.filter
 def no_benchmark(models, benchmarks):
     model_filter = []
     for model in models:
         for benchmark in benchmarks:
-            if not hasattr(benchmark, 'children') and not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
+            if not hasattr(benchmark, 'children') and not any(
+                    benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
                 model_filter.append(model)
                 break
     return model_filter
