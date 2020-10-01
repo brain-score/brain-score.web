@@ -150,6 +150,7 @@ def _collect_models(benchmarks, user=None):
     # iteratively collect scores for all benchmarks. We start with the actual instances, storing their respective
     # parents to traverse up the hierarchy which we iteratively visit until empty.
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
+    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
     scores = None
     while benchmark_todos:
         benchmark = benchmark_todos.pop(0)
@@ -161,12 +162,21 @@ def _collect_models(benchmarks, user=None):
                 user_public = dict(model__owner=user)
             benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
             if len(benchmark_scores) > 0:
-                benchmark_scores = pd.DataFrame([
-                    {'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
-                     'overall_order': benchmark.overall_order,
-                     'model': score.model.identifier,
-                     'score_ceiled': score.score_ceiled, 'score_raw': score.score_raw, 'error': score.error}
-                    for score in benchmark_scores])
+                rows = []
+                for score in benchmark_scores:
+                    # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
+                    # instead, we display the raw score if there is no ceiled score.
+                    benchmark_id = f'{score.benchmark.benchmark_type.identifier}_v{score.benchmark.version}'
+                    if benchmark_lookup[benchmark_id].root_parent != 'engineering' \
+                            or score.score_ceiled is not None:
+                        score_ceiled = score.score_ceiled
+                    else:
+                        score_ceiled = score.score_raw
+                    rows.append({'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
+                                 'overall_order': benchmark.overall_order,
+                                 'model': score.model.identifier,
+                                 'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error})
+                benchmark_scores = pd.DataFrame(rows)
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
             if scores is not None:
@@ -185,7 +195,6 @@ def _collect_models(benchmarks, user=None):
                 continue  # already in list
             benchmark_todos.append(parent)
     # setup benchmark metadata for all scores
-    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
     if scores is None:
         return []
     minmax = {}
