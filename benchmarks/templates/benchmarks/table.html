@@ -28,14 +28,16 @@
                         data-benchmark="{{ benchmark.short_name }}"
                         data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
                         class="rotate"
-                        style="display:{{not_shown_set|in_set:benchmark.identifier }}">
+                        style="display:{{ not_shown_set|in_set:benchmark.identifier }}">
                 <p>
                     {% if benchmark.benchmark_type.parent %}
+                        {# indent, depending on depth #}
                         <span class="want_to_click benchmark_child_indent">
                             {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
                         </span>
                     {% endif %}
                     {% if benchmark.identifier in uniform_parents %}
+                        {# expand/contract button #}
                         <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
                                 class="
                             {% if benchmark.depth == BASE_DEPTH %}
@@ -46,14 +48,22 @@
                             clicker want_to_click"></strong>
                     {% endif %}
 
+                    {# reference link #}
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         <a href="{{ benchmark.benchmark_type.reference.url }}">
                     {% endif %}
+                    {# identifier #}
                     <span class="want_to_click depth_{{ benchmark.depth }} {% if benchmark.version %} instance {% endif %}">
                         {{ benchmark.short_name }}
                     </span>
+                    {# version, if present #}
                     {% if benchmark.version %}
                         <span class="benchmark-version">v{{ benchmark.version }}</span>
+                    {% endif %}
+                    {# number of child benchmarks, ignore roots #}
+                    {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
+                        <span class="benchmark-count">{{ benchmark.children|length }}
+                            benchmark{% if benchmark.children|length != 1 %}s{% endif %}</span>
                     {% endif %}
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         </a>
