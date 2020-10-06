@@ -28,7 +28,7 @@
                         data-benchmark="{{ benchmark.short_name }}"
                         data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
                         class="rotate"
-                        style="display:{{not_shown_set|in_set:benchmark.identifier }}">
+                        style="display:{{ not_shown_set|in_set:benchmark.identifier }}">
                 <p>
                     {% if benchmark.benchmark_type.parent %}
                         <span class="want_to_click benchmark_child_indent">
@@ -49,7 +49,10 @@
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         <a href="{{ benchmark.benchmark_type.reference.url }}">
                     {% endif %}
-                    <span class="want_to_click depth_{{ benchmark.depth }} {% if benchmark.version %} instance {% endif %}">
+                    <span
+                            class="want_to_click depth_{{ benchmark.depth }}
+                                   {% if benchmark.version %} instance {% endif %}
+                                   {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}
                     </span>
                     {% if benchmark.version %}
