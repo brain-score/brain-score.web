@@ -1,17 +1,14 @@
+import boto3
 import datetime
 import json
 import logging
-
-import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.http import HttpResponse, HttpResponseRedirect
-from django.http import JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -97,7 +94,7 @@ class Login(View):
             login(request, user)
             return render(request, 'benchmarks/profile.html')
         else:
-            context = {"Incorrect": True, 'form': form}
+            context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
 
@@ -122,7 +119,7 @@ class Upload(View):
         if not may_submit(request.user, delay=datetime.timedelta(days=7)):  # user has already submitted recently
             return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed",
                                 status=403)
-        user_inst = User._default_manager.get_by_natural_key(request.user.get_full_name())
+        user_inst = User.objects.get_by_natural_key(request.user.get_full_name())
         json_info = {
             "model_type": request.POST['model_type'],
             "user_id": user_inst.id,
@@ -245,10 +242,15 @@ class Password(View):
     def post(self, request):
         form = PasswordResetForm(request.POST)
         username = request.POST["email"]
-        if form.is_valid() and User._default_manager.get_by_natural_key(username) != None:
-            # Create an inactive user with no password:
+        user = None
+        try:
+            user = User.objects.get_by_natural_key(username)
+        except User.DoesNotExist:
+            pass
+        if form.is_valid() and user is not None:
+            # Retrieve requested user:
             username = request.POST["email"]
-            user = User._default_manager.get_by_natural_key(username)
+            user = User.objects.get_by_natural_key(username)
             to_email = username
 
             # Send an email to the user with the token:
@@ -256,12 +258,11 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = "{0}/password-change/{1}/{2}".format(current_site, uid, token)
-            message = "Hello {0}!\n\nPlease click or paste the following link to change your password:\n{1}".format(
-                user.get_full_name(), activation_link)
+            activation_link = f"{current_site}/password-change/{uid}/{token}"
+            message = f"Hello {user.get_full_name()}!\n\n" \
+                      f"Please click or paste the following link to change your password:\n{activation_link}"
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            context = {"activation_email": False, "password_email": True, 'form': LoginForm}
             return render(request, 'benchmarks/password-confirm.html')
         elif form.errors:
             context = {'form': form}
@@ -279,10 +280,9 @@ class ChangePassword(View):
         except(TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
 
-        form = ChangePasswordForm(user=user)
         if user is not None and account_activation_token.check_token(user, token):
-            # activate user and login:
-            form = ChangePasswordForm(user=user)
+            # reset password:
+            form = SetPasswordForm(user=user)
 
             return render(request, 'benchmarks/password.html', {'form': form})
 
@@ -295,7 +295,7 @@ class ChangePassword(View):
             user = User.objects.get(pk=uid)
         except(TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
-        form = ChangePasswordForm(user=user, data=request.POST)
+        form = SetPasswordForm(user=user, data=request.POST)
         if form.is_valid():
             user.set_password(request.POST["new_password1"])
             user.save()
@@ -305,7 +305,6 @@ class ChangePassword(View):
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
         else:
-            context = {"email": True, 'form': form}
             return render(request, 'benchmarks/password.html', {'form': form})
 
 
