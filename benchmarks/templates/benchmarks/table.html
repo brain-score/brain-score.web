@@ -52,9 +52,10 @@
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         <a href="{{ benchmark.benchmark_type.reference.url }}">
                     {% endif %}
+                    
                     {# identifier #}
-                    <span
-                            class="want_to_click depth_{{ benchmark.depth }}
+                    <span data-benchmark="{{ benchmark.short_name }}"
+                            class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
                                    {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}

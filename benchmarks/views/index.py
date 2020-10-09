@@ -201,8 +201,8 @@ def _collect_models(benchmarks, user=None):
     for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
         benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
         bench_minmax = (
-            min(group['score_ceiled'].fillna(0)),
-            max(group['score_ceiled'].fillna(0))
+            np.nanmin(group['score_ceiled']),
+            np.nanmax(group['score_ceiled'])
             # this is an ugly hack to make the gray less visually dominant on the page
             * (2.5 if benchmark_lookup[benchmark_id].root_parent == ENGINEERING_ROOT else 1))
         if bench_minmax[0] == bench_minmax[1]:
@@ -230,12 +230,12 @@ def _collect_models(benchmarks, user=None):
             no_score[benchmark_identifier] = ScoreDisplay(
                 benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
                 score_ceiled="", score_raw="", error="",
-                color=representative_color(None, alpha_min=benchmark_min, alpha_max=benchmark_max))
+                color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max))
         else:
             no_score[benchmark_identifier] = ScoreDisplay(
                 benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
                 score_ceiled="", score_raw="", error="",
-                color=representative_color(None, alpha_min=0, alpha_max=1))
+                color=representative_color(None, min_value=0, max_value=1))
     # - convert scores DataFrame into rows
     data = []
     for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
@@ -251,7 +251,7 @@ def _collect_models(benchmarks, user=None):
                 score_ceiled,
                 colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
                 else colors_gray,
-                alpha_min=benchmark_min, alpha_max=benchmark_max)
+                min_value=benchmark_min, max_value=benchmark_max)
             score_ceiled = represent(score_ceiled)
             score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
                                          score_ceiled=score_ceiled, score_raw=score_raw, error=error,
@@ -275,7 +275,12 @@ def _collect_models(benchmarks, user=None):
     return data
 
 
-def normalize(value, min_value, max_value):
+def normalize_value(value, min_value, max_value):
+    normalized_value = (value - min_value) / (max_value - min_value)
+    return .7 * normalized_value  # scale down to avoid extremely green colors
+
+
+def normalize_alpha(value, min_value, max_value):
     # intercept and slope equations are from solving `y = slope * x + intercept`
     # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
     slope = -.9 / (min_value - max_value)
@@ -290,16 +295,17 @@ def represent(value):
     return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
 
 
-def representative_color(value, alpha_min=None, alpha_max=None, colors=colors_redgreen):
+def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
     if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
         return f"background-color: {color_None}"
-    step = int(100 * value)
+    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+    step = int(100 * normalized_value)
     color = colors[step]
     color = tuple(c * 255 for c in color.rgb)
     fallback_color = tuple(round(c) for c in color)
-    normalized_value = normalize(value, min_value=alpha_min, max_value=alpha_max) \
-        if alpha_min is not None else (100 * value)
-    color += (normalized_value,)
+    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
+        if min_value is not None else (100 * value)
+    color += (normalized_alpha,)
     return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
 
 
