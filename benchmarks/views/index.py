@@ -381,5 +381,29 @@ def is_public(model):
 
 
 @register.filter
+def no_children(benchmarks, models):
+    no_children = []
+    for benchmark in benchmarks:
+        if not hasattr(benchmark, 'children'):
+            for model in models:
+                if not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
+                    no_children.append(benchmark)
+                    break
+    return no_children
+
+
+@register.filter
+def no_benchmark(models, benchmarks):
+    model_filter = []
+    for model in models:
+        for benchmark in benchmarks:
+            if not hasattr(benchmark, 'children') and not any(
+                    benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
+                model_filter.append(model)
+                break
+    return model_filter
+
+
+@register.filter
 def length(obj):
     return len(obj)
