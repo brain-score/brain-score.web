@@ -202,8 +202,8 @@ def resubmit(request):
 def may_submit(user, delay):
     if user.is_superuser:
         return True
-    submissions = Submission.objects.filter(submitter=user)  # get all submissions of this user
-    submissions = submissions.exclude(status=Submission.Status.PENDING)  # exclude pendings which haven't gone through
+    submissions = Submission.objects.filter(submitter=user,  # get all submissions of this user
+                                            status=Submission.Status.SUCCESS)  # only successful submissions
     if not submissions:  # no submissions so far
         return True
     latest_submission = submissions.latest('timestamp')
