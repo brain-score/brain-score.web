@@ -116,9 +116,6 @@ class Upload(View):
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
-        if not may_submit(request.user, delay=datetime.timedelta(days=7)):  # user has already submitted recently
-            return HttpResponse("Too many submission attempts -- only one submission every 7 days is allowed",
-                                status=403)
         user_inst = User.objects.get_by_natural_key(request.user.get_full_name())
         json_info = {
             "model_type": request.POST['model_type'],
@@ -197,20 +194,6 @@ def resubmit(request):
             return render(request, 'benchmarks/success.html')
         else:
             return render(request, 'benchmark/')
-
-
-def may_submit(user, delay):
-    if user.is_superuser:
-        return True
-    submissions = Submission.objects.filter(submitter=user,  # get all submissions of this user
-                                            status=Submission.Status.SUCCESS)  # only successful submissions
-    if not submissions:  # no submissions so far
-        return True
-    latest_submission = submissions.latest('timestamp')
-    latest_timestamp = latest_submission.timestamp
-    if latest_timestamp < datetime.datetime.now(tz=latest_timestamp.tzinfo) - delay:
-        return True  # last submission >1 week ago
-    return False
 
 
 class Profile(View):
