@@ -158,8 +158,10 @@ def _collect_models(benchmarks, user=None):
             # Remove all non-public model scores, but allow users to see their own models in the table.
             if user is None:  # if we are not in a user profile, only show rows that are public
                 user_public = dict(model__public=True)
-            else:  # if we are in a user profile, show all rows that this user owns (regardless of public/private)
-                user_public = dict(model__owner=user)
+            else:
+                # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+                # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
+                user_public = dict(model__owner=user, score_ceiled__isnull=False)
             benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
             if len(benchmark_scores) > 0:
                 rows = []
