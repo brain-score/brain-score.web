@@ -157,12 +157,14 @@ def _collect_models(benchmarks, user=None):
         if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
             # Remove all non-public model scores, but allow users to see their own models in the table.
             if user is None:  # if we are not in a user profile, only show rows that are public
-                user_public = dict(model__public=True)
+                user_selection = dict(model__public=True)
+            elif user.is_superuser:
+                user_selection = dict()
             else:
                 # if we are in a user profile, show all rows that this user owns (regardless of public/private)
                 # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-                user_public = dict(model__owner=user, score_ceiled__isnull=False)
-            benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_public).select_related('model')
+                user_selection = dict(model__owner=user, score_ceiled__isnull=False)
+            benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_selection).select_related('model')
             if len(benchmark_scores) > 0:
                 rows = []
                 for score in benchmark_scores:
@@ -266,9 +268,15 @@ def _collect_models(benchmarks, user=None):
 
         # put everything together, adding model meta
         meta = model_meta[model_identifier]
+        if model_identifier in model_ranks['model'].values:
+            rank = model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze()
+        else:  # if a model does not have an average score, it will not be included in the rank
+            _logger.warning(f"Model {model_identifier} not found in model_ranks")
+            # raise ValueError(f"Model {model_identifier} not found in model_ranks")
+            rank = max(model_ranks['rank']) + 1
         model_row = ModelRow(
             identifier=model_identifier,
-            scores=model_scores, rank=model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze(),
+            scores=model_scores, rank=rank,
             reference_identifier=f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None,
             reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
         data.append(model_row)
