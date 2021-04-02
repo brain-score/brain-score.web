@@ -52,10 +52,10 @@
                     {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                         <a href="{{ benchmark.benchmark_type.reference.url }}">
                     {% endif %}
-                    
+
                     {# identifier #}
                     <span data-benchmark="{{ benchmark.short_name }}"
-                            class="want_to_click clicker depth_{{ benchmark.depth }}
+                          class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
                                    {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}
@@ -85,13 +85,17 @@
         <tr>
             <td class="score_cell"><strong>{{ model.rank }}</strong></td>
             <td class="model">
-                <a target="_blank" rel="noopener noreferrer" href="{{ model.reference_link }}">
-                    {{ model.identifier }}
-                </a>
-                <br>
-                <em>
-                    {{ model.reference_identifier }}
-                </em>
+                <div class="identifier" title="{{ model.reference_identifier }}">
+                    <a target="_blank" rel="noopener noreferrer" href="{{ model.reference_link }}">
+                        {{ model.identifier }}
+                    </a>
+                </div>
+                <div class="submitter">
+                    <span class="info">submitted by</span>
+                    <em>
+                        {{ model.user.email }}
+                    </em>
+                </div>
             </td>
             {% for score_row in model.scores %}
                 <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"

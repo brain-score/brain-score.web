@@ -220,7 +220,10 @@ def _collect_models(benchmarks, user=None):
     model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
-        'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
+        'identifier',
+        'reference_identifier', 'reference_link',
+        'user', 'public',
+        'rank', 'scores'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
     # - prepare "no score" objects for when a model-benchmark score is missing
@@ -268,9 +271,11 @@ def _collect_models(benchmarks, user=None):
         meta = model_meta[model_identifier]
         model_row = ModelRow(
             identifier=model_identifier,
-            scores=model_scores, rank=model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze(),
             reference_identifier=f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None,
-            reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
+            reference_link=meta.reference.url if meta.reference else None,
+            user=meta.owner, public=meta.public,
+            scores=model_scores, rank=model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze()
+        )
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
