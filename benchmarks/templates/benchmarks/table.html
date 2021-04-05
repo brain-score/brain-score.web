@@ -99,7 +99,11 @@
                     </a>
                 </div>
                 <div class="submitter">
-                    {{ model.user.email }}
+                    {% if model.user.display_name is not None %}
+                        {{ model.user.display_name }}
+                    {% else %}
+                        &nbsp;
+                    {% endif %}
                 </div>
             </td>
             {% for score_row in model.scores %}
