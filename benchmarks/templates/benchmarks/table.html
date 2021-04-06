@@ -48,7 +48,8 @@
                         {# expand/contract button #}
                         <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
                                 class="
-                            {% if benchmark.depth == BASE_DEPTH %}
+                            {# show brain benchmarks up to the base depth #}
+                            {% if benchmark.root_parent == 'engineering' or benchmark.depth == BASE_DEPTH %}
                                 headerExpand
                             {% else %}
                                 headerContract

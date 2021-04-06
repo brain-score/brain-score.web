@@ -59,7 +59,10 @@ def get_context(user=None):
     # configure benchmark level shown by default
     uniform_parents = set(
         benchmark_parents.values())  # we're going to use the fact that all benchmark instances currently point to their direct parent
-    not_shown_set = {benchmark.identifier for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
+    not_shown_set = {benchmark.identifier for benchmark in benchmarks
+                     if benchmark.depth > BASE_DEPTH or
+                     # show engineering benchmarks collapsed, but still show root
+                     (benchmark.short_name != ENGINEERING_ROOT and benchmark.root_parent == ENGINEERING_ROOT)}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
@@ -171,7 +174,7 @@ def _collect_models(benchmarks, user=None):
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
                     benchmark_id = f'{score.benchmark.benchmark_type.identifier}_v{score.benchmark.version}'
-                    if benchmark_lookup[benchmark_id].root_parent != 'engineering' \
+                    if benchmark_lookup[benchmark_id].root_parent != ENGINEERING_ROOT \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
                     else:
