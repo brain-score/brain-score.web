@@ -39,9 +39,6 @@ If you need to reset the database and all migrations (relevant after changing `m
 6. upload `Brain-Score.html`, `Brain-Score_files` and `fixture-scores-javascript.json` to S3
     (account id ****75, bucket www.brain-score.org)
 
-## AWS
+## Deployment
 
-Deployment to AWS uses Elastic Beanstalk.  
-`eb create brain-score-web-dev -c brain-score-web-dev -r us-east-2 -p Docker --envvars DEBUG=True,DOMAIN=localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com,DB_CRED=brainscore-1-ohio-cred`
-
-`eb create brain-score-web-prod -c brain-score-web-prod -r us-east-2 -p Docker --envvars DEBUG=False,DOMAIN=localhost:brain-score-web-prod.us-east-2.elasticbeanstalk.com:www.brain-score.org,DB_CRED=brainscore-prod-ohio-cred`
+See [deployment.md](deployment.md)
