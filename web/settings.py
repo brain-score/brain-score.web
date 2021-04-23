@@ -196,6 +196,7 @@ COMPRESS_PRECOMPILERS = (
 AUTH_USER_MODEL = 'benchmarks.User'
 
 # Logging
+log_level = 'DEBUG' if DEBUG else 'INFO'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -204,7 +205,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
         'file': {
-            'level': 'DEBUG',
+            'level': log_level,
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'django.log'),
         },
