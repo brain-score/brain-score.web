@@ -1,5 +1,4 @@
 import boto3
-import datetime
 import json
 import logging
 import requests
@@ -7,6 +6,7 @@ from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import PermissionDenied
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
@@ -15,7 +15,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
-from benchmarks.models import Model, Submission
+from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 
@@ -151,22 +151,19 @@ class Upload(View):
 def resubmit(request):
     if request.method == 'POST':
         _logger.debug(f"request user: {request.user.get_full_name()}")
-        user_inst = User.objects.get_by_natural_key(request.user.get_full_name())
         model_ids = []
         benchmarks = []
         for key, value in request.POST.items():
             if 'models_' in key:
-                # get model instance by natural key. Ideally this natural key would return only one object --
-                # but when users submit two models with the same identifier, there will be multiple model objects
-                # returned. In that case, we just use the latest submission.
-                model = Model.objects.filter(identifier=value, owner=user_inst.id).latest('submission__timestamp')
+                model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
+                verify_user_model_access(user=request.user, model=model)
                 model_ids.append(model.id)
             if 'benchmarks_' in key:
                 # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
                 benchmarks.append(value.split('_v')[0])
         if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
-                "user_id": user_inst.id,
+                "user_id": request.user.id,
                 "model_ids": model_ids,
             }
             with open('result.json', 'w') as fp:
@@ -299,12 +296,18 @@ class PublicAjax(View):
     def post(self, request):
         # data contains a dictionary of model identifiers to a boolean setting of public
         data = json.loads(request.body)
-        model_identifier, public = data['identifier'], data['public']
-        # filter from models that this user owns
-        model = Model.objects.get(identifier=model_identifier, owner=request.user)
+        model_id, public = data['id'], data['public']
+        model = Model.objects.get(id=model_id)
+        verify_user_model_access(user=request.user, model=model)
         model.public = public
         model.save(update_fields=['public'])
         return JsonResponse("success", safe=False)
+
+
+def verify_user_model_access(user, model):
+    # make sure user is allowed to perform this operation: either model owner or superuser
+    if not (user.is_superuser or model.owner == user.id):
+        raise PermissionDenied(f"User {user} is not allowed access to model {model}")
 
 
 def get_secret(secret_name, region_name='us-east-2'):
