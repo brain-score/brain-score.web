@@ -5,6 +5,24 @@
 {% if user %}
 <section id="profile" class="container center">
 	<h1>{{ user.email }}</h1>
+
+    <form action="{% url 'display-name' %}" method="post">
+        {% csrf_token %}
+        <div class="field has-addons">
+            <p class="control">
+                <label class="label">Display name</label>
+                <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+            </p>
+            <p class="control">
+                <button class="button">
+                    Save
+                </button>
+            </p>
+        </div>
+    </form>
+
+    <br>
+
 	<p>Past scores are below. Submissions are located at the bottom.</p>
 </section>
 

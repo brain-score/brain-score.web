@@ -43,6 +43,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, null=True)
+    display_name = models.CharField(max_length=300, null=True)
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
@@ -61,10 +62,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def get_full_name(self):
-        return self.email
+        return self.display_name
 
     def get_short_name(self):
-        return self.email
+        return self.display_name
 
     def natural_key(self):
         return self.email,

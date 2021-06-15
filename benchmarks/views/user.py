@@ -116,7 +116,7 @@ class Upload(View):
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
-        user_inst = User.objects.get_by_natural_key(request.user.get_full_name())
+        user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
             "model_type": request.POST['model_type'],
             "user_id": user_inst.id,
@@ -191,6 +191,14 @@ def resubmit(request):
             return render(request, 'benchmarks/success.html')
         else:
             return render(request, 'benchmark/')
+
+
+class DisplayName(View):
+    def post(self, request):
+        user_instance = User.objects.get_by_natural_key(request.user.email)
+        user_instance.display_name = request.POST['display_name']
+        user_instance.save()
+        return HttpResponseRedirect('../../profile/')
 
 
 class Profile(View):

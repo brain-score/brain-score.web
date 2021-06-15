@@ -59,7 +59,10 @@ def get_context(user=None):
     # configure benchmark level shown by default
     uniform_parents = set(
         benchmark_parents.values())  # we're going to use the fact that all benchmark instances currently point to their direct parent
-    not_shown_set = {benchmark.identifier for benchmark in benchmarks if benchmark.depth > BASE_DEPTH}
+    not_shown_set = {benchmark.identifier for benchmark in benchmarks
+                     if benchmark.depth > BASE_DEPTH or
+                     # show engineering benchmarks collapsed, but still show root
+                     (benchmark.short_name != ENGINEERING_ROOT and benchmark.root_parent == ENGINEERING_ROOT)}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
@@ -171,7 +174,7 @@ def _collect_models(benchmarks, user=None):
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
                     benchmark_id = f'{score.benchmark.benchmark_type.identifier}_v{score.benchmark.version}'
-                    if benchmark_lookup[benchmark_id].root_parent != 'engineering' \
+                    if benchmark_lookup[benchmark_id].root_parent != ENGINEERING_ROOT \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
                     else:
@@ -222,7 +225,10 @@ def _collect_models(benchmarks, user=None):
     model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
-        'id', 'identifier', 'reference_identifier', 'reference_link', 'rank', 'scores', 'user', 'public'])
+        'id', 'identifier',
+        'reference_identifier', 'reference_link',
+        'user', 'public',
+        'rank', 'scores'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
     # - prepare "no score" objects for when a model-benchmark score is missing
@@ -274,12 +280,14 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_identifier} not found in model_ranks")
             # raise ValueError(f"Model {model_identifier} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
+        reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
         model_row = ModelRow(
             id=meta.id,
             identifier=model_identifier,
-            scores=model_scores, rank=rank,
-            reference_identifier=f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None,
-            reference_link=meta.reference.url if meta.reference else None, user=meta.owner, public=meta.public)
+            reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
+            user=meta.owner, public=meta.public,
+            scores=model_scores, rank=rank
+        )
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
