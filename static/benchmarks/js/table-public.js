@@ -1,9 +1,9 @@
 $(document).ready(function () {
     $('input.model-public-checkbox').click(function () {
         // retrieve updated setting
-        var model_identifier = $(this).val();
+        var model_id = $(this).val();
         var is_checked = $(this).is(':checked');
-        var change = {'identifier': model_identifier, 'public': is_checked}
+        var change = {'id': model_id, 'public': is_checked}
 
         // convert to JSON
         var payload = JSON.stringify(change);

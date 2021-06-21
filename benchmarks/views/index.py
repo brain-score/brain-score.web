@@ -225,7 +225,7 @@ def _collect_models(benchmarks, user=None):
     model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
-        'identifier',
+        'id', 'identifier',
         'reference_identifier', 'reference_link',
         'user', 'public',
         'rank', 'scores'])
@@ -282,6 +282,7 @@ def _collect_models(benchmarks, user=None):
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
         model_row = ModelRow(
+            id=meta.id,
             identifier=model_identifier,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public,

@@ -21,7 +21,7 @@
                 {% for model in models|no_benchmark:benchmarks %}
                     <div id="modelsGroup" class="field">
                         <input class="is-checkradio is-block model_checker" name='models_{{ model.identifier }}'
-                               onclick="enableButtonModel()" value="{{ model.identifier }}" id="{{ model.identifier }}"
+                               onclick="enableButtonModel()" value="{{ model.id }}" id="{{ model.identifier }}"
                                type="checkbox">
                         <label for="{{ model.identifier }}">{{ model.identifier }}</label>
                     </div>
