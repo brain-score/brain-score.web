@@ -172,8 +172,8 @@ class Model(models.Model):
         return self.name, self.owner
 
     class ModelManager(models.Manager):
-        def get_by_natural_key(self, identifier, owner=None):
-            kwargs = dict(identifier=identifier)
+        def get_by_natural_key(self, name, owner=None):
+            kwargs = dict(name=name)
             if owner is not None:  # if owner is passed, explicitly use it to link, otherwise try without
                 kwargs['owner'] = owner
             return self.get(**kwargs)
