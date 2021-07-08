@@ -159,7 +159,7 @@ class Submission(models.Model):
 
 class Model(models.Model):
     id = models.AutoField(primary_key=True)
-    identifier = models.CharField(db_column='name',max_length=200)
+    name = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for models without publication
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
@@ -169,11 +169,11 @@ class Model(models.Model):
         return generic_repr(self)
 
     def natural_key(self):
-        return self.identifier, self.owner
+        return self.name, self.owner
 
     class ModelManager(models.Manager):
-        def get_by_natural_key(self, identifier, owner=None):
-            kwargs = dict(identifier=identifier)
+        def get_by_natural_key(self, name, owner=None):
+            kwargs = dict(name=name)
             if owner is not None:  # if owner is passed, explicitly use it to link, otherwise try without
                 kwargs['owner'] = owner
             return self.get(**kwargs)

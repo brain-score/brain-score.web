@@ -181,7 +181,7 @@ def _collect_models(benchmarks, user=None):
                         score_ceiled = score.score_raw
                     rows.append({'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
                                  'overall_order': benchmark.overall_order,
-                                 'model': score.model.identifier,
+                                 'model': score.model.id,
                                  'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error})
                 benchmark_scores = pd.DataFrame(rows)
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
@@ -219,13 +219,13 @@ def _collect_models(benchmarks, user=None):
     # arrange into per-model scores
     # - prepare model meta
     model_meta = Model.objects.select_related('reference')
-    model_meta = {model.identifier: model for model in model_meta}
+    model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
     model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
-        'id', 'identifier',
+        'id', 'name',
         'reference_identifier', 'reference_link',
         'user', 'public',
         'rank', 'scores'])
@@ -248,7 +248,7 @@ def _collect_models(benchmarks, user=None):
                 color=representative_color(None, min_value=0, max_value=1))
     # - convert scores DataFrame into rows
     data = []
-    for model_identifier, group in tqdm(scores.groupby('model'), desc='model rows'):
+    for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
         for score_ceiled, score_raw, error, benchmark, version in zip(
@@ -273,17 +273,16 @@ def _collect_models(benchmarks, user=None):
                         else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
 
         # put everything together, adding model meta
-        meta = model_meta[model_identifier]
-        if model_identifier in model_ranks['model'].values:
-            rank = model_ranks[model_ranks['model'] == model_identifier]['rank'].squeeze()
+        meta = model_meta[model_id]
+        if model_id in model_ranks['model'].values:
+            rank = model_ranks[model_ranks['model'] == model_id]['rank'].squeeze()
         else:  # if a model does not have an average score, it will not be included in the rank
-            _logger.warning(f"Model {model_identifier} not found in model_ranks")
-            # raise ValueError(f"Model {model_identifier} not found in model_ranks")
+            _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
         model_row = ModelRow(
             id=meta.id,
-            identifier=model_identifier,
+            name=meta.name,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public,
             scores=model_scores, rank=rank
@@ -329,7 +328,22 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
 
 
 def _build_comparison_data(models):
-    data = [dict(ChainMap(*[{'model': model_row.identifier}] +
+    """
+    Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
+    :return: an array where each dictionary element contains a model's scores on all benchmarks, e.g.
+        ```
+        [
+            {"dicarlo.Rajalingham2018-i2n_v2-score": .521,
+             "dicarlo.Rajalingham2018-i2n_v2-error": 0.00391920504344273,
+             "behavior_v0-score": ".521",
+             ...,
+             "model": "mobilenet_v2_1.0_224",
+            },
+            ...
+        ]
+        ```
+    """
+    data = [dict(ChainMap(*[{'model': model_row.name}] +
                            [{f"{score_row.benchmark}-score": score_row.score_ceiled,
                              f"{score_row.benchmark}-error": score_row.error}
                             for score_row in model_row.scores]))
