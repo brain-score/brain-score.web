@@ -328,6 +328,21 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
 
 
 def _build_comparison_data(models):
+    """
+    Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
+    :return: an array where each dictionary element contains a model's scores on all benchmarks, e.g.
+        ```
+        [
+            {"dicarlo.Rajalingham2018-i2n_v2-score": .521,
+             "dicarlo.Rajalingham2018-i2n_v2-error": 0.00391920504344273,
+             "behavior_v0-score": ".521",
+             ...,
+             "model": "mobilenet_v2_1.0_224",
+            },
+            ...
+        ]
+        ```
+    """
     data = [dict(ChainMap(*[{'model': model_row.name}] +
                            [{f"{score_row.benchmark}-score": score_row.score_ceiled,
                              f"{score_row.benchmark}-error": score_row.error}
