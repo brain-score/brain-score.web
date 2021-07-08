@@ -20,10 +20,10 @@
                 <h4>Pick models</h4>
                 {% for model in models|no_benchmark:benchmarks %}
                     <div id="modelsGroup" class="field">
-                        <input class="is-checkradio is-block model_checker" name='models_{{ model.identifier }}'
-                               onclick="enableButtonModel()" value="{{ model.id }}" id="{{ model.identifier }}"
+                        <input class="is-checkradio is-block model_checker" name='models_{{ model.name }}'
+                               onclick="enableButtonModel()" value="{{ model.id }}" id="{{ model.name }}"
                                type="checkbox">
-                        <label for="{{ model.identifier }}">{{ model.identifier }}</label>
+                        <label for="{{ model.name }}">{{ model.name }}</label>
                     </div>
                 {% endfor %}
             </div>
