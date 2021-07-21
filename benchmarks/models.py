@@ -150,7 +150,6 @@ class Submission(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
     model_type = models.CharField(max_length=30, default='BaseModel')
     status = models.CharField(max_length=25, default='unknown')
-    console_log = models.TextField(default=False)
     def __repr__(self):
         return generic_repr(self)
 

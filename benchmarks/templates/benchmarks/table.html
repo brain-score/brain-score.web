@@ -85,8 +85,6 @@
         {% endfor %}
         {% if has_user %}
             <th><p><span class="want_to_click"><b>Public</b></span></p></th>
-            <th><p><span class="model_info"><b>Model Information</b></span></p></th>
-
         {% endif %}
     </tr>
     </thead>
@@ -118,46 +116,8 @@
             {% endfor %}
             {% if has_user %}
                 <td class="model-public-checkbox">
-                  <input type="checkbox" value="{{ model.id }}"
+                    <input type="checkbox" value="{{ model.id }}"
                            class="public model-public-checkbox" {{ model|is_public }}>
-                </td>
-                <td class="model-information">
-                    <div class="build_status">
-                        {% if has_user and model.build_status is not None %}
-                            {% if model.build_status == "success" %}
-                                Build Status: <span style="color:green;">Success</span>
-                            {% elif model.build_status == "running" %}
-                                Build Status: <span style="color:goldenrod;">Running</span>
-                            {% else %}
-                                Build Status: <span style="color:red;">Failed</span>
-                            {% endif %}
-                        {% else %}
-                          &nbsp;
-                        {% endif %}
-                    </div>
-                    <div class="console_log">
-                        {% if has_user and model.console_log is not None %}
-                         <div class="box">
-                            <a class="console_log_button" href="#{{ model.name }}/model_information">View Console Log</a>
-                         </div>
-                         <div id="{{ model.name }}/model_information" class="overlay">
-                            <div class="popup">
-                                <h2>Model Information</h2>
-                                <a class="close" href="#">&times;</a>
-                                <div class="content">
-                                     <span class='bold'>Model ID:</span> {{ model.id }}<br>
-                                      <span class='bold'>Model Name:</span> {{  model.name }}<br>
-                                    <span class='bold'>Build Status:</span> {{  model.build_status }}<br>
-                                    <hr style="height:2px;border-width:0;color:black;background-color:gray">
-                                      <span class='bold'>Console Log:</span> <br><br>
-                                     {{ model.console_log }} <br>
-                                </div>
-                            </div>
-                         </div>
-{#                      <a href={{ "../profile/console_log" }}>View Console Log</a>#}
-                        {% else %}
-                        {% endif %}
-                    </div>
                 </td>
             {% endif %}
         </tr>
