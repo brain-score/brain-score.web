@@ -200,13 +200,18 @@ log_level = 'DEBUG' if DEBUG else 'INFO'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'basic': {'format': '%(asctime)s %(name)-15.15s %(levelname)-8.8s %(message)s'}
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'basic',
         },
         'file': {
             'level': log_level,
             'class': 'logging.FileHandler',
+            'formatter': 'basic',
             'filename': os.path.join(BASE_DIR, 'django.log'),
         },
     },
