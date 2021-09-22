@@ -157,6 +157,7 @@ def _collect_models(benchmarks, user=None):
     scores = None
     while benchmark_todos:
         benchmark = benchmark_todos.pop(0)
+        _logger.debug(f"Processing scores for benchmark {benchmark}")
         if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
             # Remove all non-public model scores, but allow users to see their own models in the table.
             if user is None:  # if we are not in a user profile, only show rows that are public
@@ -200,7 +201,19 @@ def _collect_models(benchmarks, user=None):
             parent = parent[0]
             if parent in benchmark_todos:
                 continue  # already in list
+            # Process benchmarks deeper in the hierarchy first, i.e. process benchmarks with more parents before
+            # benchmarks with fewer parents. This is to avoid cases such as the following:
+            # ```
+            #   V1
+            #     - FreemanZiemba2013.V1-pls
+            #     - V1-response_magnitude
+            #       - Marques2020_Ringach2002-max_dc
+            # ```
+            # In this case, if the FreemanZiemba2013.V1-pls benchmark is processed first, it will add V1 to the todos.
+            # V1 will thus be processed next, at which point the scores for V1-response_magnitude are however not
+            # processed yet. Thus, we want to work our way from the bottom up.
             benchmark_todos.append(parent)
+            benchmark_todos = list(sorted(benchmark_todos, key=lambda benchmark: benchmark.depth, reverse=True))
     # setup benchmark metadata for all scores
     if scores is None:
         return []
