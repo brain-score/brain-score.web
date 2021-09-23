@@ -150,7 +150,8 @@ table.benchmarks
   tr:nth-child(1) td
     border-top: 0.25em solid white
 
-  tr
+  tr:not(.list_entry)
+    // make better square for leaderboard table, but not for model dashboard list
     // root benchmarks
     td.depth_0
       border-left: 2em solid white

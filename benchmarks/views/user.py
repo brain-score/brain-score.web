@@ -106,7 +106,7 @@ class Logout(View):
 
 class Upload(View):
     def get(self, request):
-        if str(request.user) == "AnonymousUser":
+        if request.user.is_anonymous:
             return HttpResponseRedirect('../profile/')
         form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
@@ -203,7 +203,7 @@ class DisplayName(View):
 
 class Profile(View):
     def get(self, request):
-        if str(request.user) == "AnonymousUser":
+        if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
             context = get_context(request.user)

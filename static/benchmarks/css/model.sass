@@ -1,0 +1,32 @@
+section.individual_model
+  div.benchmark_scores
+    div
+      &.is_instance
+        border: 1px solid lightgray
+
+      // with increasing depth, we increase the left indent
+      &.benchmark_child_0
+        margin-left: 0
+        font-size: 13pt
+
+      &.benchmark_child_1
+        margin-left: 15pt
+        font-size: 11pt
+
+      &.benchmark_child_2
+        margin-left: 30pt
+        font-size: 10pt
+
+      &.benchmark_child_3
+        margin-left: 45pt
+        font-size: 8pt
+
+      td.benchmark_identifier
+        font-weight: bold
+
+      div.benchmark_info
+        margin-left: 5px
+
+        .stimulus_sample
+          height: 50px
+          border: 1px solid lightgray

@@ -108,11 +108,13 @@
                 </div>
             </td>
             {% for score_row in model.scores %}
-                <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"
-                    data-benchmark="{{ score_row.benchmark }}"
-                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}"
-                    class="score_cell displaySquare depth_{{ score_row.benchmark_depth }} clicker"
-                    style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
+                <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
+                    data-benchmark="{{ score_row.benchmark_specifier }}"
+                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                    class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                    style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark_specifier }} ">
+                    {{ score_row.score_ceiled }}
+                </td>
             {% endfor %}
             {% if has_user %}
                 <td class="model-public-checkbox">

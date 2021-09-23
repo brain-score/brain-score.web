@@ -42,13 +42,7 @@ def get_context(user=None):
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
-        uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.benchmark_type.identifier
-        match = re.match(r'[^\.]+\.(.+)', benchmark.benchmark_type.identifier)
-        if match:
-            uniform_benchmarks[benchmark.benchmark_type.identifier] = match.group(1)
-            benchmark.short_name = benchmark.benchmark_type.identifier = match.group(1)
-        else:
-            benchmark.short_name = benchmark.benchmark_type.identifier
+        uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.short_name
         benchmark.ceiling = represent(benchmark.ceiling)
         benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
     # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>, parent have always version 0 (only to match the pattern).
@@ -71,6 +65,14 @@ def get_context(user=None):
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
+
+
+def _get_benchmark_shortname(benchmark_type_identifier):
+    match = re.match(r'[^\.]+\.(.+)', benchmark_type_identifier)
+    if match:
+        return match.group(1)
+    else:
+        return benchmark_type_identifier
 
 
 class Tree:
@@ -143,6 +145,8 @@ def _collect_benchmarks(user_page=False):
     # add shortcut to identifier
     for benchmark in benchmarks:
         benchmark.identifier = benchmark.benchmark_type.identifier
+        shortname = _get_benchmark_shortname(benchmark.benchmark_type.identifier)
+        benchmark.short_name = shortname
     return benchmarks
 
 
@@ -182,7 +186,8 @@ def _collect_models(benchmarks, user=None):
                     rows.append({'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
                                  'overall_order': benchmark.overall_order,
                                  'model': score.model.id,
-                                 'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error})
+                                 'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error,
+                                 'comment': score.comment})
                 benchmark_scores = pd.DataFrame(rows)
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
@@ -193,6 +198,7 @@ def _collect_models(benchmarks, user=None):
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean().reset_index()
                 benchmark_scores['benchmark'] = benchmark.identifier
                 benchmark_scores['benchmark_version'] = 0
+                benchmark_scores['comment'] = None
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         if benchmark.parent:
             parent = [b for b in benchmarks if b.identifier == benchmark.parent.identifier]
@@ -230,47 +236,52 @@ def _collect_models(benchmarks, user=None):
         'user', 'public',
         'rank', 'scores'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
-        'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
+        'benchmark', 'benchmark_specifier',
+        'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
-        benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
-        if benchmark_identifier in minmax:
-            benchmark_min, benchmark_max = minmax[benchmark_identifier]
-            no_score[benchmark_identifier] = ScoreDisplay(
-                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+        benchmark_specifier = f'{benchmark.identifier}_v{benchmark.version}'
+        if benchmark_specifier in minmax:
+            benchmark_min, benchmark_max = minmax[benchmark_specifier]
+            no_score[benchmark_specifier] = ScoreDisplay(
+                benchmark=benchmark, benchmark_specifier=benchmark_specifier,
                 score_ceiled="", score_raw="", error="",
-                color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max))
+                color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max),
+                comment="")
         else:
-            no_score[benchmark_identifier] = ScoreDisplay(
-                benchmark=benchmark_identifier, benchmark_depth=benchmark.depth, order=benchmark.overall_order,
+            no_score[benchmark_specifier] = ScoreDisplay(
+                benchmark=benchmark, benchmark_specifier=benchmark_specifier,
                 score_ceiled="", score_raw="", error="",
-                color=representative_color(None, min_value=0, max_value=1))
+                color=representative_color(None, min_value=0, max_value=1),
+                comment="")
     # - convert scores DataFrame into rows
     data = []
     for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
-        for score_ceiled, score_raw, error, benchmark, version in zip(
-                group['score_ceiled'], group['score_raw'], group['error'], group['benchmark'],
-                group['benchmark_version']):
-            benchmark_identifier = f'{benchmark}_v{version}'
-            benchmark_min, benchmark_max = minmax[benchmark_identifier]
-            benchmark = benchmark_lookup[benchmark_identifier]
+        for score_ceiled, score_raw, error, benchmark, version, comment in zip(
+                group['score_ceiled'], group['score_raw'], group['error'],
+                group['benchmark'], group['benchmark_version'],
+                group['comment']):
+            benchmark_specifier = f'{benchmark}_v{version}'
+            benchmark_min, benchmark_max = minmax[benchmark_specifier]
+            benchmark = benchmark_lookup[benchmark_specifier]
             color = representative_color(
                 score_ceiled,
                 colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
                 else colors_gray,
                 min_value=benchmark_min, max_value=benchmark_max)
             score_ceiled = represent(score_ceiled)
-            score_display = ScoreDisplay(benchmark=benchmark_identifier, benchmark_depth=benchmark.depth,
+            score_display = ScoreDisplay(benchmark=benchmark, benchmark_specifier=benchmark_specifier,
                                          score_ceiled=score_ceiled, score_raw=score_raw, error=error,
-                                         color=color, order=benchmark.overall_order)
-            model_scores[benchmark_identifier] = score_display
+                                         color=color, comment=comment)
+            model_scores[benchmark_specifier] = score_display
         # fill in missing scores
-        model_scores = [model_scores[
-                            f'{benchmark.identifier}_v{benchmark.version}'] if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
-                        else no_score[f'{benchmark.identifier}_v{benchmark.version}'] for benchmark in benchmarks]
+        model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}']
+                        if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
+                        else no_score[f'{benchmark.identifier}_v{benchmark.version}']
+                        for benchmark in benchmarks]
 
         # put everything together, adding model meta
         meta = model_meta[model_id]

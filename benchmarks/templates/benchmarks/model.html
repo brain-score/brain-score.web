@@ -1,0 +1,80 @@
+{% extends 'benchmarks/base.html' %}
+
+{% block content %}
+
+    <section class="individual_model container center">
+        <h1 class="title">{{ model.name }}</h1>
+        <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+
+        {# BrainModel info #}
+        <h2 class="title-is-2">BrainModel translation</h2>
+        <div>
+            (+) what does this mean?
+
+            <h3 class="subtitle-is-3">degrees visual angle: {{ visual_degrees }}</h3>
+            (-) what does this mean?
+
+            base image presented at 8 degrees
+            <img/>
+
+            if experiment presents image at 4 degrees, model sees:
+            <img/>
+
+            if experiment presents image at 12 degrees, model sees:
+            <img/>
+
+            <h3 class="subtitle-is-3">layer assignment</h3>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Region</th>
+                    <th>Layer</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for region, layer in layers.items %}
+                    <tr>
+                        <th>{{ region }}</th>
+                        <td>{{ layer }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Benchmark scores #}
+        <h2 class="title-is-2">Benchmark scores</h2>
+        <div class="benchmark_scores">
+            {% for score_row in model.scores %}
+                <div class="benchmark_child_{{ score_row.benchmark.depth }}
+                            {% if score_row.benchmark.children|length == 0 %} is-instance {% endif %}">
+                    <table class="benchmarks">
+                        <tr class="list_entry">
+                            <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
+                                data-benchmark="{{ score_row.benchmark_specifier }}"
+                                data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                                class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                                style="{{ score_row.color }}; ">
+                                {{ score_row.score_ceiled }}
+                            </td>
+                            <td class="benchmark_identifier">{{ score_row.benchmark.short_name }}</td>
+                        </tr>
+                    </table>
+
+                    {% if score_row.benchmark.children|length == 0 %}
+                        <div class="benchmark_info">
+                            information about benchmark goes here
+                            <br/>
+                            {% for sample in '12345'|make_list %}
+                                <img class="stimulus_sample"
+                                     src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/sample{{ sample }}.png"
+                                     title="sample {{ sample }}"/>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+{% endblock %}

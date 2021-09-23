@@ -1,10 +1,11 @@
 from django.urls import path
 
-from .views import index
-from .views import user
+from .views import index, user, model
 
 urlpatterns = [
+    # index
     path('', index, name='index'),
+    # user
     path('signup/', user.Signup.as_view(), name='signup'),
     path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name='activate'),
     path('profile/', user.Profile.as_view(), name='login'),
@@ -15,4 +16,6 @@ urlpatterns = [
     path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name='change-password'),
     path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
     path('resubmit/', user.resubmit, name='resubmit'),
+    # model
+    path('model/<int:id>', model.view, name='model'),
 ]
