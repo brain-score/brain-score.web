@@ -1,6 +1,7 @@
-import boto3
 import json
 import logging
+
+import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
@@ -160,10 +161,7 @@ def resubmit(request):
                 model_ids.append(model.id)
             if 'benchmarks_' in key:
                 # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
-                identifier_version_split = value.split('_v')
-                # re-combine all components but the last (aka the version). This avoids identifiers being split at `_v`,
-                # e.g. Marques2020_Ringach2002-circular_variance
-                identifier = '_v'.join(identifier_version_split[:-1])
+                identifier, version = split_identifier_version(value)
                 benchmarks.append(identifier)
         if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
@@ -320,6 +318,20 @@ def verify_user_model_access(user, model):
     # make sure user is allowed to perform this operation: either model owner or superuser
     if not (user.is_superuser or model.owner == user.id):
         raise PermissionDenied(f"User {user} is not allowed access to model {model}")
+
+
+def split_identifier_version(benchmark_specifier):
+    """
+    Separates a benchmark specifier into identifier and version.
+    :param benchmark_specifier: the combined specifier of identifier and version, e.g. `dicarlo.MajajHong2015.V4-pls_v3`
+    :return: the benchmark identifier and version separate, e.g. `dicarlo.MajajHong2015.V4-pls` and `3`
+    """
+    identifier_version_split = benchmark_specifier.split('_v')
+    # re-combine all components but the last (aka the version). This avoids identifiers being split at `_v`,
+    # e.g. Marques2020_Ringach2002-circular_variance
+    identifier = '_v'.join(identifier_version_split[:-1])
+    version = identifier_version_split[-1]
+    return identifier, version
 
 
 def get_secret(secret_name, region_name='us-east-2'):
