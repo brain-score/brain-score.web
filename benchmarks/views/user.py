@@ -136,7 +136,7 @@ class Upload(View):
         job_name = "run_benchmarks"
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.get_full_name()}"
+                      f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
         params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
         response = requests.post(request_url, files=params, auth=auth)
