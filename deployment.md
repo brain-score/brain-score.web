@@ -48,3 +48,40 @@ eb create brain-score-web-dev -c brain-score-web-dev -r us-east-2 -p Docker --en
 eb create brain-score-web-prod -c brain-score-web-prod -r us-east-2 -p Docker --envvars DEBUG=False,DOMAIN=localhost:brain-score-web-prod.us-east-2.elasticbeanstalk.com:www.brain-score.org,DB_CRED=brainscore-prod-ohio-cred
 ```
 
+### Retrieving the django log
+
+First, install the Elastic Beanstalk command line interface: `pip install awsebcli`
+
+Initialize in the `brain-score.web` directory with `eb init`:
+```
+(brain-score.web) jjpr-mit:brain-score.web jjpr$ eb init
+
+
+Select a default region
+[...]
+14) us-east-2 : US East (Ohio)
+[...]
+(default is 3): 14
+
+
+Select an application to use
+1) brain-score.web
+2) [ Create new Application ]
+(default is 1):
+
+
+It appears you are using Docker. Is this correct?
+(Y/n): y
+Do you wish to continue with CodeCommit? (y/N) (default is n): n
+
+Do you want to set up SSH for your instances?
+(Y/n): y
+
+
+Select a keypair.
+1) jjpr
+2) [ Create new KeyPair ]
+(default is 1): 1
+```
+
+Finally, run `eb logs -a brain-score-web-prod` to store the logs locally. You can find them in e.g. `.elasticbeanstalk/logs/latest/i-08c7dffdb408ff6d8/var/log/eb-docker/containers/eb-current-app/eb-102014d535e7-stdouterr.log` (You might have to manually figure out the path hashes on your end).
