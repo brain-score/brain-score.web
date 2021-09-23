@@ -160,7 +160,11 @@ def resubmit(request):
                 model_ids.append(model.id)
             if 'benchmarks_' in key:
                 # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
-                benchmarks.append(value.split('_v')[0])
+                identifier_version_split = value.split('_v')
+                # re-combine all components but the last (aka the version). This avoids identifiers being split at `_v`,
+                # e.g. Marques2020_Ringach2002-circular_variance
+                identifier = '_v'.join(identifier_version_split[:-1])
+                benchmarks.append(identifier)
         if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
                 "user_id": request.user.id,
