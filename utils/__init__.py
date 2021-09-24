@@ -12,11 +12,13 @@ from PIL import Image
 from brainio.assemblies import NeuroidAssembly
 from brainio.stimuli import StimulusSet
 from brainscore import benchmark_pool
+from brainscore.benchmarks.screen import place_on_screen
 from brainscore.model_interface import BrainModel
 from numpy.random import RandomState
 from tqdm import tqdm
 
 _logger = logging.getLogger(__name__)
+static_directory = Path(__file__).parent.parent / 'static' / 'benchmarks' / 'img'
 
 
 class ImageStorerDummyModel(BrainModel):
@@ -50,7 +52,7 @@ class ImageStorerDummyModel(BrainModel):
 
 
 def sample_benchmark_images(num_samples: int = 30, replace=False):
-    image_directory = Path(__file__).parent / 'sample_images'
+    image_directory = static_directory / 'benchmark_samples'
 
     image_storer = ImageStorerDummyModel()
     for benchmark_identifier, benchmark in tqdm(benchmark_pool.items(), desc='benchmarks'):
@@ -75,6 +77,21 @@ def sample_benchmark_images(num_samples: int = 30, replace=False):
             image = Image.open(source_path)
             target_path = benchmark_directory / f"{sample_number}.png"
             image.save(target_path)  # convert to png
+
+
+def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
+    base_image = Path(__file__).parent / 'base.png'
+    stimulus_set = StimulusSet([{'image_id': 'base'}])
+    stimulus_set.image_paths = {'base': base_image}
+    stimulus_set.identifier = 'visual_degrees_base'
+    for visual_degrees in visual_degrees_samples:
+        converted_stimulus_set = place_on_screen(stimulus_set,
+                                                 source_visual_degrees=8,
+                                                 target_visual_degrees=visual_degrees)
+        converted_path = converted_stimulus_set.get_image('base')
+        target_path = static_directory / 'visual_degrees' / f"{base_degrees}_to_{visual_degrees}.png"
+        converted_image = Image.open(converted_path)
+        converted_image.save(target_path)
 
 
 if __name__ == '__main__':

@@ -6,44 +6,8 @@
         <h1 class="title">{{ model.name }}</h1>
         <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
 
-        {# BrainModel info #}
-        <h2 class="title-is-2">BrainModel translation</h2>
-        <div>
-            (+) what does this mean?
-
-            <h3 class="subtitle-is-3">degrees visual angle: {{ visual_degrees }}</h3>
-            (-) what does this mean?
-
-            base image presented at 8 degrees
-            <img/>
-
-            if experiment presents image at 4 degrees, model sees:
-            <img/>
-
-            if experiment presents image at 12 degrees, model sees:
-            <img/>
-
-            <h3 class="subtitle-is-3">layer assignment</h3>
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Region</th>
-                    <th>Layer</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for region, layer in layers.items %}
-                    <tr>
-                        <th>{{ region }}</th>
-                        <td>{{ layer }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
         {# Benchmark scores #}
-        <h2 class="title-is-2">Benchmark scores</h2>
+        <h2 id="scores" class="title-is-2">Benchmark scores</h2>
         <div class="benchmark_scores">
             {% for score_row in model.scores %}
                 <div class="benchmark_child_{{ score_row.benchmark.depth }}
@@ -76,6 +40,7 @@
                                         <br/>
                                         <span>ii images</span>
                                         <br/>
+                                        {# image samples #}
                                         <div class="samples_container is-overflow-wrap">
                                             {% for sample in '0123456789'|make_list %}
                                                 <img class="stimulus_sample"
@@ -90,6 +55,82 @@
                     </table>
                 </div>
             {% endfor %}
+        </div>
+
+
+        {# BrainModel info #}
+        <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
+        <div>
+            explanation of BrainModel ...
+
+            {# visual degrees #}
+            <div class="box">
+                <h3 id="visual_degrees" class="subtitle-is-3">degrees visual angle: {{ visual_degrees }}</h3>
+                <div class="notification is-info is-light">
+                    Models have to declare their field-of-view so that stimuli can be displayed like they were displayed
+                    to experimental subjects.
+                    For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is larger
+                    than that, then the stimuli are padded such that the core stimulus will make up 4 degrees in the
+                    model's field-of-view.
+                </div>
+
+                {# show labels and images separately to keep vertical alignment #}
+                <div class="columns">
+                    <div class="column">
+                        base image presented at 8 degrees:
+                    </div>
+
+                    <div class="column">
+                        if benchmark presents image at 4 degrees, model sees:
+                    </div>
+
+                    <div class="column">
+                        if benchmark presents image at 12 degrees, model sees:
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
+                             alt="visual degrees {{ visual_degrees }} to 8"/>
+                    </div>
+
+                    <div class="column">
+                        <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
+                             alt="visual degrees {{ visual_degrees }} to 4"/>
+                    </div>
+
+                    <div class="column">
+                        <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
+                             alt="visual degrees {{ visual_degrees }} to 12"/>
+                    </div>
+                </div>
+            </div>
+
+            {# region-layer commitment #}
+            <div class="box">
+                <h3 id="region_layer_commitment" class="subtitle-is-3">layer commitment</h3>
+                <div class="notification is-info is-light">
+                    explanation
+                </div>
+
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Layer</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for region, layer in layers.items %}
+                        <tr>
+                            <th>{{ region }}</th>
+                            <td>{{ layer }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 
