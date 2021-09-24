@@ -3,6 +3,7 @@ section.individual_model
     div
       &.is_instance
         border: 1px solid lightgray
+        margin-bottom: 2px
 
       // with increasing depth, we increase the left indent
       &.benchmark_child_0
@@ -24,8 +25,11 @@ section.individual_model
       td.benchmark_identifier
         font-weight: bold
 
+        .top_indicator
+          background-color: gold
+          font-weight: normal
+
       div.benchmark_info
-        margin-left: 5px
 
         .stimulus_sample
           height: 50px

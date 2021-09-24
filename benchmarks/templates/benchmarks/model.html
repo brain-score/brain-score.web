@@ -47,7 +47,7 @@
         <div class="benchmark_scores">
             {% for score_row in model.scores %}
                 <div class="benchmark_child_{{ score_row.benchmark.depth }}
-                            {% if score_row.benchmark.children|length == 0 %} is-instance {% endif %}">
+                            {% if score_row.benchmark.children|length == 0 %} is_instance {% endif %}">
                     <table class="benchmarks">
                         <tr class="list_entry">
                             <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
@@ -57,21 +57,36 @@
                                 style="{{ score_row.color }}; ">
                                 {{ score_row.score_ceiled }}
                             </td>
-                            <td class="benchmark_identifier">{{ score_row.benchmark.short_name }}</td>
+                            <td class="benchmark_identifier">
+                                {{ score_row.benchmark.short_name }}
+                                <br/>
+                                <span class="top_indicator">
+                                {% if score_row.rank %}
+                                    rank {{ score_row.rank }}
+                                {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                {% if score_row.benchmark.children|length == 0 %}
+                                    <div class="benchmark_info">
+                                        <span>recordings from xx yy electrodes / task zz</span>
+                                        <br/>
+                                        <span>ii images</span>
+                                        <br/>
+                                        {% for sample in '12345678'|make_list %}
+                                            <img class="stimulus_sample"
+                                                 src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
+                                                 alt="sample {{ sample }}"
+                                                 title="sample {{ sample }}"/>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
-
-                    {% if score_row.benchmark.children|length == 0 %}
-                        <div class="benchmark_info">
-                            information about benchmark goes here
-                            <br/>
-                            {% for sample in '12345'|make_list %}
-                                <img class="stimulus_sample"
-                                     src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/sample{{ sample }}.png"
-                                     title="sample {{ sample }}"/>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>

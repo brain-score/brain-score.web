@@ -248,7 +248,7 @@ def _collect_models(benchmarks, user=None):
         'reference_identifier', 'reference_link',
         'user', 'public',
         'rank', 'scores'])
-    ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
+    ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'benchmark_specifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
     # - prepare "no score" objects for when a model-benchmark score is missing
