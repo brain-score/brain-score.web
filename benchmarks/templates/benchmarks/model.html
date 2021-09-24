@@ -76,12 +76,13 @@
                                         <br/>
                                         <span>ii images</span>
                                         <br/>
-                                        {% for sample in '12345678'|make_list %}
-                                            <img class="stimulus_sample"
-                                                 src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
-                                                 alt="sample {{ sample }}"
-                                                 title="sample {{ sample }}"/>
-                                        {% endfor %}
+                                        <div class="samples_container is-overflow-wrap">
+                                            {% for sample in '0123456789'|make_list %}
+                                                <img class="stimulus_sample"
+                                                     src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
+                                                     alt="sample {{ sample }}"/>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 {% endif %}
                             </td>
