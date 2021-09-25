@@ -11,7 +11,7 @@
         <div class="benchmark_scores">
             {% for score_row in model.scores %}
                 <div class="benchmark_child_{{ score_row.benchmark.depth }}
-                            {% if score_row.benchmark.children|length == 0 %} is_instance {% endif %}">
+                            {% if score_row.benchmark.children|length == 0 %} box {% endif %}">
                     <table class="benchmarks">
                         <tr class="list_entry">
                             <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
@@ -24,7 +24,7 @@
                             <td class="benchmark_identifier">
                                 {{ score_row.benchmark.short_name }}
                                 <br/>
-                                <span class="top_indicator">
+                                <span class="tag top_indicator">
                                 {% if score_row.rank %}
                                     rank {{ score_row.rank }}
                                 {% endif %}
@@ -61,10 +61,12 @@
         {# BrainModel info #}
         <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
         <div>
-            explanation of BrainModel ...
+            <div class="notification is-info is-light">
+                explanation of brain model...
+            </div>
 
             {# visual degrees #}
-            <div class="box">
+            <div id="visual_degrees" class="box">
                 <h3 id="visual_degrees" class="subtitle-is-3">degrees visual angle: {{ visual_degrees }}</h3>
                 <div class="notification is-info is-light">
                     Models have to declare their field-of-view so that stimuli can be displayed like they were displayed
@@ -90,20 +92,20 @@
                 </div>
 
                 <div class="columns">
-                    <div class="column">
+                    <figure class="column image is-marginless is-256x256">
                         <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
                              alt="visual degrees {{ visual_degrees }} to 8"/>
-                    </div>
+                    </figure>
 
-                    <div class="column">
+                    <figure class="column image is-marginless is-256x256">
                         <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
                              alt="visual degrees {{ visual_degrees }} to 4"/>
-                    </div>
+                    </figure>
 
-                    <div class="column">
+                    <figure class="column image is-marginless is-256x256">
                         <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
                              alt="visual degrees {{ visual_degrees }} to 12"/>
-                    </div>
+                    </figure>
                 </div>
             </div>
 
