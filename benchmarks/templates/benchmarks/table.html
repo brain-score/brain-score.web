@@ -4,50 +4,51 @@
     {% if has_user %}
         <form>
     {% endif %}
-<table id="leaderboard" class="benchmarks fixed_header" style="margin-top: 120px">
-    <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their
-    parent
-    is. This allows for QuerySelecting and using some of the filters from index.py>
-    <thead>
-    <tr>
-        <th><p><span class="want_to_click">
-                <strong class="want_to_click" style="padding: 5px">
+<div class="table-container">
+    <table id="leaderboard" class="table is-hoverable benchmarks fixed_header">
+        <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their
+        parent
+        is. This allows for QuerySelecting and using some of the filters from index.py>
+        <thead>
+        <tr>
+            <th id="rank-th"><p><span class="want_to_click">
+                <strong class="want_to_click has-text-centered" style="padding: 5px">
                     Rank
                 </strong>
             <br>
-            &nbsp;
+            &nbsp; {# whitespace to make sure the br newline is respected #}
             </span></p></th>
-        <th class="model want_to_click"><p>
+            <th id="model-th" class="model want_to_click"><p>
             <span class="identifier want_to_click">
                 <strong class="want_to_click" style="padding: 5px">
                     Model
                 </strong>
             </span>
-            <br>
-            <span class="submitter">
+                <br>
+                <span class="submitter">
                 submitted by
             </span>
-        </p></th>
-        {% for benchmark in benchmarks %}
-            <th
-                    {% if benchmark.ceiling %}
-                        title="ceiling: {{ benchmark.ceiling }}"
-                    {% endif %}
-                        data-benchmark="{{ benchmark.short_name }}"
-                        data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
-                        class="rotate"
-                        style="display:{{ not_shown_set|in_set:benchmark.identifier }}">
-                <p>
-                    {% if benchmark.benchmark_type.parent %}
-                        {# indent, depending on depth #}
-                        <span class="want_to_click benchmark_child_indent">
+            </p></th>
+            {% for benchmark in benchmarks %}
+                <th
+                        {% if benchmark.ceiling %}
+                            title="ceiling: {{ benchmark.ceiling }}"
+                        {% endif %}
+                            data-benchmark="{{ benchmark.short_name }}"
+                            data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
+                            class="rotate depth_{{ benchmark.depth }}"
+                            style="display:{{ not_shown_set|in_set:benchmark.identifier }}">
+                    <p>
+                        {% if benchmark.benchmark_type.parent %}
+                            {# indent, depending on depth #}
+                            <span class="want_to_click benchmark_child_indent">
                             {{ benchmark_parents|get_initial_characters:benchmark.identifier }}
                         </span>
-                    {% endif %}
-                    {% if benchmark.identifier in uniform_parents %}
-                        {# expand/contract button #}
-                        <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
-                                class="
+                        {% endif %}
+                        {% if benchmark.identifier in uniform_parents %}
+                            {# expand/contract button #}
+                            <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
+                                    class="
                             {# show brain benchmarks up to the base depth #}
                             {% if benchmark.root_parent == 'engineering' or benchmark.depth == BASE_DEPTH %}
                                 headerExpand
@@ -55,80 +56,82 @@
                                 headerContract
                             {% endif %}
                             clicker want_to_click"></strong>
-                    {% endif %}
+                        {% endif %}
 
-                    {# reference link #}
-                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                        <a href="{{ benchmark.benchmark_type.reference.url }}">
-                    {% endif %}
+                        {# reference link #}
+                        {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                            <a href="{{ benchmark.benchmark_type.reference.url }}">
+                        {% endif %}
 
-                    {# identifier #}
-                    <span data-benchmark="{{ benchmark.short_name }}"
-                          class="want_to_click clicker depth_{{ benchmark.depth }}
+                        {# identifier #}
+                        <span data-benchmark="{{ benchmark.short_name }}"
+                              class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
                                    {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}
                     </span>
-                    {# version, if present #}
-                    {% if benchmark.version %}
-                        <span class="benchmark-version">v{{ benchmark.version }}</span>
-                    {% endif %}
-                    {# number of child benchmarks, ignore roots #}
-                    {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
-                        <span class="benchmark-count">{{ benchmark.children|length }}
+                        {# version, if present #}
+                        {% if benchmark.version %}
+                            <span class="benchmark-version">v{{ benchmark.version }}</span>
+                        {% endif %}
+                        {# number of child benchmarks, ignore roots #}
+                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
+                            <span class="benchmark-count">{{ benchmark.children|length }}
                             benchmark{% if benchmark.children|length != 1 %}s{% endif %}</span>
-                    {% endif %}
-                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                        </a>
-                    {% endif %}
-                </p></th>
-        {% endfor %}
-        {% if has_user %}
-            <th><p><span class="want_to_click"><b>Public</b></span></p></th>
-        {% endif %}
-    </tr>
-    </thead>
-    <!-- models -->
-    <tbody>
-    {% for model in models %}
-        <tr>
-            <td class="score_cell"><strong>{{ model.rank }}</strong></td>
-            <td class="model">
-                <div class="identifier" title="{{ model.reference_identifier }}">
-                    <a target="_blank" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                        {{ model.name }}
-                    </a>
-                </div>
-                <div class="submitter">
-                    {% if model.user.display_name is not None %}
-                        {{ model.user.display_name }}
-                    {% else %}
-                        &nbsp;
-                    {% endif %}
-                </div>
-            </td>
-            {% for score_row in model.scores %}
-                <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
-                    data-benchmark="{{ score_row.benchmark_specifier }}"
-                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
-                    class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
-                    style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark_specifier }} ">
-                    {{ score_row.score_ceiled }}
-                </td>
+                        {% endif %}
+                        {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                            </a>
+                        {% endif %}
+                    </p></th>
             {% endfor %}
             {% if has_user %}
-                <td class="model-public-checkbox">
-                    <input type="checkbox" value="{{ model.id }}"
-                           class="public model-public-checkbox" {{ model|is_public }}>
-                </td>
+                <th><p><span class="want_to_click"><b>Public</b></span></p></th>
             {% endif %}
         </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <!-- models -->
+        <tbody>
+        {% for model in models %}
+            <tr>
+                <td class="score_cell"><strong>{{ model.rank }}</strong></td>
+                <td class="model">
+                    <div class="identifier" title="{{ model.reference_identifier }}">
+                        <a target="_blank" rel="noopener noreferrer" href="{% url 'model' model.id %}">
+                            {{ model.name }}
+                        </a>
+                    </div>
+                    <div class="submitter">
+                        {% if model.user.display_name is not None %}
+                            {{ model.user.display_name }}
+                        {% else %}
+                            &nbsp;
+                        {% endif %}
+                    </div>
+                </td>
+                {% for score_row in model.scores %}
+                    <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
+                        data-benchmark="{{ score_row.benchmark_specifier }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                        class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                        style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark_specifier }} ">
+                        {{ score_row.score_ceiled }}
+                    </td>
+                {% endfor %}
+                {% if has_user %}
+                    <td class="model-public-checkbox">
+                        <input type="checkbox" value="{{ model.id }}"
+                               class="public model-public-checkbox" {{ model|is_public }}>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <div>
     Model scores on brain benchmarks.
-    Hover over model name to see layer commitments.
+    Click on a model to see more details.
     The more green and bright a cell, the better the model's score.
     Scores are ceiled, hover the benchmark to see ceilings.
 </div>
