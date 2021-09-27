@@ -26,7 +26,6 @@ colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(c
 colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
-not_shown_set = set()
 
 
 @cache_page(24 * 60 * 60)
@@ -45,14 +44,16 @@ def get_context(user=None):
         uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.short_name
         benchmark.ceiling = represent(benchmark.ceiling)
         benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
-    # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>, parent have always version 0 (only to match the pattern).
+    # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>,
+    # parent have always version 0 (only to match the pattern).
     # We set here parent nodes as value -> abstract nodes so they must have version 0.
     benchmark_parents = {
-        benchmark.identifier: f'{benchmark.benchmark_type.parent.identifier}_v0' if benchmark.benchmark_type.parent else None
+        benchmark.identifier: f'{benchmark.benchmark_type.parent.identifier}_v0'
+        if benchmark.benchmark_type.parent else None
         for benchmark in benchmarks}
     # configure benchmark level shown by default
-    uniform_parents = set(
-        benchmark_parents.values())  # we're going to use the fact that all benchmark instances currently point to their direct parent
+    # we're going to use the fact that all benchmark instances currently point to their direct parent
+    uniform_parents = set(benchmark_parents.values())
     not_shown_set = {benchmark.identifier for benchmark in benchmarks
                      if benchmark.depth > BASE_DEPTH or
                      # show engineering benchmarks collapsed, but still show root
@@ -65,25 +66,6 @@ def get_context(user=None):
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
-
-
-def _get_benchmark_shortname(benchmark_type_identifier):
-    match = re.match(r'[^\.]+\.(.+)', benchmark_type_identifier)
-    if match:
-        return match.group(1)
-    else:
-        return benchmark_type_identifier
-
-
-class Tree:
-    def __init__(self, value, depth, parent=None, children=None):
-        self.value = value
-        self.depth = depth
-        self.parent = parent
-        self.children = children
-
-    def __repr__(self):
-        return generic_repr(self)
 
 
 def _collect_benchmarks(user_page=False):
@@ -154,31 +136,35 @@ def _collect_models(benchmarks, user=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
-    # iteratively collect scores for all benchmarks. We start with the actual instances, storing their respective
-    # parents to traverse up the hierarchy which we iteratively visit until empty.
+    # Remove all non-public model scores, but allow users to see their own models in the table.
+    if user is None:  # if we are not in a user profile, only show rows that are public
+        user_selection = dict(model__public=True)
+    elif user.is_superuser:
+        user_selection = dict()
+    else:
+        # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+        # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
+        user_selection = dict(model__owner=user, score_ceiled__isnull=False)
+
+    # Database stores scores for actual instances
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
     benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
+    all_scores = Score.objects.filter(**user_selection, benchmark__in=benchmark_todos).select_related('model')
+
+    # iteratively collect scores for all benchmarks. We start with the actual instances, storing their respective
+    # parents to traverse up the hierarchy which we iteratively visit until empty.
     scores = None
     while benchmark_todos:
         benchmark = benchmark_todos.pop(0)
         _logger.debug(f"Processing scores for benchmark {benchmark}")
         if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
-            # Remove all non-public model scores, but allow users to see their own models in the table.
-            if user is None:  # if we are not in a user profile, only show rows that are public
-                user_selection = dict(model__public=True)
-            elif user.is_superuser:
-                user_selection = dict()
-            else:
-                # if we are in a user profile, show all rows that this user owns (regardless of public/private)
-                # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-                user_selection = dict(model__owner=user, score_ceiled__isnull=False)
-            benchmark_scores = Score.objects.filter(benchmark=benchmark, **user_selection).select_related('model')
+            benchmark_scores = all_scores.filter(benchmark=benchmark)
             if len(benchmark_scores) > 0:
                 rows = []
                 for score in benchmark_scores:
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
-                    benchmark_id = f'{score.benchmark.benchmark_type.identifier}_v{score.benchmark.version}'
+                    benchmark_id = f'{benchmark.identifier}_v{benchmark.version}'
                     if benchmark_lookup[benchmark_id].root_parent != ENGINEERING_ROOT \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
@@ -202,7 +188,8 @@ def _collect_models(benchmarks, user=None):
                 benchmark_scores['comment'] = None
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         if benchmark.parent:
-            parent = [b for b in benchmarks if b.identifier == benchmark.parent.identifier]
+            parent = [parent_candidate for parent_candidate in benchmarks
+                      if parent_candidate.identifier == benchmark.parent.identifier]
             assert len(parent) == 1
             parent = parent[0]
             if parent in benchmark_todos:
@@ -237,7 +224,7 @@ def _collect_models(benchmarks, user=None):
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference')
+    model_meta = Model.objects.select_related('reference', 'owner')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
@@ -315,6 +302,25 @@ def _collect_models(benchmarks, user=None):
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
     return data
+
+
+def _get_benchmark_shortname(benchmark_type_identifier):
+    match = re.match(r'[^\.]+\.(.+)', benchmark_type_identifier)
+    if match:
+        return match.group(1)
+    else:
+        return benchmark_type_identifier
+
+
+class Tree:
+    def __init__(self, value, depth, parent=None, children=None):
+        self.value = value
+        self.depth = depth
+        self.parent = parent
+        self.children = children
+
+    def __repr__(self):
+        return generic_repr(self)
 
 
 def normalize_value(value, min_value, max_value):
