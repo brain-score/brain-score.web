@@ -163,6 +163,7 @@ class Model(models.Model):
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for models without publication
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
+    visual_degrees = models.IntegerField()
     public = models.BooleanField(default=False)
 
     def __repr__(self):
