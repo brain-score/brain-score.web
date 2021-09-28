@@ -14,62 +14,66 @@
         <h2 id="scores" class="title-is-2">Benchmark scores</h2>
         <div class="benchmark_scores">
             {% for score_row in model.scores %}
-                <div class="benchmark_child_{{ score_row.benchmark.depth }}
+                {% if score_row.score_ceiled %}
+                    <div class="benchmark_child_{{ score_row.benchmark.depth }}
                             {% if score_row.benchmark.children|length == 0 %} box {% endif %}">
-                    <table class="benchmarks">
-                        <tr class="list_entry">
-                            <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
-                                data-benchmark="{{ score_row.benchmark_specifier }}"
-                                data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
-                                class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
-                                style="{{ score_row.color }}; ">
-                                {{ score_row.score_ceiled }}
-                            </td>
-                            <td class="benchmark_identifier">
-                                {{ score_row.benchmark.short_name }}
-                                <br/>
-                                {% if score_row.rank %}
-                                    <span class="tag top_indicator">rank {{ score_row.rank }}</span>
-                                {% else %}
-                                    <span></span>  {# empty span to guarantee benchmark name at top #}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td>
-                                {% if score_row.benchmark.children|length == 0 %}
-                                    <div class="benchmark_info">
-                                        {% if score_row.benchmark.meta %}
-                                            <span>
-                                            {% if score_row.benchmark.meta.number_of_recording_sites %}
-                                                recordings from {{ score_row.benchmark.meta.number_of_recording_sites }}
-                                                sites in {{ score_row.benchmark.meta.recording_sites }}
-                                            {% endif %}
-                                                {% if score_row.benchmark.meta.behavioral_task %}
-                                                    {{ score_row.benchmark.meta.behavioral_task }} task
-                                                {% endif %}
-                                            </span>
-                                            <br/>
-                                            {% if score_row.benchmark.meta.number_of_images %}
-                                                <span>{{ score_row.benchmark.meta.number_of_images }} images</span>
+                        <table class="benchmarks">
+                            <tr class="list_entry">
+                                <td title="unceiled score: {{ score_row.score_raw }}"
+                                    data-benchmark="{{ score_row.benchmark_specifier }}"
+                                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                                    class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                                    style="{{ score_row.color }}; ">
+                                    {{ score_row.score_ceiled }}
+                                </td>
+                                <td class="benchmark_identifier">
+                                    {{ score_row.benchmark.short_name }}
+                                    <br/>
+                                    {% if score_row.rank %}
+                                        <span class="tag top_indicator">rank {{ score_row.rank }}</span>
+                                    {% else %}
+                                        <span></span>  {# empty span to guarantee benchmark name at top #}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>
+                                    {% if score_row.benchmark.children|length == 0 %}
+                                        <div class="benchmark_info">
+                                            {% if score_row.benchmark.meta %}
+                                                <span>
+                                                    {% if score_row.benchmark.meta.number_of_recording_sites %}
+                                                        recordings from
+                                                        {{ score_row.benchmark.meta.number_of_recording_sites }}
+                                                        sites in
+                                                        {{ score_row.benchmark.meta.recording_sites }}
+                                                    {% endif %}
+                                                    {% if score_row.benchmark.meta.behavioral_task %}
+                                                        {{ score_row.benchmark.meta.behavioral_task }} task
+                                                    {% endif %}
+                                                </span>
                                                 <br/>
+                                                {% if score_row.benchmark.meta.number_of_images %}
+                                                    <span>{{ score_row.benchmark.meta.number_of_images }} images</span>
+                                                    <br/>
+                                                {% endif %}
                                             {% endif %}
-                                        {% endif %}
-                                        {# image samples #}
-                                        <div class="samples_container is-overflow-wrap">
-                                            {% for sample in '0123456789'|make_list %}
-                                                <img class="stimulus_sample"
-                                                     src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
-                                                     alt="sample {{ sample }}"/>
-                                            {% endfor %}
+                                            {# image samples #}
+                                            <div class="samples_container is-overflow-wrap">
+                                                {% for sample in '0123456789'|make_list %}
+                                                    <img class="stimulus_sample"
+                                                         src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
+                                                         alt="sample {{ sample }}"/>
+                                                {% endfor %}
+                                            </div>
                                         </div>
-                                    </div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                {% endif %}
             {% endfor %}
         </div>
 
