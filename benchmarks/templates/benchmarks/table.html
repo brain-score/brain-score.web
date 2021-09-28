@@ -110,10 +110,10 @@
                 </td>
                 {% for score_row in model.scores %}
                     <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
-                        data-benchmark="{{ score_row.benchmark_specifier }}"
-                        data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                        data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                         class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
-                        style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark_specifier }} ">
+                        style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }} ">
                         {{ score_row.score_ceiled }}
                     </td>
                 {% endfor %}

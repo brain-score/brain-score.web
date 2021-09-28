@@ -34,7 +34,7 @@ def view(request, id: int):
             rank = ''
         else:
             better = [other_score for other_model in reference_context['models'] for other_score in other_model.scores
-                      if other_score.benchmark_specifier == score.benchmark_specifier
+                      if other_score.versioned_benchmark_identifier == score.versioned_benchmark_identifier
                       and len(other_score.score_ceiled) > 0 and other_score.score_ceiled != 'X'
                       and not np.isnan(float(other_score.score_ceiled))
                       and float(other_score.score_ceiled) > float(score.score_ceiled)]

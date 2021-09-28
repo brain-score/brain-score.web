@@ -20,8 +20,8 @@
                         <table class="benchmarks">
                             <tr class="list_entry">
                                 <td title="unceiled score: {{ score_row.score_raw }}"
-                                    data-benchmark="{{ score_row.benchmark_specifier }}"
-                                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark_specifier }}"
+                                    data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
+                                    data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                                     class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
                                     style="{{ score_row.color }}; ">
                                     {{ score_row.score_ceiled }}
@@ -73,7 +73,7 @@
                                             <div class="samples_container is-overflow-wrap">
                                                 {% for sample in '0123456789'|make_list %}
                                                     <img class="stimulus_sample"
-                                                         src="/static/benchmarks/img/benchmark_samples/{{ score_row.benchmark_specifier }}/{{ sample }}.png"
+                                                         src="/static/benchmarks/img/benchmark_samples/{{ score_row.versioned_benchmark_identifier }}/{{ sample }}.png"
                                                          alt="sample {{ sample }}"/>
                                                 {% endfor %}
                                             </div>

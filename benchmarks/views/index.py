@@ -236,22 +236,22 @@ def _collect_models(benchmarks, user=None):
         'user', 'public',
         'rank', 'scores'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
-        'benchmark', 'benchmark_specifier',
+        'benchmark', 'versioned_benchmark_identifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
-        benchmark_specifier = f'{benchmark.identifier}_v{benchmark.version}'
-        if benchmark_specifier in minmax:
-            benchmark_min, benchmark_max = minmax[benchmark_specifier]
-            no_score[benchmark_specifier] = ScoreDisplay(
-                benchmark=benchmark, benchmark_specifier=benchmark_specifier,
+        versioned_benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
+        if versioned_benchmark_identifier in minmax:
+            benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
+            no_score[versioned_benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max),
                 comment="")
         else:
-            no_score[benchmark_specifier] = ScoreDisplay(
-                benchmark=benchmark, benchmark_specifier=benchmark_specifier,
+            no_score[versioned_benchmark_identifier] = ScoreDisplay(
+                benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=0, max_value=1),
                 comment="")
@@ -264,19 +264,20 @@ def _collect_models(benchmarks, user=None):
                 group['score_ceiled'], group['score_raw'], group['error'],
                 group['benchmark'], group['benchmark_version'],
                 group['comment']):
-            benchmark_specifier = f'{benchmark}_v{version}'
-            benchmark_min, benchmark_max = minmax[benchmark_specifier]
-            benchmark = benchmark_lookup[benchmark_specifier]
+            versioned_benchmark_identifier = f'{benchmark}_v{version}'
+            benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
+            benchmark = benchmark_lookup[versioned_benchmark_identifier]
             color = representative_color(
                 score_ceiled,
                 colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
                 else colors_gray,
                 min_value=benchmark_min, max_value=benchmark_max)
             score_ceiled = represent(score_ceiled)
-            score_display = ScoreDisplay(benchmark=benchmark, benchmark_specifier=benchmark_specifier,
+            score_display = ScoreDisplay(benchmark=benchmark,
+                                         versioned_benchmark_identifier=versioned_benchmark_identifier,
                                          score_ceiled=score_ceiled, score_raw=score_raw, error=error,
                                          color=color, comment=comment)
-            model_scores[benchmark_specifier] = score_display
+            model_scores[versioned_benchmark_identifier] = score_display
         # fill in missing scores
         model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}']
                         if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
@@ -374,8 +375,8 @@ def _build_comparison_data(models):
         ```
     """
     data = [dict(ChainMap(*[{'model': model_row.name}] +
-                           [{f"{score_row.benchmark_specifier}-score": score_row.score_ceiled,
-                             f"{score_row.benchmark_specifier}-error": score_row.error}
+                           [{f"{score_row.versioned_benchmark_identifier}-score": score_row.score_ceiled,
+                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error}
                             for score_row in model_row.scores]))
             for model_row in models]
     return data

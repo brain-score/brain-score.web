@@ -57,9 +57,9 @@ def sample_benchmark_images(num_samples: int = 30, max_height: int = 90, replace
 
     image_storer = ImageStorerDummyModel()
     for benchmark_identifier, benchmark in tqdm(benchmark_pool.items(), desc='benchmarks'):
-        benchmark_specifier = f"{benchmark_identifier}_v{benchmark.version}"
-        _logger.debug(f"Benchmark {benchmark_specifier}")
-        benchmark_directory = image_directory / benchmark_specifier
+        versioned_benchmark_identifier = f"{benchmark_identifier}_v{benchmark.version}"
+        _logger.debug(f"Benchmark {versioned_benchmark_identifier}")
+        benchmark_directory = image_directory / versioned_benchmark_identifier
         if benchmark_directory.is_dir() and not replace:
             _logger.debug(f"Skipping {benchmark_directory} since it already exists and replace is {replace}")
             continue
