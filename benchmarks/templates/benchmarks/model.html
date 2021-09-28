@@ -28,6 +28,12 @@
                                 </td>
                                 <td class="benchmark_identifier">
                                     {{ score_row.benchmark.short_name }}
+                                    {% if score_row.benchmark.benchmark_type.reference and score_row.benchmark.benchmark_type.reference.url %}
+                                        <a class="has-text-weight-normal"
+                                           href="{{ score_row.benchmark.benchmark_type.reference.url }}">
+                                            [reference]
+                                        </a>
+                                    {% endif %}
                                     <br/>
                                     {% if score_row.rank %}
                                         <span class="tag top_indicator">rank {{ score_row.rank }}</span>
