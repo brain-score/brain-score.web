@@ -3,6 +3,7 @@ from ast import literal_eval
 from collections import ChainMap, OrderedDict, namedtuple
 
 import numpy as np
+from django.http import Http404
 from django.shortcuts import render
 
 from .index import get_context
@@ -14,10 +15,15 @@ _logger = logging.getLogger(__name__)
 def view(request, id: int):
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
-    reference_context = get_context(request.user if not request.user.is_anonymous else None)
-    model_context = get_context(request.user) if not request.user.is_anonymous else reference_context
-    model = [m for m in model_context['models'] if m.id == id]
-    assert len(model) == 1
+    reference_context = get_context(None)  # public models
+    # first check if model is in public list
+    model_context = reference_context
+    model = [m for m in reference_context['models'] if m.id == id]
+    if len(model) != 1 and not request.user.is_anonymous:  # model not found in public list, try user's private
+        model_context = get_context(request.user)
+        model = [m for m in model_context['models'] if m.id == id]
+    if len(model) != 1:
+        raise Http404(f"Model with id {id} not found or user does not have access")
     model = model[0]
     # modify scores: add rank to score
     for i, score in enumerate(model.scores):
