@@ -21,8 +21,8 @@ $(document).ready(function () {
     var x = null,
         y = null;
 
-    var container_selector = "#analysis div#brain-score",
-        figure_selector = "#analysis #brain-score-fig",
+    var container_selector = "#compare div#comparison-scatter",
+        figure_selector = "#compare #comparison-fig",
         xlabel_selector = figure_selector + ' #xlabel',
         ylabel_selector = figure_selector + ' #ylabel',
         label_description_selector = figure_selector + " figcaption #label-description";
