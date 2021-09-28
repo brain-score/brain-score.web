@@ -80,77 +80,98 @@
 
         {# BrainModel info #}
         <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
-        <div>
-            <div class="notification is-info is-light">
-                explanation of brain model...
+        <div class="content">
+            <div class="box has-background-info-light has-text-info">
+                Brain-Score operates on BrainModels. A BrainModel can be treated like an experimental subject, with
+                methods such as recording from a cortical region and performing a behavioral task (see the
+                <a href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html">docs</a>).
+
+                Many models submitted to Brain-Score are what we call a BaseModel. These are often variants of
+                models from the machine learning community without a particular commitment to the brain and no
+                knowledge of what e.g. "V1" is. To engage with these models and for ease-of-use, such BaseModels
+                are typically converted into BrainModels by making commitments to the brain such as committing
+                layers to cortical regions on separate datasets.
             </div>
 
             {# visual degrees #}
-            <div id="visual_degrees" class="box">
-                <h3 id="visual_degrees" class="subtitle-is-3">degrees visual angle: {{ visual_degrees }}</h3>
-                <div class="notification is-info is-light">
-                    Models have to declare their field-of-view so that stimuli can be displayed like they were displayed
-                    to experimental subjects.
-                    For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is larger
-                    than that, then the stimuli are padded such that the core stimulus will make up 4 degrees in the
-                    model's field-of-view.
-                </div>
-
-                <div class="columns">
-                    <div class="column">
-                        <p class="has-text-centered">base image presented at 8 degrees</p>
-                        <figure class="image is-marginless is-256x256">
-                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
-                                 alt="visual degrees {{ visual_degrees }} to 8"/>
-                        </figure>
+            <div id="visual_degrees" class="card">
+                <div class="card-content">
+                    <p class="subtitle is-4">
+                        degrees visual angle: {{ visual_degrees }}
+                    </p>
+                    <div class="box has-background-info-light has-text-info">
+                        Models have to declare their field-of-view so that stimuli can be displayed like they were
+                        displayed to experimental subjects.
+                        For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
+                        larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
+                        in the model's field-of-view.
                     </div>
 
-                    <div class="column">
-                        <p class="has-text-centered">if benchmark presents image at 4 degrees, model sees</p>
-                        <figure class="image is-marginless is-256x256">
-                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
-                                 alt="visual degrees {{ visual_degrees }} to 4"/>
-                        </figure>
-                    </div>
-
-                    <div class="column">
-                        <p class="has-text-centered">if benchmark presents image at 12 degrees, model sees</p>
-                        <figure class="image is-marginless is-256x256">
-                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
-                                 alt="visual degrees {{ visual_degrees }} to 12"/>
-                        </figure>
+                    <div class="columns">
+                        <div class="column">
+                            <p class="has-text-centered">base image presented at 8 degrees</p>
+                            <figure class="image is-marginless is-256x256">
+                                <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
+                                     alt="visual degrees {{ visual_degrees }} to 8"/>
+                            </figure>
+                        </div>
+                        <div class="column">
+                            <p class="has-text-centered">if benchmark presents image at 4 degrees, model sees</p>
+                            <figure class="image is-marginless is-256x256">
+                                <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
+                                     alt="visual degrees {{ visual_degrees }} to 4"/>
+                            </figure>
+                        </div>
+                        <div class="column">
+                            <p class="has-text-centered">if benchmark presents image at 12 degrees, model sees</p>
+                            <figure class="image is-marginless is-256x256">
+                                <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
+                                     alt="visual degrees {{ visual_degrees }} to 12"/>
+                            </figure>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {# region-layer commitment #}
-            <div class="box">
-                <h3 id="region_layer_commitment" class="subtitle-is-3">layer commitment</h3>
-                <div class="notification is-info is-light">
-                    explanation
-                </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="subtitle is-3">
+                        layer commitment
+                    </p>
 
-                {% if layers %}
-                    <table class="table">
-                        <thead>
-                        <tr>
-                            <th>Region</th>
-                            <th>Layer</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for region, layer in layers.items %}
+                    <div class="box has-background-info-light has-text-info">
+                        BaseModel layers have to be committed to cortical regions. For BaseModels that are automatically
+                        translated into BrainModels this is done on separate public data.
+                        The same layers are thus used when recording from the same cortical region, e.g. always the same
+                        layer for V1 instead of different layers per benchmark.
+                    </div>
+
+                    {% if layers %}
+                        <table class="table">
+                            <thead>
                             <tr>
-                                <th>{{ region }}</th>
-                                <td>{{ layer }}</td>
+                                <th>Region</th>
+                                <th>Layer</th>
                             </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    No layer commitments found for this model. Older submissions might not have stored this information
-                    but will be updated when being evaluated on new benchmarks.
-                {% endif %}
+                            </thead>
+                            <tbody>
+                            {% for region, layer in layers.items %}
+                                <tr>
+                                    <th>{{ region }}</th>
+                                    <td>{{ layer }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="notification">
+                            No layer commitments found for this model. Older submissions might not have stored this
+                            information
+                            but will be updated when evaluated on new benchmarks.
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </section>
