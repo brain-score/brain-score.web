@@ -374,8 +374,8 @@ def _build_comparison_data(models):
         ```
     """
     data = [dict(ChainMap(*[{'model': model_row.name}] +
-                           [{f"{score_row.benchmark}-score": score_row.score_ceiled,
-                             f"{score_row.benchmark}-error": score_row.error}
+                           [{f"{score_row.benchmark_specifier}-score": score_row.score_ceiled,
+                             f"{score_row.benchmark_specifier}-error": score_row.error}
                             for score_row in model_row.scores]))
             for model_row in models]
     return data
