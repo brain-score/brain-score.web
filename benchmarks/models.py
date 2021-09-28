@@ -115,14 +115,22 @@ class BenchmarkType(models.Model):
         db_table = 'brainscore_benchmarktype'
 
 
-class BenchmarkInstance(models.Model):
-    class Meta:
-        unique_together = (('benchmark_type', 'version'),)
+class BenchmarkMeta(models.Model):
+    number_of_images = models.IntegerField(null=True)
+    number_of_recording_sites = models.IntegerField(null=True)
+    recording_sites = models.CharField(max_length=100, null=True)
+    behavioral_task = models.CharField(max_length=100, null=True)
 
+    class Meta:
+        db_table = 'brainscore_benchmarkmeta'
+
+
+class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
     version = models.IntegerField()
     ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
+    meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
 
     def __repr__(self):
         return generic_repr(self)
@@ -137,6 +145,7 @@ class BenchmarkInstance(models.Model):
     objects = BenchmarkInstanceManager()
 
     class Meta:
+        unique_together = (('benchmark_type', 'version'),)
         db_table = 'brainscore_benchmarkinstance'
 
 
@@ -150,6 +159,7 @@ class Submission(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
     model_type = models.CharField(max_length=30, default='BaseModel')
     status = models.CharField(max_length=25, default='unknown')
+
     def __repr__(self):
         return generic_repr(self)
 

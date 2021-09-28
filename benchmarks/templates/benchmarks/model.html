@@ -36,10 +36,22 @@
                             <td>
                                 {% if score_row.benchmark.children|length == 0 %}
                                     <div class="benchmark_info">
-                                        <span>recordings from xx yy electrodes / task zz</span>
-                                        <br/>
-                                        <span>ii images</span>
-                                        <br/>
+                                        {% if score_row.benchmark.meta %}
+                                            <span>
+                                            {% if score_row.benchmark.meta.number_of_recording_sites %}
+                                                recordings from {{ score_row.benchmark.meta.number_of_recording_sites }}
+                                                sites in {{ score_row.benchmark.meta.recording_sites }}
+                                            {% endif %}
+                                                {% if score_row.benchmark.meta.behavioral_task %}
+                                                    {{ score_row.benchmark.meta.behavioral_task }} task
+                                                {% endif %}
+                                            </span>
+                                            <br/>
+                                            {% if score_row.benchmark.meta.number_of_images %}
+                                                <span>{{ score_row.benchmark.meta.number_of_images }} images</span>
+                                                <br/>
+                                            {% endif %}
+                                        {% endif %}
                                         {# image samples #}
                                         <div class="samples_container is-overflow-wrap">
                                             {% for sample in '0123456789'|make_list %}
