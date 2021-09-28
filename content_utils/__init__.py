@@ -51,8 +51,9 @@ class ImageStorerDummyModel(BrainModel):
         self._time_bins = time_bins
 
 
-def sample_benchmark_images(num_samples: int = 30, replace=False):
-    image_directory = static_directory / 'benchmark_samples'
+def sample_benchmark_images(num_samples: int = 30, max_height: int = 90, replace=False):
+    image_directory = (static_directory / 'benchmark_samples').resolve()
+    _logger.debug(f"Saving to {image_directory}")
 
     image_storer = ImageStorerDummyModel()
     for benchmark_identifier, benchmark in tqdm(benchmark_pool.items(), desc='benchmarks'):
@@ -75,8 +76,13 @@ def sample_benchmark_images(num_samples: int = 30, replace=False):
         for sample_number, image_id in enumerate(sample_image_ids):
             source_path = Path(stimuli.get_image(image_id))
             image = Image.open(source_path)
+            # resize to the desired height since the website's img height is restricted, so we save on network bandwidth
+            resize_ratio = max_height / image.size[1]
+            if resize_ratio < 1:  # current image bigger than necessary
+                image = image.resize(np.ceil(np.array(image.size) * resize_ratio).astype(int), Image.ANTIALIAS)
+            # # convert to png
             target_path = benchmark_directory / f"{sample_number}.png"
-            image.save(target_path)  # convert to png
+            image.save(target_path)
 
 
 def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
@@ -96,6 +102,6 @@ def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    for shush_logger in ['PIL']:
+    for shush_logger in ['PIL', 's3transfer', 'botocore', 'boto3', 'urllib3']:
         logging.getLogger(shush_logger).setLevel(logging.INFO)
     fire.Fire()
