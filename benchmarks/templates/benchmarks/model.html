@@ -4,7 +4,11 @@
 
     <section class="individual_model container center">
         <h1 class="title">{{ model.name }}</h1>
-        <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+        {% if model.reference_identifier %}
+            <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+        {% else %}
+            <p class="no_reference">No reference paper on file</p>
+        {% endif %}
 
         {# Benchmark scores #}
         <h2 id="scores" class="title-is-2">Benchmark scores</h2>
@@ -24,11 +28,11 @@
                             <td class="benchmark_identifier">
                                 {{ score_row.benchmark.short_name }}
                                 <br/>
-                                <span class="tag top_indicator">
                                 {% if score_row.rank %}
-                                    rank {{ score_row.rank }}
+                                    <span class="tag top_indicator">rank {{ score_row.rank }}</span>
+                                {% else %}
+                                    <span></span>  {# empty span to guarantee benchmark name at top #}
                                 {% endif %}
-                                </span>
                             </td>
                         </tr>
                         <tr>
@@ -122,22 +126,27 @@
                     explanation
                 </div>
 
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th>Region</th>
-                        <th>Layer</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for region, layer in layers.items %}
+                {% if layers %}
+                    <table class="table">
+                        <thead>
                         <tr>
-                            <th>{{ region }}</th>
-                            <td>{{ layer }}</td>
+                            <th>Region</th>
+                            <th>Layer</th>
                         </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        {% for region, layer in layers.items %}
+                            <tr>
+                                <th>{{ region }}</th>
+                                <td>{{ layer }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    No layer commitments found for this model. Older submissions might not have stored this information
+                    but will be updated when being evaluated on new benchmarks.
+                {% endif %}
             </div>
         </div>
     </section>
