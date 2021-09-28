@@ -31,7 +31,7 @@
             </p></th>
             {% for benchmark in benchmarks %}
                 <th
-                        {% if benchmark.ceiling %}
+                        {% if benchmark.ceiling and benchmark.ceiling != 'X' %}
                             title="ceiling: {{ benchmark.ceiling }}"
                         {% endif %}
                             data-benchmark="{{ benchmark.short_name }}"
