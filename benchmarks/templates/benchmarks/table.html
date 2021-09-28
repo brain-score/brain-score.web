@@ -96,7 +96,7 @@
                 <td class="score_cell"><strong>{{ model.rank }}</strong></td>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                        <a target="_blank" rel="noopener noreferrer" href="{% url 'model' model.id %}">
+                        <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
                             {{ model.name }}
                         </a>
                     </div>
