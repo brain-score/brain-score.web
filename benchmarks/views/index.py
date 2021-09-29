@@ -69,7 +69,9 @@ def get_context(user=None):
 
     return {'models': model_rows, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
+            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH,
+            # will be set in user.py if user is logged in
+            "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
 
 
@@ -218,7 +220,7 @@ def _collect_models(benchmarks, user=None):
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference')
+    model_meta = Model.objects.select_related('reference', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
@@ -228,7 +230,7 @@ def _collect_models(benchmarks, user=None):
         'id', 'name',
         'reference_identifier', 'reference_link',
         'user', 'public',
-        'rank', 'scores'])
+        'rank', 'scores', 'build_status', 'console_log', 'timestamp', 'submitter', 'submission_id'])
     ScoreDisplay = namedtuple('ScoreDiplay', field_names=[
         'benchmark', 'benchmark_depth', 'order', 'score_raw', 'score_ceiled', 'error', 'color'])
     # - prepare "no score" objects for when a model-benchmark score is missing
@@ -280,17 +282,22 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
+        console_log = "This is the model's console log, to be replaced by the log itself."
+        timestamp = meta.submission.timestamp
+        submitter = meta.submission.submitter
+        submission_id = meta.submission.id
         model_row = ModelRow(
             id=meta.id,
             name=meta.name,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public,
-            scores=model_scores, rank=rank
-        )
+            scores=model_scores, rank=rank, build_status=meta.submission.status, console_log=console_log,
+            timestamp=timestamp, submitter=submitter, submission_id=submission_id)
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
     return data
+
 
 
 def normalize_value(value, min_value, max_value):
