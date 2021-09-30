@@ -5,6 +5,7 @@ from collections import ChainMap, OrderedDict, namedtuple
 import numpy as np
 from django.http import Http404
 from django.shortcuts import render
+from django.template.defaulttags import register
 
 from .index import get_context
 from ..models import BenchmarkType, Model
@@ -63,3 +64,8 @@ def view(request, id: int):
                                         key=lambda region_layer: region_order[region_layer[0]])])
     model_context['layers'] = merged_layers
     return render(request, 'benchmarks/model.html', model_context)
+
+
+@register.filter
+def format_bibtex(bibtex):
+    return bibtex.strip().strip('﻿')
