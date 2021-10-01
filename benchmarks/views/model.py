@@ -85,3 +85,8 @@ def score_style(score_ceiled):
     if score_ceiled == '' or score_ceiled == 'X':
         return score_ceiled
     return 100 * float(score_ceiled)
+
+
+@register.filter
+def is_parent(benchmark):
+    return hasattr(benchmark, 'children') and len(benchmark.children) > 0
