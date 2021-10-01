@@ -1,6 +1,17 @@
 $(document).ready(function () {
     // adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
 
+    var container_selector = "#compare div#comparison-scatter",
+        figure_selector = "#compare #comparison-fig",
+        xlabel_selector = figure_selector + ' #xlabel',
+        ylabel_selector = figure_selector + ' #ylabel',
+        label_description_selector = figure_selector + " figcaption #label-description";
+
+    // make sure we have a container to work with, otherwise abort
+    if ($(container_selector).length < 1) {
+        return;
+    }
+
     var margin = {top: 0, right: 0, bottom: 20, left: 60},
         outerWidth = 600,
         outerHeight = 400,
@@ -20,13 +31,6 @@ $(document).ready(function () {
 
     var x = null,
         y = null;
-
-    var container_selector = "#compare div#comparison-scatter",
-        figure_selector = "#compare #comparison-fig",
-        xlabel_selector = figure_selector + ' #xlabel',
-        ylabel_selector = figure_selector + ' #ylabel',
-        label_description_selector = figure_selector + " figcaption #label-description";
-
 
     var svg = d3.select(container_selector)
         .append("svg")
