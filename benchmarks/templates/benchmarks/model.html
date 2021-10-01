@@ -41,10 +41,25 @@
                                         <span></span>  {# empty span to guarantee benchmark name at top #}
                                     {% endif %}
                                 </td>
+                                <td class="bar">
+                                    <div class="bar_container">
+                                        <div class="bar"
+                                             style="background-color:{{ score_row.color }};
+                                                     --score:{{ score_row.score_ceiled|score_style }}%;">
+                                            {{ score_row.score_ceiled }}
+                                        </div>
+                                        <span class="label zero">0</span>
+                                        <div title="ceiling" class="vertical_line ceiling"></div>
+                                        <span class="label ceiling">ceiling</span>
+                                        <div title="median" class="vertical_line"
+                                             style="left: {{ score_row.median }}%"></div>
+                                        <span class="label median" style="left: {{ score_row.median }}%">median</span>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>
+                                <td colspan="2">
                                     {% if score_row.benchmark.children|length == 0 %}
                                         <div class="benchmark_info">
                                             {% if score_row.benchmark.meta %}

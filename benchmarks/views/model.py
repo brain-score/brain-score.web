@@ -28,21 +28,23 @@ def view(request, id: int):
     model = model[0]
     # modify scores: add rank to score
     for i, score in enumerate(model.scores):
+        other_scores = [other_score.score_ceiled
+                        for other_model in reference_context['models']
+                        for other_score in other_model.scores
+                        if other_score.versioned_benchmark_identifier == score.versioned_benchmark_identifier]
+        other_scores = [simplify_score(other_score) for other_score in other_scores]
         # per-score ranks
-        if score.score_ceiled == 'X':
-            rank = 'X'
-        elif score.score_ceiled == '':
-            rank = ''
+        if score.score_ceiled == 'X' or score.score_ceiled == '':
+            rank = score.score_ceiled
         else:
-            better = [other_score for other_model in reference_context['models'] for other_score in other_model.scores
-                      if other_score.versioned_benchmark_identifier == score.versioned_benchmark_identifier
-                      and len(other_score.score_ceiled) > 0 and other_score.score_ceiled != 'X'
-                      and not np.isnan(float(other_score.score_ceiled))
-                      and float(other_score.score_ceiled) > float(score.score_ceiled)]
+            better = [other_score for other_score in other_scores
+                      if float(other_score) > float(score.score_ceiled)]
             rank = len(better) + 1
-        # score is a namedtuple, need to create a new one with the `rank` field
-        score_rank_class = namedtuple(score.__class__.__name__, score._fields + ('rank',))
-        score = score_rank_class(*([getattr(score, field) for field in score._fields] + [rank, ]))
+        median = np.median(other_scores)
+        median = median * 100  # convert to percent
+        # score is a namedtuple, need to create a new one with the new fields
+        score_rank_class = namedtuple(score.__class__.__name__, score._fields + ('median', 'rank'))
+        score = score_rank_class(*([getattr(score, field) for field in score._fields] + [median, rank]))
         model.scores[i] = score
 
     model_context['model'] = model
@@ -66,6 +68,20 @@ def view(request, id: int):
     return render(request, 'benchmarks/model.html', model_context)
 
 
+def simplify_score(score):
+    try:
+        return float(score)
+    except ValueError:  # score is '', 'X', or nan
+        return 0
+
+
 @register.filter
 def format_bibtex(bibtex):
     return bibtex.strip().strip('﻿')
+
+
+@register.filter
+def score_style(score_ceiled):
+    if score_ceiled == '' or score_ceiled == 'X':
+        return score_ceiled
+    return 100 * float(score_ceiled)
