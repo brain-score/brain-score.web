@@ -116,7 +116,8 @@ def _collect_benchmarks(user_page=False):
                         instance.overall_order = overall_order
                         benchmarks.append(instance)
                 else:
-                    instance = BenchmarkInstance.objects.select_related('benchmark_type') \
+                    instance = BenchmarkInstance.objects\
+                        .select_related('benchmark_type', 'benchmark_type__reference', 'meta') \
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
                     instance.parent = node.parent.value if node.parent else None
                     instance.root_parent = tree.value.identifier
