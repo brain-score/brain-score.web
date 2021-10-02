@@ -87,10 +87,21 @@ def _collect_benchmarks(user_page=False):
             node.children = children
             traverse_todo += children
 
+    # compute total number of children per tree
+    def count_all_children(tree: Tree):
+        count = 0
+        for child in tree.children:
+            count += count_all_children(child)
+        tree.number_of_all_children = count
+        if len(tree.children) == 0:
+            count += 1  # count as instance if no further children
+        return count
+
     # gather actual benchmark instances and insert dummy instances for parents
     benchmarks = []
     overall_order = 0
     for tree in root_trees:
+        count_all_children(tree)
         # traverse the tree depth-first to go from highest parent to lowest child, corresponding to the website display
         traverse_todo = [tree]
         while traverse_todo:
@@ -99,10 +110,6 @@ def _collect_benchmarks(user_page=False):
                 instance = BenchmarkInstance(benchmark_type=node.value, version=None, ceiling=None, ceiling_error=None)
                 instance.children = [child.value.identifier for child in node.children]
                 traverse_todo = node.children + traverse_todo
-                instance.parent = node.parent.value if node.parent else None
-                instance.root_parent = tree.value.identifier
-                instance.depth = node.depth
-                instance.overall_order = overall_order
                 instance.version = int(0)
                 benchmarks.append(instance)
             else:  # no children --> it's a specific instance
@@ -110,20 +117,17 @@ def _collect_benchmarks(user_page=False):
                     instances = BenchmarkInstance.objects.select_related('benchmark_type') \
                         .filter(benchmark_type=node.value)
                     for instance in instances:
-                        instance.parent = node.parent.value if node.parent else None
-                        instance.root_parent = tree.value.identifier
-                        instance.depth = node.depth
-                        instance.overall_order = overall_order
                         benchmarks.append(instance)
                 else:
-                    instance = BenchmarkInstance.objects\
+                    instance = BenchmarkInstance.objects \
                         .select_related('benchmark_type', 'benchmark_type__reference', 'meta') \
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
-                    instance.parent = node.parent.value if node.parent else None
-                    instance.root_parent = tree.value.identifier
-                    instance.depth = node.depth
-                    instance.overall_order = overall_order
                     benchmarks.append(instance)
+            instance.parent = node.parent.value if node.parent else None
+            instance.root_parent = tree.value.identifier
+            instance.depth = node.depth
+            instance.number_of_all_children = node.number_of_all_children
+            instance.overall_order = overall_order
             overall_order += 1
     # add shortcut to identifier
     for benchmark in benchmarks:

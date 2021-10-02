@@ -62,7 +62,7 @@
                                               data-initial="hidden"
                                                 {% endif %}
                                               data-identifier="{{ score_row.benchmark.benchmark_type_id }}"></span>
-                                        {% include "benchmarks/benchmark_children.html" with number_of_children=score_row.benchmark.children|length %}
+                                        {% include "benchmarks/benchmark_children.html" with number_of_children=score_row.benchmark.number_of_all_children %}
                                     {% endif %}
                                 </td>
                                 {# bar #}

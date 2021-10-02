@@ -74,7 +74,7 @@
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
                         {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
-                            {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.children|length %}
+                            {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.number_of_all_children %}
                         {% endif %}
                         {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
                             </a>
