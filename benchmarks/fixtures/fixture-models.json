@@ -26,7 +26,7 @@
       "owner": [
         "franzi@example.com"
       ],
-      "public": "True",
+      "public": "False",
       "submission_id" : 34,
       "visual_degrees":  8
     }
