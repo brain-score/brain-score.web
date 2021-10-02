@@ -40,11 +40,13 @@ def view(request, id: int):
             better = [other_score for other_score in other_scores
                       if float(other_score) > float(score.score_ceiled)]
             rank = len(better) + 1
+        best = np.max(other_scores)
+        best = best * 100  # convert to percent
         median = np.median(other_scores)
         median = median * 100  # convert to percent
         # score is a namedtuple, need to create a new one with the new fields
-        score_rank_class = namedtuple(score.__class__.__name__, score._fields + ('median', 'rank'))
-        score = score_rank_class(*([getattr(score, field) for field in score._fields] + [median, rank]))
+        score_rank_class = namedtuple(score.__class__.__name__, score._fields + ('median', 'best', 'rank'))
+        score = score_rank_class(*([getattr(score, field) for field in score._fields] + [median, best, rank]))
         model.scores[i] = score
 
     model_context['model'] = model

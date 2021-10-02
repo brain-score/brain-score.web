@@ -78,6 +78,14 @@ section.individual_model
             border-left: 1px solid gray
             right: 0
 
+          &.median
+            top: 8px
+            height: math.div(3, 5) * $bar_container_height
+
+          &.best
+            top: 14px
+            height: math.div(3, 5) * $bar_container_height
+
         span.label
           position: absolute
           font-weight: normal
@@ -92,9 +100,15 @@ section.individual_model
             top: -4px
             right: 2px
 
+          &.best
+            font-size: 10px
+            bottom: -8px
+            margin-left: -8px
+
           &.median
-            bottom: -4px
-            padding-left: 2px
+            font-size: 10px
+            top: -4px
+            margin-left: -18px
 
   div#visual_degrees
     img
