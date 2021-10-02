@@ -35,8 +35,8 @@
                                     {{ score_row.score_ceiled }}
                                 </td>
                                 {# benchmark general info #}
-                                <td>
-                                    {# line 1#}
+                                <td class="benchmark_info depth_{{ score_row.benchmark.depth }}">
+                                    {# line 1 #}
                                     <span class="benchmark_identifier">{{ score_row.benchmark.short_name }}</span>
                                     {% if score_row.benchmark.benchmark_type.reference and score_row.benchmark.benchmark_type.reference.url %}
                                         <a class="has-text-weight-normal"
@@ -66,7 +66,7 @@
                                     {% endif %}
                                 </td>
                                 {# bar #}
-                                <td class="bar">
+                                <td class="bar depth_{{ score_row.benchmark.depth }}">
                                     <div class="bar_container">
                                         <div class="bar"
                                              style="background-color:{{ score_row.color }};
@@ -91,7 +91,7 @@
                                 <td></td>
                                 <td colspan="2">
                                     {% if not score_row.benchmark|is_parent %}
-                                        <div class="benchmark_info">
+                                        <div class="benchmark_details">
                                             {% if score_row.benchmark.meta %}
                                                 <div>
                                                     <span>

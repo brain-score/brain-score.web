@@ -31,8 +31,12 @@ section.individual_model
       .rank
         background-color: gold
 
+    td.benchmark_info.depth_1
+      // set widths so that following bars are horizontally aligned
+      width: 150px
+
       // details and sample images for benchmark
-      div.benchmark_info
+      div.benchmark_details
         .samples_container
           white-space: normal
 
@@ -45,8 +49,11 @@ section.individual_model
       padding-top: 0
       padding-bottom: 0
       padding-left: 20px
-      // make this td take up all the width to make the td.benchmark_identifier as small as possible
-      width: 100%
+
+      &:not(.depth_1)
+        // make this td take up all the width to make the td.benchmark_identifier as small as possible
+        // except for depth 1, where the widths are aligned
+        width: 100%
 
       $bar_container_height: 55px
 
