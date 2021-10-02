@@ -241,10 +241,8 @@
         </h2>
         <div id="bibtex_collapsible" class="content">
             <div class="box">
-                {% for score_row in model.scores %}
-                    {% if score_row.score_ceiled and score_row.benchmark.benchmark_type.reference %}
-                        <pre>{{ score_row.benchmark.benchmark_type.reference.bibtex|format_bibtex }}</pre>
-                    {% endif %}
+                {% for bibtex in model.scores|scores_bibtex %}
+                        <pre>{{ bibtex }}</pre>
                 {% endfor %}
             </div>
         </div>

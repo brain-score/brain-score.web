@@ -78,11 +78,6 @@ def simplify_score(score):
 
 
 @register.filter
-def format_bibtex(bibtex):
-    return bibtex.strip().strip('﻿')
-
-
-@register.filter
 def score_style(score_ceiled):
     if score_ceiled == '' or score_ceiled == 'X':
         return score_ceiled
@@ -92,3 +87,17 @@ def score_style(score_ceiled):
 @register.filter
 def is_parent(benchmark):
     return hasattr(benchmark, 'children') and len(benchmark.children) > 0
+
+
+@register.filter
+def scores_bibtex(scores):
+    bibtexs = []
+    for score_row in scores:
+        if score_row.score_ceiled and score_row.benchmark.benchmark_type.reference:
+            bibtex = score_row.benchmark.benchmark_type.reference.bibtex
+            bibtex = bibtex.strip().strip('﻿')
+            bibtexs.append(bibtex)
+    # filter unique, but maintain order
+    _, idx = np.unique(bibtexs, return_index=True)
+    bibtexs = np.array(bibtexs)[np.sort(idx)]
+    return bibtexs
