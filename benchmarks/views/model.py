@@ -14,6 +14,20 @@ _logger = logging.getLogger(__name__)
 
 
 def view(request, id: int):
+    model, model_context, reference_context = determine_context(id, request)
+    contextualize_scores(model, reference_context)
+    model_context['model'] = model
+    del model_context['models']
+    # visual degrees
+    visual_degrees = Model.objects.get(id=model.id).visual_degrees
+    model_context['visual_degrees'] = visual_degrees
+    # layer assignment
+    layers = get_layers(model)
+    model_context['layers'] = layers
+    return render(request, 'benchmarks/model.html', model_context)
+
+
+def determine_context(id, request):
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
     reference_context = get_context(None)  # public models
@@ -26,6 +40,10 @@ def view(request, id: int):
     if len(model) != 1:
         raise Http404(f"Model with id {id} not found or user does not have access")
     model = model[0]
+    return model, model_context, reference_context
+
+
+def contextualize_scores(model, reference_context):
     # modify scores: add rank to score
     for i, score in enumerate(model.scores):
         other_scores = [other_score.score_ceiled
@@ -49,13 +67,8 @@ def view(request, id: int):
         score = score_rank_class(*([getattr(score, field) for field in score._fields] + [median, best, rank]))
         model.scores[i] = score
 
-    model_context['model'] = model
-    del model_context['models']
 
-    # visual degrees
-    visual_degrees = Model.objects.get(id=model.id).visual_degrees
-    model_context['visual_degrees'] = visual_degrees
-    # layer assignment
+def get_layers(model):
     LAYERS_MARKER = 'layers: '
     layer_comments = [score.comment.replace(LAYERS_MARKER, '') for score in model.scores
                       if score.comment is not None and score.comment.startswith(LAYERS_MARKER)]
@@ -66,8 +79,7 @@ def view(request, id: int):
     merged_layers = OrderedDict([(region, layer) for region, layer in
                                  sorted(merged_layers.items(),
                                         key=lambda region_layer: region_order[region_layer[0]])])
-    model_context['layers'] = merged_layers
-    return render(request, 'benchmarks/model.html', model_context)
+    return merged_layers
 
 
 def simplify_score(score):
