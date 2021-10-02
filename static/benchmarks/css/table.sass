@@ -89,17 +89,6 @@ table.benchmarks
         padding: 1%
         margin-top: 0
 
-    // benchmark version
-    .benchmark-version
-      background-color: #eff0f1
-      color: #a4a49f
-      margin-left: 5px
-
-    // children count
-    .benchmark-count
-      color: #a4a49f
-      margin-left: 5px
-
     // depth-dependent header font
     .depth_0
       font-size: 13pt
@@ -116,7 +105,7 @@ table.benchmarks
     vertical-align: middle
     text-align: left
     white-space: nowrap
-    //padding: 0
+  //padding: 0
 
   // goodness indicators
   .score_cell
@@ -216,3 +205,14 @@ input[type=checkbox]
 
 .want_to_click
   cursor: pointer
+
+/* general meta -- keep outside table qualifier for re-use in e.g. model view */
+// benchmark version
+.benchmark-version
+  background-color: #eff0f1
+  color: #a4a49f
+  margin-left: 5px
+
+// children count
+.benchmark-count
+  margin-left: 5px

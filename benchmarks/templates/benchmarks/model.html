@@ -62,10 +62,7 @@
                                               data-initial="hidden"
                                                 {% endif %}
                                               data-identifier="{{ score_row.benchmark.benchmark_type_id }}"></span>
-                                        <span class="tag child_benchmarks">
-                                            {{ score_row.benchmark.children|length }}
-                                            benchmark{% if score_row.benchmark.children|length > 1 %}s{% endif %}
-                                        </span>
+                                        {% include "benchmarks/benchmark_children.html" with number_of_children=score_row.benchmark.children|length %}
                                     {% endif %}
                                 </td>
                                 {# bar #}
