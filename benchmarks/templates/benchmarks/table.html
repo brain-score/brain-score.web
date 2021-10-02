@@ -69,11 +69,9 @@
                                    {% if benchmark.version %} instance {% endif %}
                                    {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}
-                    </span>
-                        {# version, if present #}
-                        {% if benchmark.version %}
-                            <span class="benchmark-version">v{{ benchmark.version }}</span>
-                        {% endif %}
+                        </span>
+                        {# version #}
+                        {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
                         {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
                             <span class="benchmark-count">{{ benchmark.children|length }}
