@@ -45,7 +45,8 @@
                                         </a>
                                     {% endif %}
                                     {% if score_row.rank %}
-                                        <span class="tag rank">
+                                        <span title="Rank of this model on this benchmark compared to all public models"
+                                              class="tag rank">
                                             rank {{ score_row.rank }}
                                         </span>
                                     {% endif %}
@@ -77,10 +78,12 @@
                                         <span class="label ceiling">ceiling</span>
                                         <div title="best" class="vertical_line best"
                                              style="left: {{ score_row.best }}%"></div>
-                                        <span class="label best" style="left: {{ score_row.best }}%">best</span>
+                                        <span title="Score of best public model" class="label best"
+                                              style="left: {{ score_row.best }}%">best</span>
                                         <div title="median" class="vertical_line median"
                                              style="left: {{ score_row.median }}%"></div>
-                                        <span class="label median" style="left: {{ score_row.median }}%">median</span>
+                                        <span title="Median score of all public models" class="label median"
+                                              style="left: {{ score_row.median }}%">median</span>
                                     </div>
                                 </td>
                             </tr>
@@ -242,7 +245,7 @@
         <div id="bibtex_collapsible" class="content">
             <div class="box">
                 {% for bibtex in model.scores|scores_bibtex %}
-                        <pre>{{ bibtex }}</pre>
+                    <pre>{{ bibtex }}</pre>
                 {% endfor %}
             </div>
         </div>
