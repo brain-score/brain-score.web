@@ -314,7 +314,7 @@ class PublicAjax(View):
 
 def verify_user_model_access(user, model):
     # make sure user is allowed to perform this operation: either model owner or superuser
-    if not (user.is_superuser or model.owner == user.id):
+    if not (user.is_superuser or model.owner == user):
         raise PermissionDenied(f"User {user} is not allowed access to model {model}")
 
 
