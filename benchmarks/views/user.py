@@ -106,7 +106,7 @@ class Logout(View):
 
 class Upload(View):
     def get(self, request):
-        if str(request.user) == "AnonymousUser":
+        if request.user.is_anonymous:
             return HttpResponseRedirect('../profile/')
         form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
@@ -203,7 +203,7 @@ class DisplayName(View):
 
 class Profile(View):
     def get(self, request):
-        if str(request.user) == "AnonymousUser":
+        if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
             context = get_context(request.user)
@@ -314,7 +314,7 @@ class PublicAjax(View):
 
 def verify_user_model_access(user, model):
     # make sure user is allowed to perform this operation: either model owner or superuser
-    if not (user.is_superuser or model.owner == user.id):
+    if not (user.is_superuser or model.owner == user):
         raise PermissionDenied(f"User {user} is not allowed access to model {model}")
 
 

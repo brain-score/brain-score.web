@@ -1,37 +1,37 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-<section id="login" class="container center">
-  {% if activation_email %}
-    <p style="font-weight: bold">A confirmation email has been sent.</p>
-  {% endif %}
-  {% if password_email %}
-    <p style="font-weight: bold">A password change email has been sent.</p>
-  {% endif %}
-	<h1>Welcome</h1>
-	Welcome! You can login here!
-	<form method="post">
-		{% csrf_token %}
-    
-		{% for field in form %}
-      <p class="login">
-        {{ field.label_tag }}<br>
-        {{ field }}
-        {% if field.help_text %}
-          <small style="display: none">{{ field.help_text }}</small>
+    <section id="login" class="container center">
+        {% if activation_email %}
+            <p style="font-weight: bold">A confirmation email has been sent.</p>
         {% endif %}
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
-        {% endfor %}
-      </p>
-    {% endfor %}
-    <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
-		<button type="submit" class="submission">Login</button>
-	</form>
-  {% if Incorrect %}
-    <p style="color: red;">The username or password was incorrect</p>
-  {% endif %}
-  <br />
-  <p>Not a current participant? Sign up <a href='/signup'>here</a>.</p>
-</section>
+        {% if password_email %}
+            <p style="font-weight: bold">A password change email has been sent.</p>
+        {% endif %}
+        <h1>Login</h1>
+        <p>Access your account to submit new models or view your previous submissions.</p>
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <p class="login">
+                    {{ field.label_tag }}<br>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small style="display: none">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p style="color: red">{{ error }}</p>
+                    {% endfor %}
+                </p>
+            {% endfor %}
+            <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
+            <button type="button submit" class="button submission">Login</button>
+        </form>
+        {% if Incorrect %}
+            <p style="color: red;">The username or password was incorrect</p>
+        {% endif %}
+        <br/>
+        <button class="button"><a href='/signup'>Create account</a></button>
+    </section>
 {% endblock %}

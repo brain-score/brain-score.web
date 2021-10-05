@@ -2,22 +2,22 @@
 
 {% block content %}
 
-    <section id="leaderboard" class="container tablecenter">
+    <section id="leaderboard" class="container tablecenter is-centered">
         {% include "benchmarks/table.html" %}
     </section>
 
-    <section id="about" class="container center">
-        <h2>About</h2>
+    <section id="about" class="container is-centered">
+        <h2 class="title is-2">About</h2>
         {% include "benchmarks/about.html" %}
     </section>
 
-    <section id="analysis" class="container center">
-        <h2>Compare</h2>
+    <section id="compare" class="container is-centered">
+        <h2 class="title is-2">Compare</h2>
         {% include "benchmarks/compare.html" %}
     </section>
 
-    <section id="participate" class="container center">
-        <h2>Participate</h2>
+    <section id="participate" class="container is-centered">
+        <h2 class="title is-2">Participate</h2>
         {% include "benchmarks/participate.html" %}
     </section>
 

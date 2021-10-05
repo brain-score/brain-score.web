@@ -51,6 +51,7 @@
     <script defer src="{% static "/benchmarks/js/compare.js" %}" charset="utf-8"></script>
     <script defer src="{% static "/benchmarks/js/table-expansion.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/table-public.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/collapsible.js" %}"></script>
     {% endcompress %}
 
     <script type="application/ld+json">
@@ -106,7 +107,7 @@
         <div class="navbar-end">
             <a class="navbar-item" href="http://{{ request.get_host }}/#leaderboard">Leaderboard</a>
             <a class="navbar-item" href="http://{{ request.get_host }}/#about">About</a>
-            <a class="navbar-item" href="http://{{ request.get_host }}/#analysis">Compare</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}/#compare">Compare</a>
             <a class="navbar-item" href="http://{{ request.get_host }}/#participate">Participate</a>
         </div>
     </div>
