@@ -64,7 +64,9 @@ def get_context(user=None):
 
     return {'models': model_rows, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
+            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH,
+            # will be set in user.py if user is logged in
+            "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
 
 
@@ -229,7 +231,8 @@ def _collect_models(benchmarks, user=None):
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner')
+
+    model_meta = Model.objects.select_related('reference', 'owner', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
@@ -239,10 +242,11 @@ def _collect_models(benchmarks, user=None):
         'id', 'name',
         'reference_identifier', 'reference_link',
         'user', 'public',
-        'rank', 'scores'])
+        'rank', 'scores', 'build_status', 'timestamp', 'submitter', 'submission_id'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'versioned_benchmark_identifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
+
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
@@ -297,18 +301,20 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
+        timestamp = meta.submission.timestamp
+        submitter = meta.submission.submitter
+        submission_id = meta.submission.id
         model_row = ModelRow(
             id=meta.id,
             name=meta.name,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public,
-            scores=model_scores, rank=rank
-        )
+            scores=model_scores, rank=rank, build_status=meta.submission.status,
+            timestamp=timestamp, submitter=submitter, submission_id=submission_id)
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
 
     return data
-
 
 def _get_benchmark_shortname(benchmark_type_identifier):
     match = re.match(r'[^\.]+\.(.+)', benchmark_type_identifier)
@@ -327,7 +333,6 @@ class Tree:
 
     def __repr__(self):
         return generic_repr(self)
-
 
 def normalize_value(value, min_value, max_value):
     normalized_value = (value - min_value) / (max_value - min_value)
