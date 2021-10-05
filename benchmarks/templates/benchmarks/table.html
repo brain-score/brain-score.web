@@ -135,7 +135,7 @@
                         {% endif %}
                     </div>
                     <div class="console_log">
-                        {% if has_user and model.console_log is not None %}
+                        {% if has_user %}
                          <div class="box">
                             <a class="console_log_button" href="#{{ model.submission_id }}/model_information">View Console Log</a>
                          </div>
@@ -185,7 +185,7 @@
                                                 view a plaintext version with the link provided.
                                          </span>
                                         {% else %}
-                                            Yeet
+
                                         {% endif %}
                                 </div>
                             </div>
