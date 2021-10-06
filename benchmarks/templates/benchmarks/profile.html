@@ -8,15 +8,16 @@
 
             <form action="{% url 'display-name' %}" method="post">
                 {% csrf_token %}
+
+                <label class="label">Display name</label>
                 <div class="field has-addons">
                     <p class="control">
-                        <label class="label">Display name</label>
                         <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
                     </p>
                     <p class="control">
-                        <button class="button">
+                        <a class="button">
                             Save
-                        </button>
+                        </a>
                     </p>
                 </div>
             </form>
