@@ -57,8 +57,8 @@
                                     {# line 2 #}
                                     {% if score_row.benchmark|is_parent %}
                                         <span class="want_to_click collapsible_control is_collapsible"
-                                                {# collapse all benchmarks below 2 by default #}
-                                                {% if score_row.benchmark.depth >= 1 %}
+                                                {# collapse all benchmarks below 2 and below engineering by default #}
+                                                {% if score_row.benchmark.depth >= 1 or score_row.benchmark.benchmark_type_id == 'engineering' %}
                                               data-initial="hidden"
                                                 {% endif %}
                                               data-identifier="{{ score_row.benchmark.benchmark_type_id }}"></span>
