@@ -154,13 +154,14 @@ def resubmit(request):
         model_ids = []
         benchmarks = []
         for key, value in request.POST.items():
-            if 'models_' in key:
+            if key == 'model_selection':
+                # value in this case is the model id
                 model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
                 verify_user_model_access(user=request.user, model=model)
                 model_ids.append(model.id)
-            if 'benchmarks_' in key:
-                # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
-                benchmarks.append(value.split('_v')[0])
+            if key == 'benchmark_selection':
+                # value in this case is the benchmark_type_id
+                benchmarks.append(value)
         if len(model_ids) > 0 and len(benchmarks) > 0:
             json_info = {
                 "user_id": request.user.id,

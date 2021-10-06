@@ -7,26 +7,26 @@
         <div class="columns">
             <div class="column is-half">
                 <h4>Pick benchmarks</h4>
-                {% for benchmark in benchmarks|no_children:models %}
+                {% for short_name, benchmark_type_id in submittable_benchmarks.items %}
                     <div id=benchmarkGroup" class="field">
                         <input class="checkbox is-checkradio is-block benchmark_checker" type="checkbox"
                                onclick="enableButtonBench()"
-                               name='benchmarks_{{ benchmark.identifier }}'
-                               value="{{ benchmark.identifier }}"
-                               id="benchmark-{{ benchmark.identifier }}">
-                        <label class="checkbox" for="benchmark-{{ benchmark.identifier }}">
-                            {{ benchmark.short_name }}
+                               name='benchmark_selection'
+                               value="{{ benchmark_type_id }}"
+                               id="benchmark-{{ benchmark_type_id }}">
+                        <label class="checkbox" for="benchmark-{{ benchmark_type_id }}">
+                            {{ short_name }}
                         </label>
                     </div>
                 {% endfor %}
             </div>
             <div class="column">
                 <h4>Pick models</h4>
-                {% for model in models|no_benchmark:benchmarks %}
+                {% for model in models %}
                     <div id="modelsGroup" class="field">
                         <input class="checkbox is-checkradio is-block model_checker" type="checkbox"
                                onclick="enableButtonModel()"
-                               name='models_{{ model.name }}'
+                               name='model_selection'
                                value="{{ model.id }}"
                                id="model-{{ model.id }}">
                         <label class="checkbox" for="model-{{ model.id }}">

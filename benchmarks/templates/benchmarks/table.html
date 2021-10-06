@@ -117,7 +117,7 @@
                 {% if has_user %}
                     <td class="model-public-checkbox">
                         <input type="checkbox" value="{{ model.id }}"
-                               class="public model-public-checkbox" {{ model|is_public }}>
+                               class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
                     </td>
                 {% endif %}
             </tr>

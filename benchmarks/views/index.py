@@ -62,7 +62,12 @@ def get_context(user=None):
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
 
-    return {'models': model_rows, 'benchmarks': benchmarks,
+    # benchmarks to select from for resubmission in user profile
+    submittable_benchmarks = None
+    if user is not None:
+        submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
+
+    return {'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
@@ -143,6 +148,30 @@ def _collect_benchmarks(user_page=False):
         shortname = _get_benchmark_shortname(benchmark.benchmark_type.identifier)
         benchmark.short_name = shortname
     return benchmarks
+
+
+def _collect_submittable_benchmarks(benchmarks, user):
+    """
+    gather benchmarks that:
+    - any of a user's models have been evaluated on, if user is not a superuser
+    - all benchmarks, if user is a superuser
+    """
+
+    benchmark_types = {benchmark.short_name: benchmark.benchmark_type_id
+                       for benchmark in benchmarks if not hasattr(benchmark, 'children')}
+    # the above dictionary creation will already deal with duplicates from benchmarks with multiple versions
+    if user.is_superuser:  # superusers can resubmit on all available benchmarks
+        return benchmark_types
+
+    previously_evaluated_benchmarks = [benchmark_type_id
+                                       for benchmark_type_id in Score.objects
+                                           .select_related('benchmark')
+                                           .filter(model__owner=user)
+                                           .distinct('benchmark__benchmark_type_id')
+                                           .values_list('benchmark__benchmark_type_id', flat=True)]
+    benchmark_selection = {short_name: benchmark_type_id for short_name, benchmark_type_id in benchmark_types.items()
+                           if benchmark_type_id in previously_evaluated_benchmarks}
+    return benchmark_selection
 
 
 def _collect_models(benchmarks, user=None):
@@ -447,40 +476,3 @@ def get_parent_item(dictionary, key):
     else:
         return_string = return_value
     return return_string
-
-
-@register.filter
-def is_public(model):
-    if model.public:
-        return "checked"
-    else:
-        return ""
-
-
-@register.filter
-def no_children(benchmarks, models):
-    no_children = []
-    for benchmark in benchmarks:
-        if not hasattr(benchmark, 'children'):
-            for model in models:
-                if not any(benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
-                    no_children.append(benchmark)
-                    break
-    return no_children
-
-
-@register.filter
-def no_benchmark(models, benchmarks):
-    model_filter = []
-    for model in models:
-        for benchmark in benchmarks:
-            if not hasattr(benchmark, 'children') and not any(
-                    benchmark.identifier == score.benchmark and score.score_raw != '' for score in model.scores):
-                model_filter.append(model)
-                break
-    return model_filter
-
-
-@register.filter
-def length(obj):
-    return len(obj)
