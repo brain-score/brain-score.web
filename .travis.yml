@@ -18,4 +18,4 @@ before_script:
   - python manage.py makemigrations
   - python manage.py migrate
 script:
-  - python manage.py test
+  - python manage.py test benchmarks

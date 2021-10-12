@@ -26,7 +26,7 @@ setup(
     long_description=readme,
     author="Brain-Score team",
     url='https://github.com/brain-score/brain-score.web',
-    packages=find_packages(),
+    packages=find_packages(exclude=['content_utils']),
     include_package_data=True,
     install_requires=requirements,
     license="MIT license",
