@@ -1,22 +1,25 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-<section id="signup" class="container center">
-  <h2>Sign up</h2>
-  <form method="post">
-    {% csrf_token %}
-      {% for field in form %}
-      <p>
-        {{ field.label_tag }}<br>
-        {{ field }}
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
-        {% endfor %}
-      </p>
-      {% endfor %}
-    <button type="submit" class="submission">Sign up</button>
-  </form>
-  <br />
-  <p><a href="/../profile/">Return to login</a></p>
-</section>
+    <section id="signup" class="container center">
+        <h2>Create new account</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="field">
+                <label class="label">{{ field.label_tag }}</label>
+                <div class="control">
+                    {{ field }}
+                </div>
+                {% for error in field.errors %}
+                    <p style="color: red">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="button submission">Sign up</button>
+        </form>
+        <br/>
+        <button class="button"><a href="/../profile/">Return to login</a></button>
+    </section>
 {% endblock %}

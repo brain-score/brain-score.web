@@ -1,31 +1,37 @@
-{% with '<a href="mailto:jjpr@mit.edu,msch@mit.edu?subject=Brain-Score submission">get in touch with us</a>' as contact %}
-{% with '<a href="">models GitHub repository</a>' as models_github %}
-{% with '<a href="">Brain-Score GitHub repository</a>' as brain_github %}
+{% with '<a href="mailto:jjpr@mit.edu,mferg@mit.edu,msch@mit.edu?subject=Brain-Score submission">get in touch with us</a>' as contact %}
+    {% with '<a href="">models GitHub repository</a>' as models_github %}
+        {% with '<a href="">Brain-Score GitHub repository</a>' as brain_github %}
 
-    <h4>Challenge the data: Submit a model</h4>
-    If you would like to score a model, please <a href="profile/">log in here.</a>
-    <br />
+            <h4 class="title is-4">Challenge the data: Submit a model</h4>
+            <div class="block">
+                If you would like to score a model, please <a href="profile/">log in here.</a>
+            </div>
 
-    <h4>Challenge the models: Submit data</h4>
-    If you have neural or behavioral recordings that you would like models to compete on,
-    please {{ contact }} to  <a href="https://github.com/brain-score/brainio_contrib">submit data</a>.
+            <h4 class="title is-4">Challenge the models: Submit data</h4>
+            <div class="block">
+                If you have neural or behavioral recordings that you would like models to compete on,
+                please {{ contact }} to <a href="https://github.com/brain-score/brainio_contrib">submit data</a>.
+            </div>
 
-    <h4>Change the evaluation: Submit a metric</h4>
-    If you have an idea for a different way of comparing brain and machine,
-    please <a href="https://github.com/brain-score/brain-score">send in a pull request</a>.
+            <h4 class="title is-4">Change the evaluation: Submit a metric</h4>
+            <div class="block">
+                If you have an idea for a different way of comparing brain and machine,
+                please <a href="https://github.com/brain-score/brain-score">send in a pull request</a>.
+            </div>
 
-    <h4>Citation</h4>
-    If you use Brain-Score in your work, please cite
-    <a href="https://www.biorxiv.org/content/early/2018/09/05/407007">
-        <em>Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?</em>
-    </a> (technical)
-    and
-    <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">
-        <em>Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence</em>
-    </a> (perspective)
-    as well as the respective benchmark sources.
+            <h4 class="title is-4">Citation</h4>
+            <div class="block">
+                If you use Brain-Score in your work, please cite
+                <a href="https://www.biorxiv.org/content/early/2018/09/05/407007">
+                    <em>Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?</em>
+                </a> (technical)
+                and
+                <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">
+                    <em>Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence</em>
+                </a> (perspective)
+                as well as the respective benchmark sources.
 
-    <pre>
+                <pre>
 @article{SchrimpfKubilius2018BrainScore,
   title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},
   author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},
@@ -42,7 +48,8 @@
   url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}
 }
 </pre>
+            </div>
 
-{% endwith %}
-{% endwith %}
+        {% endwith %}
+    {% endwith %}
 {% endwith %}

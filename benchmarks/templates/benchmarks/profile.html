@@ -2,45 +2,46 @@
 
 {% block content %}
 
-{% if user %}
-<section id="profile" class="container center">
-	<h1>{{ user.email }}</h1>
+    {% if user %}
+        <section id="profile" class="container center">
+            <h1>{{ user.email }}</h1>
 
-    <form action="{% url 'display-name' %}" method="post">
-        {% csrf_token %}
-        <div class="field has-addons">
-            <p class="control">
+            <form action="{% url 'display-name' %}" method="post">
+                {% csrf_token %}
+
                 <label class="label">Display name</label>
-                <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-            </p>
-            <p class="control">
-                <button class="button">
-                    Save
-                </button>
-            </p>
-        </div>
-    </form>
+                <div class="field has-addons">
+                    <p class="control">
+                        <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                    </p>
+                    <p class="control">
+                        <a class="button">
+                            Save
+                        </a>
+                    </p>
+                </div>
+            </form>
 
-    <br>
+            <br>
 
-	<p>Past scores are below. Submissions are located at the bottom.</p>
-</section>
+            <p>Past scores are below. Submissions are located at the bottom.</p>
+        </section>
 
-<section id="leaderboard" class="container tablecenter">
-    {% include "benchmarks/table.html" %}
-</section>
+        <section id="leaderboard" class="container tablecenter">
+            {% include "benchmarks/table.html" %}
+        </section>
 
-<section id="submissions" class="container center">
-	{% include "benchmarks/submissions.html" %}
-</section>
+        <section id="submissions" class="container center">
+            {% include "benchmarks/submissions.html" %}
+        </section>
 
-<section id="profile" class="container center">
-	<h2>Submit new models <a href="/upload">here</a>.</h2>
-	<button onclick="location.href='../logout/'" type="button" class="submission">
-         Logout</button>
-    <!<p style="font-size: 12px" Having issues? Please let us know <a href="../feedback/"here</a.</p>
-</section>
-{% else %}
+        <section id="profile" class="container center">
+            <h2>Submit new models <a href="/upload">here</a>.</h2>
+            <button onclick="location.href='../logout/'" type="button" class="button submission">
+                Logout
+            </button>
+        </section>
+    {% else %}
 
-{% endif %}
+    {% endif %}
 {% endblock %}
