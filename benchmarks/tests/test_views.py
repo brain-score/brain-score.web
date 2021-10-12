@@ -1,5 +1,7 @@
 from django.test import TestCase
 
+from benchmarks.views.user import split_identifier_version
+
 ALL_FIXTURES = ['fixture-benchmarkreferences.json', 'fixture-benchmarktypes.json', 'fixture-benchmarkinstances.json',
                 'fixture-users.json', 'fixture-modelreferences.json', 'fixture-models.json',
                 'fixture-scores.json']
@@ -29,3 +31,17 @@ class TestModel(TestCase):
     def test_non_public_model(self):
         resp = self.client.get("http://localhost:8000/model/2")
         self.assertEqual(resp.status_code, 404)
+
+
+class TestIdentifierVersionSplit(TestCase):
+    def test_MajajHong(self):
+        versioned_benchmark_identifier = 'dicarlo.MajajHong2015.V4-pls_v3'
+        identifier, version = split_identifier_version(versioned_benchmark_identifier)
+        self.assertEqual(identifier, 'dicarlo.MajajHong2015.V4-pls')
+        self.assertEqual(version, '3')
+
+    def test_RingachVariance(self):
+        versioned_benchmark_identifier = 'dicarlo.Marques2020_Ringach2002-circular_variance_v1'
+        identifier, version = split_identifier_version(versioned_benchmark_identifier)
+        self.assertEqual(identifier, 'dicarlo.Marques2020_Ringach2002-circular_variance')
+        self.assertEqual(version, '1')
