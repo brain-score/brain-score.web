@@ -322,13 +322,14 @@ def verify_user_model_access(user, model):
         raise PermissionDenied(f"User {user} is not allowed access to model {model}")
 
 
-def split_identifier_version(benchmark_specifier):
+def split_identifier_version(versioned_benchmark_identifier):
     """
-    Separates a benchmark specifier into identifier and version.
-    :param benchmark_specifier: the combined specifier of identifier and version, e.g. `dicarlo.MajajHong2015.V4-pls_v3`
+    Separates a versioned benchmark identifier into identifier and version.
+    :param versioned_benchmark_identifier: the combined specifier of identifier and version,
+        e.g. `dicarlo.MajajHong2015.V4-pls_v3`
     :return: the benchmark identifier and version separate, e.g. `dicarlo.MajajHong2015.V4-pls` and `3`
     """
-    identifier_version_split = benchmark_specifier.split('_v')
+    identifier_version_split = versioned_benchmark_identifier.split('_v')
     # re-combine all components but the last (aka the version). This avoids identifiers being split at `_v`,
     # e.g. Marques2020_Ringach2002-circular_variance
     identifier = '_v'.join(identifier_version_split[:-1])
