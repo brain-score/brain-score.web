@@ -33,6 +33,10 @@ def determine_context(id, request):
     reference_context = get_context(None)  # public models
     # first check if model is in public list
     model_context = reference_context
+
+    # set login information via context
+    model_context["has_user"] = True
+
     model = [m for m in reference_context['models'] if m.id == id]
     if len(model) != 1 and not request.user.is_anonymous:  # model not found in public list, try user's private
         model_context = get_context(request.user)

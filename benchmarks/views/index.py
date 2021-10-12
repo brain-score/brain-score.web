@@ -65,6 +65,7 @@ def get_context(user=None):
     return {'models': model_rows, 'benchmarks': benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH,
+
             # will be set in user.py if user is logged in
             "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
@@ -89,8 +90,8 @@ def _collect_benchmarks(user_page=False):
             node.children = children
             traverse_todo += children
 
-    # compute total number of children per tree
     def count_all_children(tree: Tree):
+        """ compute total number of children per tree """
         count = 0
         for child in tree.children:
             count += count_all_children(child)
@@ -99,9 +100,20 @@ def _collect_benchmarks(user_page=False):
             count += 1  # count as instance if no further children
         return count
 
+    overall_order = 0
+
+    def set_instance_meta(instance, node, tree):
+        """ sets meta attributes of a benchmark instance according to its tree node """
+        instance.parent = node.parent.value if node.parent else None
+        instance.root_parent = tree.value.identifier
+        instance.depth = node.depth
+        instance.number_of_all_children = node.number_of_all_children
+        nonlocal overall_order
+        instance.overall_order = overall_order
+        overall_order += 1
+
     # gather actual benchmark instances and insert dummy instances for parents
     benchmarks = []
-    overall_order = 0
     for tree in root_trees:
         count_all_children(tree)
         # traverse the tree depth-first to go from highest parent to lowest child, corresponding to the website display
@@ -113,24 +125,21 @@ def _collect_benchmarks(user_page=False):
                 instance.children = [child.value.identifier for child in node.children]
                 traverse_todo = node.children + traverse_todo
                 instance.version = int(0)
+                set_instance_meta(instance, node, tree)
                 benchmarks.append(instance)
             else:  # no children --> it's a specific instance
                 if user_page:
                     instances = BenchmarkInstance.objects.select_related('benchmark_type') \
                         .filter(benchmark_type=node.value)
                     for instance in instances:
+                        set_instance_meta(instance, node, tree)
                         benchmarks.append(instance)
                 else:
                     instance = BenchmarkInstance.objects \
                         .select_related('benchmark_type', 'benchmark_type__reference', 'meta') \
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
+                    set_instance_meta(instance, node, tree)
                     benchmarks.append(instance)
-            instance.parent = node.parent.value if node.parent else None
-            instance.root_parent = tree.value.identifier
-            instance.depth = node.depth
-            instance.number_of_all_children = node.number_of_all_children
-            instance.overall_order = overall_order
-            overall_order += 1
     # add shortcut to identifier
     for benchmark in benchmarks:
         benchmark.identifier = benchmark.benchmark_type.identifier
