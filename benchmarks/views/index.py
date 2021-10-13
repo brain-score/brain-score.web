@@ -279,7 +279,7 @@ def _collect_models(benchmarks, user=None):
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
-    model_ranks['rank'] = model_ranks['score_ceiled'].rank(method='min', ascending=False).astype(int)
+    model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
         'id', 'name',
