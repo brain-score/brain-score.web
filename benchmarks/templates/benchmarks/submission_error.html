@@ -1,0 +1,16 @@
+{% extends 'benchmarks/base.html' %}
+
+{% block content %}
+    <section class="container center">
+        <article class="message is-danger">
+            <div class="message-body">
+                Submission of models failed.
+            </div>
+        </article>
+        <p>{{ error }}</p>
+        <br/>
+        <p>To return to your profile page, click <a href="../profile">here</a>.</p>
+        <br/>
+        <p>To submit another model, click <a href="../upload">here</a></p>
+    </section>
+{% endblock %}

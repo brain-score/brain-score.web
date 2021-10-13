@@ -150,51 +150,50 @@ class Upload(View):
 
 
 def resubmit(request):
-    if request.method == 'POST':
-        _logger.debug(f"request user: {request.user.get_full_name()}")
-        model_ids = []
-        benchmarks = []
-        for key, value in request.POST.items():
-            if key == 'model_selection':
-                # value in this case is the model id
-                model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
-                verify_user_model_access(user=request.user, model=model)
-                model_ids.append(model.id)
-            if 'benchmarks_' in key:
-                # benchmark identifiers (benchmark_type_id) are versioned,
-                # which we have to remove for submitting to jenkins
-                identifier, version = split_identifier_version(value)
-                benchmarks.append(identifier)
-        if len(model_ids) > 0 and len(benchmarks) > 0:
-            json_info = {
-                "user_id": request.user.id,
-                "model_ids": model_ids,
-            }
-            with open('result.json', 'w') as fp:
-                json.dump(json_info, fp)
+    assert request.method == 'POST'
 
-            # submit to jenkins
-            jenkins_url = "http://braintree.mit.edu:8080"
-            auth = get_secret("brainscore-website_jenkins_access")
-            auth = (auth['user'], auth['password'])
-            job_name = "run_benchmarks"
-            s = ' '
-            benchmark_string = s.join(benchmarks)
-            request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                          f"?TOKEN=trigger2scoreAmodel" \
-                          f"&email={request.user.get_full_name()}" \
-                          f"&benchmarks={benchmark_string}"
-            _logger.debug(f"request_url: {request_url}")
-            params = {'submission.config': open('result.json', 'rb')}
-            response = requests.post(request_url, files=params, auth=auth)
-            _logger.debug(f"response: {response}")
+    _logger.debug(f"request user: {request.user.get_full_name()}")
+    model_ids = []
+    benchmarks = []
+    for key, value in request.POST.items():
+        if key.startswith('model_selection_'):
+            # value in this case is the model id
+            model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
+            verify_user_model_access(user=request.user, model=model)
+            model_ids.append(model.id)
+        elif key.startswith('benchmark_selection_'):
+            # value is benchmark_type_id (un-versioned)
+            benchmarks.append(value)
+    if len(model_ids) > 0 and len(benchmarks) > 0:
+        json_info = {
+            "user_id": request.user.id,
+            "model_ids": model_ids,
+        }
+        with open('result.json', 'w') as fp:
+            json.dump(json_info, fp)
 
-            # update frontend
-            response.raise_for_status()
-            _logger.debug("Job triggered successfully")
-            return render(request, 'benchmarks/success.html')
-        else:
-            return render(request, 'benchmark/')
+        # submit to jenkins
+        jenkins_url = "http://braintree.mit.edu:8080"
+        auth = get_secret("brainscore-website_jenkins_access")
+        auth = (auth['user'], auth['password'])
+        job_name = "run_benchmarks"
+        s = ' '
+        benchmark_string = s.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?TOKEN=trigger2scoreAmodel" \
+                      f"&email={request.user.get_full_name()}" \
+                      f"&benchmarks={benchmark_string}"
+        _logger.debug(f"request_url: {request_url}")
+        params = {'submission.config': open('result.json', 'rb')}
+        response = requests.post(request_url, files=params, auth=auth)
+        _logger.debug(f"response: {response}")
+
+        # update frontend
+        response.raise_for_status()
+        _logger.debug("Job triggered successfully")
+        return render(request, 'benchmarks/success.html')
+    else:
+        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
 
 class DisplayName(View):
