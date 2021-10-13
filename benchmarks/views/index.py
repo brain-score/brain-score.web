@@ -224,7 +224,16 @@ def _collect_models(benchmarks, user=None):
                 children_scores = scores[scores['benchmark'].isin(benchmark.children)]
                 # guard against multiple scores for one combination of (benchmark, version, model)
                 children_scores = children_scores.drop_duplicates()
-                benchmark_scores = children_scores.fillna(0).groupby('model').mean().reset_index()
+                # compute average of children scores
+                benchmark_scores = children_scores.fillna(0).groupby('model').mean()
+                # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
+                all_children_nan = children_scores.groupby('model').apply(
+                    lambda group: all(group['score_raw'].isna()))
+                for value_column in ['score_ceiled', 'score_raw', 'error']:
+                    benchmark_scores[value_column][all_children_nan] = np.nan
+                # restore model index
+                benchmark_scores = benchmark_scores.reset_index()
+                # add meta
                 benchmark_scores['benchmark'] = benchmark.identifier
                 benchmark_scores['benchmark_version'] = 0
                 benchmark_scores['comment'] = None
