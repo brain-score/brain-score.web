@@ -11,7 +11,8 @@
                     <div id=benchmarkGroup" class="field">
                         <input class="checkbox is-checkradio is-block benchmark_checker" type="checkbox"
                                onclick="enableButtonBench()"
-                               name='benchmark_selection'
+                                {# add unique id to form name to allow simultaneous submission of multiple benchmarks #}
+                               name='benchmark_selection_{{ benchmark_type_id }}'
                                value="{{ benchmark_type_id }}"
                                id="benchmark-{{ benchmark_type_id }}">
                         <label class="checkbox" for="benchmark-{{ benchmark_type_id }}">
@@ -26,7 +27,8 @@
                     <div id="modelsGroup" class="field">
                         <input class="checkbox is-checkradio is-block model_checker" type="checkbox"
                                onclick="enableButtonModel()"
-                               name='model_selection'
+                               {# add unique id to form name to allow simultaneous submission of multiple models #}
+                               name='model_selection_{{ model.id }}'
                                value="{{ model.id }}"
                                id="model-{{ model.id }}">
                         <label class="checkbox" for="model-{{ model.id }}">
