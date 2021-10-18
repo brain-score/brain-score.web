@@ -227,10 +227,11 @@ def _collect_models(benchmarks, user=None):
                 # compute average of children scores
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean()
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
-                all_children_nan = children_scores.groupby('model').apply(
-                    lambda group: all(group['score_raw'].isna()))
-                for value_column in ['score_ceiled', 'score_raw', 'error']:
-                    benchmark_scores[value_column][all_children_nan] = np.nan
+                if len(benchmark_scores) > 0:
+                    all_children_nan = children_scores.groupby('model').apply(
+                        lambda group: all(group['score_raw'].isna()))
+                    for value_column in ['score_ceiled', 'score_raw', 'error']:
+                        benchmark_scores[value_column][all_children_nan] = np.nan
                 # restore model index
                 benchmark_scores = benchmark_scores.reset_index()
                 # add meta
