@@ -45,15 +45,17 @@
                         {%  else %}
                             {% if model.build_status == "successful" or model.build_status == "failure"%}
                                 <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>
-                            {# older models (0-301) with still running status should not be possible: #}
+                            {# older models (0-301) with still running status should not be possible #}
                             {% elif model.build_status == "running" %}
-                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/console"></a>
                                 <span class='italic'>
                                 <br>
-                                    Warning: This model's build status is shown as still running; thus, the console log below
+                                    This model's build status is shown as still running; thus, the console log below
                                     <br> will not be interactive until the model is done running. In the meantime, you can still
-                                    view a plaintext version with the link provided. <br>
-                                 </span>
+                                    view a plaintext version <br> with the link provided. <br>
+                                </span>
+                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a>
+                                <br>
+                                <br>
                             {% endif %}
                         {% endif %}
         {%  else %}
