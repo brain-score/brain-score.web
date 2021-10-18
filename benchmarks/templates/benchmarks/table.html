@@ -1,7 +1,7 @@
 {% load static %}
 
 {% if models %}
-    {% if has_user %}
+    {% if user %}
         <form>
     {% endif %}
 <div class="table-container">
@@ -83,132 +83,6 @@
             {% endfor %}
             {% if has_user %}
                 <th><p><span class="want_to_click"><b>Public</b></span></p></th>
-                    </span>
-                    {# version, if present #}
-                    {% if benchmark.version %}
-                        <span class="benchmark-version">v{{ benchmark.version }}</span>
-                    {% endif %}
-                    {# number of child benchmarks, ignore roots #}
-                    {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
-                        <span class="benchmark-count">{{ benchmark.children|length }}
-                            benchmark{% if benchmark.children|length != 1 %}s{% endif %}</span>
-                    {% endif %}
-                    {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                        </a>
-                    {% endif %}
-                </p></th>
-        {% endfor %}
-        {% if has_user %}
-            <th><p><span class="want_to_click"><b>Public</b></span></p></th>
-            <th><p><span class="model_info"><b>Submission Information</b></span></p></th>
-        {% endif %}
-    </tr>
-    </thead>
-    <!-- models -->
-    <tbody>
-    {% for model in models %}
-        <tr>
-            <td class="score_cell"><strong>{{ model.rank }}</strong></td>
-            <td class="model">
-                <div class="identifier" title="{{ model.reference_identifier }}">
-                    <a target="_blank" rel="noopener noreferrer" href="{{ model.reference_link }}">
-                        {{ model.name }}
-                    </a>
-                </div>
-                <div class="submitter">
-                    {% if model.user.display_name is not None %}
-                        {{ model.user.display_name }}
-                    {% else %}
-                        &nbsp;
-                    {% endif %}
-                </div>
-            </td>
-            {% for score_row in model.scores %}
-                <td title="{{ score_row.benchmark }} unceiled: {{ score_row.score_raw }}"
-                    data-benchmark="{{ score_row.benchmark }}"
-                    data-parent="{{ benchmark_parents|get_parent_item:score_row.benchmark }}"
-                    class="score_cell displaySquare depth_{{ score_row.benchmark_depth }} clicker"
-                    style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.benchmark }} ">{{ score_row.score_ceiled }}</td>
-            {% endfor %}
-            {% if has_user %}
-                <td class="model-public-checkbox">
-                    <input type="checkbox" value="{{ model.id }}"
-                           class="public model-public-checkbox" {{ model|is_public }}>
-                </td>
-                 <td class="model-information">
-                    <div class="build_status">
-                        {% if has_user and model.build_status is not None %}
-                            {% if model.build_status == "successful" %}
-                                Build Status: <span style="color:green;">Success</span>
-                            {% elif model.build_status == "running" %}
-                                Build Status: <span style="color:goldenrod;">Running</span>
-                            {% else %}
-                                Build Status: <span style="color:red;">Failed</span>
-                            {% endif %}
-                        {% else %}
-                          &nbsp;
-                        {% endif %}
-                    </div>
-                    <div class="console_log">
-                        {% if has_user %}
-                         <div class="box">
-                            <a class="console_log_button" href="#{{ model.submission_id }}/model_information">View Console Log</a>
-                         </div>
-                         <div id="{{ model.submission_id }}/model_information" class="overlay">
-                            <div class="popup">
-                                <h2>Model Information</h2>
-                                <a class="close" href="#">&times;</a>
-                                <div class="content">
-                                    <span class='bold'>Submission ID:</span> {{  model.submission_id }}<br>
-                                    <span class='bold'>Model Name:</span> {{  model.name }}<br>
-                                    <span class='bold'>Submitted By:</span> {{  model.submitter }}<br>
-                                    <span class='bold'>Job Started At:</span> {{  model.timestamp }}<br>
-                                    <div class="build_status">
-                                        {% if has_user and model.build_status is not None %}
-                                            {% if model.build_status == "successful" %}
-                                                <span class='bold'>Build Status:</span> <span style="color:green;">Success</span>
-                                            {% elif model.build_status == "running" %}
-                                                <span class='bold'>Build Status:</span> <span style="color:goldenrod;">Running</span>
-                                                 <br>
-                                                <span class='italic'>
-                                                Warning: This model's build status is shown as still running; thus model
-                                                    scores should be approached <br> with caution, as they might not
-                                                reflect the true model scores until the build is successful.
-                                                </span>
-                                            {% else %}
-                                                <span class='bold'>Build Status:</span> <span style="color:red;">Failed</span>
-                                                <br>
-                                                <span class='italic'>
-                                                Warning: This model's build status is shown as having failed; thus model
-                                                    scores should be approached <br> with caution, as they might not
-                                                reflect the true model scores until the build is successful.
-                                                </span>
-                                            {% endif %}
-                                        {% else %}
-                                          &nbsp;
-                                        {% endif %}
-                                    <br>
-                                    <hr style="height:2px;border-width:0;color:darkgreen;background-color:darkgreen">
-                                      <span class='bold'>Console Log:</span> <br><br>
-                                        {% if model.build_status == "successful" or model.build_status == "failure"%}
-                                            <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>
-                                        {% elif model.build_status == "running" %}
-                                            <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/console"></a>
-                                         <span class='italic'>
-                                                Warning: This model's build status is shown as still running; thus, the console log below
-                                                <br> will not be interactive until the model is done running. In the meantime, you can still
-                                                view a plaintext version with the link provided.
-                                         </span>
-                                        {% else %}
-
-                                        {% endif %}
-                                </div>
-                            </div>
-                         </div>
-                        {% else %}
-                        {% endif %}
-                    </div>
-                </td>
             {% endif %}
         </tr>
         </thead>
@@ -243,7 +117,7 @@
                 {% if has_user %}
                     <td class="model-public-checkbox">
                         <input type="checkbox" value="{{ model.id }}"
-                               class="public model-public-checkbox" {{ model|is_public }}>
+                               class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
                     </td>
                 {% endif %}
             </tr>
@@ -264,3 +138,120 @@
 {% else %}
     <p>No data.</p>
 {% endif %}
+
+
+    {#    <!-- models -->#}
+{#    <tbody>#}
+{#    {% for model in models %}#}
+{#        <tr>#}
+{#            <td class="score_cell"><strong>{{ model.rank }}</strong></td>#}
+{#            <td class="model">#}
+{#                <div class="identifier" title="{{ model.reference_identifier }}">#}
+{#                    <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">#}
+{#                        {{ model.name }}#}
+{#                    </a>#}
+{#                </div>#}
+{#                <div class="submitter">#}
+{#                    {% if model.user.display_name is not None %}#}
+{#                        {{ model.user.display_name }}#}
+{#                    {% else %}#}
+{#                        &nbsp;#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </td>#}
+{#            {% for score_row in model.scores %}#}
+{#                <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"#}
+{#                        data-benchmark="{{ score_row.versioned_benchmark_identifier }}"#}
+{#                        data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"#}
+{#                        class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"#}
+{#                        style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }} ">#}
+{#                        {{ score_row.score_ceiled }}#}
+{#                </td>#}
+{#            {% endfor %}#}
+{##}
+{#            {% if has_user %}#}
+{#                <td class="model-public-checkbox">#}
+{#                    <input type="checkbox" value="{{ model.id }}"#}
+{#                           class="public model-public-checkbox" {% if model.public %} checked {% endif %}>#}
+{#                </td>#}
+{##}
+{#                <td class="model-information">#}
+{#                    <div class="build_status">#}
+{#                        {% if has_user and model.build_status is not None %}#}
+{#                            {% if model.build_status == "successful" %}#}
+{#                                Build Status: <span style="color:green;">Success</span>#}
+{#                            {% elif model.build_status == "running" %}#}
+{#                                Build Status: <span style="color:goldenrod;">Running</span>#}
+{#                            {% else %}#}
+{#                                Build Status: <span style="color:red;">Failed</span>#}
+{#                            {% endif %}#}
+{#                        {% else %}#}
+{#                          &nbsp;#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                    <div class="console_log">#}
+{#                        {% if has_user %}#}
+{#                             <div class="box">#}
+{#                                <a class="console_log_button" href="#{{ model.submission_id }}/model_information">View Console Log</a>#}
+{#                             </div>#}
+{#                             <div id="{{ model.submission_id }}/model_information" class="overlay">#}
+{#                                <div class="popup">#}
+{#                                    <h2>Model Information</h2>#}
+{#                                    <a class="close" href="#">&times;</a>#}
+{#                                    <div class="content">#}
+{#                                        <span class='bold'>Submission ID:</span> {{  model.submission_id }}<br>#}
+{#                                        <span class='bold'>Model Name:</span> {{  model.name }}<br>#}
+{#                                        <span class='bold'>Submitted By:</span> {{  model.submitter }}<br>#}
+{#                                        <span class='bold'>Job Started At:</span> {{  model.timestamp }}<br>#}
+{#                                        <div class="build_status">#}
+{#                                            {% if has_user and model.build_status is not None %}#}
+{#                                                {% if model.build_status == "successful" %}#}
+{#                                                    <span class='bold'>Build Status:</span> <span style="color:green;">Success</span>#}
+{#                                                {% elif model.build_status == "running" %}#}
+{#                                                    <span class='bold'>Build Status:</span> <span style="color:goldenrod;">Running</span>#}
+{#                                                     <br>#}
+{#                                                    <span class='italic'>#}
+{#                                                    Warning: This model's build status is shown as still running; thus model#}
+{#                                                        scores should be approached <br> with caution, as they might not#}
+{#                                                    reflect the true model scores until the build is successful.#}
+{#                                                    </span>#}
+{#                                                {% else %}#}
+{#                                                    <span class='bold'>Build Status:</span> <span style="color:red;">Failed</span>#}
+{#                                                    <br>#}
+{#                                                    <span class='italic'>#}
+{#                                                    Warning: This model's build status is shown as having failed; thus model#}
+{#                                                        scores should be approached <br> with caution, as they might not#}
+{#                                                    reflect the true model scores until the build is successful.#}
+{#                                                    </span>#}
+{#                                                {% endif %}#}
+{#                                            {% else %}#}
+{#                                              &nbsp;#}
+{#                                            {% endif %}#}
+{#                                        <br>#}
+{#                                        <hr style="height:2px;border-width:0;color:darkgreen;background-color:darkgreen">#}
+{#                                          <span class='bold'>Console Log:</span> <br><br>#}
+{#                                            {% if model.build_status == "successful" or model.build_status == "failure"%}#}
+{#                                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>#}
+{#                                            {% elif model.build_status == "running" %}#}
+{#                                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/console"></a>#}
+{#                                             <span class='italic'>#}
+{#                                                    Warning: This model's build status is shown as still running; thus, the console log below#}
+{#                                                    <br> will not be interactive until the model is done running. In the meantime, you can still#}
+{#                                                    view a plaintext version with the link provided.#}
+{#                                             </span>#}
+{#                                            {% else %}#}
+{#                                            {% endif %}#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        {% else %}#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </td>#}
+{#            {% endif %}#}
+{#        </tr>#}
+{#    {% endfor %}#}
+{#    </tbody>#}
+{#    </table>#}
+{#</div>#}
+{#{% endif %}#}

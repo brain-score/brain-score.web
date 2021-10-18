@@ -6,9 +6,11 @@ import numpy as np
 from django.http import Http404
 from django.shortcuts import render
 from django.template.defaulttags import register
+import pdb
 
 from .index import get_context
 from ..models import BenchmarkType, Model
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +26,10 @@ def view(request, id: int):
     # layer assignment
     layers = get_layers(model)
     model_context['layers'] = layers
+
+    # only show detailed model info to superuser or owner:
+    if request.user.is_superuser or model.user.id == request.user.id:
+        model_context['can_see'] = True
     return render(request, 'benchmarks/model.html', model_context)
 
 
@@ -33,6 +39,7 @@ def determine_context(id, request):
     reference_context = get_context(None)  # public models
     # first check if model is in public list
     model_context = reference_context
+
     model = [m for m in reference_context['models'] if m.id == id]
     if len(model) != 1 and not request.user.is_anonymous:  # model not found in public list, try user's private
         model_context = get_context(request.user)
