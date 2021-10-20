@@ -5,14 +5,17 @@
         <h2>Create new account</h2>
         <form method="post">
             {% csrf_token %}
+
             {% for field in form %}
-                <p>
-                    {{ field.label_tag }}<br>
+            <div class="field">
+                <label class="label">{{ field.label_tag }}</label>
+                <div class="control">
                     {{ field }}
-                    {% for error in field.errors %}
-                        <p style="color: red">{{ error }}</p>
-                    {% endfor %}
-                </p>
+                </div>
+                {% for error in field.errors %}
+                    <p style="color: red">{{ error }}</p>
+                {% endfor %}
+            </div>
             {% endfor %}
             <button type="submit" class="button submission">Sign up</button>
         </form>
