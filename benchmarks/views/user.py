@@ -1,6 +1,7 @@
-import boto3
 import json
 import logging
+
+import boto3
 import requests
 from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
@@ -149,48 +150,50 @@ class Upload(View):
 
 
 def resubmit(request):
-    if request.method == 'POST':
-        _logger.debug(f"request user: {request.user.get_full_name()}")
-        model_ids = []
-        benchmarks = []
-        for key, value in request.POST.items():
-            if 'models_' in key:
-                model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
-                verify_user_model_access(user=request.user, model=model)
-                model_ids.append(model.id)
-            if 'benchmarks_' in key:
-                # benchmark identifiers are versioned, which we have to remove for submitting to jenkins
-                benchmarks.append(value.split('_v')[0])
-        if len(model_ids) > 0 and len(benchmarks) > 0:
-            json_info = {
-                "user_id": request.user.id,
-                "model_ids": model_ids,
-            }
-            with open('result.json', 'w') as fp:
-                json.dump(json_info, fp)
+    assert request.method == 'POST'
 
-            # submit to jenkins
-            jenkins_url = "http://braintree.mit.edu:8080"
-            auth = get_secret("brainscore-website_jenkins_access")
-            auth = (auth['user'], auth['password'])
-            job_name = "run_benchmarks"
-            s = ' '
-            benchmark_string = s.join(benchmarks)
-            request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                          f"?TOKEN=trigger2scoreAmodel" \
-                          f"&email={request.user.get_full_name()}" \
-                          f"&benchmarks={benchmark_string}"
-            _logger.debug(f"request_url: {request_url}")
-            params = {'submission.config': open('result.json', 'rb')}
-            response = requests.post(request_url, files=params, auth=auth)
-            _logger.debug(f"response: {response}")
+    _logger.debug(f"request user: {request.user.get_full_name()}")
+    model_ids = []
+    benchmarks = []
+    for key, value in request.POST.items():
+        if key.startswith('model_selection_'):
+            # value in this case is the model id
+            model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
+            verify_user_model_access(user=request.user, model=model)
+            model_ids.append(model.id)
+        elif key.startswith('benchmark_selection_'):
+            # value is benchmark_type_id (un-versioned)
+            benchmarks.append(value)
+    if len(model_ids) > 0 and len(benchmarks) > 0:
+        json_info = {
+            "user_id": request.user.id,
+            "model_ids": model_ids,
+        }
+        with open('result.json', 'w') as fp:
+            json.dump(json_info, fp)
 
-            # update frontend
-            response.raise_for_status()
-            _logger.debug("Job triggered successfully")
-            return render(request, 'benchmarks/success.html')
-        else:
-            return render(request, 'benchmark/')
+        # submit to jenkins
+        jenkins_url = "http://braintree.mit.edu:8080"
+        auth = get_secret("brainscore-website_jenkins_access")
+        auth = (auth['user'], auth['password'])
+        job_name = "run_benchmarks"
+        s = ' '
+        benchmark_string = s.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?TOKEN=trigger2scoreAmodel" \
+                      f"&email={request.user.get_full_name()}" \
+                      f"&benchmarks={benchmark_string}"
+        _logger.debug(f"request_url: {request_url}")
+        params = {'submission.config': open('result.json', 'rb')}
+        response = requests.post(request_url, files=params, auth=auth)
+        _logger.debug(f"response: {response}")
+
+        # update frontend
+        response.raise_for_status()
+        _logger.debug("Job triggered successfully")
+        return render(request, 'benchmarks/success.html')
+    else:
+        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
 
 class DisplayName(View):
@@ -316,6 +319,21 @@ def verify_user_model_access(user, model):
     # make sure user is allowed to perform this operation: either model owner or superuser
     if not (user.is_superuser or model.owner == user):
         raise PermissionDenied(f"User {user} is not allowed access to model {model}")
+
+
+def split_identifier_version(versioned_benchmark_identifier):
+    """
+    Separates a versioned benchmark identifier into identifier and version.
+    :param versioned_benchmark_identifier: the combined specifier of identifier and version,
+        e.g. `dicarlo.MajajHong2015.V4-pls_v3`
+    :return: the benchmark identifier and version separate, e.g. `dicarlo.MajajHong2015.V4-pls` and `3`
+    """
+    identifier_version_split = versioned_benchmark_identifier.split('_v')
+    # re-combine all components but the last (aka the version). This avoids identifiers being split at `_v`,
+    # e.g. Marques2020_Ringach2002-circular_variance
+    identifier = '_v'.join(identifier_version_split[:-1])
+    version = identifier_version_split[-1]
+    return identifier, version
 
 
 def get_secret(secret_name, region_name='us-east-2'):
