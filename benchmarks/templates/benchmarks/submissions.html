@@ -7,23 +7,33 @@
         <div class="columns">
             <div class="column is-half">
                 <h4>Pick benchmarks</h4>
-                {% for benchmark in benchmarks|no_children:models %}
+                {% for short_name, benchmark_type_id in submittable_benchmarks.items %}
                     <div id=benchmarkGroup" class="field">
-                        <input class="is-checkradio is-block benchmark_checker"
-                               name='benchmarks_{{ benchmark.identifier }}' onclick="enableButtonBench()"
-                               value="{{ benchmark.identifier }}" id="{{ benchmark.short_name }}" type="checkbox">
-                        <label for="{{ benchmark.short_name }}">{{ benchmark.short_name }}</label>
+                        <input class="checkbox is-checkradio is-block benchmark_checker" type="checkbox"
+                               onclick="enableButtonBench()"
+                                {# add unique id to form name to allow simultaneous submission of multiple benchmarks #}
+                               name='benchmark_selection_{{ benchmark_type_id }}'
+                               value="{{ benchmark_type_id }}"
+                               id="benchmark-{{ benchmark_type_id }}">
+                        <label class="checkbox" for="benchmark-{{ benchmark_type_id }}">
+                            {{ short_name }}
+                        </label>
                     </div>
                 {% endfor %}
             </div>
             <div class="column">
                 <h4>Pick models</h4>
-                {% for model in models|no_benchmark:benchmarks %}
+                {% for model in models %}
                     <div id="modelsGroup" class="field">
-                        <input class="is-checkradio is-block model_checker" name='models_{{ model.name }}'
-                               onclick="enableButtonModel()" value="{{ model.id }}" id="{{ model.name }}"
-                               type="checkbox">
-                        <label for="{{ model.name }}">{{ model.name }}</label>
+                        <input class="checkbox is-checkradio is-block model_checker" type="checkbox"
+                               onclick="enableButtonModel()"
+                               {# add unique id to form name to allow simultaneous submission of multiple models #}
+                               name='model_selection_{{ model.id }}'
+                               value="{{ model.id }}"
+                               id="model-{{ model.id }}">
+                        <label class="checkbox" for="model-{{ model.id }}">
+                            {{ model.name }}
+                        </label>
                     </div>
                 {% endfor %}
             </div>
