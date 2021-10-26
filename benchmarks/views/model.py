@@ -11,7 +11,7 @@ from .index import get_context
 from ..models import BenchmarkType, Model
 
 _logger = logging.getLogger(__name__)
-
+import pdb
 
 def view(request, id: int):
     model, model_context, reference_context = determine_context(id, request)
@@ -24,9 +24,14 @@ def view(request, id: int):
     # layer assignment
     layers = get_layers(model)
     model_context['layers'] = layers
+    # print("model_context")
+    # print(model_context)
+    # print(model_context)
+    # pdb.set_trace()
 
     # only show detailed model info to superuser or owner:
     if request.user.is_superuser or model.user.id == request.user.id:
+
         model_context['can_see'] = True
     return render(request, 'benchmarks/model.html', model_context)
 
