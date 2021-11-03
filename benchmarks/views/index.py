@@ -286,7 +286,7 @@ def _collect_models(benchmarks, user=None):
         'id', 'name',
         'reference_identifier', 'reference_link',
         'user', 'public',
-        'rank', 'scores', 'build_status', 'timestamp', 'submitter', 'submission_id'])
+        'rank', 'scores', 'build_status', 'submitter', 'submission_id'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'versioned_benchmark_identifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
@@ -344,7 +344,6 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
-        timestamp = meta.submission.timestamp
         submitter = meta.submission.submitter
         submission_id = meta.submission.id
         model_row = ModelRow(
@@ -353,7 +352,7 @@ def _collect_models(benchmarks, user=None):
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public,
             scores=model_scores, rank=rank, build_status=meta.submission.status,
-            timestamp=timestamp, submitter=submitter, submission_id=submission_id
+            submitter=submitter, submission_id=submission_id
         )
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
