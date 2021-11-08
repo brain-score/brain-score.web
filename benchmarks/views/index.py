@@ -276,7 +276,7 @@ def _collect_models(benchmarks, user=None):
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner')
+    model_meta = Model.objects.select_related('reference', 'owner', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == 'average']
@@ -286,7 +286,8 @@ def _collect_models(benchmarks, user=None):
         'id', 'name',
         'reference_identifier', 'reference_link',
         'user', 'public',
-        'rank', 'scores', 'build_status', 'submitter', 'submission_id'])
+        'rank', 'scores',
+        'build_status', 'submitter', 'submission_id'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'versioned_benchmark_identifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
