@@ -7,6 +7,7 @@
         {% if can_see %}
             <span class='bold'>Submission ID:</span> {{  model.submission_id }}<br>
             <span class='bold'>Submitted By:</span> {{  model.submitter }}<br>
+            <span class='bold'>Submitted On:</span> {{  model.timestamp }}<br>
             <div class="build_status">
                 {%if model.build_status is not None %}
                         {% if model.build_status == "successful" %}
