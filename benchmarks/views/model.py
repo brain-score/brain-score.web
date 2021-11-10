@@ -11,11 +11,14 @@ from .index import get_context
 from ..models import BenchmarkType, Model
 
 _logger = logging.getLogger(__name__)
-import pdb
 
 def view(request, id: int):
     model, model_context, reference_context = determine_context(id, request)
-    contextualize_scores(model, reference_context)
+    # needed if a benchmark, like behavrior is Null (could not be scored)
+    try:
+        contextualize_scores(model, reference_context)
+    except ValueError:
+        pass
     model_context['model'] = model
     del model_context['models']
     # visual degrees
