@@ -71,8 +71,11 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
             activation_link = f"{current_site}/activate/{uid}/{token}"
-            message = (f"Hello {user.get_full_name()}!\n\n"
-                       f"Please click or paste the following link to activate your account:\n{activation_link}")
+            message = (f"Hello! Thanks for signing up with Brain-Score.\n\n"
+                       f"Please click or paste the following link to activate your account:\n{activation_link}\n\n"
+                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
+                       f"Thanks,\n"
+                       f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             context = {"activation_email": True, "password_email": False, 'form': LoginForm}
@@ -250,8 +253,11 @@ class Password(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
             activation_link = f"{current_site}/password-change/{uid}/{token}"
-            message = f"Hello {user.get_full_name()}!\n\n" \
-                      f"Please click or paste the following link to change your password:\n{activation_link}"
+            message = (f"Hello!\n\n"
+                      f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
+                      f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
+                      f"Thanks,\n"
+                      f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             return render(request, 'benchmarks/password-confirm.html')
