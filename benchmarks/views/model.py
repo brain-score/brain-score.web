@@ -12,10 +12,14 @@ from ..models import BenchmarkType, Model
 
 _logger = logging.getLogger(__name__)
 
-
 def view(request, id: int):
     model, model_context, reference_context = determine_context(id, request)
-    contextualize_scores(model, reference_context)
+
+    # takes care of 0 depth benchmarks
+    try:
+        contextualize_scores(model, reference_context)
+    except ValueError:
+        pass
     model_context['model'] = model
     del model_context['models']
     # visual degrees
@@ -24,6 +28,10 @@ def view(request, id: int):
     # layer assignment
     layers = get_layers(model)
     model_context['layers'] = layers
+
+    # only show detailed model info to superuser or owner:
+    if request.user.is_superuser or model.user.id == request.user.id:
+        model_context['can_see'] = True
     return render(request, 'benchmarks/model.html', model_context)
 
 
