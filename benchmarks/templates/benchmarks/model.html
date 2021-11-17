@@ -1,14 +1,73 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-
     <section class="individual_model container center">
-        <h1 class="title">{{ model.name }}</h1>
+        <h1 class="title">Model Information</h1>
+        <span class='bold'>Model Name:</span> {{  model.name }}<br>
+        {% if can_see %}
+            <span class='bold'>Submission ID:</span> {{  model.submission_id }}<br>
+            <span class='bold'>Submitted By:</span> {{  model.submitter }}<br>
+            <span class='bold'>Submitted On:</span> {{  model.timestamp }}<br>
+            <div class="build_status">
+                {%if model.build_status is not None %}
+                        {% if model.build_status == "successful" %}
+                            <span class='bold'>Build Status:</span> <span style="color:green;">Success</span>
+                        {% elif model.build_status == "running" %}
+                            <span class='bold'>Build Status:</span> <span style="color:goldenrod;">Running</span>
+                             <br>
+                            <span class='italic'>
+                            Warning: This model's build status is shown as still running; thus model
+                                scores should be approached <br> with caution, as they might not
+                            reflect the true model scores until the build is successful.
+                            </span>
+                        {% else %}
+                            <span class='bold'>Build Status:</span> <span style="color:red;">Failed</span>
+                            <br>
+                            <span class='italic'>
+                            Warning: This model's build status is shown as having failed; this error might be irrelevant <br>
+                                to results, but reach out to us to confirm the results are legitimate.
+                            </span>
+                        {% endif %}
+            {% else %}
+              &nbsp;
+            {% endif %}
+                </div>
+                <br>
+                    <span class='bold'>Console Log:</span>
+                        {# older models from build IDs 0- 301 do not have a parsed log, so view unparsed: #}
+                        {% if model.submission_id < 302 %}
+                            <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a> <br>
+                            <span class='italic'>
+                                This is an older model, so a parsed (interactive) console log will not be available <br>
+                                until the model is re-run on a new submission. In the meantime, you can still
+                                view a plaintext version with the link provided. <br>
+                             </span>
+                        {%  else %}
+                            {% if model.build_status == "successful" or model.build_status == "failure"%}
+                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>
+                            {# older models (0-301) with still running status should not be possible #}
+                            {% elif model.build_status == "running" %}
+                                <span class='italic'>
+                                <br>
+                                    This model's build status is shown as still running; thus, the console log below
+                                    <br> will not be interactive until the model is done running. In the meantime, you can still
+                                    view a plaintext version <br> with the link provided. <br>
+                                </span>
+                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a>
+                                <br>
+                                <br>
+                            {% endif %}
+                        {% endif %}
+        {%  else %}
+        {% endif %}
+
+        <span class='bold'>Refrence Link:</span>
         {% if model.reference_identifier %}
             <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
         {% else %}
-            <p class="no_reference">No reference paper on file</p>
+            <p class="no_reference">No reference paper on file.</p>
         {% endif %}
+        <br>
 
         {# Benchmark scores #}
         <h2 id="scores" class="title-is-2">Benchmark scores</h2>
@@ -148,11 +207,57 @@
                 layers to cortical regions on separate datasets.
             </div>
 
+            {# visual degrees #}
+            <div id="visual_degrees" class="card">
+                <div class="card-content">
+                    <p class="subtitle is-4">
+                        Visual Angle (Degrees): {{ visual_degrees }}
+                    </p>
+                    <div class="box has-background-info-light has-text-info">
+                        Models have to declare their field-of-view so that stimuli can be displayed like they were
+                        displayed to experimental subjects.
+                        For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
+                        larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
+                        in the model's field-of-view.
+                    </div>
+
+                    {% if visual_degrees %}
+                        <div class="columns">
+                            <div class="column">
+                                <p class="has-text-centered">Base image, presented at 8 degrees:</p>
+                                <figure class="image is-marginless is-256x256">
+                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
+                                         alt="visual degrees {{ visual_degrees }} to 8"/>
+                                </figure>
+                            </div>
+                            <div class="column">
+                                <p class="has-text-centered">If benchmark presents image at 4 degrees, model sees:</p>
+                                <figure class="image is-marginless is-256x256">
+                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
+                                         alt="visual degrees {{ visual_degrees }} to 4"/>
+                                </figure>
+                            </div>
+                            <div class="column">
+                                <p class="has-text-centered">If benchmark presents image at 12 degrees, model sees:</p>
+                                <figure class="image is-marginless is-256x256">
+                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
+                                         alt="visual degrees {{ visual_degrees }} to 12"/>
+                                </figure>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="notification">
+                            No visual degrees found for this model. The submission might have failed.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
             {# region-layer commitment #}
             <div class="card">
                 <div class="card-content">
                     <p class="subtitle is-3">
-                        layer commitment
+                        Layer Commitment
                     </p>
 
                     <div class="box has-background-info-light has-text-info">
@@ -183,52 +288,6 @@
                         <div class="notification">
                             No layer commitments found for this model. Older submissions might not have stored this
                             information but will be updated when evaluated on new benchmarks.
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            {# visual degrees #}
-            <div id="visual_degrees" class="card">
-                <div class="card-content">
-                    <p class="subtitle is-3">
-                        degrees visual angle: {{ visual_degrees }}
-                    </p>
-                    <div class="box has-background-info-light has-text-info">
-                        Models have to declare their field-of-view so that stimuli can be displayed like they were
-                        displayed to experimental subjects.
-                        For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
-                        larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
-                        in the model's field-of-view.
-                    </div>
-
-                    {% if visual_degrees %}
-                        <div class="columns">
-                            <div class="column">
-                                <p class="has-text-centered">base image presented at 8 degrees</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
-                                         alt="visual degrees {{ visual_degrees }} to 8"/>
-                                </figure>
-                            </div>
-                            <div class="column">
-                                <p class="has-text-centered">if benchmark presents image at 4 degrees, model sees</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
-                                         alt="visual degrees {{ visual_degrees }} to 4"/>
-                                </figure>
-                            </div>
-                            <div class="column">
-                                <p class="has-text-centered">if benchmark presents image at 12 degrees, model sees</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
-                                         alt="visual degrees {{ visual_degrees }} to 12"/>
-                                </figure>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="notification">
-                            No visual degrees found for this model. The submission might have failed.
                         </div>
                     {% endif %}
                 </div>
