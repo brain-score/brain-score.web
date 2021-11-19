@@ -39,13 +39,16 @@ class UploadFileForm(forms.Form):
     model_type = forms.ChoiceField(choices=[
         ("BaseModel", "Base model - to submit a standard machine learning model"),
         ("BrainModel", "Brain model - to change brain-transformation, e.g. layer-mapping, visual degrees etc.")])
+    zip_file = forms.FileField(label="zip_file", help_text='Required')
     public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
-        help_text='Check if you want the results of your submitted models included in the public ranking.')
-    zip_file = forms.FileField(help_text='Required')
+                                help_text='Check if you want the results of your submitted models included in the public ranking.')
+    competition = forms.BooleanField(label="Participate in Competition?",
+                                     help_text='Click if you would like to submit this model as part'
+                                               'of the COSYNE 2022 Brain-Score competition. Not required.')
 
     class Meta:
         model = UploadPlaceHolder
-        fields = ('zip_file', 'public')
+        fields = ('zip_file', 'public', 'competition')
 
 
 class ChangePasswordForm(PasswordChangeForm):

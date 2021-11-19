@@ -167,6 +167,17 @@ class Submission(models.Model):
         db_table = 'brainscore_submission'
 
 
+class CompetitionSubmission(models.Model):
+    submission = models.ForeignKey(Submission, on_delete=models.PROTECT)
+    competition = models.CharField(max_length=100)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+    class Meta:
+        db_table = 'brainscore_competition_submission'
+
+
 class Model(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
