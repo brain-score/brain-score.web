@@ -1,0 +1,112 @@
+[
+  {
+    "model": "benchmarks.Model",
+    "pk" : 1,
+    "fields": {
+      "name": "alexnet1",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "True",
+      "competition": "None",
+      "submission_id" : 33,
+      "visual_degrees":  8
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "pk" : 2,
+    "fields": {
+      "name": "alexnet2",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "franzi@example.com"
+      ],
+      "public": "False",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
+      "visual_degrees":  8
+    }
+  },
+
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "alexnet",
+      "reference": [
+        "https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": "None",
+      "visual_degrees":  8
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "squeezenet1_0",
+      "reference": [
+        "https://arxiv.org/abs/1602.07360"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": "cosyne2022",
+      "visual_degrees":  8
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "squeezenet1_1",
+      "reference": [
+        "https://arxiv.org/abs/1602.07360"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": "None",
+      "visual_degrees":  8
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "resnet-18",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": "cosyne2022",
+      "visual_degrees":  8
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "resnet-34",
+      "reference": [
+        "https://arxiv.org/abs/1512.03385"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": "None",
+      "visual_degrees":  8
+    }
+  }
+]
