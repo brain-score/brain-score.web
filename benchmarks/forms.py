@@ -42,7 +42,9 @@ class UploadFileForm(forms.Form):
     zip_file = forms.FileField(label="zip_file", help_text='Required')
     public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
                                 help_text='Check if you want the results of your submitted models included in the public ranking.')
-    competition = forms.BooleanField(label="Participate in Competition?",
+
+    # add link to compeition site (brainscore link)
+    competition = forms.BooleanField(label="Participate in Cosyne 2022 Competition?",required=False, initial=True,
                                      help_text='Click if you would like to submit this model as part'
                                                'of the COSYNE 2022 Brain-Score competition. Not required.')
 

@@ -167,17 +167,6 @@ class Submission(models.Model):
         db_table = 'brainscore_submission'
 
 
-class CompetitionSubmission(models.Model):
-    submission = models.ForeignKey(Submission, on_delete=models.PROTECT)
-    competition = models.CharField(max_length=100)
-
-    def __repr__(self):
-        return generic_repr(self)
-
-    class Meta:
-        db_table = 'brainscore_competition_submission'
-
-
 class Model(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
@@ -186,6 +175,7 @@ class Model(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
     visual_degrees = models.IntegerField(null=True)  # null during model creation before querying objec
     public = models.BooleanField(default=False)
+    competition = models.CharField(max_length=200, default=None, null=True)
 
     def __repr__(self):
         return generic_repr(self)

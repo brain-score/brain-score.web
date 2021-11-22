@@ -125,7 +125,7 @@ class Upload(View):
             "model_type": request.POST['model_type'],
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
-            "competition": str('competition' in request.POST),
+            "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
         }
 
         with open('result.json', 'w') as fp:
