@@ -11,6 +11,7 @@
         "franzi@example.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
       "submission_id" : 33,
       "visual_degrees":  8
     }
@@ -27,6 +28,7 @@
         "franzi@example.com"
       ],
       "public": "False",
+      "competition": null,
       "submission_id" : 34,
       "visual_degrees":  8
     }
@@ -43,6 +45,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -57,6 +61,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -71,6 +77,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -85,6 +93,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -99,6 +109,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -113,6 +125,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -127,6 +141,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -141,6 +157,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -155,6 +173,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -169,6 +189,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -183,6 +205,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -197,6 +221,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -211,6 +237,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -225,6 +253,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -239,6 +269,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -253,6 +285,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -267,6 +301,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -281,6 +317,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -295,6 +333,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -309,6 +349,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -323,6 +365,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -337,6 +381,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -351,6 +397,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -365,6 +413,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -379,6 +429,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -393,6 +445,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -407,6 +461,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -421,6 +477,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -435,6 +493,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -449,6 +509,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -463,6 +525,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -477,6 +541,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -491,6 +557,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -505,6 +573,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -519,6 +589,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -533,6 +605,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -547,6 +621,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -561,6 +637,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -575,6 +653,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -587,6 +667,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -599,6 +681,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -613,6 +697,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -627,6 +713,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -641,6 +729,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -655,6 +745,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -669,6 +761,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -683,6 +777,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -697,6 +793,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -711,6 +809,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -725,6 +825,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -739,6 +841,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -753,6 +857,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -767,6 +873,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -781,6 +889,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -795,6 +905,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -809,6 +921,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -823,6 +937,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -837,6 +953,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -851,6 +969,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -865,6 +985,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -879,6 +1001,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -893,6 +1017,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -907,6 +1033,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -921,6 +1049,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -935,6 +1065,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -949,6 +1081,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -963,6 +1097,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": null,
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -977,6 +1113,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -991,6 +1129,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1005,6 +1145,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1019,6 +1161,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1033,6 +1177,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1047,6 +1193,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1061,6 +1209,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1075,6 +1225,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1089,6 +1241,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1103,6 +1257,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1117,6 +1273,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1131,6 +1289,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1145,6 +1305,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1159,6 +1321,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1171,6 +1335,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1183,6 +1349,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1195,6 +1363,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   },
@@ -1207,6 +1377,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 33,
       "visual_degrees":  8
     }
   },
@@ -1219,6 +1391,8 @@
         "martin.schrimpf@outlook.com"
       ],
       "public": "True",
+      "competition": "cosyne2022",
+      "submission_id" : 34,
       "visual_degrees":  8
     }
   }
