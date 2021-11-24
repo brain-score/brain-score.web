@@ -3,14 +3,33 @@
 {% block content %}
 <section id="success" class="container center">
 	<h1>Welcome to the home page of the 2022 Brain-Score Competition!</h1>
-    <p>Below is the current leaderboard. Submission for the 2022 contest close on February 15 2022.</p>
+    <p>Brain-Score is hosting a workshop competition at <a
+                    href="https://www.cosyne.org/">COSYNE 2022</a>! We, along with our gracious sponsors listed below,
+    are offering CASH PRIZES to the winner of the competition, along with other challenges! The prizes are: <p>
 
-    <p>~~Benchmarks~~</p>
+    <ol>
+      <li>Best overall Brain-Score (Entire Ventral Stream)
+          <ol>
+              <li> First Prize: $2,000</li>
+              <li> Second Prize: $1,500</li>
+              <li> Third Prize: $1,000</li>
+          </ol>
+      </li>
+      <li>Best V1 Brain-Score: $1,000</li>
+      <li>Best Behavioral Brain-Score: $1,000</li>
+    </ol>
+
+    <p>Below is the current leaderboard. Submissions are open from November 26, 2021 to February 15, 2022. Good Luck!</p>
+
 
     <section id="leaderboard" class="container tablecenter is-centered">
     <h2>Competition Leaderboard</h2>
         {% include "benchmarks/table.html" %}
     </section>
+
+    <h1>We would also like to thank our sponsors below!</h1>
+    <img src="../../../static/benchmarks/img/competition_logos/quest.PNG" alt=" MIT Quest for Intelligence">
+    <img src="../../../static/benchmarks/img/competition_logos/cbric.png" alt="CBRIC">
 
 </section>
 {% endblock %}
