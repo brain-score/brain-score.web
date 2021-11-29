@@ -1,4 +1,5 @@
 {% extends 'benchmarks/base.html' %}
+{% load static %}
 
 {% block content %}
 <section id="success" class="container center">
@@ -30,8 +31,8 @@
     </section>
 
     <h1>We would also like to thank our sponsors below!</h1>
-    <img src="../../../static/benchmarks/img/competition_logos/quest.PNG" alt=" MIT Quest for Intelligence">
-    <img src="../../../static/benchmarks/img/competition_logos/cbric.png" alt="CBRIC">
+    {% static "../../../static/benchmarks/img/competition_logos/quest.PNG" %}
+    {% static "../../../static/benchmarks/img/competition_logos/cbric.png" %}
 
 </section>
 {% endblock %}
