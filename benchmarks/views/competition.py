@@ -1,6 +1,5 @@
 from .index import get_context
 from django.shortcuts import render
-import pdb
 
 
 def view(request):

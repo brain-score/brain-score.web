@@ -2,12 +2,12 @@
 
 {% block content %}
     <section class="individual_model container center">
-        <h1 class="title">Model Information</h1>
-        <span class='bold'>Model Name:</span> {{  model.name }}<br>
+        <h1 class="title">{{ model.name }}</h1>
+        <span class='bold'>Model Name:</span> {{ model.name }}<br>
         {% if can_see %}
-            <span class='bold'>Submission ID:</span> {{  model.submission_id }}<br>
-            <span class='bold'>Submitted By:</span> {{  model.submitter }}<br>
-            <span class='bold'>Submitted On:</span> {{  model.timestamp }}<br>
+            <span class='bold'>Submission ID:</span> {{ model.submission_id }}<br>
+            <span class='bold'>Submitted By:</span> {{ model.submitter }}<br>
+            <span class='bold'>Submitted On:</span> {{ model.timestamp }}<br>
             <div class="build_status">
                 {%if model.build_status is not None %}
                         {% if model.build_status == "successful" %}
