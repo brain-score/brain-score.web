@@ -207,10 +207,51 @@
                 layers to cortical regions on separate datasets.
             </div>
 
-            {# visual degrees #}
+        {# region-layer commitment #}
+            <div class="card">
+                <div class="card-content">
+                    <p class="subtitle is-3">
+                        Layer Commitment
+                    </p>
+
+                    <div class="box has-background-info-light has-text-info">
+                        BaseModel layers have to be committed to cortical regions. For BaseModels that are automatically
+                        translated into BrainModels this is done on separate public data.
+                        The same layers are thus used when recording from the same cortical region, e.g. always the same
+                        layer for V1 instead of different layers per benchmark.
+                    </div>
+
+                    {% if layers %}
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Region</th>
+                                <th>Layer</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for region, layer in layers.items %}
+                                <tr>
+                                    <th>{{ region }}</th>
+                                    <td>{{ layer }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="notification">
+                            No layer commitments found for this model. Older submissions might not have stored this
+                            information but will be updated when evaluated on new benchmarks.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# visual degrees #}
             <div id="visual_degrees" class="card">
                 <div class="card-content">
-                    <p class="subtitle is-4">
+                    <p class="subtitle is-3">
                         Visual Angle (Degrees): {{ visual_degrees }}
                     </p>
                     <div class="box has-background-info-light has-text-info">
@@ -253,46 +294,7 @@
                 </div>
             </div>
 
-            {# region-layer commitment #}
-            <div class="card">
-                <div class="card-content">
-                    <p class="subtitle is-3">
-                        Layer Commitment
-                    </p>
 
-                    <div class="box has-background-info-light has-text-info">
-                        BaseModel layers have to be committed to cortical regions. For BaseModels that are automatically
-                        translated into BrainModels this is done on separate public data.
-                        The same layers are thus used when recording from the same cortical region, e.g. always the same
-                        layer for V1 instead of different layers per benchmark.
-                    </div>
-
-                    {% if layers %}
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Region</th>
-                                <th>Layer</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for region, layer in layers.items %}
-                                <tr>
-                                    <th>{{ region }}</th>
-                                    <td>{{ layer }}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="notification">
-                            No layer commitments found for this model. Older submissions might not have stored this
-                            information but will be updated when evaluated on new benchmarks.
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
 
 
         {# Benchmarks bibtex #}
