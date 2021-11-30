@@ -15,7 +15,8 @@ _logger = logging.getLogger(__name__)
 def view(request, id: int):
     model, model_context, reference_context = determine_context(id, request)
 
-    # takes care of 0 depth benchmarks
+    # takes care of odd issue where valueError is raised when
+    # models are scored on some benchmarks, but not others.
     try:
         contextualize_scores(model, reference_context)
     except ValueError:
