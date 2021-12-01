@@ -345,8 +345,8 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
-
-        # model
+       
+      # model
         competition = meta.competition
 
         # submission
