@@ -5,23 +5,27 @@
     <section id="upload" class="container center">
         <h1>Model Submission</h1>
         You can upload files here to test. For an example of what your submission should include, please visit <a
-            href="https://github.com/brain-score/sample-model-submission/">this template</a>.
+            href="https://github.com/brain-score/sample-model-submission/">this template</a>.<br>
+
         <form action="" method="post" enctype="multipart/form-data">
             {% csrf_token %}
-
+            <br>
             {% for field in form %}
-                <p class="special">
-                    {{ field.label_tag }}<br>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <small style="display: none">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <p style="color: red">{{ error }}</p>
-                    {% endfor %}
-                </p>
+                    <p class="special">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small style="display: none">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p style="color: red">{{ error }}</p>
+                        {% endfor %}
+                    </p>
             {% endfor %}
-            <p>
+            <span class='italic'>You can read more about the competition <a
+                    href="https://www.brain-score.org/competition">here</a>. </span>
+            <p><br>
+                Upload File:
                 <button id="upload_button" class="submission">Click here to select file</button>
             </p>
             <button type="submit" class="button submission">Submit Model</button>

@@ -1,0 +1,107 @@
+[
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "franzi@example.com"
+      ],
+      "timestamp": "2021-09-01 16:00:00",
+      "model_type" : "BaseModel",
+      "status":  "running",
+      "submitter_id" : 2
+    }
+  },
+ {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "franzi@example.com"
+      ],
+      "timestamp": "2021-09-02 16:00:00",
+      "model_type" : "BaseModel",
+      "status":  "successful",
+      "submitter_id" : 2
+    }
+  },
+
+ {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "timestamp": "2018-08-01 16:00:00",
+      "model_type" : "BrainModel",
+      "status":  "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "timestamp": "2018-09-01 16:00:00",
+      "model_type" : "BrainModel",
+      "status":  "failure",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "franzi@example.com"
+      ],
+      "timestamp": "2021-09-06 16:00:00",
+      "model_type" : "BaseModel",
+      "status":  "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "timestamp": "2021-01-07 16:00:00",
+      "model_type" : "BaseModel",
+      "status":  "failure",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "franzi@example.com"
+      ],
+      "timestamp": "2021-06-21 16:00:00",
+      "model_type" : "BaseModel",
+      "status":  "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model": "benchmarks.Submission",
+    "pk" : 1,
+    "fields": {
+      "submitter": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "timestamp": "2021-03-31 16:00:00",
+      "model_type" : "BrainModel",
+      "status":  "running",
+      "submitter_id" : 2
+    }
+  }
+]

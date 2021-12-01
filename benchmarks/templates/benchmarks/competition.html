@@ -1,0 +1,38 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+
+{% block content %}
+<section id="success" class="container center">
+	<h1>The 2022 Brain-Score Competition!</h1>
+    <p>Brain-Score is hosting a workshop competition at <a
+                    href="https://www.cosyne.org/">COSYNE 2022</a>! We, along with our gracious sponsors listed below,
+    are offering CASH PRIZES to the winner of the competition, along with other challenges! The prizes are: <p>
+
+    <ol>
+      <li>Best overall Submission (Entire Ventral Stream)
+          <ol>
+              <li> First Prize: <span class='information'>$2,000</span></li>
+              <li> Second Prize: <span class='information'>$1,500</span></li>
+              <li> Third Prize: <span class='information'>$1,000</span></li>
+          </ol>
+      </li>
+      <li>Best V1 Submission: <span class='information'>$1,000</span></li>
+      <li>Best Behavioral Submission: <span class='information'>$1,000</span></li>
+    </ol>
+
+    <p>Below is the current leaderboard. Submissions are open from November 26, 2021 to February 15, 2022. You can
+        also see more information on this flyer below. Good Luck!</p>
+        <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}" >
+
+
+    <section id="leaderboard" class="container tablecenter is-centered">
+    <h2>Competition Leaderboard</h2>
+        {% include "benchmarks/table.html" %}
+    </section>
+
+    <h1>We would also like to thank our sponsors below!</h1>
+    <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest">
+    <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC">
+
+</section>
+{% endblock %}

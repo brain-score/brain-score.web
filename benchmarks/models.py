@@ -175,6 +175,7 @@ class Model(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.PROTECT, null=True)  # null for self-run models
     visual_degrees = models.IntegerField(null=True)  # null during model creation before querying objec
     public = models.BooleanField(default=False)
+    competition = models.CharField(max_length=200, default=None, null=True)
 
     def __repr__(self):
         return generic_repr(self)
