@@ -99,7 +99,11 @@
                     </div>
                     <div class="submitter">
                         {% if model.user.display_name is not None %}
-                            {{ model.user.display_name }}
+                            {% if not model.public and model.competition is not None %}
+                                Anonymous Submitter
+                            {% else %}
+                                {{ model.user.display_name }}
+                            {% endif %}
                         {% else %}
                             &nbsp;
                         {% endif %}
@@ -119,7 +123,7 @@
                         <input type="checkbox" value="{{ model.id }}"
                                class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
                     </td>
-                {% endif %}
+                    {% endif %}
             </tr>
         {% endfor %}
         </tbody>
