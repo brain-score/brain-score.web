@@ -94,12 +94,21 @@
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
                         <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                            {{ model.name }}
+                            {% if not model.public and model.competition is not None %}
+                                Anonymous Submission
+                            {% else %}
+                                {{ model.name }}
+                            {% endif %}
+
                         </a>
                     </div>
                     <div class="submitter">
                         {% if model.user.display_name is not None %}
-                            {{ model.user.display_name }}
+                            {% if not model.public and model.competition is not None %}
+                                &nbsp;
+                            {% else %}
+                                {{ model.user.display_name }}
+                            {% endif %}
                         {% else %}
                             &nbsp;
                         {% endif %}
@@ -119,7 +128,7 @@
                         <input type="checkbox" value="{{ model.id }}"
                                class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
                     </td>
-                {% endif %}
+                    {% endif %}
             </tr>
         {% endfor %}
         </tbody>

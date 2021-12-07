@@ -3,7 +3,7 @@
 
 {% block content %}
 <section id="success" class="container center">
-	<h1>The 2022 Brain-Score Competition!</h1>
+	<h1>2022 Brain-Score Competition</h1>
     <p>Brain-Score is hosting a workshop competition at <a
                     href="https://www.cosyne.org/">COSYNE 2022</a>! We, along with our gracious sponsors listed below,
     are offering CASH PRIZES to the winner of the competition, along with other challenges! The prizes are: <p>
@@ -20,8 +20,9 @@
       <li>Best Behavioral Submission: <span class='information'>$1,000</span></li>
     </ol>
 
-    <p>Below is the current leaderboard. Submissions are open from November 26, 2021 to February 15, 2022. You can
-        also see more information on this flyer below. Good Luck!</p>
+    <p>Below is the current leaderboard. Submissions are open now until February 15, 2022. You can
+        also see more information on this flyer below. If you have any questions, feel free to
+        reach out to the Brain-Score team, and check out the FAQ section. Good Luck!</p>
         <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}" >
 
 
@@ -30,9 +31,60 @@
         {% include "benchmarks/table.html" %}
     </section>
 
-    <h1>We would also like to thank our sponsors below!</h1>
-    <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest">
-    <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC">
+
+   <section id="FAQ" class="container center">
+       <h2>FAQ</h2>
+       <ol>
+           <li>
+               <h5>How do I submit a model?</h5>
+               <p> We have a full length <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                    tutorial</a> that walks users through the submission process- feel free to
+                    take a look, as it covers model submission, scoring, and results.
+               </p>
+           </li>
+           <li>
+               <h5>Why did you choose these benchmarks to score models against?</h5>
+               <p>
+                   We currently use the PLS25 neural predictivity metric to rank models; this is an established metric,
+                   but since it’s most likely far from perfect, we will iterate on this going forward.
+                   We are also including novel, unpublished, recordings (Sanghavi2020, SanghaviJozwik2020, SanghaviMurty2020)-
+                   these data are from a single monkey, and while we verified data quality and signal reliability,
+                   the benchmarks are not vetted as strongly as the other datasets. We will discuss implications
+                   and empirical results of these benchmarks at the Cosyne workshop.
+                   Based on this year’s results, we will also discuss if we should only include benchmarks from
+                   recordings with n>=2 monkeys. Please join the workshop and join the slack
+                   channel if you have input on these questions!
+               </p>
+           </li>
+           <li>
+               <h4>I have data that could be useful -- can I submit a benchmark?</h4>
+               <p>
+                    We also have a tutorial for those who wish to submit benchmarks, found
+                    <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+                    here</a>. We strongly encourage those with useful data to submit a poster at the
+                    <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop as well.
+               </p>
+           </li>
+           <li>
+               <h4>Who will get prizes?</h4>
+               <p>
+                    See the above section on the prize breakdown.
+               </p>
+           </li>
+           <li>
+               <h4>Does my model have to beat the current most brain-like model on brain-score.org?</h4>
+               <p>
+                    Nope! You only have to be the best out of all the competition submissions.
+               </p>
+           </li>
+       </ol>
+    </section>
+
+ <h1>We would also like to thank our sponsors below!</h1>
+    <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest" width="200" height="100">
+    <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC" width="200" height="100">
+    <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab" width="200" height="100">
+
 
 </section>
 {% endblock %}
