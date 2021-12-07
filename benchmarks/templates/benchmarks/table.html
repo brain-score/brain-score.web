@@ -94,13 +94,18 @@
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
                         <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                            {{ model.name }}
+                            {% if not model.public and model.competition is not None %}
+                                Anonymous Submission
+                            {% else %}
+                                {{ model.name }}
+                            {% endif %}
+
                         </a>
                     </div>
                     <div class="submitter">
                         {% if model.user.display_name is not None %}
                             {% if not model.public and model.competition is not None %}
-                                Anonymous Submitter
+                                &nbsp;
                             {% else %}
                                 {{ model.user.display_name }}
                             {% endif %}
