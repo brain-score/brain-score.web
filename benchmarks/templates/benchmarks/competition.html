@@ -2,52 +2,85 @@
 {% load static %}
 
 {% block content %}
+    <section class="hero competition-hero">
+        <div class="hero-body container">
+            <p class="title">
+                2022 Brain-Score Competition
+            </p>
+        </div>
+    </section>
+
+    {# stimuli #}
+    <section id="stimuli-samples">
+        <div class="samples_container container">
+            {% for stimulus_sample in stimuli_samples %}
+                <img class="stimulus_sample"
+                     src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
+                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
+                     alt="sample {{ stimulus_sample.path }}"/>
+            {% endfor %}
+        </div>
+    </section>
+
     <section id="competition" class="container center">
-        <h1>2022 Brain-Score Competition</h1>
-        <p>Brain-Score is hosting a competition for the most brain-like ventral stream model at
-            <a href="https://www.cosyne.org/">COSYNE 2022</a>!
-            The competition has a total prize pool of <span id="prize-pool">$6,000</span>:
+        {# overview #}
         <p>
-
-        <div class="card-content">
-            Prize Category 1: <span class="prize-category">Overall Brain-Score (V1, V2, V4, IT, Behavior)</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$2,000</span></li>
-                <li>Second Prize: <span class='information'>$1,500</span></li>
-                <li>Third Prize: <span class='information'>$500</span></li>
-            </ol>
-        </div>
-
-        <div class="card-content">
-            Prize Category 2: <span class="prize-category">V1</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$1,000</span></li>
-            </ol>
-        </div>
-
-        <div class="card-content">
-            Prize Category 3: <span class="prize-category">Behavior</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$1,000</span></li>
-            </ol>
-        </div>
+            Brain-Score is hosting a competition for the most brain-like ventral stream model,
+            with a prize pool of <span id="prize-pool">$6,000</span>.
+            Model submissions will automatically be tested on benchmarks ranging from V1 to IT to behavior,
+            and <a href="#prizes">prizes will be awarded in three categories</a>.
+        <p>
 
         <p>
             Submissions are open now until February 15, 2022.
             Check out the flyer below for more information.
             If you have any questions, please consult the FAQ section
-                and feel free to reach out to the Brain-Score team.
+            and feel free to reach out to the Brain-Score team.
             Good luck!
         </p>
         <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}">
 
+        {# prizes #}
+        <section id="prizes" class="container">
+            <h2>Prizes</h2>
+            <div class="card-content">
+                Prize Category 1: <span class="prize-category">Overall Brain-Score (V1, V2, V4, IT, Behavior)</span>
+                <ol class="prizes">
+                    <li>First Prize: <span class='information'>$2,000</span></li>
+                    <li>Second Prize: <span class='information'>$1,500</span></li>
+                    <li>Third Prize: <span class='information'>$500</span></li>
+                </ol>
+            </div>
 
+            <div class="card-content">
+                Prize Category 2: <span class="prize-category">V1</span>
+                <ol class="prizes">
+                    <li>First Prize: <span class='information'>$1,000</span></li>
+                </ol>
+            </div>
+
+            <div class="card-content">
+                Prize Category 3: <span class="prize-category">Behavior</span>
+                <ol class="prizes">
+                    <li>First Prize: <span class='information'>$1,000</span></li>
+                </ol>
+            </div>
+        </section>
+
+        {# workshop #}
+        <section id="workshop" class="container">
+            <h2>Cosyne Workshop</h2>
+            We will announce the competition winners at a <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop!
+            We encourage submitters to attend the workshop, but this is not a requirement for participation.
+        </section>
+
+        {# leaderboard #}
         <section id="leaderboard" class="container tablecenter is-centered">
             <h2>Competition Leaderboard</h2>
             {% include "benchmarks/table.html" %}
         </section>
 
-
+        {# FAQ #}
         <section id="FAQ" class="container center">
             <h2>FAQ</h2>
             <ol>
@@ -99,12 +132,22 @@
             </ol>
         </section>
 
-        <h1>We would also like to thank our sponsors below!</h1>
-        <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest" width="200" height="100">
-        <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC" width="200" height="100">
-        <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab" width="200"
-             height="100">
-
+        {# sponsors #}
+        <section class="section">
+            <h2 class="title is-2">Sponsors</h2>
+            <a href="https://quest.mit.edu/">
+                <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
+                     width="200" height="100">
+            </a>
+            <a href="https://engineering.purdue.edu/C-BRIC">
+                <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
+                     width="200" height="100">
+            </a>
+            <a href="https://mitibmwatsonailab.mit.edu/">
+                <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
+                     width="200" height="100">
+            </a>
+        </section>
 
     </section>
 {% endblock %}
