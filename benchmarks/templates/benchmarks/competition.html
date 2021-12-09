@@ -1,6 +1,37 @@
 {% extends 'benchmarks/base.html' %}
 {% load static %}
 
+{# site navigation #}
+{% block navbar %}
+<nav class="navbar is-fixed-top is-transparent" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <div class="container">
+        <div class="navbar-brand">
+            <a href="{{url}}/competition" class="navbar-item">
+                <img src="/static/benchmarks/img/logo-competition.png" />
+            </a>
+
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+            <div class="navbar-end">
+                <a class="navbar-item" href="#prizes">Prizes</a>
+                <a class="navbar-item" href="#benchmarks">Benchmarks</a>
+                <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
+                <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+                <a class="navbar-item" href="#brain-score">Brain-Score</a>
+                <a class="navbar-item" href="#tutorial">Tutorial</a>
+                <a class="navbar-item" href="#contact">Contact</a>
+                <a class="navbar-item" href="#FAQ">FAQ</a>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
 {% block content %}
     <section class="hero competition-hero">
         <div class="hero-body container">
@@ -9,21 +40,6 @@
             </p>
         </div>
     </section>
-
-    {# site navigation #}
-    <nav class="container">
-        {# specifically don't use a navbar-menu to avoid hiding the items on mobile #}
-        <div class="navbar-start">
-            <a class="navbar-item" href="#prizes">Prizes</a>
-            <a class="navbar-item" href="#benchmarks">Benchmarks</a>
-            <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
-            <a class="navbar-item" href="#leaderboard">Leaderboard</a>
-            <a class="navbar-item" href="#brain-score">Brain-Score</a>
-            <a class="navbar-item" href="#tutorial">Tutorial</a>
-            <a class="navbar-item" href="#contact">Contact</a>
-            <a class="navbar-item" href="#FAQ">FAQ</a>
-        </div>
-    </nav>
 
     <section id="competition" class="container center">
         {# overview #}
