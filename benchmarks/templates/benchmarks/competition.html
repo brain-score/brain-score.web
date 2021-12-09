@@ -15,23 +15,15 @@
         {# specifically don't use a navbar-menu to avoid hiding the items on mobile #}
         <div class="navbar-start">
             <a class="navbar-item" href="#prizes">Prizes</a>
+            <a class="navbar-item" href="#benchmarks">Benchmarks</a>
             <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
             <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+            <a class="navbar-item" href="#brain-score">Brain-Score</a>
+            <a class="navbar-item" href="#tutorial">Tutorial</a>
+            <a class="navbar-item" href="#contact">Contact</a>
             <a class="navbar-item" href="#FAQ">FAQ</a>
         </div>
     </nav>
-
-    {# stimuli #}
-    <section id="stimuli-samples">
-        <div class="samples_container container">
-            {% for stimulus_sample in stimuli_samples %}
-                <img class="stimulus_sample"
-                     src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
-                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
-                     alt="sample {{ stimulus_sample.path }}"/>
-            {% endfor %}
-        </div>
-    </section>
 
     <section id="competition" class="container center">
         {# overview #}
@@ -78,6 +70,19 @@
             </div>
         </section>
 
+        {# stimuli #}
+        <section id="benchmarks">
+            <h2>Benchmarks</h2>
+            <div id="stimuli-samples" class="samples_container container">
+                {% for stimulus_sample in stimuli_samples %}
+                    <img class="stimulus_sample"
+                         src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
+                         title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
+                         alt="sample {{ stimulus_sample.path }}"/>
+                {% endfor %}
+            </div>
+        </section>
+
         {# workshop #}
         <section id="workshop" class="container">
             <h2>Cosyne Workshop</h2>
@@ -89,6 +94,24 @@
         <section id="leaderboard" class="container tablecenter is-centered">
             <h2>Competition Leaderboard</h2>
             {% include "benchmarks/table.html" %}
+        </section>
+
+        {# brain-score #}
+        <section id="brain-score">
+            <h2>Brain-Score</h2>
+            Lorem Ipsum
+        </section>
+
+        {# tutorial #}
+        <section id="tutorial">
+            <h2>Tutorial</h2>
+            Tutorials, Documentation, ...
+        </section>
+
+        {# contact #}
+        <section id="contact">
+            <h2>Contact</h2>
+            Lorem Ipsum
         </section>
 
         {# FAQ #}
