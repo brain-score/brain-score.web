@@ -3,7 +3,7 @@ from django.test import TestCase
 from benchmarks.views.user import split_identifier_version
 
 ALL_FIXTURES = ['fixture-benchmarkreferences.json', 'fixture-benchmarktypes.json', 'fixture-benchmarkinstances.json',
-                'fixture-users.json', 'fixture-modelreferences.json', 'fixture-models.json',
+                'fixture-users.json', 'fixture-modelreferences.json', 'fixture-submissions.json', 'fixture-models.json',
                 'fixture-scores.json']
 
 

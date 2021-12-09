@@ -16,9 +16,9 @@ python manage.py loaddata benchmarks/fixtures/fixture-benchmarkreferences.json
 python manage.py loaddata benchmarks/fixtures/fixture-benchmarktypes.json
 python manage.py loaddata benchmarks/fixtures/fixture-benchmarkinstances.json
 python manage.py loaddata benchmarks/fixtures/fixture-users.json
+python manage.py loaddata benchmarks/fixtures/fixture-submissions.json
 python manage.py loaddata benchmarks/fixtures/fixture-modelreferences.json
 python manage.py loaddata benchmarks/fixtures/fixture-models.json
-python manage.py loaddata benchmarks/fixtures/fixture-submissions.json
 python manage.py loaddata benchmarks/fixtures/fixture-scores.json
 ```
 
