@@ -25,11 +25,11 @@ class TestCompetitionTable(TestCase):
     fixtures = ALL_FIXTURES
 
     def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition")
+        resp = self.client.get("http://localhost:8000/competition/")
         self.assertEqual(resp.status_code, 200)
 
     def test_num_rows(self):
-        resp = self.client.get("http://localhost:8000/competition")
+        resp = self.client.get("http://localhost:8000/competition/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr>")
         self.assertEqual(num_rows, 1 + 7)
