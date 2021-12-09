@@ -2,7 +2,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "dicarlo.Majaj2015.V4-pls",
+      "identifier": "dicarlo.MajajHong2015.V4-pls",
       "parent": "V4",
       "visible": "True",
       "reference": [
@@ -13,7 +13,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "dicarlo.Majaj2015.IT-pls",
+      "identifier": "dicarlo.MajajHong2015.IT-pls",
       "parent": "IT",
       "visible": "True",
       "reference": [
