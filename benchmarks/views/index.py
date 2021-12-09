@@ -34,9 +34,10 @@ def view(request):
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None):
-    benchmarks = _collect_benchmarks(user_page=True if user is not None else False)
-    model_rows = _collect_models(benchmarks, user)
+def get_context(user=None, benchmark_filter=None, model_filter=None):
+    benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
+                                     filter_benchmark_objects=benchmark_filter)
+    model_rows = _collect_models(benchmarks, user, score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -73,7 +74,7 @@ def get_context(user=None):
             "comparison_data": json.dumps(comparison_data)}
 
 
-def _collect_benchmarks(user_page=False):
+def _collect_benchmarks(user_page=False, filter_benchmark_objects=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
@@ -87,7 +88,7 @@ def _collect_benchmarks(user_page=False):
         # traverse the tree, filling in children in the process
         while traverse_todo:
             node = traverse_todo.pop()
-            children = benchmark_types.filter(parent=node.value).order_by('order')
+            children = benchmark_types.filter(parent=node.value).order_by('order')  # TODO: each of these is a db call
             children = [Tree(value=child, parent=node, depth=node.depth + 1) for child in children]
             node.children = children
             traverse_todo += children
@@ -142,6 +143,9 @@ def _collect_benchmarks(user_page=False):
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
                     set_instance_meta(instance, node, tree)
                     benchmarks.append(instance)
+    # filter
+    benchmarks = [benchmark for benchmark in benchmarks
+                  if filter_benchmark_objects is None or filter_benchmark_objects(benchmark)]
     # add shortcut to identifier
     for benchmark in benchmarks:
         benchmark.identifier = benchmark.benchmark_type.identifier
@@ -174,7 +178,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(benchmarks, user=None):
+def _collect_models(benchmarks, user=None, score_filter=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
@@ -191,7 +195,10 @@ def _collect_models(benchmarks, user=None):
     # Database stores scores for actual instances
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
     benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
-    all_scores = Score.objects.filter(**user_selection, benchmark__in=benchmark_todos).select_related('model')
+    all_scores = Score.objects.filter(**user_selection,
+                                      **(score_filter if score_filter else {}),
+                                      benchmark__in=benchmark_todos)
+    all_scores = all_scores.select_related('model')
 
     # iteratively collect scores for all benchmarks. We start with the actual instances, storing their respective
     # parents to traverse up the hierarchy which we iteratively visit until empty.
@@ -266,8 +273,8 @@ def _collect_models(benchmarks, user=None):
     for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
         benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
         bench_minmax = (
-            np.nanmin(group['score_ceiled']),
-            np.nanmax(group['score_ceiled'])
+            np.nanmin(group['score_ceiled'].fillna(value=np.nan)),
+            np.nanmax(group['score_ceiled'].fillna(value=np.nan))
             # this is an ugly hack to make the gray less visually dominant on the page
             * (2.5 if benchmark_lookup[benchmark_id].root_parent == ENGINEERING_ROOT else 1))
         if bench_minmax[0] == bench_minmax[1]:
@@ -345,8 +352,8 @@ def _collect_models(benchmarks, user=None):
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
         reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
-       
-      # model
+
+        # model
         competition = meta.competition
 
         # submission
