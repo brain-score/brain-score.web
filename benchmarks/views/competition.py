@@ -15,7 +15,10 @@ def view(request):
                            and benchmark.root_parent == 'average'
                            # ignore Marques2020 benchmarks for now since the sampled stimuli are only those from
                            # receptive-field-mapping
-                           and not benchmark.benchmark_type_id.startswith('dicarlo.Marques2020')]
+                           and not benchmark.benchmark_type_id.startswith('dicarlo.Marques2020')
+                           # ignore temporal benchmark
+                           and not benchmark.benchmark_type_id.startswith('dicarlo.Kar2019')
+                           ]
     context['stimuli_samples'] = create_stimuli_samples(benchmark_instances, num_samples=NUM_STIMULI_SAMPLES)
     context['models'] = [model for model in context['models'] if model.competition == 'cosyne2022']
     return render(request, 'benchmarks/competition.html', context)
