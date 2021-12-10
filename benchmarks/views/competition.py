@@ -9,16 +9,14 @@ NUM_STIMULI_SAMPLES = 150
 
 
 def view(request):
-    context = get_context(benchmark_filter=lambda benchmark: benchmark.root_parent == 'average',  # brain benchmarks only
+    # brain benchmarks only, ignore temporal benchmark
+    context = get_context(benchmark_filter=lambda benchmarks: benchmarks.exclude(
+        identifier__in=['engineering', 'dicarlo.Kar2019-ost']),
                           model_filter=dict(model__competition='cosyne2022'))
     benchmark_instances = [benchmark for benchmark in context['benchmarks'] if benchmark.id is not None
-                           # brain benchmarks only
-                           and benchmark.root_parent == 'average'
                            # ignore Marques2020 benchmarks for now since the sampled stimuli are only those from
                            # receptive-field-mapping
                            and not benchmark.benchmark_type_id.startswith('dicarlo.Marques2020')
-                           # ignore temporal benchmark
-                           and not benchmark.benchmark_type_id.startswith('dicarlo.Kar2019')
                            ]
     context['stimuli_samples'] = create_stimuli_samples(benchmark_instances, num_samples=NUM_STIMULI_SAMPLES)
     return render(request, 'benchmarks/competition.html', context)
