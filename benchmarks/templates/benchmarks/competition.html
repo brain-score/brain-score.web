@@ -109,7 +109,31 @@
     {# leaderboard #}
     <section id="leaderboard" class="section container tablecenter is-centered">
         <h2 class="title is-2">Competition Leaderboard</h2>
-        {% include "benchmarks/table.html" %}
+        <div class="tabs is-centered is-boxed">
+            <ul>
+                {% for leaderboard_key in leaderboard_keys %}
+                    <li data-target="tab-{{ leaderboard_key }}"
+                        class="tab {% if leaderboard_key == 'average' %}is-active{% endif %}">
+                        <a>
+                            <span>{{ leaderboard_key }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {# ideally this would be a for loop, but I don't know how to look up {benchmarks_average, benchmarks_V1} based on a variable #}
+        <div id="tab-average"
+             class="tab-content">
+            {% include "benchmarks/table.html" with benchmarks=benchmarks_average models=models_average %}
+        </div>
+        <div id="tab-V1"
+             class="tab-content" style="display: none">
+            {% include "benchmarks/table.html" with benchmarks=benchmarks_V1 models=models_V1 %}
+        </div>
+        <div id="tab-behavior"
+             class="tab-content" style="display: none">
+            {% include "benchmarks/table.html" with benchmarks=benchmarks_behavior models=models_behavior %}
+        </div>
     </section>
 
     {# brain-score #}
