@@ -143,7 +143,6 @@
     {# brain-score #}
     <section id="brain-score" class="section container">
         <h2 class="title is-2">Brain-Score</h2>
-        Lorem Ipsum
     </section>
 
     {# tutorial #}
@@ -226,19 +225,37 @@
     </section>
 
     {# sponsors #}
+
     <section class="section container">
+    <div class="row">
         <h2 class="title is-2">Sponsors</h2>
-        <a href="https://quest.mit.edu/">
-            <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
-                 width="200" height="100">
-        </a>
-        <a href="https://engineering.purdue.edu/C-BRIC">
-            <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
-                 width="200" height="100">
-        </a>
-        <a href="https://mitibmwatsonailab.mit.edu/">
-            <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
-                 width="200" height="100">
-        </a>
+        <br><br>
+        <div class="column">
+            <a href="https://quest.mit.edu/">
+                <figure >
+                    <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
+                         height="300" width="300">
+                </figure>
+            </a>
+        </div>
+
+        <div class="column">
+            <a href="https://engineering.purdue.edu/C-BRIC">
+                <figure>
+                    <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
+                    height="300" width="300">
+                </figure>
+            </a>
+        </div>
+
+        <div class="column">
+            <a href="https://mitibmwatsonailab.mit.edu/">
+                <figure>
+                   <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
+                   height="300" width="300">
+                </figure>
+            </a>
+        </div>
+    </div>
     </section>
 {% endblock %}
