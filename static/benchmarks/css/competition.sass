@@ -1,3 +1,6 @@
+@use "benchmark_info" as benchmark_info
+@use "collapsible" as collapsible
+
 .navbar-competition
   background-color: rgb(7, 137, 48)
   color: white
@@ -7,9 +10,12 @@
     border: 1px solid $brain-score-color
 
 .competition-hero
-  background-color: $brain-score-color
+
+  background: rgb(0,0,0)
+  background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(7,137,48,1) 54%, rgba(69,252,179,1) 100%)
+
   .title
-    color: white
+    color: black
     font-weight: bold
 
 section#competition
@@ -22,6 +28,9 @@ section#competition
   #prize-pool
     font-weight: bold
     border-bottom: 1px solid $brain-score-color
+
+  @include benchmark_info.benchmark_info
+  @include collapsible.collapsible_control
 
 #stimuli-samples
   max-height: 325px
