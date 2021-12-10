@@ -36,7 +36,7 @@ def view(request):
 
 def get_context(user=None, benchmark_filter=None, model_filter=None):
     benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
-                                     filter_benchmark_objects=benchmark_filter)
+                                     benchmark_filter=benchmark_filter)
     model_rows = _collect_models(benchmarks, user, score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
@@ -74,12 +74,15 @@ def get_context(user=None, benchmark_filter=None, model_filter=None):
             "comparison_data": json.dumps(comparison_data)}
 
 
-def _collect_benchmarks(user_page=False, filter_benchmark_objects=None):
+def _collect_benchmarks(user_page=False, benchmark_filter=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
         benchmark_types = benchmark_types.filter(visible=True)
-    root_benchmarks = benchmark_types.filter(parent=None).order_by('order')
+    root_benchmarks = benchmark_types.filter(parent=None)
+    if benchmark_filter:
+        root_benchmarks = benchmark_filter(root_benchmarks)
+    root_benchmarks = root_benchmarks.order_by('order')
     root_trees = []
     for root_benchmark in root_benchmarks:
         root_tree = Tree(value=root_benchmark, depth=0)
@@ -89,6 +92,8 @@ def _collect_benchmarks(user_page=False, filter_benchmark_objects=None):
         while traverse_todo:
             node = traverse_todo.pop()
             children = benchmark_types.filter(parent=node.value).order_by('order')  # TODO: each of these is a db call
+            if benchmark_filter:
+                children = benchmark_filter(children)
             children = [Tree(value=child, parent=node, depth=node.depth + 1) for child in children]
             node.children = children
             traverse_todo += children
@@ -143,9 +148,6 @@ def _collect_benchmarks(user_page=False, filter_benchmark_objects=None):
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
                     set_instance_meta(instance, node, tree)
                     benchmarks.append(instance)
-    # filter
-    benchmarks = [benchmark for benchmark in benchmarks
-                  if filter_benchmark_objects is None or filter_benchmark_objects(benchmark)]
     # add shortcut to identifier
     for benchmark in benchmarks:
         benchmark.identifier = benchmark.benchmark_type.identifier
