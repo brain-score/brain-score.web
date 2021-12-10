@@ -181,13 +181,13 @@ class Model(models.Model):
         return generic_repr(self)
 
     def natural_key(self):
-        return self.name, self.owner
+        return self.name, self.owner.natural_key()
 
     class ModelManager(models.Manager):
         def get_by_natural_key(self, name, owner=None):
             kwargs = dict(name=name)
             if owner is not None:  # if owner is passed, explicitly use it to link, otherwise try without
-                kwargs['owner'] = owner
+                kwargs['owner__email'] = owner
             return self.get(**kwargs)
 
     objects = ModelManager()
