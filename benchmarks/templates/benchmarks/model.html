@@ -86,7 +86,7 @@
                         <table class="benchmarks">
                             <tr class="list_entry">
                                 {# score #}
-                                <td title="unceiled score: {{ score_row.score_raw }}"
+                                <td title="unceiled score: {{ score_row.score_raw|format_score }}"
                                     data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
                                     data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                                     class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"

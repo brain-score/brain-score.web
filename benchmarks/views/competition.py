@@ -9,11 +9,22 @@ NUM_STIMULI_SAMPLES = 150
 
 
 def view(request):
-    # brain benchmarks only, ignore temporal benchmark
-    context = get_context(benchmark_filter=lambda benchmarks: benchmarks.exclude(
-        identifier__in=['engineering', 'dicarlo.Kar2019-ost']),
-                          model_filter=dict(model__competition='cosyne2022'))
-    benchmark_instances = [benchmark for benchmark in context['benchmarks'] if benchmark.id is not None
+    context = {'leaderboard_keys': ['average', 'V1', 'behavior']}
+    for key, selection_filter in [
+        ('V1', lambda benchmarks: benchmarks.exclude(identifier__in=['V2', 'V4', 'IT', 'behavior'])),
+        ('behavior', lambda benchmarks: benchmarks.exclude(identifier__in=['V1', 'V2', 'V4', 'IT'])),
+        ('average', lambda benchmarks: benchmarks),  # average last to have the full set of adjacent variables
+    ]:
+        # brain benchmarks only, ignore temporal benchmark
+        base_filter = lambda benchmarks: benchmarks.exclude(identifier__in=['engineering', 'dicarlo.Kar2019-ost'])
+        benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
+        key_context = get_context(benchmark_filter=benchmark_filter,
+                                  model_filter=dict(model__competition='cosyne2022'))
+        key_context[f"benchmarks_{key}"] = key_context['benchmarks']
+        key_context[f"models_{key}"] = key_context['models']
+        del key_context['benchmarks'], key_context['models']
+        context = {**context, **key_context}
+    benchmark_instances = [benchmark for benchmark in context['benchmarks_average'] if benchmark.id is not None
                            # ignore Marques2020 benchmarks for now since the sampled stimuli are only those from
                            # receptive-field-mapping
                            and not benchmark.benchmark_type_id.startswith('dicarlo.Marques2020')

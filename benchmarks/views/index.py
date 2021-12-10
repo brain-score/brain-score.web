@@ -91,9 +91,10 @@ def _collect_benchmarks(user_page=False, benchmark_filter=None):
         # traverse the tree, filling in children in the process
         while traverse_todo:
             node = traverse_todo.pop()
-            children = benchmark_types.filter(parent=node.value).order_by('order')  # TODO: each of these is a db call
+            children = benchmark_types.filter(parent=node.value)
             if benchmark_filter:
                 children = benchmark_filter(children)
+            children = children.order_by('order')
             children = [Tree(value=child, parent=node, depth=node.depth + 1) for child in children]
             node.children = children
             traverse_todo += children
@@ -507,3 +508,11 @@ def get_parent_item(dictionary, key):
     else:
         return_string = return_value
     return return_string
+
+
+@register.filter
+def format_score(score):
+    try:
+        return f"{score:.3f}"
+    except ValueError:  # e.g. 'X'
+        return score
