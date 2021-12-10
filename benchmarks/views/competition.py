@@ -9,7 +9,8 @@ NUM_STIMULI_SAMPLES = 150
 
 
 def view(request):
-    context = get_context()
+    context = get_context(benchmark_filter=lambda benchmark: benchmark.root_parent == 'average',  # brain benchmarks only
+                          model_filter=dict(model__competition='cosyne2022'))
     benchmark_instances = [benchmark for benchmark in context['benchmarks'] if benchmark.id is not None
                            # brain benchmarks only
                            and benchmark.root_parent == 'average'
@@ -20,7 +21,6 @@ def view(request):
                            and not benchmark.benchmark_type_id.startswith('dicarlo.Kar2019')
                            ]
     context['stimuli_samples'] = create_stimuli_samples(benchmark_instances, num_samples=NUM_STIMULI_SAMPLES)
-    context['models'] = [model for model in context['models'] if model.competition == 'cosyne2022']
     return render(request, 'benchmarks/competition.html', context)
 
 
