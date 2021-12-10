@@ -143,19 +143,56 @@
     {# brain-score #}
     <section id="brain-score" class="section container">
         <h2 class="title is-2">Brain-Score</h2>
-        Lorem Ipsum
     </section>
 
     {# tutorial #}
     <section id="tutorial" class="section container">
         <h2 class="title is-2">Tutorial</h2>
-        Tutorials, Documentation, ...
+
+        <br> To enter the competition,
+        simply create an account on our main website
+        <a href="https://www.brain-score.org">here</a> and submit a model.
+        A full length <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a> <br>
+        is also available that covers the model submission process, as well as
+        a quickstart guide for those that want to get up and running as soon as possible. <br><br>
+
+        To facilitate model submission, we provide helper wrappers for neural networks implemented in Pytorch,
+        Tensorflow or Keras.<br> Submitted models can be standard artificial neural networks (ANNs)
+        for computer vision - <span class='contact-link'>base models</span> - or actual
+        <span class='bold-emphasis'>brain models</span> <br> with their internal
+        components <span class='italic-emphasis'>committed to specific visual areas</span>, and their field-of-view mapped to a
+        spatial visual <br> extent (in visual degrees).  The difference between base and brain model are also shown in
+        the diagram below, and for more information <br> about model details, please visit our tutorial mentioned above.
+
+        <br> <br>
+        <figure>
+              <img src="{% static "/benchmarks/img/diagram.png" %}"
+                   alt="Base v. Brain Models" height="1250" width="750">
+              <figcaption>Figure from
+                  <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>  </figcaption>
+        </figure>
+
+
+        <br> <br>
+        Happy submitting!
+
+
     </section>
 
     {# contact #}
     <section id="contact" class="section container">
         <h2 class="title is-2">Contact</h2>
-        Lorem Ipsum
+         <h4> If you have any questions, feel free to email one of the team members below!</h4>
+    <ul>
+        <li>Martin Schrimpf - msch@mit.edu</li>
+        <li>Tiago Marques - tmarques@mit.edu</li>
+        <li>Mike Ferguson - mferg@mit.edu</li>
+    </ul>
+
+    You can also enter our competition <span class='bold-emphasis'>Slack Channel</span> with this
+    <a href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">
+        link</a>. We will be posting competition <br>updates, model support, and other assistance in this channel,
+            so feel free to join!
     </section>
 
     {# FAQ #}
@@ -163,7 +200,7 @@
         <h2 class="title is-2">FAQ</h2>
         <ol>
             <li>
-                <h5>How do I submit a model?</h5>
+                <h4>How do I submit a model?</h4>
                 <p> We have a full length <a
                         href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
                     tutorial</a> that walks users through the submission process- feel free to
@@ -171,7 +208,7 @@
                 </p>
             </li>
             <li>
-                <h5>Why did you choose these benchmarks to score models against?</h5>
+                <h4>Why did you choose these benchmarks to score models against?</h4>
                 <p>
                     We currently use the PLS25 neural predictivity metric to rank models; this is an established
                     metric,
@@ -207,23 +244,50 @@
                     Nope! You only have to be the best out of all the competition submissions.
                 </p>
             </li>
+            <li>
+                <h4>Is public data available?</h4>
+                <p>
+                    Yes. Public data splits of many of the benchmarks can be found
+                    <a href="https://github.com/brain-score/brain-score/blob/master/brainscore/benchmarks/public_benchmarks.py#L87">here</a>.
+                    Use the list_public_assemblies function
+                    <a href="https://github.com/brain-score/brain-score/blob/master/brainscore/benchmarks/public_benchmarks.py#L87">
+                        here</a> as well to view all available public data.
+                </p>
+            </li>
         </ol>
     </section>
 
     {# sponsors #}
     <section class="section container">
-        <h2 class="title is-2">Sponsors</h2>
-        <a href="https://quest.mit.edu/">
-            <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
-                 width="200" height="100">
-        </a>
-        <a href="https://engineering.purdue.edu/C-BRIC">
-            <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
-                 width="200" height="100">
-        </a>
-        <a href="https://mitibmwatsonailab.mit.edu/">
-            <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
-                 width="200" height="100">
-        </a>
+    <h2 class="title is-2">Sponsors</h2><br>
+        <div class="columns">
+            <div class="column">
+
+                <a href="https://quest.mit.edu/">
+                    <figure >
+                        <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
+                             height="300" width="300">
+                    </figure>
+                </a>
+            </div>
+
+            <div class="column">
+                <a href="https://engineering.purdue.edu/C-BRIC">
+                    <figure>
+                        <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
+                        height="300" width="300">
+                    </figure>
+                </a>
+            </div>
+
+            <div class="column">
+                <a href="https://mitibmwatsonailab.mit.edu/">
+                    <figure>
+                       <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
+                       height="300" width="300">
+                    </figure>
+                </a>
+            </div>
+        </div>
     </section>
 {% endblock %}
