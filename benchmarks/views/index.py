@@ -82,7 +82,7 @@ def _collect_benchmarks(user_page=False, benchmark_filter=None):
     root_benchmarks = benchmark_types.filter(parent=None)
     if benchmark_filter:
         root_benchmarks = benchmark_filter(root_benchmarks)
-    root_benchmarks=root_benchmarks.order_by('order')
+    root_benchmarks = root_benchmarks.order_by('order')
     root_trees = []
     for root_benchmark in root_benchmarks:
         root_tree = Tree(value=root_benchmark, depth=0)
@@ -92,7 +92,8 @@ def _collect_benchmarks(user_page=False, benchmark_filter=None):
         while traverse_todo:
             node = traverse_todo.pop()
             children = benchmark_types.filter(parent=node.value).order_by('order')  # TODO: each of these is a db call
-            children = benchmark_filter(children)
+            if benchmark_filter:
+                children = benchmark_filter(children)
             children = [Tree(value=child, parent=node, depth=node.depth + 1) for child in children]
             node.children = children
             traverse_todo += children
