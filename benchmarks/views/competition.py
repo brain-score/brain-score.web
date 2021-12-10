@@ -10,14 +10,14 @@ NUM_STIMULI_SAMPLES = 150
 
 def view(request):
     context = {'leaderboard_keys': ['average', 'V1', 'behavior']}
-    for key, extra_filter in [
+    for key, selection_filter in [
         ('V1', lambda benchmarks: benchmarks.exclude(identifier__in=['V2', 'V4', 'IT', 'behavior'])),
         ('behavior', lambda benchmarks: benchmarks.exclude(identifier__in=['V1', 'V2', 'V4', 'IT'])),
         ('average', lambda benchmarks: benchmarks),  # average last to have the full set of adjacent variables
     ]:
         # brain benchmarks only, ignore temporal benchmark
         base_filter = lambda benchmarks: benchmarks.exclude(identifier__in=['engineering', 'dicarlo.Kar2019-ost'])
-        benchmark_filter = lambda benchmarks: extra_filter(base_filter(benchmarks))
+        benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
         key_context = get_context(benchmark_filter=benchmark_filter,
                                   model_filter=dict(model__competition='cosyne2022'))
         key_context[f"benchmarks_{key}"] = key_context['benchmarks']
