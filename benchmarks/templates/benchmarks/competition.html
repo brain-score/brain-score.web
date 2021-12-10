@@ -3,33 +3,34 @@
 
 {# site navigation #}
 {% block navbar %}
-<nav class="navbar is-fixed-top is-transparent" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <div class="container">
-        <div class="navbar-brand">
-            <a href="{{url}}/competition" class="navbar-item">
-                <img src="/static/benchmarks/img/logo-competition.png" />
-            </a>
+    <nav class="navbar is-fixed-top is-transparent" role="navigation"
+         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="{{ url }}/competition" class="navbar-item">
+                    <img src="/static/benchmarks/img/logo-competition.png"/>
+                </a>
 
-            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </a>
-        </div>
-        <div id="navMenu" class="navbar-menu">
-            <div class="navbar-end">
-                <a class="navbar-item" href="#prizes">Prizes</a>
-                <a class="navbar-item" href="#benchmarks">Benchmarks</a>
-                <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
-                <a class="navbar-item" href="#leaderboard">Leaderboard</a>
-                <a class="navbar-item" href="#brain-score">Brain-Score</a>
-                <a class="navbar-item" href="#tutorial">Tutorial</a>
-                <a class="navbar-item" href="#contact">Contact</a>
-                <a class="navbar-item" href="#FAQ">FAQ</a>
+                <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <a class="navbar-item" href="#prizes">Prizes</a>
+                    <a class="navbar-item" href="#benchmarks">Benchmarks</a>
+                    <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
+                    <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+                    <a class="navbar-item" href="#brain-score">Brain-Score</a>
+                    <a class="navbar-item" href="#tutorial">Tutorial</a>
+                    <a class="navbar-item" href="#contact">Contact</a>
+                    <a class="navbar-item" href="#FAQ">FAQ</a>
+                </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 {% endblock %}
 
 {% block content %}
@@ -41,7 +42,7 @@
         </div>
     </section>
 
-    <section id="competition" class="container center">
+    <section id="overview" class="section container center">
         {# overview #}
         <p>
             Brain-Score is hosting a competition for the most brain-like ventral stream model,
@@ -58,146 +59,143 @@
             Good luck!
         </p>
         <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}">
+    </section>
 
-        {# prizes #}
-        <section id="prizes" class="container">
-            <h2>Prizes</h2>
-            <div class="card-content">
-                Prize Category 1: <span class="prize-category">Overall Brain-Score (V1, V2, V4, IT, Behavior)</span>
-                <ol class="prizes">
-                    <li>First Prize: <span class='information'>$2,000</span></li>
-                    <li>Second Prize: <span class='information'>$1,500</span></li>
-                    <li>Third Prize: <span class='information'>$500</span></li>
-                </ol>
-            </div>
-
-            <div class="card-content">
-                Prize Category 2: <span class="prize-category">V1</span>
-                <ol class="prizes">
-                    <li>First Prize: <span class='information'>$1,000</span></li>
-                </ol>
-            </div>
-
-            <div class="card-content">
-                Prize Category 3: <span class="prize-category">Behavior</span>
-                <ol class="prizes">
-                    <li>First Prize: <span class='information'>$1,000</span></li>
-                </ol>
-            </div>
-        </section>
-
-        {# stimuli #}
-        <section id="benchmarks">
-            <h2>Benchmarks</h2>
-            <div id="stimuli-samples" class="samples_container container">
-                {% for stimulus_sample in stimuli_samples %}
-                    <img class="stimulus_sample"
-                         src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
-                         title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
-                         alt="sample {{ stimulus_sample.path }}"/>
-                {% endfor %}
-            </div>
-        </section>
-
-        {# workshop #}
-        <section id="workshop" class="container">
-            <h2>Cosyne Workshop</h2>
-            We will announce the competition winners at a <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop!
-            We encourage submitters to attend the workshop, but this is not a requirement for participation.
-        </section>
-
-        {# leaderboard #}
-        <section id="leaderboard" class="container tablecenter is-centered">
-            <h2>Competition Leaderboard</h2>
-            {% include "benchmarks/table.html" %}
-        </section>
-
-        {# brain-score #}
-        <section id="brain-score">
-            <h2>Brain-Score</h2>
-            Lorem Ipsum
-        </section>
-
-        {# tutorial #}
-        <section id="tutorial">
-            <h2>Tutorial</h2>
-            Tutorials, Documentation, ...
-        </section>
-
-        {# contact #}
-        <section id="contact">
-            <h2>Contact</h2>
-            Lorem Ipsum
-        </section>
-
-        {# FAQ #}
-        <section id="FAQ" class="container center">
-            <h2>FAQ</h2>
-            <ol>
-                <li>
-                    <h5>How do I submit a model?</h5>
-                    <p> We have a full length <a
-                            href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
-                        tutorial</a> that walks users through the submission process- feel free to
-                        take a look, as it covers model submission, scoring, and results.
-                    </p>
-                </li>
-                <li>
-                    <h5>Why did you choose these benchmarks to score models against?</h5>
-                    <p>
-                        We currently use the PLS25 neural predictivity metric to rank models; this is an established
-                        metric,
-                        but since it’s most likely far from perfect, we will iterate on this going forward.
-                        We are also including novel, unpublished, recordings (Sanghavi2020, SanghaviJozwik2020,
-                        SanghaviMurty2020)-
-                        these data are from a single monkey, and while we verified data quality and signal reliability,
-                        the benchmarks are not vetted as strongly as the other datasets. We will discuss implications
-                        and empirical results of these benchmarks at the Cosyne workshop.
-                        Based on this year’s results, we will also discuss if we should only include benchmarks from
-                        recordings with n>=2 monkeys. Please join the workshop and join the slack
-                        channel if you have input on these questions!
-                    </p>
-                </li>
-                <li>
-                    <h4>I have data that could be useful -- can I submit a benchmark?</h4>
-                    <p>
-                        We also have a tutorial for those who wish to submit benchmarks, found
-                        <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
-                            here</a>. We strongly encourage those with useful data to submit a poster at the
-                        <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop as well.
-                    </p>
-                </li>
-                <li>
-                    <h4>Who will get prizes?</h4>
-                    <p>
-                        See the above section on the prize breakdown.
-                    </p>
-                </li>
-                <li>
-                    <h4>Does my model have to beat the current most brain-like model on brain-score.org?</h4>
-                    <p>
-                        Nope! You only have to be the best out of all the competition submissions.
-                    </p>
-                </li>
+    {# prizes #}
+    <section id="prizes" class="section container">
+        <h2 class="title is-2">Prizes</h2>
+        <div class="card-content">
+            Prize Category 1: <span class="prize-category">Overall Brain-Score (V1, V2, V4, IT, Behavior)</span>
+            <ol class="prizes">
+                <li>First Prize: <span class='information'>$2,000</span></li>
+                <li>Second Prize: <span class='information'>$1,500</span></li>
+                <li>Third Prize: <span class='information'>$500</span></li>
             </ol>
-        </section>
+        </div>
+        <div class="card-content">
+            Prize Category 2: <span class="prize-category">V1</span>
+            <ol class="prizes">
+                <li>First Prize: <span class='information'>$1,000</span></li>
+            </ol>
+        </div>
+        <div class="card-content">
+            Prize Category 3: <span class="prize-category">Behavior</span>
+            <ol class="prizes">
+                <li>First Prize: <span class='information'>$1,000</span></li>
+            </ol>
+        </div>
+    </section>
 
-        {# sponsors #}
-        <section class="section">
-            <h2 class="title is-2">Sponsors</h2>
-            <a href="https://quest.mit.edu/">
-                <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
-                     width="200" height="100">
-            </a>
-            <a href="https://engineering.purdue.edu/C-BRIC">
-                <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
-                     width="200" height="100">
-            </a>
-            <a href="https://mitibmwatsonailab.mit.edu/">
-                <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
-                     width="200" height="100">
-            </a>
-        </section>
+    {# stimuli #}
+    <section id="benchmarks" class="section container">
+        <h2 class="title is-2">Benchmarks</h2>
+        <div id="stimuli-samples" class="samples_container container">
+            {% for stimulus_sample in stimuli_samples %}
+                <img class="stimulus_sample"
+                     src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
+                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
+                     alt="sample {{ stimulus_sample.path }}"/>
+            {% endfor %}
+        </div>
+    </section>
 
+    {# workshop #}
+    <section id="workshop" class="section container">
+        <h2 class="title is-2">Cosyne Workshop</h2>
+        We will announce the competition winners at a <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop!
+        We encourage submitters to attend the workshop, but this is not a requirement for participation.
+    </section>
+
+    {# leaderboard #}
+    <section id="leaderboard" class="section container tablecenter is-centered">
+        <h2 class="title is-2">Competition Leaderboard</h2>
+        {% include "benchmarks/table.html" %}
+    </section>
+
+    {# brain-score #}
+    <section id="brain-score" class="section container">
+        <h2 class="title is-2">Brain-Score</h2>
+        Lorem Ipsum
+    </section>
+
+    {# tutorial #}
+    <section id="tutorial" class="section container">
+        <h2 class="title is-2">Tutorial</h2>
+        Tutorials, Documentation, ...
+    </section>
+
+    {# contact #}
+    <section id="contact" class="section container">
+        <h2 class="title is-2">Contact</h2>
+        Lorem Ipsum
+    </section>
+
+    {# FAQ #}
+    <section id="FAQ" class="section container center">
+        <h2 class="title is-2">FAQ</h2>
+        <ol>
+            <li>
+                <h5>How do I submit a model?</h5>
+                <p> We have a full length <a
+                        href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                    tutorial</a> that walks users through the submission process- feel free to
+                    take a look, as it covers model submission, scoring, and results.
+                </p>
+            </li>
+            <li>
+                <h5>Why did you choose these benchmarks to score models against?</h5>
+                <p>
+                    We currently use the PLS25 neural predictivity metric to rank models; this is an established
+                    metric,
+                    but since it’s most likely far from perfect, we will iterate on this going forward.
+                    We are also including novel, unpublished, recordings (Sanghavi2020, SanghaviJozwik2020,
+                    SanghaviMurty2020)-
+                    these data are from a single monkey, and while we verified data quality and signal reliability,
+                    the benchmarks are not vetted as strongly as the other datasets. We will discuss implications
+                    and empirical results of these benchmarks at the Cosyne workshop.
+                    Based on this year’s results, we will also discuss if we should only include benchmarks from
+                    recordings with n>=2 monkeys. Please join the workshop and join the slack
+                    channel if you have input on these questions!
+                </p>
+            </li>
+            <li>
+                <h4>I have data that could be useful -- can I submit a benchmark?</h4>
+                <p>
+                    We also have a tutorial for those who wish to submit benchmarks, found
+                    <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+                        here</a>. We strongly encourage those with useful data to submit a poster at the
+                    <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop as well.
+                </p>
+            </li>
+            <li>
+                <h4>Who will get prizes?</h4>
+                <p>
+                    See the above section on the prize breakdown.
+                </p>
+            </li>
+            <li>
+                <h4>Does my model have to beat the current most brain-like model on brain-score.org?</h4>
+                <p>
+                    Nope! You only have to be the best out of all the competition submissions.
+                </p>
+            </li>
+        </ol>
+    </section>
+
+    {# sponsors #}
+    <section class="section container">
+        <h2 class="title is-2">Sponsors</h2>
+        <a href="https://quest.mit.edu/">
+            <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
+                 width="200" height="100">
+        </a>
+        <a href="https://engineering.purdue.edu/C-BRIC">
+            <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
+                 width="200" height="100">
+        </a>
+        <a href="https://mitibmwatsonailab.mit.edu/">
+            <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
+                 width="200" height="100">
+        </a>
     </section>
 {% endblock %}
