@@ -113,7 +113,7 @@
             <ul>
                 {% for leaderboard_key in leaderboard_keys %}
                     <li data-target="tab-{{ leaderboard_key }}"
-                        class="tab {% if leaderboard_key == 'average' %}is-active{% endif %}">
+                        class="tab leaderboard-track {% if leaderboard_key == 'average' %}is-active{% endif %}">
                         <a>
                             <span>{{ leaderboard_key }}</span>
                         </a>

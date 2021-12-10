@@ -3,7 +3,7 @@ $(document).ready(function () {
 
     const tabs = document.getElementsByClassName("tab");
     Array.from(tabs).forEach((tab) => {
-        tab.onclick = function () {
+        tab.addEventListener('click', function () {
             // set other tabs to inactive
             Array.from(tabs).forEach((tab) => {
                 tab.className = tab.className.replace("is-active", ""); // set not active
@@ -14,7 +14,7 @@ $(document).ready(function () {
             hide_all_tabs();
             // set target visible
             show_tab_content(tab);
-        };
+        });
 
         if (tab.className.includes("is-active")) {
             show_tab_content(tab); // show active tab
