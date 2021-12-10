@@ -5,7 +5,7 @@
       "ceiling": 0.8950300216674805,
       "ceiling_error": 0.0006182539189773819,
       "version": 3,
-      "benchmark_type": "dicarlo.Majaj2015.V4-pls"
+      "benchmark_type": "dicarlo.MajajHong2015.V4-pls"
     }
   },
   {
@@ -14,7 +14,7 @@
       "ceiling": 0.8218406438827515,
       "ceiling_error": 0.00058712737191322,
       "version": 3,
-      "benchmark_type": "dicarlo.Majaj2015.IT-pls"
+      "benchmark_type": "dicarlo.MajajHong2015.IT-pls"
     }
   },
   {

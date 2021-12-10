@@ -115,7 +115,7 @@
                     </div>
                 </td>
                 {% for score_row in model.scores %}
-                    <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw }}"
+                    <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
                         data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
                         data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                         class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
