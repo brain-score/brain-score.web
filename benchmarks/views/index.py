@@ -507,3 +507,11 @@ def get_parent_item(dictionary, key):
     else:
         return_string = return_value
     return return_string
+
+
+@register.filter
+def format_score(score):
+    try:
+        return f"{score:.3f}"
+    except ValueError:  # e.g. 'X'
+        return score
