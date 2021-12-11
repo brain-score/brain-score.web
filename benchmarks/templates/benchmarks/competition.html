@@ -19,7 +19,8 @@
             </div>
             <div id="navMenu" class="navbar-menu">
                 <div class="navbar-end">
-                    <a class="navbar-item" href="#prizes">Prizes</a>
+                    <a class="navbar-item" href="#overview">Overview</a>
+                    <a class="navbar-item" href="#tracks">Tracks</a>
                     <a class="navbar-item" href="#benchmarks">Benchmarks</a>
                     <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
                     <a class="navbar-item" href="#leaderboard">Leaderboard</a>
@@ -42,47 +43,149 @@
         </div>
     </section>
 
-    <section id="overview" class="section container center">
-        {# overview #}
+    {# intro #}
+    <section id="intro" class="section container center">
         <p>
-            Brain-Score is hosting a competition for the most brain-like ventral stream model,
-            with a prize pool of <span id="prize-pool">$6,000</span>.
-            Model submissions will automatically be tested on benchmarks ranging from V1 to IT to behavior,
-            and <a href="#prizes">prizes will be awarded in three categories</a>.
+            Our ability to recognize objects in the world relies on visual processing along the ventral visual stream,
+            a set of hierarchically-organized cortical areas.
+            Recently, neuroscientists and machine-learning researchers have produced computational models that have
+            achieved moderate success at explaining primate object recognition behavior and the neural representations
+            that support it.
+            <span class="has-text-weight-bold">The first edition of the Brain-Score Competition proposes to evaluate
+                how well these models can predict a wide range of neuronal and behavioral phenomena related to
+                primate object recognition.</span>
+        </p>
         <p>
+            The Brain-Score Competition 2022 will be open to the scientific community and aims to accelerate the
+            development of better models of primate vision. It will do so by providing an infrastructure to evaluate
+            candidate models in a standardised and unified manner along a multitude of neuronal and behavioral
+            benchmarks. In addition, it will incentivize model submissions by providing visibility to participants - via
+            participation in a Cosyne workshop - and <a href="#tracks">monetary prizes</a>
+            (total pool of <span id="prize-pool">$6,000</span>) to the best performing models.
+        </p>
+    </section>
 
+    {# overview #}
+    <section id="overview" class="section container center">
+        <h2 class="title is-2">Overview</h2>
+
+        <p>
+            Participants should submit their models through the Brain-Score platform. Brain-Score currently accepts any
+            image-computable model that can predict neural responses in ventral visual stream areas and/or object
+            recognition behavior. While the overarching goal of the competition is to evaluate models that engage with
+            the whole ventral visual stream, we also accept models that only attempt to model some of its components
+            (see <a href="tracks">Competition Tracks</a> below). To facilitate model submission, we provide helper
+            wrappers for neural networks implemented in Pytorch, Tensorflow or Keras. Submitted models can be standard
+            artificial neural networks (ANNs) for computer vision - base models - or actual brain models with their
+            internal components committed to specific visual areas, and their field-of-view mapped to a spatial visual
+            extent (in visual degrees). For more information about model details, please check our
+            <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">Tutorial</a>.
+        </p>
+        <p>
+            Submitted models will be evaluated on a total of 27 neuronal and behavioral benchmarks related to activity
+            in macaque visual cortical areas V1, V2, V4, and IT, and human psychophysical performance in a set of object
+            classification tasks. Each benchmark contains a set of measurements as well as a comparative metric that
+            evaluates how well the model can explain the experimental data. In the first edition of the Brain-Score
+            Competition we are considering a standard neural predictivity metric using PLS regression, the similarity of
+            single-neuron response property distributions, and the alignment of object classification performance at the
+            level of individual images (see <a href="#benchmarks">Benchmarks</a> below).
+        </p>
         <p>
             Submissions are open now until February 15, 2022.
             Check out the flyer below for more information.
-            If you have any questions, please consult the FAQ section
-            and feel free to reach out to the Brain-Score team.
+            If you have any questions, please consult the <a href="#FAQ">FAQ</a> section
+            and feel free to <a href="#contact">reach out</a> to the Brain-Score team.
             Good luck!
         </p>
         <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}">
     </section>
 
-    {# prizes #}
-    <section id="prizes" class="section container">
-        <h2 class="title is-2">Prizes</h2>
-        <div class="card-content">
-            Prize Category 1: <span class="prize-category">Overall Brain-Score (V1, V2, V4, IT, Behavior)</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$2,000</span></li>
-                <li>Second Prize: <span class='information'>$1,500</span></li>
-                <li>Third Prize: <span class='information'>$500</span></li>
-            </ol>
+    {# tracks #}
+    <section id="tracks" class="section container">
+        <h2 class="title is-2">Competition Tracks</h2>
+
+        <div class="columns">
+            <div class="column is-full">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Main Track:</span>&nbsp;V1, V2, V4, IT, and Behavior
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$2,000</span></li>
+                                <li>Second Prize: <span class='information'>$1,500</span></li>
+                                <li>Third Prize: <span class='information'>$500</span></li>
+                            </ul>
+                            <br/>
+                            The main goal of the Brain-Score Competition 2022 is to advance the development of models of
+                            the
+                            primate ventral visual stream and object recognition behavior. We believe that modelling
+                            this system
+                            as a whole, holds better promise for success than efforts focused solely on modelling
+                            specific
+                            components. Thus, the main competition track will simultaneously evaluate models in all the
+                            neuronal
+                            benchmarks for all the ventral stream areas as well as in a behavioral benchmark. We will
+                            award the
+                            three models with the highest overall scores, which consists of the average of five
+                            components: V1,
+                            V2, V4, IT, and behavior.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-content">
-            Prize Category 2: <span class="prize-category">V1</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$1,000</span></li>
-            </ol>
-        </div>
-        <div class="card-content">
-            Prize Category 3: <span class="prize-category">Behavior</span>
-            <ol class="prizes">
-                <li>First Prize: <span class='information'>$1,000</span></li>
-            </ol>
+
+        <div class="columns">
+            <div class="column is-half">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">V1 Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$1,000</span></li>
+                            </ul>
+                            <br/>
+                            There is a large and vibrant community in neuroscience whose main focus is to model neuronal
+                            responses in the primary visual cortex (V1). For this reason, we will award the best V1
+                            model from
+                            all the submissions. The V1 score is the average of a standard neural predictivity benchmark
+                            and a
+                            composite properties benchmark (see <a href="#benchmarks">Benchmarks</a> below).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-half">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Behavior Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$1,000</span></li>
+                            </ul>
+                            <br/>
+                            Cognitive scientists and machine learning researchers may be interested in modeling human
+                            object
+                            recognition behavior independently of the neural mechanisms that support it. We will award
+                            the best
+                            model in predicting human behavioral performance in a battery of object classification task.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         See the
@@ -152,7 +255,8 @@
         <br> To enter the competition,
         simply create an account on our main website
         <a href="https://www.brain-score.org">here</a> and submit a model.
-        A full length <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a> <br>
+        A full length <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a>
+        <br>
         is also available that covers the model submission process, as well as
         a quickstart guide for those that want to get up and running as soon as possible. <br><br>
 
@@ -160,16 +264,18 @@
         Tensorflow or Keras.<br> Submitted models can be standard artificial neural networks (ANNs)
         for computer vision - <span class='contact-link'>base models</span> - or actual
         <span class='bold-emphasis'>brain models</span> <br> with their internal
-        components <span class='italic-emphasis'>committed to specific visual areas</span>, and their field-of-view mapped to a
-        spatial visual <br> extent (in visual degrees).  The difference between base and brain model are also shown in
+        components <span class='italic-emphasis'>committed to specific visual areas</span>, and their field-of-view
+        mapped to a
+        spatial visual <br> extent (in visual degrees). The difference between base and brain model are also shown in
         the diagram below, and for more information <br> about model details, please visit our tutorial mentioned above.
 
         <br> <br>
         <figure>
-              <img src="{% static "/benchmarks/img/diagram.png" %}"
-                   alt="Base v. Brain Models" height="1250" width="750">
-              <figcaption>Figure from
-                  <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>  </figcaption>
+            <img src="{% static "/benchmarks/img/diagram.png" %}"
+                 alt="Base v. Brain Models" height="1250" width="750">
+            <figcaption>Figure from
+                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
+            </figcaption>
         </figure>
 
 
@@ -182,17 +288,17 @@
     {# contact #}
     <section id="contact" class="section container">
         <h2 class="title is-2">Contact</h2>
-         <h4> If you have any questions, feel free to email one of the team members below!</h4>
-    <ul>
-        <li>Martin Schrimpf - msch@mit.edu</li>
-        <li>Tiago Marques - tmarques@mit.edu</li>
-        <li>Mike Ferguson - mferg@mit.edu</li>
-    </ul>
+        <h4> If you have any questions, feel free to email one of the team members below!</h4>
+        <ul>
+            <li>Martin Schrimpf - msch@mit.edu</li>
+            <li>Tiago Marques - tmarques@mit.edu</li>
+            <li>Mike Ferguson - mferg@mit.edu</li>
+        </ul>
 
-    You can also enter our competition <span class='bold-emphasis'>Slack Channel</span> with this
-    <a href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">
-        link</a>. We will be posting competition <br>updates, model support, and other assistance in this channel,
-            so feel free to join!
+        You can also enter our competition <span class='bold-emphasis'>Slack Channel</span> with this
+        <a href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">
+            link</a>. We will be posting competition <br>updates, model support, and other assistance in this channel,
+        so feel free to join!
     </section>
 
     {# FAQ #}
@@ -235,7 +341,7 @@
             <li>
                 <h4>Who will get prizes?</h4>
                 <p>
-                    See the above section on the prize breakdown.
+                    See <a href="#tracks">Tracks</a> for the prize breakdown.
                 </p>
             </li>
             <li>
@@ -259,12 +365,12 @@
 
     {# sponsors #}
     <section class="section container">
-    <h2 class="title is-2">Sponsors</h2><br>
+        <h2 class="title is-2">Sponsors</h2><br>
         <div class="columns">
             <div class="column">
 
                 <a href="https://quest.mit.edu/">
-                    <figure >
+                    <figure>
                         <img src="{% static "/benchmarks/img/competition_logos/quest.PNG" %}" alt="MIT Quest"
                              height="300" width="300">
                     </figure>
@@ -275,7 +381,7 @@
                 <a href="https://engineering.purdue.edu/C-BRIC">
                     <figure>
                         <img src="{% static "/benchmarks/img/competition_logos/cbric.png" %}" alt="C-BRIC"
-                        height="300" width="300">
+                             height="300" width="300">
                     </figure>
                 </a>
             </div>
@@ -283,8 +389,8 @@
             <div class="column">
                 <a href="https://mitibmwatsonailab.mit.edu/">
                     <figure>
-                       <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
-                       height="300" width="300">
+                        <img src="{% static "/benchmarks/img/competition_logos/ibm.jpg" %}" alt="MIT-IBM Watson AI Lab"
+                             height="300" width="300">
                     </figure>
                 </a>
             </div>

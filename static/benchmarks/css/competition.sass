@@ -15,16 +15,19 @@
     color: white
     font-weight: bold
 
-section#competition
-  ol.prizes
+section#tracks
+  div.columns > div.column > div.card
+    height: 100%
+
+  span.track
+    border-bottom: 1px solid $brain-score-color
+
+  ul.prizes
     list-style-type: none
 
-  .prize-category
-    border-bottom: 1px solid $brain-score-color
-
-  #prize-pool
-    font-weight: bold
-    border-bottom: 1px solid $brain-score-color
+#prize-pool
+  font-weight: bold
+  border-bottom: 1px solid $brain-score-color
 
 
 #stimuli-samples
