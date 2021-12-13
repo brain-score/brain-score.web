@@ -130,8 +130,8 @@
                         <div class="content">
                             <ul class="prizes">
                                 <li>First Prize: <span class='information'>$2,000</span></li>
-                                <li>Second Prize: <span class='information'>$1,500</span></li>
-                                <li>Third Prize: <span class='information'>$500</span></li>
+                                <li>Second Prize: <span class='information'>$1,250</span></li>
+                                <li>Third Prize: <span class='information'>$750</span></li>
                             </ul>
                             <br/>
                             <p>
@@ -210,6 +210,16 @@
     <section id="benchmarks" class="section container">
         <h3 class="title is-3">Benchmarks</h3>
 
+        <div id="stimuli-samples" class="samples_container container">
+            {% for stimulus_sample in stimuli_samples %}
+                <img class="stimulus_sample"
+                     src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
+                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
+                     alt="sample {{ stimulus_sample.path }}"/>
+            {% endfor %}
+        </div>
+        <br/>
+
         <div> {# can't use ul inside p #}
             The Brain-Score Competition 2022 will evaluate submitted models in 33 neuronal and behavioral benchmarks
             related to primate object recognition behavior. These benchmarks contain the following metrics:
@@ -255,15 +265,6 @@
                     <a href="https://www.biorxiv.org/content/10.1101/407007v2">Schrimpf, Kubilius, et al. 2018</a>.
                 </li>
             </ul>
-        </div>
-
-        <div id="stimuli-samples" class="samples_container container">
-            {% for stimulus_sample in stimuli_samples %}
-                <img class="stimulus_sample"
-                     src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
-                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
-                     alt="sample {{ stimulus_sample.path }}"/>
-            {% endfor %}
         </div>
     </section>
 
