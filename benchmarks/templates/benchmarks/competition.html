@@ -206,9 +206,54 @@
         for full details.
     </section>
 
-    {# stimuli #}
+    {# benchmarks #}
     <section id="benchmarks" class="section container">
         <h3 class="title is-3">Benchmarks</h3>
+
+        <div> {# can't use ul inside p #}
+            The Brain-Score Competition 2022 will evaluate submitted models in 27 neuronal and behavioral benchmarks
+            related to primate object recognition behavior. These benchmarks contain the following metrics:
+
+            <ul>
+                <li>Neural predictivity (image-level consistency with PLS regression): Measures how well the responses
+                    to given images in a model area predict the responses of a neuronal population of the corresponding
+                    area in the macaque brain. First, the model responses are mapped to the neuronal recordings using a
+                    linear transformation (PLS regression with 25 components) on a training set of images. Then the
+                    model’s predictivity is determined for held-out images by computing the Pearson correlation
+                    coefficient between the model’s predictions and the neuronal responses. This procedure is performed
+                    using cross-validation in 10 splits. More details about this neural predictivity metric can be found
+                    in <a href="https://www.biorxiv.org/content/10.1101/407007v2">Schrimpf, Kubilius, et al. 2018</a>
+                    and <a href="https://www.pnas.org/content/111/23/8619">Yamins, Hong, et al. 2014</a>. There is one
+                    neural predictivity
+                    benchmark for each area of the ventral stream in the macaque brain. The V1 and V2 benchmarks were
+                    built using neuronal datasets first described in
+                    <a href="https://www.nature.com/articles/nn.3402">Freeman, Ziemba, et al. 2013</a>,
+                    and the V4 and IT benchmarks were built from recordings reported in
+                    <a href="https://www.jneurosci.org/content/35/39/13402.long">Majaj, Hong, et al. 2015</a>.
+                </li>
+                <li>Single-neuron property distribution similarity: Measures whether single neurons in a model area are
+                    functionally similar to single-neurons in the corresponding monkey brain area. This is done by
+                    comparing the distribution of single-neuron response properties between the model area and the brain
+                    area using a similarity score (using the KS distance). For more details about this metric, please
+                    see <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2">Marques et al. 2021</a>.
+                    There are 22 single-neuron property distribution similarity benchmarks
+                    corresponding to different response properties in the monkey V1. These single-neuron property
+                    distributions relate to several aspects of V1 responses and are pooled in seven groups: orientation
+                    tuning, spatial frequency tuning, receptive-field size, surround modulation, texture modulation,
+                    response selectivity, and response magnitude.
+                </li>
+                <li>Behavioral consistency (normalized image-level): Measures the behavioral similarity between the
+                    model and humans in core object recognition tasks. This metric does not measure the overall accuracy
+                    of the model but whether it can predict the patterns of successes and failures of humans in a set of
+                    object recognition tasks. Model’s and humans’ behavioral accuracies are first transformed to a d’
+                    statistic and then compared using the Pearson correlation coefficient. For more details about this
+                    behavioral metric, please see
+                    <a href="https://www.jneurosci.org/content/38/33/7255">Rajalingham, Issa, et al. 2018</a> and
+                    <a href="https://www.biorxiv.org/content/10.1101/407007v2">Schrimpf, Kubilius, et al. 2018</a>.
+                </li>
+            </ul>
+        </div>
+
         <div id="stimuli-samples" class="samples_container container">
             {% for stimulus_sample in stimuli_samples %}
                 <img class="stimulus_sample"
@@ -319,18 +364,19 @@
 
         <p>
             We recommend that participants join our competiton
-            <a target="_blank" href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">Slack Workspace</a>
+            <a target="_blank"
+               href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">
+                Slack Workspace</a>
             and follow <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a>
             for any questions, updates, model support, and other assistance.
         </p>
 
         <div> {# ul not allowed inside p #}
             In addition, feel free to contact any of the team members.
-
             <ul>
-                <li>Martin Schrimpf - msch@mit.edu /
+                <li>Martin Schrimpf - msch@mit.edu/
                     <a target="_blank" href="https://twitter.com/martin_schrimpf">@mschrimpf</a></li>
-                <li>Tiago Marques - tmarques@mit.edu /
+                <li>Tiago Marques - tmarques@mit.edu/
                     <a target="_blank" href="https://twitter.com/tiagogmarques">@tiagogmarques</a></li>
                 <li>Mike Ferguson - mferg@mit.edu</li>
             </ul>
