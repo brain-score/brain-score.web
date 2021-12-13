@@ -1,30 +1,43 @@
 .navbar-competition
-  background-color: rgb(7, 137, 48)
+  // logo in main site
+  background-color: $brain-score-color
   color: white
   border-radius: 6px
 
   &:hover
     border: 1px solid $brain-score-color
 
-.competition-hero
+#navbar-competition-logo
+  @media (max-width: 450px)
+    max-width: 280px
+  @media (max-width: 350px)
+    max-width: 180px
 
+
+.competition-hero
   background: $brain-score-color
-  background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(7,137,48,1) 54%, rgba(69,252,179,1) 100%)
+  background: linear-gradient(90deg, rgba(0, 0, 0, 1) 0%, rgba(7, 137, 48, 1) 54%, rgba(69, 252, 179, 1) 100%)
 
   .title
     color: white
     font-weight: bold
 
-section#competition
-  ol.prizes
+#graphical-abstract
+  max-height: 600px
+
+section#tracks
+  div.columns > div.column > div.card
+    height: 100%
+
+  span.track
+    border-bottom: 1px solid $brain-score-color
+
+  ul.prizes
     list-style-type: none
 
-  .prize-category
-    border-bottom: 1px solid $brain-score-color
-
-  #prize-pool
-    font-weight: bold
-    border-bottom: 1px solid $brain-score-color
+#prize-pool
+  font-weight: bold
+  border-bottom: 1px solid $brain-score-color
 
 
 #stimuli-samples
