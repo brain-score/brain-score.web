@@ -22,8 +22,8 @@
                     <a class="navbar-item" href="#overview">Overview</a>
                     <a class="navbar-item" href="#tracks">Tracks</a>
                     <a class="navbar-item" href="#benchmarks">Benchmarks</a>
-                    <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
                     <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+                    <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
                     <a class="navbar-item" href="#brain-score">Brain-Score</a>
                     <a class="navbar-item" href="#tutorial">Tutorial</a>
                     <a class="navbar-item" href="#contact">Contact</a>
@@ -46,23 +46,42 @@
     {# intro #}
     <section id="intro" class="section container center">
         <p>
-            Our ability to recognize objects in the world relies on visual processing along the ventral visual stream,
-            a set of hierarchically-organized cortical areas.
-            Recently, neuroscientists and machine-learning researchers have produced computational models that have
-            achieved moderate success at explaining primate object recognition behavior and the neural representations
-            that support it.
-            <span class="has-text-weight-bold">The first edition of the Brain-Score Competition proposes to evaluate
-                how well these models can predict a wide range of neuronal and behavioral phenomena related to
-                primate object recognition.</span>
+            Our ability to recognize objects in the world relies on visual processing along the ventral visual stream, a
+            set of hierarchically-organized cortical areas. Recently, neuroscientists and machine-learning researchers
+            have produced computational models that have achieved moderate success at explaining primate object
+            recognition behavior and the neural representations that support it.
+            <span class="has-text-weight-bold">
+                The first edition of the Brain-Score Competition proposes to evaluate how well these models can predict
+                primate object recognition in 27 neuronal and behavioral benchmarks.
+            </span>
         </p>
         <p>
             The Brain-Score Competition 2022 will be open to the scientific community and aims to accelerate the
             development of better models of primate vision. It will do so by providing an infrastructure to evaluate
             candidate models in a standardised and unified manner along a multitude of neuronal and behavioral
             benchmarks. In addition, it will incentivize model submissions by providing visibility to participants - via
-            participation in a Cosyne workshop - and <a href="#tracks">monetary prizes</a>
+            participation in a <a href="#workshop">Cosyne workshop</a> - and <a href="#tracks">monetary prizes</a>
             (total pool of <span id="prize-pool">$6,000</span>) to the best performing models.
         </p>
+        <p>
+            <span class="has-text-weight-bold">
+                <a target="_blank" href="http://www.brain-score.org/profile/">Submissions</a>
+                are open until February 15, 2022</span>.
+            For regular updates related to the competition, please follow
+            <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a> and join our
+            <a target="_blank"
+               href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-102tbg73n-DD1qQ7DpHfXV8l~vH1N~WQ">Slack
+                channel</a>.
+            Good Luck!
+        </p>
+
+        <figure>
+            <img src="{% static "/benchmarks/img/base_brain_models.png" %}"
+                 alt="Base v. Brain Models">
+            <figcaption>Figure from
+                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
+            </figcaption>
+        </figure>
     </section>
 
     {# overview #}
@@ -70,34 +89,29 @@
         <h2 class="title is-2">Overview</h2>
 
         <p>
-            Participants should submit their models through the Brain-Score platform. Brain-Score currently accepts any
-            image-computable model that can predict neural responses in ventral visual stream areas and/or object
-            recognition behavior. While the overarching goal of the competition is to evaluate models that engage with
-            the whole ventral visual stream, we also accept models that only attempt to model some of its components
-            (see <a href="tracks">Competition Tracks</a> below). To facilitate model submission, we provide helper
-            wrappers for neural networks implemented in Pytorch, Tensorflow or Keras. Submitted models can be standard
-            artificial neural networks (ANNs) for computer vision - base models - or actual brain models with their
-            internal components committed to specific visual areas, and their field-of-view mapped to a spatial visual
-            extent (in visual degrees). For more information about model details, please check our
-            <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">Tutorial</a>.
+            Participants should submit their models through the
+            <a target="_blank" href="http://www.brain-score.org/profile/">Brain-Score platform</a>.
+            Brain-Score currently accepts any image-computable model that can predict neural responses in ventral
+            visual stream areas and/or object recognition behavior. While the overarching goal of the competition is to
+            evaluate models that engage with the whole ventral visual stream, we also accept models that only attempt
+            to model some of its components (see <a href="#tracks">Competition Tracks</a> below). Submitted models can
+            be standard artificial neural networks (ANNs) for computer vision, which we call base models, or actual
+            brain models with their internal components committed to specific visual areas, and their field-of-view
+            mapped to a spatial visual extent (in visual degrees). To facilitate model submission, we provide helper
+            wrappers for neural networks implemented in Pytorch, Tensorflow or Keras. For more information about model
+            details, please check our
+            <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                tutorial</a>.
         </p>
         <p>
-            Submitted models will be evaluated on a total of 27 neuronal and behavioral benchmarks related to activity
+            Submitted models will be evaluated in a total of 27 neuronal and behavioral benchmarks related to activity
             in macaque visual cortical areas V1, V2, V4, and IT, and human psychophysical performance in a set of object
             classification tasks. Each benchmark contains a set of measurements as well as a comparative metric that
             evaluates how well the model can explain the experimental data. In the first edition of the Brain-Score
-            Competition we are considering a standard neural predictivity metric using PLS regression, the similarity of
-            single-neuron response property distributions, and the alignment of object classification performance at the
-            level of individual images (see <a href="#benchmarks">Benchmarks</a> below).
+            Competition, the metrics will consist of a standard neural predictivity metric using PLS regression, the
+            similarity of single-neuron response property distributions, and the alignment of object classification
+            performance at the level of individual images (see <a href="#benchmarks">Benchmarks</a> below).
         </p>
-        <p>
-            Submissions are open now until February 15, 2022.
-            Check out the flyer below for more information.
-            If you have any questions, please consult the <a href="#FAQ">FAQ</a> section
-            and feel free to <a href="#contact">reach out</a> to the Brain-Score team.
-            Good luck!
-        </p>
-        <embed width="191" height="207" src="{% static "/benchmarks/img/competition_logos/flyer.PNG" %}">
     </section>
 
     {# tracks #}
@@ -120,19 +134,16 @@
                                 <li>Third Prize: <span class='information'>$500</span></li>
                             </ul>
                             <br/>
-                            The main goal of the Brain-Score Competition 2022 is to advance the development of models of
-                            the
-                            primate ventral visual stream and object recognition behavior. We believe that modelling
-                            this system
-                            as a whole, holds better promise for success than efforts focused solely on modelling
-                            specific
-                            components. Thus, the main competition track will simultaneously evaluate models in all the
-                            neuronal
-                            benchmarks for all the ventral stream areas as well as in a behavioral benchmark. We will
-                            award the
-                            three models with the highest overall scores, which consists of the average of five
-                            components: V1,
-                            V2, V4, IT, and behavior.
+                            <p>
+                                The main goal of the Brain-Score Competition 2022 is to advance the development of
+                                models of the primate ventral visual stream and object recognition behavior. We believe
+                                that modelling this system as a whole, holds better promise for success than efforts
+                                focused solely on modelling specific components. Thus, the main competition track will
+                                simultaneously evaluate models in all the neuronal benchmarks for all the ventral stream
+                                areas as well as in a behavioral benchmark. We will award the three models with the
+                                highest overall scores, which consists of the average of five components: V1, V2, V4,
+                                IT, and behavior.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -153,12 +164,13 @@
                                 <li>First Prize: <span class='information'>$1,000</span></li>
                             </ul>
                             <br/>
-                            There is a large and vibrant community in neuroscience whose main focus is to model neuronal
-                            responses in the primary visual cortex (V1). For this reason, we will award the best V1
-                            model from
-                            all the submissions. The V1 score is the average of a standard neural predictivity benchmark
-                            and a
-                            composite properties benchmark (see <a href="#benchmarks">Benchmarks</a> below).
+                            <p>
+                                There is a large and vibrant community in neuroscience whose main focus is to model
+                                neuronal responses in the primary visual cortex (V1). For this reason, we will award the
+                                best V1 model from all the submissions. The V1 score is the average of a standard neural
+                                predictivity benchmark and a composite properties benchmark
+                                (see <a href="#benchmarks">Benchmarks</a> below).
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -177,11 +189,12 @@
                                 <li>First Prize: <span class='information'>$1,000</span></li>
                             </ul>
                             <br/>
-                            Cognitive scientists and machine learning researchers may be interested in modeling human
-                            object
-                            recognition behavior independently of the neural mechanisms that support it. We will award
-                            the best
-                            model in predicting human behavioral performance in a battery of object classification task.
+                            <p>
+                                Cognitive scientists and machine learning researchers may be interested in modeling
+                                human object recognition behavior independently of the neural mechanisms that support
+                                it. We will award the best model in predicting human behavioral performance in a battery
+                                of object classification task.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -204,13 +217,6 @@
                      alt="sample {{ stimulus_sample.path }}"/>
             {% endfor %}
         </div>
-    </section>
-
-    {# workshop #}
-    <section id="workshop" class="section container">
-        <h2 class="title is-2">Cosyne Workshop</h2>
-        We will announce the competition winners at a <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop!
-        We encourage submitters to attend the workshop, but this is not a requirement for participation.
     </section>
 
     {# leaderboard #}
@@ -243,6 +249,48 @@
         </div>
     </section>
 
+    {# workshop #}
+    <section id="workshop" class="section container">
+        <h2 class="title is-2">Cosyne Workshop</h2>
+        <p>
+            In parallel to the competition we will organize a workshop at Cosyne 2022 in Cascais, Portugal on March
+            21-22. The workshop,
+            <span class="has-text-italic">
+                Brain-Score and beyond: confronting brain-like ANNs with neuroscientific data
+            </span>,
+            will focus on 1) deep learning models from AI as theories of neural computations, and 2) the 2022
+            Brain-Score competition as a specific real-world system for brain model evaluation and development.
+        </p>
+        <div>  {# ul not allowed inside p, using div instead #}
+            During the workshop we will bring together theorists and experimenters to address:
+            <ul>
+                <li>
+                    What is the deep learning framework for neuroscience, and what is it not?
+                </li>
+                <li>
+                    What are the best competing frameworks for understanding computation in neural circuits?
+                </li>
+                <li>
+                    What are the strongest experimental findings that support the deep learning framework and/or its
+                    competitors?
+                </li>
+                <li>How should we modify the deep learning framework and/or other competing frameworks, to facilitate
+                    progress in neuroscience?
+                </li>
+            </ul>
+        </div>
+        <br/>
+        <p>
+            In addition to a fantastic lineup of established speakers,
+            <span class="has-text-weight-bold">
+                we will invite selected participants in the Brain-Score competition to present their modeling work
+                during the workshop either as a talk or a poster.
+            </span>
+            While attendance to the Cosyne workshop is not required to participate in the Brain-Score competition,
+            we encourage participants do so.
+        </p>
+    </section>
+
     {# brain-score #}
     <section id="brain-score" class="section container">
         <h2 class="title is-2">Brain-Score</h2>
@@ -252,36 +300,31 @@
     <section id="tutorial" class="section container">
         <h2 class="title is-2">Tutorial</h2>
 
-        <br> To enter the competition,
-        simply create an account on our main website
-        <a href="https://www.brain-score.org">here</a> and submit a model.
-        A full length <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a>
-        <br>
-        is also available that covers the model submission process, as well as
-        a quickstart guide for those that want to get up and running as soon as possible. <br><br>
-
-        To facilitate model submission, we provide helper wrappers for neural networks implemented in Pytorch,
-        Tensorflow or Keras.<br> Submitted models can be standard artificial neural networks (ANNs)
-        for computer vision - <span class='contact-link'>base models</span> - or actual
-        <span class='bold-emphasis'>brain models</span> <br> with their internal
-        components <span class='italic-emphasis'>committed to specific visual areas</span>, and their field-of-view
-        mapped to a
-        spatial visual <br> extent (in visual degrees). The difference between base and brain model are also shown in
-        the diagram below, and for more information <br> about model details, please visit our tutorial mentioned above.
-
-        <br>
-        <figure>
-            <img src="{% static "/benchmarks/img/base_brain_models.png" %}"
-                 alt="Base v. Brain Models">
-            <figcaption>Figure from
-                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
-            </figcaption>
-        </figure>
-
-        <br>
-        Happy submitting!
-
-
+        <p>
+            To enter the competition,
+            simply create an account on our main website
+            <a target="_blank" href="https://www.brain-score.org/profile">here</a> and submit a model.
+            A full length
+            <a target="_blank"
+               href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a>
+            is also available that covers the model submission process, as well as
+            a quickstart guide for those that want to get up and running as soon as possible.
+        </p>
+        <p>
+            To facilitate model submission, we provide helper wrappers for neural networks implemented in Pytorch,
+            Tensorflow or Keras. Submitted models can be standard artificial neural networks (ANNs)
+            for computer vision - <span class='contact-link'>base models</span> - or actual
+            <span class='bold-emphasis'>brain models</span> with their internal
+            components <span class='italic-emphasis'>committed to specific visual areas</span>, and their field-of-view
+            mapped to a spatial visual extent (in visual degrees). The difference between base and brain model are also
+            shown in the <a href="#intro">graphical abstract</a>, and for more information about model details,
+            please visit our
+            <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                tutorial</a>.
+        </p>
+        <p>
+            Happy submitting!
+        </p>
     </section>
 
     {# contact #}
@@ -306,9 +349,9 @@
         <ol>
             <li>
                 <h4>How do I submit a model?</h4>
-                <p> We have a full length <a
-                        href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
-                    tutorial</a> that walks users through the submission process- feel free to
+                <p> We have a full length
+                    <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                        tutorial</a> that walks users through the submission process- feel free to
                     take a look, as it covers model submission, scoring, and results.
                 </p>
             </li>
