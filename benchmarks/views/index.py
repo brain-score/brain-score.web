@@ -514,5 +514,5 @@ def get_parent_item(dictionary, key):
 def format_score(score):
     try:
         return f"{score:.3f}"
-    except ValueError:  # e.g. 'X'
+    except:  # e.g. 'X'
         return score
