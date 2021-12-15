@@ -4,7 +4,7 @@
 <section class="individual_model container center">
     <h1 class="title">{{ model.name }}</h1>
     {% if model.reference_identifier %}
-    <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+        <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
     {% else %}
     <p class="no_reference">No reference paper on file.</p>
     {% endif %}
@@ -18,9 +18,9 @@
         <div class="build_status">
             {%if model.build_status is not None %}
             {% if model.build_status == "successful" %}
-            <span class='information'>Build Status:</span> <span style="color:green;">Success</span>
+            <span class='information'>Build Status:</span> <span class="build_success">Success</span>
             {% elif model.build_status == "running" %}
-            <span class='information'>Build Status:</span> <span style="color:goldenrod;">Running</span>
+            <span class='information'>Build Status:</span> <span class="build_running">Running</span>
             <br>
             <span class='fine_print'>
                                 Warning: This model's build status is shown as still running; thus model
@@ -28,7 +28,7 @@
                                 reflect the true model scores until the build is successful.
                                 </span>
             {% else %}
-            <span class='information'>Build Status:</span> <span style="color:red;">Failed</span>
+            <span class='information'>Build Status:</span> <span class="build_failed">Failed</span>
             <br>
             <span class='fine_print'>
                                 Warning: This model's build status is shown as having failed; this error might be irrelevant <br>
