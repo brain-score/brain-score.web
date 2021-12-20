@@ -45,7 +45,7 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":"), "127.0.0.1"]
+ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 
 # Allows E-mail use
 try:
