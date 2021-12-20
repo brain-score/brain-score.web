@@ -5,7 +5,6 @@
     <h1 class="title">{{ model.name }}</h1>
     {% if model.reference_identifier %}
         <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
-    {% else %}
     {% endif %}
 
     {% if submission_details_visible %}
