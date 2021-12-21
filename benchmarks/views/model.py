@@ -32,7 +32,7 @@ def view(request, id: int):
 
     # only show detailed model info to superuser or owner:
     if request.user.is_superuser or model.user.id == request.user.id:
-        model_context['can_see'] = True
+        model_context['submission_details_visible'] = True
     return render(request, 'benchmarks/model.html', model_context)
 
 

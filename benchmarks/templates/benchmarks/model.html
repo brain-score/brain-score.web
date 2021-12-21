@@ -1,158 +1,152 @@
 {% extends 'benchmarks/base.html' %}
 
 {% block content %}
-    <section class="individual_model container center">
-        <h1 class="title">{{ model.name }}</h1>
-        <span class='information'>Model Name:</span> {{ model.name }}<br>
-        {% if can_see %}
+<section class="individual_model container center">
+    <h1 class="title">{{ model.name }}</h1>
+    {% if model.reference_identifier %}
+        <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+    {% endif %}
+
+    {% if submission_details_visible %}
+        <div class="box">
+            <span class='fine_print'>The following information is only visible to you:</span><br><br>
             <span class='information'>Submission ID:</span> {{ model.submission_id }}<br>
             <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
             <span class='information'>Submitted On:</span> {{ model.timestamp }}<br>
             <div class="build_status">
-                {%if model.build_status is not None %}
-                        {% if model.build_status == "successful" %}
-                            <span class='information'>Build Status:</span> <span style="color:green;">Success</span>
-                        {% elif model.build_status == "running" %}
-                            <span class='information'>Build Status:</span> <span style="color:goldenrod;">Running</span>
-                             <br>
-                            <span class='fine_print'>
+                {% if model.build_status is not None %}
+                    {% if model.build_status == "successful" %}
+                        <span class='information'>Build Status:</span> <span class="build_success">Success</span>
+                    {% elif model.build_status == "running" %}
+                        <span class='information'>Build Status:</span> <span class="build_running">Running</span><br>
+                        <span class='fine_print'>
                             Warning: This model's build status is shown as still running; thus model
-                                scores should be approached <br> with caution, as they might not
+                            scores should be approached <br> with caution, as they might not
                             reflect the true model scores until the build is successful.
-                            </span>
-                        {% else %}
-                            <span class='information'>Build Status:</span> <span style="color:red;">Failed</span>
-                            <br>
-                            <span class='fine_print'>
-                            Warning: This model's build status is shown as having failed; this error might be irrelevant <br>
-                                to results, but reach out to us to confirm the results are legitimate.
-                            </span>
-                        {% endif %}
-            {% else %}
-              &nbsp;
+                        </span>
+                    {% else %}
+                        <span class='information'>Build Status:</span> <span class="build_failed">Failed</span><br>
+                        <span class='fine_print'>
+                        Warning: This model's build status is shown as having failed; this error might be irrelevant <br>
+                        to results, but reach out to us to confirm the results are legitimate.
+                        </span>
+                    {% endif %}
+                {% else %}
+                &nbsp;
+                {% endif %}
+            </div>
+            <br>
+            <span class='information'>Console Log:</span>
+
+            {% if model.submission_id < 302 %}
+                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a> <br>
+                <span class='fine_print'>
+                    This is an older model, so a parsed (interactive) console log will not be available <br>
+                    until the model is re-run on a new submission. In the meantime, you can still
+                    view a plaintext version with the link provided. <br>
+                </span>
+            {%  else %}
+                {% if model.build_status == "successful" or model.build_status == "failure" %}
+                    <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>
+
+                {% elif model.build_status == "running" %}
+                    <span class='fine_print'><br>
+                        This model's build status is shown as still running; thus, the console log below
+                        <br> will not be interactive until the model is done running. In the meantime, you can still
+                        view a plaintext version <br> with the link provided. <br>
+                    </span>
+                    <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a>
+                    <br><br>
+                {% endif %}
             {% endif %}
-                </div>
-                <br>
-                    <span class='information'>Console Log:</span>
-                        {# older models from build IDs 0- 301 do not have a parsed log, so view unparsed: #}
-                        {% if model.submission_id < 302 %}
-                            <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a> <br>
-                            <span class='fine_print'>
-                                This is an older model, so a parsed (interactive) console log will not be available <br>
-                                until the model is re-run on a new submission. In the meantime, you can still
-                                view a plaintext version with the link provided. <br>
-                             </span>
-                        {%  else %}
-                            {% if model.build_status == "successful" or model.build_status == "failure"%}
-                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View Console Log</a> <br>
-                            {# older models (0-301) with still running status should not be possible #}
-                            {% elif model.build_status == "running" %}
-                                <span class='fine_print'>
-                                <br>
-                                    This model's build status is shown as still running; thus, the console log below
-                                    <br> will not be interactive until the model is done running. In the meantime, you can still
-                                    view a plaintext version <br> with the link provided. <br>
-                                </span>
-                                <a class="log_link" href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.submission_id }}/consoleText">View Console Log</a>
-                                <br>
-                                <br>
-                            {% endif %}
-                        {% endif %}
-        {%  else %}
-        {% endif %}
-
-        <span class='information'>Reference Link:</span>
-        {% if model.reference_identifier %}
-            <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
-        {% else %}
-            <p class="no_reference">No reference paper on file.</p>
-        {% endif %}
-        <br>
-
-        {# Benchmark scores #}
-        <h2 id="scores" class="title-is-2">Benchmark scores</h2>
-        <div class="benchmark_scores">
-            {% for score_row in model.scores %}
-                {% if score_row.score_ceiled %}
-                    <div
-                            class="benchmark_child_{{ score_row.benchmark.depth }}
+        </div>
+    {%  else %}
+    {% endif %}
+    <br>
+    {# Benchmark scores #}
+    <h2 id="scores" class="title-is-2">Benchmark scores</h2>
+    <div class="benchmark_scores">
+        {% for score_row in model.scores %}
+        {% if score_row.score_ceiled %}
+        <div
+                class="benchmark_child_{{ score_row.benchmark.depth }}
                             {% if not score_row.benchmark|is_parent %}
                                 box
                             {% endif %}"
-                            {% if score_row.benchmark.parent %}
-                            data-parent="{{ score_row.benchmark.parent.identifier }}"
-                            {% endif %}
-                    >
-                        <table class="benchmarks">
-                            <tr class="list_entry">
-                                {# score #}
-                                <td title="unceiled score: {{ score_row.score_raw|format_score }}"
-                                    data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
-                                    data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
-                                    class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
-                                    style="{{ score_row.color }}; ">
-                                    {{ score_row.score_ceiled }}
-                                </td>
-                                {# benchmark general info #}
-                                <td class="benchmark_info depth_{{ score_row.benchmark.depth }}">
-                                    {# line 1 #}
-                                    <span class="benchmark_identifier">{{ score_row.benchmark.short_name }}</span>
-                                    {# version #}
-                                    {% include "benchmarks/benchmark_version.html" with version=score_row.benchmark.version %}
-                                    {# reference, if present #}
-                                    {% if score_row.benchmark.benchmark_type.reference and score_row.benchmark.benchmark_type.reference.url %}
-                                        <a class="has-text-weight-normal"
-                                           href="{{ score_row.benchmark.benchmark_type.reference.url }}">
-                                            [reference]
-                                        </a>
-                                    {% endif %}
-                                    {% if score_row.rank %}
-                                        <span title="Rank of this model on this benchmark compared to all public models"
-                                              class="tag rank">
+                {% if score_row.benchmark.parent %}
+                data-parent="{{ score_row.benchmark.parent.identifier }}"
+                {% endif %}
+        >
+            <table class="benchmarks">
+                <tr class="list_entry">
+                    {# score #}
+                    <td title="unceiled score: {{ score_row.score_raw|format_score }}"
+                        data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
+                        data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
+                        class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                        style="{{ score_row.color }}; ">
+                        {{ score_row.score_ceiled }}
+                    </td>
+                    {# benchmark general info #}
+                    <td class="benchmark_info depth_{{ score_row.benchmark.depth }}">
+                        {# line 1 #}
+                        <span class="benchmark_identifier">{{ score_row.benchmark.short_name }}</span>
+                        {# version #}
+                        {% include "benchmarks/benchmark_version.html" with version=score_row.benchmark.version %}
+                        {# reference, if present #}
+                        {% if score_row.benchmark.benchmark_type.reference and score_row.benchmark.benchmark_type.reference.url %}
+                        <a class="has-text-weight-normal"
+                           href="{{ score_row.benchmark.benchmark_type.reference.url }}">
+                            [reference]
+                        </a>
+                        {% endif %}
+                        {% if score_row.rank %}
+                        <span title="Rank of this model on this benchmark compared to all public models"
+                              class="tag rank">
                                             rank {{ score_row.rank }}
                                         </span>
-                                    {% endif %}
-                                    <br/>
-                                    {# line 2 #}
-                                    {% if score_row.benchmark|is_parent %}
-                                        <span class="want_to_click collapsible_control is_collapsible"
-                                                {# collapse all benchmarks below 2 and below engineering by default #}
-                                                {% if score_row.benchmark.depth >= 1 or score_row.benchmark.benchmark_type_id == 'engineering' %}
+                        {% endif %}
+                        <br/>
+                        {# line 2 #}
+                        {% if score_row.benchmark|is_parent %}
+                        <span class="want_to_click collapsible_control is_collapsible"
+                              {# collapse all benchmarks below 2 and below engineering by default #}
+                              {% if score_row.benchmark.depth >= 1 or score_row.benchmark.benchmark_type_id == 'engineering' %}
                                               data-initial="hidden"
                                                 {% endif %}
                                               data-identifier="{{ score_row.benchmark.benchmark_type_id }}"></span>
-                                        {% include "benchmarks/benchmark_children.html" with number_of_children=score_row.benchmark.number_of_all_children %}
-                                    {% endif %}
-                                </td>
-                                {# bar #}
-                                <td class="bar depth_{{ score_row.benchmark.depth }}">
-                                    <div class="bar_container">
-                                        <div class="bar"
-                                             style="background-color:{{ score_row.color }};
+                        {% include "benchmarks/benchmark_children.html" with number_of_children=score_row.benchmark.number_of_all_children %}
+                        {% endif %}
+                    </td>
+                    {# bar #}
+                    <td class="bar depth_{{ score_row.benchmark.depth }}">
+                        <div class="bar_container">
+                            <div class="bar"
+                                 style="background-color:{{ score_row.color }};
                                                      --score:{{ score_row.score_ceiled|score_style }}%;">
-                                            {{ score_row.score_ceiled }}
-                                        </div>
-                                        <span class="label zero">0</span>
-                                        <div title="ceiling" class="vertical_line ceiling"></div>
-                                        <span class="label ceiling">ceiling</span>
-                                        <div title="best" class="vertical_line best"
-                                             style="left: {{ score_row.best }}%"></div>
-                                        <span title="Score of best public model" class="label best"
-                                              style="left: {{ score_row.best }}%">best</span>
-                                        <div title="median" class="vertical_line median"
-                                             style="left: {{ score_row.median }}%"></div>
-                                        <span title="Median score of all public models" class="label median"
-                                              style="left: {{ score_row.median }}%">median</span>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                                <td colspan="2">
-                                    {% if not score_row.benchmark|is_parent %}
-                                        <div class="benchmark_details">
-                                            {% if score_row.benchmark.meta %}
-                                                <div>
+                                {{ score_row.score_ceiled }}
+                            </div>
+                            <span class="label zero">0</span>
+                            <div title="ceiling" class="vertical_line ceiling"></div>
+                            <span class="label ceiling">ceiling</span>
+                            <div title="best" class="vertical_line best"
+                                 style="left: {{ score_row.best }}%"></div>
+                            <span title="Score of best public model" class="label best"
+                                  style="left: {{ score_row.best }}%">best</span>
+                            <div title="median" class="vertical_line median"
+                                 style="left: {{ score_row.median }}%"></div>
+                            <span title="Median score of all public models" class="label median"
+                                  style="left: {{ score_row.median }}%">median</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td colspan="2">
+                        {% if not score_row.benchmark|is_parent %}
+                        <div class="benchmark_details">
+                            {% if score_row.benchmark.meta %}
+                            <div>
                                                     <span>
                                                         {% if score_row.benchmark.meta.number_of_recording_sites %}
                                                             recordings from
@@ -164,150 +158,150 @@
                                                             {{ score_row.benchmark.meta.behavioral_task }} task
                                                         {% endif %}
                                                     </span>
-                                                    <br/>
-                                                    {% if score_row.benchmark.meta.number_of_images %}
-                                                        <span>
+                                <br/>
+                                {% if score_row.benchmark.meta.number_of_images %}
+                                <span>
                                                             {{ score_row.benchmark.meta.number_of_images }} images
                                                         </span>
-                                                        <br/>
-                                                    {% endif %}
-                                                </div>
-                                            {% endif %}
-                                            {# image samples #}
-                                            <div class="samples_container is-overflow-wrap">
-                                                {% for sample in '0123456789'|make_list %}
-                                                    <img class="stimulus_sample"
-                                                         src="/static/benchmarks/img/benchmark_samples/{{ score_row.versioned_benchmark_identifier }}/{{ sample }}.png"
-                                                         alt="sample {{ sample }}"/>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                                <br/>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {# image samples #}
+                            <div class="samples_container is-overflow-wrap">
+                                {% for sample in '0123456789'|make_list %}
+                                <img class="stimulus_sample"
+                                     src="/static/benchmarks/img/benchmark_samples/{{ score_row.versioned_benchmark_identifier }}/{{ sample }}.png"
+                                     alt="sample {{ sample }}"/>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+
+    {# BrainModel info #}
+    <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
+    <div class="content">
+        <div class="box has-background-info-light has-text-info">
+            Brain-Score operates on BrainModels. A BrainModel can be treated like an experimental subject, with
+            methods such as recording from a cortical region and performing a behavioral task (see the
+            <a href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html">docs</a>).
+
+            Many models submitted to Brain-Score are what we call a BaseModel. These are often variants of
+            models from the machine learning community without a particular commitment to the brain and no
+            knowledge of what e.g. "V1" is. To engage with these models and for ease-of-use, such BaseModels
+            are typically converted into BrainModels by making commitments to the brain such as committing
+            layers to cortical regions on separate datasets.
+        </div>
+
+        {# region-layer commitment #}
+        <div class="card">
+            <div class="card-content">
+                <p class="subtitle is-3">
+                    Layer Commitment
+                </p>
+
+                <div class="box has-background-info-light has-text-info">
+                    BaseModel layers have to be committed to cortical regions. For BaseModels that are automatically
+                    translated into BrainModels this is done on separate public data.
+                    The same layers are thus used when recording from the same cortical region, e.g. always the same
+                    layer for V1 instead of different layers per benchmark.
+                </div>
+
+                {% if layers %}
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Layer</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for region, layer in layers.items %}
+                    <tr>
+                        <th>{{ region }}</th>
+                        <td>{{ layer }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="notification">
+                    No layer commitments found for this model. Older submissions might not have stored this
+                    information but will be updated when evaluated on new benchmarks.
+                </div>
                 {% endif %}
-            {% endfor %}
+            </div>
         </div>
 
-
-        {# BrainModel info #}
-        <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
-        <div class="content">
-            <div class="box has-background-info-light has-text-info">
-                Brain-Score operates on BrainModels. A BrainModel can be treated like an experimental subject, with
-                methods such as recording from a cortical region and performing a behavioral task (see the
-                <a href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html">docs</a>).
-
-                Many models submitted to Brain-Score are what we call a BaseModel. These are often variants of
-                models from the machine learning community without a particular commitment to the brain and no
-                knowledge of what e.g. "V1" is. To engage with these models and for ease-of-use, such BaseModels
-                are typically converted into BrainModels by making commitments to the brain such as committing
-                layers to cortical regions on separate datasets.
-            </div>
-
-            {# region-layer commitment #}
-            <div class="card">
-                <div class="card-content">
-                    <p class="subtitle is-3">
-                        Layer Commitment
-                    </p>
-
-                    <div class="box has-background-info-light has-text-info">
-                        BaseModel layers have to be committed to cortical regions. For BaseModels that are automatically
-                        translated into BrainModels this is done on separate public data.
-                        The same layers are thus used when recording from the same cortical region, e.g. always the same
-                        layer for V1 instead of different layers per benchmark.
-                    </div>
-
-                    {% if layers %}
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Region</th>
-                                <th>Layer</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for region, layer in layers.items %}
-                                <tr>
-                                    <th>{{ region }}</th>
-                                    <td>{{ layer }}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="notification">
-                            No layer commitments found for this model. Older submissions might not have stored this
-                            information but will be updated when evaluated on new benchmarks.
-                        </div>
-                    {% endif %}
+        {# visual degrees #}
+        <div id="visual_degrees" class="card">
+            <div class="card-content">
+                <p class="subtitle is-3">
+                    Visual Angle (Degrees): {{ visual_degrees }}
+                </p>
+                <div class="box has-background-info-light has-text-info">
+                    Models have to declare their field-of-view so that stimuli can be displayed like they were
+                    displayed to experimental subjects.
+                    For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
+                    larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
+                    in the model's field-of-view.
                 </div>
-            </div>
 
-            {# visual degrees #}
-            <div id="visual_degrees" class="card">
-                <div class="card-content">
-                    <p class="subtitle is-3">
-                        Visual Angle (Degrees): {{ visual_degrees }}
-                    </p>
-                    <div class="box has-background-info-light has-text-info">
-                        Models have to declare their field-of-view so that stimuli can be displayed like they were
-                        displayed to experimental subjects.
-                        For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
-                        larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
-                        in the model's field-of-view.
+                {% if visual_degrees %}
+                <div class="columns">
+                    <div class="column">
+                        <p class="has-text-centered">Base image, presented at 8 degrees:</p>
+                        <figure class="image is-marginless is-256x256">
+                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
+                                 alt="visual degrees {{ visual_degrees }} to 8"/>
+                        </figure>
                     </div>
-
-                    {% if visual_degrees %}
-                        <div class="columns">
-                            <div class="column">
-                                <p class="has-text-centered">Base image, presented at 8 degrees:</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_8.png"
-                                         alt="visual degrees {{ visual_degrees }} to 8"/>
-                                </figure>
-                            </div>
-                            <div class="column">
-                                <p class="has-text-centered">If benchmark presents image at 4 degrees, model sees:</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
-                                         alt="visual degrees {{ visual_degrees }} to 4"/>
-                                </figure>
-                            </div>
-                            <div class="column">
-                                <p class="has-text-centered">If benchmark presents image at 12 degrees, model sees:</p>
-                                <figure class="image is-marginless is-256x256">
-                                    <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
-                                         alt="visual degrees {{ visual_degrees }} to 12"/>
-                                </figure>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="notification">
-                            No visual degrees found for this model. The submission might have failed.
-                        </div>
-                    {% endif %}
+                    <div class="column">
+                        <p class="has-text-centered">If benchmark presents image at 4 degrees, model sees:</p>
+                        <figure class="image is-marginless is-256x256">
+                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_4.png"
+                                 alt="visual degrees {{ visual_degrees }} to 4"/>
+                        </figure>
+                    </div>
+                    <div class="column">
+                        <p class="has-text-centered">If benchmark presents image at 12 degrees, model sees:</p>
+                        <figure class="image is-marginless is-256x256">
+                            <img src="/static/benchmarks/img/visual_degrees/{{ visual_degrees }}_to_12.png"
+                                 alt="visual degrees {{ visual_degrees }} to 12"/>
+                        </figure>
+                    </div>
                 </div>
+                {% else %}
+                <div class="notification">
+                    No visual degrees found for this model. The submission might have failed.
+                </div>
+                {% endif %}
             </div>
-
         </div>
 
-            {# Benchmarks bibtex #}
-        <h2 class="title-is-2">
+    </div>
+
+    {# Benchmarks bibtex #}
+    <h2 class="title-is-2">
             <span class="want_to_click collapsible_control is_collapsible"
                   data-initial="hidden" data-target="bibtex_collapsible"></span>
-            Benchmarks bibtex
-        </h2>
-        <div id="bibtex_collapsible" class="content">
-            <div class="box">
-                {% for bibtex in model.scores|scores_bibtex %}
-                    <pre>{{ bibtex }}</pre>
-                {% endfor %}
-            </div>
+        Benchmarks bibtex
+    </h2>
+    <div id="bibtex_collapsible" class="content">
+        <div class="box">
+            {% for bibtex in model.scores|scores_bibtex %}
+            <pre>{{ bibtex }}</pre>
+            {% endfor %}
         </div>
-    </section>
+    </div>
+</section>
 
 {% endblock %}
