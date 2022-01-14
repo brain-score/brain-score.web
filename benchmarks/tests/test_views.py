@@ -44,7 +44,7 @@ class TestModel(TestCase):
 
     def test_non_public_model(self):
         resp = self.client.get("http://localhost:8000/model/2")
-        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 200)
 
 
 class TestIdentifierVersionSplit(TestCase):
