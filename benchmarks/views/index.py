@@ -191,6 +191,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
             # show public only set for competition context. See competition.py get_context
             user_selection = dict(model__public=True)
         else:
+            # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
             user_selection = dict(score_ceiled__isnull=False)
     elif user.is_superuser:
         user_selection = dict()

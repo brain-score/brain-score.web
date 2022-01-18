@@ -4,17 +4,14 @@
 <section class="individual_model container center">
     {% if model.public %}
         <h1 class="title">{{ model.name }}</h1>
-        {% if model.reference_identifier %}
-            <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
-        {% endif %}
     {% else %}
-        <h1 class="title">Anonymous Submission</h1>
+        <h1 class="title">Anonymous Model</h1>
         <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>
     {% endif %}
 
     {% if submission_details_visible %}
         <div class="box">
-            <span class='fine_print'>The following information is only visible to you (the model owner) and the site admins, Martin and Mike:</span><br><br>
+            <span class='fine_print'>The following information is only visible to you (the model owner):</span><br><br>
             <span class='information'>Model Name:</span> {{ model.name }}<br>
             <span class='information'>Submission ID:</span> {{ model.submission_id }}<br>
             <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
@@ -75,6 +72,9 @@
     <br>
     {# Benchmark scores #}
     <h2 id="scores" class="title-is-2">Benchmark scores</h2>
+    <span class='fine_print'>
+       Model rank shown below is with respect to the main site (all submissions), not just the competition. <br>
+    </span>
     <div class="benchmark_scores">
         {% for score_row in model.scores %}
         {% if score_row.score_ceiled %}

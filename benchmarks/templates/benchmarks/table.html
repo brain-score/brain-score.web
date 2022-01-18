@@ -93,9 +93,9 @@
                 <td class="score_cell"><strong>{{ model.rank }}</strong></td>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                         <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
+                        <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
                             {% if not model.public and model.competition is not None %}
-                                    Anonymous Submission
+                                Anonymous Submission
                             {% else %}
                                 {{ model.name }}
                             {% endif %}
