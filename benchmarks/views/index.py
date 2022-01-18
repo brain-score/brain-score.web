@@ -34,10 +34,10 @@ def view(request):
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, benchmark_filter=None, model_filter=None):
+def get_context(user=None, benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(benchmarks, user, score_filter=model_filter)
+    model_rows = _collect_models(benchmarks, show_public, user, score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -181,13 +181,18 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(benchmarks, user=None, score_filter=None):
+def _collect_models(benchmarks, show_public, user=None, score_filter=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
     # Remove all non-public model scores, but allow users to see their own models in the table.
     if user is None:  # if we are not in a user profile, only show rows that are public
-        user_selection = dict(model__public=True)
+        if not show_public:
+            # show public only set for competition context. See competition.py get_context
+            user_selection = dict(model__public=True)
+        else:
+            # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
+            user_selection = dict(score_ceiled__isnull=False)
     elif user.is_superuser:
         user_selection = dict()
     else:

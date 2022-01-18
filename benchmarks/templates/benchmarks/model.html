@@ -2,17 +2,30 @@
 
 {% block content %}
 <section class="individual_model container center">
-    <h1 class="title">{{ model.name }}</h1>
-    {% if model.reference_identifier %}
-        <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+    {% if model.public %}
+        <h1 class="title">{{ model.name }}</h1>
+    {% else %}
+        <h1 class="title">Anonymous Model</h1>
+            {% if model.competition is None %}
+{#                Edge case where model is not public and not competittion. Should not be able to get here, #}
+{#                but this protects against hardcoding the URL #}
+                <span class='information'>This model was submitted to Brain-Score, but was not made public.</span><br>
+            {% else %}
+                <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>
+            {% endif %}
+
     {% endif %}
 
     {% if submission_details_visible %}
         <div class="box">
-            <span class='fine_print'>The following information is only visible to you:</span><br><br>
+            <span class='fine_print'>The following information is only visible to you (the model owner):</span><br><br>
+            <span class='information'>Model Name:</span> {{ model.name }}<br>
             <span class='information'>Submission ID:</span> {{ model.submission_id }}<br>
             <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
             <span class='information'>Submitted On:</span> {{ model.timestamp }}<br>
+            {% if model.reference_identifier %}
+                <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+            {% endif %}
             <div class="build_status">
                 {% if model.build_status is not None %}
                     {% if model.build_status == "successful" %}
@@ -27,8 +40,8 @@
                     {% else %}
                         <span class='information'>Build Status:</span> <span class="build_failed">Failed</span><br>
                         <span class='fine_print'>
-                        Warning: This model's build status is shown as having failed; this error might be irrelevant <br>
-                        to results, but reach out to us to confirm the results are legitimate.
+                        Warning: sometimes the build status shows up as failed even though your model
+                        has been scored on all benchmarks. Please check the log to make sure everything has run properly.
                         </span>
                     {% endif %}
                 {% else %}
@@ -65,6 +78,9 @@
     <br>
     {# Benchmark scores #}
     <h2 id="scores" class="title-is-2">Benchmark scores</h2>
+    <span class='fine_print'>
+       Model rank shown below is with respect to the main site (all submissions), not just the competition. <br>
+    </span>
     <div class="benchmark_scores">
         {% for score_row in model.scores %}
         {% if score_row.score_ceiled %}

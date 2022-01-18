@@ -12,6 +12,7 @@ from ..models import BenchmarkType, Model
 
 _logger = logging.getLogger(__name__)
 
+
 def view(request, id: int):
     model, model_context, reference_context = determine_context(id, request)
 
@@ -37,9 +38,10 @@ def view(request, id: int):
 
 
 def determine_context(id, request):
+
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
-    reference_context = get_context(None)  # public models
+    reference_context = get_context(show_public=True)
     # first check if model is in public list
     model_context = reference_context
     model = [m for m in reference_context['models'] if m.id == id]

@@ -19,7 +19,7 @@ def view(request):
         base_filter = lambda benchmarks: benchmarks.exclude(identifier__in=['engineering', 'dicarlo.Kar2019-ost'])
         benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
         key_context = get_context(benchmark_filter=benchmark_filter,
-                                  model_filter=dict(model__competition='cosyne2022'))
+                                  model_filter=dict(model__competition='cosyne2022'), show_public=True)
         key_context[f"benchmarks_{key}"] = key_context['benchmarks']
         key_context[f"models_{key}"] = key_context['models']
         del key_context['benchmarks'], key_context['models']
