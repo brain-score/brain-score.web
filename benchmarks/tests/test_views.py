@@ -43,6 +43,7 @@ class TestModel(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_non_public_model(self):
+        # test no returns 200 after competition update (model publicity schema is changed)
         resp = self.client.get("http://localhost:8000/model/2")
         self.assertEqual(resp.status_code, 200)
 

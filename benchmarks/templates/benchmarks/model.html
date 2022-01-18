@@ -6,7 +6,14 @@
         <h1 class="title">{{ model.name }}</h1>
     {% else %}
         <h1 class="title">Anonymous Model</h1>
-        <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>
+            {% if model.competition is None %}
+{#                Edge case where model is not public and not competittion. Should not be able to get here, #}
+{#                but this protects against hardcoding the URL #}
+                <span class='information'>This model was submitted to Brain-Score, but was not made public.</span><br>
+            {% else %}
+                <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>
+            {% endif %}
+
     {% endif %}
 
     {% if submission_details_visible %}
@@ -35,7 +42,6 @@
                         <span class='fine_print'>
                         Warning: sometimes the build status shows up as failed even though your model
                         has been scored on all benchmarks. Please check the log to make sure everything has run properly.
-
                         </span>
                     {% endif %}
                 {% else %}
