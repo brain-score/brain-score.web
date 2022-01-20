@@ -30,11 +30,11 @@ color_None = '#e0e1e2'
 
 @cache_page(24 * 60 * 60)
 def view(request):
-    context = get_context()
+    context = get_context(request=request)
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, benchmark_filter=None, model_filter=None, show_public=False):
+def get_context(user=None, benchmark_filter=None, model_filter=None, show_public=False, request=None):
     benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(benchmarks, show_public, user, score_filter=model_filter)
@@ -67,11 +67,11 @@ def get_context(user=None, benchmark_filter=None, model_filter=None, show_public
     submittable_benchmarks = None
     if user is not None:
         submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
-
+    
     return {'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
-            "comparison_data": json.dumps(comparison_data)}
+            "comparison_data": json.dumps(comparison_data), "request": request}
 
 
 def _collect_benchmarks(user_page=False, benchmark_filter=None):
