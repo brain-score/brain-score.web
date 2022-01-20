@@ -69,7 +69,7 @@ def get_context(user=None, benchmark_filter=None, model_filter=None, show_public
     submittable_benchmarks = None
     if user is not None:
         submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
-
+    
     return {'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
@@ -472,6 +472,25 @@ def _build_comparison_data(models):
     return data
 
 
+# controls how model name and submitter appear on leaderboard:
+def get_visibility(model, user):
+
+    # Handles private competition models:
+    if (not model.public) and (model.competition is not None):
+
+        # Model is a private competition model, and user is logged in (or superuser)
+        if (user is not None) and (user.is_superuser or model.user.id == user.id):
+            return "private_owner"
+
+        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
+        else:
+            return "private_not_owner"
+
+    # Model is public
+    else:
+        return "public"
+
+
 # Adds python functions so the HTML can do several things
 @register.filter
 def get_item(dictionary, key):
@@ -532,3 +551,28 @@ def format_score(score):
         return f"{score:.3f}"
     except:  # e.g. 'X'
         return score
+
+
+@register.filter
+def display_model(model, user):
+
+    visibility = get_visibility(model, user)
+    if visibility is "private_owner":
+        return model.name
+    elif visibility == "private_not_owner":
+        return f"Model #{model.id}"
+    else:
+        return model.name
+
+
+# controls the way model submitter appears (name vs Anonymous Submitter) in table
+@register.filter
+def display_submitter(model, user):
+
+    visibility = get_visibility(model, user)
+    if visibility is "private_owner":
+        return model.user.display_name
+    elif visibility == "private_not_owner":
+        return "Anonymous Submitter"
+    else:
+        return model.user.display_name
