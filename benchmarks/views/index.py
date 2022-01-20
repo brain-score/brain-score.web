@@ -1,10 +1,12 @@
 import json
 import logging
-import numpy as np
-import pandas as pd
 import re
 from collections import ChainMap
 from collections import namedtuple
+
+import itertools
+import numpy as np
+import pandas as pd
 from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
@@ -239,6 +241,15 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
                 children_scores = scores[scores['benchmark'].isin(benchmark.children)]
                 # guard against multiple scores for one combination of (benchmark, version, model)
                 children_scores = children_scores.drop_duplicates()
+                # fill in models that don't have a score
+                combinatorial_model_benchmark_set = set(itertools.product(
+                    set(children_scores['model']), benchmark.children))  # the full combination of models x benchmarks
+                actual_model_benchmark_set = set(zip(children_scores['model'], children_scores['benchmark']))
+                missing_scores = combinatorial_model_benchmark_set - actual_model_benchmark_set
+                if len(missing_scores) > 0:
+                    missing_scores = pd.DataFrame(missing_scores, columns=['model', 'benchmark'])
+                    missing_scores['score_raw'] = missing_scores['score_ceiled'] = np.nan
+                    children_scores = pd.concat((children_scores, missing_scores))
                 # compute average of children scores
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean()
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
