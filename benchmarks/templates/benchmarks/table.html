@@ -94,8 +94,12 @@
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
                         <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                            {% if  (model.public and model.competition) or (request and (request.user.is_superuser or model.user.id == request.user.id)) %}
+                            {% if model.public and model.competition}
                                 {{ model.name }}
+                            {% elif request %}
+                                {% if request.user.is_superuser or model.user.id == request.user.id}
+                                    {{ model.name }}
+                                {% endif %}
                             {% else %}
                                 Anonymous Submission
                             {% endif %}
