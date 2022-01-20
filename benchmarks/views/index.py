@@ -532,3 +532,43 @@ def format_score(score):
         return f"{score:.3f}"
     except:  # e.g. 'X'
         return score
+
+
+# controls the way model name appears (name vs model ID) in table
+@register.filter
+def display_model(model, user):
+
+    # Handles private competition models:
+    if (not model.public) and (model.competition is not None):
+
+        # Model is a private competition model, and user is logged in (or superuser)
+        if (user is not None) and (user.is_superuser or model.user.id == user.id):
+            return model.name
+
+        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
+        else:
+            return f"Model #{model.id}"
+
+    # Model is public
+    else:
+        return model.name
+
+
+# controls the way model submitter appears (name vs Anonymous Submitter) in table
+@register.filter
+def display_submitter(model, user):
+
+    # Handles private competition models:
+    if (not model.public) and (model.competition is not None):
+
+        # Model is a private competition model, and user is logged in (or superuser)
+        if (user is not None) and (user.is_superuser or model.user.id == user.id):
+            return model.user.display_name
+
+        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
+        else:
+            return "Anonymous Submitter"
+
+    # Model is public
+    else:
+        return model.user.display_name
