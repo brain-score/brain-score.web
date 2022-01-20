@@ -472,6 +472,25 @@ def _build_comparison_data(models):
     return data
 
 
+# controls how model name and submitter appear on leaderboard:
+def get_visibility(model, user):
+
+    # Handles private competition models:
+    if (not model.public) and (model.competition is not None):
+
+        # Model is a private competition model, and user is logged in (or superuser)
+        if (user is not None) and (user.is_superuser or model.user.id == user.id):
+            return "private_owner"
+
+        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
+        else:
+            return "private_not_owner"
+
+    # Model is public
+    else:
+        return "public"
+
+
 # Adds python functions so the HTML can do several things
 @register.filter
 def get_item(dictionary, key):
@@ -534,22 +553,14 @@ def format_score(score):
         return score
 
 
-# controls the way model name appears (name vs model ID) in table
 @register.filter
 def display_model(model, user):
 
-    # Handles private competition models:
-    if (not model.public) and (model.competition is not None):
-
-        # Model is a private competition model, and user is logged in (or superuser)
-        if (user is not None) and (user.is_superuser or model.user.id == user.id):
-            return model.name
-
-        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
-        else:
-            return f"Model #{model.id}"
-
-    # Model is public
+    visibility = get_visibility(model, user)
+    if visibility is "private_owner":
+        return model.name
+    elif visibility == "private_not_owner":
+        return f"Model #{model.id}"
     else:
         return model.name
 
@@ -558,17 +569,10 @@ def display_model(model, user):
 @register.filter
 def display_submitter(model, user):
 
-    # Handles private competition models:
-    if (not model.public) and (model.competition is not None):
-
-        # Model is a private competition model, and user is logged in (or superuser)
-        if (user is not None) and (user.is_superuser or model.user.id == user.id):
-            return model.user.display_name
-
-        # Model is a private competition model, and user is NOT logged in (or NOT superuser)
-        else:
-            return "Anonymous Submitter"
-
-    # Model is public
+    visibility = get_visibility(model, user)
+    if visibility is "private_owner":
+        return model.user.display_name
+    elif visibility == "private_not_owner":
+        return "Anonymous Submitter"
     else:
         return model.user.display_name
