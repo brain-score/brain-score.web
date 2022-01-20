@@ -95,21 +95,28 @@
                     <div class="identifier" title="{{ model.reference_identifier }}">
                         <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
                             {% if not model.public and model.competition is not None %}
-                                Anonymous Submission
+                                {# Model is a private competition model, and user is logged in (or superuser) #}
+                                {% if request.user is not None and request.user.is_superuser or model.user.id == request.user.id %}
+                                    {{ model.name }}
+                                {# Model is a private competition model, and user is NOT logged in (or NOT superuser) #}
+                                {% else %}
+                                    Model #{{model.id}}
+                                {% endif %}
+                            {# Model is public #}
                             {% else %}
                                 {{ model.name }}
                             {% endif %}
                         </a>
                     </div>
                     <div class="submitter">
-                        {% if model.user.display_name is not None %}
-                            {% if not model.public and model.competition is not None %}
-                                &nbsp;
-                            {% else %}
+                        {% if not model.public and model.competition is not None %}
+                            {% if request.user is not None and request.user.is_superuser or model.user.id == request.user.id %}
                                 {{ model.user.display_name }}
+                            {% else %}
+                                Anonymous Submitter
                             {% endif %}
                         {% else %}
-                            &nbsp;
+                            {{ model.user.display_name }}
                         {% endif %}
                     </div>
                 </td>

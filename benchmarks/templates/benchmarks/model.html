@@ -5,7 +5,7 @@
     {% if model.public %}
         <h1 class="title">{{ model.name }}</h1>
     {% else %}
-        <h1 class="title">Anonymous Model</h1>
+        <h1 class="title">Anonymous Model #{{ model.id }}</h1>
             {% if model.competition is None %}
 {#                Edge case where model is not public and not competittion. Should not be able to get here, #}
 {#                but this protects against hardcoding the URL #}
