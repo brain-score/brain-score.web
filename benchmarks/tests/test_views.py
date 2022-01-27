@@ -17,7 +17,7 @@ class TestTable(TestCase):
     def test_num_rows(self):
         resp = self.client.get("http://localhost:8000/")
         content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr>")
+        num_rows = content.count("<tr")
         self.assertEqual(num_rows, 1 + 78)
 
 
@@ -31,8 +31,16 @@ class TestCompetitionTable(TestCase):
     def test_num_rows(self):
         resp = self.client.get("http://localhost:8000/competition/")
         content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr>")
-        self.assertEqual(num_rows, (1 + 4) * 3)  # header, 4 different users, 3 tracks
+        num_rows = content.count("<tr")
+        self.assertEqual(num_rows, (1 + 9) * 3)  # header, 9 different models, 3 tracks
+
+    def test_num_secondary_models(self):
+        resp = self.client.get("http://localhost:8000/competition/")
+        content = resp.content.decode('utf-8')
+        num_rows = content.count("is-secondary-model")
+        num_total_models = 9 * 3  # 9 different models, 3 tracks
+        num_primary_models = 4 * 3  # 4 different users, 3 tracks
+        self.assertEqual(num_rows, num_total_models - num_primary_models)
 
 
 class TestModel(TestCase):
