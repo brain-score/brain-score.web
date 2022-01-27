@@ -1,11 +1,11 @@
 [
   {
     "model": "benchmarks.user",
-    "pk": 1,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
       "is_superuser": false,
+      "display_name": "Martin Schrimpf",
       "email": "martin.schrimpf@outlook.com",
       "is_staff": false,
       "is_active": true,
@@ -15,11 +15,11 @@
   },
   {
     "model": "benchmarks.user",
-    "pk": 2,
     "fields": {
       "password": "pbkdf2_sha256$180000$ueydqZC2tIce$R+guoaYWT2xEQPaTVrOnQyD/V1+3YYc6lzr2lyl6wuY=",
       "last_login": "2020-07-17T18:42:42.594Z",
-      "is_superuser": true,
+      "is_superuser": false,
+      "display_name": "Franzi Geiger",
       "email": "franzi@example.com",
       "is_staff": true,
       "is_active": true,
@@ -28,25 +28,31 @@
     }
   },
   {
-   "model" :  "benchmarks.submission",
-    "pk" : 33,
-    "fields" : {
-      "timestamp": "2018-09-01 12:00:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Mary Smith",
+      "email": "itsmeauser@me.com",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
     }
-
   },
   {
-   "model" :  "benchmarks.submission",
-    "pk" : 34,
-    "fields" : {
-      "timestamp": "2018-09-01 12:00:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": null,
+      "email": "anotheruser@email.com",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
     }
-
   }
 ]
