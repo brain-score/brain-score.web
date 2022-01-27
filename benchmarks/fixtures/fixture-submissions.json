@@ -14,7 +14,7 @@
   },
  {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 2,
     "fields": {
       "submitter": [
         "franzi@example.com"
@@ -28,7 +28,7 @@
 
  {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 3,
     "fields": {
       "submitter": [
         "martin.schrimpf@outlook.com"
@@ -41,7 +41,7 @@
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 4,
     "fields": {
       "submitter": [
         "martin.schrimpf@outlook.com"
@@ -54,7 +54,7 @@
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 5,
     "fields": {
       "submitter": [
         "franzi@example.com"
@@ -67,7 +67,7 @@
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 6,
     "fields": {
       "submitter": [
         "martin.schrimpf@outlook.com"
@@ -80,7 +80,7 @@
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 7,
     "fields": {
       "submitter": [
         "franzi@example.com"
@@ -93,7 +93,7 @@
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk" : 8,
     "fields": {
       "submitter": [
         "martin.schrimpf@outlook.com"
@@ -101,6 +101,26 @@
       "timestamp": "2021-03-31 16:00:00",
       "model_type" : "BrainModel",
       "status":  "running",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model" :  "benchmarks.submission",
+    "pk" : 33,
+    "fields" : {
+      "timestamp": "2018-09-01 12:00:00",
+      "model_type" : "BaseModel",
+      "status" : "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model" :  "benchmarks.submission",
+    "pk" : 34,
+    "fields" : {
+      "timestamp": "2018-09-01 12:00:00",
+      "model_type" : "BaseModel",
+      "status" : "successful",
       "submitter_id" : 2
     }
   }

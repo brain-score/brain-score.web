@@ -139,7 +139,7 @@
       ],
       "model": [
         "vggface",
-        "martin.schrimpf@outlook.com"
+        "anotheruser@email.com"
       ]
     }
   },
@@ -571,7 +571,7 @@
       ],
       "model": [
         "squeezenet1_0",
-        "martin.schrimpf@outlook.com"
+        "franzi@example.com"
       ]
     }
   },
@@ -715,7 +715,7 @@
       ],
       "model": [
         "squeezenet1_1",
-        "martin.schrimpf@outlook.com"
+        "franzi@example.com"
       ]
     }
   },
