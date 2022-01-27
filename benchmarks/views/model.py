@@ -38,7 +38,6 @@ def view(request, id: int):
 
 
 def determine_context(id, request):
-
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
     reference_context = get_context(show_public=True)

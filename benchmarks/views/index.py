@@ -555,9 +555,8 @@ def format_score(score):
 
 @register.filter
 def display_model(model, user):
-
     visibility = get_visibility(model, user)
-    if visibility is "private_owner":
+    if visibility == "private_owner":
         return model.name
     elif visibility == "private_not_owner":
         return f"Model #{model.id}"
@@ -568,11 +567,10 @@ def display_model(model, user):
 # controls the way model submitter appears (name vs Anonymous Submitter) in table
 @register.filter
 def display_submitter(model, user):
-
     visibility = get_visibility(model, user)
-    if visibility is "private_owner":
+    if visibility == "private_owner":
         return model.user.display_name
     elif visibility == "private_not_owner":
-        return "Anonymous Submitter"
+        return f"Anonymous Submitter #{model.user.id}"
     else:
         return model.user.display_name
