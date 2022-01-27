@@ -61,7 +61,7 @@
         "franzi@example.com"
       ],
       "public": "True",
-      "competition": null,
+      "competition": "cosyne2022",
       "submission_id" : 33,
       "visual_degrees":  8
     }
@@ -77,7 +77,7 @@
         "franzi@example.com"
       ],
       "public": "True",
-      "competition": null,
+      "competition": "cosyne2022",
       "submission_id" : 33,
       "visual_degrees":  8
     }
@@ -106,7 +106,7 @@
         "https://arxiv.org/abs/1512.03385"
       ],
       "owner": [
-        "martin.schrimpf@outlook.com"
+        "itsmeauser@me.com"
       ],
       "public": "True",
       "competition": "cosyne2022",
@@ -125,7 +125,7 @@
         "itsmeauser@me.com"
       ],
       "public": "True",
-      "competition": "cosyne2022",
+      "competition": null,
       "submission_id" : 34,
       "visual_degrees":  8
     }
@@ -154,7 +154,7 @@
         "https://arxiv.org/abs/1409.1556"
       ],
       "owner": [
-        "martin.schrimpf@outlook.com"
+        "anotheruser@email.com"
       ],
       "public": "True",
       "competition": "cosyne2022",

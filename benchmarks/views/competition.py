@@ -40,9 +40,9 @@ def view(request):
 def group_by_user(context):
     models = context['models']
     # group
-    submitters = [m.submitter.email +
+    submitters = [m.user.email +
                   # append random string to superuser to treat baselines as coming from separate users
-                  (''.join(random.choices(string.ascii_uppercase, k=3)) if m.submitter.is_superuser else '')
+                  (''.join(random.choices(string.ascii_uppercase, k=3)) if m.user.is_superuser else '')
                   for m in models]
     unique_submitters, unique_indices = unique_in_order(submitters, return_index=True)
     top_models = itemgetter(*unique_indices)(models)
@@ -52,9 +52,9 @@ def group_by_user(context):
         top_model = top_model._replace(rank=rank)
         # find secondary models that also belong to this user
         secondary_models = [model for model in models
-                            if model.submitter == top_model.submitter
+                            if model.user == top_model.user
                             and model.id != top_model.id
-                            and not model.submitter.is_superuser]
+                            and not model.user.is_superuser]
         # add count to model row
         model_dict = top_model._asdict()
         TopModel = namedtuple('TopModel', list(model_dict.keys()) + ['num_secondary_models'])

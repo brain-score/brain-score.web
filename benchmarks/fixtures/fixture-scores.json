@@ -336,8 +336,7 @@
         2
       ],
       "model": [
-        "resnet-34",
-        "martin.schrimpf@outlook.com"
+        "resnet-34"
       ]
     }
   },
@@ -786,8 +785,7 @@
         2
       ],
       "model": [
-        "vgg-16",
-        "martin.schrimpf@outlook.com"
+        "vgg-16"
       ]
     }
   },
