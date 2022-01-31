@@ -104,7 +104,7 @@
                         </a>
                     </div>
                     <div class="submitter">
-                        {{ model|display_submitter:user }}
+                        {{ model|display_submitter:user|default:"&nbsp;" }}
                     </div>
 
                     {% if not model.primary_model_id and model.num_secondary_models %}
