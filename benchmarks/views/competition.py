@@ -23,7 +23,7 @@ def view(request):
         benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
         key_context = get_context(benchmark_filter=benchmark_filter,
                                   model_filter=dict(model__competition='cosyne2022'), show_public=True)
-        group_by_user(key_context)
+        key_context['models'] = group_by_user(key_context['models'])
         key_context[f"benchmarks_{key}"] = key_context['benchmarks']
         key_context[f"models_{key}"] = key_context['models']
         del key_context['benchmarks'], key_context['models']
@@ -37,8 +37,7 @@ def view(request):
     return render(request, 'benchmarks/competition.html', context)
 
 
-def group_by_user(context):
-    models = context['models']
+def group_by_user(models):
     # group
     submitters = [m.user.email +
                   # append random string to superuser to treat baselines as coming from separate users
@@ -49,12 +48,14 @@ def group_by_user(context):
     # re-rank
     reranked_models = []
     for rank, top_model in enumerate(top_models, start=1):
-        top_model = top_model._replace(rank=rank)
         # find secondary models that also belong to this user
         secondary_models = [model for model in models
                             if model.user == top_model.user
                             and model.id != top_model.id
                             and not model.user.is_superuser]
+        # if any of the models is set to private, we have to set everything to private to avoid revealing identities
+        all_public = top_model.public and all(secondary_model.public for secondary_model in secondary_models)
+        top_model = top_model._replace(rank=rank, public=all_public)
         # add count to model row
         model_dict = top_model._asdict()
         TopModel = namedtuple('TopModel', list(model_dict.keys()) + ['num_secondary_models'])
@@ -62,13 +63,13 @@ def group_by_user(context):
         reranked_models.append(top_model)
         # append secondary models
         for secondary_model in secondary_models:
-            secondary_model = secondary_model._replace(rank='')
+            secondary_model = secondary_model._replace(rank='', public=all_public)
             model_dict = secondary_model._asdict()
             SecondaryModel = namedtuple('SecondaryModel', list(model_dict.keys()) + ['primary_model_id'])
             secondary_model = SecondaryModel(*(list(model_dict.values()) + [top_model.id]))
             reranked_models.append(secondary_model)
 
-    context['models'] = reranked_models
+    return reranked_models
 
 
 def create_stimuli_samples(benchmark_instances, num_samples, available_sample_per_benchmark=30):
