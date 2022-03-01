@@ -43,10 +43,6 @@ class UploadFileForm(forms.Form):
     public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
                                 help_text='Check if you want the results of your submitted models included in the public ranking.')
 
-    competition = forms.BooleanField(label="Participate in Cosyne 2022 Competition?",required=False, initial=True,
-                                     help_text='Check if you want to submit your models to the 2022 Brain-Score '
-                                               'competition. Read more here: https://brain-score.org/competition')
-
     class Meta:
         model = UploadPlaceHolder
         fields = ('zip_file', 'public', 'competition')
