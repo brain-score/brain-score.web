@@ -4,6 +4,9 @@
 <section class="individual_model container center">
     {% if model.public %}
         <h1 class="title">{{ model.name }}</h1>
+        {% if model.reference_identifier %}
+            <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
+        {% endif %}
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
             {% if model.competition is None %}
@@ -13,7 +16,6 @@
             {% else %}
                 <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>
             {% endif %}
-
     {% endif %}
 
     {% if submission_details_visible %}
@@ -23,9 +25,6 @@
             <span class='information'>Submission ID:</span> {{ model.submission_id }}<br>
             <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
             <span class='information'>Submitted On:</span> {{ model.timestamp }}<br>
-            {% if model.reference_identifier %}
-                <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
-            {% endif %}
             <div class="build_status">
                 {% if model.build_status is not None %}
                     {% if model.build_status == "successful" %}
@@ -73,7 +72,6 @@
                 {% endif %}
             {% endif %}
         </div>
-    {%  else %}
     {% endif %}
     <br>
     {# Benchmark scores #}
