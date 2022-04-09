@@ -168,10 +168,16 @@ def resubmit(request):
         elif key.startswith('benchmark_selection_'):
             # value is benchmark_type_id (un-versioned)
             benchmarks.append(value)
-    if len(model_ids) > 0 and len(benchmarks) > 0:
+    if len(model_ids) == 0 or len(benchmarks) == 0:
+        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
+
+    # submit each model_id separately, for two reasons:
+    # 1. model_ids from different submissions might have conflicting dependencies
+    # 2. parallelizing the runs across multiple jobs
+    for model_id in model_ids:
         json_info = {
             "user_id": request.user.id,
-            "model_ids": model_ids,
+            "model_ids": [model_id],
         }
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
@@ -181,8 +187,7 @@ def resubmit(request):
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
         job_name = "run_benchmarks"
-        s = ' '
-        benchmark_string = s.join(benchmarks)
+        benchmark_string = ' '.join(benchmarks)
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.get_full_name()}" \
@@ -195,9 +200,7 @@ def resubmit(request):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-        return render(request, 'benchmarks/success.html')
-    else:
-        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
+    return render(request, 'benchmarks/success.html')
 
 
 class DisplayName(View):
@@ -255,10 +258,10 @@ class Password(View):
             token = account_activation_token.make_token(user)
             activation_link = f"{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
-                      f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
-                      f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
-                      f"Thanks,\n"
-                      f"The Brain-Score Team")
+                       f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
+                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
+                       f"Thanks,\n"
+                       f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             return render(request, 'benchmarks/password-confirm.html')
