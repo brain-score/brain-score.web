@@ -13,13 +13,51 @@ NUM_STIMULI_SAMPLES = 150
 
 def view(request):
     context = {'leaderboard_keys': ['average', 'V1', 'behavior']}
+    # specify exact set of benchmarks used in this competition (brain benchmarks only, ignore temporal benchmark)
+    # A problem with this filter is that it only filters for the benchmark type, but not the *instance*.
+    # I.e., if a benchmark is updated with a new version, this call will still use the newest version rather than
+    # the version at the time of the competition.
+    included_benchmarks = [
+        'average',
+        'V1',
+        'movshon.FreemanZiemba2013.V1-pls',
+        'dicarlo.Marques2020', 'V1-orientation', 'V1-spatial_frequency', 'V1-response_selectivity',
+        'V1-receptive_field_size', 'V1-surround_modulation', 'V1-texture_modulation', 'V1-response_magnitude'
+                                                                                      'dicarlo.Marques2020_Ringach2002-circular_variance',
+        'dicarlo.Marques2020_Ringach2002-or_bandwidth', 'dicarlo.Marques2020_Ringach2002-orth_pref_ratio',
+        'dicarlo.Marques2020_Ringach2002-or_selective', 'dicarlo.Marques2020_Ringach2002-cv_bandwidth_ratio',
+        'dicarlo.Marques2020_Ringach2002-opr_cv_diff', 'dicarlo.Marques2020_DeValois1982-pref_or',
+        'dicarlo.Marques2020_DeValois1982-peak_sf', 'dicarlo.Marques2020_Schiller1976-sf_selective',
+        'dicarlo.Marques2020_Schiller1976-sf_bandwidth', 'dicarlo.Marques2020_Cavanaugh2002-grating_summation_field',
+        'dicarlo.Marques2020_Cavanaugh2002-surround_diameter',
+        'dicarlo.Marques2020_Cavanaugh2002-surround_suppression_index',
+        'dicarlo.Marques2020_FreemanZiemba2013-texture_modulation_index',
+        'dicarlo.Marques2020_FreemanZiemba2013-abs_texture_modulation_index',
+        'dicarlo.Marques2020_FreemanZiemba2013-texture_selectivity',
+        'dicarlo.Marques2020_FreemanZiemba2013-texture_sparseness',
+        'dicarlo.Marques2020_FreemanZiemba2013-texture_variance_ratio', 'dicarlo.Marques2020_Ringach2002-max_dc',
+        'dicarlo.Marques2020_Ringach2002-modulation_ratio', 'dicarlo.Marques2020_FreemanZiemba2013-max_texture',
+        'dicarlo.Marques2020_FreemanZiemba2013-max_noise',
+        'V2',
+        'movshon.FreemanZiemba2013.V2-pls',
+        'V4',
+        'dicarlo.MajajHong2015.V4-pls', 'dicarlo.Sanghavi2020.V4-pls', 'dicarlo.SanghaviJozwik2020.V4-pls',
+        'dicarlo.SanghaviMurty2020.V4-pls',
+        'IT',
+        'dicarlo.MajajHong2015.IT-pls', 'dicarlo.Sanghavi2020.IT-pls', 'dicarlo.SanghaviJozwik2020.IT-pls',
+        'dicarlo.SanghaviMurty2020.IT-pls',
+        'behavior',
+        'dicarlo.Rajalingham2018-i2n',
+    ]
+    assert len(included_benchmarks) == 33 + len(
+        ['average', 'V1', 'V2', 'V4', 'IT', 'behavior', 'dicarlo.Marques2020']) + 6  # (Marques 2nd level)
+    base_filter = lambda benchmarks: benchmarks.filter(identifier__in=included_benchmarks)
+    # further filter for each track
     for key, selection_filter in [
         ('V1', lambda benchmarks: benchmarks.exclude(identifier__in=['V2', 'V4', 'IT', 'behavior'])),
         ('behavior', lambda benchmarks: benchmarks.exclude(identifier__in=['V1', 'V2', 'V4', 'IT'])),
         ('average', lambda benchmarks: benchmarks),  # average last to have full set of adjacent variables in context
     ]:
-        # brain benchmarks only, ignore temporal benchmark
-        base_filter = lambda benchmarks: benchmarks.exclude(identifier__in=['engineering', 'dicarlo.Kar2019-ost'])
         benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
         key_context = get_context(benchmark_filter=benchmark_filter,
                                   model_filter=dict(model__competition='cosyne2022'), show_public=True)
