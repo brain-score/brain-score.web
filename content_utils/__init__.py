@@ -92,11 +92,12 @@ def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
     stimulus_set.identifier = 'visual_degrees_base'
     for visual_degrees in visual_degrees_samples:
         converted_stimulus_set = place_on_screen(stimulus_set,
-                                                 source_visual_degrees=8,
-                                                 target_visual_degrees=visual_degrees)
+                                                 source_visual_degrees=visual_degrees,
+                                                 target_visual_degrees=base_degrees)
         converted_path = converted_stimulus_set.get_image('base')
-        target_path = static_directory / 'visual_degrees' / f"{base_degrees}_to_{visual_degrees}.png"
+        target_path = static_directory / 'visual_degrees' / f"benchmark{visual_degrees}_model{base_degrees}.png"
         converted_image = Image.open(converted_path)
+        _logger.debug(f"Saving to {target_path}")
         converted_image.save(target_path)
 
 
