@@ -50,7 +50,7 @@ def view(request):
         'dicarlo.Rajalingham2018-i2n',
     ]
     assert len(included_benchmarks) == 33 + len(
-        ['average', 'V1', 'V2', 'V4', 'IT', 'behavior', 'dicarlo.Marques2020']) + 6  # (Marques 2nd level)
+        ['average', 'V1', 'V2', 'V4', 'IT', 'behavior', 'dicarlo.Marques2020']) + 7  # (Marques 2nd level)
     base_filter = lambda benchmarks: benchmarks.filter(identifier__in=included_benchmarks)
     # further filter for each track
     for key, selection_filter in [
