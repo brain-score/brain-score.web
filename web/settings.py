@@ -56,7 +56,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = email_secrets["host"]
 EMAIL_PORT = 587
 EMAIL_HOST_USER = email_secrets["address"]
-EMAIL_HOST_PASSWORD = email_secrets["password"]
+EMAIL_HOST_PASSWORD = email_secrets["django_gmail_password"]
 
 LOGOUT_REDIRECT_URL = '/'
 
