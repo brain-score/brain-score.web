@@ -51,7 +51,7 @@ ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.ela
 try:
     email_secrets = get_secret("brainscore-email", REGION_NAME)
 except NoCredentialsError:
-    email_secrets = {'host': None, 'address': None, 'password': None}
+    email_secrets = {'host': None, 'address': None, 'password': None, 'django_gmail_password': None}
 EMAIL_USE_TLS = True
 EMAIL_HOST = email_secrets["host"]
 EMAIL_PORT = 587
