@@ -70,11 +70,11 @@ def sample_benchmark_images(num_samples: int = 30, max_height: int = 90, replace
             pass
         stimuli = image_storer.stimuli
         random_state = RandomState(len(stimuli))  # seed with number of stimuli to pick different indices per benchmark
-        sample_image_ids = random_state.choice(stimuli['image_id'],
+        sample_stimulus_ids = random_state.choice(stimuli['stimulus_id'],
                                                size=num_samples,
                                                replace=False if len(stimuli) >= num_samples else True)
-        for sample_number, image_id in enumerate(sample_image_ids):
-            source_path = Path(stimuli.get_image(image_id))
+        for sample_number, stimulus_id in enumerate(sample_stimulus_ids):
+            source_path = Path(stimuli.get_stimulus(stimulus_id))
             image = Image.open(source_path)
             # resize to the desired height since the website's img height is restricted, so we save on network bandwidth
             resize_ratio = max_height / image.size[1]
@@ -87,14 +87,14 @@ def sample_benchmark_images(num_samples: int = 30, max_height: int = 90, replace
 
 def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
     base_image = Path(__file__).parent / 'base.png'
-    stimulus_set = StimulusSet([{'image_id': 'base'}])
+    stimulus_set = StimulusSet([{'stimulus_id': 'base'}])
     stimulus_set.image_paths = {'base': base_image}
     stimulus_set.identifier = 'visual_degrees_base'
     for visual_degrees in visual_degrees_samples:
         converted_stimulus_set = place_on_screen(stimulus_set,
                                                  source_visual_degrees=visual_degrees,
                                                  target_visual_degrees=base_degrees)
-        converted_path = converted_stimulus_set.get_image('base')
+        converted_path = converted_stimulus_set.get_stimulus('base')
         target_path = static_directory / 'visual_degrees' / f"benchmark{visual_degrees}_model{base_degrees}.png"
         converted_image = Image.open(converted_path)
         _logger.debug(f"Saving to {target_path}")
