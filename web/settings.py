@@ -48,15 +48,18 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 
 # Allows E-mail use
+# After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
+# django_gmail_password thus is an app-specific login for Gmail (adds Django as authorized login for Gmail)
+
 try:
     email_secrets = get_secret("brainscore-email", REGION_NAME)
 except NoCredentialsError:
-    email_secrets = {'host': None, 'address': None, 'password': None}
+    email_secrets = {'host': None, 'address': None, 'password': None, 'django_gmail_password': None}
 EMAIL_USE_TLS = True
 EMAIL_HOST = email_secrets["host"]
 EMAIL_PORT = 587
 EMAIL_HOST_USER = email_secrets["address"]
-EMAIL_HOST_PASSWORD = email_secrets["password"]
+EMAIL_HOST_PASSWORD = email_secrets["django_gmail_password"]
 
 LOGOUT_REDIRECT_URL = '/'
 
