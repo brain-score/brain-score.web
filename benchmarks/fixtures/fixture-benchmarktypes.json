@@ -136,5 +136,53 @@
       "visible": "True",
       "order": 2
     }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.pereira2018-metric",
+      "parent": "engineering",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.federenko2016-metric",
+      "parent": "engineering",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.blank2014-metric",
+      "parent": "engineering",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.pereira2018-metric_2",
+      "parent": "engineering",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.federenko2016-metric_2",
+      "parent": "engineering",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "lab.blank2014-metric_2",
+      "parent": "engineering",
+      "visible": "True"
+    }
   }
 ]

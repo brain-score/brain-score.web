@@ -19,4 +19,6 @@ urlpatterns = [
     # model
     path('model/<int:id>', model.view, name='model'),
     path('competition/', competition.view, name='competition'),
+    path('vision/', index, name='index'),
+    path('language/', index, name='index'),
 ]

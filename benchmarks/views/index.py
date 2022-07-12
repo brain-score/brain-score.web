@@ -147,7 +147,7 @@ def _collect_benchmarks(user_page=False, benchmark_filter=None):
                         benchmarks.append(instance)
                 else:
                     instance = BenchmarkInstance.objects \
-                        .select_related('benchmark_type', 'benchmark_type__reference', 'meta') \
+                        .select_related('benchmark_type', 'benchmark_type__reference', 'vision_meta', "language_meta") \
                         .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
                     set_instance_meta(instance, node, tree)
                     benchmarks.append(instance)
