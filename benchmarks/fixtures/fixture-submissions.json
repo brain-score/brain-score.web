@@ -123,5 +123,35 @@
       "status" : "successful",
       "submitter_id" : 2
     }
+  },
+  {
+    "model" :  "benchmarks.submission",
+    "pk" : 35,
+    "fields" : {
+      "timestamp": "2022-07-18 12:09:00",
+      "model_type" : "BaseModel",
+      "status" : "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model" :  "benchmarks.submission",
+    "pk" : 36,
+    "fields" : {
+      "timestamp": "2022-07-19 12:09:00",
+      "model_type" : "BaseModel",
+      "status" : "successful",
+      "submitter_id" : 2
+    }
+  },
+  {
+    "model" :  "benchmarks.submission",
+    "pk" : 37,
+    "fields" : {
+      "timestamp": "2022-07-19 12:12:00",
+      "model_type" : "BaseModel",
+      "status" : "successful",
+      "submitter_id" : 2
+    }
   }
 ]
