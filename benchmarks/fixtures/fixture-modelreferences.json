@@ -187,5 +187,32 @@
       "url": "https://openreview.net/forum?id=Bygh9j09KX"
     },
     "model": "benchmarks.Reference"
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/2005.14165",
+      "bibtex": "@article{brown2020language,\n  title={Language models are few-shot learners},\n  author={Brown, Tom and Mann, Benjamin and Ryder, Nick and Subbiah, Melanie and Kaplan, Jared D and Dhariwal, Prafulla and Neelakantan, Arvind and Shyam, Pranav and Sastry, Girish and Askell, Amanda and others},\n  journal={Advances in neural information processing systems},\n  volume={33},\n  pages={1877--1901},\n  year={2020}\n}",
+      "author": "Brown",
+      "year": "2020"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://arxiv.org/abs/1810.04805",
+      "bibtex": "@article{devlin2018bert,\n  title={Bert: Pre-training of deep bidirectional transformers for language understanding},\n  author={Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},\n  journal={arXiv preprint arXiv:1810.04805},\n  year={2018}\n}",
+      "author": "Devlin",
+      "year": "2018"
+    }
+  },
+  {
+    "model": "benchmarks.Reference",
+    "fields": {
+      "url": "https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
+      "bibtex": "@article{devlin2018bert,\n  title={Bert: Pre-training of deep bidirectional transformers for language understanding},\n  author={Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},\n  journal={arXiv preprint arXiv:1810.04805},\n  year={2018}\n}}",
+      "author": "Radford",
+      "year": "2018"
+    }
   }
 ]
