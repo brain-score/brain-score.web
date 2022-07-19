@@ -84,7 +84,7 @@
     "fields": {
       "ceiling": 0.79,
       "ceiling_error": NaN,
-      "version": 2,
+      "version": 1,
       "benchmark_type": "lab.federenko2016-metric",
       "meta": 16
     }
@@ -94,7 +94,7 @@
     "fields": {
       "ceiling": 0.88123,
       "ceiling_error": 0.0111,
-      "version": 3,
+      "version": 1,
       "benchmark_type": "lab.blank2014-metric",
       "meta": 17
     }
@@ -104,7 +104,7 @@
     "fields": {
       "ceiling": 0.8631810774,
       "ceiling_error": 0.00384253,
-      "version": 2,
+      "version": 1,
       "benchmark_type": "lab.pereira2018-metric_2",
       "meta": 18
     }
@@ -114,7 +114,7 @@
     "fields": {
       "ceiling": 0.79,
       "ceiling_error": NaN,
-      "version": 2,
+      "version": 1,
       "benchmark_type": "lab.federenko2016-metric_2",
       "meta": 19
     }
@@ -124,7 +124,7 @@
     "fields": {
       "ceiling": 0.79,
       "ceiling_error": NaN,
-      "version": 2,
+      "version": 1,
       "benchmark_type": "lab.blank2014-metric_2",
       "meta": 20
     }

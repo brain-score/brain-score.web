@@ -9336,5 +9336,311 @@
         "fixres_resnext101_32x48d_wsl"
       ]
     }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.678,
+      "score_raw": 0.678,
+      "error": 0.00023,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.pereira2018-metric",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.450,
+      "score_raw": 0.450,
+      "error": NaN,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.federenko2016-metric",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.888,
+      "score_raw": 0.888,
+      "error": 0.0006663,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.blank2014-metric",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.123,
+      "score_raw": 0.123,
+      "error": 0.00123,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.pereira2018-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.444,
+      "score_raw": 0.444,
+      "error": 0.00456,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.federenko2016-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.245,
+      "score_raw": 0.245,
+      "error": 0.00023,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "lab.blank2014-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.789,
+      "score_raw": 0.789,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.pereira2018-metric",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.555,
+      "score_raw": 0.555,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.federenko2016-metric",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.745,
+      "score_raw": 0.745,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "flab.blank2014-metric",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.888,
+      "score_raw": 0.888,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.pereira2018-metric_2",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.123,
+      "score_raw": 0.123,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.federenko2016-metric_2",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.632,
+      "score_raw": 0.632,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.blank2014-metric_2",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.333,
+      "score_raw": 0.333,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.pereira2018-metric",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.452,
+      "score_raw": 0.452,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.federenko2016-metric",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.432,
+      "score_raw": 0.432,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.blank2014-metric",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.345,
+      "score_raw": 0.345,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.pereira2018-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.223,
+      "score_raw": 0.223,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.federenko2016-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.122,
+      "score_raw": 0.122,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "lab.blank2014-metric_2",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
   }
 ]
