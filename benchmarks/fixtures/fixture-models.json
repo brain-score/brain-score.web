@@ -1395,5 +1395,54 @@
       "submission_id" : 34,
       "visual_degrees":  8
     }
+  },
+
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "GPT-3",
+      "reference": [
+        "https://arxiv.org/abs/2005.14165"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id" : 35,
+      "visual_degrees":  null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "BERT",
+      "reference": [
+        "https://arxiv.org/abs/1810.04805"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id" : 36,
+      "visual_degrees":  null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "GPT-2",
+      "reference": [
+        "https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+      ],
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
   }
 ]
