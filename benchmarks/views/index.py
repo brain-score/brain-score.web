@@ -305,7 +305,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
     model_meta = Model.objects.select_related('reference', 'owner', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
-    model_ranks = scores[scores['benchmark'] == 'average']
+    model_ranks = scores[scores['benchmark'] == 'average_vision']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
