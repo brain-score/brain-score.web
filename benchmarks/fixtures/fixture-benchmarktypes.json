@@ -140,6 +140,22 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
+      "identifier": "average_language",
+      "visible": "True",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "engineering_language",
+      "visible": "True",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
       "identifier": "lab.pereira2018-metric",
       "parent": "average_language",
       "visible": "True"
