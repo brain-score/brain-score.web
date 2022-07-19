@@ -9482,7 +9482,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "flab.blank2014-metric",
+        "lab.blank2014-metric",
         1
       ],
       "model": [
