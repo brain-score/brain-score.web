@@ -131,7 +131,6 @@ class BenchmarkInstance(models.Model):
     ceiling_error = models.FloatField(null=True)
     meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
 
-
     def __repr__(self):
         return generic_repr(self)
 
