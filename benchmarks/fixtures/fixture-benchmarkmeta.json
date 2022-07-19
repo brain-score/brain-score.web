@@ -1,0 +1,132 @@
+[
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 1,
+      "number_of_stimuli": 315,
+      "number_of_recording_sites": 102,
+      "recording_sites": "V1",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 2,
+      "number_of_stimuli": 315,
+      "number_of_recording_sites": 103,
+      "recording_sites": "V2",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 3,
+      "number_of_stimuli": 2560,
+      "number_of_recording_sites": 88,
+      "recording_sites": "V4",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 4,
+      "number_of_stimuli": 5760,
+      "number_of_recording_sites": 47,
+      "recording_sites": "V4",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 7,
+      "number_of_stimuli": 2560,
+      "number_of_recording_sites": 168,
+      "recording_sites": "IT",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 11,
+      "number_of_stimuli": 1318,
+      "number_of_recording_sites": 424,
+      "recording_sites": "IT",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 12,
+      "number_of_stimuli": 240,
+      "number_of_recording_sites": null,
+      "recording_sites": null,
+      "behavioral_task": "match-to-sample"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 15,
+      "number_of_stimuli": 315,
+      "number_of_recording_sites": 102,
+      "recording_sites": "L1",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 16,
+      "number_of_stimuli": 315,
+      "number_of_recording_sites": 103,
+      "recording_sites": "L2",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 17,
+      "number_of_stimuli": 2560,
+      "number_of_recording_sites": 88,
+      "recording_sites": "L4",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 18,
+      "number_of_stimuli": 5760,
+      "number_of_recording_sites": null,
+      "recording_sites": null,
+      "behavioral_task": "next_word_prediction"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 19,
+      "number_of_stimuli": 2560,
+      "number_of_recording_sites": 168,
+      "recording_sites": "LIT",
+      "behavioral_task": null
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 20,
+      "number_of_stimuli": 1318,
+      "number_of_recording_sites": null,
+      "recording_sites": null,
+      "behavioral_task": "sentence_completion"
+    }
+  }
+]

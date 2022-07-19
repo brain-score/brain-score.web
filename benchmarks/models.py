@@ -115,33 +115,22 @@ class BenchmarkType(models.Model):
         db_table = 'brainscore_benchmarktype'
 
 
-class VisionMeta(models.Model):
-    number_of_images = models.IntegerField(null=True)
+class BenchmarkMeta(models.Model):
+    number_of_stimuli = models.IntegerField(null=True)
     number_of_recording_sites = models.IntegerField(null=True)
     recording_sites = models.CharField(max_length=100, null=True)
     behavioral_task = models.CharField(max_length=100, null=True)
 
     class Meta:
-        db_table = 'brainscore_visionbenchmarkmeta'
-
-
-class LanguageMeta(models.Model):
-    number_of_words = models.IntegerField(null=True)
-    number_of_recording_sites = models.IntegerField(null=True)
-    recording_sites = models.CharField(max_length=100, null=True)
-    behavioral_task = models.CharField(max_length=100, null=True)
-
-    class Meta:
-        db_table = 'brainscore_languagebenchmarkmeta'
-
+        db_table = 'brainscore_benchmarkmeta'
 
 class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
     version = models.IntegerField()
     ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
-    vision_meta = models.ForeignKey(VisionMeta, null=True, on_delete=models.PROTECT)
-    language_meta = models.ForeignKey(LanguageMeta, null=True, on_delete=models.PROTECT)
+    meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
+
 
     def __repr__(self):
         return generic_repr(self)

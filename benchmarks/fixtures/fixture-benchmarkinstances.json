@@ -6,8 +6,7 @@
       "ceiling_error": 0.0006182539189773819,
       "version": 3,
       "benchmark_type": "dicarlo.MajajHong2015.V4-pls",
-      "vision_meta": 3,
-      "language_meta": null
+      "meta": 3
     }
   },
   {
@@ -17,8 +16,7 @@
       "ceiling_error": 0.00058712737191322,
       "version": 3,
       "benchmark_type": "dicarlo.MajajHong2015.IT-pls",
-      "vision_meta": 7,
-      "language_meta": null
+      "meta": 7
     }
   },
   {
@@ -28,8 +26,7 @@
       "ceiling_error": 0.003592410347494883,
       "version": 2,
       "benchmark_type": "movshon.FreemanZiemba2013.V1-pls",
-      "vision_meta": 1,
-      "language_meta": null
+      "meta": 1
     }
   },
   {
@@ -39,8 +36,7 @@
       "ceiling_error": 0.0017617471233464287,
       "version": 2,
       "benchmark_type": "movshon.FreemanZiemba2013.V2-pls",
-      "vision_meta": 2,
-      "language_meta": null
+      "meta": 2
     }
   },
   {
@@ -50,8 +46,7 @@
       "ceiling_error": NaN,
       "version": 2,
       "benchmark_type": "dicarlo.Kar2019-ost",
-      "vision_meta": 11,
-      "language_meta": null
+      "meta": 11
     }
   },
   {
@@ -61,8 +56,7 @@
       "ceiling_error": 0.003951294268384253,
       "version": 2,
       "benchmark_type": "dicarlo.Rajalingham2018-i2n",
-      "vision_meta": 12,
-      "language_meta": null
+      "meta": 12
     }
   },
   {
@@ -72,8 +66,7 @@
       "ceiling_error": NaN,
       "version": 1,
       "benchmark_type": "fei-fei.Deng2009-top1",
-      "vision_meta": null,
-      "language_meta": null
+      "meta": null
     }
   },
   {
@@ -83,8 +76,7 @@
       "ceiling_error": 0.00212,
       "version": 1,
       "benchmark_type": "lab.pereira2018-metric",
-      "vision_meta": null,
-      "language_meta": 1
+      "meta": 15
     }
   },
   {
@@ -94,8 +86,7 @@
       "ceiling_error": NaN,
       "version": 2,
       "benchmark_type": "lab.federenko2016-metric",
-      "vision_meta": null,
-      "language_meta": 2
+      "meta": 16
     }
   },
   {
@@ -105,8 +96,7 @@
       "ceiling_error": 0.0111,
       "version": 3,
       "benchmark_type": "lab.blank2014-metric",
-      "vision_meta": null,
-      "language_meta": 3
+      "meta": 17
     }
   },
   {
@@ -116,8 +106,7 @@
       "ceiling_error": 0.00384253,
       "version": 2,
       "benchmark_type": "lab.pereira2018-metric_2",
-      "vision_meta": null,
-      "language_meta": 4
+      "meta": 18
     }
   },
   {
@@ -127,8 +116,7 @@
       "ceiling_error": NaN,
       "version": 2,
       "benchmark_type": "lab.federenko2016-metric_2",
-      "vision_meta": null,
-      "language_meta": 5
+      "meta": 19
     }
   },
   {
@@ -138,8 +126,7 @@
       "ceiling_error": NaN,
       "version": 2,
       "benchmark_type": "lab.blank2014-metric_2",
-      "vision_meta": null,
-      "language_meta": 6
+      "meta": 20
     }
   }
 ]
