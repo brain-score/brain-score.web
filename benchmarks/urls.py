@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import index, user, model, competition
+from .views import index, user, model, competition, language
 
 urlpatterns = [
     # index
@@ -20,5 +20,5 @@ urlpatterns = [
     path('model/<int:id>', model.view, name='model'),
     path('competition/', competition.view, name='competition'),
     path('vision/', index, name='index'),
-    path('language/', index, name='index'),
+    path('language/', language.view, name='language'),
 ]

@@ -32,14 +32,15 @@ color_None = '#e0e1e2'
 
 @cache_page(24 * 60 * 60)
 def view(request):
-    context = get_context()
+    context = get_context(domain="vision")
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, benchmark_filter=None, model_filter=None, show_public=False):
-    benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
+def get_context(domain, user=None, benchmark_filter=None, model_filter=None, show_public=False):
+
+    benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(benchmarks, show_public, user, score_filter=model_filter)
+    model_rows = _collect_models(domain,benchmarks, show_public, user,score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -76,12 +77,12 @@ def get_context(user=None, benchmark_filter=None, model_filter=None, show_public
             "comparison_data": json.dumps(comparison_data)}
 
 
-def _collect_benchmarks(user_page=False, benchmark_filter=None):
+def _collect_benchmarks(domain, user_page=False, benchmark_filter=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
         benchmark_types = benchmark_types.filter(visible=True)
-    root_benchmarks = benchmark_types.filter(parent=None)
+    root_benchmarks = benchmark_types.filter(identifier__in=[f"average_{domain}", f"engineering_{domain}"])
     if benchmark_filter:
         root_benchmarks = benchmark_filter(root_benchmarks)
     root_benchmarks = root_benchmarks.order_by('order')
@@ -183,7 +184,8 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(benchmarks, show_public, user=None, score_filter=None):
+def _collect_models(domain, benchmarks, show_public, user=None, score_filter=None):
+    print(domain)
     """
     :param user: The user whose profile we are currently on, if any
     """
@@ -305,7 +307,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
     model_meta = Model.objects.select_related('reference', 'owner', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
-    model_ranks = scores[scores['benchmark'] == 'average_vision']
+    model_ranks = scores[scores['benchmark'] == f'average_{domain}']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[

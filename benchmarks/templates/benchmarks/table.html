@@ -67,13 +67,13 @@
                         <span data-benchmark="{{ benchmark.short_name }}"
                               class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
-                                   {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
+                                   {% if benchmark.root_parent == 'average_vision' %} brain_benchmark {% endif %}">
                         {{ benchmark.short_name }}
                         </span>
                         {# version #}
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
-                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
+                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_vision' %}
                             {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.number_of_all_children %}
                         {% endif %}
                         {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
