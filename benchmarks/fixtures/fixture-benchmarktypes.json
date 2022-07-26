@@ -156,7 +156,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "lab.pereira2018-metric",
+      "identifier": "federenko.pereira2018-linear",
       "parent": "average_language",
       "visible": "True"
     }
@@ -164,23 +164,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "lab.federenko2016-metric",
-      "parent": "engineering_language",
-      "visible": "True"
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
-      "identifier": "lab.blank2014-metric",
-      "parent": "engineering_language",
-      "visible": "True"
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
-      "identifier": "lab.pereira2018-metric_2",
+      "identifier": "kanwisher.federenko2016-linear",
       "parent": "average_language",
       "visible": "True"
     }
@@ -188,15 +172,39 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "lab.federenko2016-metric_2",
-      "parent": "engineering_language",
+      "identifier": "federenko.blank2014-linear",
+      "parent": "average_language",
       "visible": "True"
     }
   },
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "lab.blank2014-metric_2",
+      "identifier": "federenko.pereira2018-rdm",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "kanwisher.federenko2016-rdm",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "federenko.blank2014-rdm",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "socher.merity2016-accuracy",
       "parent": "engineering_language",
       "visible": "True"
     }

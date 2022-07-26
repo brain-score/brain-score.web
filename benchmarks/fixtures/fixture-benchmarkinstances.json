@@ -75,7 +75,7 @@
       "ceiling": 0.576,
       "ceiling_error": 0.00212,
       "version": 1,
-      "benchmark_type": "lab.pereira2018-metric",
+      "benchmark_type": "federenko.pereira2018-linear",
       "meta": 15
     }
   },
@@ -85,7 +85,7 @@
       "ceiling": 0.79,
       "ceiling_error": NaN,
       "version": 1,
-      "benchmark_type": "lab.federenko2016-metric",
+      "benchmark_type": "kanwisher.federenko2016-linear",
       "meta": 16
     }
   },
@@ -95,7 +95,7 @@
       "ceiling": 0.88123,
       "ceiling_error": 0.0111,
       "version": 1,
-      "benchmark_type": "lab.blank2014-metric",
+      "benchmark_type": "federenko.blank2014-linear",
       "meta": 17
     }
   },
@@ -105,27 +105,37 @@
       "ceiling": 0.8631810774,
       "ceiling_error": 0.00384253,
       "version": 1,
-      "benchmark_type": "lab.pereira2018-metric_2",
+      "benchmark_type": "federenko.pereira2018-rdm",
       "meta": 18
     }
   },
   {
     "model": "benchmarks.BenchmarkInstance",
     "fields": {
-      "ceiling": 0.79,
+      "ceiling": 0.66,
       "ceiling_error": NaN,
       "version": 1,
-      "benchmark_type": "lab.federenko2016-metric_2",
+      "benchmark_type": "kanwisher.federenko2016-rdm",
       "meta": 19
     }
   },
   {
     "model": "benchmarks.BenchmarkInstance",
     "fields": {
-      "ceiling": 0.79,
+      "ceiling": 0.76,
       "ceiling_error": NaN,
       "version": 1,
-      "benchmark_type": "lab.blank2014-metric_2",
+      "benchmark_type": "federenko.blank2014-rdm",
+      "meta": 20
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.89,
+      "ceiling_error": NaN,
+      "version": 1,
+      "benchmark_type": "socher.merity2016-accuracy",
       "meta": 20
     }
   }

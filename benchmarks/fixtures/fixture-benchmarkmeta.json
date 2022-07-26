@@ -128,5 +128,15 @@
       "recording_sites": null,
       "behavioral_task": "sentence_completion"
     }
+  },
+  {
+    "model": "benchmarks.BenchmarkMeta",
+    "fields": {
+      "id": 21,
+      "number_of_stimuli": 256,
+      "number_of_recording_sites": null,
+      "recording_sites": null,
+      "behavioral_task": null
+    }
   }
 ]

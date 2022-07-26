@@ -9346,7 +9346,7 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.pereira2018-metric",
+        "federenko.pereira2018-linear",
         1
       ],
       "model": [
@@ -9363,7 +9363,7 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.federenko2016-metric",
+        "kanwisher.federenko2016-linear",
         1
       ],
       "model": [
@@ -9380,7 +9380,7 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.blank2014-metric",
+        "federenko.blank2014-linear",
         1
       ],
       "model": [
@@ -9397,7 +9397,7 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.pereira2018-metric_2",
+        "federenko.pereira2018-rdm",
         1
       ],
       "model": [
@@ -9414,7 +9414,7 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.federenko2016-metric_2",
+        "kanwisher.federenko2016-rdm",
         1
       ],
       "model": [
@@ -9431,7 +9431,24 @@
       "start_timestamp": "2022-07-18 12:09:00",
       "end_timestamp": "2022-07-18 14:09:00",
       "benchmark": [
-        "lab.blank2014-metric_2",
+        "federenko.blank2014-rdm",
+        1
+      ],
+      "model": [
+        "GPT-3"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.55,
+      "score_raw": 0.255,
+      "error": 0.000999,
+      "start_timestamp": "2022-07-18 12:09:00",
+      "end_timestamp": "2022-07-18 14:09:00",
+      "benchmark": [
+        "socher.merity2016-accuracy",
         1
       ],
       "model": [
@@ -9448,7 +9465,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.pereira2018-metric",
+        "federenko.pereira2018-linear",
         1
       ],
       "model": [
@@ -9465,7 +9482,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.federenko2016-metric",
+        "kanwisher.federenko2016-linear",
         1
       ],
       "model": [
@@ -9482,7 +9499,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.blank2014-metric",
+        "federenko.blank2014-linear",
         1
       ],
       "model": [
@@ -9499,7 +9516,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.pereira2018-metric_2",
+        "federenko.pereira2018-rdm",
         1
       ],
       "model": [
@@ -9516,7 +9533,7 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.federenko2016-metric_2",
+        "kanwisher.federenko2016-rdm",
         1
       ],
       "model": [
@@ -9533,7 +9550,24 @@
       "start_timestamp": "2022-07-19 12:09:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.blank2014-metric_2",
+        "federenko.blank2014-rdm",
+        1
+      ],
+      "model": [
+        "BERT"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.632,
+      "score_raw": 0.632,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:09:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "socher.merity2016-accuracy",
         1
       ],
       "model": [
@@ -9550,7 +9584,7 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.pereira2018-metric",
+        "federenko.pereira2018-linear",
         1
       ],
       "model": [
@@ -9567,7 +9601,7 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.federenko2016-metric",
+        "kanwisher.federenko2016-linear",
         1
       ],
       "model": [
@@ -9584,7 +9618,7 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.blank2014-metric",
+        "federenko.blank2014-linear",
         1
       ],
       "model": [
@@ -9601,7 +9635,7 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.pereira2018-metric_2",
+        "federenko.pereira2018-rdm",
         1
       ],
       "model": [
@@ -9618,7 +9652,7 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.federenko2016-metric_2",
+        "kanwisher.federenko2016-rdm",
         1
       ],
       "model": [
@@ -9635,7 +9669,24 @@
       "start_timestamp": "2022-07-19 12:12:00",
       "end_timestamp": "2018-09-01 19:00:00",
       "benchmark": [
-        "lab.blank2014-metric_2",
+        "federenko.blank2014-rdm",
+        1
+      ],
+      "model": [
+        "GPT-2"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.122,
+      "score_raw": 0.122,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "socher.merity2016-accuracy",
         1
       ],
       "model": [
