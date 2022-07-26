@@ -68,7 +68,13 @@
                               class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
                                    {% if benchmark.root_parent == 'average_vision' %} brain_benchmark {% endif %}">
-                        {{ benchmark.short_name }}
+                        {% if "average" in benchmark.short_name %}
+                            average
+                        {% elif "engineering" in benchmark.short_name %}
+                            engineering
+                        {% else %}
+                            {{ benchmark.short_name }}
+                        {% endif %}
                         </span>
                         {# version #}
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
