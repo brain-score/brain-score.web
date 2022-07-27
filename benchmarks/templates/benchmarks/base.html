@@ -108,10 +108,10 @@
     </div>
     <div id="navMenu" class="navbar-menu">
         <div class="navbar-end">
-            <a class="navbar-item" href="http://{{ request.get_host }}/#leaderboard">Leaderboard</a>
-            <a class="navbar-item" href="http://{{ request.get_host }}/#about">About</a>
-            <a class="navbar-item" href="http://{{ request.get_host }}/#compare">Compare</a>
-            <a class="navbar-item" href="http://{{ request.get_host }}/#participate">Participate</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}{{ request.path }}#leaderboard">Leaderboard</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}{{ request.path }}#about">About</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}{{ request.path }}#compare">Compare</a>
+            <a class="navbar-item" href="http://{{ request.get_host }}{{ request.path }}#participate">Participate</a>
         </div>
     </div>
 </div>

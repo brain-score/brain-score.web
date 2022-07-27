@@ -40,7 +40,7 @@ def get_context(domain, user=None, benchmark_filter=None, model_filter=None, sho
 
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(domain,benchmarks, show_public, user,score_filter=model_filter)
+    model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
