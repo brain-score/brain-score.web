@@ -32,7 +32,12 @@ color_None = '#e0e1e2'
 
 @cache_page(24 * 60 * 60)
 def view(request):
-    context = get_context(domain="vision")
+
+    domain = request.path.strip("/")
+    if domain == "":
+        domain = "vision"
+    context = get_context(domain=domain)
+
     return render(request, 'benchmarks/index.html', context)
 
 

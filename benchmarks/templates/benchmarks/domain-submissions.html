@@ -5,7 +5,11 @@
     {% if user %}
         <section id="profile" class="container center">
             <h1>{{ user.email }}</h1>
-
+            {% if "language" in request.path %}
+                <h4>You are viewing your language models. </h4>
+            {% else %}
+                <h4>You are viewing your vision models. </h4>
+            {% endif %}
             <form action="{% url 'display-name' %}" method="post">
                 {% csrf_token %}
 
@@ -14,6 +18,7 @@
                     <p class="control">
                         <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
                     </p>
+
                     <p class="control">
                         <input type="submit" value="Save" class="button">
                     </p>
@@ -21,20 +26,22 @@
             </form>
 
             <br>
-            <h4>To view your vision models, visit
-                <a href="http://{{ request.get_host }}/vision/my-submissions">here</a>.</h4>
-            <h4>To view your language models, visit
-                <a href="http://{{ request.get_host }}/language/my-submissions">here</a>.</h4>
+            <p>Past scores are below. Submissions are located at the bottom.</p>
         </section>
 
-        <section id="profile" class="container center">
-            <h2>Submit new models <a href="/upload">here</a>.</h2>
-            <button onclick="location.href='../logout/'" type="button" class="button submission">
-                Logout
-            </button>
+        <section id="leaderboard" class="container tablecenter">
+            {% include "benchmarks/table.html" %}
         </section>
 
+        <section id="submissions" class="container center">
+            {% include "benchmarks/submissions.html" %}
+        </section>
     {% else %}
+
+    <section id="profile" class="container center">
+        <h2>Submit new models <a href="/upload">here</a>.</h2>
+    </section>
+
 
     {% endif %}
 {% endblock %}
