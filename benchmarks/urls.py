@@ -1,10 +1,11 @@
 from django.urls import path
+import functools
 
-from .views import index, user, model, competition, domain_submissions
+from .views import index, user, model, competition
 
 urlpatterns = [
     # index
-    path('', index, name='index'),
+    path('', functools.partial(index, domain='vision'), name='index'),
     # user
     path('signup/', user.Signup.as_view(), name='signup'),
     path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name='activate'),
@@ -19,8 +20,8 @@ urlpatterns = [
     # model
     path('model/<int:id>', model.view, name='model'),
     path('competition/', competition.view, name='competition'),
-    path('vision/', index, name='index'),
-    path('language/', index, name='index'),
-    path('vision/my-submissions/', domain_submissions.view, name='vision-submissions'),
-    path('language/my-submissions/', domain_submissions.view, name='language-submissions'),
+    path('vision/', functools.partial(index, domain='vision'), name='index'),
+    path('language/', functools.partial(index, domain='language'), name='index'),
+    path('vision/my-submissions/', user.Domain.as_view(), name='vision-submissions'),
+    path('language/my-submissions/', user.Domain.as_view(), name='language-submissions'),
 ]

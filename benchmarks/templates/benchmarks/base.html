@@ -113,6 +113,7 @@
                 <a class="navbar-item" href="http://{{ request.get_host }}/language/#about">About</a>
                 <a class="navbar-item" href="http://{{ request.get_host }}/language/#compare">Compare</a>
                 <a class="navbar-item" href="http://{{ request.get_host }}/language/#participate">Participate</a>
+            {% elif "profile" in request.path %}
             {% else %}
                 <a class="navbar-item" href="http://{{ request.get_host }}/vision/#leaderboard">Leaderboard</a>
                 <a class="navbar-item" href="http://{{ request.get_host }}/vision/#about">About</a>

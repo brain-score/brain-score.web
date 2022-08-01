@@ -31,17 +31,12 @@ color_None = '#e0e1e2'
 
 
 @cache_page(24 * 60 * 60)
-def view(request):
-
-    domain = request.path.strip("/")
-    if domain == "":
-        domain = "vision"
+def view(request, domain):
     context = get_context(domain=domain)
-
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(domain, user=None, benchmark_filter=None, model_filter=None, show_public=False):
+def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
 
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)

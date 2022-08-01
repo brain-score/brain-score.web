@@ -36,12 +36,10 @@
         <section id="submissions" class="container center">
             {% include "benchmarks/submissions.html" %}
         </section>
+
+        <section id="profile" class="container center">
+            <h2>Submit new models <a href="/upload">here</a>.</h2>
+        </section>
     {% else %}
-
-    <section id="profile" class="container center">
-        <h2>Submit new models <a href="/upload">here</a>.</h2>
-    </section>
-
-
     {% endif %}
 {% endblock %}
