@@ -3,7 +3,13 @@
 
 {% block content %}
     <section id="upload" class="container center">
-        <h1>Model Submission</h1>
+
+        {% if "language" in request.path %}
+            <h1>Model Submission (Language)</h1>
+        {% else %}
+            <h1>Model Submission (Vision)</h1>
+        {% endif %}
+
         You can upload files here to test. For an example of what your submission should include, please visit <a
             href="https://github.com/brain-score/sample-model-submission/">this template</a>.<br>
 

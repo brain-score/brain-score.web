@@ -122,6 +122,7 @@ class Upload(View):
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
+            "domain": "language" if 'language' in request.path else "vision",
             "model_type": request.POST['model_type'],
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
@@ -153,7 +154,7 @@ class Upload(View):
         return render(request, 'benchmarks/success.html')
 
 
-def resubmit(request):
+def collect_models_benchmarks(request):
     assert request.method == 'POST'
 
     _logger.debug(f"request user: {request.user.get_full_name()}")
@@ -168,38 +169,64 @@ def resubmit(request):
         elif key.startswith('benchmark_selection_'):
             # value is benchmark_type_id (un-versioned)
             benchmarks.append(value)
+
+    return model_ids, benchmarks
+
+
+def submit_to_jenkins(request, benchmarks=None):
+    # submit to jenkins
+    jenkins_url = "http://braintree.mit.edu:8080"
+    auth = get_secret("brainscore-website_jenkins_access")
+    auth = (auth['user'], auth['password'])
+    job_name = "dev_run_benchmarks"
+    benchmark_string = ' '.join(benchmarks)
+    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                  f"?TOKEN=trigger2scoreAmodel" \
+                  f"&email={request.user.get_full_name()}" \
+                  f"&benchmarks={benchmark_string}"
+    _logger.debug(f"request_url: {request_url}")
+    params = {'submission.config': open('result.json', 'rb')}
+    response = requests.post(request_url, files=params, auth=auth)
+    _logger.debug(f"response: {response}")
+
+    # update frontend
+    response.raise_for_status()
+    _logger.debug("Job triggered successfully")
+
+
+def language_resubmit(request):
+    model_ids, benchmarks = collect_models_benchmarks(request)
     if len(model_ids) == 0 or len(benchmarks) == 0:
         return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
-    # submit each model_id separately, for two reasons:
-    # 1. model_ids from different submissions might have conflicting dependencies
-    # 2. parallelizing the runs across multiple jobs
     for model_id in model_ids:
         json_info = {
+            "domain": "language",
+            "user_id": request.user.id,
+            "model_ids": [model_id],
+        }
+        with open('result.json', 'w') as fp:
+            json.dump(json_info, fp)
+        submit_to_jenkins(request, benchmarks)
+
+    return render(request, 'benchmarks/success.html')
+
+
+def vision_resubmit(request):
+    model_ids, benchmarks = collect_models_benchmarks(request)
+    if len(model_ids) == 0 or len(benchmarks) == 0:
+        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
+
+    for model_id in model_ids:
+        json_info = {
+            "domain": "vision",
             "user_id": request.user.id,
             "model_ids": [model_id],
         }
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
 
-        # submit to jenkins
-        jenkins_url = "http://braintree.mit.edu:8080"
-        auth = get_secret("brainscore-website_jenkins_access")
-        auth = (auth['user'], auth['password'])
-        job_name = "run_benchmarks"
-        benchmark_string = ' '.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.get_full_name()}" \
-                      f"&benchmarks={benchmark_string}"
-        _logger.debug(f"request_url: {request_url}")
-        params = {'submission.config': open('result.json', 'rb')}
-        response = requests.post(request_url, files=params, auth=auth)
-        _logger.debug(f"response: {response}")
-
-        # update frontend
-        response.raise_for_status()
-        _logger.debug("Job triggered successfully")
+        submit_to_jenkins(request, benchmarks)
     return render(request, 'benchmarks/success.html')
 
 
@@ -240,7 +267,7 @@ class Domain(View):
         else:
             context = get_context(request.user, domain=domain)
             context["has_user"] = True
-            return render(request, 'benchmarks/domain-submissions.html', context)
+            return render(request, 'benchmarks/domain-information.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
@@ -249,7 +276,7 @@ class Domain(View):
             login(request, user)
             context = get_context(user, domain=domain)
             context["has_user"] = True
-            return render(request, 'benchmarks/domain-submissions.html', context)
+            return render(request, 'benchmarks/domain-information.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
