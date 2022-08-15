@@ -104,8 +104,9 @@ class Login(View):
 
 class Logout(View):
     def get(self, request):
+        domain = request.path.split("/")[2]
         logout(request)
-        return HttpResponseRedirect('../../')
+        return HttpResponseRedirect(f'../../../{domain}')
 
 
 class Upload(View):
@@ -122,11 +123,11 @@ class Upload(View):
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
-            "domain": "language" if 'language' in request.path else "vision",
             "model_type": request.POST['model_type'],
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
+            "domain": "language" if 'language' in request.path else "vision",
         }
 
         with open('result.json', 'w') as fp:
@@ -139,7 +140,7 @@ class Upload(View):
         jenkins_url = "http://braintree.mit.edu:8080"
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
-        job_name = "run_benchmarks"
+        job_name = "dev_run_benchmarks"
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
@@ -240,28 +241,7 @@ class DisplayName(View):
 
 class Profile(View):
     def get(self, request):
-        if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm})
-        else:
-            context = get_context(request.user)
-            context["has_user"] = True
-            return render(request, 'benchmarks/profile.html', context)
-
-    def post(self, request):
-        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-        if user is not None:
-            login(request, user)
-            context = get_context(user)
-            context["has_user"] = True
-            return render(request, 'benchmarks/profile.html', context)
-        else:
-            context = {"Incorrect": True, 'form': LoginForm}
-            return render(request, 'benchmarks/login.html', context)
-
-
-class Domain(View):
-    def get(self, request):
-        domain = request.path.split("/")[1]
+        domain = request.path.split("/")[2]
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
@@ -271,7 +251,7 @@ class Domain(View):
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-        domain = request.path.split("/")[1]
+        domain = request.path.split("/")[2]
         if user is not None:
             login(request, user)
             context = get_context(user, domain=domain)
@@ -280,6 +260,29 @@ class Domain(View):
         else:
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
+
+
+# class Domain(View):
+#     def get(self, request):
+#         domain = request.path.split("/")[1]
+#         if request.user.is_anonymous:
+#             return render(request, 'benchmarks/login.html', {'form': LoginForm})
+#         else:
+#             context = get_context(request.user, domain=domain)
+#             context["has_user"] = True
+#             return render(request, 'benchmarks/domain-information.html', context)
+#
+#     def post(self, request):
+#         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+#         domain = request.path.split("/")[1]
+#         if user is not None:
+#             login(request, user)
+#             context = get_context(user, domain=domain)
+#             context["has_user"] = True
+#             return render(request, 'benchmarks/domain-information.html', context)
+#         else:
+#             context = {"Incorrect": True, 'form': LoginForm}
+#             return render(request, 'benchmarks/login.html', context)
 
 
 class Password(View):

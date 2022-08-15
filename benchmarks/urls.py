@@ -22,10 +22,15 @@ urlpatterns = [
     # language changes
     path('vision/', functools.partial(index, domain='vision'), name='index'),
     path('language/', functools.partial(index, domain='language'), name='index'),
-    path('vision/my-submissions/', user.Domain.as_view(), name='vision-information'),
-    path('language/my-submissions/', user.Domain.as_view(), name='language-information'),
+    path('profile/vision/', user.Profile.as_view(), name='vision-information'),
+    path('profile/language/', user.Profile.as_view(), name='language-information'),
+    path('profile/vision/logout/',  user.Logout.as_view(), name='vision-logout'),
+    path('profile/language/logout/', user.Logout.as_view(), name='language-logout'),
     path('vision/submit/', user.Upload.as_view(), name='vision-submissions'),
     path('language/submit/', user.Upload.as_view(), name='language-submissions'),
     path('language/resubmit/', user.language_resubmit, name='language_resubmit'),
     path('vision/resubmit/', user.vision_resubmit, name='vision_resubmit'),
+
+
+
 ]

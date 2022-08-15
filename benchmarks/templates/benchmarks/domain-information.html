@@ -6,9 +6,9 @@
         <section id="profile" class="container center">
             <h1>{{ user.email }}</h1>
             {% if "language" in request.path %}
-                <h4>You are viewing your language models. </h4>
+                <h4>You are currently visiting language Brain-Score. Click here to visit vision Brain-Score.</h4>
             {% else %}
-                <h4>You are viewing your vision models. </h4>
+                <h4>You are currently visiting vision Brain-Score. Click here to visit language Brain-Score.</h4>
             {% endif %}
             <form action="{% url 'display-name' %}" method="post">
                 {% csrf_token %}
@@ -35,6 +35,18 @@
 
         <section id="submissions" class="container center">
             {% include "benchmarks/submissions.html" %}
+        </section>
+
+        <section id="profile" class="container center">
+            {% if "language" in request.path %}
+                <h4>Submit new language models <a href="/language/submit">here</a>.</h4>
+            {% else %}
+                <h4>Submit new vision models <a href="/vision/submit">here</a>.</h4>
+            {% endif %}
+
+            <button onclick="location.href='logout/'" type="button" class="button submission">
+                Logout
+            </button>
         </section>
 
     {% else %}
