@@ -262,29 +262,6 @@ class Profile(View):
             return render(request, 'benchmarks/login.html', context)
 
 
-# class Domain(View):
-#     def get(self, request):
-#         domain = request.path.split("/")[1]
-#         if request.user.is_anonymous:
-#             return render(request, 'benchmarks/login.html', {'form': LoginForm})
-#         else:
-#             context = get_context(request.user, domain=domain)
-#             context["has_user"] = True
-#             return render(request, 'benchmarks/domain-information.html', context)
-#
-#     def post(self, request):
-#         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-#         domain = request.path.split("/")[1]
-#         if user is not None:
-#             login(request, user)
-#             context = get_context(user, domain=domain)
-#             context["has_user"] = True
-#             return render(request, 'benchmarks/domain-information.html', context)
-#         else:
-#             context = {"Incorrect": True, 'form': LoginForm}
-#             return render(request, 'benchmarks/login.html', context)
-
-
 class Password(View):
     def get(self, request):
         form = PasswordResetForm()

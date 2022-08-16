@@ -4,50 +4,72 @@
 
     {% if user %}
         <section id="profile" class="container center">
-            <h1>{{ user.email }}</h1>
-            {% if "language" in request.path %}
-                <h4>You are currently visiting language Brain-Score. Click here to visit vision Brain-Score.</h4>
-            {% else %}
-                <h4>You are currently visiting vision Brain-Score. Click here to visit language Brain-Score.</h4>
-            {% endif %}
-            <form action="{% url 'display-name' %}" method="post">
-                {% csrf_token %}
+            <section id = profile-info>
+                <h1>{{ user.email }}</h1>
 
-                <label class="label">Display name</label>
-                <div class="field has-addons">
-                    <p class="control">
-                        <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-                    </p>
+                <form action="{% url 'display-name' %}" method="post">
+                    {% csrf_token %}
+                    <label class="label">Display name</label>
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                        </p>
 
-                    <p class="control">
-                        <input type="submit" value="Save" class="button">
-                    </p>
-                </div>
-            </form>
+                        <p class="control">
+                            <input type="submit" value="Save" class="button">
+                        </p>
+                    </div>
+                </form>
+                {% if "language" in request.path %}
+                    <h4>Submit new language models <a href="/language/submit">here</a>.</h4>
+                {% else %}
+                    <h4>Submit new vision models <a href="/vision/submit">here</a>.</h4>
+                {% endif %}
+                <p>Past scores are below. Submissions are located at the bottom.</p>
+            </section>
 
-            <br>
-            <p>Past scores are below. Submissions are located at the bottom.</p>
+            <div class="columns">
+                <section id="models-profile" class="column is-8" >
+                    <div id="scores">
+                        <section id="leaderboard">
+                            {% include "benchmarks/table.html" %}
+                        </section>
+                    </div>
+                    <div id="benchmarks">
+                        <section id="submissions" class="container center">
+                            {% include "benchmarks/submissions.html" %}
+                        </section>
+                    </div>
+                    <section id="profile-logout">
+                        <button onclick="location.href='logout/'" type="button" class="button submission">
+                            Logout
+                        </button>
+                    </section>
+                </section>
+
+                <section id="benchmarks-profile" class="column">
+                    <div>
+                        {% if "language" in request.path %}
+                            <button type="button" class="button submission">
+                                Submit new language benchmark
+                            </button>
+                        {% else %}
+                            <button type="button" class="button submission">
+                                Submit new vision benchmark
+                            </button>
+                        {% endif %}
+                    </div>
+                    <section id="your-benchmarks">
+                        <section id="benchmark-submissions" class="container center">
+                            {% include "benchmarks/benchmark-profile.html" %}
+                        </section>
+                    </section>
+
+
+                </section>
+            </div>
         </section>
 
-        <section id="leaderboard" class="container tablecenter">
-            {% include "benchmarks/table.html" %}
-        </section>
-
-        <section id="submissions" class="container center">
-            {% include "benchmarks/submissions.html" %}
-        </section>
-
-        <section id="profile" class="container center">
-            {% if "language" in request.path %}
-                <h4>Submit new language models <a href="/language/submit">here</a>.</h4>
-            {% else %}
-                <h4>Submit new vision models <a href="/vision/submit">here</a>.</h4>
-            {% endif %}
-
-            <button onclick="location.href='logout/'" type="button" class="button submission">
-                Logout
-            </button>
-        </section>
 
     {% else %}
     {% endif %}
