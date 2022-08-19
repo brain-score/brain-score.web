@@ -18,17 +18,19 @@ urlpatterns = [
     # model
     path('model/<int:id>', model.view, name='model'),
     path('competition/', competition.view, name='competition'),
+
     # language changes
     path('vision/', functools.partial(index, domain='vision'), name='index'),
     path('language/', functools.partial(index, domain='language'), name='index'),
-    path('vision/submit/', user.Upload.as_view(domain="vision"), name='vision-submissions'),
-    path('language/submit/', user.Upload.as_view(domain="language"), name='language-submissions'),
-    path('language/resubmit/', user.language_resubmit, name='language_resubmit'),
-    path('vision/resubmit/', user.vision_resubmit, name='vision_resubmit'),
     path('profile/vision/', user.Profile.as_view(domain="vision"), name='vision-information'),
     path('profile/language/', user.Profile.as_view(domain="language"), name='language-information'),
+    path('profile/vision/submit/', user.Upload.as_view(domain="vision"), name='vision-submit'),
+    path('profile/language/submit/', user.Upload.as_view(domain="language"), name='language-submit'),
+    path('profile/vision/resubmit/', user.resubmit, name='vision_resubmit'),
+    path('profile/language/resubmit/', user.resubmit, name='language_resubmit'),
     path('profile/vision/logout/',  user.Logout.as_view(domain="vision"), name='vision-logout'),
     path('profile/language/logout/', user.Logout.as_view(domain="language"), name='language-logout'),
+
 
 
 

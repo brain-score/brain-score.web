@@ -201,14 +201,15 @@ def submit_to_jenkins(request, benchmarks=None):
     _logger.debug("Job triggered successfully")
 
 
-def language_resubmit(request):
+def resubmit(request):
+    domain = request.path.split("/")[2]
     model_ids, benchmarks = collect_models_benchmarks(request)
     if len(model_ids) == 0 or len(benchmarks) == 0:
         return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
     for model_id in model_ids:
         json_info = {
-            "domain": "language",
+            "domain": domain,
             "user_id": request.user.id,
             "model_ids": [model_id],
         }
@@ -216,24 +217,6 @@ def language_resubmit(request):
             json.dump(json_info, fp)
         submit_to_jenkins(request, benchmarks)
 
-    return render(request, 'benchmarks/success.html')
-
-
-def vision_resubmit(request):
-    model_ids, benchmarks = collect_models_benchmarks(request)
-    if len(model_ids) == 0 or len(benchmarks) == 0:
-        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
-
-    for model_id in model_ids:
-        json_info = {
-            "domain": "vision",
-            "user_id": request.user.id,
-            "model_ids": [model_id],
-        }
-        with open('result.json', 'w') as fp:
-            json.dump(json_info, fp)
-
-        submit_to_jenkins(request, benchmarks)
     return render(request, 'benchmarks/success.html')
 
 
