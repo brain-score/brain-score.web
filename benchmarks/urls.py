@@ -9,9 +9,8 @@ urlpatterns = [
     # user
     path('signup/', user.Signup.as_view(), name='signup'),
     path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name='activate'),
-    path('profile/', user.Profile.as_view(), name='login'),
-    path('logout/', user.Logout.as_view(), name='logout'),
-    path('upload/', user.Profile.as_view(), name='upload'),
+    path('logout/', user.Logout.as_view(domain="vision"), name='logout'),
+    path('upload/', user.Profile.as_view(domain="vision"), name='upload'),
     path('display-name/', user.DisplayName.as_view(), name='display-name'),
     path('password/', user.Password.as_view(), name='password'),
     path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name='change-password'),
@@ -22,14 +21,14 @@ urlpatterns = [
     # language changes
     path('vision/', functools.partial(index, domain='vision'), name='index'),
     path('language/', functools.partial(index, domain='language'), name='index'),
-    path('profile/vision/', user.Profile.as_view(), name='vision-information'),
-    path('profile/language/', user.Profile.as_view(), name='language-information'),
-    path('profile/vision/logout/',  user.Logout.as_view(), name='vision-logout'),
-    path('profile/language/logout/', user.Logout.as_view(), name='language-logout'),
-    path('vision/submit/', user.Upload.as_view(), name='vision-submissions'),
-    path('language/submit/', user.Upload.as_view(), name='language-submissions'),
+    path('vision/submit/', user.Upload.as_view(domain="vision"), name='vision-submissions'),
+    path('language/submit/', user.Upload.as_view(domain="language"), name='language-submissions'),
     path('language/resubmit/', user.language_resubmit, name='language_resubmit'),
     path('vision/resubmit/', user.vision_resubmit, name='vision_resubmit'),
+    path('profile/vision/', user.Profile.as_view(domain="vision"), name='vision-information'),
+    path('profile/language/', user.Profile.as_view(domain="language"), name='language-information'),
+    path('profile/vision/logout/',  user.Logout.as_view(domain="vision"), name='vision-logout'),
+    path('profile/language/logout/', user.Logout.as_view(domain="language"), name='language-logout'),
 
 
 

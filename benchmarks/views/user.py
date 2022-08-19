@@ -103,20 +103,25 @@ class Login(View):
 
 
 class Logout(View):
+    domain = None
+
     def get(self, request):
-        domain = request.path.split("/")[2]
         logout(request)
-        return HttpResponseRedirect(f'../../../{domain}')
+        return HttpResponseRedirect(f'../../../{self.domain}')
 
 
 class Upload(View):
+    domain = None
+
     def get(self, request):
+        assert self.domain is not None
         if request.user.is_anonymous:
             return HttpResponseRedirect('../profile/')
         form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
 
     def post(self, request):
+        assert self.domain is not None
         form = UploadFileForm(request.POST, request.FILES)
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
@@ -127,7 +132,7 @@ class Upload(View):
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
-            "domain": "language" if 'language' in request.path else "vision",
+            "domain": self.domain
         }
 
         with open('result.json', 'w') as fp:
@@ -152,6 +157,7 @@ class Upload(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
+
         return render(request, 'benchmarks/success.html')
 
 
@@ -240,22 +246,24 @@ class DisplayName(View):
 
 
 class Profile(View):
+    domain = None
+
     def get(self, request):
-        domain = request.path.split("/")[2]
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            context = get_context(request.user, domain=domain)
+            context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
+            context["domain"] = self.domain
             return render(request, 'benchmarks/domain-information.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-        domain = request.path.split("/")[2]
         if user is not None:
             login(request, user)
-            context = get_context(user, domain=domain)
+            context = get_context(user, domain=self.domain)
             context["has_user"] = True
+            context["domain"] = self.domain
             return render(request, 'benchmarks/domain-information.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
