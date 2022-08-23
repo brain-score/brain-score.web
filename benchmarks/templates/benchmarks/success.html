@@ -6,10 +6,10 @@
   <h4>Thank you for your participation!</h4>
   {% if "language" in request.path %}
     <h5>To return to your profile page, click <a href="/profile/language">here</a>.</h5>
-    <h5>Submit another language model <a href="/language/submit">here</a>.</h5>
+    <h5>Submit another language model <a href="http://{{ request.get_host }}/profile/language/submit">here</a>.</h5>
   {% else %}
     <h5>To return to your profile page, click <a href="/profile/vision">here</a>.</h5>
-    <h5>Submit another language model <a href="/vision/submit">here</a>.</h5>
+    <h5>Submit another language model <a href="http://{{ request.get_host }}/profile/vision/submit">here</a>.</h5>
   {% endif %}
 
 </section>
