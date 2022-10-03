@@ -35,7 +35,15 @@
             </p>
             <button type="submit" class="button submission">Submit Model</button>
         </form>
-        <p style="font-size: 12px"><a href="/profile">Return to profile page</a></p>
+        {% if "language" in request.path %}
+            <p style="font-size: 12px"><a href="/profile/language">Return to profile page</a></p>
+        {% else %}
+            <p style="font-size: 12px"><a href="/profile/vision">Return to profile page</a></p>
+        {% endif %}
+
+
+
+
     </section>
 
     <script defer src="{% static "/benchmarks/js/upload-format.js" %}"></script>
