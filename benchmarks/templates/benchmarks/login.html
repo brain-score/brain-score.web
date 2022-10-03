@@ -27,13 +27,26 @@
                     {% endfor %}
                 </div>
             {% endfor %}
-            <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
-            <button type="button submit" class="button submission">Login</button>
+            {% if "language" in request.path %}
+                <p style="font-size: 12px"><a href="/password/language">Forgot Password</a></p>
+                <button type="button submit" class="button submission">Login</button>
+            {% else %}
+                <p style="font-size: 12px"><a href="/password/vision">Forgot Password</a></p>
+                <button type="button submit" class="button submission">Login</button>
+            {% endif %}
+
+
         </form>
         {% if Incorrect %}
             <p style="color: red;">The username or password was incorrect</p>
         {% endif %}
         <br/>
-        <button class="button"><a href='/signup'>Create account</a></button>
+
+        {% if "language" in request.path %}
+            <button class="button"><a href='/signup/language'>Create account</a></button>
+        {% else %}
+            <button class="button"><a href='/signup/vision'>Create account</a></button>
+        {% endif %}
+
     </section>
 {% endblock %}

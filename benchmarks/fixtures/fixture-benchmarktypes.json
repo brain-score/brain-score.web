@@ -156,7 +156,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "federenko.pereira2018-linear",
+      "identifier": "Federenko.Pereira2018-linear",
       "parent": "average_language",
       "visible": "True"
     }
@@ -164,7 +164,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "kanwisher.federenko2016-linear",
+      "identifier": "Kanwisher.Federenko2016-linear",
       "parent": "average_language",
       "visible": "True"
     }
@@ -172,7 +172,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "federenko.blank2014-linear",
+      "identifier": "Federenko.Blank2014-linear",
       "parent": "average_language",
       "visible": "True"
     }
@@ -180,7 +180,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "federenko.pereira2018-rdm",
+      "identifier": "Futrell2018-pearsonr",
       "parent": "average_language",
       "visible": "True"
     }
@@ -188,7 +188,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "kanwisher.federenko2016-rdm",
+      "identifier": "HuGathier2018",
       "parent": "average_language",
       "visible": "True"
     }
@@ -196,15 +196,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "federenko.blank2014-rdm",
-      "parent": "average_language",
-      "visible": "True"
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
-      "identifier": "socher.merity2016-accuracy",
+      "identifier": "Socher.Merity2016-accuracy",
       "parent": "engineering_language",
       "visible": "True"
     }

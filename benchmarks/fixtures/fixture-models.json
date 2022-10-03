@@ -1400,12 +1400,10 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "GPT-3",
-      "reference": [
-        "https://arxiv.org/abs/2005.14165"
-      ],
+      "name": "glove-840b",
+      "reference": null,
       "owner": [
-        "martin.schrimpf@outlook.com"
+        "mferg@mit.edu"
       ],
       "public": "True",
       "competition": null,
@@ -1416,12 +1414,10 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "BERT",
-      "reference": [
-        "https://arxiv.org/abs/1810.04805"
-      ],
+      "name": "ScLM",
+      "reference": null,
       "owner": [
-        "martin.schrimpf@outlook.com"
+        "cfourrier@mit.edu"
       ],
       "public": "True",
       "competition": null,
@@ -1432,12 +1428,68 @@
   {
     "model": "benchmarks.Model",
     "fields": {
-      "name": "GPT-2",
+      "name": "gpt2-xl",
       "reference": [
         "https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
       ],
       "owner": [
         "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "distilgpt2",
+      "reference": null,
+      "owner": [
+        "kfairchild@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "lm1b",
+      "reference": null,
+      "owner": [
+        "kshehada@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "Earley-parser",
+      "reference": null,
+      "owner": [
+        "kshehada@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "rnn-g",
+      "reference": null,
+      "owner": [
+        "blipkin@mit.edu"
       ],
       "public": "True",
       "competition": null,
