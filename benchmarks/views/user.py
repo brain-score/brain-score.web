@@ -15,7 +15,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
-from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
@@ -121,18 +121,24 @@ class Upload(View):
         assert self.domain is not None
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
-        form = UploadFileForm()
+        if self.domain == "language":
+            form = UploadFileFormLanguage()
+        else:
+            form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
 
     def post(self, request):
         assert self.domain is not None
-        form = UploadFileForm(request.POST, request.FILES)
+        if self.domain == "language":
+            form = UploadFileFormLanguage(request.POST, request.FILES)
+        else:
+            form = UploadFileForm(request.POST, request.FILES)
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
-            "model_type": request.POST['model_type'],
+            "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,

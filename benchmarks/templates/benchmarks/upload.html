@@ -5,9 +5,13 @@
     <section id="upload" class="container center">
 
         {% if "language" in request.path %}
-            <h1>Model Submission (Language)</h1>
-            You can upload files here to test. For an example of what your submission should include, please
-            visit <a href="https://github.com/brain-score/sample-model-submission/">this template</a>.<br>
+            <h1>Submission System (Language)</h1>
+            Below you can upload a plugin. Plugins can be:
+                <ol>
+                    <li>A language model or revision</li>
+                    <li>A benchmark or revision</li>
+                </ol>
+            See here for more information on plugin submissions.
         {% else %}
             <h1>Model Submission (Vision)</h1>
             You can upload files here to test. For an example of what your submission should include, please
