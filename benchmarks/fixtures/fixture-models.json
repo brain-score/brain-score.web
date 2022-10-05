@@ -1496,5 +1496,33 @@
       "submission_id": 37,
       "visual_degrees": null
     }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "BigNet-1",
+      "reference": null,
+      "owner": [
+        "nonoko7727@canyona.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "DEVNet100",
+      "reference": null,
+      "owner": [
+        "nonoko7727@canyona.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 37,
+      "visual_degrees": null
+    }
   }
 ]

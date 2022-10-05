@@ -6,20 +6,35 @@
         <section id="profile" class="container center">
             <h1>{{ user.email }}</h1>
 
-            <form action="{% url 'display-name' %}" method="post">
-                {% csrf_token %}
+            {% if "language" in request.path %}
+                <form action="{% url 'display-name-language' %}" method="post">
+                    {% csrf_token %}
 
-                <label class="label">Display name</label>
-                <div class="field has-addons">
-                    <p class="control">
-                        <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-                    </p>
-                    <p class="control">
-                        <input type="submit" value="Save" class="button">
-                    </p>
-                </div>
-            </form>
+                    <label class="label">Display name</label>
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                        </p>
+                        <p class="control">
+                            <input type="submit" value="Save" class="button">
+                        </p>
+                    </div>
+                </form>
+            {% else %}
+                <form action="{% url 'display-name-vision' %}" method="post">
+                    {% csrf_token %}
 
+                    <label class="label">Display name</label>
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                        </p>
+                        <p class="control">
+                            <input type="submit" value="Save" class="button">
+                        </p>
+                    </div>
+                </form>
+            {% endif %}
             <br>
             <h4>To view your vision models, visit
                 <a href="http://{{ request.get_host }}/vision/my-submissions">here</a>.</h4>

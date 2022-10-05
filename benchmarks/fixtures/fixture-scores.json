@@ -10050,5 +10050,209 @@
         "rnn-g"
       ]
     }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.111,
+      "score_raw": 0.111,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Federenko.Pereira2018-linear",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.245,
+      "score_raw": 0.245,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Kanwisher.Federenko2016-linear",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.454,
+      "score_raw": 0.454,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Federenko.Blank2014-linear",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.009,
+      "score_raw": 0.009,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Futrell2018-pearsonr",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.345,
+      "score_raw": 0.345,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "HuGathier2018",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.2643,
+      "score_raw": 0.2643,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Socher.Merity2016-accuracy",
+        1
+      ],
+      "model": [
+        "BigNet-1"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.111,
+      "score_raw": 0.111,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Federenko.Pereira2018-linear",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.245,
+      "score_raw": 0.245,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Kanwisher.Federenko2016-linear",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.454,
+      "score_raw": 0.454,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Federenko.Blank2014-linear",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.009,
+      "score_raw": 0.009,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Futrell2018-pearsonr",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.345,
+      "score_raw": 0.345,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "HuGathier2018",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
+  },
+  {
+    "model": "benchmarks.Score",
+    "fields": {
+      "score_ceiled": 0.2643,
+      "score_raw": 0.2643,
+      "error": NaN,
+      "start_timestamp": "2022-07-19 12:12:00",
+      "end_timestamp": "2018-09-01 19:00:00",
+      "benchmark": [
+        "Socher.Merity2016-accuracy",
+        1
+      ],
+      "model": [
+        "DEVNet100"
+      ]
+    }
   }
 ]

@@ -26,6 +26,8 @@ User = get_user_model()
 
 
 class Activate(View):
+    domain = None
+
     def get(self, request, uidb64, token):
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
@@ -38,7 +40,7 @@ class Activate(View):
             user.is_active = True
             user.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return HttpResponseRedirect('../../profile/')
+            return HttpResponseRedirect(f'../../../profile/{self.domain}')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -52,6 +54,8 @@ class Activate(View):
 
 
 class Signup(View):
+    domain = None
+
     def get(self, request):
         form = SignupForm()
         return render(request, 'benchmarks/signup.html', {'form': form})
@@ -70,7 +74,7 @@ class Signup(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/activate/{uid}/{token}"
+            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
             message = (f"Hello! Thanks for signing up with Brain-Score.\n\n"
                        f"Please click or paste the following link to activate your account:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -116,7 +120,7 @@ class Upload(View):
     def get(self, request):
         assert self.domain is not None
         if request.user.is_anonymous:
-            return HttpResponseRedirect('../profile/')
+            return HttpResponseRedirect(f'../profile/{self.domain}')
         form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
 
@@ -221,11 +225,13 @@ def resubmit(request):
 
 
 class DisplayName(View):
+    domain = None
+
     def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect('../../profile/')
+        return HttpResponseRedirect(f'../../profile/{self.domain}')
 
 
 class Profile(View):
@@ -254,6 +260,8 @@ class Profile(View):
 
 
 class Password(View):
+    domain = None
+
     def get(self, request):
         form = PasswordResetForm()
         return render(request, 'benchmarks/password.html', {'form': form})
@@ -277,7 +285,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{uid}/{token}"
+            activation_link = f"{current_site}/password-change/{self.domain}/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -295,6 +303,8 @@ class Password(View):
 
 
 class ChangePassword(View):
+    domain = None
+
     def get(self, request, uidb64, token):
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
@@ -322,7 +332,7 @@ class ChangePassword(View):
             user.set_password(request.POST["new_password1"])
             user.save()
             user.is_active = True
-            return HttpResponseRedirect('../../profile/')
+            return HttpResponseRedirect(f'../../../profile/{self.domain}')
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
