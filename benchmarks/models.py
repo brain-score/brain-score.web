@@ -124,6 +124,7 @@ class BenchmarkMeta(models.Model):
     class Meta:
         db_table = 'brainscore_benchmarkmeta'
 
+
 class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
     version = models.IntegerField()

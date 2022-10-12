@@ -6,6 +6,7 @@ from .views import index, user, model, competition
 urlpatterns = [
     # index
     path('', functools.partial(index, domain='vision'), name='index'),
+    path('/', functools.partial(index, domain='vision'), name='index'),
     # user
     path('logout/', user.Logout.as_view(domain="vision"), name='logout'),
     path('upload/', user.Profile.as_view(domain="vision"), name='upload'),

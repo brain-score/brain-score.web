@@ -185,7 +185,6 @@ def _collect_submittable_benchmarks(benchmarks, user):
 
 
 def _collect_models(domain, benchmarks, show_public, user=None, score_filter=None):
-    print(domain)
     """
     :param user: The user whose profile we are currently on, if any
     """
