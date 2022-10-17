@@ -10,8 +10,6 @@
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
             {% if model.competition is None %}
-{#                Edge case where model is not public and not competittion. Should not be able to get here, #}
-{#                but this protects against hardcoding the URL #}
                 <span class='information'>This model was submitted to Brain-Score, but was not made public.</span><br>
             {% else %}
                 <span class='information'>This model was submitted to the 2022 competition, but was not made public.</span><br>

@@ -11,8 +11,6 @@ urlpatterns = [
     path('logout/', user.Logout.as_view(domain="vision"), name='logout'),
     path('upload/', user.Profile.as_view(domain="vision"), name='upload'),
     path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
-    # model
-    path('model/<int:id>', model.view, name='model'),
     path('competition/', competition.view, name='competition'),
 
     # language changes
@@ -36,6 +34,8 @@ urlpatterns = [
     path('profile/language/resubmit/', user.resubmit, name='language_resubmit'),
     path('profile/vision/logout/',  user.Logout.as_view(domain="vision"), name='vision-logout'),
     path('profile/language/logout/', user.Logout.as_view(domain="language"), name='language-logout'),
+    path('model/vision/<int:id>', model.view, name='model-vision'),
+    path('model/language/<int:id>', model.view, name='model-language'),
 
 
 

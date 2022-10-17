@@ -105,9 +105,15 @@
                 <td class="score_cell"><strong>{{ model.rank }}</strong></td>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                        <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                            {{ model|display_model:user }}
-                        </a>
+                         {% if "language" in request.path %}
+                              <a target="_self" rel="noopener noreferrer" href="{% url 'model-language' model.id %}">
+                                {{ model|display_model:user }}
+                            </a>
+                        {% else %}
+                            <a target="_self" rel="noopener noreferrer" href="{% url 'model-vision' model.id %}">
+                                {{ model|display_model:user }}
+                            </a>
+                        {% endif %}
                     </div>
                     <div class="submitter">
                         {{ model|display_submitter:user|default:"&nbsp;" }}
