@@ -225,7 +225,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
                     benchmark_id = f'{benchmark.identifier}_v{benchmark.version}'
-                    if benchmark_lookup[benchmark_id].root_parent != ENGINEERING_ROOT \
+                    if ENGINEERING_ROOT not in benchmark_lookup[benchmark_id].root_parent  \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
                     else:
@@ -296,7 +296,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
             np.nanmin(group['score_ceiled'].fillna(value=np.nan)),
             np.nanmax(group['score_ceiled'].fillna(value=np.nan))
             # this is an ugly hack to make the gray less visually dominant on the page
-            * (2.5 if benchmark_lookup[benchmark_id].root_parent == ENGINEERING_ROOT else 1))
+            * (2.5 if ENGINEERING_ROOT in benchmark_lookup[benchmark_id].root_parent else 1))
         if bench_minmax[0] == bench_minmax[1]:
             bench_minmax = (0, 1)
         minmax[benchmark_id] = bench_minmax
@@ -349,7 +349,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
             benchmark = benchmark_lookup[versioned_benchmark_identifier]
             color = representative_color(
                 score_ceiled,
-                colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
+                colors=colors_redgreen if ENGINEERING_ROOT not in benchmark.root_parent
                 else colors_gray,
                 min_value=benchmark_min, max_value=benchmark_max)
             score_ceiled = represent(score_ceiled)
