@@ -1,0 +1,72 @@
+[
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Khaled Shehada",
+      "email": "kshehada@mit.edu",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Clémentine Fourrier",
+      "email": "cfourrier@mit.edu",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Benjamin Lipkin",
+      "email": "blipkin@mit.edu",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Katherine Fairchild",
+      "email": "kfairchild@mit.edu",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Test Person 1",
+      "email": "nonoko7727@canyona.com",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]

@@ -61,7 +61,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     not_shown_set = {benchmark.identifier for benchmark in benchmarks
                      if benchmark.depth > BASE_DEPTH or
                      # show engineering benchmarks collapsed, but still show root
-                     (benchmark.short_name != ENGINEERING_ROOT and benchmark.root_parent == ENGINEERING_ROOT)}
+                     (ENGINEERING_ROOT not in benchmark.short_name and ENGINEERING_ROOT in benchmark.root_parent)}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)

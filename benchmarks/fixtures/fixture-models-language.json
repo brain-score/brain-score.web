@@ -1,0 +1,128 @@
+[
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "glove-840b",
+      "reference": null,
+      "owner": [
+        "mferg@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id" : 1157,
+      "visual_degrees":  null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "ScLM",
+      "reference": null,
+      "owner": [
+        "cfourrier@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id" : 1157,
+      "visual_degrees":  null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "gpt2-xl",
+      "reference": null,
+      "owner": [
+        "martin.schrimpf@outlook.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "distilgpt2",
+      "reference": null,
+      "owner": [
+        "kfairchild@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "lm1b",
+      "reference": null,
+      "owner": [
+        "kshehada@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "Earley-parser",
+      "reference": null,
+      "owner": [
+        "kshehada@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "rnn-g",
+      "reference": null,
+      "owner": [
+        "blipkin@mit.edu"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "BigNet-1",
+      "reference": null,
+      "owner": [
+        "nonoko7727@canyona.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  },
+  {
+    "model": "benchmarks.Model",
+    "fields": {
+      "name": "DEVNet100",
+      "reference": null,
+      "owner": [
+        "nonoko7727@canyona.com"
+      ],
+      "public": "True",
+      "competition": null,
+      "submission_id": 1157,
+      "visual_degrees": null
+    }
+  }
+]
