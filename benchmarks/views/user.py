@@ -190,19 +190,25 @@ def validate_zip(file):
         files = []
         for plugin in submitted_plugins:
             has_instance, submitted_instances = plugin_has_instances(namelist, plugin)
-            if len(submitted_plugins) == 1:
-                if not has_instance:
-                    single = plugin[:-1] if plugin != "data" else "dataset"
-                    return False, f"\nYour {plugin} folder must contain at least one {single}."
             instances.append(submitted_instances)
         plugin_instance_dict = dict(zip(submitted_plugins, instances))
+
+        # make sure there is at least one plugin that is not empty:
+        if all(x == [] for x in plugin_instance_dict.values()):
+
+            if len(list(plugin_instance_dict.keys())) == 1:
+                return False, f"\nYour {list(plugin_instance_dict.keys())} folder is empty."
+            else:
+                return False, f"\nYour {list(plugin_instance_dict.keys())} folders are empty."
+
+
         for instance in plugin_instance_dict.values():
             if len(instance) < 1:
                 pass
             else:
-                has_files, submitted_files = instance_has_files(namelist, instance)
+                has_files, submitted_files, broken_instance = instance_has_files(namelist, instance)
                 if not has_files:
-                    return False, f"\nYour {instance} folder must contain an __init__.py and a test.py folder."
+                    return False, f"\nYour {broken_instance} folder must contain an __init__.py and a test.py folder."
                 files.append(submitted_files)
         return True, ""
 
@@ -236,10 +242,10 @@ def instance_has_files(namelist, instances):
     for instance in instances:
         files = [file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance]
         if len(set(files) & {"__init__.py", "test.py"}) < 2:
-            return False, []
+            return False, [], instance
         files_list.append(files)
 
-    return True, files_list
+    return True, files_list, None
 
 
 def collect_models_benchmarks(request):
