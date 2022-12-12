@@ -37,7 +37,4 @@ urlpatterns = [
     path('model/vision/<int:id>', model.view, name='model-vision'),
     path('model/language/<int:id>', model.view, name='model-language'),
 
-
-
-
 ]

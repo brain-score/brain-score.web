@@ -19,6 +19,8 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFo
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
+import zipfile
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -136,6 +138,11 @@ class Upload(View):
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
+        # parse directory tree, return new html page if not valid:
+        is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+        if not is_zip_valid:
+            return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
@@ -169,6 +176,71 @@ class Upload(View):
         _logger.debug("Job triggered successfully")
 
         return render(request, 'benchmarks/success.html')
+
+
+def validate_zip(file):
+    with zipfile.ZipFile(file, mode="r") as archive:
+        namelist = archive.infolist()
+        root = namelist[0]
+        has_plugin, submitted_plugins = plugins_exist(namelist)
+        if not has_plugin:
+            return False, f"\nPlease make sure your {root.filename} folder contains at least one of the " \
+                          f"following folders:" \
+                          "[metrics, data, benchmarks, models]"
+        instances = []
+        files = []
+        for plugin in submitted_plugins:
+            has_instance, submitted_instances = plugin_has_instances(namelist, plugin)
+            if len(submitted_plugins) == 1:
+                if not has_instance:
+                    single = plugin[:-1] if plugin != "data" else "dataset"
+                    return False, f"\nYour {plugin} folder must contain at least one {single}."
+            instances.append(submitted_instances)
+        plugin_instance_dict = dict(zip(submitted_plugins, instances))
+        for instance in plugin_instance_dict.values():
+            if len(instance) < 1:
+                pass
+            else:
+                has_files, submitted_files = instance_has_files(namelist, instance)
+                if not has_files:
+                    return False, f"\nYour {instance} folder must contain an __init__.py and a test.py folder."
+                files.append(submitted_files)
+        return True, ""
+
+
+# checks that there is >= 1 plugin
+def plugins_exist(namelist):
+    acceptable_plugins = ["models", "benchmarks", "data", "metrics"]
+    plugins = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 2]
+    plugins_list = [plugin.split("/")[1].lower() for plugin in plugins]
+    if len(list(set(plugins_list) & set(acceptable_plugins))) >= 1:
+        return True, list(set(plugins_list) & set(acceptable_plugins))
+    else:
+        return False, []
+
+
+# makes sure every plugin has an associated instance
+def plugin_has_instances(namelist, plugin):
+    instances = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 3]
+    instances_list = [file_path.split("/")[2] for file_path in instances if file_path.split("/")[1] == plugin]
+
+    # make sure there is >= 1 instance submitted:
+    if len(instances_list) < 1:
+        return False, []
+    else:
+        return True, instances_list
+
+
+# makes sure each instance has a __init__.py and setup.py
+def instance_has_files(namelist, instances):
+    files_list = []
+    for instance in instances:
+        files = [file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance]
+        if len(set(files) & {"__init__.py", "test.py"}) < 2:
+            return False, []
+        files_list.append(files)
+
+    return True, files_list
 
 
 def collect_models_benchmarks(request):
