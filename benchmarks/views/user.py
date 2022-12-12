@@ -174,7 +174,6 @@ class Upload(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-
         return render(request, 'benchmarks/success.html')
 
 
