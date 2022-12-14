@@ -59,7 +59,9 @@ def contextualize_scores(model, reference_context):
         other_scores = [other_score.score_ceiled
                         for other_model in reference_context['models']
                         for other_score in other_model.scores
-                        if other_score.versioned_benchmark_identifier == score.versioned_benchmark_identifier]
+                        if other_model.public
+                        and other_score.versioned_benchmark_identifier == score.versioned_benchmark_identifier
+                        ]
         other_scores = [simplify_score(other_score) for other_score in other_scores]
         # per-score ranks
         if score.score_ceiled == 'X' or score.score_ceiled == '':
