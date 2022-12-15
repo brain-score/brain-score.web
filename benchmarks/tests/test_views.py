@@ -94,4 +94,4 @@ class TestLanguage(TestCase):
         resp = self.client.get("http://localhost:8000/language/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
-        self.assertEqual(num_rows, 1 + 9)
+        self.assertEqual(num_rows, 9)
