@@ -68,5 +68,19 @@
       "groups": [],
       "user_permissions": []
     }
+  },
+  {
+    "model": "benchmarks.user",
+    "fields": {
+      "password": "dummy",
+      "last_login": "2020-07-17T18:42:42.594Z",
+      "is_superuser": false,
+      "display_name": "Mike Ferguson",
+      "email": "mferg@mit.edu",
+      "is_staff": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
   }
 ]
