@@ -87,11 +87,11 @@ class TestLanguage(TestCase):
 
     # ensures language homepage exists
     def test_language_leaderboard(self):
-        resp = self.client.get("http://localhost:8000/language")
+        resp = self.client.get("http://localhost:8000/language/")
         self.assertEqual(resp.status_code, 200)
 
     def test_num_lang_rows(self):
-        resp = self.client.get("http://localhost:8000/language")
+        resp = self.client.get("http://localhost:8000/language/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         self.assertEqual(num_rows, 1 + 9)
