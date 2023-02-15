@@ -177,7 +177,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
                                        for benchmark_type_id in Score.objects
                                            .select_related('benchmark')
                                            .filter(model__owner=user)
-                                           # .distinct('benchmark__benchmark_type_id')
+                                           .distinct('benchmark__benchmark_type_id')
                                            .values_list('benchmark__benchmark_type_id', flat=True)]
     benchmark_selection = {short_name: benchmark_type_id for short_name, benchmark_type_id in benchmark_types.items()
                            if benchmark_type_id in previously_evaluated_benchmarks}
