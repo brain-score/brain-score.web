@@ -206,7 +206,6 @@ def validate_zip(file):
             else:
                 return False, f"\nYour {list(plugin_instance_dict.keys())} folders are empty."
 
-
         for instance in plugin_instance_dict.values():
             if len(instance) < 1:
                 pass
@@ -281,7 +280,7 @@ def submit_to_jenkins(request, benchmarks=None):
     benchmark_string = ' '.join(benchmarks)
     request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                   f"?TOKEN=trigger2scoreAmodel" \
-                  f"&email={request.user.get_full_name()}" \
+                  f"&email={request.user.email}" \
                   f"&benchmarks={benchmark_string}"
     _logger.debug(f"request_url: {request_url}")
     params = {'submission.config': open('result.json', 'rb')}

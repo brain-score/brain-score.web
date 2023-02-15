@@ -23,6 +23,7 @@
             <span class='information'>Submission ID:</span> {{ model.submission_id }}<br>
             <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
             <span class='information'>Submitted On:</span> {{ model.timestamp }}<br>
+            <span class='information'>Domain:</span> {{ model.domain }}<br>
             <div class="build_status">
                 {% if model.build_status is not None %}
                     {% if model.build_status == "successful" %}

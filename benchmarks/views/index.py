@@ -177,7 +177,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
                                        for benchmark_type_id in Score.objects
                                            .select_related('benchmark')
                                            .filter(model__owner=user)
-                                           .distinct('benchmark__benchmark_type_id')
+                                           # .distinct('benchmark__benchmark_type_id')
                                            .values_list('benchmark__benchmark_type_id', flat=True)]
     benchmark_selection = {short_name: benchmark_type_id for short_name, benchmark_type_id in benchmark_types.items()
                            if benchmark_type_id in previously_evaluated_benchmarks}
@@ -312,7 +312,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
     ModelRow = namedtuple('ModelRow', field_names=[
         'id', 'name',
         'reference_identifier', 'reference_link',
-        'user', 'public', 'competition',
+        'user', 'public', 'competition', 'domain',
         'rank', 'scores',
         'build_status', 'submitter', 'submission_id', 'timestamp'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
@@ -375,6 +375,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
 
         # model
         competition = meta.competition
+        domain = meta.domain
 
         # submission
         submitter = meta.submission.submitter
@@ -386,7 +387,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
             id=meta.id,
             name=meta.name,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
-            user=meta.owner, public=meta.public, competition=competition,
+            user=meta.owner, public=meta.public, competition=competition, domain=domain,
             scores=model_scores, rank=rank, build_status=build_status,
             submitter=submitter, submission_id=submission_id, timestamp=timestamp
         )
