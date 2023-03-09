@@ -150,32 +150,20 @@ class BenchmarkInstance(models.Model):
 
 
 class Submission(models.Model):
-    """
-      Some things to note:
-
-      1) The reason for this change is that language models now have their own Jenkins jobs that start at 0. If
-         no changes were made, then the submission IDs (Jenkins job #s) for language would start to override
-         the vision entries.
-      2) As of <launch date>, all submissions xxxx and below will have their old primary key (the previous ID column
-         that was generated automatically by django) duplicated in the new jenkins_id column. This preserved old
-         IDs for models before language integration (models xxxx and below)
-      3) This is why the Submission_ID column now starts at xxxx.
-      4) submission_id and jenkins_id column values will be identical up until xxxx ID. after that, they will diverge
-         due to language models being scored.
-      5) The purpose of the jenkins_id column is simply to preserve that information in case we need it
-      """
     class Status:
         PENDING = 'running'
         SUCCESS = 'successful'
         FAILURE = 'failure'
 
-    # rename old django-generated primary key to submission_id, auto increment.
+    # ID now auto-increments
     id = models.AutoField(primary_key=True)
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
     model_type = models.CharField(max_length=30, default='BaseModel')
     status = models.CharField(max_length=25, default='unknown')
-    jenkins_id = models.IntegerField(default="999999")
+
+    # equivalent to ID until language changes were added: (ID 6756)
+    jenkins_id = models.IntegerField(null=True)
 
     def __repr__(self):
         return generic_repr(self)
