@@ -155,15 +155,13 @@ class Submission(models.Model):
         SUCCESS = 'successful'
         FAILURE = 'failure'
 
-    # ID now auto-increments
-    id = models.AutoField(primary_key=True)
     submitter = models.ForeignKey(User, on_delete=models.PROTECT)
     timestamp = models.DateTimeField(auto_now_add=True, blank=True)
     model_type = models.CharField(max_length=30, default='BaseModel')
     status = models.CharField(max_length=25, default='unknown')
 
     # equivalent to ID until language changes were added: (ID 6756)
-    jenkins_id = models.IntegerField(null=True)
+    jenkins_id = models.IntegerField(default=999)
 
     def __repr__(self):
         return generic_repr(self)
