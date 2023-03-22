@@ -50,12 +50,10 @@ class UploadFileForm(forms.Form):
 
 class UploadFileFormLanguage(forms.Form):
     zip_file = forms.FileField(label="", help_text='Required')
-    public = forms.BooleanField(label='Make plugin public (can be changed later):', required=False,
-                                help_text='Check if you want your plugin to be made public.')
 
     class Meta:
         model = UploadPlaceHolder
-        fields = ('zip_file', 'public', 'competition')
+        fields = ('zip_file', 'competition')
 
 
 class ChangePasswordForm(PasswordChangeForm):
