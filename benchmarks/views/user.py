@@ -157,9 +157,10 @@ class Upload(View):
             return HttpResponse("Form is invalid", status=400)
 
         # parse directory tree, return new html page if not valid:
-        is_zip_valid, error = validate_zip(form.files.get('zip_file'))
-        if not is_zip_valid:
-            return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+        if self.domain == "language":
+            is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+            if not is_zip_valid:
+                return render(request, 'benchmarks/invalid_zip.html', {'error': error})
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
