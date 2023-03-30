@@ -48,6 +48,14 @@ class UploadFileForm(forms.Form):
         fields = ('zip_file', 'public', 'competition')
 
 
+class UploadFileFormLanguage(forms.Form):
+    zip_file = forms.FileField(label="", help_text='Required')
+
+    class Meta:
+        model = UploadPlaceHolder
+        fields = ('zip_file', 'competition')
+
+
 class ChangePasswordForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super(ChangePasswordForm, self).__init__(*args, **kwargs)

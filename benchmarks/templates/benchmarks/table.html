@@ -50,7 +50,7 @@
                             <strong data-benchmark="{{ benchmark.short_name }}" style="font-size: 10px"
                                     class="
                             {# show brain benchmarks up to the base depth #}
-                            {% if benchmark.root_parent == 'engineering' or benchmark.depth == BASE_DEPTH %}
+                            {% if 'engineering' in benchmark.root_parent or benchmark.depth == BASE_DEPTH %}
                                 headerExpand
                             {% else %}
                                 headerContract
@@ -67,13 +67,19 @@
                         <span data-benchmark="{{ benchmark.short_name }}"
                               class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
-                                   {% if benchmark.root_parent == 'average' %} brain_benchmark {% endif %}">
-                        {{ benchmark.short_name }}
+                                   {% if benchmark.root_parent == 'average_vision' %} brain_benchmark {% endif %}">
+                        {% if "average" in benchmark.short_name %}
+                            average
+                        {% elif "engineering" in benchmark.short_name %}
+                            engineering
+                        {% else %}
+                            {{ benchmark.short_name }}
+                        {% endif %}
                         </span>
                         {# version #}
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
-                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average' %}
+                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_vision' %}
                             {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.number_of_all_children %}
                         {% endif %}
                         {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
@@ -99,9 +105,15 @@
                 <td class="score_cell"><strong>{{ model.rank }}</strong></td>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                        <a target="_self" rel="noopener noreferrer" href="{% url 'model' model.id %}">
-                            {{ model|display_model:user }}
-                        </a>
+                         {% if "language" in request.path %}
+                              <a target="_self" rel="noopener noreferrer" href="{% url 'model-language' model.id %}">
+                                {{ model|display_model:user }}
+                            </a>
+                        {% else %}
+                            <a target="_self" rel="noopener noreferrer" href="{% url 'model-vision' model.id %}">
+                                {{ model|display_model:user }}
+                            </a>
+                        {% endif %}
                     </div>
                     <div class="submitter">
                         {{ model|display_submitter:user|default:"&nbsp;" }}
@@ -137,7 +149,7 @@
     </table>
 </div>
 
-<div>
+<div class="column is-10">
     Model scores on brain benchmarks.
     Click on a model to see more details.
     The more green and bright a cell, the better the model's score.

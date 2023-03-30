@@ -14,7 +14,8 @@ _logger = logging.getLogger(__name__)
 
 
 def view(request, id: int):
-    model, model_context, reference_context = determine_context(id, request)
+    domain = request.path.split("/")[2]
+    model, model_context, reference_context = determine_context(id, request, domain)
 
     # takes care of odd issue where valueError is raised when
     # models are scored on some benchmarks, but not others.
@@ -37,10 +38,10 @@ def view(request, id: int):
     return render(request, 'benchmarks/model.html', model_context)
 
 
-def determine_context(id, request):
+def determine_context(id, request, domain):
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
-    reference_context = get_context(show_public=True)
+    reference_context = get_context(show_public=True, domain=domain)
     # first check if model is in public list
     model_context = reference_context
     model = [m for m in reference_context['models'] if m.id == id]

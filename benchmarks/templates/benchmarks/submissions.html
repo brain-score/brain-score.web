@@ -2,16 +2,18 @@
 {% block content %}
     <h2>Resubmit models</h2>
     <p>Rerun models on new benchmark version. Benchmarks are only executed when no score available.</p>
-    <form action="{% url 'resubmit' %}" method="post">
-        {% csrf_token %}
-        <div class="columns">
-            <div class="column is-half">
-                <h4>Pick benchmarks</h4>
-                {% for short_name, benchmark_type_id in submittable_benchmarks.items %}
+
+    {% if "language" in request.path %}
+        <form action="{% url 'language_resubmit' %}" method="post">
+            {% csrf_token %}
+            <div class="columns">
+                <div class="column is-half">
+                    <h4>Pick benchmarks</h4>
+                    {% for short_name, benchmark_type_id in submittable_benchmarks.items %}
                     <div id=benchmarkGroup" class="field">
                         <input class="checkbox is-checkradio is-block benchmark_checker" type="checkbox"
                                onclick="enableButtonBench()"
-                                {# add unique id to form name to allow simultaneous submission of multiple benchmarks #}
+                               {# add unique id to form name to allow simultaneous submission of multiple benchmarks #}
                                name='benchmark_selection_{{ benchmark_type_id }}'
                                value="{{ benchmark_type_id }}"
                                id="benchmark-{{ benchmark_type_id }}">
@@ -19,11 +21,11 @@
                             {{ short_name }}
                         </label>
                     </div>
-                {% endfor %}
-            </div>
-            <div class="column">
-                <h4>Pick models</h4>
-                {% for model in models %}
+                    {% endfor %}
+                </div>
+                <div class="column">
+                    <h4>Pick models</h4>
+                    {% for model in models %}
                     <div id="modelsGroup" class="field">
                         <input class="checkbox is-checkradio is-block model_checker" type="checkbox"
                                onclick="enableButtonModel()"
@@ -35,12 +37,54 @@
                             {{ model.name }}
                         </label>
                     </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-        <button id="resubmit" class="button is-large" disabled="disabled">
-            Resubmit
-        </button>
-    </form>
+            <button id="resubmit" class="button is-large" disabled="disabled">
+                Resubmit
+            </button>
+        </form>
+    {% else %}
+        <form action="{% url 'vision_resubmit' %}" method="post">
+            {% csrf_token %}
+            <div class="columns">
+                <div class="column is-half">
+                    <h4>Pick benchmarks</h4>
+                    {% for short_name, benchmark_type_id in submittable_benchmarks.items %}
+                    <div id=benchmarkGroup" class="field">
+                        <input class="checkbox is-checkradio is-block benchmark_checker" type="checkbox"
+                               onclick="enableButtonBench()"
+                               {# add unique id to form name to allow simultaneous submission of multiple benchmarks #}
+                               name='benchmark_selection_{{ benchmark_type_id }}'
+                               value="{{ benchmark_type_id }}"
+                               id="benchmark-{{ benchmark_type_id }}">
+                        <label class="checkbox" for="benchmark-{{ benchmark_type_id }}">
+                            {{ short_name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="column">
+                    <h4>Pick models</h4>
+                    {% for model in models %}
+                    <div id="modelsGroup" class="field">
+                        <input class="checkbox is-checkradio is-block model_checker" type="checkbox"
+                               onclick="enableButtonModel()"
+                               {# add unique id to form name to allow simultaneous submission of multiple models #}
+                               name='model_selection_{{ model.id }}'
+                               value="{{ model.id }}"
+                               id="model-{{ model.id }}">
+                        <label class="checkbox" for="model-{{ model.id }}">
+                            {{ model.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button id="resubmit" class="button is-large" disabled="disabled">
+                Resubmit
+            </button>
+        </form>
+    {% endif %}
     <script src="{% static "/benchmarks/js/resubmit.js" %}" type="text/javascript" charset="utf-8"></script>
 {% endblock %}

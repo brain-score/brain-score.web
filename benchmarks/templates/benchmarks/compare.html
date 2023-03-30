@@ -4,14 +4,26 @@
     <div class="xlabel-container">
         <select id="xlabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
+                {% if "average" in benchmark.short_name %}
+                    <option value="{{ benchmark.identifier }}">average</option>
+                {% elif "engineering" in benchmark.short_name %}
+                    <option value="{{ benchmark.identifier }}">engineering</option>
+                {% else %}
+                    <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
+                {% endif %}
             {% endfor %}
         </select>
     </div>
     <div class="ylabel-container">
         <select id="ylabel">
             {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
+                {% if "average" in benchmark.short_name %}
+                    <option value="{{ benchmark.identifier }}">average</option>
+                {% elif "engineering" in benchmark.short_name %}
+                    <option value="{{ benchmark.identifier }}">engineering</option>
+                {% else %}
+                    <option value="{{ benchmark.identifier }}">{{ benchmark.short_name }}</option>
+                {% endif %}
             {% endfor %}
         </select>
     </div>

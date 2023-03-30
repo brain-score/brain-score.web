@@ -69,7 +69,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "fei-fei.Deng2009-top1",
-      "parent": "engineering",
+      "parent": "engineering_vision",
       "visible": "True",
       "reference": [
         "https://ieeexplore.ieee.org/abstract/document/5206848"
@@ -79,7 +79,7 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "average",
+      "identifier": "average_vision",
       "visible": "True",
       "order": 0
     }
@@ -88,7 +88,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V1",
-      "parent": "average",
+      "parent": "average_vision",
       "visible": "True",
       "order": 0
     }
@@ -97,7 +97,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V2",
-      "parent": "average",
+      "parent": "average_vision",
       "visible": "True",
       "order": 1
     }
@@ -106,7 +106,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V4",
-      "parent": "average",
+      "parent": "average_vision",
       "visible": "True",
       "order": 2
     }
@@ -115,7 +115,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "IT",
-      "parent": "average",
+      "parent": "average_vision",
       "visible": "True",
       "order": 3
     }
@@ -124,7 +124,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "behavior",
-      "parent": "average",
+      "parent": "average_vision",
       "visible": "True",
       "order": 4
     }
@@ -132,9 +132,25 @@
   {
     "model": "benchmarks.BenchmarkType",
     "fields": {
-      "identifier": "engineering",
+      "identifier": "engineering_vision",
       "visible": "True",
       "order": 2
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "average_language",
+      "visible": "True",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "engineering_language",
+      "visible": "True",
+      "order": 0
     }
   }
 ]

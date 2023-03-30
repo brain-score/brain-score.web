@@ -12,5 +12,13 @@ button.addEventListener('click', function (e) {
 });
 
 input.addEventListener('change', function () {
-   button.innerText = this.value; 
+    const ext = this.value.match(/\.([^\.]+)$/)[1];
+    switch (ext) {
+    case 'zip':
+      button.innerText = this.value;
+      break;
+    default:
+      alert('Please submit a .zip file.');
+      this.value = "Click here to select file"
+  }
 });

@@ -1,0 +1,50 @@
+[
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "Federenko.Pereira2018-linear",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "Kanwisher.Federenko2016-linear",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "Federenko.Blank2014-linear",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "Futrell2018-pearsonr",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "HuGathier2018",
+      "parent": "average_language",
+      "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "Socher.Merity2016-accuracy",
+      "parent": "engineering_language",
+      "visible": "True"
+    }
+  }
+]

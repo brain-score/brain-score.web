@@ -1,0 +1,18 @@
+{% extends 'benchmarks/base.html' %}
+
+{% block content %}
+<section id="success" class="container center">
+  <h2>Uh Oh! Your submission package was not in the correct format.</h2>
+  <p>
+    {{ error }}
+  </p>
+  <h3>The submission packaging rules can be found
+    <a href="https://brain-score.readthedocs.io/en/latest/">here</a></h3>
+  {% if "language" in request.path %}
+    <h5>To resubmit, click <a href="http://{{ request.get_host }}/profile/language/submit">here</a>.</h5>
+  {% else %}
+    <h5>To resubmit, click <a href="http://{{ request.get_host }}/profile/vision/submit">here</a>.</h5>
+  {% endif %}
+
+</section>
+{% endblock %}
