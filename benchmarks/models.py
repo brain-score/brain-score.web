@@ -161,7 +161,7 @@ class Submission(models.Model):
     status = models.CharField(max_length=25, default='unknown')
 
     # equivalent to ID until language changes were added: (ID 6756)
-    jenkins_id = models.IntegerField(default=999)
+    jenkins_id = models.IntegerField()
 
     def __repr__(self):
         return generic_repr(self)
