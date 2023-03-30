@@ -2,8 +2,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 1,
-    "jenkins_id": 1,
     "fields": {
+      "jenkins_id": 1,
       "submitter": [
         "franzi@example.com"
       ],
@@ -16,8 +16,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 2,
-    "jenkins_id": 2,
     "fields": {
+      "jenkins_id": 2,
       "submitter": [
         "franzi@example.com"
       ],
@@ -30,8 +30,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 3,
-    "jenkins_id": 3,
     "fields": {
+      "jenkins_id": 3,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
@@ -44,8 +44,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 4,
-    "jenkins_id": 4,
     "fields": {
+      "jenkins_id": 4,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
@@ -58,8 +58,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 5,
-    "jenkins_id": 5,
     "fields": {
+      "jenkins_id": 5,
       "submitter": [
         "franzi@example.com"
       ],
@@ -72,8 +72,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 6,
-    "jenkins_id": 6,
     "fields": {
+      "jenkins_id": 6,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
@@ -86,8 +86,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 7,
-    "jenkins_id": 7,
     "fields": {
+      "jenkins_id": 7,
       "submitter": [
         "franzi@example.com"
       ],
@@ -100,8 +100,8 @@
   {
     "model": "benchmarks.Submission",
     "pk": 8,
-    "jenkins_id": 8,
     "fields": {
+      "jenkins_id": 8,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
@@ -114,8 +114,8 @@
   {
     "model": "benchmarks.submission",
     "pk": 33,
-    "jenkins_id": 33,
     "fields": {
+      "jenkins_id": 33,
       "timestamp": "2018-09-01 12:00:00",
       "model_type": "BaseModel",
       "status": "successful",
@@ -125,8 +125,8 @@
   {
     "model": "benchmarks.submission",
     "pk": 34,
-    "jenkins_id": 34,
     "fields": {
+      "jenkins_id": 34,
       "timestamp": "2018-09-01 12:00:00",
       "model_type": "BaseModel",
       "status": "successful",
@@ -136,8 +136,8 @@
   {
     "model": "benchmarks.submission",
     "pk": 35,
-    "jenkins_id": 35,
     "fields": {
+      "jenkins_id": 35,
       "timestamp": "2022-07-18 12:09:00",
       "model_type": "BaseModel",
       "status": "successful",
@@ -147,8 +147,8 @@
   {
     "model": "benchmarks.submission",
     "pk": 36,
-    "jenkins_id": 36,
     "fields": {
+      "jenkins_id": 36,
       "timestamp": "2022-07-19 12:09:00",
       "model_type": "BaseModel",
       "status": "successful",
@@ -158,8 +158,8 @@
   {
     "model": "benchmarks.submission",
     "pk": 37,
-    "jenkins_id": 37,
     "fields": {
+      "jenkins_id": 37,
       "timestamp": "2022-07-19 12:12:00",
       "model_type": "BaseModel",
       "status": "successful",
