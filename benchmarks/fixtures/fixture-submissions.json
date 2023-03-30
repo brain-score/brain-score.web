@@ -1,157 +1,169 @@
 [
   {
     "model": "benchmarks.Submission",
-    "pk" : 1,
+    "pk": 1,
     "fields": {
+      "jenkins_id": 1,
       "submitter": [
         "franzi@example.com"
       ],
       "timestamp": "2021-09-01 16:00:00",
-      "model_type" : "BaseModel",
-      "status":  "running",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "running",
+      "submitter_id": 2
     }
   },
- {
+  {
     "model": "benchmarks.Submission",
-    "pk" : 2,
+    "pk": 2,
     "fields": {
+      "jenkins_id": 2,
       "submitter": [
         "franzi@example.com"
       ],
       "timestamp": "2021-09-02 16:00:00",
-      "model_type" : "BaseModel",
-      "status":  "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
-
- {
+  {
     "model": "benchmarks.Submission",
-    "pk" : 3,
+    "pk": 3,
     "fields": {
+      "jenkins_id": 3,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
       "timestamp": "2018-08-01 16:00:00",
-      "model_type" : "BrainModel",
-      "status":  "successful",
-      "submitter_id" : 2
+      "model_type": "BrainModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 4,
+    "pk": 4,
     "fields": {
+      "jenkins_id": 4,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
       "timestamp": "2018-09-01 16:00:00",
-      "model_type" : "BrainModel",
-      "status":  "failure",
-      "submitter_id" : 2
+      "model_type": "BrainModel",
+      "status": "failure",
+      "submitter_id": 2
     }
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 5,
+    "pk": 5,
     "fields": {
+      "jenkins_id": 5,
       "submitter": [
         "franzi@example.com"
       ],
       "timestamp": "2021-09-06 16:00:00",
-      "model_type" : "BaseModel",
-      "status":  "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 6,
+    "pk": 6,
     "fields": {
+      "jenkins_id": 6,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
       "timestamp": "2021-01-07 16:00:00",
-      "model_type" : "BaseModel",
-      "status":  "failure",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "failure",
+      "submitter_id": 2
     }
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 7,
+    "pk": 7,
     "fields": {
+      "jenkins_id": 7,
       "submitter": [
         "franzi@example.com"
       ],
       "timestamp": "2021-06-21 16:00:00",
-      "model_type" : "BaseModel",
-      "status":  "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
     "model": "benchmarks.Submission",
-    "pk" : 8,
+    "pk": 8,
     "fields": {
+      "jenkins_id": 8,
       "submitter": [
         "martin.schrimpf@outlook.com"
       ],
       "timestamp": "2021-03-31 16:00:00",
-      "model_type" : "BrainModel",
-      "status":  "running",
-      "submitter_id" : 2
+      "model_type": "BrainModel",
+      "status": "running",
+      "submitter_id": 2
     }
   },
   {
-    "model" :  "benchmarks.submission",
-    "pk" : 33,
-    "fields" : {
+    "model": "benchmarks.submission",
+    "pk": 33,
+    "fields": {
+      "jenkins_id": 33,
       "timestamp": "2018-09-01 12:00:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
-    "model" :  "benchmarks.submission",
-    "pk" : 34,
-    "fields" : {
+    "model": "benchmarks.submission",
+    "pk": 34,
+    "fields": {
+      "jenkins_id": 34,
       "timestamp": "2018-09-01 12:00:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
-    "model" :  "benchmarks.submission",
-    "pk" : 35,
-    "fields" : {
+    "model": "benchmarks.submission",
+    "pk": 35,
+    "fields": {
+      "jenkins_id": 35,
       "timestamp": "2022-07-18 12:09:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
-    "model" :  "benchmarks.submission",
-    "pk" : 36,
-    "fields" : {
+    "model": "benchmarks.submission",
+    "pk": 36,
+    "fields": {
+      "jenkins_id": 36,
       "timestamp": "2022-07-19 12:09:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   },
   {
-    "model" :  "benchmarks.submission",
-    "pk" : 37,
-    "fields" : {
+    "model": "benchmarks.submission",
+    "pk": 37,
+    "fields": {
+      "jenkins_id": 37,
       "timestamp": "2022-07-19 12:12:00",
-      "model_type" : "BaseModel",
-      "status" : "successful",
-      "submitter_id" : 2
+      "model_type": "BaseModel",
+      "status": "successful",
+      "submitter_id": 2
     }
   }
 ]
