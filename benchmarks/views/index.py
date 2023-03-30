@@ -31,15 +31,16 @@ color_None = '#e0e1e2'
 
 
 @cache_page(24 * 60 * 60)
-def view(request):
-    context = get_context()
+def view(request, domain):
+    context = get_context(domain=domain)
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, benchmark_filter=None, model_filter=None, show_public=False):
-    benchmarks = _collect_benchmarks(user_page=True if user is not None else False,
+def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+
+    benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(benchmarks, show_public, user, score_filter=model_filter)
+    model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -60,7 +61,7 @@ def get_context(user=None, benchmark_filter=None, model_filter=None, show_public
     not_shown_set = {benchmark.identifier for benchmark in benchmarks
                      if benchmark.depth > BASE_DEPTH or
                      # show engineering benchmarks collapsed, but still show root
-                     (benchmark.short_name != ENGINEERING_ROOT and benchmark.root_parent == ENGINEERING_ROOT)}
+                     (ENGINEERING_ROOT not in benchmark.short_name and ENGINEERING_ROOT in benchmark.root_parent)}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
@@ -76,12 +77,12 @@ def get_context(user=None, benchmark_filter=None, model_filter=None, show_public
             "comparison_data": json.dumps(comparison_data)}
 
 
-def _collect_benchmarks(user_page=False, benchmark_filter=None):
+def _collect_benchmarks(domain, user_page=False, benchmark_filter=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
         benchmark_types = benchmark_types.filter(visible=True)
-    root_benchmarks = benchmark_types.filter(parent=None)
+    root_benchmarks = benchmark_types.filter(identifier__in=[f"average_{domain}", f"engineering_{domain}"])
     if benchmark_filter:
         root_benchmarks = benchmark_filter(root_benchmarks)
     root_benchmarks = root_benchmarks.order_by('order')
@@ -183,7 +184,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(benchmarks, show_public, user=None, score_filter=None):
+def _collect_models(domain, benchmarks, show_public, user=None, score_filter=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
@@ -224,7 +225,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
                     benchmark_id = f'{benchmark.identifier}_v{benchmark.version}'
-                    if benchmark_lookup[benchmark_id].root_parent != ENGINEERING_ROOT \
+                    if ENGINEERING_ROOT not in benchmark_lookup[benchmark_id].root_parent  \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
                     else:
@@ -295,7 +296,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
             np.nanmin(group['score_ceiled'].fillna(value=np.nan)),
             np.nanmax(group['score_ceiled'].fillna(value=np.nan))
             # this is an ugly hack to make the gray less visually dominant on the page
-            * (2.5 if benchmark_lookup[benchmark_id].root_parent == ENGINEERING_ROOT else 1))
+            * (2.5 if ENGINEERING_ROOT in benchmark_lookup[benchmark_id].root_parent else 1))
         if bench_minmax[0] == bench_minmax[1]:
             bench_minmax = (0, 1)
         minmax[benchmark_id] = bench_minmax
@@ -305,13 +306,13 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
     model_meta = Model.objects.select_related('reference', 'owner', 'submission')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
-    model_ranks = scores[scores['benchmark'] == 'average']
+    model_ranks = scores[scores['benchmark'] == f'average_{domain}']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
     # - prepare data structures
     ModelRow = namedtuple('ModelRow', field_names=[
         'id', 'name',
         'reference_identifier', 'reference_link',
-        'user', 'public', 'competition',
+        'user', 'public', 'competition', 'domain',
         'rank', 'scores',
         'build_status', 'submitter', 'submission_id', 'timestamp'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
@@ -348,7 +349,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
             benchmark = benchmark_lookup[versioned_benchmark_identifier]
             color = representative_color(
                 score_ceiled,
-                colors=colors_redgreen if benchmark.root_parent != ENGINEERING_ROOT
+                colors=colors_redgreen if ENGINEERING_ROOT not in benchmark.root_parent
                 else colors_gray,
                 min_value=benchmark_min, max_value=benchmark_max)
             score_ceiled = represent(score_ceiled)
@@ -374,6 +375,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
 
         # model
         competition = meta.competition
+        domain = meta.domain
 
         # submission
         submitter = meta.submission.submitter
@@ -385,7 +387,7 @@ def _collect_models(benchmarks, show_public, user=None, score_filter=None):
             id=meta.id,
             name=meta.name,
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
-            user=meta.owner, public=meta.public, competition=competition,
+            user=meta.owner, public=meta.public, competition=competition, domain=domain,
             scores=model_scores, rank=rank, build_status=build_status,
             submitter=submitter, submission_id=submission_id, timestamp=timestamp
         )

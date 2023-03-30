@@ -1,0 +1,21 @@
+branch-defaults:
+  hotfix_ugettext:
+    environment: brain-score-web-dev
+  language_changes:
+    environment: brain-score-web-dev
+environment-defaults:
+  brain-score-web-dev:
+    branch: null
+    repository: null
+global:
+  application_name: brain-score.web
+  default_ec2_keyname: mferg@mit.edu
+  default_platform: Docker running on 64bit Amazon Linux
+  default_region: us-east-2
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: eb-cli
+  sc: git
+  workspace_type: Application

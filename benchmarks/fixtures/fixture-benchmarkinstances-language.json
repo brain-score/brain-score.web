@@ -1,0 +1,62 @@
+[
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.576,
+      "ceiling_error": 0.00212,
+      "version": 1,
+      "benchmark_type": "Federenko.Pereira2018-linear",
+      "meta": 15
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.79,
+      "ceiling_error": NaN,
+      "version": 1,
+      "benchmark_type": "Kanwisher.Federenko2016-linear",
+      "meta": 16
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.88123,
+      "ceiling_error": 0.0111,
+      "version": 1,
+      "benchmark_type": "Federenko.Blank2014-linear",
+      "meta": 17
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.8631810774,
+      "ceiling_error": 0.00384253,
+      "version": 1,
+      "benchmark_type": "Futrell2018-pearsonr",
+      "meta": 18
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.66,
+      "ceiling_error": NaN,
+      "version": 1,
+      "benchmark_type": "HuGathier2018",
+      "meta": 19
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkInstance",
+    "fields": {
+      "ceiling": 0.89,
+      "ceiling_error": NaN,
+      "version": 1,
+      "benchmark_type": "Socher.Merity2016-accuracy",
+      "meta": 20
+    }
+  }
+]

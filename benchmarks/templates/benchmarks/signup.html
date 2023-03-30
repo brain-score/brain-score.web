@@ -20,6 +20,12 @@
             <button type="submit" class="button submission">Sign up</button>
         </form>
         <br/>
-        <button class="button"><a href="/../profile/">Return to login</a></button>
+
+        {% if "language" in request.path %}
+            <button class="button"><a href="/../profile/language">Return to login</a></button>
+        {% else %}
+            <button class="button"><a href="/../profile/vision">Return to login</a></button>
+        {% endif %}
+
     </section>
 {% endblock %}

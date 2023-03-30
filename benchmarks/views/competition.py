@@ -18,7 +18,7 @@ def view(request):
     # I.e., if a benchmark is updated with a new version, this call will still use the newest version rather than
     # the version at the time of the competition.
     included_benchmarks = [
-        'average',
+        'average_vision',
         'V1',
         'movshon.FreemanZiemba2013.V1-pls',
         'dicarlo.Marques2020', 'V1-orientation', 'V1-spatial_frequency', 'V1-response_selectivity',

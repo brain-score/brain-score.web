@@ -15,10 +15,12 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
-from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
+import zipfile
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +28,8 @@ User = get_user_model()
 
 
 class Activate(View):
+    domain = None
+
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -38,7 +42,7 @@ class Activate(View):
             user.is_active = True
             user.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return HttpResponseRedirect('../../profile/')
+            return HttpResponseRedirect(f'../../../profile/{self.domain}')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -52,6 +56,8 @@ class Activate(View):
 
 
 class Signup(View):
+    domain = None
+
     def get(self, request):
         form = SignupForm()
         return render(request, 'benchmarks/signup.html', {'form': form})
@@ -66,16 +72,31 @@ class Signup(View):
             user.save()
 
             # Send an email to the user with the token:
-            mail_subject = 'Activate your account.'
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/activate/{uid}/{token}"
-            message = (f"Hello! Thanks for signing up with Brain-Score.\n\n"
-                       f"Please click or paste the following link to activate your account:\n{activation_link}\n\n"
-                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
-                       f"Thanks,\n"
-                       f"The Brain-Score Team")
+
+            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
+            message_suffix = (f"Please click or paste the following link to activate your account:\n"
+                              f"{activation_link}\n\n"
+                              f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
+                              f"Thanks,\n"
+                              f"The Brain-Score Team")
+            # if indirect signup via PR, provide additional context:
+            if "is_from_pr" in request.POST:
+                message = (f"Hello!\n"
+                           f"We have received your pull request via GitHub for a Brain-Score plugin.\n\n"
+                           f"We did not find a Brain-Score account associated with your GitHub email {to_email}, "
+                           f"so we created one for you. "
+                           f"Your temporary password is {form.cleaned_data.get('password1')}, "
+                           f"please reset it after activating you account."
+                           f"\n\n{message_suffix}")
+            # regular signup via website form
+            else:
+                message = (f"Hello!\n"
+                           f"Thanks for signing up with Brain-Score."
+                           f"\n\n{message_suffix}")
+            mail_subject = 'Activate your Brain-Score Account'
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
             context = {"activation_email": True, "password_email": False, 'form': LoginForm}
@@ -103,29 +124,48 @@ class Login(View):
 
 
 class Logout(View):
+    domain = None
+
     def get(self, request):
         logout(request)
-        return HttpResponseRedirect('../../')
+        return HttpResponseRedirect(f'../../../{self.domain}')
 
 
 class Upload(View):
+    domain = None
+
     def get(self, request):
+        assert self.domain is not None
         if request.user.is_anonymous:
-            return HttpResponseRedirect('../profile/')
-        form = UploadFileForm()
+            return HttpResponseRedirect(f'../profile/{self.domain}')
+        if self.domain == "language":
+            form = UploadFileFormLanguage()
+        else:
+            form = UploadFileForm()
         return render(request, 'benchmarks/upload.html', {'form': form})
 
     def post(self, request):
-        form = UploadFileForm(request.POST, request.FILES)
+        assert self.domain is not None
+        if self.domain == "language":
+            form = UploadFileFormLanguage(request.POST, request.FILES)
+        else:
+            form = UploadFileForm(request.POST, request.FILES)
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
+        # parse directory tree, return new html page if not valid:
+        if self.domain == "language":
+            is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+            if not is_zip_valid:
+                return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
-            "model_type": request.POST['model_type'],
+            "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
             "user_id": user_inst.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
+            "domain": self.domain
         }
 
         with open('result.json', 'w') as fp:
@@ -138,7 +178,12 @@ class Upload(View):
         jenkins_url = "http://braintree.mit.edu:8080"
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
-        job_name = "run_benchmarks"
+
+        if self.domain == "language":
+            job_name = "dev_create_github_pr"
+        else:
+            job_name = "dev_run_benchmarks"
+
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
@@ -153,7 +198,77 @@ class Upload(View):
         return render(request, 'benchmarks/success.html')
 
 
-def resubmit(request):
+def validate_zip(file):
+    with zipfile.ZipFile(file, mode="r") as archive:
+        namelist = archive.infolist()
+        root = namelist[0]
+        has_plugin, submitted_plugins = plugins_exist(namelist)
+        if not has_plugin:
+            return False, f"\nPlease make sure your {root.filename} folder contains at least one of the " \
+                          f"following folders:" \
+                          "[metrics, data, benchmarks, models]"
+        instances = []
+        files = []
+        for plugin in submitted_plugins:
+            has_instance, submitted_instances = plugin_has_instances(namelist, plugin)
+            instances.append(submitted_instances)
+        plugin_instance_dict = dict(zip(submitted_plugins, instances))
+
+        # make sure there is at least one plugin that is not empty:
+        if all(x == [] for x in plugin_instance_dict.values()):
+
+            if len(list(plugin_instance_dict.keys())) == 1:
+                return False, f"\nYour {list(plugin_instance_dict.keys())} folder is empty."
+            else:
+                return False, f"\nYour {list(plugin_instance_dict.keys())} folders are empty."
+
+        for instance in plugin_instance_dict.values():
+            if len(instance) < 1:
+                pass
+            else:
+                has_files, submitted_files, broken_instance = instance_has_files(namelist, instance)
+                if not has_files:
+                    return False, f"\nYour {broken_instance} folder must contain an __init__.py and a test.py folder."
+                files.append(submitted_files)
+        return True, ""
+
+
+# checks that there is >= 1 plugin
+def plugins_exist(namelist):
+    acceptable_plugins = ["models", "benchmarks", "data", "metrics"]
+    plugins = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 2]
+    plugins_list = [plugin.split("/")[1].lower() for plugin in plugins]
+    if len(list(set(plugins_list) & set(acceptable_plugins))) >= 1:
+        return True, list(set(plugins_list) & set(acceptable_plugins))
+    else:
+        return False, []
+
+
+# makes sure every plugin has an associated instance
+def plugin_has_instances(namelist, plugin):
+    instances = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 3]
+    instances_list = [file_path.split("/")[2] for file_path in instances if file_path.split("/")[1] == plugin]
+
+    # make sure there is >= 1 instance submitted:
+    if len(instances_list) < 1:
+        return False, []
+    else:
+        return True, instances_list
+
+
+# makes sure each instance has a __init__.py and setup.py
+def instance_has_files(namelist, instances):
+    files_list = []
+    for instance in instances:
+        files = [file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance]
+        if len(set(files) & {"__init__.py", "test.py"}) < 2:
+            return False, [], instance
+        files_list.append(files)
+
+    return True, files_list, None
+
+
+def collect_models_benchmarks(request):
     assert request.method == 'POST'
 
     _logger.debug(f"request user: {request.user.get_full_name()}")
@@ -168,71 +283,88 @@ def resubmit(request):
         elif key.startswith('benchmark_selection_'):
             # value is benchmark_type_id (un-versioned)
             benchmarks.append(value)
+
+    return model_ids, benchmarks
+
+
+def submit_to_jenkins(request, benchmarks=None):
+    # submit to jenkins
+    jenkins_url = "http://braintree.mit.edu:8080"
+    auth = get_secret("brainscore-website_jenkins_access")
+    auth = (auth['user'], auth['password'])
+    job_name = "dev_run_benchmarks"
+    benchmark_string = ' '.join(benchmarks)
+    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                  f"?TOKEN=trigger2scoreAmodel" \
+                  f"&email={request.user.email}" \
+                  f"&benchmarks={benchmark_string}"
+    _logger.debug(f"request_url: {request_url}")
+    params = {'submission.config': open('result.json', 'rb')}
+    response = requests.post(request_url, files=params, auth=auth)
+    _logger.debug(f"response: {response}")
+
+    # update frontend
+    response.raise_for_status()
+    _logger.debug("Job triggered successfully")
+
+
+def resubmit(request):
+    domain = request.path.split("/")[2]
+    model_ids, benchmarks = collect_models_benchmarks(request)
     if len(model_ids) == 0 or len(benchmarks) == 0:
         return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
-    # submit each model_id separately, for two reasons:
-    # 1. model_ids from different submissions might have conflicting dependencies
-    # 2. parallelizing the runs across multiple jobs
     for model_id in model_ids:
         json_info = {
+            "domain": domain,
             "user_id": request.user.id,
             "model_ids": [model_id],
         }
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
+        submit_to_jenkins(request, benchmarks)
 
-        # submit to jenkins
-        jenkins_url = "http://braintree.mit.edu:8080"
-        auth = get_secret("brainscore-website_jenkins_access")
-        auth = (auth['user'], auth['password'])
-        job_name = "run_benchmarks"
-        benchmark_string = ' '.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.get_full_name()}" \
-                      f"&benchmarks={benchmark_string}"
-        _logger.debug(f"request_url: {request_url}")
-        params = {'submission.config': open('result.json', 'rb')}
-        response = requests.post(request_url, files=params, auth=auth)
-        _logger.debug(f"response: {response}")
-
-        # update frontend
-        response.raise_for_status()
-        _logger.debug("Job triggered successfully")
     return render(request, 'benchmarks/success.html')
 
 
 class DisplayName(View):
+    domain = None
+
     def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect('../../profile/')
+        return HttpResponseRedirect(f'../../profile/{self.domain}')
 
 
 class Profile(View):
+    domain = None
+
     def get(self, request):
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            context = get_context(request.user)
+            context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
-            return render(request, 'benchmarks/profile.html', context)
+            context["domain"] = self.domain
+            return render(request, 'benchmarks/domain-information.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            context = get_context(user)
+            context = get_context(user, domain=self.domain)
             context["has_user"] = True
-            return render(request, 'benchmarks/profile.html', context)
+            context["domain"] = self.domain
+            return render(request, 'benchmarks/domain-information.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
 
 class Password(View):
+    domain = None
+
     def get(self, request):
         form = PasswordResetForm()
         return render(request, 'benchmarks/password.html', {'form': form})
@@ -256,7 +388,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{uid}/{token}"
+            activation_link = f"{current_site}/password-change/{self.domain}/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -274,6 +406,8 @@ class Password(View):
 
 
 class ChangePassword(View):
+    domain = None
+
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -301,7 +435,7 @@ class ChangePassword(View):
             user.set_password(request.POST["new_password1"])
             user.save()
             user.is_active = True
-            return HttpResponseRedirect('../../profile/')
+            return HttpResponseRedirect(f'../../../profile/{self.domain}')
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)

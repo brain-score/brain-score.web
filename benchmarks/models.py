@@ -116,7 +116,7 @@ class BenchmarkType(models.Model):
 
 
 class BenchmarkMeta(models.Model):
-    number_of_images = models.IntegerField(null=True)
+    number_of_stimuli = models.IntegerField(null=True)
     number_of_recording_sites = models.IntegerField(null=True)
     recording_sites = models.CharField(max_length=100, null=True)
     behavioral_task = models.CharField(max_length=100, null=True)
@@ -179,6 +179,7 @@ class Model(models.Model):
     visual_degrees = models.IntegerField(null=True)  # null during model creation before querying objec
     public = models.BooleanField(default=False)
     competition = models.CharField(max_length=200, default=None, null=True)
+    domain = models.CharField(max_length=200, default="vision", null=True)
 
     def __repr__(self):
         return generic_repr(self)
