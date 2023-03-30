@@ -76,32 +76,29 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
 
-            # if submitted via PR and now user is found, create a new user:
+            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
+            message_suffix = (f"Please click or paste the following link to activate your account:\n"
+                              f"{activation_link}\n\n"
+                              f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
+                              f"Thanks,\n"
+                              f"The Brain-Score Team")
+            # if indirect signup via PR, provide additional context:
             if "is_from_pr" in request.POST:
-                mail_subject = 'Activate your new Brain-Score Account'
-                current_site = get_current_site(request)
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = account_activation_token.make_token(user)
-                activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}/{to_email}"
-                message = (f"Hello! We have received your pull request via Github for a new Plugin.\n\n"
-                           f"It seems that we did not find a Brain-Score account associated with your email {to_email}, "
-                           f"so we created one for you. \n\n"
-                           f"Please click or paste the following link to activate your account:\n{activation_link}\n\n"
-                           f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
-                           f"Thanks,\n"
-                           f"The Brain-Score Team")
-                email = EmailMessage(mail_subject, message, to=[to_email])
-                email.send()
+                message = (f"Hello!\n"
+                           f"We have received your pull request via GitHub for a Brain-Score plugin.\n\n"
+                           f"We did not find a Brain-Score account associated with your GitHub email {to_email}, "
+                           f"so we created one for you. "
+                           f"Your temporary password is {form.cleaned_data.get('password1')}, "
+                           f"please reset it after activating you account."
+                           f"\n\n{message_suffix}")
+            # regular signup via website form
             else:
-                mail_subject = 'Activate your account'
-                activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
-                message = (f"Hello! Thanks for signing up with Brain-Score.\n\n"
-                           f"Please click or paste the following link to activate your account:\n{activation_link}\n\n"
-                           f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
-                           f"Thanks,\n"
-                           f"The Brain-Score Team")
-                email = EmailMessage(mail_subject, message, to=[to_email])
-                email.send()
+                message = (f"Hello!\n"
+                           f"Thanks for signing up with Brain-Score."
+                           f"\n\n{message_suffix}")
+            mail_subject = 'Activate your Brain-Score Account'
+            email = EmailMessage(mail_subject, message, to=[to_email])
+            email.send()
             context = {"activation_email": True, "password_email": False, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
         elif form.errors:
