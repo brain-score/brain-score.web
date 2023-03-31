@@ -1,9 +1,11 @@
 import json
 import logging
+import zipfile
 
 import boto3
 import requests
 from botocore.exceptions import ClientError
+from django.conf import settings
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.sites.shortcuts import get_current_site
@@ -19,8 +21,6 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFo
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
-import zipfile
-import os
 
 _logger = logging.getLogger(__name__)
 
@@ -179,10 +179,8 @@ class Upload(View):
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
 
-        if self.domain == "language":
-            job_name = "dev_create_github_pr"
-        else:
-            job_name = "dev_run_benchmarks"
+        job_name = "create_github_pr" if self.domain == "language" else "run_benchmarks"
+        job_name = conditional_debug(job_name)
 
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
@@ -292,7 +290,7 @@ def submit_to_jenkins(request, benchmarks=None):
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
-    job_name = "dev_run_benchmarks"
+    job_name = conditional_debug("run_benchmarks")
     benchmark_string = ' '.join(benchmarks)
     request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                   f"?TOKEN=trigger2scoreAmodel" \
@@ -478,6 +476,13 @@ def split_identifier_version(versioned_benchmark_identifier):
     identifier = '_v'.join(identifier_version_split[:-1])
     version = identifier_version_split[-1]
     return identifier, version
+
+
+def conditional_debug(job_name: str) -> str:
+    """ Tests if the website is running in DEBUG mode, and if it is, changes the job to a dev job. """
+    if settings.DEBUG:
+        job_name = f"dev_{job_name}"
+    return job_name
 
 
 def get_secret(secret_name, region_name='us-east-2'):
