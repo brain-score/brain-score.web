@@ -156,6 +156,7 @@ class Upload(View):
         # parse directory tree, return new html page if not valid:
         if self.domain == "language":
             is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+            request.FILES['zip_file'].seek(0)  # reset file pointer
             if not is_zip_valid:
                 return render(request, 'benchmarks/invalid_zip.html', {'error': error})
 
