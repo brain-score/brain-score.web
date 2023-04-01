@@ -103,6 +103,7 @@ class Reference(models.Model):
 
 class BenchmarkType(models.Model):
     identifier = models.CharField(max_length=200, primary_key=True)
+    domain = models.CharField(max_length=200, default="vision")
     reference = models.ForeignKey(Reference, on_delete=models.PROTECT, null=True)  # null for parents
     order = models.IntegerField(default=999)
     parent = models.ForeignKey("self", null=True, on_delete=models.PROTECT)  # null: average benchmark has no parent
@@ -179,7 +180,7 @@ class Model(models.Model):
     visual_degrees = models.IntegerField(null=True)  # null during model creation before querying objec
     public = models.BooleanField(default=False)
     competition = models.CharField(max_length=200, default=None, null=True)
-    domain = models.CharField(max_length=200, default="vision", null=True)
+    domain = models.CharField(max_length=200, default="vision")
 
     def __repr__(self):
         return generic_repr(self)

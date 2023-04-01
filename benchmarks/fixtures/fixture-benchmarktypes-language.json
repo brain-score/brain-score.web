@@ -3,6 +3,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "Federenko.Pereira2018-linear",
+      "domain": "language",
       "parent": "average_language",
       "visible": "True"
     }
@@ -11,6 +12,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "Kanwisher.Federenko2016-linear",
+      "domain": "language",
       "parent": "average_language",
       "visible": "True"
     }
@@ -19,6 +21,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "Federenko.Blank2014-linear",
+      "domain": "language",
       "parent": "average_language",
       "visible": "True"
     }
@@ -27,6 +30,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "Futrell2018-pearsonr",
+      "domain": "language",
       "parent": "average_language",
       "visible": "True"
     }
@@ -35,6 +39,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "HuGathier2018",
+      "domain": "language",
       "parent": "average_language",
       "visible": "True"
     }
@@ -43,8 +48,27 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "Socher.Merity2016-accuracy",
+      "domain": "language",
       "parent": "engineering_language",
       "visible": "True"
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "average_language",
+      "domain": "language",
+      "visible": "True",
+      "order": 0
+    }
+  },
+  {
+    "model": "benchmarks.BenchmarkType",
+    "fields": {
+      "identifier": "engineering_language",
+      "domain": "language",
+      "visible": "True",
+      "order": 0
     }
   }
 ]

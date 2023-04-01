@@ -3,6 +3,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "dicarlo.MajajHong2015.V4-pls",
+      "domain": "vision",
       "parent": "V4",
       "visible": "True",
       "reference": [
@@ -14,6 +15,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "dicarlo.MajajHong2015.IT-pls",
+      "domain": "vision",
       "parent": "IT",
       "visible": "True",
       "reference": [
@@ -25,6 +27,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "movshon.FreemanZiemba2013.V1-pls",
+      "domain": "vision",
       "parent": "V1",
       "visible": "True",
       "reference": [
@@ -36,6 +39,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "movshon.FreemanZiemba2013.V2-pls",
+      "domain": "vision",
       "parent": "V2",
       "visible": "True",
       "reference": [
@@ -47,6 +51,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "dicarlo.Kar2019-ost",
+      "domain": "vision",
       "parent": "IT",
       "visible": "True",
       "reference": [
@@ -58,6 +63,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "dicarlo.Rajalingham2018-i2n",
+      "domain": "vision",
       "parent": "behavior",
       "visible": "True",
       "reference": [
@@ -69,6 +75,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "fei-fei.Deng2009-top1",
+      "domain": "vision",
       "parent": "engineering_vision",
       "visible": "True",
       "reference": [
@@ -80,6 +87,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "average_vision",
+      "domain": "vision",
       "visible": "True",
       "order": 0
     }
@@ -88,6 +96,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V1",
+      "domain": "vision",
       "parent": "average_vision",
       "visible": "True",
       "order": 0
@@ -97,6 +106,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V2",
+      "domain": "vision",
       "parent": "average_vision",
       "visible": "True",
       "order": 1
@@ -106,6 +116,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "V4",
+      "domain": "vision",
       "parent": "average_vision",
       "visible": "True",
       "order": 2
@@ -115,6 +126,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "IT",
+      "domain": "vision",
       "parent": "average_vision",
       "visible": "True",
       "order": 3
@@ -124,6 +136,7 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "behavior",
+      "domain": "vision",
       "parent": "average_vision",
       "visible": "True",
       "order": 4
@@ -133,24 +146,9 @@
     "model": "benchmarks.BenchmarkType",
     "fields": {
       "identifier": "engineering_vision",
+      "domain": "vision",
       "visible": "True",
       "order": 2
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
-      "identifier": "average_language",
-      "visible": "True",
-      "order": 0
-    }
-  },
-  {
-    "model": "benchmarks.BenchmarkType",
-    "fields": {
-      "identifier": "engineering_language",
-      "visible": "True",
-      "order": 0
     }
   }
 ]
