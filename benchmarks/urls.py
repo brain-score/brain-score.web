@@ -13,6 +13,9 @@ urlpatterns = [
     path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
     path('competition/', competition.view, name='competition'),
 
+    # default profile is vision
+    path('profile/', user.Profile.as_view(domain="vision"), name='default-profile'),
+
     # language changes
     path('vision/', functools.partial(index, domain='vision'), name='index'),
     path('language/', functools.partial(index, domain='language'), name='index'),
