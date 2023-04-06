@@ -181,9 +181,9 @@ class Upload(View):
         auth = (auth['user'], auth['password'])
 
         if self.domain == "language":
-            job_name = "dev_create_github_pr"
+            job_name = "create_github_pr"
         else:
-            job_name = "dev_run_benchmarks"
+            job_name = "run_benchmarks"
 
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
@@ -293,7 +293,7 @@ def submit_to_jenkins(request, benchmarks=None):
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
-    job_name = "dev_run_benchmarks"
+    job_name = "run_benchmarks"
     benchmark_string = ' '.join(benchmarks)
     request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                   f"?TOKEN=trigger2scoreAmodel" \
