@@ -10,6 +10,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            'ALTER SEQUENCE brainscore_submission_id_seq RESTART WITH 7022'
+            'ALTER SEQUENCE brainscore_submission_id_seq RESTART WITH 7024'
         )
     ]
