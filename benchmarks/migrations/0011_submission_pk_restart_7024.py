@@ -8,8 +8,11 @@ class Migration(migrations.Migration):
         ('benchmarks', '0010_benchmarktype_domain'),
     ]
 
+    # this is a one-time data migration, and is commented out because Travis throws a syntax error from SEQUENCE
+    # when trying to compile using SQLite in testing; however, the migration works for Postgres and has been applied
+    # already to both prod and dev.
     operations = [
-        migrations.RunSQL(
-            'ALTER SEQUENCE brainscore_submission_id_seq RESTART WITH 7024'
-        )
+        # migrations.RunSQL(
+        #     'ALTER SEQUENCE brainscore_submission_id_seq RESTART WITH 7024'
+        # )
     ]
