@@ -274,32 +274,47 @@ def collect_models_benchmarks(request):
 
     _logger.debug(f"request user: {request.user.get_full_name()}")
     model_ids = []
+    model_names = []
     benchmarks = []
     for key, value in request.POST.items():
         if key.startswith('model_selection_'):
             # value in this case is the model id
             model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
             verify_user_model_access(user=request.user, model=model)
+            model_names.append(model.name)
             model_ids.append(model.id)
         elif key.startswith('benchmark_selection_'):
             # value is benchmark_type_id (un-versioned)
             benchmarks.append(value)
+    return model_ids, model_names, benchmarks
 
-    return model_ids, benchmarks
 
-
-def submit_to_jenkins(request, benchmarks=None):
+def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     # submit to jenkins
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
-    job_name = "run_benchmarks"
-    benchmark_string = ' '.join(benchmarks)
-    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                  f"?TOKEN=trigger2scoreAmodel" \
-                  f"&email={request.user.email}" \
-                  f"&benchmarks={benchmark_string}"
-    _logger.debug(f"request_url: {request_url}")
+
+    # language has a different URL building system than vision
+    if domain == "vision":
+        job_name = "run_benchmarks"
+        benchmark_string = ' '.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?TOKEN=trigger2scoreAmodel" \
+                      f"&email={request.user.email}" \
+                      f"&benchmarks={benchmark_string}"
+        _logger.debug(f"request_url: {request_url}")
+    else:
+        job_name = "score_plugins"
+        benchmark_string = '%20'.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?token=trigger2scoreAmodel" \
+                      f"&user_id={request.user.id}" \
+                      f"&new_benchmarks={benchmark_string}" \
+                      f"&new_models={model_name}" \
+                      f"&specified_only=True"
+        _logger.debug(f"request_url: {request_url}")
+
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
     _logger.debug(f"response: {response}")
@@ -311,11 +326,13 @@ def submit_to_jenkins(request, benchmarks=None):
 
 def resubmit(request):
     domain = request.path.split("/")[2]
-    model_ids, benchmarks = collect_models_benchmarks(request)
+    model_ids, model_names, benchmarks = collect_models_benchmarks(request)
+    model_id_name_dict = dict(zip(model_ids, model_names))
+
     if len(model_ids) == 0 or len(benchmarks) == 0:
         return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
-    for model_id in model_ids:
+    for model_id in model_id_name_dict.keys():
         json_info = {
             "domain": domain,
             "user_id": request.user.id,
@@ -323,8 +340,7 @@ def resubmit(request):
         }
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
-        submit_to_jenkins(request, benchmarks)
-
+        submit_to_jenkins(request, domain, model_id_name_dict[model_id], benchmarks)
     return render(request, 'benchmarks/success.html')
 
 
