@@ -576,3 +576,13 @@ def display_submitter(model, user):
         return f"Anonymous Submitter #{model.user.id}"
     else:
         return model.user.display_name
+
+
+# controls how the benchmark roots are displayed in the comparison graphs
+@register.filter
+def simplify_domain(benchmark_name: str) -> str:
+    suffixed_benchmarks = ['average', 'engineering']
+    for suffixed_name in suffixed_benchmarks:
+        if benchmark_name.startswith(f"{suffixed_name}_"):
+            return suffixed_name
+    return benchmark_name
