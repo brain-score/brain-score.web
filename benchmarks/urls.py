@@ -22,7 +22,7 @@ non_domain_urls = [
 all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
-    single_domain_urls = [
+    domain_urls = [
         path(f'{domain}/', functools.partial(index, domain=domain), name='index'),
         path(f'password/{domain}/',  user.Password.as_view(domain=domain), name=f'password-{domain}'),
         path(f'password-change/{domain}/<str:uidb64>/<str:token>', user.ChangePassword.as_view(domain=domain), name=f'change-password-{domain}'),
@@ -35,7 +35,7 @@ for domain in supported_domains:
         path(f'profile/{domain}/logout/',  user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
         path(f'model/{domain}/<int:id>', functools.partial(model.view, domain=domain), name=f'model-{domain}'),
     ]
-    all_domain_urls.append(single_domain_urls)
+    all_domain_urls.append(domain_urls)
 
 # collapse all domains into one list
 urlpatterns = sum(all_domain_urls, [])
