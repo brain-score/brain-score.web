@@ -38,7 +38,7 @@ def view(request, id: int):
     return render(request, 'benchmarks/model.html', model_context)
 
 
-def determine_context(id, request, domain):
+def determine_context(id, request, domain: str):
     # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
     # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
     reference_context = get_context(show_public=True, domain=domain)

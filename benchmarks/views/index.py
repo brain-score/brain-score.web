@@ -77,7 +77,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             "comparison_data": json.dumps(comparison_data)}
 
 
-def _collect_benchmarks(domain, user_page=False, benchmark_filter=None):
+def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
@@ -184,7 +184,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(domain, benchmarks, show_public, user=None, score_filter=None):
+def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
