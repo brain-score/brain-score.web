@@ -99,6 +99,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # domain processing -> allows domain to be retrieved from all URLs, globally across templates:
+                'benchmarks.context_processors.domain_processor',
             ],
         },
     },
