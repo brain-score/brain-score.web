@@ -60,7 +60,7 @@ class Signup(View):
 
     def get(self, request):
         form = SignupForm()
-        return render(request, 'benchmarks/signup.html', {'form': form})
+        return render(request, 'benchmarks/signup.html', {'form': form, "domain": self.domain})
 
     def post(self, request):
         form = SignupForm(request.POST)
@@ -142,7 +142,7 @@ class Upload(View):
             form = UploadFileFormLanguage()
         else:
             form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form})
+        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain})
 
     def post(self, request):
         assert self.domain is not None
@@ -158,7 +158,7 @@ class Upload(View):
             is_zip_valid, error = validate_zip(form.files.get('zip_file'))
             request.FILES['zip_file'].seek(0)  # reset file pointer
             if not is_zip_valid:
-                return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+                return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
@@ -196,7 +196,7 @@ class Upload(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-        return render(request, 'benchmarks/success.html')
+        return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
 
 def validate_zip(file):
@@ -324,8 +324,8 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     _logger.debug("Job triggered successfully")
 
 
-def resubmit(request):
-    domain = request.path.split("/")[2]
+def resubmit(request, domain: str):
+
     model_ids, model_names, benchmarks = collect_models_benchmarks(request)
     model_id_name_dict = dict(zip(model_ids, model_names))
 
@@ -341,7 +341,7 @@ def resubmit(request):
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
         submit_to_jenkins(request, domain, model_name, benchmarks)
-    return render(request, 'benchmarks/success.html')
+    return render(request, 'benchmarks/success.html', {"domain": domain})
 
 
 class DisplayName(View):
@@ -359,11 +359,10 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
             return render(request, 'benchmarks/domain-information.html', context)
 
     def post(self, request):
@@ -372,10 +371,9 @@ class Profile(View):
             login(request, user)
             context = get_context(user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
             return render(request, 'benchmarks/domain-information.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain}
             return render(request, 'benchmarks/login.html', context)
 
 
@@ -384,7 +382,7 @@ class Password(View):
 
     def get(self, request):
         form = PasswordResetForm()
-        return render(request, 'benchmarks/password.html', {'form': form})
+        return render(request, 'benchmarks/password.html', {'form': form, "domain": self.domain})
 
     def post(self, request):
         form = PasswordResetForm(request.POST)
@@ -413,12 +411,12 @@ class Password(View):
                        f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            return render(request, 'benchmarks/password-confirm.html')
+            return render(request, 'benchmarks/password-confirm.html', {"domain": self.domain})
         elif form.errors:
-            context = {'form': form}
+            context = {'form': form, "domain": self.domain}
             return render(request, 'benchmarks/password.html', context)
         else:
-            context = {"activation_email": False, 'password_email': False, 'form': LoginForm}
+            context = {"domain": self.domain, "activation_email": False, 'password_email': False, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
 

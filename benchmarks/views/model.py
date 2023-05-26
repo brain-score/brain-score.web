@@ -13,8 +13,7 @@ from ..models import BenchmarkType, Model
 _logger = logging.getLogger(__name__)
 
 
-def view(request, id: int):
-    domain = request.path.split("/")[2]
+def view(request, id: int, domain: str):
     model, model_context, reference_context = determine_context(id, request, domain)
 
     # takes care of odd issue where valueError is raised when

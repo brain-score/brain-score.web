@@ -101,7 +101,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
 
                 # domain processing -> allows domain to be retrieved from all URLs, globally across templates:
-                'benchmarks.context_processors.domain_processor',
+                # 'benchmarks.context_processors.domain_processor',
             ],
         },
     },

@@ -31,12 +31,12 @@ color_None = '#e0e1e2'
 
 
 @cache_page(24 * 60 * 60)
-def view(request, domain):
+def view(request, domain: str):
     context = get_context(domain=domain)
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
 
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
@@ -71,7 +71,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     if user is not None:
         submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
     
-    return {'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
+    return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
             "comparison_data": json.dumps(comparison_data)}
