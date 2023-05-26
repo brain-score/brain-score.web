@@ -2,10 +2,18 @@
 
 {% block content %}
 <section id="success" class="container center">
-  <h3>Your submission was a success! Scores will be emailed to you whenever the tests complete.</h3>
-  <h4>Thank you for your participation!</h4>
-  <h5>To return to your profile page, click <a href="/profile/{{ domain }}">here</a>.</h5>
-  <h5>Submit another language model <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.</h5>
+
+  <article class="message">
+  <div class="message-header">
+    <p>Your submission was a success!</p>
+    <button class="delete" aria-label="delete"></button>
+  </div>
+  <div class="message-body">
+    Scores will be emailed to you whenever the tests complete. Thank you for your participation!
+    To return to your profile page, click <a href="/profile/{{ domain }}">here</a>.
+    Submit another language model <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
+  </div>
+</article>
 
 </section>
 {% endblock %}
