@@ -10,11 +10,7 @@
           <div class="message-body">
             {{ error }}. The submission packaging rules can be found
                 <a href="https://brain-score.readthedocs.io/en/latest/">here</a>.
-            {% if "language" in request.path %}
-                To resubmit, click <a href="http://{{ request.get_host }}/profile/language/submit">here</a>.
-            {% else %}
-                To resubmit, click <a href="http://{{ request.get_host }}/profile/vision/submit">here</a>.
-            {% endif %}
+              To resubmit, click <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
           </div>
         </article>
 
