@@ -33,7 +33,7 @@ for domain in supported_domains:
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/{domain}/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'{domain}_resubmit'),
         path(f'profile/{domain}/logout/',  user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
-        path(f'model/{domain}/<int:id>', functools.partial(model.view, domain=domain), name=f'model-{domain}'),
+        path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
     ]
     all_domain_urls.append(domain_urls)
 
