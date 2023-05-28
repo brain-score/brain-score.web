@@ -347,11 +347,11 @@ def resubmit(request, domain: str):
 class DisplayName(View):
     domain = None
 
-    def post(self, request):
+    def post(self, request, domain):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect(f'../../profile/{self.domain}')
+        return HttpResponseRedirect(f'../../profile/{domain}')
 
 
 class Profile(View):

@@ -28,7 +28,7 @@ for domain in supported_domains:
         path(f'password-change/{domain}/<str:uidb64>/<str:token>', user.ChangePassword.as_view(domain=domain), name=f'change-password-{domain}'),
         path(f'signup/{domain}', user.Signup.as_view(domain=domain), name=f'{domain}-signup'),
         path(f'activate/{domain}/<str:uidb64>/<str:token>', user.Activate.as_view(domain=domain), name=f'activate-{domain}'),
-        path(f'display-name/{domain}', user.DisplayName.as_view(domain=domain), name=f'display-name-{domain}'),
+        path(f'display-name/<str:domain>', user.DisplayName.as_view(domain=domain), name=f'display-name'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/{domain}/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'{domain}_resubmit'),
