@@ -31,7 +31,7 @@ for domain in supported_domains:
         path(f'display-name/<str:domain>', user.DisplayName.as_view(domain=domain), name=f'display-name'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
-        path(f'profile/{domain}/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'{domain}_resubmit'),
+        path(f'profile/<str:domain>/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'resubmit'),
         path(f'profile/{domain}/logout/',  user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
         path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
     ]
