@@ -37,6 +37,6 @@ for domain in supported_domains:
     ]
     all_domain_urls.append(domain_urls)
 
-# collapse all domains into one list
+# collapse all domains into 1D list (from 2D)
 urlpatterns = sum(all_domain_urls, [])
 

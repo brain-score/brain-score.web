@@ -9,9 +9,10 @@
     <button class="delete" aria-label="delete"></button>
   </div>
   <div class="message-body">
-    Scores will be emailed to you whenever the tests complete. Thank you for your participation!
+    You will be able to see the scores in your profile, and will be notified by email once all runs complete.
+    Note that it can take up to 24 hours for the public leaderboard to update. Thank you for your participation!
     To return to your profile page, click <a href="/profile/{{ domain }}">here</a>.
-    Submit another language model <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
+    Submit another {{ domain }} model <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
   </div>
 </article>
 
