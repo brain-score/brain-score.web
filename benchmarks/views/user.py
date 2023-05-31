@@ -28,7 +28,6 @@ User = get_user_model()
 
 
 class Activate(View):
-    domain = None
 
     def get(self, request, uidb64, token):
         try:
@@ -42,7 +41,7 @@ class Activate(View):
             user.is_active = True
             user.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -56,11 +55,10 @@ class Activate(View):
 
 
 class Signup(View):
-    domain = None
 
     def get(self, request):
         form = SignupForm()
-        return render(request, 'benchmarks/signup.html', {'form': form, "domain": self.domain})
+        return render(request, 'benchmarks/signup.html', {'form': form})
 
     def post(self, request):
         form = SignupForm(request.POST)
@@ -76,7 +74,7 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
 
-            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
                               f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
@@ -106,7 +104,7 @@ class Signup(View):
             return render(request, 'benchmarks/signup.html', context)
         else:
             context = {'form': LoginForm}
-            return render(request, 'benchmarks/profile.html', context)
+            return render(request, 'benchmarks/central-profile.html', context)
 
 
 class Login(View):
@@ -123,12 +121,18 @@ class Login(View):
             return render(request, 'benchmarks/login.html', context)
 
 
+class LandingPage(View):
+
+    def get(self, request):
+        return render(request, 'benchmarks/landing_page.html')
+
+
 class Logout(View):
     domain = None
 
     def get(self, request):
         logout(request)
-        return HttpResponseRedirect(f'../../../{self.domain}')
+        return HttpResponseRedirect('../')
 
 
 class Upload(View):
@@ -317,6 +321,7 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
 
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
+    response = requests.post(request_url, files=params, auth=auth)
     _logger.debug(f"response: {response}")
 
     # update frontend
@@ -345,13 +350,31 @@ def resubmit(request, domain: str):
 
 
 class DisplayName(View):
-    domain = None
 
-    def post(self, request, domain):
+    def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect(f'../../profile/{domain}')
+        return HttpResponseRedirect(f'../../profile/')
+
+
+# intermediary account page: uniform across all Brain-Score domains.
+class ProfileAccount(View):
+
+    def get(self, request):
+        if request.user.is_anonymous:
+            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+        else:
+            return render(request, 'benchmarks/central-profile.html')
+
+    def post(self, request):
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            return render(request, 'benchmarks/central-profile.html')
+        else:
+            context = {"Incorrect": True, 'form': LoginForm, "domain": "test"}
+            return render(request, 'benchmarks/login.html', context)
 
 
 class Profile(View):
@@ -378,11 +401,10 @@ class Profile(View):
 
 
 class Password(View):
-    domain = None
 
     def get(self, request):
         form = PasswordResetForm()
-        return render(request, 'benchmarks/password.html', {'form': form, "domain": self.domain})
+        return render(request, 'benchmarks/password.html', {'form': form})
 
     def post(self, request):
         form = PasswordResetForm(request.POST)
@@ -403,7 +425,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -411,17 +433,16 @@ class Password(View):
                        f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            return render(request, 'benchmarks/password-confirm.html', {"domain": self.domain})
+            return render(request, 'benchmarks/password-confirm.html')
         elif form.errors:
-            context = {'form': form, "domain": self.domain}
+            context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
         else:
-            context = {"domain": self.domain, "activation_email": False, 'password_email': False, 'form': LoginForm}
+            context = {"activation_email": False, 'password_email': False, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
 
 
 class ChangePassword(View):
-    domain = None
 
     def get(self, request, uidb64, token):
         try:
@@ -450,7 +471,7 @@ class ChangePassword(View):
             user.set_password(request.POST["new_password1"])
             user.save()
             user.is_active = True
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
