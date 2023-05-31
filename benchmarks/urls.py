@@ -8,12 +8,13 @@ supported_domains = ["vision", "language"]
 
 non_domain_urls = [
 
-        # landing (main) page
-        path('', user.LandingPage.as_view(), name='landing_page'),
-        path('', user.LandingPage.as_view(), name='landing_page'),
+        # landing page (coming soon). For now default to vision:
+        # path('', user.LandingPage.as_view(), name='landing_page'),
+        # path('', user.LandingPage.as_view(), name='landing_page'),
+        path('', functools.partial(index, domain="vision"), name='index'),
+        path('/', functools.partial(index, domain="vision"), name='index'),
 
         # user
-        path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
         path('competition/', competition.view, name='competition'),
         path('signup/', user.Signup.as_view(), name='signup'),
         path('profile/logout/', user.Logout.as_view(), name='logout'),
@@ -24,6 +25,11 @@ non_domain_urls = [
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
+        path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+
+        # need navbar links when on /profile. Default to vision.
+        # update with new UI
+        path('profile//', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
 ]
 
 all_domain_urls = [non_domain_urls]
