@@ -104,7 +104,7 @@ class Signup(View):
             return render(request, 'benchmarks/signup.html', context)
         else:
             context = {'form': LoginForm}
-            return render(request, 'benchmarks/central-profile.html', context)
+            return render(request, 'benchmarks/central_profile.html', context)
 
 
 class Login(View):
@@ -365,13 +365,13 @@ class ProfileAccount(View):
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            return render(request, 'benchmarks/central-profile.html')
+            return render(request, 'benchmarks/central_profile.html')
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            return render(request, 'benchmarks/central-profile.html')
+            return render(request, 'benchmarks/central_profile.html')
         else:
             context = {"Incorrect": True, 'form': LoginForm, "domain": "test"}
             return render(request, 'benchmarks/login.html', context)

@@ -21,21 +21,23 @@
                 </form>
             </section>
 
-            <div id="domain_overviews" class="domain_overviews">
-                <div id="vision_overview" class="container">
-                    <div class="notification is-primary">
+
+
+            <div id="domain_overviews" class="box">
+                <div id="vision_overview" class="box">
+                    <div>
                         View your <strong>vision</strong> plugins and leaderboard
                         <a href="http://{{ request.get_host }}/profile/vision">here</a>.
 
-                        <h4>Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.</h4>
+                        Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.
                     </div>
                 </div>
 
-                <div id="language_overview" class="container">
-                    <div class="notification is-primary">
+                <div id="language_overview" class="box">
+                    <div>
                         View your <strong>language</strong> plugins and leaderboard
                         <a href="http://{{ request.get_host }}/profile/language">here</a>.
-                        <h4>Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.</h4>
+                        Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.
                     </div>
                 </div>
             </div>
