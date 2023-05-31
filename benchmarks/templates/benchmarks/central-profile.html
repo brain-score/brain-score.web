@@ -1,0 +1,57 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% block content %}
+
+    {% if user %}
+        <section id="profile" class="container center">
+            <section id = profile-info>
+                <h1>{{ user.email }}</h1>
+
+                <form action="{% url 'display-name' %}" method="post">
+                    {% csrf_token %}
+                    <label class="label">Display name</label>
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                        </p>
+                        <p class="control">
+                            <input type="submit" value="Save" class="button">
+                        </p>
+                    </div>
+                </form>
+            </section>
+
+            <div id="domain_overviews" class="domain_overviews">
+                <div id="vision_overview" class="container">
+                    <div class="notification is-primary">
+                        View your <strong>vision</strong> plugins and leaderboard
+                        <a href="http://{{ request.get_host }}/profile/vision">here</a>.
+
+                        <h4>Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.</h4>
+                    </div>
+                </div>
+
+                <div id="language_overview" class="container">
+                    <div class="notification is-primary">
+                        View your <strong>language</strong> plugins and leaderboard
+                        <a href="http://{{ request.get_host }}/profile/language">here</a>.
+                        <h4>Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns">
+                <section id="models-profile" class="column is-9" >
+                    <section id="profile-logout">
+                        <button onclick="location.href='logout/'" type="button" class="button submission">
+                            Logout
+                        </button>
+                    </section>
+                </section>
+            </div>
+        </section>
+
+
+    {% else %}
+    {% endif %}
+{% endblock %}
