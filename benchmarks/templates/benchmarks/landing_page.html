@@ -1,0 +1,160 @@
+{% load static %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+<link rel="stylesheet" href="static/benchmarks/css/landing_page.css">
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600,300,800,700,400italic" />
+
+{% block navbar %}
+<nav class="navbar is-fixed-top" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <div class= "container is-full-fullhd">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/new_ui_elements/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <button onclick="location.href='profile/'" type="button" class="button btn-1" >Log In</button>
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/new_ui_elements/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/new_ui_elements/twitter_icon.png"/>
+                        </a>
+                    </div>
+                </div>
+            </div>
+    </div>
+</nav>
+{% endblock %}
+
+<div class="landing container">
+    <div class="columns">
+        <div class="left_side column is-half">
+            <img class="logo_green image"  src="/static/benchmarks/img/new_ui_elements/logo_name_full.png" />
+            <h3 class = landing_heading>Integrative Benchmarks | Models at Scale </h3>
+            <p class = text-default-small>The Brain-Score platform aims to yield strong computational models of the
+                ventral stream. We enable researchers to quickly get a sense of how their model scores
+                against standardized brain benchmarks on multiple dimensions and facilitate comparisons to
+                other state-of-the-art models. </p>
+            <div class="domain_buttons container">
+                <button onclick="location.href='vision/'" type="button" class="button domain_button" >Vision</button>
+                <button onclick="location.href='language/'" type="button" class="button domain_button" >Language</button>
+            </div>
+        </div>
+        <div class="column is-half">
+            <img class="head_art image"  src="/static/benchmarks/img/new_ui_elements/head_art_1.png" />
+        </div>
+    </div>
+</div>
+
+<div class="main_body container">
+    <div class="about container">
+        <div class="columns">
+            <div class="column">
+                <img class="collab_graphic image"  src="/static/benchmarks/img/new_ui_elements/collaboration.png" />
+            </div>
+            <div class="column is-half">
+                <h1 class = big_green>Democratizing the Search for Natural Intelligence</h1>
+                <p class = text-default>The Brain-Score platform aims to yield strong computational models of the
+                    ventral stream. We enable researchers to quickly get a sense of how their model scores
+                    against standardized brain benchmarks on multiple dimensions and facilitate comparisons to
+                    other state-of-the-art models. At the same time, new brain data can quickly be tested against
+                    a wide range of models to determine how well existing models explain the data. </p>
+            </div>
+        </div>
+    </div>
+     <div class="benefits container">
+         <img class="b-w_logo image"  src="/static/benchmarks/img/new_ui_elements/b-w_logo.png" />
+        <div class="columns">
+            <div class="column">
+                 <div class="benefits_card container">
+                     <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/collab_icon.png" />
+                     <h3 class=benefits_heading>Collaborative</h3>
+                     <p class="benefits_info">Community-wide initiatives & competitions.</p>
+                     <button onclick="location.href='profile/'" type="button" class="button benefit_button" >Leaderboard</button>
+                 </div>
+            </div>
+            <div class="column">
+                <div class="benefits_card container">
+                    <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/book_icon.png" />
+                    <h3 class=benefits_heading>Open Source</h3>
+                    <p class="benefits_info">Download and Experiment. Completely free.</p>
+                    <button onclick="location.href='profile/'" type="button" class="button benefit_button" >Github</button>
+                 </div>
+            </div>
+            <div class="column">
+                <div class="benefits_card container">
+                    <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/access_icon.png" />
+                    <h3 class=benefits_heading>Accessible</h3>
+                    <p class="benefits_info">Interact seamlessly with our curated leaderboard.</p>
+                    <button onclick="location.href='profile/'" type="button" class="button benefit_button" >Submit</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="landing_leaderboard container">
+        <div class="columns">
+            <div class="column is-half">
+                <h1 class = big_green>Leaderboard</h1>
+                <p class = text-default>The Leaderboard is the heart of Brain-Score. Here you can view the best models,
+                    their performance across 55+ vision benchmarks and 33+ language benchmarks. You can also view
+                    information about these benchmarks, the minds behind them, and links to explore more.
+                </p>
+            </div>
+            <div class="column">
+                <div class="benefits_card container">
+                    <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/upload_icon.png" />
+                    <h3 class=benefits_heading>Ready to Submit?</h3>
+                    <p class="leaderboard_info">Below you will find links on how to prepare a model for submission and
+                        receive a Brain-Score! You will also find the same for submitting a benchmark, with detailed
+                        tutorials available for both modelers and experimentalists. </p>
+                    <button onclick="location.href='profile/'" type="button" class="button tutorial_button" >Tutorials</button>
+                    <button onclick="location.href='profile/'" type="button" class="button hollow_button" >Submit</button>
+                 </div>
+            </div>
+        </div>
+
+    </div>
+
+     <div class="main_footer container">
+        <div class="columns">
+            <div class="column has-text-centered">
+                <img class="white_logo image"  src="/static/benchmarks/img/new_ui_elements/White_logo_full.png" />
+            </div>
+            <div class="footer_middle column has-text-centered">
+                <div class="column">
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Support</button>
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >FAQ</button>
+                </div>
+                <div class="column">
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Tutorials</button>
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Log In</button>
+                </div>
+                 <div class="column">
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Citations</button>
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >License</button>
+                </div>
+                <div class="column">
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Sponsors</button>
+                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Privacy Policy</button>
+                </div>
+
+            </div>
+            <div class="column">
+                <h1 class=join_text>Join our Newsletter!</h1>
+                <div class="control">
+                    <input class="input" type="text" placeholder="Sign up Coming Soon :)" disabled>
+                    <button onclick="location.href='profile/'" type="button" class="button white_button"
+                            title="Disabled button" disabled >Sign Up</button>
+                </div>
+            </div>
+        </div>
+
+
+</div>
