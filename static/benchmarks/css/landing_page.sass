@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans')
 $new_green: #45C676
+$new_blue: #47B7DE
 
 
 // navbar
@@ -31,7 +32,7 @@ $new_green: #45C676
   font-weight: 600
   padding: 8px 30px
   margin-right: 20px
-  background-image: linear-gradient(0deg, #47B7DE, $new_green)
+  background-image: linear-gradient(0deg, $new_blue, $new_green)
 
 .big_green
   color: $new_green
@@ -46,15 +47,14 @@ $new_green: #45C676
   font-weight: 200
   padding-top: 20px
 
-//controls the landing gradient
-.container.landing::before
+.container.landing::before // controls the landing gradient
   content: ""
   position: absolute
   top: 0
   left: 0
   width: 100%
   height: 100%
-  background-image: linear-gradient(0deg, #47B7DE, $new_green)
+  background-image: linear-gradient(0deg, $new_blue, $new_green)
   opacity: 0.3
   z-index: -1
   border-radius: 40px
@@ -62,10 +62,6 @@ $new_green: #45C676
 .container.landing
   position: relative  // critical for gradient above
   margin-top: 100px
-  border-radius: 40px
-
-.container.about
-  padding: 75px
   border-radius: 40px
 
 .image.head_art
@@ -105,12 +101,20 @@ $new_green: #45C676
   width: 25%
   height: 30px
 
+
+// about page
+.container.about
+  padding: 75px
+  border-radius: 40px
+
+
+// benefits page
 .container.benefits
   margin-top: 20px
   margin-bottom: -20px
   padding: 50px 100px
   border-radius: 40px
-  background-image: linear-gradient(0deg, #47B7DE, $new_green)
+  background-image: linear-gradient(0deg, $new_blue, $new_green)
 
 .container.benefits_card
   text-align: center
@@ -151,6 +155,8 @@ $new_green: #45C676
   padding-bottom: 30px
   margin: auto
 
+
+// leaderboard page (on landing)
 .container.landing_leaderboard
   margin-top: 20px
   padding: 120px
@@ -181,8 +187,10 @@ $new_green: #45C676
   font-size: 100%
   font-weight: 200
 
+
+// footer
 .container.main_footer
-  background-image: linear-gradient(0deg, #47B7DE, $new_green)
+  background-image: linear-gradient(0deg, $new_blue, $new_green)
   padding: 50px 100px
 
 button.simple_button
@@ -203,6 +211,7 @@ button.white_button
   background-image: none
   margin-top: 30px
   color: $new_green
+
 
 //controls resizing to lower breakpoints. Head art will disappear after max-width breakpoint
 @media (max-width: 785px)
