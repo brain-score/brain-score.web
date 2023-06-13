@@ -4,9 +4,11 @@ import functools
 from .views import index, user, model, competition
 
 urlpatterns = [
-    # index
-    path('', functools.partial(index, domain='vision'), name='index'),
-    path('/', functools.partial(index, domain='vision'), name='index'),
+
+    # landing page
+    path('', user.Landing.as_view(), name='landing-page'),
+    path('/', user.Landing.as_view(), name='landing-page'),
+
     # user
     path('logout/', user.Logout.as_view(domain="vision"), name='logout'),
     path('upload/', user.Profile.as_view(domain="vision"), name='upload'),

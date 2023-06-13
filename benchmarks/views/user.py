@@ -131,6 +131,12 @@ class Logout(View):
         return HttpResponseRedirect(f'../../../{self.domain}')
 
 
+class Landing(View):
+
+    def get(self, request):
+        return render(request, 'benchmarks/landing_page.html')
+
+
 class Upload(View):
     domain = None
 
