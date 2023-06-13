@@ -115,7 +115,7 @@ $brainscore_blue: #47B7DE
 .container.benefits
   margin-top: 20px
   margin-bottom: -20px
-  padding: 50px 100px
+  padding: 30px 75px 75px
   border-radius: 40px
   background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
 
@@ -216,7 +216,7 @@ button.white_button
   color: $brainscore_green
 
 
-//resizes text between 768-850px, to ensure head stays put.
+// resizes text between 768-850px, to ensure head stays put.
 @media (max-width: 850px)
   .text-default-small
     width: 125%
@@ -224,6 +224,24 @@ button.white_button
     font-size: 100%
     width: 20%
     height: 20px
+  .button.tutorial_button
+    width: 70%
+    height: 35px
+  .button.hollow_button
+    width: 70%
+
+// resizes buttons between 850px and 1024 px
+@media (max-width: 1024px)
+  .button.benefit_button
+    margin: auto
+    width: 100%
+    height: 35px
+
+// resizes buttons between 1024px and 1215 px
+@media (max-width: 1215px)
+  .button.benefit_button
+    margin: auto
+    height: 35px
 
 //mobile styling (below 768px)
 @media (max-width: 768px)
