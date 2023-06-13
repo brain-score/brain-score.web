@@ -91,17 +91,15 @@ $brainscore_blue: #47B7DE
 .text-default-small
   color: black
   font-family: 'Open Sans', sans-serif
-  font-size: 1vw
-  max-font-size: 100%
   padding-top: 2%
   font-weight: 200
   padding-right: 25%
+  margin-bottom: -10px
 
 .container.domain_buttons
   padding-top: 4%
 
 .button.domain_button
-  font-size: 100%
   width: 25%
   height: 30px
 
@@ -218,18 +216,24 @@ button.white_button
   color: $brainscore_green
 
 
-//controls resizing to lower breakpoints. Head art will disappear after max-width breakpoint
-@media (max-width: 785px)
+//resizes text between 768-850px, to ensure head stays put.
+@media (max-width: 850px)
   .text-default-small
-    font-size: 80%
-  .landing_heading
+    width: 125%
+  .button.domain_button
     font-size: 100%
+    width: 20%
+    height: 20px
+
+//mobile styling (below 768px)
+@media (max-width: 768px)
+  .text-default-small
+    width: 75%
+    margin-left: 23%
   .button.domain_button
     font-size: 100%
     width: 25%
     height: 30px
-  .column.left_side
-    margin-left: 10%
   .image.head_art
     width: 0
     height: auto
