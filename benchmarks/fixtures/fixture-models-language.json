@@ -3,9 +3,7 @@
     "model": "benchmarks.Model",
     "fields": {
       "name": "glove-840b",
-      "reference": [
-        "https://nlp.stanford.edu/pubs/glove.pdf"
-      ],
+      "reference": null,
       "owner": [
         "mferg@mit.edu"
       ],
@@ -35,9 +33,7 @@
     "model": "benchmarks.Model",
     "fields": {
       "name": "gpt2-xl",
-       "reference": [
-        "https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
-      ],
+       "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
       ],
