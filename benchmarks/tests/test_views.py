@@ -17,8 +17,10 @@ class TestTable(TestCase):
         resp = self.client.get("http://localhost:8000/")
         self.assertEqual(resp.status_code, 200)
 
+    # After UI update,  http://localhost:8000 has no leaderboard anymore.
+    # vision is used here, language tested below.
     def test_num_rows(self):
-        resp = self.client.get("http://localhost:8000/")
+        resp = self.client.get("http://localhost:8000/vision")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         self.assertEqual(num_rows, 1 + 78)
