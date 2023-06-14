@@ -32,8 +32,11 @@ non_domain_urls = [
         path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
 
         # need navbar links when on /profile. Default to vision.
-        # update with new UI
+        # this is a **temporary** fix until the new UI landing page is live.
         path('profile//', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
+        path('profile//submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
+        path('profile//resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
+        path('profile//logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 ]
 
 all_domain_urls = [non_domain_urls]
