@@ -42,6 +42,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
+    # test comment
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
