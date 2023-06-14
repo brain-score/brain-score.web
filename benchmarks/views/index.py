@@ -75,7 +75,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_url = 'https://www.biorxiv.org/content/early/2018/09/05/407007'
         citation_domain_title = "Brain-Score: Which Artificial Neural Network for Object Recognition is most " \
                                 "Brain-Like? "
-        citation_domain_bibtext = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
+        citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
                                   "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
                                   "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
                                   "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
@@ -86,7 +86,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     else:
         citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
         citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
-        citation_domain_bibtext = "@article{schrimpf2021neural,\n\t\t\t\t" \
+        citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
                                   "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
                                   "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
                                   "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
@@ -115,7 +115,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                        'url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n\t\t\t}',
             'citation_domain_url': citation_domain_url,
             'citation_domain_title': citation_domain_title,
-            'citation_domain_bibtex': citation_domain_bibtext,
+            'citation_domain_bibtex': citation_domain_bibtex,
             }
 
 
