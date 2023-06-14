@@ -83,7 +83,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                   "journal={bioRxiv preprint},\n\t\t\t\t" \
                                   "year={2018},\n\t\t\t\t" \
                                   "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
-    else:
+    elif domain is "language":
         citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
         citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
         citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
@@ -97,6 +97,8 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                   "year={2021},\n\t\t\t\t" \
                                   "publisher={National Acad Sciences}\n\t\t\t" \
                                   "}"
+    else:
+        raise ValueError(f"Unknown domain {domain}")
 
     return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks,
             'submittable_benchmarks': submittable_benchmarks,

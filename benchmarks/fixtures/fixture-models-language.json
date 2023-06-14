@@ -33,7 +33,7 @@
     "model": "benchmarks.Model",
     "fields": {
       "name": "gpt2-xl",
-       "reference": null,
+      "reference": null,
       "owner": [
         "martin.schrimpf@outlook.com"
       ],

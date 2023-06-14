@@ -20,28 +20,17 @@
                     </div>
                 </form>
             </section>
-
-
-
             <div id="domain_overviews" class="box">
-                <div id="vision_overview" class="box">
-                    <div>
-                        View your <strong>vision</strong> plugins and leaderboard
-                        <a href="http://{{ request.get_host }}/profile/vision">here</a>.
-
-                        Submit new vision plugins <a href="{{ request.build_absolute_uri }}/">here</a>.
+                {% for domain in domains %}
+                    <div id="vision_overview" class="box">
+                        <div>
+                            View your <strong>{{ domain }}</strong> plugins and leaderboard
+                            <a href="http://{{ request.get_host }}/profile/{{ domain }}">here</a>.
+                            Submit new {{ domain }} plugins <a href="http://{{ request.get_host }}/profile/{{domain}}/submit">here</a>.
+                        </div>
                     </div>
-                </div>
-
-                <div id="language_overview" class="box">
-                    <div>
-                        View your <strong>language</strong> plugins and leaderboard
-                        <a href="http://{{ request.get_host }}/profile/language">here</a>.
-                        Submit new language plugins <a href="{{ request.build_absolute_uri }}/">here</a>.
-                    </div>
-                </div>
+                {% endfor %}
             </div>
-
             <div class="columns">
                 <section id="models-profile" class="column is-9" >
                     <section id="profile-logout">
