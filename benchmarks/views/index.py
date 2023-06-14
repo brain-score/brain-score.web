@@ -98,7 +98,9 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                   "publisher={National Acad Sciences}\n\t\t\t" \
                                   "}"
     else:
-        raise ValueError(f"Unknown domain {domain}")
+        citation_domain_url = ''
+        citation_domain_title = ''
+        citation_domain_bibtex = ''
 
     return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks,
             'submittable_benchmarks': submittable_benchmarks,
