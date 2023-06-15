@@ -1,7 +1,7 @@
 {% load static %}
 {% load compress %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-<link rel="stylesheet" href="static/benchmarks/css/landing_page.css">
+<link rel="stylesheet" href="../static/benchmarks/css/landing_page.css">
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600,300,800,700,400italic" />
 
 {# own sources #}
@@ -10,7 +10,7 @@
 {% endcompress %}
 
 {% block navbar %}
-<nav class="navbar is-fixed-top is-transparent" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<nav class="navbar updated is-fixed-top is-transparent" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <div class= "container is-full-fullhd">
         <div class="navbar-brand">
             <a class="navbar-item" href="https://www.brain-score.org">
@@ -25,7 +25,7 @@
         <div id="navMenu" class="navbar-menu">
                 <div class="navbar-end">
                     <div class="navbar-item">
-                        <button onclick="location.href='profile/'" type="button" class="button btn-1" >Log In</button>
+                        <button onclick="location.href='../profile'" type="button" class="button btn-1" >Log In</button>
                         <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
                             <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/new_ui_elements/github_icon.png" />
                         </a>
@@ -49,8 +49,8 @@
                 currently dozens of neural and behavioral measurements, and provide these
                 models to experimentalists to prototype new experiments and make sense of biological data. </p>
             <div class="domain_buttons container">
-                <button onclick="location.href='vision/'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Vision</button>
-                <button onclick="location.href='language/'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Language</button>
+                <button onclick="location.href='../vision'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Vision</button>
+                <button onclick="location.href='../language'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Language</button>
             </div>
         </div>
         <div class="column is-half">
@@ -67,11 +67,11 @@
             </div>
             <div class="column is-half">
                 <h1 class = heading_green>Democratizing the Search for Natural Intelligence</h1>
-                <p class = text-default>The Brain-Score platform aims to yield strong computational models of the
-                    ventral stream. We enable researchers to quickly get a sense of how their model scores
-                    against standardized brain benchmarks on multiple dimensions and facilitate comparisons to
-                    other state-of-the-art models. At the same time, new brain data can quickly be tested against
-                    a wide range of models to determine how well existing models explain the data. </p>
+                <p class = text-default>We believe in synergy between computational modeling and experimental brain
+                    and cognitive science. Brain-Score improves the efficiency of communication between experimentalists
+                    and modelers by providing experimental data as accessible benchmarks, and providing computational
+                    models in a unified form to experimentalists. All code is open-source and many community members
+                    have chosen to make their data or model weights fully public.</p>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@
                      <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/collab_icon.png" />
                      <h3 class="benefits_heading is-size-5 is-size-3-widescreen">Collaborative</h3>
                      <p class="benefits_info is-size-7 is-size-6-widescreen">Community-wide initiatives & competitions.</p>
-                     <button onclick="location.href='profile/'" type="button" class="button benefit_button is-size-7
+                     <button onclick="location.href='../profile'" type="button" class="button benefit_button is-size-7
                      is-size-6-widescreen" >Leaderboard</button>
                  </div>
              </div>
@@ -100,7 +100,7 @@
                     <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/access_icon.png" />
                     <h3 class="benefits_heading is-size-5 is-size-3-widescreen">Accessible</h3>
                     <p class="benefits_info is-size-7 is-size-6-widescreen">Interact seamlessly with our curated leaderboard.</p>
-                    <button onclick="location.href='profile/'" type="button" class="button benefit_button is-size-7 is-size-6-widescreen" >Submit</button>
+                    <button onclick="location.href='../profile'" type="button" class="button benefit_button is-size-7 is-size-6-widescreen" >Submit</button>
                  </div>
             </div>
         </div>
@@ -109,9 +109,12 @@
         <div class="columns has-text-centered-mobile">
             <div class="column is-half">
                 <h1 class = heading_green>Leaderboard</h1>
-                <p class = text-default>The Leaderboard is the heart of Brain-Score. Here you can view the best models,
-                    their performance across 55+ vision benchmarks and 33+ language benchmarks. You can also view
-                    information about these benchmarks, the minds behind them, and links to explore more.
+                <p class = text-default>At the core of Brain-Score is a leaderboard showing the latest evaluations of
+                    all available models on all available benchmarks. Models are ranked according to their average
+                    score across all the benchmarks because we believe the best model of a domain should explain all
+                    neural and behavioral data. The leaderboard also provides finer-grain per-benchmark and per-model
+                    scores for a more detailed view into where current models most need to improve on and which
+                    benchmarks are the most challenging.
                 </p>
             </div>
             <div class="column has-text-centered-mobile">
@@ -122,7 +125,7 @@
                         receive a Brain-Score! You will also find the same for submitting a benchmark, with detailed
                         tutorials available for both modelers and experimentalists. </p>
                     <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#'" type="button" class="button tutorial_button" >Tutorials</button>
-                    <button onclick="location.href='profile/'" type="button" class="button hollow_button" >Submit</button>
+                    <button onclick="location.href='../profile/'" type="button" class="button hollow_button" >Submit</button>
                  </div>
             </div>
         </div>
@@ -139,7 +142,7 @@
                 </div>
                 <div class="column">
                     <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#'" type="button" class="button simple_button" >Tutorials</button>
-                    <button onclick="location.href='profile/'" type="button" class="button simple_button" >Log In</button>
+                    <button onclick="location.href='../profile/'" type="button" class="button simple_button" >Log In</button>
                 </div>
                  <div class="column">
                     <button onclick="location.href='https://github.com/brain-score/brain-score#references'" type="button" class="button simple_button" >Citations</button>
@@ -154,7 +157,7 @@
                 <h1 class=join_text>Join our Newsletter!</h1>
                 <div class="control">
                     <input class="input" type="text" placeholder="Sign up Coming Soon :)" disabled>
-                    <button onclick="location.href='profile/'" type="button" class="button white_button"
+                    <button onclick="location.href='../profile'" type="button" class="button white_button"
                             title="Disabled button" disabled >Sign Up</button>
                 </div>
             </div>
