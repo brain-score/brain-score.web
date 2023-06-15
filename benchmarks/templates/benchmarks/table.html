@@ -67,19 +67,13 @@
                         <span data-benchmark="{{ benchmark.short_name }}"
                               class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
-                                   {% if benchmark.root_parent == 'average_vision' %} brain_benchmark {% endif %}">
-                        {% if "average" in benchmark.short_name %}
-                            average
-                        {% elif "engineering" in benchmark.short_name %}
-                            engineering
-                        {% else %}
-                            {{ benchmark.short_name }}
-                        {% endif %}
+                                   {% if benchmark.root_parent == 'average_{{ domain }}' %} brain_benchmark {% endif %}"
+                        value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}
                         </span>
                         {# version #}
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
-                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_vision' %}
+                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_{{ domain }}' %}
                             {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.number_of_all_children %}
                         {% endif %}
                         {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
@@ -105,15 +99,10 @@
                 <td class="score_cell"><strong>{{ model.rank }}</strong></td>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                         {% if "language" in request.path %}
-                              <a target="_self" rel="noopener noreferrer" href="{% url 'model-language' model.id %}">
+
+                         <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
                                 {{ model|display_model:user }}
                             </a>
-                        {% else %}
-                            <a target="_self" rel="noopener noreferrer" href="{% url 'model-vision' model.id %}">
-                                {{ model|display_model:user }}
-                            </a>
-                        {% endif %}
                     </div>
                     <div class="submitter">
                         {{ model|display_submitter:user|default:"&nbsp;" }}
