@@ -1,0 +1,303 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans");
+.navbar {
+  height: 100px;
+}
+
+.navbar-item.social_icon {
+  padding: 10px 0 0 0;
+  margin-left: 15px;
+}
+
+.image.navbar_element {
+  max-height: 80%;
+  max-width: 80%;
+}
+
+.navbar-brand {
+  padding-top: 10px;
+}
+
+.container.main_body {
+  background-image: linear-gradient(0deg, #e8f4ea, white);
+}
+
+.button {
+  flex: 1 1 auto;
+  text-align: center;
+  transition: 0.5s;
+  color: white;
+  border-radius: 16px;
+  border-width: 0;
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 10px;
+  padding: 8px 30px;
+  margin-right: 20px;
+  background-image: linear-gradient(0deg, #47B7DE, #45C676);
+}
+
+.heading_green {
+  color: #45C676;
+  font-family: "Open Sans", sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.text-default {
+  color: black;
+  font-family: "Open Sans", sans-serif;
+  width: 85%;
+  font-size: 20px;
+  font-weight: 200;
+  padding-top: 20px;
+}
+
+.container.landing::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(0deg, #47B7DE, #45C676);
+  opacity: 0.3;
+  z-index: -1;
+  border-radius: 40px;
+}
+
+.container.landing {
+  position: relative;
+  margin-top: 120px;
+  border-radius: 40px;
+}
+
+.image.head_art {
+  margin-top: -12px;
+  margin-bottom: -12px;
+}
+
+.image.logo_green {
+  width: 110%;
+  max-width: 120%;
+  height: auto;
+}
+
+.column.left_side {
+  margin-top: 15%;
+  padding-left: 6%;
+}
+
+.landing_heading {
+  color: black;
+  font-family: "Open Sans", sans-serif;
+  padding-top: 4%;
+  font-size: 165%;
+  font-weight: 500;
+}
+
+.text-default-small {
+  color: black;
+  font-family: "Open Sans", sans-serif;
+  padding-top: 2%;
+  font-weight: 200;
+  padding-right: 25%;
+  margin-bottom: -10px;
+}
+
+.container.domain_buttons {
+  padding-top: 4%;
+}
+
+.button.domain_button {
+  width: 25%;
+  height: 30px;
+}
+
+.container.about {
+  margin-top: 20px;
+  padding: 75px;
+  border-radius: 40px;
+}
+
+.container.benefits {
+  margin-top: 20px;
+  margin-bottom: -20px;
+  padding: 30px 75px 75px;
+  border-radius: 40px;
+  background-image: linear-gradient(0deg, #47B7DE, #45C676);
+}
+
+.container.benefits_card {
+  text-align: center;
+  padding: 50px;
+  border-radius: 40px;
+  background-color: white;
+}
+
+.benefits_heading {
+  color: #45C676;
+  font-family: "Open Sans", sans-serif;
+  font-size: 200%;
+  max-font-size: 200%;
+  font-weight: 800;
+}
+
+.benefits_info {
+  padding-top: 15px;
+  color: black;
+  font-family: "Open Sans", sans-serif;
+  font-size: 100%;
+  font-weight: 200;
+  padding-bottom: 15px;
+}
+
+.benefit_icon {
+  margin: auto;
+  width: 50px;
+  height: auto;
+  padding-bottom: 20px;
+}
+
+.button.benefit_button {
+  margin: auto;
+  font-size: 80%;
+  width: 50%;
+  height: 35px;
+}
+
+.image.b-w_logo {
+  width: 50px;
+  height: auto;
+  padding-bottom: 30px;
+  margin: auto;
+}
+
+.container.landing_leaderboard {
+  margin-top: 20px;
+  padding: 120px;
+  border-radius: 40px;
+  background-image: url("/static/benchmarks/img/new_ui_elements/CNN_abstract.png");
+  background-repeat: no-repeat;
+  background-size: 80% auto;
+  background-position: 350px -200px;
+}
+
+.button.tutorial_button {
+  font-size: 100%;
+  width: 35%;
+  height: 35px;
+}
+
+.button.hollow_button {
+  font-size: 100%;
+  width: 35%;
+  height: 35px;
+  border: 2px solid #45C676;
+  color: #45C676;
+  background-image: linear-gradient(0deg, white, white);
+}
+
+.leaderboard_info {
+  padding-top: 20px;
+  padding-bottom: 25px;
+  color: black;
+  font-family: "Open Sans", sans-serif;
+  font-size: 100%;
+  font-weight: 200;
+}
+
+.container.main_footer {
+  background-image: linear-gradient(0deg, #47B7DE, #45C676);
+  padding: 50px 100px;
+}
+
+button.simple_button {
+  background-color: transparent;
+  background-image: none;
+  font-family: "Open Sans", sans-serif;
+  width: 100px;
+}
+
+.join_text {
+  font-family: "Open Sans", sans-serif;
+  color: white;
+  font-size: 25px;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+button.white_button {
+  background-color: white;
+  background-image: none;
+  margin-top: 30px;
+  color: #45C676;
+}
+
+@media (max-width: 850px) {
+  .text-default-small {
+    width: 125%;
+  }
+
+  .button.domain_button {
+    font-size: 100%;
+    width: 20%;
+    height: 20px;
+  }
+
+  .button.tutorial_button {
+    width: 70%;
+    height: 35px;
+  }
+
+  .button.hollow_button {
+    width: 70%;
+  }
+}
+@media (max-width: 1024px) {
+  .button.benefit_button {
+    margin: auto;
+    width: 100%;
+    height: 35px;
+  }
+}
+@media (max-width: 1215px) {
+  .button.benefit_button {
+    margin: auto;
+    height: 35px;
+  }
+}
+@media (max-width: 768px) {
+  .text-default-small {
+    width: 75%;
+    margin-left: 23%;
+  }
+
+  .button.domain_button {
+    font-size: 100%;
+    width: 25%;
+    height: 30px;
+  }
+
+  .image.head_art {
+    width: 0;
+    height: auto;
+  }
+
+  .image.logo_green {
+    padding-top: 15px;
+    width: 80%;
+    height: auto;
+  }
+
+  .container.landing_leaderboard {
+    background-image: none;
+  }
+}
+@media (min-width: 1200px) {
+  .text-default-small {
+    font-size: 100%;
+  }
+}
+
+/*# sourceMappingURL=landing_page.css.map */

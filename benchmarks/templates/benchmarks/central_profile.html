@@ -1,4 +1,5 @@
 {% extends 'benchmarks/base.html' %}
+{% load static %}
 {% block content %}
 
     {% if user %}
@@ -13,29 +14,25 @@
                         <p class="control">
                             <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
                         </p>
-
                         <p class="control">
                             <input type="submit" value="Save" class="button">
                         </p>
                     </div>
-
-                <h4>Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.</h4>
-                <p>Past scores are below. Submissions are located at the bottom.</p>
                 </form>
             </section>
-
+            <div id="domain_overviews" class="box">
+                {% for domain in domains %}
+                    <div id="vision_overview" class="box">
+                        <div>
+                            View your <strong>{{ domain }}</strong> plugins and leaderboard
+                            <a href="http://{{ request.get_host }}/profile/{{ domain }}">here</a>.
+                            Submit new {{ domain }} plugins <a href="http://{{ request.get_host }}/profile/{{domain}}/submit">here</a>.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
             <div class="columns">
                 <section id="models-profile" class="column is-9" >
-                    <div id="scores">
-                        <section id="leaderboard">
-                            {% include "benchmarks/table.html" %}
-                        </section>
-                    </div>
-                    <div id="benchmarks">
-                        <section id="submissions" class="container center">
-                            {% include "benchmarks/submissions.html" %}
-                        </section>
-                    </div>
                     <section id="profile-logout">
                         <button onclick="location.href='logout/'" type="button" class="button submission">
                             Logout

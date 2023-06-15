@@ -2,15 +2,19 @@
 
 {% block content %}
 <section id="success" class="container center">
-  <h3>Your submission was a success! Scores will be emailed to you whenever the tests complete.</h3>
-  <h4>Thank you for your participation!</h4>
-  {% if "language" in request.path %}
-    <h5>To return to your profile page, click <a href="/profile/language">here</a>.</h5>
-    <h5>Submit another language model <a href="http://{{ request.get_host }}/profile/language/submit">here</a>.</h5>
-  {% else %}
-    <h5>To return to your profile page, click <a href="/profile/vision">here</a>.</h5>
-    <h5>Submit another vision model <a href="http://{{ request.get_host }}/profile/vision/submit">here</a>.</h5>
-  {% endif %}
+
+  <article class="message">
+  <div class="message-header">
+    <p>Your submission was a success!</p>
+    <button class="delete" aria-label="delete"></button>
+  </div>
+  <div class="message-body">
+    You will be able to see the scores in your profile, and will be notified by email once all runs complete.
+    Note that it can take up to 24 hours for the public leaderboard to update. Thank you for your participation!
+    To return to your profile page, click <a href="/profile/{{ domain }}">here</a>.
+    Submit another {{ domain }} model <a href="http://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
+  </div>
+</article>
 
 </section>
 {% endblock %}

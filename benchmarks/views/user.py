@@ -28,7 +28,6 @@ User = get_user_model()
 
 
 class Activate(View):
-    domain = None
 
     def get(self, request, uidb64, token):
         try:
@@ -42,7 +41,7 @@ class Activate(View):
             user.is_active = True
             user.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -56,7 +55,6 @@ class Activate(View):
 
 
 class Signup(View):
-    domain = None
 
     def get(self, request):
         form = SignupForm()
@@ -76,7 +74,7 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
 
-            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
                               f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
@@ -105,8 +103,8 @@ class Signup(View):
             context = {'form': form}
             return render(request, 'benchmarks/signup.html', context)
         else:
-            context = {'form': LoginForm}
-            return render(request, 'benchmarks/profile.html', context)
+            context = {'form': LoginForm, "domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
 
 
 class Login(View):
@@ -123,12 +121,17 @@ class Login(View):
             return render(request, 'benchmarks/login.html', context)
 
 
+class LandingPage(View):
+    def get(self, request):
+        return render(request, 'benchmarks/landing_page.html')
+
+
 class Logout(View):
     domain = None
 
     def get(self, request):
         logout(request)
-        return HttpResponseRedirect(f'../../../{self.domain}')
+        return HttpResponseRedirect('../')
 
 
 class Landing(View):
@@ -148,7 +151,7 @@ class Upload(View):
             form = UploadFileFormLanguage()
         else:
             form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form})
+        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain})
 
     def post(self, request):
         assert self.domain is not None
@@ -164,7 +167,7 @@ class Upload(View):
             is_zip_valid, error = validate_zip(form.files.get('zip_file'))
             request.FILES['zip_file'].seek(0)  # reset file pointer
             if not is_zip_valid:
-                return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+                return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
@@ -202,7 +205,7 @@ class Upload(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-        return render(request, 'benchmarks/success.html')
+        return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
 
 def validate_zip(file):
@@ -323,6 +326,7 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
 
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
+    response = requests.post(request_url, files=params, auth=auth)
     _logger.debug(f"response: {response}")
 
     # update frontend
@@ -330,8 +334,8 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     _logger.debug("Job triggered successfully")
 
 
-def resubmit(request):
-    domain = request.path.split("/")[2]
+def resubmit(request, domain: str):
+
     model_ids, model_names, benchmarks = collect_models_benchmarks(request)
     model_id_name_dict = dict(zip(model_ids, model_names))
 
@@ -347,17 +351,37 @@ def resubmit(request):
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
         submit_to_jenkins(request, domain, model_name, benchmarks)
-    return render(request, 'benchmarks/success.html')
+    return render(request, 'benchmarks/success.html', {"domain": domain})
 
 
 class DisplayName(View):
-    domain = None
 
     def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect(f'../../profile/{self.domain}')
+        return HttpResponseRedirect(f'../../profile/')
+
+
+# intermediary account page: uniform across all Brain-Score domains.
+class ProfileAccount(View):
+
+    def get(self, request):
+        if request.user.is_anonymous:
+            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+        else:
+            context = {"domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
+
+    def post(self, request):
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            context = {"domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
+        else:
+            context = {"Incorrect": True, 'form': LoginForm, "domains": ["vision", "language"]}
+            return render(request, 'benchmarks/login.html', context)
 
 
 class Profile(View):
@@ -365,12 +389,11 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
-            return render(request, 'benchmarks/domain-information.html', context)
+            return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
@@ -378,15 +401,13 @@ class Profile(View):
             login(request, user)
             context = get_context(user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
-            return render(request, 'benchmarks/domain-information.html', context)
+            return render(request, 'benchmarks/profile.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain}
             return render(request, 'benchmarks/login.html', context)
 
 
 class Password(View):
-    domain = None
 
     def get(self, request):
         form = PasswordResetForm()
@@ -411,7 +432,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -429,7 +450,6 @@ class Password(View):
 
 
 class ChangePassword(View):
-    domain = None
 
     def get(self, request, uidb64, token):
         try:
@@ -458,7 +478,7 @@ class ChangePassword(View):
             user.set_password(request.POST["new_password1"])
             user.save()
             user.is_active = True
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)
