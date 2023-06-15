@@ -4,7 +4,7 @@
 {% block content %}
     <section id="upload" class="container center">
 
-        {% if "language" in request.path %}
+        {% if domain == "language"%}
             <h1>Submission System (Language)</h1>
             Below you can upload a plugin. Plugins can be:
                 <ol>
@@ -40,13 +40,9 @@
                 Upload File:
                 <button id="upload_button" class="submission">Click here to select file</button>
             </p>
-            <button type="submit" class="button submission">Submit Model</button>
+            <button type="submit" class="button submission">Submit Plugin</button>
         </form>
-        {% if "language" in request.path %}
-            <p style="font-size: 12px"><a href="/profile/language">Return to profile page</a></p>
-        {% else %}
-            <p style="font-size: 12px"><a href="/profile/vision">Return to profile page</a></p>
-        {% endif %}
+        <p style="font-size: 12px"><a href="/profile/{{ domain }}">Return to {{ domain }} profile page</a></p>
     </section>
 
     <script defer src="{% static "/benchmarks/js/upload-format.js" %}"></script>

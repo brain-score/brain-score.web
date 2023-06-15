@@ -31,13 +31,12 @@ color_None = '#e0e1e2'
 
 
 @cache_page(24 * 60 * 60)
-def view(request, domain):
+def view(request, domain: str):
     context = get_context(domain=domain)
     return render(request, 'benchmarks/index.html', context)
 
 
-def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
-
+def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
@@ -70,14 +69,61 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     submittable_benchmarks = None
     if user is not None:
         submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
-    
-    return {'models': model_rows, 'benchmarks': benchmarks, 'submittable_benchmarks': submittable_benchmarks,
+
+    # need to hardcode this
+    if domain is "vision":
+        citation_domain_url = 'https://www.biorxiv.org/content/early/2018/09/05/407007'
+        citation_domain_title = "Brain-Score: Which Artificial Neural Network for Object Recognition is most " \
+                                "Brain-Like? "
+        citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
+                                  "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
+                                  "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
+                                  "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
+                                  "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n\t\t\t\t" \
+                                  "journal={bioRxiv preprint},\n\t\t\t\t" \
+                                  "year={2018},\n\t\t\t\t" \
+                                  "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
+    elif domain is "language":
+        citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
+        citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
+        citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
+                                  "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
+                                  "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
+                                  "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
+                                  "journal={Proceedings of the National Academy of Sciences},\n\t\t\t\t" \
+                                  "volume={118},\n\t\t\t\t" \
+                                  "number={45},\n\t\t\t\t" \
+                                  "pages={e2105646118},\n\t\t\t\t" \
+                                  "year={2021},\n\t\t\t\t" \
+                                  "publisher={National Acad Sciences}\n\t\t\t" \
+                                  "}"
+    else:
+        citation_domain_url = ''
+        citation_domain_title = ''
+        citation_domain_bibtex = ''
+
+    return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks,
+            'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
-            "comparison_data": json.dumps(comparison_data)}
+            "comparison_data": json.dumps(comparison_data),
+            'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
+            'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
+            'citation_general_bibtex': '@article{Schrimpf2020integrative,\n\t\t\t\t'
+                                       'title={Integrative Benchmarking to Advance '
+                                       'Neurally Mechanistic Models of Human Intelligence},\n\t\t\t\t'
+                                       'author={Schrimpf, Martin and Kubilius, Jonas and Lee, Michael J and Murty, '
+                                       'N Apurva Ratan and Ajemian, Robert and DiCarlo, James J},\n\t\t\t\t'
+                                       'journal={Neuron},\n\t\t\t\t'
+                                       'year={2020},\n\t\t\t\t'
+                                       'url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n\t\t\t}',
+            'citation_domain_url': citation_domain_url,
+            'citation_domain_title': citation_domain_title,
+            'citation_domain_bibtex': citation_domain_bibtex,
+            }
 
 
-def _collect_benchmarks(domain, user_page=False, benchmark_filter=None):
+def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
     # build tree structure of parent relationships
     benchmark_types = BenchmarkType.objects.select_related('reference')
     if not user_page:  # on public overview, only show visible benchmarks
@@ -175,16 +221,16 @@ def _collect_submittable_benchmarks(benchmarks, user):
 
     previously_evaluated_benchmarks = [benchmark_type_id
                                        for benchmark_type_id in Score.objects
-                                           .select_related('benchmark')
-                                           .filter(model__owner=user)
-                                           .distinct('benchmark__benchmark_type_id')
-                                           .values_list('benchmark__benchmark_type_id', flat=True)]
+                                       .select_related('benchmark')
+                                       .filter(model__owner=user)
+                                       .distinct('benchmark__benchmark_type_id')
+                                       .values_list('benchmark__benchmark_type_id', flat=True)]
     benchmark_selection = {short_name: benchmark_type_id for short_name, benchmark_type_id in benchmark_types.items()
                            if benchmark_type_id in previously_evaluated_benchmarks}
     return benchmark_selection
 
 
-def _collect_models(domain, benchmarks, show_public, user=None, score_filter=None):
+def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
     """
     :param user: The user whose profile we are currently on, if any
     """
@@ -225,7 +271,7 @@ def _collect_models(domain, benchmarks, show_public, user=None, score_filter=Non
                     # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
                     # instead, we display the raw score if there is no ceiled score.
                     benchmark_id = f'{benchmark.identifier}_v{benchmark.version}'
-                    if ENGINEERING_ROOT not in benchmark_lookup[benchmark_id].root_parent  \
+                    if ENGINEERING_ROOT not in benchmark_lookup[benchmark_id].root_parent \
                             or score.score_ceiled is not None:
                         score_ceiled = score.score_ceiled
                     else:
@@ -476,7 +522,6 @@ def _build_comparison_data(models):
 
 # controls how model name and submitter appear on leaderboard:
 def get_visibility(model, user):
-
     # Handles private competition models:
     if (not model.public) and (model.competition is not None):
 
@@ -576,3 +621,13 @@ def display_submitter(model, user):
         return f"Anonymous Submitter #{model.user.id}"
     else:
         return model.user.display_name
+
+
+# controls how the benchmark roots are displayed in the comparison graphs
+@register.filter
+def simplify_domain(benchmark_name: str) -> str:
+    suffixed_benchmarks = ['average', 'engineering']
+    for suffixed_name in suffixed_benchmarks:
+        if benchmark_name.startswith(f"{suffixed_name}_"):
+            return suffixed_name
+    return benchmark_name

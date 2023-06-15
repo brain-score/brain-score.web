@@ -3,41 +3,51 @@ import functools
 
 from .views import index, user, model, competition
 
-urlpatterns = [
-    # index
-    path('', functools.partial(index, domain='vision'), name='index'),
-    path('/', functools.partial(index, domain='vision'), name='index'),
-    # user
-    path('logout/', user.Logout.as_view(domain="vision"), name='logout'),
-    path('upload/', user.Profile.as_view(domain="vision"), name='upload'),
-    path('public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
-    path('competition/', competition.view, name='competition'),
+# all currently supported Brain-Score domains:
+supported_domains = ["vision", "language"]
 
-    # default profile is vision
-    path('profile/', user.Profile.as_view(domain="vision"), name='default-profile'),
+non_domain_urls = [
 
-    # language changes
-    path('vision/', functools.partial(index, domain='vision'), name='index'),
-    path('language/', functools.partial(index, domain='language'), name='index'),
-    path('password/vision/',  user.Password.as_view(domain="vision"), name='password-vision'),
-    path('password/language/',  user.Password.as_view(domain="language"), name='password-language'),
-    path('password-change/vision/<str:uidb64>/<str:token>', user.ChangePassword.as_view(domain="vision"), name='change-password-vision'),
-    path('password-change/language/<str:uidb64>/<str:token>', user.ChangePassword.as_view(domain="language"), name='change-password-language'),
-    path('signup/vision', user.Signup.as_view(domain="vision"), name='vision-signup'),
-    path('signup/language', user.Signup.as_view(domain="language"), name='language-signup'),
-    path('activate/vision/<str:uidb64>/<str:token>', user.Activate.as_view(domain="vision"), name='activate-vision'),
-    path('activate/language/<str:uidb64>/<str:token>', user.Activate.as_view(domain="language"), name='activate-language'),
-    path('display-name/vision', user.DisplayName.as_view(domain="vision"), name='display-name-vision'),
-    path('display-name/language', user.DisplayName.as_view(domain="language"), name='display-name-language'),
-    path('profile/vision/', user.Profile.as_view(domain="vision"), name='vision-information'),
-    path('profile/language/', user.Profile.as_view(domain="language"), name='language-information'),
-    path('profile/vision/submit/', user.Upload.as_view(domain="vision"), name='vision-submit'),
-    path('profile/language/submit/', user.Upload.as_view(domain="language"), name='language-submit'),
-    path('profile/vision/resubmit/', user.resubmit, name='vision_resubmit'),
-    path('profile/language/resubmit/', user.resubmit, name='language_resubmit'),
-    path('profile/vision/logout/',  user.Logout.as_view(domain="vision"), name='vision-logout'),
-    path('profile/language/logout/', user.Logout.as_view(domain="language"), name='language-logout'),
-    path('model/vision/<int:id>', model.view, name='model-vision'),
-    path('model/language/<int:id>', model.view, name='model-language'),
+        # landing page (preview mode)
+        path('2023/', user.LandingPage.as_view(), name='landing_page'),
 
+        path('', functools.partial(index, domain="vision"), name='index'),
+        path('/', functools.partial(index, domain="vision"), name='index'),
+
+        # user
+        path('competition/', competition.view, name='competition'),
+        path('signup/', user.Signup.as_view(), name='signup'),
+        path('profile/logout/', user.Logout.as_view(), name='logout'),
+        path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name=f'activate'),
+        path('display-name/', user.DisplayName.as_view(), name='display-name'),
+        path('password/',  user.Password.as_view(), name='password'),
+        path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
+
+        # central profile page, constant across all Brain-Score domains
+        path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
+        path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+
+        # need navbar links when on /profile. Default to vision.
+        # this is a **temporary** fix until the new UI landing page is live.
+        path('profile//', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
+        path('profile//submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
+        path('profile//resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
+        path('profile//logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 ]
+
+all_domain_urls = [non_domain_urls]
+
+for domain in supported_domains:
+    domain_urls = [
+        path(f'{domain}/', functools.partial(index, domain=domain), name='index'),
+        path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
+        path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
+        path(f'profile/<str:domain>/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'resubmit'),
+        path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
+        path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
+    ]
+    all_domain_urls.append(domain_urls)
+
+# collapse all domains into 1D list (from 2D)
+urlpatterns = sum(all_domain_urls, [])
+
