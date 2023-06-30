@@ -1,20 +1,15 @@
+{% extends 'benchmarks/base.html' %}
 {% load static %}
 {% load compress %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-<link rel="stylesheet" href="../static/benchmarks/css/landing_page.css">
-<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600,300,800,700,400italic" />
 
-{# own sources #}
-{% compress js %}
-    <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
-{% endcompress %}
+
 
 {% block navbar %}
 <nav class="navbar updated is-fixed-top is-transparent" role="navigation" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <div class= "container is-full-fullhd">
         <div class="navbar-brand">
             <a class="navbar-item" href="https://www.brain-score.org">
-                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/new_ui_elements/colored_logo.png"/>
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
             </a>
             <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
                 <span aria-hidden="true"></span>
@@ -25,12 +20,12 @@
         <div id="navMenu" class="navbar-menu">
                 <div class="navbar-end">
                     <div class="navbar-item">
-                        <button onclick="location.href='../profile'" type="button" class="button btn-1" >Log In</button>
+                        <button onclick="location.href='../profile'" type="button" class="button new_design" >Log In</button>
                         <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
-                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/new_ui_elements/github_icon.png" />
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
                         </a>
                         <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
-                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/new_ui_elements/twitter_icon.png"/>
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
                         </a>
                     </div>
                 </div>
@@ -39,31 +34,32 @@
 </nav>
 {% endblock %}
 
+{% block content %}
 <div class="landing container">
     <div class="columns">
         <div class="left_side column is-half has-text-centered-mobile">
-            <img class="logo_green image is-inline-block"  src="/static/benchmarks/img/new_ui_elements/logo_name_full.png" />
+            <img class="logo_green image is-inline-block"  src="{% static "/benchmarks/img/logo_name_full.png" %}" />
             <h3 class="landing_heading is-size-6 is-size-4-widescreen is-size-4-mobile">Integrative Benchmarks | Models at Scale </h3>
-            <p class="text-default-small is-size-7 is-size-6-widescreen has-text-justified-mobile">The Brain-Score platform aims to yield strong computational models of the
+            <p class="text-default-small is-size-7 is-size-6-widescreen has-text-justified-mobile">
+                The Brain-Score platform aims to yield strong computational models of the
                 brain and mind. We enable researchers to quickly get a sense of the alignment of their model(s) to
                 currently dozens of neural and behavioral measurements, and provide these
                 models to experimentalists to prototype new experiments and make sense of biological data. </p>
             <div class="domain_buttons container">
-                <button onclick="location.href='../vision'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Vision</button>
-                <button onclick="location.href='../language'" type="button" class="button domain_button is-size-7 is-size-6-widescreen" >Language</button>
+                <button onclick="location.href='../vision'" type="button" class="button new_design domain_button is-size-7 is-size-6-widescreen" >Vision</button>
+                <button onclick="location.href='../language'" type="button" class="button new_design domain_button is-size-7 is-size-6-widescreen" >Language</button>
             </div>
         </div>
         <div class="column is-half">
-            <img class="head_art image"  src="/static/benchmarks/img/new_ui_elements/head_art_1.png" />
+            <img class="head_art image"  src="{% static "/benchmarks/img/head_art_1.png" %}" />
         </div>
     </div>
 </div>
-
 <div class="main_body container">
     <div class="about container">
         <div class="columns">
             <div class="column">
-                <img class="collab_graphic image"  src="/static/benchmarks/img/new_ui_elements/collaboration.png" />
+                <img class="collab_graphic image"  src="{% static "/benchmarks/img/collaboration.png" %}" />
             </div>
             <div class="column is-half">
                 <h1 class=heading_green>Democratizing the Search for Natural Intelligence</h1>
@@ -76,31 +72,32 @@
         </div>
     </div>
      <div class="benefits container">
-         <img class="b-w_logo image"  src="/static/benchmarks/img/new_ui_elements/b-w_logo.png" />
+         <img class="b-w_logo image"  src="{% static "/benchmarks/img/b-w_logo.png" %}" />
          <div class="columns is-tablet">
              <div class="column is-one-third">
                  <div class="benefits_card container">
-                     <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/collab_icon.png" />
+                     <img class="benefit_icon image"  src="{% static "/benchmarks/img/collab_icon.png" %}" />
                      <h3 class="benefits_heading is-size-5 is-size-3-widescreen">Collaborative</h3>
                      <p class="benefits_info is-size-7 is-size-6-widescreen">Community-wide initiatives & competitions.</p>
-                     <button onclick="location.href='../profile'" type="button" class="button benefit_button is-size-7
+                     <button onclick="location.href='../profile'" type="button" class="button new_design benefit_button is-size-7
                      is-size-6-widescreen" >Leaderboard</button>
                  </div>
              </div>
              <div class="column is-one-third">
                  <div class="benefits_card container">
-                     <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/book_icon.png" />
+                     <img class="benefit_icon image"  src="{% static "/benchmarks/img/book_icon.png" %}" />
                      <h3 class="benefits_heading is-size-5 is-size-3-widescreen">Open Source</h3>
                      <p class="benefits_info is-size-7 is-size-6-widescreen">Download and Experiment. Completely free.</p>
-                    <button onclick="location.href='https://www.github.com/brain-score'" type="button" class="button benefit_button is-size-7 is-size-6-widescreen " >Github</button>
+                    <button onclick="location.href='https://www.github.com/brain-score'" type="button" class="button
+                     new_design benefit_button is-size-7 is-size-6-widescreen " >Github</button>
                  </div>
              </div>
              <div class="column is-one-third">
                  <div class="benefits_card container">
-                    <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/access_icon.png" />
+                    <img class="benefit_icon image"  src="{% static "/benchmarks/img/access_icon.png" %}" />
                     <h3 class="benefits_heading is-size-5 is-size-3-widescreen">Accessible</h3>
                     <p class="benefits_info is-size-7 is-size-6-widescreen">Interact seamlessly with our curated leaderboard.</p>
-                    <button onclick="location.href='../profile'" type="button" class="button benefit_button is-size-7 is-size-6-widescreen" >Submit</button>
+                    <button onclick="location.href='../profile'" type="button" class="button new_design benefit_button is-size-7 is-size-6-widescreen" >Submit</button>
                  </div>
             </div>
         </div>
@@ -119,29 +116,32 @@
             </div>
             <div class="column has-text-centered-mobile">
                 <div class="benefits_card container">
-                    <img class="benefit_icon image"  src="/static/benchmarks/img/new_ui_elements/upload_icon.png" />
+                    <img class="benefit_icon image"  src="{% static "/benchmarks/img/upload_icon.png" %}" />
                     <h3 class=benefits_heading>Ready to Submit?</h3>
                     <p class="leaderboard_info">Below you will find links on how to prepare a model for submission and
                         receive a Brain-Score! You will also find the same for submitting a benchmark, with detailed
                         tutorials available for both modelers and experimentalists. </p>
-                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#'" type="button" class="button tutorial_button" >Tutorials</button>
-                    <button onclick="location.href='../profile/'" type="button" class="button hollow_button" >Submit</button>
+                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#'"
+                            type="button" class="button new_design tutorial_button" >Tutorials</button>
+                    <button onclick="location.href='../profile/'" type="button" class="button new_design hollow_button" >Submit</button>
                  </div>
             </div>
         </div>
     </div>
+{% endblock %}
+{% block footer %}
     <div class="main_footer container">
         <div class="columns has-text-centered-mobile">
             <div class="column has-text-centered ">
-                <img class="white_logo image is-inline-block"  src="/static/benchmarks/img/new_ui_elements/White_logo_full.png" />
+                <img class="white_logo image is-inline-block"  src="{% static "/benchmarks/img/white_logo_full.png" %}" />
             </div>
             <div class="footer_middle column has-text-centered">
                 <div class="column">
-                    <button onclick="location.href='https://github.com/brain-score/brain-score/issues'" type="button" class="button simple_button" >Support</button>
-                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#frequently-asked-questions'" type="button" class="button simple_button" >FAQ</button>
+                    <button onclick="location.href='https://github.com/brain-score/brain-score/issues'" type="button" class="button  simple_button" >Support</button>
+                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/index.html'" type="button" class="button simple_button" >FAQ</button>
                 </div>
                 <div class="column">
-                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html#'" type="button" class="button simple_button" >Tutorials</button>
+                    <button onclick="location.href='https://brain-score.readthedocs.io/en/latest/index.html'" type="button" class="button simple_button" >Tutorials</button>
                     <button onclick="location.href='../profile/'" type="button" class="button simple_button" >Log In</button>
                 </div>
                  <div class="column">
@@ -149,17 +149,12 @@
                     <button onclick="location.href='https://github.com/brain-score/brain-score#license'" type="button" class="button simple_button" >License</button>
                 </div>
                 <div class="column">
-                    <button onclick="location.href='https://quest.mit.edu'" type="button" class="button simple_button" >Sponsors</button>
+                    <button onclick="location.href='https://www.brain-score.org'" type="button" class="button simple_button" >Sponsors</button>
                     <button onclick="location.href='https://github.com/brain-score/brain-score/graphs/contributors'" type="button" class="button simple_button" >Team</button>
                 </div>
             </div>
-            <div class="column">
-                <h1 class=join_text>Join our Newsletter!</h1>
-                <div class="control">
-                    <input class="input" type="text" placeholder="Sign up Coming Soon :)" disabled>
-                    <button onclick="location.href='../profile'" type="button" class="button white_button"
-                            title="Disabled button" disabled >Sign Up</button>
-                </div>
-            </div>
         </div>
+    </div>
+{% endblock %}
 </div>
+

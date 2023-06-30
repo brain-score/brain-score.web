@@ -23,7 +23,7 @@ $brainscore_blue: #47B7DE
 .container.main_body
   background-image: linear-gradient(0deg, #e8f4ea, white)
 
-.button_updated
+.button.new_design
   flex: 1 1 auto
   text-align: center
   transition: 0.5s
@@ -45,7 +45,7 @@ $brainscore_blue: #47B7DE
   font-weight: 800
 
 .text-default
-  color: blue
+  color: black
   font-family: 'Open Sans', sans-serif
   width: 85%
   font-size: 20px
@@ -101,8 +101,8 @@ $brainscore_blue: #47B7DE
   padding-top: 4%
 
 .button.domain_button
-  width: 25%
-  height: 30px
+    width: 25%
+    height: 30px
 
 
 // about section
@@ -165,7 +165,7 @@ $brainscore_blue: #47B7DE
   margin-top: 20px
   padding: 120px
   border-radius: 40px
-  background-image: url("/static/benchmarks/img/new_ui_elements/CNN_abstract.png")
+  background-image: url("/static/benchmarks/img/CNN_abstract.png")
   background-repeat: no-repeat
   background-size: 80% auto
   background-position: 350px -200px
@@ -196,25 +196,15 @@ $brainscore_blue: #47B7DE
 .container.main_footer
   background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
   padding: 50px 100px
+  margin-top: -25px // shift up due to adding {% footer %} tag, creating gap
 
 button.simple_button
   background-color: transparent
   background-image: none
   font-family: 'Open Sans', sans-serif
-  width: 100px
-
-.join_text
-  font-family: 'Open Sans', sans-serif
+  border-color: transparent
   color: white
-  font-size: 25px
-  font-weight: 600
-  margin-bottom: 30px
-
-button.white_button
-  background-color: white
-  background-image: none
-  margin-top: 30px
-  color: $brainscore_green
+  width: 100px
 
 
 // resizes text between 768-850px, to ensure head stays put.
