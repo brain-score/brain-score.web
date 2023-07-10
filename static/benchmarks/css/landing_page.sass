@@ -42,15 +42,18 @@ h1.heading_green
   color: $brainscore_green
   font-family: 'Open Sans', sans-serif
   font-size: 40px
+  margin-left: 30px
   font-weight: 800
 
 .text-default
   color: black
+  text-align: justify
   font-family: 'Open Sans', sans-serif
   width: 85%
   font-size: 20px
   font-weight: 200
   padding-top: 20px
+  margin-left: 30px
 
 .container.landing::before // controls the landing gradient
   content: ""
@@ -92,10 +95,11 @@ h3.landing_heading
 p.text-default-small
   color: black
   font-family: 'Open Sans', sans-serif
+  width: 100%
   padding-top: 2%
   font-weight: 200
   padding-right: 25%
-  margin-bottom: -10px
+  margin-bottom: -10px !important
 
 .container.domain_buttons
   padding-top: 4%
@@ -145,7 +149,6 @@ h3.benefits_heading
   margin: auto
   width: 50px
   height: auto
-  padding-bottom: 20px
 
 .button.benefit_button
   margin: auto
@@ -163,11 +166,11 @@ h3.benefits_heading
 // leaderboard section (on landing)
 .container.landing_leaderboard
   margin-top: 20px
-  padding: 120px
+  padding: 90px
   border-radius: 40px
   background-repeat: no-repeat
   background-size: 80% auto
-  background-position: 350px -200px
+  background-position: 400px -200px
 
 .button.tutorial_button
   font-size: 100%
@@ -189,6 +192,7 @@ h3.benefits_heading
   font-family: 'Open Sans', sans-serif
   font-size: 100%
   font-weight: 200
+  text-align: justify
 
 
 // footer
@@ -233,6 +237,13 @@ button.simple_button
     margin: auto
     height: 35px
 
+
+//mobile styling (below 1087)
+@media (max-width: 1087px)
+  .column.left_side
+    margin-top: 0
+    padding-left: 6%
+
 //mobile styling (below 768px)
 @media (max-width: 768px)
   .text-default-small
@@ -258,3 +269,9 @@ button.simple_button
   .text-default-small
     font-size: 100%
 
+// resizing at FHD breakpoint (1407 px):
+@media (max-width: 1407px)
+  .container.landing_leaderboard
+    background-position: 520px -200px
+  p.text-default-small
+    width: 120%
