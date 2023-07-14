@@ -6,7 +6,7 @@
 
 {% block navbar %}
 <nav class="navbar updated is-fixed-top is-transparent">
-    <div class= "nav-container container">
+    <div class= "container my_container nav-container">
         <div class="navbar-brand">
             <a class="navbar-item" href="https://www.brain-score.org">
                     <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="landing container is-widescreen">
+<div class=" container my_container landing">
     <div class="columns">
         <div class="left_side column is-half has-text-centered-mobile">
             <img class="logo_green image is-inline-block"  src="{% static "/benchmarks/img/logo_name_full.png" %}" />
@@ -55,8 +55,8 @@
         </div>
     </div>
 </div>
-<div class="main_body container is-widescreen">
-    <div class="about container is-widescreen">
+<div class="container my_container main_body">
+    <div class="about container">
         <div class="columns">
             <div class="column is-half">
                 <img class="collab_graphic image"  src="{% static "/benchmarks/img/collaboration.png" %}" />
@@ -130,7 +130,7 @@
     </div>
 {% endblock %}
 {% block footer %}
-    <div class="main_footer container is-widescreen">
+    <div class="container my_container main_footer">
         <div class="columns has-text-centered-mobile">
             <div class="column has-text-centered ">
                 <img class="white_logo image is-inline-block"  src="{% static "/benchmarks/img/white_logo_full.png" %}" />
