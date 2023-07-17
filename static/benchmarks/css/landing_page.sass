@@ -252,7 +252,7 @@ button.simple_button
   .benefits_info
     margin: 0 !important
   .container.landing_leaderboard
-    background: none
+    background-size: 0 auto
     padding: 0
 
 // in between tablet and mobile, to take care of head resizing:
@@ -267,29 +267,45 @@ button.simple_button
     margin-top: -50px
   .landing_heading
     width: 75%
+  .container.benefits_card
+    padding: 5px
+  .container.about
+    padding: 5px
+  .container.landing_leaderboard
+   padding: 15px
+  .container.benefits
+    padding: 10px
 
 // tablet:
 @media (min-width: 880px) and (max-width: 1023px)
-  .container.about
-    background-color: lightpink
   .column.left_side
     margin-top: 5%
   .landing_heading
     width: 120%
   p.text-default-small
     width: 130% !important
+  .container.benefits_card
+    padding: 10px
+  .container.about
+    padding: 5px
+  .container.landing_leaderboard
+   padding: 20px
+  .container.benefits
+    padding: 10px
 
 //desktop
 @media (min-width: 1024px) and (max-width: 1215px)
  .container.about
-    background-color: lightgreen
+    padding: 38px
  .column.left_side
     margin-top: 10%
+ .container.benefits_card
+    padding: 20px
+ .container.landing_leaderboard
+   padding: 45px
 
 //widescreen
-@media (min-width: 1216px) and (max-width: 1407px)
- .container.about
-    background-color: lightseagreen
+// @media (min-width: 1216px) and (max-width: 1407px)
 
 // FHD
 @media (max-width: 1407px)
