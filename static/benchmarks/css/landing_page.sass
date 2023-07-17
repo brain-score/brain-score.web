@@ -115,8 +115,8 @@ p.text-default-small
   padding-top: 4%
 
 .button.domain_button
-    width: 25%
-    height: 30px
+  width: 25%
+  height: 30px
 
 
 // about section
@@ -220,19 +220,6 @@ button.simple_button
   width: 100px
 
 
-// resizing past normal breakpoints, prevents large text and navbar overflow >fullhd
-@media (min-width: $fullhd)
-  .container.my_container.nav-container
-    margin: auto
-  .text-default-small
-    font-size: 100%
-
-// resizing below FHD breakpoint (1407 px):
-@media (max-width: 1407px)
-  .container.landing_leaderboard
-    background-position: 520px -200px
-  p.text-default-small
-    width: 120%
 
 //mobile styling (below 768px)
 @media (max-width: 768px)
@@ -267,3 +254,53 @@ button.simple_button
   .container.landing_leaderboard
     background: none
     padding: 0
+
+// in between tablet and mobile, to take care of head resizing:
+@media (min-width: 769px) and (max-width: 880px)
+  p.text-default-small
+    margin-top: 140px
+    width: 233% !important
+    text-align: justify
+  .domain_buttons
+    position: relative
+    top: -150px
+    margin-top: -50px
+  .landing_heading
+    width: 75%
+
+// tablet:
+@media (min-width: 880px) and (max-width: 1023px)
+  .container.about
+    background-color: lightpink
+  .column.left_side
+    margin-top: 5%
+  .landing_heading
+    width: 120%
+  p.text-default-small
+    width: 130% !important
+
+//desktop
+@media (min-width: 1024px) and (max-width: 1215px)
+ .container.about
+    background-color: lightgreen
+ .column.left_side
+    margin-top: 10%
+
+//widescreen
+@media (min-width: 1216px) and (max-width: 1407px)
+ .container.about
+    background-color: lightseagreen
+
+// FHD
+@media (max-width: 1407px)
+  .container.landing_leaderboard
+    background-position: 520px -200px
+  p.text-default-small
+    width: 120%
+
+// resizing past normal breakpoints, prevents large text and navbar overflow >fullhd
+@media (min-width: $fullhd)
+  .container.my_container.nav-container
+    margin: auto
+  .text-default-small
+    font-size: 100%
