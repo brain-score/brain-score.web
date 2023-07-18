@@ -3,11 +3,27 @@
 {% block content %}
     <section id="login" class="container center">
         {% if activation_email %}
-            <p style="font-weight: bold">A confirmation email has been sent.</p>
-            <h2>Be sure to confirm your account via email before trying to log in!</h2>
+            <article class="message">
+                <div class="message-header">
+                    <p style="font-weight: bold">A confirmation email has been sent.</p>
+                </div>
+                <div class="message-body">
+                    Be sure to confirm your account via email before trying to log in!
+                </div>
+            </article>
+
         {% endif %}
         {% if password_email %}
-            <p style="font-weight: bold">A password change email has been sent.</p>
+            <article class="message">
+                    <div class="message-header">
+                         <p style="font-weight: bold">A password change email has been sent.</p>
+                    </div>
+                    <div class="message-body">
+                        Be sure to visit your emailed link to change your password!
+                    </div>
+            </article>
+
+
         {% endif %}
         <h1>Login</h1>
         <p>Access your account to submit new models or view your previous submissions.</p>
@@ -28,13 +44,9 @@
                     {% endfor %}
                 </div>
             {% endfor %}
-            {% if "language" in request.path %}
-                <p style="font-size: 12px"><a href="/password/language">Forgot Password</a></p>
-                <button type="button submit" class="button submission">Login</button>
-            {% else %}
-                <p style="font-size: 12px"><a href="/password/vision">Forgot Password</a></p>
-                <button type="button submit" class="button submission">Login</button>
-            {% endif %}
+            <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
+            <button type="button submit" class="button submission">Login</button>
+
 
 
         </form>
@@ -43,11 +55,8 @@
         {% endif %}
         <br/>
 
-        {% if "language" in request.path %}
-            <button class="button"><a href='/signup/language'>Create account</a></button>
-        {% else %}
-            <button class="button"><a href='/signup/vision'>Create account</a></button>
-        {% endif %}
+        <button class="button"><a href='/signup'>Create account</a></button>
+
 
     </section>
 {% endblock %}
