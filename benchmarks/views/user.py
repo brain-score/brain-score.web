@@ -28,8 +28,6 @@ User = get_user_model()
 
 
 class Activate(View):
-    domain = None
-
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -42,7 +40,7 @@ class Activate(View):
             user.is_active = True
             user.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
 
         else:
             return HttpResponse('Activation link is invalid!')
@@ -56,8 +54,6 @@ class Activate(View):
 
 
 class Signup(View):
-    domain = None
-
     def get(self, request):
         form = SignupForm()
         return render(request, 'benchmarks/signup.html', {'form': form})
@@ -76,7 +72,7 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
 
-            activation_link = f"{current_site}/activate/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
                               f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
@@ -105,8 +101,8 @@ class Signup(View):
             context = {'form': form}
             return render(request, 'benchmarks/signup.html', context)
         else:
-            context = {'form': LoginForm}
-            return render(request, 'benchmarks/profile.html', context)
+            context = {'form': LoginForm, "domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
 
 
 class Login(View):
@@ -123,12 +119,17 @@ class Login(View):
             return render(request, 'benchmarks/login.html', context)
 
 
+class LandingPage(View):
+    def get(self, request):
+        return render(request, 'benchmarks/landing_page.html')
+
+
 class Logout(View):
     domain = None
 
     def get(self, request):
         logout(request)
-        return HttpResponseRedirect(f'../../../{self.domain}')
+        return HttpResponseRedirect('../')
 
 
 class Upload(View):
@@ -142,7 +143,7 @@ class Upload(View):
             form = UploadFileFormLanguage()
         else:
             form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form})
+        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain})
 
     def post(self, request):
         assert self.domain is not None
@@ -158,7 +159,7 @@ class Upload(View):
             is_zip_valid, error = validate_zip(form.files.get('zip_file'))
             request.FILES['zip_file'].seek(0)  # reset file pointer
             if not is_zip_valid:
-                return render(request, 'benchmarks/invalid_zip.html', {'error': error})
+                return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
@@ -194,7 +195,7 @@ class Upload(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-        return render(request, 'benchmarks/success.html')
+        return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
 
 def validate_zip(file):
@@ -272,33 +273,49 @@ def collect_models_benchmarks(request):
 
     _logger.debug(f"request user: {request.user.get_full_name()}")
     model_ids = []
+    model_names = []
     benchmarks = []
     for key, value in request.POST.items():
         if key.startswith('model_selection_'):
             # value in this case is the model id
             model = Model.objects.get(id=value)  # get model instance uniquely referenced with the id
             verify_user_model_access(user=request.user, model=model)
+            model_names.append(model.name)
             model_ids.append(model.id)
         elif key.startswith('benchmark_selection_'):
             # value is benchmark_type_id (un-versioned)
             benchmarks.append(value)
+    return model_ids, model_names, benchmarks
 
-    return model_ids, benchmarks
 
-
-def submit_to_jenkins(request, benchmarks=None):
+def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     # submit to jenkins
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
-    job_name = conditional_debug("run_benchmarks")
-    benchmark_string = ' '.join(benchmarks)
-    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                  f"?TOKEN=trigger2scoreAmodel" \
-                  f"&email={request.user.email}" \
-                  f"&benchmarks={benchmark_string}"
-    _logger.debug(f"request_url: {request_url}")
+    
+    # language has a different URL building system than vision
+    if domain == "vision":
+        job_name = conditional_debug("run_benchmarks")
+        benchmark_string = ' '.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?TOKEN=trigger2scoreAmodel" \
+                      f"&email={request.user.email}" \
+                      f"&benchmarks={benchmark_string}"
+        _logger.debug(f"request_url: {request_url}")
+    else:
+        job_name = conditional_debug("score_plugins")
+        benchmark_string = '%20'.join(benchmarks)
+        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                      f"?token=trigger2scoreAmodel" \
+                      f"&user_id={request.user.id}" \
+                      f"&new_benchmarks={benchmark_string}" \
+                      f"&new_models={model_name}" \
+                      f"&specified_only=True"
+        _logger.debug(f"request_url: {request_url}")
+
     params = {'submission.config': open('result.json', 'rb')}
+    response = requests.post(request_url, files=params, auth=auth)
     response = requests.post(request_url, files=params, auth=auth)
     _logger.debug(f"response: {response}")
 
@@ -307,13 +324,14 @@ def submit_to_jenkins(request, benchmarks=None):
     _logger.debug("Job triggered successfully")
 
 
-def resubmit(request):
-    domain = request.path.split("/")[2]
-    model_ids, benchmarks = collect_models_benchmarks(request)
+def resubmit(request, domain: str):
+    model_ids, model_names, benchmarks = collect_models_benchmarks(request)
+    model_id_name_dict = dict(zip(model_ids, model_names))
+
     if len(model_ids) == 0 or len(benchmarks) == 0:
         return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
 
-    for model_id in model_ids:
+    for model_id, model_name in model_id_name_dict.items():
         json_info = {
             "domain": domain,
             "user_id": request.user.id,
@@ -321,19 +339,37 @@ def resubmit(request):
         }
         with open('result.json', 'w') as fp:
             json.dump(json_info, fp)
-        submit_to_jenkins(request, benchmarks)
-
-    return render(request, 'benchmarks/success.html')
+        submit_to_jenkins(request, domain, model_name, benchmarks)
+    return render(request, 'benchmarks/success.html', {"domain": domain})
 
 
 class DisplayName(View):
-    domain = None
-
     def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
         user_instance.save()
-        return HttpResponseRedirect(f'../../profile/{self.domain}')
+        return HttpResponseRedirect(f'../../profile/')
+
+
+# intermediary account page: uniform across all Brain-Score domains.
+class ProfileAccount(View):
+
+    def get(self, request):
+        if request.user.is_anonymous:
+            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+        else:
+            context = {"domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
+
+    def post(self, request):
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            context = {"domains": ["vision", "language"]}
+            return render(request, 'benchmarks/central_profile.html', context)
+        else:
+            context = {"Incorrect": True, 'form': LoginForm, "domains": ["vision", "language"]}
+            return render(request, 'benchmarks/login.html', context)
 
 
 class Profile(View):
@@ -341,12 +377,11 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm})
+            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
-            return render(request, 'benchmarks/domain-information.html', context)
+            return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
@@ -354,16 +389,13 @@ class Profile(View):
             login(request, user)
             context = get_context(user, domain=self.domain)
             context["has_user"] = True
-            context["domain"] = self.domain
-            return render(request, 'benchmarks/domain-information.html', context)
+            return render(request, 'benchmarks/profile.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain}
             return render(request, 'benchmarks/login.html', context)
 
 
 class Password(View):
-    domain = None
-
     def get(self, request):
         form = PasswordResetForm()
         return render(request, 'benchmarks/password.html', {'form': form})
@@ -387,7 +419,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{self.domain}/{uid}/{token}"
+            activation_link = f"{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
@@ -405,8 +437,6 @@ class Password(View):
 
 
 class ChangePassword(View):
-    domain = None
-
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -434,7 +464,7 @@ class ChangePassword(View):
             user.set_password(request.POST["new_password1"])
             user.save()
             user.is_active = True
-            return HttpResponseRedirect(f'../../../profile/{self.domain}')
+            return HttpResponseRedirect(f'../../../profile/')
         elif form.errors:
             context = {'form': form}
             return render(request, 'benchmarks/password.html', context)

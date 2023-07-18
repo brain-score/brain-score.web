@@ -14,6 +14,9 @@ COPY benchmarks /app/benchmarks
 COPY static /app/static
 COPY web /app/web
 
+# Put in to prevent data block overflow (can kill prod if too full)
+RUN sudo docker system prune -f
+
 RUN /opt/conda/bin/conda env create -f environment.yml
 RUN echo "conda activate brain-score.web" >> ~/.bashrc
 
