@@ -45,7 +45,9 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
+ALLOWED_HOSTS = [os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":"),
+                 os.getenv("DOMAIN", "localhost:Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com").split(":")]
+
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
@@ -117,7 +119,7 @@ def get_db_info():
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': secrets["dbInstanceIdentifier"],
+                'NAME': "dev",
                 'USER': secrets["username"],
                 'PASSWORD': secrets["password"],
                 'HOST': secrets["host"],
@@ -129,7 +131,7 @@ def get_db_info():
             DATABASES = {
                 'default': {
                     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                    'NAME': os.environ['RDS_DB_NAME'],
+                    'NAME': "dev",
                     'USER': os.environ['RDS_USERNAME'],
                     'PASSWORD': os.environ['RDS_PASSWORD'],
                     'HOST': os.environ['RDS_HOSTNAME'],
