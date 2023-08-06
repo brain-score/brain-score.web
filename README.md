@@ -1,11 +1,17 @@
 [![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
 
 ## Setup
+
+Initialize then activate a virtual environment
+
 Install dependencies: `pip install .`
 
 Install node dependencies: `npm install --no-optional`
 
+Run migrations: `python manage.py migrate`
+
 Run server: `python manage.py runserver &`
+
 
 
 ## Update data
