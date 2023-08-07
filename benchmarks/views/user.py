@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import zipfile
 
 import boto3
@@ -122,6 +123,14 @@ class Login(View):
 class LandingPage(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
+
+class LeaderboardV2(View):
+    def get(self, request):
+        if os.getenv("DJANGO_ENV") == "development":
+            return render(request, 'benchmarks/leaderboard/leaderboard.html')
+        else:
+            return HttpResponseRedirect('../')
+
 
 
 class Logout(View):

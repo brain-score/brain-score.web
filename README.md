@@ -8,11 +8,16 @@ Install dependencies: `pip install .`
 
 Install node dependencies: `npm install --no-optional`
 
-Run migrations: `python manage.py migrate`
-
-Run server: `python manage.py runserver &`
+Run server in dev: `DEBUG=True python manage.py runserver &`
 
 
+### Error troubleshooting
+
+Error installing sass with pip - `pip3 install cython` and try again
+
+Error installing `psycopg2` Error: pg_config executable not found. - Install postgresql `brew install postgresql`
+
+Error running the server  - `/bin/sh: command not found: sass` - `npm install -g sass`
 
 ## Update data
 ```
