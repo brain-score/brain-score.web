@@ -16,5 +16,4 @@ dependencies:
     - django_compressor
     - colour
     - tqdm
-    - awsebcli
     - requests
