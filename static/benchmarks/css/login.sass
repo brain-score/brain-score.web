@@ -1,11 +1,57 @@
-.submission
-  background-color: #008CBA
-  border: none
-  color: white
+@import url('https://fonts.googleapis.com/css?family=Open+Sans')
+$brainscore_green: #45C676
+$brainscore_blue: #47B7DE
 
-input[type="file"]
-  display: none
+.container.login
+  margin-top: 150px
+  padding: 100px
+  position: relative /* Required to position the pseudo-element */
+  border-radius: 40px
+  background-size: cover
+  background-repeat: no-repeat
 
-p.login
-  margin-block-start: .5em
-  margin-block-end: .5em
+.container.login::before
+  content: ""
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background: linear-gradient(rgba($brainscore_green, 0.6), rgba($brainscore_blue, 0.6))
+  border-radius: 40px
+
+.container.login-left
+  background-color: white
+  height: 500px
+  border-radius: 5px
+  padding: 7%
+
+span.green_log
+  font-weight: 600
+  font-family: 'Open Sans', sans-serif
+  color: $brainscore_green
+
+span.gray_log
+  font-weight: 600
+  font-family: 'Open Sans', sans-serif
+  color: lightgray
+
+p.small_green
+  font-weight: 500
+  font-family: 'Open Sans', sans-serif
+  color: $brainscore_green
+  padding-top: 10px
+
+.input.gray
+  background-color: #ededed
+  margin-bottom: 7%
+
+.button.updated_green
+  color: $brainscore_green !important
+  border-color: white
+  position: relative
+  left: -137px
+  margin-top: 60px
+  margin-bottom: 40px
+  text-decoration: underline
+
