@@ -1,0 +1,40 @@
+{% extends "benchmarks/components/app-view.html" %}
+
+{% block content %}
+<div class="columns is-2 is-variable">
+  <div class="column is-4">
+    <div class="box">
+      <div class="gradient">
+        <p>Total Benchmarks</p>
+      </div>
+      <div>
+        32
+      </div>
+    </div>
+    <div class="box">
+      <div class="gradient">
+        <p>Total Models</p>
+      </div>
+      <div>
+        126
+      </div>
+    </div>
+  </div>
+
+  <div class="column">
+    <div class="box" style="height: 100%;">
+      Graph
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="box">
+    Leaderboard
+  </div>
+</div>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/leaderboard/info-section.html" %}
+{% endblock %}

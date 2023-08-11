@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+{% load static %}
+{% load compress %}
+
+{% with "Brain-Score" as title %}
+{% with "Brain-Score Benchmark" as title_long %}
+{% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
+{% with "http://brain-score.org" as url %}
+{% with "/static/benchmarks/img/icon.png" as icon_url %}
+{% with "/static/benchmarks/img/logo.png" as logo_url %}
+
+<html lang="en" style="background-color: #EFF3FC">
+<head>
+    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-89541187-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-89541187-2');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600,300,800,700,400italic" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% compress css %}
+    <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
+    {% endcompress %}
+
+    {# libraries #}
+    <script defer src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script defer src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script defer src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+    {# data #}
+    <script type="text/javascript">
+        comparison_data = {{ comparison_data|safe }};
+    </script>
+
+    {# own sources #}
+    {% compress js %}
+    <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/scrolling-active.js" %}" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/jquery.tablesorter.min.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/table.js" %}" type="text/javascript" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/compare.js" %}" charset="utf-8"></script>
+    <script defer src="{% static "/benchmarks/js/table-expansion.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/table-public.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/collapsible.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/tab.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/tab-competition.js" %}"></script>
+    {% endcompress %}
+
+    <script type="application/ld+json">
+        {
+            "@context":"https://schema.org/",
+            "@type":"Dataset",
+            "name":"Brain-Score neural and behavioral brain benchmarks",
+            "alternateName":["Brain-Score.ventral-stream", "Brain-Score.vision"],
+            "description":"Brain-Score evaluates models of the brain's ventral stream on their quantitative match to neural recordings and behavioral measurements",
+            "url":"http://www.brain-score.org",
+            "keywords":[
+                "computational neuroscience",
+                "human and primate vision",
+                "artificial neural networks",
+                "deep learning"
+            ]
+        }
+    </script>
+
+    <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
+
+    <meta name="description" content="{{description}}">
+    <link rel="icon" href="{{icon_url}}">
+
+    <meta property="og:title" content="{{title}}">
+    <meta property="og:type" content="website">
+    <meta property="og:description" content="{{description}}">
+    <meta property="og:url" content="{{url}}">
+    <meta property="og:image" content="{{logo_url}}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{title}}">
+    <meta name="twitter:description" content="{{description}}">
+    <meta name="twitter:image" content="{{logo_url}}">
+
+    <title>{{title}}</title>
+</head>
+
+<body>
+    <main>
+        {% block main %}{% endblock %}
+    </main>
+</body>
+
+</html>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}

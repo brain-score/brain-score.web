@@ -1,11 +1,23 @@
 [![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
 
 ## Setup
-Install dependencies: `pip install .`
+
+Create and activate a virtual environment
+
+Install dependencies: `pip install -r dev-requirements.txt`
 
 Install node dependencies: `npm install --no-optional`
 
-Run server: `python manage.py runserver &`
+Run server in dev: `DEBUG=True python manage.py runserver &`
+
+
+### Setup Errors - troubleshooting
+
+Error installing sass with pip - `pip3 install cython` and try again
+
+Error installing `psycopg2` Error: pg_config executable not found. - Install postgresql `brew install postgresql`
+
+Error running the server  - `/bin/sh: command not found: sass` - `npm install -g sass`
 
 
 ## Update data
