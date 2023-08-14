@@ -4,7 +4,7 @@ $brainscore_blue: #47B7DE
 
 .container.login
   margin-top: 150px
-  padding: 100px
+  padding: 85px
   position: relative /* Required to position the pseudo-element */
   border-radius: 40px
   background-size: cover
@@ -22,7 +22,7 @@ $brainscore_blue: #47B7DE
 
 .container.login-left
   background-color: white
-  height: 500px
+  height: 550px
   border-radius: 5px
   padding: 7%
 
@@ -38,7 +38,7 @@ span.gray_log
 
 p.small_green
   font-weight: 500
-  font-family: 'Open Sans', sans-serif
+  font-family: 'Roboto', sans-serif
   color: $brainscore_green
   padding-top: 10px
 
@@ -46,12 +46,30 @@ p.small_green
   background-color: #ededed
   margin-bottom: 7%
 
-.button.updated_green
-  color: $brainscore_green !important
-  border-color: white
-  position: relative
-  left: -137px
-  margin-top: 60px
-  margin-bottom: 40px
-  text-decoration: underline
+label.label-green
+  color: $brainscore_green
+  font-weight: 500
+  font-family: 'Roboto', sans-serif
 
+
+p.create-account, p.create-account a
+  color: $brainscore_green
+  text-decoration: underline
+  font-size: 14px
+  padding-top: 10px
+  padding-bottom: 30px
+
+//mobile styling (below 768px) - remove brain background
+@media (max-width: 768px)
+  .container.login
+    background: linear-gradient(rgba($brainscore_green, 0.6), rgba($brainscore_blue, 0.6))
+  .button.new_design.tutorial_button
+    margin-left: 50px
+  p.forgot_password
+    margin-left: 20px
+
+
+// FHD
+@media (max-width: 1407px)
+   .container.login
+    background-position-x: -150px
