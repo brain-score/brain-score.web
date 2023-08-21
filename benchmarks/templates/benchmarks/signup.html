@@ -1,27 +1,64 @@
+
 {% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block navbar %}
+<nav class="navbar updated is-fixed-top is-transparent">
+    <div class= "container my_container nav-container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
+                        </a>
+                    </div>
+                </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
 
 {% block content %}
-    <section id="signup" class="container center">
-        <h2>Create new account</h2>
-        <form method="post">
-            {% csrf_token %}
+    <div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
+        <div class="column is-half has-text-centered-mobile">
+            <div class="container login-left">
+                <form method="post">
+                    {% csrf_token %}
+                    <span class="green_log is-size-3 is-size-2-widescreen">Create</span><span class="gray_log is-size-3 is-size-2-widescreen"> New Account</span>
+                    <p class="create-account"><a href="/profile">Return to Login</a></p>
+                    {% for field in form %}
+                        <div class="field">
+                            <label class="label label-green" style="margin-top: -15px;">{{ field.label_tag }}</label>
+                            <div class="control">
+                                <input class="input is-normal gray" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}">
+                            </div>
+                            {% for error in field.errors %}
+                                <p style="color: red">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="button new_design tutorial_button" style="margin-top: -15px;">Sign up</button>
+                </form>
 
-            {% for field in form %}
-            <div class="field">
-                <label class="label">{{ field.label_tag }}</label>
-                <div class="control">
-                    {{ field }}
-                </div>
-                {% for error in field.errors %}
-                    <p style="color: red">{{ error }}</p>
-                {% endfor %}
-            </div>
-            {% endfor %}
-            <button type="submit" class="button submission">Sign up</button>
-        </form>
-        <br/>
-
-        <button class="button"><a href="/../profile">Return to login</a></button>
-
-    </section>
+             </div>
+        </div>
+    </div>
 {% endblock %}
+{% block footer %}
+{% endblock %}
+
