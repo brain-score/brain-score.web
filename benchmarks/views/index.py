@@ -298,7 +298,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                     missing_scores['score_raw'] = missing_scores['score_ceiled'] = np.nan
                     children_scores = pd.concat((children_scores, missing_scores))
                 # compute average of children scores
-                benchmark_scores = children_scores.fillna(0).groupby('model').mean()
+                benchmark_scores = children_scores.fillna(0).groupby('model').mean(numeric_only=True)
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
                 if len(benchmark_scores) > 0:
                     all_children_nan = children_scores.groupby('model').apply(

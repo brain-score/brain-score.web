@@ -1,9 +1,11 @@
 import json
 import logging
+import zipfile
 
 import boto3
 import requests
 from botocore.exceptions import ClientError
+from django.conf import settings
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.sites.shortcuts import get_current_site
@@ -19,8 +21,6 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFo
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
-import zipfile
-import os
 
 _logger = logging.getLogger(__name__)
 
@@ -28,7 +28,6 @@ User = get_user_model()
 
 
 class Activate(View):
-
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -55,7 +54,6 @@ class Activate(View):
 
 
 class Signup(View):
-
     def get(self, request):
         form = SignupForm()
         return render(request, 'benchmarks/signup.html', {'form': form})
@@ -189,10 +187,8 @@ class Upload(View):
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
 
-        if self.domain == "language":
-            job_name = "create_github_pr"
-        else:
-            job_name = "run_benchmarks"
+        job_name = "create_github_pr" if self.domain == "language" else "run_benchmarks"
+        job_name = conditional_debug(job_name)
 
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
@@ -303,10 +299,10 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
-
+    
     # language has a different URL building system than vision
     if domain == "vision":
-        job_name = "run_benchmarks"
+        job_name = conditional_debug("run_benchmarks")
         benchmark_string = ' '.join(benchmarks)
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
@@ -314,7 +310,7 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
                       f"&benchmarks={benchmark_string}"
         _logger.debug(f"request_url: {request_url}")
     else:
-        job_name = "score_plugins"
+        job_name = conditional_debug("score_plugins")
         benchmark_string = '%20'.join(benchmarks)
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                       f"?token=trigger2scoreAmodel" \
@@ -335,7 +331,6 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
 
 
 def resubmit(request, domain: str):
-
     model_ids, model_names, benchmarks = collect_models_benchmarks(request)
     model_id_name_dict = dict(zip(model_ids, model_names))
 
@@ -355,7 +350,6 @@ def resubmit(request, domain: str):
 
 
 class DisplayName(View):
-
     def post(self, request):
         user_instance = User.objects.get_by_natural_key(request.user.email)
         user_instance.display_name = request.POST['display_name']
@@ -408,7 +402,6 @@ class Profile(View):
 
 
 class Password(View):
-
     def get(self, request):
         form = PasswordResetForm()
         return render(request, 'benchmarks/password.html', {'form': form})
@@ -450,7 +443,6 @@ class Password(View):
 
 
 class ChangePassword(View):
-
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -521,6 +513,13 @@ def split_identifier_version(versioned_benchmark_identifier):
     identifier = '_v'.join(identifier_version_split[:-1])
     version = identifier_version_split[-1]
     return identifier, version
+
+
+def conditional_debug(job_name: str) -> str:
+    """ Tests if the website is running in DEBUG mode, and if it is, changes the job to a dev job. """
+    if settings.DEBUG:
+        job_name = f"dev_{job_name}"
+    return job_name
 
 
 def get_secret(secret_name, region_name='us-east-2'):
