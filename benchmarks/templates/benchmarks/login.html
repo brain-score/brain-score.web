@@ -74,8 +74,12 @@
                                 {% endfor %}
                             </div>
                         {% endfor %}
-                        {% if Incorrect %}
-                            <p style="color: red;">The username or password was incorrect.</p>
+                         {% if Incorrect %}
+                            <article id="wrong-password" class="message is-danger">
+                                <div class="message-body">
+                                    The username or password was incorrect.
+                                </div>
+                            </article>
                         {% endif %}
                         <p class="forgot_password" style="font-size: 14px"><a href="/password">Forgot Your Password?</a></p>
                         <button type="button submit" class="button new_design tutorial_button" >Login</button>

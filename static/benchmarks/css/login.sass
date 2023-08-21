@@ -73,3 +73,28 @@ p.create-account, p.create-account a
 @media (max-width: 1407px)
    .container.login
     background-position-x: -150px
+
+//wrong password error message effect:
+@keyframes fadeOut
+  0%
+    opacity: 1
+  100%
+    opacity: 0
+
+#wrong-password
+  opacity: 1
+  transition: opacity 0.5s
+
+  &.fade-out
+    animation-name: fadeOut
+    animation-timing-function: ease-out
+    animation-duration: 0.5s
+    animation-delay: 0s
+    animation-fill-mode: forwards
+
+#wrong-password
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  z-index: 1001 // Ensure it's above other elements like the navbar. Adjust as necessary.
