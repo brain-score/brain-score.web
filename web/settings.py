@@ -46,12 +46,14 @@ except NoCredentialsError:
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
-hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
-ALLOWED_HOSTS = hosts_list
+hosts_list.append("www.brain-score.org")
 
-# AWS solution to load balancer requests. Django currently does not support subnet wildcards (172.31.*.*), so
-# this is a work around solution.
-ALLOWED_HOSTS += ['172.31.{}.{}'.format(i, j) for i in range(256) for j in range(256)]
+# hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
+ALLOWED_HOSTS = hosts_list
+#
+# # AWS solution to load balancer requests. Django currently does not support subnet wildcards (172.31.*.*), so
+# # this is a work around solution.
+# ALLOWED_HOSTS += ['172.31.{}.{}'.format(i, j) for i in range(256) for j in range(256)]
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
