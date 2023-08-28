@@ -14,6 +14,7 @@ import boto3
 import json
 import os
 from botocore.exceptions import NoCredentialsError
+import socket
 
 
 def get_secret(secret_name, region_name):
@@ -47,6 +48,10 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 hosts_list.append("www.brain-score.org")
+hostname = socket.gethostname()
+local_ip = socket.gethostbyname(hostname)
+hosts_list.append(local_ip)
+
 
 # hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
 ALLOWED_HOSTS = hosts_list
