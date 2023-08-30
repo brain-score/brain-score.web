@@ -360,7 +360,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         'reference_identifier', 'reference_link',
         'user', 'public', 'competition', 'domain',
         'rank', 'scores',
-        'build_status', 'submitter', 'submission_id', 'timestamp'])
+        'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'versioned_benchmark_identifier',
         'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
@@ -428,6 +428,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         submission_id = meta.submission.id
         timestamp = meta.submission.timestamp
         build_status = meta.submission.status
+        jenkins_id = meta.submission.jenkins_id
 
         model_row = ModelRow(
             id=meta.id,
@@ -435,7 +436,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public, competition=competition, domain=domain,
             scores=model_scores, rank=rank, build_status=build_status,
-            submitter=submitter, submission_id=submission_id, timestamp=timestamp
+            submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
         )
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))
