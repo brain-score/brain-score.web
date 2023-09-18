@@ -15,6 +15,7 @@ import json
 import os
 from botocore.exceptions import NoCredentialsError
 import socket
+from urllib.request import urlopen, Request
 
 
 def get_secret(secret_name, region_name):
@@ -46,19 +47,23 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+# AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 hosts_list.append("www.brain-score.org")
 hostname = socket.gethostname()
 local_ip = socket.gethostbyname(hostname)
 hosts_list.append(local_ip)
-
-
-# hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
+try:
+    reqToken = Request('http://169.254.169.254/latest/api/token', method='PUT')
+    reqToken.add_header('X-aws-ec2-metadata-token-ttl-seconds', '21600')
+    token = urlopen(reqToken).read().decode("utf-8")
+    reqIP = Request('http://169.254.169.254/latest/meta-data/local-ipv4')
+    reqIP.add_header('X-aws-ec2-metadata-token', token)
+    ipv4 = urlopen(reqIP).read().decode("utf-8")
+    hosts_list.append(ipv4)
+except:
+    hosts_list = hosts_list
 ALLOWED_HOSTS = hosts_list
-#
-# # AWS solution to load balancer requests. Django currently does not support subnet wildcards (172.31.*.*), so
-# # this is a work around solution.
-# ALLOWED_HOSTS += ['172.31.{}.{}'.format(i, j) for i in range(256) for j in range(256)]
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
