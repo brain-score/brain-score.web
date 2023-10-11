@@ -1,0 +1,153 @@
+{% if models %}
+{% if has_user %}
+
+{% load static %}
+
+<form>
+{% endif %}
+
+<banner>
+  <div class="leaderboard-table-banner-icon gradient">
+      <img src="{% static "/benchmarks/img/leaderboard_header_icon.png" %}" alt="Brain-Score Logo">
+  </div>
+  <div class="leaderboard-table-banner box gradient"><h3>Leaderboard</h3></div>
+</banner>
+<div class="filters">
+  <select class="benchmark-sort">
+    <option value="" disabled selected>Sort by Benchmarks</option>
+    <option value="average">Sort by average</option>
+    {% for name in benchmark_names %}
+      <option value="{{name}}">{{ name }}</option>
+    {% endfor %}
+  </select>
+  <div class="legend" style="
+  ">
+    <label>Score Legend</label>
+    <span>No Alignment</span>
+    <span class="legend-right">Alignment at ceiling</span>
+  </div>
+  <div class="leaderboard-breadcrumb"></div>
+</div>
+<div class="leaderboard-table-container">
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="rank-header">
+          <p>Rank</p>
+        </th>
+        <th class="model-header">
+          <p>Model</p>
+        </th>
+        <!
+          Each of the cells in table/heading have a lot of information
+          of what benchmark they are and who their parent is. This allows
+          for QuerySelecting and using some of the filters from index.py
+        >
+        {% for benchmark in benchmarks %}
+          <th data-benchmark="{{ benchmark.short_name }}"
+              data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
+              data-depth="{{benchmark.depth}}"
+              class="{% if 'engineering' in benchmark.root_parent %}
+                  engineering
+                {% elif 'average' in benchmark.root_parent %}
+                  average
+                {% endif %}
+                {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_{{ domain }}' %}
+                  cursor--pointer
+                {% endif %}
+                benchmark-header depth_{{ benchmark.depth }}"
+              style="display:{{ not_shown_set|in_set:benchmark.identifier }}"
+              {% if benchmark.ceiling and benchmark.ceiling != 'X' %}
+              title="{{ benchmark.short_name }} ceiling: {{ benchmark.ceiling }}"
+              {% endif %}>
+            <div>
+              <p>
+                {# reference link #}
+                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                  <a href="{{ benchmark.benchmark_type.reference.url }}" target="_blank" rel="noopener noreferrer">
+                {% endif %}
+                {# identifier #}
+                <span class="depth_{{ benchmark.depth }}
+                           {% if benchmark.version %} instance {% endif %}
+                           {% if benchmark.root_parent == 'average_{{ domain }}' %} brain_benchmark {% endif %}"
+                      value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}
+                </span>
+                {# version #}
+                {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
+                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                  </a>
+                {% endif %}
+                {# number of child benchmarks, ignore roots #}
+                {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_{{ domain }}' %}
+                  <span class="benchmark-count">
+                    {{ benchmark.number_of_all_children }}
+                    <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
+                  </span>
+                {% endif %}
+              </p>
+            </div>
+          </th>
+        {% endfor %}
+        {% if has_user %}
+          <th><p><span class="cursor--pointer"><b>Public</b></span></p></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <!-- models -->
+    <tbody>
+      {% for model in models %}
+        <tr
+          {% if model.primary_model_id %}
+            data-parent="{{ model.primary_model_id }}"
+            style="display: none"
+            class="is-secondary-model"
+          {% endif %}
+        >
+          <td class="rank">{{ model.rank }}</td>
+          <td class="model">
+            <div class="identifier" title="{{ model.reference_identifier }}">
+              <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
+                {{ model|display_model:user }}
+              </a>
+            </div>
+            <div class="submitter">
+                {{ model|display_submitter:user|default:"&nbsp;" }}
+            </div>
+            {% if not model.primary_model_id and model.num_secondary_models %}
+              <span class="collapsible_control is_expandable competition-models-more"
+                    data-identifier="{{ model.id }}">
+              {{ model.num_secondary_models }} more models from this user
+              </span>
+            {% elif model.num_secondary_models == 0 %} {# show empty line to align with other rows #}
+              <span class="competition-models-more">&nbsp;</span>
+            {% endif %}
+          </td>
+          {% for score_row in model.scores %}
+            <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
+                data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
+                data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
+                class="display-square depth_{{ score_row.benchmark.depth }}"
+                style="display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }}">
+              <div style="{{ score_row.color }};">
+                {{ score_row.score_ceiled }}
+              </div>
+            </td>
+          {% endfor %}
+          {% if has_user %}
+            <td class="model-public-checkbox">
+              <input type="checkbox" value="{{ model.id }}"
+                     class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if has_user %}
+</form>
+{% endif %}
+{% else %}
+  <p>No data.</p>
+{% endif %}
