@@ -125,10 +125,6 @@ class LandingPage(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
 
-class LeaderboardV2(View):
-    def get(self, request):
-        return render(request, 'benchmarks/leaderboard/leaderboard.html')
-
 class Logout(View):
     domain = None
 

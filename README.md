@@ -4,7 +4,7 @@
 
 Create and activate a virtual environment
 
-Install dependencies: `pip install -r dev-requirements.txt`
+Install dependencies: `pip install -r requirements.txt`
 
 Install node dependencies: `npm install --no-optional`
 

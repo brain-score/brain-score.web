@@ -10,7 +10,6 @@ non_domain_urls = [
 
         # landing page (preview mode)
         path('2023/', user.LandingPage.as_view(), name='landing_page'),
-        path('2023/leaderboard', user.LeaderboardV2.as_view(), name='leaderboard'),
 
         path('', functools.partial(index, domain="vision"), name='index'),
         path('/', functools.partial(index, domain="vision"), name='index'),
