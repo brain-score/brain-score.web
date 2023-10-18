@@ -2,8 +2,6 @@
 {% load static %}
 {% load compress %}
 
-
-
 {% block navbar %}
 <nav class="navbar updated is-fixed-top is-transparent">
     <div class= "container my_container nav-container">
@@ -37,13 +35,56 @@
    <div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
         <div class="column is-half has-text-centered-mobile">
             <div class="container login-left">
-                <span class="green_log is-size-3 is-size-2-widescreen">Log</span><span class="gray_log is-size-3 is-size-2-widescreen"> In</span>
-                <button onclick="location.href='/signup'" type="button" class="button updated_green" >Create An Account</button>
-                <p class="small_green is-size-7 is-size-6-widescreen">Email Address</p>
-                <input class="input is-normal gray" type="text" placeholder="my_email@science.net">
-                <p class="small_green is-size-7 is-size-6-widescreen">Password</p>
-                <input class="input is-normal gray" type="text" >
-                <button type="button" class="button new_design tutorial_button" >Login</button>
+                {% if activation_email %}
+                    <article class="message">
+                        <div class="message-header">
+                            <p style="font-weight: bold">A confirmation email has been sent.</p>
+                        </div>
+                        <div class="message-body">
+                            Be sure to confirm your account via email before trying to log in!
+                            <p class="create-account"><a href="/profile">Return to Login</a></p>
+                        </div>
+                    </article>
+                {% elif password_email %}
+                    <article class="message">
+                        <div class="message-header">
+                             <p style="font-weight: bold">A password change email has been sent.</p>
+                        </div>
+                        <div class="message-body">
+                            Be sure to visit your emailed link to change your password!
+                            <p class="create-account"><a href="/profile">Return to Login</a></p>
+                        </div>
+                    </article>
+                {% else %}
+                    <span class="green_log is-size-3 is-size-2-widescreen">Log</span><span class="gray_log is-size-3 is-size-2-widescreen"> In</span>
+                    <p class="create-account"><a href="/signup">Create An Account</a></p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="field">
+                                <label class="label label-green">{{ field.label_tag }}</label>
+                                <div class="control">
+                                     <input class="input is-normal gray" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}">
+                                </div>
+                                {% if field.help_text %}
+                                    <small style="display: none">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <p style="color: red">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                         {% if Incorrect %}
+                            <article id="wrong-password" class="message is-danger">
+                                <div class="message-body">
+                                    The username or password was incorrect.
+                                </div>
+                            </article>
+                        {% endif %}
+                        <p class="forgot_password" style="font-size: 14px"><a href="/password">Forgot Your Password?</a></p>
+                        <button type="button submit" class="button new_design tutorial_button" >Login</button>
+                    </form>
+                {% endif %}
              </div>
         </div>
     </div>
