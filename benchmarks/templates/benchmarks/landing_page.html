@@ -3,8 +3,7 @@
 {% load compress %}
 
 
-
-{% block navbar %}
+{% block main %}
 <nav class="navbar updated is-fixed-top is-transparent">
     <div class= "container my_container nav-container">
         <div class="navbar-brand">
@@ -32,9 +31,7 @@
         </div>
     </div>
 </nav>
-{% endblock %}
 
-{% block content %}
 <div class=" container my_container landing">
     <div class="columns">
         <div class="left_side column is-half has-text-centered-mobile">
@@ -128,8 +125,6 @@
             </div>
         </div>
     </div>
-{% endblock %}
-{% block footer %}
     <div class="container my_container main_footer">
         <div class="columns has-text-centered-mobile">
             <div class="column has-text-centered ">
@@ -155,6 +150,5 @@
             </div>
         </div>
     </div>
-{% endblock %}
 </div>
-
+{% endblock %}

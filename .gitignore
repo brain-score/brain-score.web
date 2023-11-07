@@ -1,0 +1,11 @@
+.sass-cache/
+__pycache__
+brain_score.web.egg-info/
+build/
+db.sqlite3
+dist/
+django.log
+node_modules/
+static/admin/
+static/CACHE/
+venv
