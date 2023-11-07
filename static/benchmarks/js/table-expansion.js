@@ -98,7 +98,6 @@ $(document).ready(function () {
         assignFunction(coll, i)
     }
 
-
     function recursiveChildren(all_coll) {
         // Performs recursiveChildren on the current benchmark and checking for all of its children and
         // then setting each child's benchmark to be the current benchmark. (Making them invisible in the meantime).
@@ -170,6 +169,5 @@ $(document).ready(function () {
             }
         }
     }
-
 
 });
