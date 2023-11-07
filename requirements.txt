@@ -20,7 +20,6 @@ rcssmin==1.1.1
 requests==2.31.0
 rjsmin==1.2.1
 s3transfer==0.6.1
-sass==2.3
 six==1.16.0
 sqlparse==0.4.4
 tqdm==4.65.0

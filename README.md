@@ -2,9 +2,21 @@
 
 ## Setup
 
+Ensure you are using `python@3.8`
+
 Create and activate a virtual environment
 
-Install dependencies: `pip install -r requirements.txt`
+```
+python3 -m venv <env_name>
+source <env_name>/bin/activate
+```
+
+Install dependencies:
+
+```
+python3 -m pip install --upgrade pip
+pip3 install -r requirements.txt
+```
 
 Install node dependencies: `npm install --no-optional`
 
@@ -13,7 +25,18 @@ Run server in dev: `DEBUG=True python manage.py runserver &`
 
 ### Setup Errors - troubleshooting
 
-Error installing sass with pip - `pip3 install cython` and try again
+Error installing sass with pip:
+
+```
+ERROR: Failed building wheel for sass
+```
+
+Install `cython` and try again
+
+```
+pip3 install cython
+pip3 install -r requirements.txt
+```
 
 Error installing `psycopg2` Error: pg_config executable not found. - Install postgresql `brew install postgresql`
 
