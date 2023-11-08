@@ -68,8 +68,6 @@ $(document).ready(function () {
             if (target.data().benchmark === "engineering_vision") {
                 breadcrumb = `<span class="breadcrumb-link cursor--pointer">average_vision</span> > ` + breadcrumb;
             }
-
-
         }
 
 
