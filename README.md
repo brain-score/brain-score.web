@@ -2,7 +2,7 @@
 
 ## Setup
 
-Ensure you are using `python@3.8`
+Ensure you are using `<= python@3.8`
 
 Create and activate a virtual environment
 
