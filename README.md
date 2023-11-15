@@ -1,11 +1,53 @@
 [![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
 
 ## Setup
-Install dependencies: `pip install .`
+
+Ensure you are using `<= python@3.8`
+
+Create and activate a virtual environment
+
+```
+python3 -m venv <env_name>
+source <env_name>/bin/activate
+```
+
+Install dependencies:
+
+```
+python3 -m pip install --upgrade pip
+pip3 install -r requirements.txt
+```
 
 Install node dependencies: `npm install --no-optional`
 
-Run server: `python manage.py runserver &`
+Create a `.env` file and add `DB_HOST` and `DB_PASSWORD` vars for the development database.
+
+Run server in dev: `DJANGO_ENV=development DEBUG=True python manage.py runserver`
+
+TIP: add an alias for the above command to your shell config file (.bashrc, .zshrc, etc.)
+
+```
+alias bsw="DJANGO_ENV=development DEBUG=True python manage.py runserver"
+```
+
+### Setup Errors - troubleshooting
+
+Error installing sass with pip:
+
+```
+ERROR: Failed building wheel for sass
+```
+
+Install `cython` and try again
+
+```
+pip3 install cython
+pip3 install -r requirements.txt
+```
+
+Error installing `psycopg2` Error: pg_config executable not found. - Install postgresql `brew install postgresql`
+
+Error running the server  - `/bin/sh: command not found: sass` - `npm install -g sass`
 
 
 ## Update data

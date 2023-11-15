@@ -50,9 +50,11 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 hosts_list.append("www.brain-score.org")
+hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
 hostname = socket.gethostname()
 local_ip = socket.gethostbyname(hostname)
 hosts_list.append(local_ip)
+if os.getenv("DJANGO_ENV") == "development": hosts_list.append("127.0.0.1")
 try:
     reqToken = Request('http://169.254.169.254/latest/api/token', method='PUT')
     reqToken.add_header('X-aws-ec2-metadata-token-ttl-seconds', '21600')
@@ -129,6 +131,19 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
+    if os.getenv("DJANGO_ENV") == "development":
+        from dotenv import load_dotenv; load_dotenv()
+
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'dev',
+                'USER': 'postgres',
+                'PASSWORD': os.getenv('DB_PASSWORD'),
+                'HOST': os.getenv('DB_HOST'),
+                'PORT': '5432'
+            }
+        }
     db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
