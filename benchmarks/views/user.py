@@ -139,6 +139,15 @@ class Landing(View):
         return render(request, 'benchmarks/landing_page.html')
 
 
+class Tutorial(View):
+    tutorial_type = None
+
+    def get(self, request):
+        return render(request, f'benchmarks/tutorial{self.tutorial_type}.html')
+
+
+
+
 class Upload(View):
     domain = None
 

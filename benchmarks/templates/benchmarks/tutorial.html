@@ -1,0 +1,86 @@
+
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+<nav class="navbar updated is-fixed-top is-transparent">
+    <div class= "container my_container nav-container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
+                        </a>
+                    </div>
+                </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container my_container landing">
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half has-text-centered">
+                    <h3 class="benefits_heading is-size-3-mobile">Welcome to Brain-Score</h3>
+                       <p> We are excited that you are here! Below you will find guides and links on various use cases
+                           of the platform. We hope that Brain-Score will enable you to find new insights
+                           from models, benchmarks, and integrated scoring.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column has-text-centered">
+                    <h3 class="benefits_heading is-size-3-mobile">Quick Start</h3>
+                    <p>In this guide, learn how to install Brain-Score on your machine and how to score an existing
+                        model on an existing benchmark. This will help familiarize you with the scoring system,
+                        what these scores mean, and how to run any model on any of our publicly available
+                        data benchmarks.</p>
+                    <button onclick="location.href='../tutorial/quickstart'" type="button" class="button new_design tutorial benefit_button is-size-7
+                     is-size-6-widescreen" >Quickstart</button>
+                </div>
+                <div class="column has-text-centered">
+                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper Series</h3>
+                    <p>In these guides, we will cover more advanced topics and use cases of the platform. This is mainly
+                        split into two sections: model submission and benchmark submission. For models, this includes
+                        how to submit a Resnet-50 model to the website, how to score and upload a custom model, and
+                        how to submit a model via Github Pull Request. For benchmarks, we cover how to submit a new
+                        data with an existing metric, as well as how to submit a new metric with existing data.
+                    </p>
+                    <button onclick="location.href='../tutorial/deepdive_1'" type="button" class="button new_design tutorial benefit_button is-size-7
+                     is-size-6-widescreen" >Dive Deeper</button>
+                </div>
+                <div class="column has-text-centered">
+                    <h3 class="benefits_heading is-size-3-mobile">Stuck?</h3>
+                    <p>Our tutorial was made in conjunction with Brain-Score’s users and we hope it covers everything
+                        you need to know to familiarize yourself with all Brain-Score has to offer. Sometimes though,
+                        things come up, and users can get stuck. If that is the case, do not hesitate to reach out to
+                        the Brain-Score team; we are always happy to help</p>
+                    <button onclick="location.href='../profile'" type="button" class="button new_design tutorial benefit_button is-size-7
+                     is-size-6-widescreen" >Contact Us</button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+
