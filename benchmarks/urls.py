@@ -29,11 +29,13 @@ non_domain_urls = [
 
         # central tutorial page, constant across all Brain-Score domains
         path('tutorial/', user.Tutorial.as_view(tutorial_type=""), name='tutorial'),
-        path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
-        path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
-        path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
-        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
-        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_4"), name='tutorial-deepdive-4'),
+
+        # Needs HTML still
+        # path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
+        # path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
+        # path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
+        # path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
+        # path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_4"), name='tutorial-deepdive-4'),
 
 
         # need navbar links when on /profile. Default to vision.
