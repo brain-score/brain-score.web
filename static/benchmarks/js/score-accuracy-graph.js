@@ -33,7 +33,7 @@ $(document).ready(() => {
   );
 
   // let the page render before setting the dimensions
-  setTimeout(setGraphContainerDimensions);
+  setTimeout(setGraphContainerDimensions, 1);
 
   window.addEventListener("resize", setGraphWidth);
 
