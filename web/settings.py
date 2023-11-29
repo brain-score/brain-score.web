@@ -63,6 +63,8 @@ try:
     hosts_list.append(ipv4)
 except:
     hosts_list = hosts_list
+hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
+if os.getenv("DJANGO_ENV") == "development": hosts_list.append("127.0.0.1")
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -129,6 +131,19 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
+    if os.getenv("DJANGO_ENV") == "development":
+        from dotenv import load_dotenv; load_dotenv()
+
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'dev',
+                'USER': 'postgres',
+                'PASSWORD': os.getenv('DB_PASSWORD'),
+                'HOST': os.getenv('DB_HOST'),
+                'PORT': '5432'
+            }
+        }
     db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
