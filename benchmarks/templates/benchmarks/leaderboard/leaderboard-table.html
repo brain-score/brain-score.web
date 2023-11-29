@@ -1,7 +1,7 @@
+{% load static %}
 {% if models %}
 {% if has_user %}
 
-{% load static %}
 
 <form>
 {% endif %}
@@ -56,9 +56,8 @@
                 {% endif %}
                 benchmark-header depth_{{ benchmark.depth }}"
               style="display:{{ not_shown_set|in_set:benchmark.identifier }}"
-              {% if benchmark.ceiling and benchmark.ceiling != 'X' %}
-              title="{{ benchmark.short_name }} ceiling: {{ benchmark.ceiling }}"
-              {% endif %}>
+              title="{{ benchmark.short_name }} {% if benchmark.ceiling and benchmark.ceiling != 'X' %}ceiling: {{ benchmark.ceiling }} {% endif %}"
+          >
             <div>
               <p>
                 {# reference link #}
@@ -111,7 +110,7 @@
               </a>
             </div>
             <div class="submitter">
-                {{ model|display_submitter:user|default:"&nbsp;" }}
+                {{ model|display_submitter:user|default:"" }}
             </div>
             {% if not model.primary_model_id and model.num_secondary_models %}
               <span class="collapsible_control is_expandable competition-models-more"

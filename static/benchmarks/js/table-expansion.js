@@ -10,7 +10,7 @@ $(document).ready(function () {
         const benchmarkCount = event.currentTarget.querySelector('.benchmark-count');
 
         // the column has no children or the user clicked the average column so do nothing
-        if (!benchmarkCount || (event.type !== "breadcrumb-click" && event.currentTarget.dataset.benchmark === 'average_vision')) { return; }
+        if (!benchmarkCount || (event.type !== "breadcrumb-click" && /average/.test(event.currentTarget.dataset.benchmark))) { return; }
 
         // start by hiding everything
         $('[data-benchmark]').css('display','none');
@@ -19,7 +19,7 @@ $(document).ready(function () {
 
         // toggle the open state
         if ((isClosed = !benchmarkCount.classList.contains('open'))) {
-            event.currentTarget.dataset.benchmark !== 'average_vision' && benchmarkCount.classList.add('open');
+            !/average/.test(event.currentTarget.dataset.benchmark) && benchmarkCount.classList.add('open');
             stepDown(event);
         } else {
             benchmarkCount.classList.remove('open');
@@ -33,7 +33,7 @@ $(document).ready(function () {
         // the `$=` attribute selector e.g. [attr$=val] matches a suffix
         $(`[data-benchmark$="${benchmark}_v0"],[data-parent="${benchmark}_v0"]`).css('display', '');
 
-        if (event.currentTarget.dataset.benchmark === "average_vision") {
+        if (/average/.test(event.currentTarget.dataset.benchmark)) {
              $('[data-parent="None"]').css('display', '');
         }
         setBreadCrumbs($(event.currentTarget));
@@ -42,8 +42,8 @@ $(document).ready(function () {
     function stepUp(event) {
         const benchmark = event.currentTarget.dataset.parent;
         // special case this so returning back to the main view also expands neural and behavioral columns
-        if (event.currentTarget.dataset.depth === '0' || event.currentTarget.dataset.parent === 'average_vision_v0') {
-            $('[data-parent="None"],[data-parent="average_vision_v0"]').css('display', '');
+        if (event.currentTarget.dataset.depth === '0' || /average_.*_v0/.test(event.currentTarget.dataset.parent)) {
+            $('[data-parent="None"],[data-parent="average_vision_v0"],[data-parent="average_language_v0"]').css('display', '');
         } else {
             $(`[data-benchmark="${benchmark.replace('_v0', '')}"],[data-benchmark$="${benchmark}"],[data-parent="${benchmark}"]`).css('display', '');
         }
@@ -51,7 +51,7 @@ $(document).ready(function () {
     }
 
     function setBreadCrumbs(target) {
-        if (target.data() && (target.data().benchmark === "average_vision")) {
+        if (target.data() && (/average/.test(target.data().benchmark))) {
             $('.leaderboard-breadcrumb').html('');
             return;
         }
