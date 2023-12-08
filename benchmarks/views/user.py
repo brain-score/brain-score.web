@@ -18,7 +18,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
-from benchmarks.models import Model
+from benchmarks.models import Model, BenchmarkInstance
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 
@@ -205,6 +205,9 @@ class Upload(View):
 
 def is_submission_original(file, submitter):
 
+    # add metrics and data eventually
+    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkInstance}
+
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
         plugins = plugins_exist(namelist)[1]
@@ -212,16 +215,17 @@ def is_submission_original(file, submitter):
         # for each plugin submitted, make sure that the identifier does not exist already:
         for plugin in plugins:
             identifiers = plugin_has_instances(namelist, plugin)[1]
+            db_table = plugin_db_mapping[plugin]
             for identifier in identifiers:
-                if Model.objects.filter(name=identifier).exists():  # just Model right now until other plugins are ready
+                if db_table.objects.filter(name=identifier).exists():
 
-                    model_owner = Model.objects.get(name=identifier).owner.id
+                    owner = db_table.objects.get(name=identifier).owner.id
 
-                    # check to see if the submitter is the owner:
-                    if model_owner == submitter.id or submitter.is_superuser:
+                    # check to see if the submitter is the owner (or superuser):
+                    if owner == submitter.id or submitter.is_superuser:
 
                         # Khaled versioning here
-                        print(model_owner, submitter)
+                        print(owner, submitter)
 
                     return False, [plugin, identifier]
 
