@@ -108,7 +108,7 @@ class BenchmarkType(models.Model):
     order = models.IntegerField(default=999)
     parent = models.ForeignKey("self", null=True, on_delete=models.PROTECT)  # null: average benchmark has no parent
     visible = models.BooleanField(default=False, null=False)
-    owner_id = models.ForeignKey(User, on_delete=models.PROTECT, default=2)  # null for parents
+    owner = models.ForeignKey(User, on_delete=models.PROTECT, default=2)  # null for parents
 
     def __repr__(self):
         return generic_repr(self)
