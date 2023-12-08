@@ -217,18 +217,32 @@ def is_submission_original(file, submitter):
             identifiers = plugin_has_instances(namelist, plugin)[1]
             db_table = plugin_db_mapping[plugin]
             for identifier in identifiers:
-                if db_table.objects.filter(name=identifier).exists():
 
-                    owner = db_table.objects.get(name=identifier).owner.id
+                # models plugins. There might be a better way to do this then an if/else,
+                # but the "name" part in name=identifier of line 225 changes depending on the plugin.
+                if plugin == "Models":
+                    if db_table.objects.filter(name=identifier).exists():
 
-                    # check to see if the submitter is the owner (or superuser):
-                    if owner == submitter.id or submitter.is_superuser:
+                        owner = db_table.objects.get(name=identifier).owner.id
 
-                        # Khaled versioning here
-                        print(owner, submitter)
+                        # check to see if the submitter is the owner (or superuser):
+                        if owner == submitter.id or submitter.is_superuser:
 
-                    return False, [plugin, identifier]
+                            # Khaled versioning here
+                            print(owner, submitter)
 
+                        return False, [plugin, identifier]
+                elif plugin == "Benchmarks":
+                    if db_table.objects.filter(identifier=identifier).exists():
+
+                        owner = db_table.objects.get(identifier=identifier).owner_id
+
+                        # check to see if the submitter is the owner (or superuser):
+                        if owner == submitter.id or submitter.is_superuser:
+                            # Khaled versioning here
+                            print(owner, submitter)
+
+                        return False, [plugin, identifier]
         return True, []  # passes all checks, then the submission is original -> good to go
 
 
