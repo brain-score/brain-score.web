@@ -3,35 +3,6 @@
 {% load static %}
 
 {% block content %}
-<div class="leaderboard columns">
-  <div class="leaderboard-totals column is-narrow">
-    <div class="leaderboard-totals-card box">
-      <div class="gradient leaderboard-totals-card-label">
-        <img src="{% static "/benchmarks/img/total_benchmarks_icon.png" %}" alt="Brain-Score Logo">
-        <p>Total Benchmarks</p>
-      </div>
-      <div class="leaderboard-totals-card-stat">
-        <p>{{benchmarks|length}}</p>
-      </div>
-    </div>
-    <div class="leaderboard-totals-card box">
-      <div class="gradient leaderboard-totals-card-label">
-        <img src="{% static "/benchmarks/img/DCNN_icon.png" %}" alt="Brain-Score Logo">
-        <p>Total Models</p>
-      </div>
-      <div class="leaderboard-totals-card-stat">
-        <p>{{models|length}}</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="column">
-    <div class="box leaderboard-graph-container">
-      <canvas id="scores_time_graph"></canvas>
-    </div>
-  </div>
-</div>
-
 <div class="box leaderboard-table-component">
   {% include "benchmarks/leaderboard/leaderboard-table.html" %}
 </div>

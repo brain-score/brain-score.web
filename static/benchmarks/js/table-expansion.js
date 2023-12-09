@@ -12,7 +12,7 @@ $(document).ready(function () {
 
         // If the user clicks on a benchmark without a count or the average column there are no children to expand, so do nothing.
         // If the user clicks on the breadcrumb link matching the root identifier execute.
-        // All other cases handle the click.
+        // And all other cases handle the click.
         if (!benchmarkCount || (event.type !== "breadcrumb-click" && isRootIdentifier(event))) { return; }
 
         // start by hiding everything
