@@ -1,26 +1,39 @@
-<figure id="comparison-fig">
-    <div id="comparison-scatter"></div>
+{% extends "benchmarks/components/app-view.html" %}
 
-    <div class="xlabel-container">
-        <select id="xlabel">
-            {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="ylabel-container">
-        <select id="ylabel">
-            {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-            {% endfor %}
-        </select>
-    </div>
+{% load static %}
 
-    <figcaption>
-        <span id="label-description">x vs y</span>.
-        <br/>
-        Hover over dots to reveal model details.
-        Scrolling zooms in and out.
-        Click the dropdowns to change x-/y-axis data.
-    </figcaption>
-</figure>
+{% block banner %}
+<h1>Compare</h1>
+<p>Reveal model details by hovering over dots. Scrolling zooms in and out.</p>
+{% endblock %}
+
+{% block content %}
+<div class="comparison">
+    <div class="card">
+        <h3 id="label-description">x <span>vs</span> y</h3>
+
+        <div class="controls-container">
+            <div class="xlabel-container">
+                <select id="xlabel">
+                    {% for benchmark in benchmarks %}
+                        <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="ylabel-container">
+                <select id="ylabel">
+                    {% for benchmark in benchmarks %}
+                        <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div id="comparison-scatter"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/leaderboard/info-section.html" %}
+{% endblock %}
