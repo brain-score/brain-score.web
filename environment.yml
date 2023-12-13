@@ -4,7 +4,7 @@ channels:
 - anaconda
 - pytorch
 dependencies:
-  - python>=3.6
+  - python>=3.6, <=3.11
   - pip
   - django
   - numpy
