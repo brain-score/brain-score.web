@@ -18,7 +18,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
-from benchmarks.models import Model
+from benchmarks.models import Model, BenchmarkInstance
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 
@@ -154,17 +154,22 @@ class Upload(View):
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
+        user_inst = User.objects.get_by_natural_key(request.user.email)
+        user_id = user_inst.id
+
         # parse directory tree, return new html page if not valid:
         if self.domain == "language":
             is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+            submission_is_original, submission_data = is_submission_original(form.files.get('zip_file'), user_inst)
             request.FILES['zip_file'].seek(0)  # reset file pointer
             if not is_zip_valid:
                 return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
+            if not submission_is_original:
+                return render(request, 'benchmarks/already_submitted.html', {'plugin': submission_data[0], "domain": self.domain, 'identifier': submission_data[1]})
 
-        user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
-            "user_id": user_inst.id,
+            "user_id": user_id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
             "domain": self.domain
@@ -196,6 +201,49 @@ class Upload(View):
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
         return render(request, 'benchmarks/success.html', {"domain": self.domain})
+
+
+def is_submission_original(file, submitter):
+
+    # add metrics and data eventually
+    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkInstance}
+
+    with zipfile.ZipFile(file, mode="r") as archive:
+        namelist = archive.infolist()
+        plugins = plugins_exist(namelist)[1]
+
+        # for each plugin submitted, make sure that the identifier does not exist already:
+        for plugin in plugins:
+            identifiers = plugin_has_instances(namelist, plugin)[1]
+            db_table = plugin_db_mapping[plugin]
+            for identifier in identifiers:
+
+                # models plugins. There might be a better way to do this then an if/else,
+                # but the "name" part in name=identifier of line 225 changes depending on the plugin.
+                if plugin == "Models":
+                    if db_table.objects.filter(name=identifier).exists():
+
+                        owner = db_table.objects.get(name=identifier).owner.id
+
+                        # check to see if the submitter is the owner (or superuser):
+                        if owner == submitter.id or submitter.is_superuser:
+
+                            # Khaled versioning here
+                            print(owner, submitter)
+
+                        return False, [plugin, identifier]
+                elif plugin == "Benchmarks":
+                    if db_table.objects.filter(identifier=identifier).exists():
+
+                        owner = db_table.objects.get(identifier=identifier).owner_id
+
+                        # check to see if the submitter is the owner (or superuser):
+                        if owner == submitter.id or submitter.is_superuser:
+                            # Khaled versioning here
+                            print(owner, submitter)
+
+                        return False, [plugin, identifier]
+        return True, []  # passes all checks, then the submission is original -> good to go
 
 
 def validate_zip(file):
