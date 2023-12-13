@@ -18,7 +18,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
-from benchmarks.models import Model, BenchmarkInstance
+from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 
@@ -204,9 +204,8 @@ class Upload(View):
 
 
 def is_submission_original(file, submitter):
-
     # add metrics and data eventually
-    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkInstance}
+    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkType}
 
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
@@ -216,34 +215,26 @@ def is_submission_original(file, submitter):
         for plugin in plugins:
             identifiers = plugin_has_instances(namelist, plugin)[1]
             db_table = plugin_db_mapping[plugin]
+
+            # Determine the field name based on the plugin type
+            field_name = 'name' if plugin == "models" else 'identifier'
+
             for identifier in identifiers:
+                query_filter = {field_name: identifier}
 
-                # models plugins. There might be a better way to do this then an if/else,
-                # but the "name" part in name=identifier of line 225 changes depending on the plugin.
-                if plugin == "Models":
-                    if db_table.objects.filter(name=identifier).exists():
+                # Check if an entry with the given identifier exists
+                if db_table.objects.filter(**query_filter).exists():
+                    owner_obj = db_table.objects.get(**query_filter)
+                    owner_id = getattr(owner_obj, 'owner_id', None) or getattr(owner_obj, 'owner').id
 
-                        owner = db_table.objects.get(name=identifier).owner.id
-
-                        # check to see if the submitter is the owner (or superuser):
-                        if owner == submitter.id or submitter.is_superuser:
-
-                            # Khaled versioning here
-                            print(owner, submitter)
-
+                    # Check to see if the submitter is the owner (or superuser)
+                    if owner_id == submitter.id or submitter.is_superuser:
+                        # Khaled versioning here
+                        print(owner_id, submitter)
+                    else:
                         return False, [plugin, identifier]
-                elif plugin == "Benchmarks":
-                    if db_table.objects.filter(identifier=identifier).exists():
 
-                        owner = db_table.objects.get(identifier=identifier).owner_id
-
-                        # check to see if the submitter is the owner (or superuser):
-                        if owner == submitter.id or submitter.is_superuser:
-                            # Khaled versioning here
-                            print(owner, submitter)
-
-                        return False, [plugin, identifier]
-        return True, []  # passes all checks, then the submission is original -> good to go
+    return True, []  # Passes all checks, then the submission is original -> good to go
 
 
 def validate_zip(file):
