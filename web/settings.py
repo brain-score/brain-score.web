@@ -14,8 +14,6 @@ import boto3
 import json
 import os
 from botocore.exceptions import NoCredentialsError
-import socket
-from urllib.request import urlopen, Request
 
 
 def get_secret(secret_name, region_name):
@@ -49,28 +47,11 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
-hosts_list.append("www.brain-score.org")
-hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod env
-hostname = socket.gethostname()
-local_ip = socket.gethostbyname(hostname)
-hosts_list.append(local_ip)
-if os.getenv("DJANGO_ENV") == "development": hosts_list.append("127.0.0.1")
-try:
-    reqToken = Request('http://169.254.169.254/latest/api/token', method='PUT')
-    reqToken.add_header('X-aws-ec2-metadata-token-ttl-seconds', '21600')
-    token = urlopen(reqToken).read().decode("utf-8")
-    reqIP = Request('http://169.254.169.254/latest/meta-data/local-ipv4')
-    reqIP.add_header('X-aws-ec2-metadata-token', token)
-    ipv4 = urlopen(reqIP).read().decode("utf-8")
-    hosts_list.append(ipv4)
-except:
-    hosts_list = hosts_list
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
 # django_gmail_password thus is an app-specific login for Gmail (adds Django as authorized login for Gmail)
-
 try:
     email_secrets = get_secret("brainscore-email", REGION_NAME)
 except NoCredentialsError:
