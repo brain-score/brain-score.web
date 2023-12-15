@@ -1,0 +1,69 @@
+
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+<nav class="navbar updated is-fixed-top is-transparent">
+    <div class= "container my_container nav-container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
+                        </a>
+                    </div>
+                </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container my_container landing">
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half has-text-centered">
+                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case- Submitting via Github Pull Request
+                    </h3>
+                       <p>Brain-Score also supports the submission of plugins via a Github Pull Request (PR).
+                           This is another simple way to allow your plugins to be scored or uploaded to the Brain-Score
+                           ecosystem. If you are submitting a model, then all that is required to be in the PR are the
+                           4 required files structured like so:
+
+                            /models (root folder to zip/unzip)
+                                /resnet-50_deepdive-2 (your model folder)
+                                    setup.py
+                                    model.py
+                                    test.py
+                                     __init__.py
+                           For a complete description of what each of these files are, as well as what to include in
+                           each, please refer to deep dive 1. To submit via PR, simply open a PR with your
+                           files to the branch on Github. We hope to support automatic PR merging soon. However,
+                           for the time being, if you submit via PR, one of the members of the Brain-Score team
+                           will review it and either merge it or suggest any needed fixes. Once this PR is merged,
+                           it will be scored, and you will get an email back with scores just like you would for a
+                           website submission.
+
+                       </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+

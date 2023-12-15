@@ -146,8 +146,6 @@ class Tutorial(View):
         return render(request, f'benchmarks/tutorial{self.tutorial_type}.html')
 
 
-
-
 class Upload(View):
     domain = None
 
