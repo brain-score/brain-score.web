@@ -35,20 +35,24 @@
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
+                <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case- Submitting via Github Pull Request
                     </h3>
                        <p>Brain-Score also supports the submission of plugins via a Github Pull Request (PR).
                            This is another simple way to allow your plugins to be scored or uploaded to the Brain-Score
                            ecosystem. If you are submitting a model, then all that is required to be in the PR are the
-                           4 required files structured like so:
-
-                            /models (root folder to zip/unzip)
-                                /resnet-50_deepdive-2 (your model folder)
-                                    setup.py
-                                    model.py
-                                    test.py
-                                     __init__.py
+                           4 required files structured like so: <p/>
+<br><pre>
+<code class="language-python">
+/models (root folder to zip/unzip)
+    /resnet-50_deepdive-2 (your model folder)
+        setup.py
+        model.py
+        test.py
+         __init__.py
+</code>
+</pre><br>
+                    <p>
                            For a complete description of what each of these files are, as well as what to include in
                            each, please refer to deep dive 1. To submit via PR, simply open a PR with your
                            files to the branch on Github. We hope to support automatic PR merging soon. However,
