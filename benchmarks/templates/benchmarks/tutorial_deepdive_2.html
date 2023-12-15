@@ -35,7 +35,7 @@
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
+                <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 2- Submitting a Custom Model</h3>
                        <p>This guide will show you how to submit a model that you created yourself.
                            In order to do this tutorial, you must complete Use Case 1, as it will show you how to
@@ -55,49 +55,67 @@
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
+                <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Step 1: Adding a Custom Model</h3>
                        <p> Let’s open up model.py in our sample project. It will currently not run, and that is okay
                            - we are going to add in what we need in order to get our custom models submitted.
                            First, let’s actually add in a model. Luckily we have a toy example ready to go, shown below:
+<br><pre>
+<code class="language-python">
+# define your custom model here:
+class MyModel(nn.Module):
+    def __init__(self):
+        super(MyModel, self).__init__()
+        self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=2, kernel_size=3)
+        self.relu1 = torch.nn.ReLU()
+        linear_input_size = np.power((224 - 3 + 2 * 0) / 1 + 1, 2) * 2
+        self.linear = torch.nn.Linear(int(linear_input_size), 1000)
+        self.relu2 = torch.nn.ReLU()  # can't get named ReLU output otherwise
 
-                            # define your custom model here:
-                            class MyModel(nn.Module):
-                                def __init__(self):
-                                    super(MyModel, self).__init__()
-                                    self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=2, kernel_size=3)
-                                    self.relu1 = torch.nn.ReLU()
-                                    linear_input_size = np.power((224 - 3 + 2 * 0) / 1 + 1, 2) * 2
-                                    self.linear = torch.nn.Linear(int(linear_input_size), 1000)
-                                    self.relu2 = torch.nn.ReLU()  # can't get named ReLU output otherwise
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu1(x)
+        x = x.view(x.size(0), -1)
+        x = self.linear(x)
+        x = self.relu2(x)
+        return x
+</code>
+</pre><br>
 
-                                def forward(self, x):
-                                    x = self.conv1(x)
-                                    x = self.relu1(x)
-                                    x = x.view(x.size(0), -1)
-                                    x = self.linear(x)
-                                    x = self.relu2(x)
-                                    return x
-                           Copy and paste this model into line 20 in your sample model.py file. Now we have a custom
+                           <p>Copy and paste this model into line 20 in your sample model.py file. Now we have a custom
                            model! Overall, and more generally, if you want to add in a custom model, simply add the
                            class of the model before the other methods in the models.py file.
                        </p>
                 </div>
             </div>
             <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
+                <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Step 2: Hooking up our Custom Model to Brain-Score </h3>
                        <p>You can see on line 38 the call to Brain-Score’s preprocessing - this is standard, and you
-                           shouldn’t have to worry about this. Next, on line 42, we are going to add in this line:
-                           activations_model = PytorchWrapper(identifier='my-model', model=MyModel(), preprocessing=preprocessing)
+                           shouldn’t have to worry about this. Next, on line 42, we are going to add in this line:</p>
+
+<br><pre>
+<code class="language-python">
+activations_model = PytorchWrapper(identifier='my-model', model=MyModel(), preprocessing=preprocessing)
+</code>
+</pre><br>
+                           <p>
                            This allows us to actually get the activations model from our PyTorch Wrapper. Next we
                            actually want to make the model into a Brain-Score ModelCommitment. You can do this by adding
-                           at line 30 the following lines: model = ModelCommitment(identifier='my-model', activations_model=activations_model,
+                           at line 30 the following lines: </p>
+ <br><pre>
+<code class="language-python">
+model = ModelCommitment(identifier='my-model', activations_model=activations_model,
                         # specify layers to consider
                         layers=['conv1', 'relu1', 'relu2'])
+</code>
+</pre><br>
+                            <p>
                            That’s really it! The rest of the model.py file is the same as our Resnet50 Sample Submission
                            in Deep Dive 1, so be sure to reference that if you are lost. The submission process is also
-                           the exact same as Deep Dive 1.
+                           the exact same as <a href="https://www.brain-score.org/tutorial/deepdive_1">Deep Dive 1</a>.
+                                If you want to learn how to submit a model via a Github PR, visit
+                                <a href="https://www.brain-score.org/tutorial/deepdive_3">here</a>.
 
                        </p>
                 </div>
