@@ -155,11 +155,10 @@ class Upload(View):
             return HttpResponse("Form is invalid", status=400)
 
         # parse directory tree, return new html page if not valid:
-        if self.domain == "language":
-            is_zip_valid, error = validate_zip(form.files.get('zip_file'))
-            request.FILES['zip_file'].seek(0)  # reset file pointer
-            if not is_zip_valid:
-                return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
+        is_zip_valid, error = validate_zip(form.files.get('zip_file'))
+        request.FILES['zip_file'].seek(0)  # reset file pointer
+        if not is_zip_valid:
+            return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
 
         user_inst = User.objects.get_by_natural_key(request.user.email)
         json_info = {
@@ -181,7 +180,7 @@ class Upload(View):
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
 
-        job_name = "create_github_pr" if self.domain == "language" else "run_benchmarks"
+        job_name = "create_github_pr"
         job_name = conditional_debug(job_name)
 
         request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
