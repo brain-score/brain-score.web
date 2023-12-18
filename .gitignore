@@ -1,3 +1,4 @@
+.env
 .sass-cache/
 __pycache__
 brain_score.web.egg-info/

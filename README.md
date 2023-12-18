@@ -2,7 +2,7 @@
 
 ## Setup
 
-Ensure you are using `python@3.8`
+Ensure you are using `<= python@3.8`
 
 Create and activate a virtual environment
 
@@ -20,8 +20,15 @@ pip3 install -r requirements.txt
 
 Install node dependencies: `npm install --no-optional`
 
-Run server in dev: `DEBUG=True python manage.py runserver &`
+Create a `.env` file and add `DB_HOST` and `DB_PASSWORD` vars for the development database.
 
+Run server in dev: `DJANGO_ENV=development DEBUG=True python manage.py runserver`
+
+TIP: add an alias for the above command to your shell config file (.bashrc, .zshrc, etc.)
+
+```
+alias bsw="DJANGO_ENV=development DEBUG=True python manage.py runserver"
+```
 
 ### Setup Errors - troubleshooting
 

@@ -45,15 +45,13 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+# AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
-hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")
-
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
 # django_gmail_password thus is an app-specific login for Gmail (adds Django as authorized login for Gmail)
-
 try:
     email_secrets = get_secret("brainscore-email", REGION_NAME)
 except NoCredentialsError:
@@ -114,6 +112,19 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
+    if os.getenv("DJANGO_ENV") == "development":
+        from dotenv import load_dotenv; load_dotenv()
+
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'dev',
+                'USER': 'postgres',
+                'PASSWORD': os.getenv('DB_PASSWORD'),
+                'HOST': os.getenv('DB_HOST'),
+                'PORT': '5432'
+            }
+        }
     db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
