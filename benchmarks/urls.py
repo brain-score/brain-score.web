@@ -8,11 +8,8 @@ supported_domains = ["vision", "language"]
 
 non_domain_urls = [
 
-        # landing page (preview mode)
-        path('2023/', user.LandingPage.as_view(), name='landing_page'),
-
-        path('', functools.partial(index, domain="vision"), name='index'),
-        path('/', functools.partial(index, domain="vision"), name='index'),
+        path('',  user.LandingPage.as_view(), name='landing_page'),
+        path('/', user.LandingPage.as_view(), name='landing_page'),
 
         # user
         path('competition/', competition.view, name='competition'),
