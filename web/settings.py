@@ -131,7 +131,7 @@ def get_db_info():
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': secrets["dbInstanceIdentifier"],
+                'NAME': "prod",
                 'USER': secrets["username"],
                 'PASSWORD': secrets["password"],
                 'HOST': secrets["host"],

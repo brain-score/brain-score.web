@@ -632,7 +632,7 @@ def display_submitter(model, user):
 # controls how the benchmark roots are displayed in the comparison graphs
 @register.filter
 def simplify_domain(benchmark_name: str) -> str:
-    suffixed_benchmarks = ['average', 'engineering']
+    suffixed_benchmarks = ['average', 'engineering', "neural", "behavior"]
     for suffixed_name in suffixed_benchmarks:
         if benchmark_name.startswith(f"{suffixed_name}_"):
             return suffixed_name

@@ -55,7 +55,6 @@ class Activate(View):
 
 
 class Signup(View):
-
     def get(self, request):
         form = SignupForm()
         return render(request, 'benchmarks/signup.html', {'form': form})
