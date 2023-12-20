@@ -74,7 +74,7 @@ class Signup(View):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
 
-            activation_link = f"{current_site}/activate/{uid}/{token}"
+            activation_link = f"https://{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
                               f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
@@ -438,7 +438,7 @@ class Password(View):
             current_site = get_current_site(request)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = f"{current_site}/password-change/{uid}/{token}"
+            activation_link = f"https://{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
                        f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
