@@ -8,12 +8,8 @@ supported_domains = ["vision", "language"]
 
 non_domain_urls = [
 
-        # landing page (preview mode)
-        path('2023/', user.LandingPage.as_view(), name='landing_page'),
-
-        path('', functools.partial(index, domain="vision"), name='index'),
-        path('/', functools.partial(index, domain="vision"), name='index'),
-        path('/compare', functools.partial(compare.view, domain="vision"), name='compare'),
+        path('',  user.LandingPage.as_view(), name='landing_page'),
+        path('/', user.LandingPage.as_view(), name='landing_page'),
 
         # user
         path('competition/', competition.view, name='competition'),
@@ -23,6 +19,7 @@ non_domain_urls = [
         path('display-name/', user.DisplayName.as_view(), name='display-name'),
         path('password/',  user.Password.as_view(), name='password'),
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
+        path('/compare', functools.partial(compare.view, domain="vision"), name='compare'),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
