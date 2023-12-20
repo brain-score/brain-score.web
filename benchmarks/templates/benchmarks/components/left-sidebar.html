@@ -1,4 +1,18 @@
-<a class="selected" href="#">Leaderboard</a>
-<a href="#">Compare</a>
-<a href="#">Tutorials</a>
-<a href="#">Profile</a>
+{% load static %}
+<a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/2023"><img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo"></a>
+<a class="selected" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
+	<img src="{% static "/benchmarks/img/leaderboard_icon.png" %}" alt="Brain-Score Logo">
+	<span>Leaderboard</span>
+</a>
+<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/#compare">
+	<img src="{% static "/benchmarks/img/compare_icon.png" %}" alt="Brain-Score Logo">
+	<span>Compare</span>
+</a>
+<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial ">
+	<img src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Brain-Score Logo">
+	<span>Tutorials</span>
+</a>
+<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
+	<img src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Brain-Score Logo">
+	<span>Profile</span>
+</a>

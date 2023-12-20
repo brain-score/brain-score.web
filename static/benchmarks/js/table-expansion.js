@@ -1,83 +1,91 @@
 $(document).ready(function () {
-    // This script functions by finding all the elements whose parents the benchmark that is clicked and setting them to
-    // visible or invisible. (And doing it recursively for all of its children)
-    var coll = document.getElementsByClassName("clicker");
-    var i;
+    const domain = location.pathname.split('/').filter(i => i)[0] || 'vision';
+    const isRootIdentifier = (e) => e.currentTarget.dataset.benchmark === `average_${domain}`;
 
-    for (i = 0; i < coll.length; i++) {
-        // This allows the current value of i to be saved to the assigned function.
-        assignFunction(coll, i)
+    if (document.querySelector('.leaderboard-table-component')) {
+        $('th[data-benchmark]').click(onClickExpandCollapseBenchmark);
+        return;
     }
 
-    function recursiveChildren(all_coll) {
-        // Performs recursiveChildren on the current benchmark and checking for all of its children and
-        // then setting each child's benchmark to be the current benchmark. (Making them invisible in the meantime).
-        var used_set = new Set();
-        for (var i = 0; i < all_coll.length; i++) {
-            const benchmark = all_coll[i].dataset.benchmark;
-            if (!used_set.has(benchmark)) {
-                used_set.add(all_coll[i].dataset.benchmark)
-                changeChildSymbol(benchmark)
-                child_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark)}]`);
-                for (j = 0; j < child_coll.length; j++) {
-                    if (child_coll[j].style.display === "") {
-                        child_coll[j].style.display = "none";
-                    }
-                }
-                recursiveChildren(child_coll)
+    function onClickExpandCollapseBenchmark(event) {
+        const benchmarkCount = event.currentTarget.querySelector('.benchmark-count');
+
+        // If the user clicks on a benchmark without a count or the average column there are no children to expand, so do nothing.
+        // If the user clicks on the breadcrumb link matching the root identifier execute.
+        // All other cases handle the click.
+        if (!benchmarkCount || (event.type !== "breadcrumb-click" && isRootIdentifier(event))) { return; }
+
+        // start by hiding everything
+        $('[data-benchmark]').css('display','none');
+        // reshow the element that was actually clicked
+        event.currentTarget.style.display  = '';
+
+        // toggle the open state
+        if ((isClosed = !benchmarkCount.classList.contains('open'))) {
+            !isRootIdentifier(event) && benchmarkCount.classList.add('open');
+            expandChild(event);
+        } else {
+            benchmarkCount.classList.remove('open');
+            expandParent(event);
+        }
+
+    }
+
+    function expandChild(event) {
+        const benchmark = event.currentTarget.dataset.benchmark;
+        // the `$=` attribute selector e.g. [attr$=val] matches a suffix
+        $(`[data-benchmark$="${benchmark}_v0"],[data-parent="${benchmark}_v0"]`).css('display', '');
+
+        if (isRootIdentifier(event)) {
+             $('[data-parent="None"]').css('display', '');
+        }
+        setBreadCrumbs($(event.currentTarget));
+    }
+
+    function expandParent(event) {
+        const benchmark = event.currentTarget.dataset.parent;
+        // special case this so returning back to the main view expands the immediate children
+        if (event.currentTarget.dataset.depth === '0' || event.currentTarget.dataset.parent === `average_${domain}_v0`) {
+            $(`[data-parent="None"],[data-parent="average_${domain}_v0"]`).css('display', '');
+        } else {
+            $(`[data-benchmark="${benchmark.replace('_v0', '')}"],[data-benchmark$="${benchmark}"],[data-parent="${benchmark}"]`).css('display', '');
+        }
+        setBreadCrumbs($(`[data-benchmark="${benchmark.replace('_v0', '')}"]`))
+    }
+
+    function setBreadCrumbs(target) {
+        if (!target.data() || target.data() && target.data().benchmark === `average_${domain}`) {
+            $('.leaderboard-breadcrumb').html('');
+            return;
+        }
+
+        let breadcrumb = `<span class="breadcrumb-link cursor--pointer">${target.data().benchmark}</span>`;
+
+        if (target.data().benchmark === `engineering_${domain}`) {
+            breadcrumb = `<span class="breadcrumb-link cursor--pointer">average_${domain}</span> > ` + breadcrumb;
+        }
+        while (target.data().parent !== 'None') {
+            target = $(`[data-benchmark="${target.data().parent.replace('_v0', '')}"]`);
+            breadcrumb = `<span class="breadcrumb-link cursor--pointer">${target.data().benchmark}</span> > ` + breadcrumb;
+
+            if (target.data().benchmark === `engineering_${domain}`) {
+                breadcrumb = `<span class="breadcrumb-link cursor--pointer">average_${domain}</span> > ` + breadcrumb;
             }
         }
+
+
+        $('.leaderboard-breadcrumb').html(breadcrumb);
+
+        // add click handlers to the newly created breadcrumbs
+        $('.breadcrumb-link').click((event) => {
+            // toggle all the open columns back to their closed state
+            $('.benchmark-count').removeClass('open');
+
+            onClickExpandCollapseBenchmark({
+                type: 'breadcrumb-click',
+                currentTarget: $(`[data-benchmark="${event.currentTarget.innerText}"]`)[0]
+            });
+        });
     }
 
-    function assignFunction(coll, i) {
-        // Simple hide/show function onClick(). Determines what to show by finding all elements with their
-        // data-parent value == the current benchmark.
-
-        coll[i].onclick = function () {
-            var j;
-            let benchmark = coll[i].dataset.benchmark;
-            var all_coll = document.querySelectorAll(`[data-parent=${CSS.escape(benchmark + '_v0')}]`);
-            changeParentSymbol(benchmark)
-            recursiveChildren(all_coll);
-            for (j = 0; j < all_coll.length; j++) {
-                if (all_coll[j].style.display === "none") {
-                    all_coll[j].style.display = "";
-                } else {
-                    all_coll[j].style.display = "none";
-                }
-            }
-            var table = document.getElementById("leaderboard");
-            table.style.margin = "auto";
-        };
-    }
-
-    function changeParentSymbol(parentName) {
-        // Changes the plus to a minus and a minus to a plus upon clicking the column
-        var allParentsExpand = document.getElementsByClassName("headerExpand");
-        var allParentContract = document.getElementsByClassName("headerContract");
-
-        for (var i = 0; i < allParentsExpand.length; i++) {
-            if (allParentsExpand[i].dataset.benchmark == parentName) {
-                allParentsExpand[i].className = "headerContract clicker";
-                return null
-            }
-        }
-        for (var i = 0; i < allParentContract.length; i++) {
-            if (allParentContract[i].dataset.benchmark == parentName) {
-                allParentContract[i].className = "headerExpand clicker";
-                return null
-            }
-        }
-    }
-
-    function changeChildSymbol(childName) {
-        // Only changes the minus to a plus for the children (since the children shouldn't automatically expand.)
-        var allParentContract = document.getElementsByClassName("headerContract");
-        for (var i = 0; i < allParentContract.length; i++) {
-            if (allParentContract[i].dataset.benchmark == childName) {
-                allParentContract[i].className = "headerExpand clicker";
-                return null
-            }
-        }
-    }
 });

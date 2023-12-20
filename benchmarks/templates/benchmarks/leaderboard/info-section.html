@@ -1,15 +1,15 @@
 <div class="box">
   <h3 class="title">How to Interpret</h3>
   <div class="content">
-    Lorem ipsum leo risus, porta ac consectetur ac, vestibulum at eros. Donec id elit non mi porta gravida at eget metus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Cras mattis consectetur purus sit amet fermentum.
+    The leaderboard is the heart of Brain-Score. It displays scores, all ranging from 0-1, on every benchmark available. Benchmarks are arranged hierarchically, with scores for each child benchmark averaged together to create the overall score for the parent.
   </div>
 </div>
 
 <div class="box">
   <div class="title">Ready to Submit</div>
   <div class="content">
-    Below you will find links on how to prepare a model for submission and receive a Brain-Score! You will also find the same for submitting a benchmark with detailed tutorials available for both  modelers and experimentalists.
+    If you would like to submit your own model to Brain-Score, we highly recommend you complete our tutorial series <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }/tutorial">here</a>. It covers how to score a model on a single benchmark locally, as well as how to submit both predefined models and custom ones as well.
   </div>
-  <button class="button button-primary">Tutorials</button>
-  <button class="button button-ghost">Submit</button>
+  <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }/tutorial"><button class="button button-primary">Tutorials</button></a>
+  <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }/profile"><button class="button button-ghost">Submit</button></a>
 </div>

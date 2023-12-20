@@ -1,8 +1,11 @@
 import json
 import logging
 import re
+import datetime
+from math import isnan
 from collections import ChainMap
 from collections import namedtuple
+from collections import OrderedDict
 
 import itertools
 import numpy as np
@@ -20,7 +23,7 @@ _logger = logging.getLogger(__name__)
 BASE_DEPTH = 1
 ENGINEERING_ROOT = 'engineering'
 
-colors_redgreen = list(Color('red').range_to(Color('green'), 101))
+colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
 colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
 a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
@@ -33,7 +36,7 @@ color_None = '#e0e1e2'
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
     context = get_context(domain=domain)
-    return render(request, 'benchmarks/index.html', context)
+    return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
 
 
 def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
@@ -102,7 +105,11 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_title = ''
         citation_domain_bibtex = ''
 
-    return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks,
+
+    benchmark_names = [b.short_name for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
+
+    return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'benchmark_names': benchmark_names,
+            'graph_data': graph_data(),
             'submittable_benchmarks': submittable_benchmarks,
             "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
             "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
@@ -538,6 +545,91 @@ def get_visibility(model, user):
     else:
         return "public"
 
+
+def graph_data():
+    models = {}
+    day_benchmarks = {}
+    all_scores = Score.objects.all()
+
+    # map all the scores for a model_id by day e.g.
+    # [{
+    #    <model_id>: {
+    #        <day>: [ <score>,... ],
+    #        <day>: [ <score>,... ],
+    #    }
+    #   },
+    #   <model_id: {...},
+    #   ...
+    #  ]
+    for score in all_scores.iterator(chunk_size=1000):
+        if score.score_raw is None or isnan(score.score_raw):
+           continue
+        model_id = score.model_id
+        day = score.start_timestamp.strftime('%m/%d/%Y')
+        benchmark_id = score.benchmark_id
+        # add scores to models by date
+        if model_id not in models:
+            models[model_id] = {day:[score.score_raw]}
+        elif day not in models[model_id]:
+            models[model_id][day] = [score.score_raw]
+        else:
+            models[model_id][day].append(score.score_raw)
+        # get number of benchmarks by date
+        if day not in day_benchmarks:
+            day_benchmarks[day] = set([benchmark_id])
+        else:
+            day_benchmarks[day].add(benchmark_id)
+
+    # Collect the number of benchmarks on a given day so we can use it to average the scores on that day.
+    num_benchmarks_by_day = {day : len(day_benchmarks[day]) for day in day_benchmarks}
+
+    all_scores = []
+    # we're doing this second map reduce so we can sort by date before calculating the avgs
+    for model_id in models:
+        for day in models[model_id]:
+            all_scores.append({
+                'model_id': model_id,
+                'day': day,
+                'scores': models[model_id][day]
+            })
+
+    # sort by date asc
+    all_scores.sort(key=lambda x: datetime.datetime.strptime(x['day'], '%m/%d/%Y').timestamp())
+
+    # highest_average_score_by_day<OrderedDict>
+    # { <day>: { 'model_id': 123, 'averaged_score': .0222 }, ... }
+    highest_average_score_by_day = OrderedDict()
+    highest_score = 0.00
+    highest_benchmark_count = 0
+
+    for entry in all_scores:
+        day = entry['day']
+        day_benchmark_count = num_benchmarks_by_day[day]
+
+        if day_benchmark_count > highest_benchmark_count:
+            highest_benchmark_count = day_benchmark_count
+
+        model_day_average = sum(entry['scores']) / num_benchmarks_by_day[day]
+
+        if  model_day_average > highest_score:
+            highest_score = model_day_average
+            highest_average_score_by_day[day] = {
+                'model_id': entry['model_id'],
+                'averaged_score': model_day_average
+            }
+
+    model_ids = [highest_average_score_by_day[day]['model_id'] for day in highest_average_score_by_day]
+    models = {model['id']:model for model in Model.objects.filter(pk__in=list(model_ids)).values('id', 'name')}
+    graph_data = []
+    for day in highest_average_score_by_day:
+        model_id = highest_average_score_by_day[day]['model_id']
+        graph_data.append({
+            'day': day,
+            'score': highest_average_score_by_day[day]['averaged_score'],
+            'model':  models[model_id]
+        })
+
+    return graph_data
 
 # Adds python functions so the HTML can do several things
 @register.filter
