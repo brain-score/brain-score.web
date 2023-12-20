@@ -1,17 +1,31 @@
 @import "rotate"
 
-#compare
-  // containers
-  figure
-    width: 650px // specify to keep together with axes labels
+.comparison
+  width: 134%
+
+  .card
+    margin-bottom: 20px
+    padding: 20px
+
+    h3#label-description
+      margin-bottom: 10px
+      font-size: 20px
+
+      span
+        font-weight: bold
+
+    .controls-container
+      display: flex
+      margin-bottom: 20px
 
   .xlabel-container, .ylabel-container
     text-align: center
 
-  .ylabel-container
-    @include transform_origin(0px 0px)
-    @include rotate(270deg, 0px, 0px)
-    width: 500px
+    select
+      width: 300px
+      height: 30px
+      margin-right: 15px
+      border-radius: 5px
 
   rect
     fill: transparent
