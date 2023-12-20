@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+import zipfile
 
 import boto3
 import requests
@@ -19,8 +21,6 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFo
 from benchmarks.models import Model
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
-import zipfile
-import os
 
 _logger = logging.getLogger(__name__)
 

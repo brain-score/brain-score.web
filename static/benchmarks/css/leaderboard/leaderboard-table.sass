@@ -1,0 +1,193 @@
+.leaderboard-table-component
+  banner
+    display: flex
+    position: relative
+    align-items: center
+    margin: -5px 0 10px 0px
+    margin-bottom: 20px
+
+    .leaderboard-table-banner-icon
+      width: 83px
+      height: 78px
+      z-index: 1
+      border: 5px solid white
+      border-radius: 81px
+
+      img
+        margin: 12px
+
+    .leaderboard-table-banner
+      display: flex
+      align-items: center
+      height: 55px
+      width: 100%
+      margin-left: -15px
+
+      h3
+        margin-left: 10px
+        font-family: 'Open Sans', sans-serif
+        font-size: 28px
+        font-weight: 900
+        color: white
+
+.filters
+    display: flex
+    position: relative
+    height: 80px
+    align-items: center
+    padding-left: 10px
+    margin-bottom: 5px
+
+    .benchmark-sort
+      max-width: 300px
+
+    .legend
+      display: flex
+      position: relative
+      width: 40%
+      min-width: 300px
+      height: 30px
+      align-items: center
+      padding: 0 15px
+      margin-left: auto
+      margin-right: 10px
+      border-radius: 25px
+      background: linear-gradient(90deg, rgba(253.07360206185567, 12.603708989690725, 0.7063979381443353, 0.19576321702511779), rgba(115.52127251251848, 198.4398288659794, 67.740171, 1.0000000000000002))
+
+      label
+        font-weight: bold
+        position: absolute
+        top: -25px
+
+      .legend-right
+        margin-left: auto
+
+    .leaderboard-breadcrumb
+      position: absolute
+      bottom: 0
+      right: 10px
+      font-weight: bold
+
+      .breadcrumb-link
+        &:hover
+          color: #008CBA
+          text-decoration: underline
+
+.leaderboard-table-container
+  overflow-x: scroll
+
+  table
+    table-layout: fixed
+    border-collapse: separate
+    border-spacing: 0 10px
+    padding: 0 10px
+
+    tr
+      height: 80px
+      box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02)
+      border-radius: 10px
+
+      td
+        vertical-align: middle
+        border-bottom: none
+
+        &.display-square
+          text-align: center
+
+    thead
+      height: 80px
+      tr
+        th
+          vertical-align: middle
+          border-bottom: none
+
+          &.rank-header
+            width: 30px
+
+          &.model-header
+            width: 75px
+            margin-left: 10px
+            text-align: right
+
+          &.benchmark-header
+            div
+              position: relative
+              width: 125px
+              height: 45px
+              padding: 0 10px
+              border-radius: 25px
+              text-align: center
+              background: $brainscore_gray1
+
+              p
+                max-width: 120px
+                line-height: 45px
+                overflow: hidden
+                text-wrap: nowrap
+                text-overflow: ellipsis
+                text-align: center
+
+            &.average
+              &.depth_0
+                div
+                  background: $brainscore_mint
+
+              &.depth_1
+                div
+                  background: $brainscore_gray4
+                  color: $brainscore_mint
+
+            &.engineering
+              &.depth_0
+                div
+                  background: $brainscore_sky
+
+            .benchmark-count
+              position: absolute
+              padding: 0 7px
+              bottom: -10px
+              right: -10px
+              line-height: 18px
+              font-size: 14px
+              color: #363636
+              background: white
+              border: 1px solid $brainscore_mint
+              border-radius: 11px
+
+              .fa-up-right-and-down-left-from-center
+                font-size: 12px
+                color: $brainscore_mint
+
+              .fa-down-left-and-up-right-to-center
+                font-size: 12px
+                color: $brainscore_gray4
+                display: none
+
+              &.open
+                background: $brainscore_mint
+                border: 1px solid $brainscore_gray4
+                .fa-down-left-and-up-right-to-center
+                  display: var(--fa-display,inline-block)
+                .fa-up-right-and-down-left-from-center
+                  display: none
+
+    tbody
+      td.rank
+        padding: 0
+        padding-left: 20px
+        font-size: 48px
+
+      td.model
+        max-width: 250px
+        padding-right: 20px
+        padding-left: 20px
+
+        .identifier, .submitter
+          text-align: right
+          overflow: hidden
+
+      td.display-square
+        div
+          height: 45px
+          padding: 10px
+          border-radius: 25px
