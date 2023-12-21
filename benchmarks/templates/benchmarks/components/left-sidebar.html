@@ -16,3 +16,7 @@
 	<img src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Brain-Score Logo">
 	<span>Profile</span>
 </a>
+<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">
+	<img src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Brain-Score Logo">
+	<span>Community</span>
+</a>
