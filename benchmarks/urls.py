@@ -21,6 +21,7 @@ non_domain_urls = [
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
         path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
         path('community', functools.partial(community.view), name='community'),
+        path('join_slack', community.JoinSlack.as_view(), name="join_slack"),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
