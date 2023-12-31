@@ -79,8 +79,8 @@ def handle_google_oauth_callback(request):
     requested_url = request.build_absolute_uri()
 
     # shim for local dev
-    if requested_url.find('127.0.0.1') != -1:
-        requested_url = requested_url.replace('http://127', 'https://127')
+    # if requested_url.find('127.0.0.1') != -1:
+    #     requested_url = requested_url.replace('http://127', 'https://127')
 
     stored_token, is_new = OauthToken.objects.get_or_create(email=settings.DEFAULT_GOOGLE_USER, provider=AuthProvider.GOOGLE.value)
 
