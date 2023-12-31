@@ -21,7 +21,8 @@ non_domain_urls = [
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
         path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
         path('community', functools.partial(community.view), name='community'),
-        path('join_slack', community.JoinSlack.as_view(), name="join_slack"),
+        path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
+        path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
@@ -43,6 +44,7 @@ non_domain_urls = [
         path('profile//submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
         path('profile//resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
         path('profile//logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
+        path('user/google/oauth/redirect', user.google_oauth_redirect, name="google-oauth-redirect")
 ]
 
 all_domain_urls = [non_domain_urls]

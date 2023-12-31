@@ -23,8 +23,17 @@
                 <div class="column has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Mailing list signup</h3>
                     <p>Be the first to know about new features and keep up with news and events by joining our mailing list.</p>
-                    <button onclick="location.href='../tutorial/quickstart'" type="button" class="button new_design tutorial benefit_button is-size-7
-                     is-size-6-widescreen" >Sign me up</button>
+                    {% if request.GET.join_mailing_list %}
+                        <br/>
+                        <p><b>Thanks for joining!</b></p>
+                    {%else%}
+                        <form action="{% url 'join_mailing_list' %}" method="post" class="join-mailing-form">
+                            {% csrf_token %}
+                            <input class="input user-email" type="email" name="email" placeholder="email">
+                            <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
+                        is-size-6-widescreen" >Sign me up</button>
+                        </form>
+                    {% endif %}
                 </div>
                 <div class="column has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Join our Slack</h3>

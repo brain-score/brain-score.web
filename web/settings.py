@@ -47,6 +47,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
+hosts_list.append('127.0.0.1')
 if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 ALLOWED_HOSTS = hosts_list
 
@@ -247,3 +248,15 @@ LOGGING = {
         },
     },
 }
+
+try:
+    OAUTH_ENCRYPT_KEY = get_secret('OAUTH_ENCRYPT_KEY', REGION_NAME)['OAUTH_ENCRYPT_KEY']
+    JWT_ENCRYPT_KEY = get_secret('JWT_ENCRYPT_KEY', REGION_NAME)['JWT_ENCRYPT_KEY']
+    GOOGLE_CREDS_PATH = get_secret('GOOGLE_CREDS_PATH', REGION_NAME)['GOOGLE_CREDS_PATH']
+    DEFAULT_GOOGLE_USER = get_secret('DEFAULT_GOOGLE_USER', REGION_NAME)['DEFAULT_GOOGLE_USER']
+except NoCredentialsError:
+    import dotenv; dotenv.load_dotenv()
+    OAUTH_ENCRYPT_KEY = os.getenv('OAUTH_ENCRYPT_KEY')
+    JWT_ENCRYPT_KEY = os.getenv('JWT_ENCRYPT_KEY')
+    GOOGLE_CREDS_PATH = os.getenv('GOOGLE_CREDS_PATH')
+    DEFAULT_GOOGLE_USER = os.getenv('DEFAULT_GOOGLE_USER')

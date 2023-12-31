@@ -1,11 +1,17 @@
 import json
+import jwt
 import logging
 import os
 import zipfile
 
 import boto3
 import requests
+
 from botocore.exceptions import ClientError
+
+from datetime import datetime
+
+from django.conf import settings
 from django.contrib.auth import get_user_model, login, authenticate, update_session_auth_hash, logout
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.contrib.sites.shortcuts import get_current_site
@@ -16,10 +22,15 @@ from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+
+import google_auth_oauthlib.flow
+from googleapiclient.errors import HttpError
+
 
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
 from benchmarks.models import Model
-from benchmarks.tokens import account_activation_token
+from benchmarks.tokens import account_activation_token, decode_oauth_state, handle_google_oauth_callback
 from benchmarks.views.index import get_context
 
 _logger = logging.getLogger(__name__)
@@ -143,6 +154,22 @@ class Tutorial(View):
 
     def get(self, request):
         return render(request, f'benchmarks/tutorial{self.tutorial_type}.html')
+
+
+@csrf_exempt
+def google_oauth_redirect(request):
+    state = request.GET['state']
+
+    if state == None:
+        return HttpResponse(status=401)
+
+    audience, expires_at = decode_oauth_state(state)
+    if audience != 'brainscore-google-default-user' or datetime.now() > datetime.fromtimestamp(expires_at):
+        return HttpResponse(status=401)
+
+    handle_google_oauth_callback(request)
+
+    return HttpResponse('success', status=200)
 
 
 class Upload(View):
