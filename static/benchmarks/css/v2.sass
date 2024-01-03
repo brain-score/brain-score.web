@@ -1,0 +1,51 @@
+@import "components/banner"
+@import "components/left-sidebar"
+@import "components/info-section"
+@import "leaderboard/leaderboard-table"
+
+h1,h2,h3,h4,h5,p,span,a
+  font-family: 'Open Sans', sans-serif
+
+.box
+  font-family: 'Open Sans', sans-serif
+  border-radius: 8px
+
+.button
+  padding: 0 25px
+  border-radius: 20px
+  font-family: 'Open Sans', sans-serif
+
+.button-primary
+  background: $brainscore_green
+  color: white
+
+.button-ghost
+  border: 1px solid $brainscore_green
+  color: $brainscore_green
+
+.gradient
+  background: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+
+  &--90
+    background: linear-gradient(90deg, $brainscore_blue, $brainscore_green)
+
+.cursor
+  &--pointer
+    cursor: pointer
+
+.content-container
+  width: calc(100% - $sidebar_width - 40px)
+  margin-left: auto
+  margin-right: 20px
+
+  .social-icons
+    display: flex
+    justify-content: flex-end
+    margin-top: 20px
+
+    a
+      margin-left: 15px
+      color: $brainscore_gray4
+
+      i.fa-brands
+        font-size: 2.5em

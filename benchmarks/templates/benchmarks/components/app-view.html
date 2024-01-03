@@ -1,0 +1,36 @@
+{% extends "benchmarks/base.html" %}
+
+{% load static %}
+
+{% block main %}
+<div class="left-sidebar">
+  {% include "benchmarks/components/left-sidebar.html" %}
+</div>
+
+<div class="content-container">
+  <div class="social-icons">
+    <a href="https://github.com/brain-score" target="_blank" rel="noopener noreferrer">
+      <i class="fa-brands fa-square-github"></i>
+    </a>
+    <a href="https://twitter.com/brain_score" target="_blank" rel="noopener noreferrer">
+      <i class="fa-brands fa-square-twitter"></i>
+    </a>
+  </div>
+  <div class="banner box gradient">
+    {% block banner %}
+    <h1>Welcome to Brain-Score!</h1>
+    <p>Navigate our dashboard to view key submission data.</p>
+    {% endblock %}
+  </div>
+
+  <div class="columns main-content">
+    <div class="column is-three-quarters">
+      {% block content %}{% endblock %}
+    </div>
+
+    <div class="info-section column">
+      {% block info_section %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans')
+$brainscore_green: #45C676
+$brainscore_blue: #47B7DE
+
+//container to keep a fixed gap on all sizes
+.container.my_container
+  width: 95%
+  max-width: 1500px
+
+// navbar
+.navbar_updated
+  height: 100px
+
+
+.navbar-item.social_icon
+  padding: 10px 0 0 0
+  margin-left: 15px
+
+.image.navbar_element
+  max-height: 80%
+  max-width: 80%
+
+.navbar-brand
+  padding-top: 10px
+
+.container.my_container.nav-container
+  margin-left: 2.5%
+  margin-right: 2.5%
+  max-width: $fullhd - 60px
+
+
+// main body and components
+.container.my_container.main_body
+  background-image: linear-gradient(0deg, #e8f4ea, white)
+
+.button.new_design
+  flex: 1 1 auto
+  text-align: center
+  transition: 0.5s
+  color: white
+  border-radius: 16px
+  border-width: 0
+  font-family: 'Open Sans', sans-serif
+  font-size: 15px
+  font-weight: 600
+  margin-top: 10px
+  padding: 8px 30px
+  margin-right: 20px
+  background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+
+.button.new_design.tutorial
+  margin-top: 40px
+  width: 150px
+
+h1.heading_green
+  color: $brainscore_green
+  font-family: 'Open Sans', sans-serif
+  font-size: 40px
+  margin-left: 30px
+  font-weight: 800
+
+.text-default
+  color: black
+  text-align: justify
+  font-family: 'Open Sans', sans-serif
+  width: 85%
+  font-size: 20px
+  font-weight: 200
+  padding-top: 20px
+  margin-left: 30px
+
+.container.landing::before // controls the landing gradient
+  content: ""
+  position: absolute
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+  opacity: 0.3
+  z-index: -1
+  border-radius: 40px
+
+.container.landing
+  position: relative  // critical for gradient above
+  margin-top: 130px
+  border-radius: 40px
+
+.image.head_art
+  margin-top: -12px
+  margin-bottom: -12px
+
+.image.logo_green
+  width: 110%
+  max-width: 120%
+  height: auto
+
+.column.left_side
+  margin-top: 15%
+  padding-left: 6%
+
+h3.landing_heading
+  color: black
+  font-family: 'Open Sans', sans-serif
+  padding-top: -5%
+  font-size: 165%
+  font-weight: 500
+
+p.text-default-small
+  color: black
+  font-family: 'Open Sans', sans-serif
+  width: 100%
+  padding-top: 2%
+  font-weight: 200
+  padding-right: 25%
+  margin-bottom: -10px !important
+
+.container.domain_buttons
+  padding-top: 4%
+
+.button.domain_button
+  width: 25%
+  height: 30px
+
+
+// about section
+.container.about
+  margin-top: 20px
+  padding: 75px
+  border-radius: 40px
+
+
+// benefits section
+.container.benefits
+  margin-top: 20px
+  margin-bottom: -20px
+  padding: 30px 75px 75px
+  border-radius: 40px
+  background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+
+.container.benefits_card
+  text-align: center
+  padding: 50px
+  border-radius: 40px
+  background-color: white
+
+h3.benefits_heading
+  color: $brainscore_green
+  font-family: 'Open Sans', sans-serif
+  font-size: 200%
+  max-font-size: 200%
+  font-weight: 800
+
+.benefits_info
+  padding-top: 15px
+  color: black
+  font-family: 'Open Sans', sans-serif
+  font-size: 100%
+  font-weight: 200
+  padding-bottom: 15px
+
+.benefit_icon
+  margin: auto
+  width: 50px
+  height: auto
+
+.button.benefit_button
+  margin: auto
+  font-size: 80%
+  width: 50%
+  height: 35px
+
+.image.b-w_logo
+  width: 50px
+  height: auto
+  padding-bottom: 30px
+  margin: auto
+
+
+// leaderboard section (on landing)
+.container.landing_leaderboard
+  margin-top: 20px
+  padding: 90px
+  border-radius: 40px
+  background-repeat: no-repeat
+  background-size: 80% auto
+  background-position: 400px -200px
+
+.button.tutorial_button
+  font-size: 100%
+  width: 35%
+  height: 35px
+
+.button.hollow_button
+  font-size: 100%
+  width: 35%
+  height: 35px
+  border: 2px solid $brainscore_green
+  color: $brainscore_green
+  background-image: linear-gradient(0deg, white, white) // for some reason background-color: white does not work
+
+.leaderboard_info
+  padding-top: 20px
+  padding-bottom: 25px
+  color: black
+  font-family: 'Open Sans', sans-serif
+  font-size: 100%
+  font-weight: 200
+  text-align: justify
+
+
+// footer
+.container.main_footer
+  background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+  padding: 50px 100px
+  margin-top: -25px // shift up due to adding {% footer %} tag, creating gap
+
+button.simple_button
+  background-color: transparent
+  background-image: none
+  font-family: 'Open Sans', sans-serif
+  border-color: transparent
+  color: white
+  width: 100px
+
+
+
+//mobile styling (below 768px)
+@media (max-width: 768px)
+  .text-default
+    margin: auto
+  .text-default-small
+    width: 30%
+  .landing_heading
+    margin: auto
+  .heading_green
+    margin-right: 6%
+    text-align: center
+  .image.head_art
+    width: 0
+    height: auto
+  .image.logo_green
+    padding-top: 15px
+    margin: auto
+    width: 80%
+    height: auto
+  .container.about
+    padding: 0
+  .container.benefits
+    padding: 10px
+  .container.benefits_card
+    padding: 10px
+    width: 75%
+  .benefits_heading
+    margin: 2% 0 0 0  !important
+  .benefits_info
+    margin: 0 !important
+  .container.landing_leaderboard
+    background-size: 0 auto
+    padding: 0
+
+// in between tablet and mobile, to take care of head resizing:
+@media (min-width: 769px) and (max-width: 880px)
+  p.text-default-small
+    margin-top: 140px
+    width: 233% !important
+    text-align: justify
+  .domain_buttons
+    position: relative
+    top: -150px
+    margin-top: -50px
+  .landing_heading
+    width: 75%
+  .container.benefits_card
+    padding: 5px
+  .container.about
+    padding: 5px
+  .container.landing_leaderboard
+   padding: 15px
+  .container.benefits
+    padding: 10px
+
+// tablet:
+@media (min-width: 880px) and (max-width: 1023px)
+  .column.left_side
+    margin-top: 5%
+  .landing_heading
+    width: 120%
+  p.text-default-small
+    width: 130% !important
+  .container.benefits_card
+    padding: 10px
+  .container.about
+    padding: 5px
+  .container.landing_leaderboard
+   padding: 20px
+  .container.benefits
+    padding: 10px
+
+//desktop
+@media (min-width: 1024px) and (max-width: 1215px)
+ .container.about
+    padding: 38px
+ .column.left_side
+    margin-top: 10%
+ .container.benefits_card
+    padding: 20px
+ .container.landing_leaderboard
+   padding: 45px
+
+//widescreen
+// @media (min-width: 1216px) and (max-width: 1407px)
+
+// FHD
+@media (max-width: 1407px)
+  .container.landing_leaderboard
+    background-position: 520px -200px
+  p.text-default-small
+    width: 120%
+
+// resizing past normal breakpoints, prevents large text and navbar overflow >fullhd
+@media (min-width: $fullhd)
+  .container.my_container.nav-container
+    margin: auto
+  .text-default-small
+    font-size: 100%

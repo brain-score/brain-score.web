@@ -1,11 +1,10 @@
 $(document).ready(function () {
     // adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
 
-    var container_selector = "#compare div#comparison-scatter",
-        figure_selector = "#compare #comparison-fig",
-        xlabel_selector = figure_selector + ' #xlabel',
-        ylabel_selector = figure_selector + ' #ylabel',
-        label_description_selector = figure_selector + " figcaption #label-description";
+    var container_selector = "div#comparison-scatter",
+        xlabel_selector = '#xlabel',
+        ylabel_selector = '#ylabel',
+        label_description_selector = "#label-description";
 
     // make sure we have a container to work with, otherwise abort
     if ($(container_selector).length < 1) {
@@ -35,7 +34,8 @@ $(document).ready(function () {
     var svg = d3.select(container_selector)
         .append("svg")
         .attr("width", outerWidth)
-        .attr("height", outerHeight);
+        .attr("height", outerHeight)
+        .attr("fill", "white");
 
     function zoom() {
         svg.select(".x.axis").call(xAxis);
@@ -57,7 +57,7 @@ $(document).ready(function () {
         yKey = $(ylabel_selector).prop('value') + "-score";
         var xName = $(xlabel_selector).find('option:selected').text(),
             yName = $(ylabel_selector).find('option:selected').text();
-        $(label_description_selector).text(xName + ' vs ' + yName);
+        $(label_description_selector).html(xName + ' <span>vs</span> ' + yName);
 
 
         d3.selectAll("svg > *").remove();

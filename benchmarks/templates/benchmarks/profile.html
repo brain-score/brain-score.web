@@ -1,51 +1,86 @@
 {% extends 'benchmarks/base.html' %}
-{% block content %}
+{% load static %}
+{% load compress %}
 
-    {% if user %}
-        <section id="profile" class="container center">
-            <section id = profile-info>
-                <h1>{{ user.email }}</h1>
+{% block main %}
 
-                <form action="{% url 'display-name' %}" method="post">
-                    {% csrf_token %}
-                    <label class="label">Display name</label>
-                    <div class="field has-addons">
-                        <p class="control">
-                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-                        </p>
-
-                        <p class="control">
-                            <input type="submit" value="Save" class="button">
-                        </p>
+{% if user %}
+<nav class="navbar updated is-transparent">
+    <div class= "container my_container nav-container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
+                        </a>
                     </div>
+                </div>
+        </div>
+    </div>
+</nav>
+<section id="profile" class="container center">
+    <section id="profile-info">
+        <div id="profile_overview" class="box" style="width: 75%;">
+            <h1 style="font-size: 1.5em;">Welcome, {{ user.email }}</h1>
+            <br>
+            <form action="{% url 'display-name' %}" method="post">
+                {% csrf_token %}
+                <label class="label">Display name</label>
+                <div class="field has-addons">
+                    <p class="control">
+                        <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                    </p>
 
-                <h4>Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.</h4>
-                <p>Past scores are below. Submissions are located at the bottom.</p>
-                </form>
-            </section>
+                    <p class="control">
+                        <input type="submit" value="Save" class="button">
+                    </p>
+                </div>
+                <br>
+            <h4>Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.</h4>
+            <p>Past scores are below. Submissions are located at the bottom.</p>
+            </form>
+        </div>
+    </section>
 
-            <div class="columns">
-                <section id="models-profile" class="column is-9" >
-                    <div id="scores">
-                        <section id="leaderboard">
-                            {% include "benchmarks/table.html" %}
-                        </section>
-                    </div>
-                    <div id="benchmarks">
-                        <section id="submissions" class="container center">
-                            {% include "benchmarks/submissions.html" %}
-                        </section>
-                    </div>
-                    <section id="profile-logout">
-                        <button onclick="location.href='logout/'" type="button" class="button submission">
-                            Logout
-                        </button>
-                    </section>
+    <div class="columns">
+        <section id="models-profile" class="column is-9" >
+            <div id="scores">
+                <section id="leaderboard">
+                    {% block content %}
+                        <div class="box leaderboard-table-component">
+                          {% include "benchmarks/leaderboard/leaderboard-table.html" %}
+                        </div>
+                    {% endblock %}
                 </section>
             </div>
+            <div id="benchmarks">
+                <section id="submissions" class="container center">
+                    <div id="submission_overviews" class="box">
+                        {% include "benchmarks/submissions.html" %}
+                    </div>
+                </section>
+            </div>
+            <section id="profile-logout">
+                <button onclick="location.href='logout/'" type="button" class="button submission">
+                    Logout
+                </button>
+            </section>
         </section>
+    </div>
+</section>
 
-
-    {% else %}
-    {% endif %}
+{% endif %}
 {% endblock %}
