@@ -1,0 +1,13 @@
+{% extends "benchmarks/components/app-view.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="box leaderboard-table-component">
+  {% include "benchmarks/leaderboard/leaderboard-table.html" %}
+</div>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/leaderboard/info-section.html" %}
+{% endblock %}

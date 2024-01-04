@@ -1,62 +1,88 @@
 {% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
 
-{% block content %}
-    <section id="login" class="container center">
-        {% if activation_email %}
-            <article class="message">
-                <div class="message-header">
-                    <p style="font-weight: bold">A confirmation email has been sent.</p>
+{% block main %}
+<nav class="navbar updated is-fixed-top is-transparent">
+    <div class= "container my_container nav-container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="https://www.brain-score.org">
+                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            </a>
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
+                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
+                        </a>
+                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
+                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
+                        </a>
+                    </div>
                 </div>
-                <div class="message-body">
-                    Be sure to confirm your account via email before trying to log in!
-                </div>
-            </article>
-
-        {% endif %}
-        {% if password_email %}
-            <article class="message">
+        </div>
+    </div>
+</nav>
+<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
+    <div class="column is-half has-text-centered-mobile">
+        <div class="container login-left">
+            {% if activation_email %}
+                <article class="message">
+                    <div class="message-header">
+                        <p style="font-weight: bold">A confirmation email has been sent.</p>
+                    </div>
+                    <div class="message-body">
+                        Be sure to confirm your account via email before trying to log in!
+                        <p class="create-account"><a href="/profile">Return to Login</a></p>
+                    </div>
+                </article>
+            {% elif password_email %}
+                <article class="message">
                     <div class="message-header">
                          <p style="font-weight: bold">A password change email has been sent.</p>
                     </div>
                     <div class="message-body">
                         Be sure to visit your emailed link to change your password!
+                        <p class="create-account"><a href="/profile">Return to Login</a></p>
                     </div>
-            </article>
-
-
-        {% endif %}
-        <h1>Login</h1>
-        <p>Access your account to submit new models or view your previous submissions.</p>
-        <form method="post">
-            {% csrf_token %}
-
-            {% for field in form %}
-                <div class="field">
-                    <label class="label">{{ field.label_tag }}</label>
-                    <div class="control">
-                        {{ field }}
-                    </div>
-                    {% if field.help_text %}
-                        <small style="display: none">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <p style="color: red">{{ error }}</p>
+                </article>
+            {% else %}
+                <span class="green_log is-size-3 is-size-2-widescreen">Log</span><span class="gray_log is-size-3 is-size-2-widescreen"> In</span>
+                <p class="create-account"><a href="/signup">Create An Account</a></p>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="field">
+                            <label class="label label-green">{{ field.label_tag }}</label>
+                            <div class="control">
+                                 <input class="input is-normal gray" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}">
+                            </div>
+                            {% if field.help_text %}
+                                <small style="display: none">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <p style="color: red">{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     {% endfor %}
-                </div>
-            {% endfor %}
-            <p style="font-size: 12px"><a href="/password">Forgot Password</a></p>
-            <button type="button submit" class="button submission">Login</button>
-
-
-
-        </form>
-        {% if Incorrect %}
-            <p style="color: red;">The username or password was incorrect</p>
-        {% endif %}
-        <br/>
-
-        <button class="button"><a href='/signup'>Create account</a></button>
-
-
-    </section>
+                     {% if Incorrect %}
+                        <article id="wrong-password" class="message is-danger">
+                            <div class="message-body">
+                                The username or password was incorrect.
+                            </div>
+                        </article>
+                    {% endif %}
+                    <p class="forgot_password" style="font-size: 14px"><a href="/password">Forgot Your Password?</a></p>
+                    <button type="button submit" class="button new_design tutorial_button" >Login</button>
+                </form>
+            {% endif %}
+         </div>
+    </div>
+</div>
 {% endblock %}

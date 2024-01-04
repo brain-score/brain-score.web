@@ -1,0 +1,33 @@
+.left-sidebar
+  position: fixed
+  top: 0
+  right: calc(100% - $sidebar_width)
+  bottom: 0
+  left: 0
+  padding-right: 0
+  background: $brainscore_gray4
+
+  a
+    display: block
+    padding-left: 20px
+    line-height: 50px
+    font-size: 16px
+    text-decoration: none
+    color: white
+
+    &.brainscore-logo
+      display: flex
+      justify-content: center
+      margin: 30px 0
+      padding: 0
+
+      img
+        width: 90px
+
+    img
+      display: inline-block
+      vertical-align: middle
+      margin-right: 10px
+
+    &.selected
+      border-right: 8px solid $brainscore_green
