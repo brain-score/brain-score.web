@@ -192,11 +192,7 @@ class Upload(View):
         jenkins_url = "http://braintree.mit.edu:8080"
         auth = get_secret("brainscore-website_jenkins_access")
         auth = (auth['user'], auth['password'])
-
-        job_name = "create_github_pr"
-        job_name = conditional_debug(job_name)
-
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+        request_url = f"{jenkins_url}/job/create_github_pr/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
