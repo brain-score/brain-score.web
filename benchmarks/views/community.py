@@ -1,8 +1,6 @@
-from django.views.decorators.csrf import csrf_exempt
 import requests
 
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views import View
 from django.core.validators import validate_email
