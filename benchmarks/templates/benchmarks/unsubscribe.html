@@ -1,0 +1,27 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+{% include 'benchmarks/components/nav-bar.html' %}
+
+<div class="container unsubscribe">
+    <div class="has-text-centered">
+        <h3 class="benefits_heading is-size-3-mobile">Unsubscribe from the mailing list.</h3>
+        <p>We're sorry to see you go.</p>
+        {% if request.GET.success %}
+            <br/>
+            <p><b>Unsubscribed</b></p>
+        {%else%}
+            <form action="{% url 'unsubscribe' %}" method="post" class="unsubscribe-form">
+                {% csrf_token %}
+                <input class="input user-email" type="email" name="email" placeholder="email">
+                <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
+            is-size-6-widescreen">Unsubscribe</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

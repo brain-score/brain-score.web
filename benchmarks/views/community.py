@@ -8,11 +8,7 @@ from django.views import View
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-from benchmarks.tokens import get_google_default_credentials
-
+from benchmarks.models import MailingList
 
 SLACK_WEBHOOK_URL = 'https://hooks.slack.com/triggers/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'
 
@@ -50,25 +46,22 @@ class JoinMailingList(View):
         except ValidationError as e:
             return HttpResponse('Please enter a valid email')
 
-        try:
-            service = build("people", "v1", credentials=get_google_default_credentials())
-
-            contact_groups = service.contactGroups().list().execute()['contactGroups']
-            brainscore_mailing_list = next((group for group in contact_groups if 'name' in group and group['name'] == 'Brainscore mailing list'), None)
-
-            contact_payload = {
-                'emailAddresses': [{ 'value': email }],
-                'memberships': [
-                    {
-                        "contactGroupMembership": {
-                            "contactGroupResourceName": brainscore_mailing_list['resourceName']
-                        }
-                    }
-                ]
-            }
-
-            service.people().createContact(body=contact_payload).execute()
-        except HttpError as e:
-            return HttpResponse('Something went wrong')
+        MailingList.objects.update_or_create(email=email.lower())
 
         return HttpResponseRedirect('../../../community?join_mailing_list=true')
+
+class Unsubscribe(View):
+    def get(self, request):
+        return render(request, 'benchmarks/unsubscribe.html')
+
+    def post(self, request):
+        email = request.POST['email']
+
+        try:
+            validate_email(email)
+        except ValidationError as e:
+            return HttpResponse('Please enter a valid email')
+
+        MailingList.objects.get(email=email.lower()).delete()
+
+        return HttpResponseRedirect('../../../unsubscribe?success=true')
