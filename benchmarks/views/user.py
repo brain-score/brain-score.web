@@ -164,8 +164,9 @@ class Upload(View):
             if not is_zip_valid:
                 return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
             if not submission_is_original:
+                plugin, identifier = submission_data
                 return render(request, 'benchmarks/already_submitted.html',
-                              {'plugin': submission_data[0], "domain": self.domain, 'identifier': submission_data[1]})
+                              {'plugin': plugin, 'identifier': identifier, "domain": self.domain})
 
         json_info = {
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
