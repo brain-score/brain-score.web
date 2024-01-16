@@ -235,7 +235,7 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Tup
                     else:
                         return False, [plugin, identifier]
 
-    return True, []  # Passes all checks, then the submission is original -> good to go
+    return True, None  # Passes all checks, then the submission is original -> good to go
 
 
 def validate_zip(file):
