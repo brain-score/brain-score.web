@@ -154,8 +154,7 @@ class Upload(View):
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
-        user_inst = User.objects.get_by_natural_key(request.user.email)
-        user_id = user_inst.id
+        user_instance = User.objects.get_by_natural_key(request.user.email)
 
         # parse directory tree, return new html page if not valid:
         if self.domain == "language":
