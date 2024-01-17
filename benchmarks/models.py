@@ -223,3 +223,11 @@ class Score(models.Model):
 
     class Meta:
         db_table = 'brainscore_score'
+
+
+class MailingList(models.Model):
+    email = models.EmailField(max_length=254)
+
+    indexes = [
+        models.Index(fields=['email']),
+    ]

@@ -1,18 +1,15 @@
 from django.urls import path
 import functools
 
-from .views import index, user, model, competition
+from .views import index, user, model, competition, compare, community
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
 
 non_domain_urls = [
 
-        # landing page (preview mode)
-        path('2023/', user.LandingPage.as_view(), name='landing_page'),
-
-        path('', functools.partial(index, domain="vision"), name='index'),
-        path('/', functools.partial(index, domain="vision"), name='index'),
+        path('',  user.LandingPage.as_view(), name='landing_page'),
+        path('/', user.LandingPage.as_view(), name='landing_page'),
 
         # user
         path('competition/', competition.view, name='competition'),
@@ -22,10 +19,25 @@ non_domain_urls = [
         path('display-name/', user.DisplayName.as_view(), name='display-name'),
         path('password/',  user.Password.as_view(), name='password'),
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
+        path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
+        path('community', functools.partial(community.view), name='community'),
+        path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
+        path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
+        path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
         path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+
+        # central tutorial page, constant across all Brain-Score domains
+        path('tutorial/', user.Tutorial.as_view(tutorial_type=""), name='tutorial'),
+
+        path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
+        path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
+        path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
+        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
+        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_4"), name='tutorial-deepdive-4'),
+
 
         # need navbar links when on /profile. Default to vision.
         # this is a **temporary** fix until the new UI landing page is live.
@@ -45,9 +57,9 @@ for domain in supported_domains:
         path(f'profile/<str:domain>/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'resubmit'),
         path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
         path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
+        path(f'{domain}/compare/', functools.partial(compare.view, domain=domain), name='compare'),
     ]
     all_domain_urls.append(domain_urls)
 
 # collapse all domains into 1D list (from 2D)
 urlpatterns = sum(all_domain_urls, [])
-
