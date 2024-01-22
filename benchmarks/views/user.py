@@ -226,7 +226,7 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
             identifiers = plugin_has_instances(namelist, plugin)[1]
             db_table = plugin_db_mapping[plugin]
 
-            # Determine the field name based on the plugin type
+            # Determine the lookup field name based on the plugin type
             field_name = 'name' if plugin == "models" else 'identifier'
 
             for identifier in identifiers:
@@ -239,74 +239,104 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
     return True, None  # Passes all checks, then the submission is original -> good to go
 
 
-def validate_zip(file):
+def validate_zip(file: str) -> Tuple[bool, str]:
+    """
+    Validates the structure of a zip file. Checks for the existence of required plugins
+    and their instances, and verifies that each instance contains specific files.
+
+    :param file: Path to the zip file.
+    :return: Tuple containing a boolean for success and an error message if any.
+    """
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
-        if not has_plugin:
-            return False, f"\nPlease make sure your {root.filename} folder contains at least one of the " \
-                          f"following folders:" \
-                          "[metrics, data, benchmarks, models]"
-        instances = []
-        files = []
-        for plugin in submitted_plugins:
-            has_instance, submitted_instances = plugin_has_instances(namelist, plugin)
-            instances.append(submitted_instances)
-        plugin_instance_dict = dict(zip(submitted_plugins, instances))
+        if not has_plugin:  # checks for at least one plugin
+            return False, (f"\nPlease make sure your {root.filename} folder contains at least one of the "
+                           "following valid plugin folders: [metrics, data, benchmarks, models].")
 
-        # make sure there is at least one plugin that is not empty:
-        if all(x == [] for x in plugin_instance_dict.values()):
-
-            if len(list(plugin_instance_dict.keys())) == 1:
-                return False, f"\nYour {list(plugin_instance_dict.keys())} folder is empty."
+        plugin_instance_dict = {plugin: plugin_has_instances(namelist, plugin)[1] for plugin in submitted_plugins}
+        if all(not instances for instances in plugin_instance_dict.values()):
+            folder_names = list(plugin_instance_dict.keys())
+            if len(folder_names) == 1:
+                return False, f"\nYour {folder_names[0]} folder is empty."
             else:
-                return False, f"\nYour {list(plugin_instance_dict.keys())} folders are empty."
+                return False, f"\nYour {', '.join(folder_names)} folders are empty."
 
-        for instance in plugin_instance_dict.values():
-            if len(instance) < 1:
-                pass
-            else:
-                has_files, submitted_files, broken_instance = instance_has_files(namelist, instance)
+        for instances in plugin_instance_dict.values():
+            for instance in instances:
+                has_files, _, broken_instance = instance_has_files(namelist, [instance])
                 if not has_files:
-                    return False, f"\nYour {broken_instance} folder must contain an __init__.py and a test.py folder."
-                files.append(submitted_files)
+                    return False, f"\nYour {broken_instance} folder must contain all 4 required Python files:" \
+                                  f" __init__.py,  setup.py,  model.py and test.py."
+
         return True, ""
 
 
-# checks that there is >= 1 plugin
-def plugins_exist(namelist):
-    acceptable_plugins = ["models", "benchmarks", "data", "metrics"]
-    plugins = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 2]
-    plugins_list = [plugin.split("/")[1].lower() for plugin in plugins]
-    if len(list(set(plugins_list) & set(acceptable_plugins))) >= 1:
-        return True, list(set(plugins_list) & set(acceptable_plugins))
-    else:
-        return False, []
+def plugins_exist(namelist: List[zipfile.ZipInfo]) -> Tuple[bool, List[str]]:
+    """
+    Checks if at least one acceptable plugin exists in the zip file.
+
+    :param namelist: List of ZipInfo objects from the zip file.
+    :return: Tuple of boolean indicating existence and list of found plugins.
+    """
+    acceptable_plugins = {"models", "benchmarks", "data", "metrics"}
+    plugins = {file.filename.split("/")[1].lower() for file in namelist if _is_plugin_path(file.filename)}
+    valid_plugins = list(plugins & acceptable_plugins)
+    return bool(valid_plugins), valid_plugins
 
 
-# makes sure every plugin has an associated instance
-def plugin_has_instances(namelist, plugin):
-    instances = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 3]
-    instances_list = [file_path.split("/")[2] for file_path in instances if file_path.split("/")[1] == plugin]
+def plugin_has_instances(namelist: List[zipfile.ZipInfo], plugin: str) -> Tuple[bool, List[str]]:
+    """
+    Determines if a plugin has associated instances.
 
-    # make sure there is >= 1 instance submitted:
-    if len(instances_list) < 1:
-        return False, []
-    else:
-        return True, instances_list
+    :param namelist: List of ZipInfo objects from the zip file.
+    :param plugin: The plugin name to check.
+    :return: Tuple of boolean indicating existence and list of instances.
+    """
+    # Filter filenames that represent plugin instances
+    instances = [file.filename for file in namelist if file.filename.endswith("/")
+                 and file.filename.count("/") == 3
+                 and file.filename.split("/")[1] == plugin]
+
+    # Extract instance names
+    instances_list = [instance.split("/")[2] for instance in instances]
+    return bool(instances_list), instances_list
 
 
-# makes sure each instance has a __init__.py and setup.py
-def instance_has_files(namelist, instances):
-    files_list = []
+def instance_has_files(namelist: List[zipfile.ZipInfo], instances: List[str]) -> Tuple[bool, List[List[str]], str]:
+    """
+    Checks if each instance has required files (__init__.py and test.py).
+
+    :param namelist: List of ZipInfo objects from the zip file.
+    :param instances: List of instance names to check.
+    :return: Tuple of boolean indicating success, list of files, and the name of a broken instance if any.
+    """
+    required_files = {"__init__.py", "test.py"}
+    all_files = []
+
     for instance in instances:
-        files = [file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance]
-        if len(set(files) & {"__init__.py", "test.py"}) < 2:
+        files = {file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance}
+        all_files.append(list(files))
+        if not required_files.issubset(files):
             return False, [], instance
-        files_list.append(files)
 
-    return True, files_list, None
+    return True, all_files, ''
+
+
+def _is_plugin_path(path: str) -> bool:
+    """
+    Helper function to check if a path corresponds to a plugin.
+    """
+    return path.endswith("/") and path.count("/") == 2
+
+
+def _is_instance_path(path: str, plugin: str) -> bool:
+    """
+    Helper function to check if a path corresponds to an instance of a plugin.
+    """
+    parts = path.split("/")
+    return len(parts) > 2 and parts[1] == plugin and path.endswith("/")
 
 
 def collect_models_benchmarks(request):
