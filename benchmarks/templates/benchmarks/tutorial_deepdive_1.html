@@ -36,16 +36,38 @@
         <div class="container">
             <div class="columns is-centered">
                 <div class="column is-half has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 1- Submitting a Resnet-50 Model</h3>
+                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 1- Preparing a Resnet-50 Model</h3>
                        <p>One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
                            a user can submit a model and see how it performs on many benchmarks, not just a single one.
                            Oftentimes this leads to new insights and correlations, as well as interesting findings.
-                           We will explore how to do this in use Case 1- Submitting an Resnet-50 Model
+                           We will explore how to do this in use Case 1- Preparing a Resnet-50 Model.
+                           <br>
+                           <strong>
+                               Note that we will not actually submit your created model in this tutorial, as we do not
+                               want to upload another resnet50_tutorial model. Please do not actually submit your tutorial model.
+                           </strong>
+
+
+                       /packaging_tutorial --> root folder to zip/unzip. This can be named anything.
+                           /models --> the plugin type. This can also be benchmarks, data, or metrics.
+                               /resnet50_tutorial --> the name of your submission
+                                   setup.py
+                                   model.py
+                                   test.py
+                                   __init__.py
+
+
+
+
                        </p>
                 </div>
             </div>
         </div>
     </section>
+
+
+
+
 
     <section class="section">
         <div class="container">
@@ -53,7 +75,7 @@
                 <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Step 1: Install Necessary Packages</h3>
                        <p> If you have not already, we highly recommend completing the quick start section above before
-                           trying to submit a Resnet-50 model. Although completion is not required, the Quickstart
+                           trying to submit a resnet50 model. Although completion is not required, the Quickstart
                            will give you a nice background into what model scores mean, and how to score a model
                            locally on a single, publicly available benchmark.
                            If you have already done the quick start, skip to step 2 Below. Otherwise, visit
@@ -66,11 +88,11 @@
                 <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Step 2: Download the starter submission Zip folder: </h3>
                        <p> Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
-                           upload, or through a Github PR. In this deepdive, you will upload a sample Zip project to
-                           the site in order to learn how the submission system works. In Deepdive 3, you will submit a
-                           model via Github Pull Request. The sample Zip is a stock version of Resnet-50 pretrained on
-                           imagenet, and you should get a score back within 24 hours.
-                           You can download the sample zip file here.
+                           upload, or through a Github PR. In this deepdive, you will prepare a sample Zip project to
+                           upload (but will not actually submit it), in order to learn the process of submitting.
+                           In Deepdive 3, you will prepare to submit a model via Github Pull Request. The sample Zip
+                           is a stock version of resnet50 pretrained on imagenet. You can download the sample zip file
+                           <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
                        </p>
                 </div>
             </div>
@@ -78,11 +100,12 @@
            <div class="columns is-centered">
                 <div class="column is-three-quarters has-text-centered">
                     <h3 class="benefits_heading is-size-3-mobile">Step 3: Explore the starter submission file</h3>
-                       <p> After unzipping the model.zip, you will see that it contains a folder called
-                           resnet-50_deepdive-2, which in turn contains 4 other directories.
-                           The overall structure of the submission package is below. *Note*: this would also be
-                           the same overall structure as your submission package, if you are submitting any other
-                           plugins.
+                       <p> After unzipping the model.zip, you will see that it contains a folder called models
+                           (the plugin), which in turn contains the model itself, named resnet50_tutorial.
+                           This folder also contains 4 other Python files. The overall structure of the submission
+                           package is below. *Note*: this would also be the same overall structure as your submission
+                           package, if you are submitting any other plugins. Feel free to base your submission off of
+                           this package, just do not submit the resnet50_tutorial model.
                        </p> </br>
                         <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
 
@@ -99,19 +122,21 @@
                            ecosystem at large. You are registering your model to a unique global identifier. You can
                            see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
                            adds the plugin to the registry. Let’s go ahead and modify the identifier of our model,
-                           from resnet-50 to resnet-50_youremail_sample. We can do this by changing line 5 to this:
+                           from resnet-50 to resnet50_tutorial_your-email. We can do this by changing line 5 to this:
                        </p>
 <br><pre>
 <code class="language-shell">
-model_registry['resnet50_youremail_sample'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
+model_registry['resnet50_tutorial_your-email'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
 </code>
 </pre><br>
 
                     <p> Which simply tells Brain-Score to use the resnet50 backend that already exists, but to give it
-                        a new name, resnet50_your-email_sample. Note: Brain-Score does not allow duplicate plugin
+                        a new name, resnet50_tutorial_your-email. Note: Brain-Score does not allow duplicate plugin
                         names, so if you submit another version of the same model, make sure to make the identifier unique!
                         Also note: It would be prohibitively time- and resource-consuming to actually load every plugin
-                        in a registry before they are needed, so the plugin discovery process relies on string parsing. This unfortunately means that it’s not possible to programmatically add plugin identifiers to the registry; each registration needs to be written explicitly in the form of
+                        in a registry before they are needed, so the plugin discovery process relies on string parsing.
+                        This unfortunately means that it’s not possible to programmatically add plugin identifiers to
+                        the registry; each registration needs to be written explicitly in the form of
                         plugin_registry['my_plugin_identifier']
                         Next, let’s check out the setup.py file.
                     </p>
@@ -149,7 +174,7 @@ model_registry['resnet50_youremail_sample'] = lambda: ModelCommitment(identifier
                            change line 21 to be our model identifier instead:</p>
 <br><pre>
 <code class="language-python">
-return ['resnet50_<your-email>_sample']
+return ['resnet50_tutorial_your-email']
 </code>
 </pre><br>
 
@@ -158,8 +183,8 @@ return ['resnet50_<your-email>_sample']
                            lines 26 and 36 to be our identifier, like so (respectively): </p>
 <br><pre>
 <code class="language-python">
-    assert name == 'resnet50_your-email_sample'
-    wrapper = PytorchWrapper(identifier='resnet50_your-email_sample', model=model, preprocessing=preprocessing
+    assert name == 'resnet50_tutorial_your-email'
+    wrapper = PytorchWrapper(identifier='resnet50_tutorial_your-email', model=model, preprocessing=preprocessing
 </code>
 </pre><br>
                           <p>
@@ -170,7 +195,7 @@ return ['resnet50_<your-email>_sample']
                            again modify the identifier to be our model’s on line 42:</p>
 <br><pre>
 <code class="language-python">
-assert name == 'resnet50_your-email_sample'
+assert name == 'resnet50_tutorial_your-email'
 </code>
 </pre><br>
 
@@ -199,18 +224,24 @@ Test successful, you are ready to submit!
 </code>
 </pre><br>
                     <p>
-                          Once you receive this message, you can rezip
+                          Once you receive this message, you could rezip
                            (after you save everything, of course) our sample model.zip file,
-                           navigate to www.brain-score.org/vision/upload, and submit your model. You will receive an
-                           email with your results within 24 hours. (Most of the time it only takes 2-3 hours to score.
+                           and you would be good to submit your model.
+
+                        <strong>Again, please do NOT actually submit the
+                           model that you just created during this entire tutorial. This process was for illustration purposes only.
+
+                        </strong>
+
+                        <br>
+                        When you submit an actual (non-tutorial) model, you will receive an email with your results
+                        within 24 hours. (Most of the time it only takes 2-3 hours to score).
                         If you would like to know how to submit a custom model to Brain-Score, please visit the next
                         deepdive <a href="https://www.brain-score.org/tutorial/deepdive_2">here</a>.
 
                        </p>
                 </div>
             </div>
-
-
 
         </div>
     </section>

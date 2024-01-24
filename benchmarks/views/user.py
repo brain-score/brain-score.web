@@ -178,7 +178,11 @@ class Upload(View):
             return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
         if not submission_is_original:
             plugin, identifier = submission_data
-            return render(request, 'benchmarks/already_submitted.html',
+
+            # ensure the user is not accidentally submitting the tutorial model
+            page = "tutorial" if identifier == "resnet50_tutorial" else "already"
+
+            return render(request, f'benchmarks/{page}_submitted.html',
                           {'plugin': plugin, 'identifier': identifier, "domain": self.domain})
 
         json_info = {
@@ -233,7 +237,7 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
                 query_filter = {field_name: identifier}
 
                 # Check if an entry with the given identifier exists
-                if db_table.objects.filter(**query_filter).exists():
+                if db_table.objects.filter(**query_filter).exists() or "resnet50_tutorial" in identifier:
                     return False, [plugin, identifier]
 
     return True, None  # Passes all checks, then the submission is original -> good to go
