@@ -18,7 +18,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
-from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
@@ -153,18 +153,12 @@ class Upload(View):
         assert self.domain is not None
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
-        if self.domain == "language":
-            form = UploadFileFormLanguage()
-        else:
-            form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain})
+        form = UploadFileForm()
+        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
     def post(self, request):
         assert self.domain is not None
-        if self.domain == "language":
-            form = UploadFileFormLanguage(request.POST, request.FILES)
-        else:
-            form = UploadFileForm(request.POST, request.FILES)
+        form = UploadFileForm(request.POST, request.FILES)
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 

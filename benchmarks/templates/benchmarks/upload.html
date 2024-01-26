@@ -36,50 +36,47 @@
 <div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
     <div class="column is-half has-text-centered-mobile">
         <div class="container login-left">
-            {% if domain == "language"%}
-             <h1 style="font-size: 2em;">Submission System, Language</h1>
-              <br>
-              <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can be:</h1>
+            <h1 style="font-size: 2em;">Submission System, {{ formatted }} </h1>
+            <br>
+            <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can be:</h1>
             <br>
 
-              <ol style="margin-left: 0; padding-left: 1.25em;">
-                <li>A language model or revision</li>
-                <li>A benchmark or revision</li>
+            <ol style="margin-left: 0; padding-left: 1.25em;">
+                <li>A {{ domain }} model or revision</li>
+                <li>A {{ domain }} benchmark or revision</li>
                 <li>A dataset or revision</li>
                 <li>A metric or revision</li>
-              </ol>
+            </ol>
             <br>
-              See <a href="https://brain-score-core.readthedocs.io/en/latest/modules/glossary.html#term-Plug-in">
-              this template</a> for more information on plugin submissions.
-            {% else %}
-              <h1 style="font-size: 2em;">Model Submission (Vision)</h1>
-                <br>
-              You can upload files here to test. For an example of what your submission should include, please
-              visit <a href="https://github.com/brain-score/sample-model-submission/">this documentation</a>.<br>
-            {% endif %}
-
-        <form action="" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <br>
-            {% for field in form %}
-                <p class="special">
-                    <br>
-                    {{ field.label_tag }}
-                    {{ field }}
-                    <br>
-                    {% if field.help_text %}
-                        <small style="display: none">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <p style="color: red">{{ error }}</p>
-                    {% endfor %}
-                </p>
-            {% endfor %}
+            <p>
+                See <a href="https://brain-score-core.readthedocs.io/en/latest/modules/glossary.html#term-Plug-in">
+                this template</a> for more information on plugin submissions.
             </p>
-            <br>
-            <button type="submit" class="button submission">Submit Plugin</button>
-            <br>
-        </form>
+
+
+
+            <form action="" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <br>
+                {% for field in form %}
+                    <p class="special">
+                        <br>
+                        {{ field.label_tag }}
+                        {{ field }}
+                        <br>
+                        {% if field.help_text %}
+                            <small style="display: none">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p style="color: red">{{ error }}</p>
+                        {% endfor %}
+                    </p>
+                {% endfor %}
+                </p>
+                <br>
+                <button type="submit" class="button submission">Submit Plugin</button>
+                <br>
+            </form>
             <br>
         <p style="font-size: 12px"><a href="/profile/{{ domain }}">Return to {{ domain }} profile page</a></p>
         </div>
