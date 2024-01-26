@@ -47,6 +47,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
+if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated prod site
 hosts_list.append("Brain-score-web-dev-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com")  # updated dev site
 ALLOWED_HOSTS = hosts_list

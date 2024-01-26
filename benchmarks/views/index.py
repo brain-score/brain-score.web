@@ -33,7 +33,7 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-@cache_page(24 * 60 * 60)
+# @cache_page(24 * 60 * 60)
 def view(request, domain: str):
     context = get_context(domain=domain)
     return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
