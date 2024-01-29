@@ -1,74 +1,43 @@
-
 {% extends 'benchmarks/base.html' %}
 {% load static %}
 {% load compress %}
 
 {% block main %}
-<nav class="navbar updated is-fixed-top is-transparent">
-    <div class= "container my_container nav-container">
-        <div class="navbar-brand">
-            <a class="navbar-item" href="https://www.brain-score.org">
-                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
-            </a>
-            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </a>
-        </div>
-        <div id="navMenu" class="navbar-menu">
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
-                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
-                        </a>
-                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
-                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
-                        </a>
-                    </div>
-                </div>
-        </div>
-    </div>
-</nav>
-
+{% include 'benchmarks/components/nav-bar.html' %}
 <div class="container my_container landing">
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
                 <div class="column is-half has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 1- Preparing a Resnet-50 Model</h3>
-                       <p>One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
-                           a user can submit a model and see how it performs on many benchmarks, not just a single one.
-                           Oftentimes this leads to new insights and correlations, as well as interesting findings.
-                           We will explore how to do this in use Case 1- Preparing a Resnet-50 Model.
-                           <br>
-                           <strong>
-                               Note that we will not actually submit your created model in this tutorial, as we do not
-                               want to upload another resnet50_tutorial model. Please do not actually submit your tutorial model.
-                           </strong>
+                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 1- Preparing a ResNet-50 Model</h3>
+                    <p>
+                        One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
+                        a user can submit a model and see how it performs on many benchmarks, not just a single one.
+                        Oftentimes this leads to new insights and correlations, as well as interesting findings.
+                        We will explore how to do this in use Case 1- Preparing a ResNet-50 Model.
+                        <br>
+                        <strong>
+                            Note that we will not actually submit your created model in this tutorial, as we do not
+                            want to upload another resnet50_tutorial model. Please do not actually submit your tutorial model.
+                        </strong>
+                    </p>
 
 
-                       /packaging_tutorial --> root folder to zip/unzip. This can be named anything.
-                           /models --> the plugin type. This can also be benchmarks, data, or metrics.
-                               /resnet50_tutorial --> the name of your submission
-                                   setup.py
-                                   model.py
-                                   test.py
-                                   __init__.py
-
-
-
+                    <pre><code class="code-block">
+                    /packaging_tutorial --> root folder to zip/unzip. This can be named anything.
+                        /models --> the plugin type. This can also be benchmarks, data, or metrics.
+                            /resnet50_tutorial --> the name of your submission
+                                setup.py
+                                model.py
+                                test.py
+                                __init__.py
+                    </code></pre>
 
                        </p>
                 </div>
             </div>
         </div>
     </section>
-
-
-
-
-
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
@@ -122,7 +91,7 @@
                            ecosystem at large. You are registering your model to a unique global identifier. You can
                            see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
                            adds the plugin to the registry. Let’s go ahead and modify the identifier of our model,
-                           from resnet-50 to resnet50_tutorial_your-email. We can do this by changing line 5 to this:
+                           from ResNet-50 to resnet50_tutorial_your-email. We can do this by changing line 5 to this:
                        </p>
 <br><pre>
 <code class="language-shell">

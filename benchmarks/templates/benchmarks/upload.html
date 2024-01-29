@@ -1,38 +1,8 @@
-
-
 {% extends 'benchmarks/base.html' %}
 {% load static %}
 {% load compress %}
 
 {% block main %}
-<nav class="navbar updated is-fixed-top is-transparent">
-    <div class= "container my_container nav-container">
-        <div class="navbar-brand">
-            <a class="navbar-item" href="https://www.brain-score.org">
-                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
-            </a>
-            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </a>
-        </div>
-        <div id="navMenu" class="navbar-menu">
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
-                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
-                        </a>
-                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
-                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
-                        </a>
-                    </div>
-                </div>
-        </div>
-    </div>
-</nav>
-
-
 <div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
     <div class="column is-half has-text-centered-mobile">
         <div class="container login-left">
@@ -42,19 +12,19 @@
             <br>
 
             <ol style="margin-left: 0; padding-left: 1.25em;">
-                <li>A {{ domain }} model or revision</li>
-                <li>A {{ domain }} benchmark or revision</li>
-                <li>A dataset or revision</li>
-                <li>A metric or revision</li>
+                <li>A {{ domain }} model</li>
+                <li>A {{ domain }} benchmark</li>
+                <li>A {{ domain }} dataset</li>
+                <li>A metric</li>
             </ol>
             <br>
             <p>
+                You may submit either a new plugin or a revision for a plugin that you have already submitted.
+                (You must be the original submitter of a plugin in order to submit a revision).
+                <br>
                 See <a href="https://brain-score-core.readthedocs.io/en/latest/modules/glossary.html#term-Plug-in">
                 this template</a> for more information on plugin submissions.
             </p>
-
-
-
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <br>
