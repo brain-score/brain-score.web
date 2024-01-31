@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import zipfile
+import re
 from typing import Tuple, Union, List
 
 import boto3
@@ -221,9 +222,16 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
         namelist = archive.infolist()
         plugins = plugins_exist(namelist)[1]
 
+        for file in namelist:
+            identifier = extract_model_identifier(file, archive)
+            if identifier is not None:
+                break
+
         # for each plugin submitted, make sure that the identifier does not exist already:
         for plugin in plugins:
             identifiers = plugin_has_instances(namelist, plugin)[1]
+            if identifier is not None:
+                identifiers.append(identifier)
             db_table = plugin_db_mapping[plugin]
 
             # Determine the field name based on the plugin type
@@ -238,6 +246,19 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
 
     return True, None  # Passes all checks, then the submission is original -> good to go
 
+def extract_model_identifier(file_info, archive):
+    if file_info.filename.endswith('/'):
+        return 
+    # Check if the file is __init__.py
+    if '__init__.py' in file_info.filename:
+        with archive.open(file_info) as file:
+            # Read the content of __init__.py
+            content = file.read().decode('utf-8')
+            # Search for the model identifier pattern
+            match = re.search(r"identifier\s*=\s*'(.+?)'", content)
+            if match:
+                return match.group(1)  # Return the model identifier
+    return None 
 
 def validate_zip(file):
     with zipfile.ZipFile(file, mode="r") as archive:
