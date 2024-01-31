@@ -265,8 +265,8 @@ def validate_zip(file: str) -> Tuple[bool, str]:
             for instance in instances:
                 has_files, _, broken_instance = instance_has_files(namelist, [instance])
                 if not has_files:
-                    return False, f"\nYour {broken_instance} folder must contain all 4 required Python files:" \
-                                  f" __init__.py,  setup.py,  model.py and test.py."
+                    return False, f"\nYour {broken_instance} folder must contain both required Python files:" \
+                                  f" __init__.py and test.py."
 
         return True, ""
 
