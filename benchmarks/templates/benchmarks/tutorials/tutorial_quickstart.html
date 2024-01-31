@@ -1,0 +1,159 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1>Quickstart</h1>
+    <p>Getting started for those with tight deadlines. </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Let's Jump Right In</h3>
+            <p class="benefits_info is-size-5-mobile">
+                The Brain-Score platform allows users to score models on public data via the command line
+                on your machine, once installed. It also allows scoring models on all data
+                (public and private) via the website. In the section we will cover how to use the CLI to
+                score a model on public data.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                We highly recommend you complete this quickstart before trying to submit a model to the site. Not only will
+                the quickstart show you what to expect from a score, but it will better prepare you to submit a plugin
+                and get a score on all benchmarks!
+            </p>
+        </div>
+         <div class="column is-one-half">
+            <img class="tutorial_main" src="{% static "/benchmarks/img/quickstart.png" %}" />
+        </div>
+    </div>
+</div>
+
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Let's Jump Right In</h3>
+            <p class="benefits_info is-size-5-mobile">
+                The Brain-Score platform allows users to score models on public data via the command line
+                on your machine, once installed. It also allows scoring models on all data
+                (public and private) via the website. In the section we will cover how to use the CLI to
+                score a model on public data.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                We highly recommend you complete this quickstart before trying to submit a model to the site. Not only will
+                the quickstart show you what to expect from a score, but it will better prepare you to submit a plugin
+                and get a score on all benchmarks!
+            </p>
+        </div>
+         <div class="column is-one-half">
+            <img class="tutorial_main" src="{% static "/benchmarks/img/quickstart.png" %}" />
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!--<div class="container my_container landing">-->
+<!--    <section class="section">-->
+<!--        <div class="container">-->
+<!--            <div class="columns is-centered">-->
+<!--                <div class="column is-three-quarters has-text-centered">-->
+<!--                    <h3 class="benefits_heading is-size-3-mobile">Brain-Score Tutorial</h3>-->
+<!--                       <p> The Brain-Score platform allows users to score models on public data via the command line-->
+<!--                           on your machine, once installed. It also allows scoring models on all data-->
+<!--                           (public and private) via the website. In the section we will cover how to use the CLI to-->
+<!--                           score a model on public data.-->
+<!--                       </p>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </section>-->
+
+<!--    <section class="section">-->
+<!--        <div class="container">-->
+<!--            <div class="columns is-centered">-->
+<!--                <div class="column is-three-quarters has-text-centered">-->
+<!--                    <h3 class="benefits_heading is-size-3-mobile">Step 1: Install Necessary Packages</h3>-->
+<!--                       <p> In order to use Brain-Score on your machine, you need to install it. Luckily, we have tried-->
+<!--                           to drastically simplify this process (we strongly recommend setting up a Virtual Environment-->
+<!--                           for all your Brain-Score projects, but this is not required).-->
+<!--                           Run the following commands in the command line of your choosing (example is for Unix-based-->
+<!--                           machines):-->
+<!--                       </p>-->
+<!--                    <br>-->
+<!--<pre>-->
+<!--<code class="language-shell">-->
+<!--git clone https://github.com/brain-score/brain-score.git-->
+<!--cd brain-score-->
+<!--python -m pip install -e "."-->
+<!--</code>-->
+<!--</pre>-->
+
+<!--                    <p> This will pull the most recent copy of Brain-Score into your local machine and install-->
+<!--                        all the necessary packages.-->
+<!--                    </p>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="columns is-centered">-->
+<!--                <div class="column is-three-quarters has-text-centered">-->
+<!--                    <h3 class="benefits_heading is-size-3-mobile">Step 2: Run a model on a benchmark (via CLI)</h3>-->
+<!--                       <p> Next, make sure your working directory is /brain-score (you can confirm with a pwd call),-->
+<!--                           and run the following command to score a model (pixels) on a sample benchmark’s publicly-->
+<!--                           available data (dicarlo.MajajHong2015.IT-pls)-->
+<!--                       </p>-->
+<!--                    <br>-->
+<!--<pre>-->
+<!--<code class="language-shell">-->
+<!--python3 brainscore_vision  score &#45;&#45;model_identifier='alexnet' &#45;&#45;benchmark_identifier='dicarlo.MajajHong2015.IT-pls'-->
+<!--</code>-->
+<!--</pre><br>-->
+
+<!--                    <p> You should get a message like below, indicating what the score is:-->
+<!--                    </p><br>-->
+<!--<pre>-->
+<!--<code class="language-python">-->
+<!--xarray.Score (aggregation: 2)-->
+<!--array([0.01538053, 0.00571393])-->
+<!--Coordinates:-->
+<!--  * aggregation  (aggregation) U6 'center' 'error'-->
+<!--Attributes:-->
+<!--    raw:                   xarray.Score (aggregation: 2)>\narray([0.10192326...-->
+<!--    ceiling:               xarray.Score (aggregation: 2)>\narray([8.21840601...-->
+<!--    model_identifier:      pixels-->
+<!--    benchmark_identifier:  dicarlo.MajajHong2015.IT-pls-->
+
+<!--Process finished with exit code 0-->
+
+<!--</code>-->
+<!--</pre><br>-->
+
+<!--                    <p> Let’s break down what these numbers mean. First off, your score is 0.0153, the first number-->
+<!--                           in the first xarray listed, along with the error, which is 0.00571. Next, you can see two-->
+<!--                           other attributes: raw, which represents the unceiled score (0.1019) of your model, and the-->
+<!--                           ceiling (8.28*10-2), which is the highest score a model can get. Your final score above thus-->
+<!--                           is a simple calculation of raw/ceiling. Note: This example scores a model on a sample-->
+<!--                           benchmark's data in Brain-Score Vision, but you can follow a similar procedure for-->
+<!--                           Brain-Score Language with the following command.-->
+<!--                    </p>-->
+<!--                    <br>-->
+<!--<pre>-->
+<!--<code class="language-shell">-->
+<!--python brainscore_language score &#45;&#45;model_identifier='distilgpt2' &#45;&#45;benchmark_identifier='Futrell2018-pearsonr'-->
+<!--</code>-->
+<!--</pre><br>-->
+<!--                    <p> Please note that compute times may vary; running on a 2021 Macbook Pro M1 Max takes about-->
+<!--                        10 minutes. If you would like to learn how to submit a model to the website, please visit-->
+<!--                        <a href="https://www.brain-score.org/tutorial/deepdive_1">Deepdive 1</a>.-->
+<!--                    </p><br>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </section>-->
+
+<!--</div>-->
+
+
