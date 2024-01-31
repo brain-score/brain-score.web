@@ -117,7 +117,7 @@ def create_stimuli_samples(benchmark_instances, num_samples, available_sample_pe
     :param available_sample_per_benchmark: how many image files have been pre-generated per benchmark
     :return:
     """
-    StimulusSample = namedtuple('StimulusSample', field_names=['path', 'benchmark_short_name'])
+    StimulusSample = namedtuple('StimulusSample', field_names=['path', 'benchmark_identifier'])
 
     samples = set()
     random = RandomState(42)
@@ -125,7 +125,7 @@ def create_stimuli_samples(benchmark_instances, num_samples, available_sample_pe
         benchmark = random.choice(benchmark_instances)
         sample_num = random.randint(low=0, high=available_sample_per_benchmark)
         path = f"{benchmark.identifier}/{sample_num}.png"
-        sample = StimulusSample(path=path, benchmark_short_name=benchmark.identifier)
+        sample = StimulusSample(path=path, benchmark_identifier=benchmark.identifier)
         samples.add(sample)
     samples = list(sorted(samples))  # make order deterministic
     random.shuffle(samples)  # reshuffle
