@@ -143,7 +143,7 @@ class Tutorial(View):
     tutorial_type = None
 
     def get(self, request):
-        return render(request, f'benchmarks/tutorial{self.tutorial_type}.html')
+        return render(request, f'benchmarks/tutorials/tutorial{self.tutorial_type}.html')
 
 
 class Upload(View):
