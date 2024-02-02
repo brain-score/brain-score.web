@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block banner %}
-<h1>Quickstart</h1>
-<p>Getting started for those with tight deadlines. </p>
+<h1>Deep Dive 1</h1>
+<p>A Tour of the Submission Package </p>
 {% endblock %}
 
 {% block info_section %}
@@ -12,53 +12,32 @@
 
 
 {% block content %}
+
 <div class="box leaderboard-table-component">
     <div class="columns is-tablet is-variable is-1-tablet">
-        <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Let's Jump Right In</h3>
-            <p class="benefits_info is-size-5-mobile">
-            We are excited that you are here. Below you will find guides and
-            links on various use cases of the platform. We hope that Brain-Score will enable you to find new
-            insights from models, benchmarks, and integrated scoring.
-            </p>
-            <p class="benefits_info is-size-5-mobile">
-            You can get up and running ASAP with our Quickstart, where you learn how to install Brain-Score on your
-             machine and how to score an existing model on an existing benchmark.
-            </p>
-            <p class="benefits_info is-size-5-mobile">
-                Or, if you are a more seasoned user, you can explore the platform further via our Deep Dive series. Here
-             there are guided overiews of the submission system, as well as instructions on how to submit plugins.
-            </p>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/quickstart"><button class="button button-primary tutorial">Quickstart</button></a>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_1"><button class="button button-primary tutorial">Dive Deeper</button></a>
+        <div class="column is-one-half">
+            <img class="tutorial_dd1_1" src="{% static "/benchmarks/img/tutorials/deep_dive_1_1.png" %}" />
         </div>
-         <div class="column is-one-half">
-            <img class="tutorial_main" src="{% static "/benchmarks/img/quickstart.png" %}" />
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Let's Dive Deeper!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
+                a user can submit a model and see how it performs on many benchmarks, not just a single one.
+                Oftentimes this leads to new insights and correlations, as well as interesting findings.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                In this first Deep Dive, we will download a sample Brain-Score Submission (containing the model ResNet-50),
+                and explore the parts of its submission package. You can then base your own unique submissions on our sample project.
+            </p>
+
+            <p class="benefits_info is-size-5-mobile is-italic">
+                Note: Please do not submit the tutorial file itself via the website. The following walkthough is just
+                to let you become familiar with how submissions should be structured.
+            </p>
         </div>
     </div>
 </div>
 
-<!--<div class="container my_container landing">-->
-<!--    <section class="section">-->
-<!--        <div class="container">-->
-<!--            <div class="columns is-centered">-->
-<!--                <div class="column is-half has-text-centered">-->
-<!--                    <h3 class="benefits_heading is-size-3-mobile">Dive Deeper:  Use Case 1- Walkthrough of a ResNet-50 Model Submission</h3>-->
-<!--                    <p>-->
-<!--                        One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which-->
-<!--                        a user can submit a model and see how it performs on many benchmarks, not just a single one.-->
-<!--                        Oftentimes this leads to new insights and correlations, as well as interesting findings.-->
-<!--                    </p>-->
-<!--                    <br>-->
-<!--                    <p>-->
-<!--                        In this use case, we will download a sample model (ResNet-50), and explore the parts of the-->
-<!--                        submission package. You can then base your own unique submissions on our sample project.-->
-<!--                    </p>-->
-<!--                    <br>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </section>-->
 <!--    <section class="section">-->
 <!--        <div class="container">-->
 <!--            <div class="columns is-centered">-->
