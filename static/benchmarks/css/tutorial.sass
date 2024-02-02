@@ -1,12 +1,73 @@
-.tutorial_main
+// Variables
+$bg-color: #f4f4f4
+$font-color: #666
+$font-family-default: monospace
+$border-color-light: #ddd
+$primary-border-color: #47B7DE
+$font-size-default: 0.9em
+
+// Mixins
+@mixin border-style($leftColor)
+  border: 1px solid $border-color-light
+  border-left: 3px solid $leftColor
+
+
+// Base styles for images
+.quickstart_image
   padding: 10%
   width: 90%
   height: auto
 
+  &.alt  // Nested for context, making ".quickstart_image.alt" specific
+    padding: 1%
+    margin-top: 5%
+    width: 100%
+
+// Text content styling
 .tutorial_text
   margin-right: 5%
 
-.button-primary.tutorial
-  margin-top: 5%
-  margin-bottom: 5%
-  margin-right: 5%
+// Button styling within tutorial context
+.button-primary
+  &.tutorial
+    margin: 5% 5% 5% 0 // Consolidated margin properties
+
+// Preformatted text styling
+pre
+  @include border-style($primary-border-color)
+  background-color: $bg-color
+  color: $font-color
+  page-break-inside: avoid
+  font-family: $font-family-default
+  font-size: $font-size-default
+  width: 90%
+  overflow: auto
+  padding: 5%
+  display: block
+  word-wrap: normal
+  line-height: 1.5
+  word-break: normal
+  max-width: 90%
+
+  code
+    border-radius: 4px
+    font-family: inherit
+
+  &.modified_1  // Adjusted styling for modified pre blocks
+    margin: 1% 0
+    padding: 1%
+
+// Special formatting for inline text
+span.special_format
+  background-color: $bg-color
+  color: $font-color
+  font-family: $font-family-default
+  font-size: $font-size-default
+  display: inline-block
+
+
+// Additional class for benefits_info
+.benefits_info
+  &.shorter
+    width: 90%
+
