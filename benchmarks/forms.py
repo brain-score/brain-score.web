@@ -36,19 +36,6 @@ class UploadPlaceHolder(forms.Form):
 
 
 class UploadFileForm(forms.Form):
-    model_type = forms.ChoiceField(choices=[
-        ("BaseModel", "Base model - to submit a standard machine learning model"),
-        ("BrainModel", "Brain model - to change brain-transformation")])
-    zip_file = forms.FileField(label="", help_text='Required')
-    public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
-                                help_text='Check if you want the results of your submitted models included in the public ranking.')
-
-    class Meta:
-        model = UploadPlaceHolder
-        fields = ('zip_file', 'public', 'competition')
-
-
-class UploadFileFormLanguage(forms.Form):
     zip_file = forms.FileField(label="", help_text='Required')
 
     class Meta:
