@@ -38,7 +38,7 @@
     <div class="columns is-tablet is-variable is-1-tablet">
          <div class="column is-one-half">
             <pre><code>
-git clone https://github.com/brain-score/brain-score.git
+git clone https://github.com/brain-score/brain-score_vision.git
 cd brainscore_vision
 python -m pip install -e
             </code></pre>
@@ -74,6 +74,9 @@ python brainscore_vision score --model_identifier='pixels' --benchmark_identifie
         Upon scoring completion, you should get a message like below, indicating what the score is.
     </p>
     <pre class="modified_1"><code >
+
+
+         * update with new format *
 xarray.Score (aggregation: 2)
 array([0.01538053, 0.00571393])
 Coordinates:
@@ -91,7 +94,7 @@ Process finished with exit code 0
                 in the first xarray listed, along with the error, which is <span class="special_format">0.00571</span>. Next, you can see two
                 other attributes: <span class="special_format">raw</span>, which represents the unceiled score
                 <span class="special_format">0.1019</span> of your model, and the
-                ceiling <span class="special_format">8.28*10-2</span>, which is the highest score a model can get. Your final score above thus
+                ceiling <span class="special_format">8.28*10-2</span>, which is the highest score a perfect model is expected to get. Your final score above thus
                 is a simple calculation of <span class="special_format">raw/ceiling</span>.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
@@ -104,7 +107,7 @@ Process finished with exit code 0
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half tutorial_text">
             <p class="benefits_info is-size-5-mobile shorter">
-                 If you would like to know more about Brain-Score, please visit our Deep Dive series! These are guided tours
+                If you would like to know more about Brain-Score, please visit our Deep Dive series! These are guided tours
                 that walk you through how to put Brain-Score to work for you.
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
@@ -117,7 +120,7 @@ Process finished with exit code 0
                 we will walkthough what a custom model submission looks like, and how to submit one.
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
-                Fianlly, In <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_3">Deep Dive 3</a>,
+                Finally, in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_3">Deep Dive 3</a>,
                 we will cover how to submit a plugin via a Github Pull Request (PR).
             </p>
         </div>
@@ -130,7 +133,8 @@ Process finished with exit code 0
     <h3 class="benefits_heading is-size-3-mobile">Optional: Scoring a Language Model</h3>
         <p class="benefits_info is-size-5-mobile shorter">
             The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            this time changing <span class="special_format"> brainscore_vision</span> to <span class="special_format">brainscore_language</span>.
+            but just change all occurrences of vision to language, i.e:
+            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
             Next, simply call the language equivalent to the above vision command, which would be:
         </p>
 
