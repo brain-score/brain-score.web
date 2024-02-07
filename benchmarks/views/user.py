@@ -329,7 +329,7 @@ def collect_models_benchmarks(request):
     return model_ids, model_names, benchmarks
 
 
-def submit_to_jenkins(request, domain, model_name, benchmarks=None):
+def submit_to_jenkins(request, model_name, benchmarks=None):
     # submit to jenkins
     jenkins_url = "http://braintree.mit.edu:8080"
     auth = get_secret("brainscore-website_jenkins_access")
