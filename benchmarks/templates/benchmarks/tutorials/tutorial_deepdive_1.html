@@ -269,16 +269,27 @@
         <pre class="modified_1"><code>
 Test successful, you are ready to submit!
     </code></pre>
-    <p class="benefits_info is-size-5-mobile shorter">
-        Once you receive this message, you could rezip (after you save everything, of course) your package, and you
-        would be good to submit your model.
-    </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-    When you submit an actual (non-tutorial) model, you will receive an email with your results
-    within 24 hours. (Most of the time it only takes 2-3 hours to score).
-    If you would like to know how to submit a custom model to Brain-Score, please visit the next
-    deepdive <a href="https://www.brain-score.org/tutorial/deepdive_2">here</a>.
-    </p>
+
+
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+           <p class="benefits_info is-size-5-mobile shorter top_adjust">
+                Once you receive this message, you could rezip (after you save everything, of course) your package, and you
+                would be good to submit your model.
+           </p>
+            <p class="benefits_info is-size-5-mobile shorter ">
+                When you submit an actual (non-tutorial) model, you will receive an email with your results
+                within 24 hours. (Most of the time it only takes 2-3 hours to score).
+                If you would like to know how to submit a custom model to Brain-Score, please visit the next
+                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_2">here</a>.
+            </p>
+        </div>
+        <div class="column is-one-half">
+            <img class="tutorial_dd1_2" src="{% static "/benchmarks/img/tutorials/deep_dive_1_2.png" %}" />
+        </div>
+    </div>
+
+
 </div>
 {% endblock %}
 
