@@ -72,65 +72,75 @@
 </div>
 
 <div class="box leaderboard-table-component">
-    <div class="columns is-tablet is-variable is-1-tablet">
-        <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Starter Submission File</h3>
-            <p class="benefits_info is-size-5-mobile">
-                After unzipping the <span class="special_format">packaging_submission.zip</span> file, you will see that the root folder is
-                called <span class="special_format">packaging_tutorial</span>. This in turns contains another folder for the plugin itself, in
-                this case <span class="special_format">/models</span>. This <span class="special_format">/models</span> folder then
-                contains a folder called <span class="special_format"> /resnet50_tutorial</span>.
-                This final also contains 4 other Python files. The overall structure of the submission
-                package is shown to the right:
-            </p>
-            <p class="benefits_info is-size-5-mobile">
-                Note: this would also be the same overall structure as your submission
-                package, or if you are submitting any other plugins (benchmarks, metrics, or data). Feel free
-                to base your future submissions off of this package, just please do not submit the
-                <span class="special_format">resnet50_tutorial</span> model.
-            </p>
-        </div>
-            <div class="column is-one-half">
-                <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
-                <p> Just like the sample submission, each submission that you submit must contain at least the 2 required
-                    Python files: <span class="special_format">__init__.py</span> and <span class="special_format">test.py</span>.
-                    The other two files, <span class="special_format">setup.py</span> and <span class="special_format">model.py</span>,
-                    are optional, but will be explored below along with the two required files. Let's begin with the first required file,
-                    <span class="special_format">__init__.py</span> file:
-                </p>
-        </div>
-    </div>
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Starter Submission File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        After unzipping the <span class="special_format">packaging_submission.zip</span> file, you will see that the root folder is
+        called <span class="special_format">packaging_tutorial</span>. This in turns contains another folder for the plugin itself, in
+        this case <span class="special_format">/models</span>. This <span class="special_format">/models</span> folder then
+        contains a folder called <span class="special_format"> /resnet50_tutorial</span>.
+        This final also contains 4 other Python files. The overall structure of the submission
+        package is shown below:
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        Just like the sample submission, each submission that you submit must contain at least the 2 required
+        Python files: <span class="special_format">__init__.py</span> and <span class="special_format">test.py</span>.
+        The other two files, <span class="special_format">setup.py</span> and <span class="special_format">model.py</span>,
+        are optional, but will be explored below along with the two required files. Let's explore further with the first required file,
+        <span class="special_format">__init__.py</span> file.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter is-italic">
+        Note: this would also be the same overall structure as your submission
+        package, or if you are submitting any other plugins (benchmarks, metrics, or data). Feel free
+        to base your future submissions off of this package, just please do not submit the
+    <span class="special_format">resnet50_tutorial</span> model.
+    </p>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 4: Exploring the  __init__.py  file</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        This file adds your plugin to the Brain-Score plugin registry and to the Brain-Score
+        ecosystem at large. You are registering your model to a unique global identifier. You can
+        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
+        adds the plugin to the registry. In the future, when you submit models (or other plugins),
+        you will add the plugin to our ecosystem via line 5.
+    </p>
+
+    <pre class="modified_1"><code>
+from brainscore_vision import model_registry
+from brainscore_vision.model_helpers.brain_transformation import ModelCommitment
+from .model import get_model, get_layers
+
+model_registry['resnet50'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
+    </code></pre>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Please note: Brain-Score does not allow duplicate plugin
+        names, so if you submit another version of the same model, make sure to make the identifier unique!
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Also note: It would be prohibitively time- and resource-consuming to actually load every plugin
+        in a registry before they are needed, so the plugin discovery process relies on string parsing.
+        This unfortunately means that it’s not possible to programmatically add plugin identifiers to
+        the registry; each registration needs to be written explicitly in the form of
+        <span class="special_format">plugin_registry['my_plugin_identifier']</span>
+        Next, let’s check out the second required file, <span class="special_format">test.py</span> file.
+    </p>
 </div>
 
 
-<!--            <div class="columns is-centered">-->
-<!--                <div class="column is-three-quarters has-text-centered">-->
-<!--                    <h3 class="benefits_heading is-size-3-mobile">Part 3: Explore the Starter Submission File</h3>-->
 
-<!--                    </p>-->
-<!--                    <br>-->
-<!--                    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />-->
-
-<!--                </div>-->
-<!--            </div>-->
+<!--            </p>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
 <!--            <div class="columns is-centered">-->
 <!--                <div class="column is-three-quarters has-text-centered">-->
 <!--                    <h3 class="benefits_heading is-size-3-mobile">Part 4: Explore the  __init__.py  file: </h3>-->
-<!--                    <p> This file adds your plugin to the Brain-Score plugin registry and to the Brain-Score-->
-<!--                        ecosystem at large. You are registering your model to a unique global identifier. You can-->
-<!--                        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5-->
-<!--                        adds the plugin to the registry. In the future, when you submit models (or other plugins),-->
-<!--                        you will add the plugin to our ecosystem via line 5.-->
 
-<!--                        Please note: Brain-Score does not allow duplicate plugin-->
-<!--                        names, so if you submit another version of the same model, make sure to make the identifier unique!-->
-<!--                        Also note: It would be prohibitively time- and resource-consuming to actually load every plugin-->
-<!--                        in a registry before they are needed, so the plugin discovery process relies on string parsing.-->
-<!--                        This unfortunately means that it’s not possible to programmatically add plugin identifiers to-->
-<!--                        the registry; each registration needs to be written explicitly in the form of-->
-<!--                        plugin_registry['my_plugin_identifier']-->
-<!--                        Next, let’s check out the setup.py file.-->
+
+
 <!--                    </p>-->
 <!--                </div>-->
 <!--            </div>-->
