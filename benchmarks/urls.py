@@ -20,6 +20,7 @@ non_domain_urls = [
         path('password/',  user.Password.as_view(), name='password'),
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
         path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
+        path('/compare', functools.partial(compare.view, domain="vision"), name='compare'),
         path('community', functools.partial(community.view), name='community'),
         path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
         path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
