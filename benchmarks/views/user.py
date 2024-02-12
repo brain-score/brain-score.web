@@ -247,6 +247,12 @@ def validate_zip(file: str) -> Tuple[bool, str]:
     """
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
+
+        # Check for spaces in file names
+        for item in namelist:
+            if ' ' in item.filename:
+                return False, f"File '{item.filename}' contains spaces. Please remove spaces from all file names."
+                
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
         if not has_plugin:  # checks for at least one plugin
