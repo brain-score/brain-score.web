@@ -251,7 +251,7 @@ def validate_zip(file: str) -> Tuple[bool, str]:
         has_plugin, submitted_plugins = plugins_exist(namelist)
         if not has_plugin:  # checks for at least one plugin
             return False, (f"\nPlease make sure your {root.filename} folder contains at least one of the "
-                           "following valid plugin folders: [metrics, data, benchmarks, models].")
+                           "following valid plugin folders: [models, benchmarks, data, metrics].")
 
         plugin_instance_dict = {plugin: plugin_has_instances(namelist, plugin)[1] for plugin in submitted_plugins}
         if all(not instances for instances in plugin_instance_dict.values()):
