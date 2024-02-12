@@ -47,7 +47,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
-        uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.short_name
+        uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.identifier
         benchmark.ceiling = represent(benchmark.ceiling)
         benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
     # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>,
@@ -63,7 +63,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     not_shown_set = {benchmark.identifier for benchmark in benchmarks
                      if benchmark.depth > BASE_DEPTH or
                      # show engineering benchmarks collapsed, but still show root
-                     (ENGINEERING_ROOT not in benchmark.short_name and ENGINEERING_ROOT in benchmark.root_parent)}
+                     (ENGINEERING_ROOT not in benchmark.identifier and ENGINEERING_ROOT in benchmark.root_parent)}
 
     # data for javascript comparison script
     comparison_data = _build_comparison_data(model_rows)
@@ -106,7 +106,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_bibtex = ''
 
 
-    benchmark_names = [b.short_name for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
+    benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
     return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'benchmark_names': benchmark_names,
             'submittable_benchmarks': submittable_benchmarks,
@@ -219,7 +219,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
     - all benchmarks, if user is a superuser
     """
 
-    benchmark_types = {benchmark.short_name: benchmark.benchmark_type_id
+    benchmark_types = {benchmark.identifier: benchmark.benchmark_type_id
                        for benchmark in benchmarks if not hasattr(benchmark, 'children')}
     # the above dictionary creation will already deal with duplicates from benchmarks with multiple versions
     if user.is_superuser:  # superusers can resubmit on all available benchmarks
@@ -231,7 +231,7 @@ def _collect_submittable_benchmarks(benchmarks, user):
                                        .filter(model__owner=user)
                                        .distinct('benchmark__benchmark_type_id')
                                        .values_list('benchmark__benchmark_type_id', flat=True)]
-    benchmark_selection = {short_name: benchmark_type_id for short_name, benchmark_type_id in benchmark_types.items()
+    benchmark_selection = {identifier: benchmark_type_id for identifier, benchmark_type_id in benchmark_types.items()
                            if benchmark_type_id in previously_evaluated_benchmarks}
     return benchmark_selection
 
@@ -450,8 +450,18 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
     return data
 
 
-def _get_benchmark_shortname(benchmark_type_identifier):
-    match = re.match(r'[^\.]+\.(.+)', benchmark_type_identifier)
+def _get_benchmark_shortname(benchmark_type_identifier: str):
+    """
+    Removes the lab identifier from a benchmark name.
+    e.g. "dicarlo.MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
+    
+    Assumes that lab identifiers do not contain capital letters.
+    e.g. "MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
+    """
+    # 
+    # E.g., 
+    # 
+    match = re.match(r'[^A-Z]+\.(.+)', benchmark_type_identifier)
     if match:
         return match.group(1)
     else:

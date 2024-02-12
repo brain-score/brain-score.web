@@ -220,7 +220,7 @@
             {% for stimulus_sample in stimuli_samples %}
                 <img class="stimulus_sample"
                      src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
-                     title="from benchmark {{ stimulus_sample.benchmark_short_name }}"
+                     title="from benchmark {{ stimulus_sample.benchmark_identifier }}"
                      alt="sample {{ stimulus_sample.path }}"/>
             {% endfor %}
         </div>

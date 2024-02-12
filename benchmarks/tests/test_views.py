@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from benchmarks.views.index import _get_benchmark_shortname
 from benchmarks.views.user import split_identifier_version
 
 ALL_FIXTURES = ['fixture-benchmarkreferences.json', 'fixture-benchmarktypes.json',
@@ -97,3 +98,31 @@ class TestLanguage(TestCase):
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         self.assertEqual(num_rows, 9)
+
+
+class TestBenchmarkShortname:
+    fixtures = ALL_FIXTURES
+
+    def test_no_lab_id(self):
+        benchmark_identifier = "Kar2019-ost"
+        shortname = _get_benchmark_shortname(benchmark_identifier)
+        expected_shortname = "Kar2019-ost"
+        self.assertEqual(shortname, expected_shortname)
+
+    def test_lab_id(self):
+        benchmark_identifier = "fei-fei.Deng2009-top1"
+        shortname = _get_benchmark_shortname(benchmark_identifier)
+        expected_shortname = "Deng2009-top1"
+        self.assertEqual(shortname, expected_shortname)
+
+    def test_no_lab_id_with_version(self):
+        benchmark_identifier = "MajajHong2015.V4-pls"
+        shortname = _get_benchmark_shortname(benchmark_identifier)
+        expected_shortname = "MajajHong2015.V4-pls"
+        self.assertEqual(shortname, expected_shortname)
+
+    def test_lab_id_with_version(self):
+        benchmark_identifier = "dicarlo.MajajHong2015.V4-pls"
+        shortname = _get_benchmark_shortname(benchmark_identifier)
+        expected_shortname = "MajajHong2015.V4-pls"
+        self.assertEqual(shortname, expected_shortname)
