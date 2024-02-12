@@ -6,20 +6,12 @@
 {% include 'benchmarks/components/nav-bar.html' %}
 <div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
     <div class="column is-half has-text-centered-mobile">
-        <div class="container login-left">
+        <div class="container login-left vision_submit">
             <h1 style="font-size: 2em;">Submission System, {{ formatted }} </h1>
             <br>
-            <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can be:</h1>
-            <br>
-
-            <ol style="margin-left: 0; padding-left: 1.25em;">
-                <li>A {{ domain }} model</li>
-                <li>A {{ domain }} benchmark</li>
-                <li>A {{ domain }} dataset</li>
-                <li>A {{ domain }} metric</li>
-            </ol>
-            <br>
-            <p>
+            <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can either be a {{ domain }} model, benchmark, dataset,
+            or metric. </h1>
+            <p class="benefits_info is-size-5-mobile shorter submission">
                 You may submit either a new plugin or a revision for a plugin that you have already submitted.
                 (You must be the original submitter of a plugin in order to submit a revision).
                 <br>
@@ -28,7 +20,7 @@
             </p>
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <br>
+
                 {% for field in form %}
                     <p class="special">
                         <br>
