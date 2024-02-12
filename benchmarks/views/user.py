@@ -364,24 +364,15 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     auth = (auth['user'], auth['password'])
 
     # language has a different URL building system than vision
-    if domain == "vision":
-        job_name = "run_benchmarks"
-        benchmark_string = ' '.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.email}" \
-                      f"&benchmarks={benchmark_string}"
-        _logger.debug(f"request_url: {request_url}")
-    else:
-        job_name = "score_plugins"
-        benchmark_string = '%20'.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?token=trigger2scoreAmodel" \
-                      f"&user_id={request.user.id}" \
-                      f"&new_benchmarks={benchmark_string}" \
-                      f"&new_models={model_name}" \
-                      f"&specified_only=True"
-        _logger.debug(f"request_url: {request_url}")
+    job_name = "score_plugins"
+    benchmark_string = '%20'.join(benchmarks)
+    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                  f"?token=trigger2scoreAmodel" \
+                  f"&user_id={request.user.id}" \
+                  f"&new_benchmarks={benchmark_string}" \
+                  f"&new_models={model_name}" \
+                  f"&specified_only=True"
+    _logger.debug(f"request_url: {request_url}")
 
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
