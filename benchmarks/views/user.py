@@ -343,7 +343,8 @@ def extract_identifiers(zip_ref):
                 with zip_ref.open(file_info) as file:
                     # extract identifier pattern matches
                     for line in TextIOWrapper(file, encoding='utf-8'):
-                        if pattern := registry_patterns.get(plugin):
+                        pattern = registry_patterns.get(plugin)
+                        if pattern:
                             matches = pattern.findall(line)
                             identifiers[plugin].update(matches)
                 break
