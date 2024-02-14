@@ -251,7 +251,7 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
     # check if file is above 50MB. If so reject and ask users to contact Brain-Score team
     file_size_mb = file.size / (1024 * 1024)  # Convert bytes to megabytes
     if file_size_mb > 50:
-        return False, "File size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
+        return False, "Your zip file size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
                       "If so, please contact the Brain-Score team and we can assist you in hosting your model " \
                       "weights elsewhere."
 
