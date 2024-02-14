@@ -25,7 +25,6 @@ non_domain_urls = [
         path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
         path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
         path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
-        path('sponsors', user.Sponsors.as_view(), name='sponsors'),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),

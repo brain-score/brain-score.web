@@ -22,6 +22,7 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 _logger = logging.getLogger(__name__)
 
@@ -124,6 +125,7 @@ class Login(View):
 class LandingPage(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
+
 
 class Logout(View):
     domain = None
@@ -237,7 +239,7 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
     return True, None  # Passes all checks, then the submission is original -> good to go
 
 
-def validate_zip(file: str) -> Tuple[bool, str]:
+def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
     """
     Validates the structure of a zip file. Checks for the existence of required plugins
     and their instances, and verifies that each instance contains specific files.
@@ -245,6 +247,14 @@ def validate_zip(file: str) -> Tuple[bool, str]:
     :param file: Path to the zip file.
     :return: Tuple containing a boolean for success and an error message if any.
     """
+
+    # check if file is above 50MB. If so reject and ask users to contact Brain-Score team
+    file_size_mb = file.size / (1024 * 1024)  # Convert bytes to megabytes
+    if file_size_mb > 50:
+        return False, "File size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
+                      "If so, please contact the Brain-Score team and we can assist you in hosting your model " \
+                      "weights elsewhere."
+
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
 
