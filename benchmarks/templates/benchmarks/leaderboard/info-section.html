@@ -2,8 +2,9 @@
   <h3 class="title">How to Interpret</h3>
   <div class="content">
     <p class="benefits_info is-size-5-mobile">
-      The leaderboard is the heart of Brain-Score. It displays scores, all ranging from 0-1, on every benchmark available.
-      Benchmarks are arranged hierarchically, with scores for each child benchmark averaged together to create the overall score for the parent.
+      The leaderboard is the heart of Brain-Score. It displays scores, all ranging from 0-1 (where 1 indicates closest
+      alignment between model and collected data), on every benchmark available. Benchmarks are arranged hierarchically,
+      with scores for each child benchmark averaged together to create the overall score for the parent.
     </p>
   </div>
 </div>
@@ -14,7 +15,7 @@
     <p class="benefits_info is-size-5-mobile">
       If you would like to submit your own model to Brain-Score, we highly recommend you complete our tutorial series
       <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial">here</a>. It covers how
-      to score a model on a single benchmark locally, as well as how to submit both predefined models and custom ones as well.
+      to score a model on a single benchmark locally, walkthroughs of model submission packages, and more.
     </p>
   </div>
 <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial"><button class="button button-primary">Tutorials</button></a>

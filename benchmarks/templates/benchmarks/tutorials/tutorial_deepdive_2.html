@@ -63,10 +63,10 @@
 7       from brainscore_vision.model_helpers.brain_transformation import ModelCommitment
 8
 9
-10      # This is an example implementation for submitting custom model named my_custom_model
+10      # This is an example implementation for submitting a custom model named my_custom_model
 11
-12      # Attention: It is important, that the wrapper identifier is unique per model!
-13      # The results will otherwise be the same due to brain-scores internal result caching mechanism.
+12      # Attention: It is important that the wrapper identifier is unique per model!
+13      # You will be unable to submit a model with the same identifier as an existing model.
 14      # Please load your pytorch model for usage in CPU. There won't be GPUs available for scoring your model.
 15      # If the model requires a GPU, contact the brain-score team directly.
 16
@@ -157,7 +157,7 @@
                 which covers how to submit a plugin via a Github Pull Request (PR).
             <p class="benefits_info is-size-5-mobile is-italic">
                 Note: As with Deep Dive 1, please do not submit the model that you prepare in this tutorial. This guide
-                if for illustration purposes only.
+                is for illustration purposes only.
             </p>
         </div>
          <div class="column is-one-half">

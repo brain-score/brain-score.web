@@ -27,7 +27,7 @@
                 to reach out.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                So, whether you just want to stay on top of news and events or you're looking to roll up your sleeves and
+                Whether you just want to stay on top of news and events or you're looking to roll up your sleeves and
                 contribute to our GitHub repositories, there are many ways to participate in the active and growing Brain-Score community.
             </p>
         </div>
@@ -47,7 +47,7 @@
                         {% if request.GET.join_slack %}
                             <br/>
                             <p class="benefits_info is-size-5-mobile">
-                                <b>Thanks for joining!</b>
+                                <b>Thanks for joining! You should receive an invitation in the next 24 hours.</b>
                             </p>
                         {% else %}
                             <form action="{% url 'join_slack' %}" method="post" class="join-slack-form">
@@ -68,7 +68,7 @@
                         <h3 class="benefits_heading is-size-3-mobile">Join Our Mailing List</h3>
                         <p class="benefits_info is-size-5-mobile">
                             Be the first to know about new features and keep up with news and events by joining our mailing list.
-                            You can opt out anytme.
+                            You can opt out anytime.
                         </p>
                         {% if request.GET.join_mailing_list %}
                             <br/>
@@ -94,7 +94,7 @@
                         <h3 class="benefits_heading is-size-3-mobile">GitHub</h3>
                         <p class="benefits_info is-size-5-mobile">
                             Want to jump right in? Brain-Score's codebase is entirely open source and we welcome user contributions.
-                            Feel free to open an Issue if you find an issue, or to request a new feature.
+                            Feel free to open an Issue to report a bug or request a new feature.
                         </p>
                         <a href="https://github.com/brain-score" target="_blank" rel="noopener noreferrer"><button type="button" class="button new_design tutorial benefit_button is-size-7
                         is-size-6-widescreen" >Go to GitHub</button></a>
