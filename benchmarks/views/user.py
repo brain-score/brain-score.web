@@ -349,9 +349,10 @@ def extract_identifiers(zip_ref):
                 with zip_ref.open(file_info) as file:
                     # extract identifier pattern matches
                     for line in TextIOWrapper(file, encoding='utf-8'):
+                        line_code = line.split('#', 1)[0]  # ignore both inline and own line comments
                         pattern = registry_patterns.get(plugin)
                         if pattern:
-                            matches = pattern.findall(line)
+                            matches = pattern.findall(line_code)
                             identifiers[plugin].update(matches)
                 break
 
