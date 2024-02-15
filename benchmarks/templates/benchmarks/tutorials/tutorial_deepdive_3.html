@@ -1,0 +1,41 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Deep Dive 3</h1>
+<p>Submitting a Plugin via Github Pull Request </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="tutorial_dd3" src="{% static "/benchmarks/img/tutorials/deep_dive_3_1.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Custom Models</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Brain-Score also supports the submission of plugins via a Github Pull Request (PR).
+                For a complete description of what the required files are, as well as what to include in
+                each, please refer to <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_3">Deep Dive 1</a>.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                To submit via PR, simply open a Pull Request with your submission on the appropriate domain's Github
+                repository. If you submit via PR, one of the members of the Brain-Score team
+                will review it and either merge it or suggest any needed fixes. Once this PR is merged,
+                it will be scored, and you will get an email back with scores just like you would for a
+                website submission.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

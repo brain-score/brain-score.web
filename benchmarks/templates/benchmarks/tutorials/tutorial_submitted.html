@@ -10,18 +10,15 @@
             <section id="success" class="container center">
                 <article class="message">
                     <div class="message-header">
-                        <p>Error:  {{ identifier }} already exists. </p>
+                        <p>Error: Submitted Tutorial Model </p>
                     </div>
                     <div class="message-body">
-                       There already is a {{ plugin }} plugin '{{ identifier }}' in the Brain-Score system.
-                        As you are not the original submitter of this plugin, you do not have permission to modify it.
+                        It looks like you have tried to submit the model from our tutorial.
+                        Please do not upload tutorial plugins, as they will get merged into our code base and cause
+                        duplicate entries.
                         <br>
                         <br>
-                        Brain-Score does not allow plugins with duplicate identifiers. Please resubmit your {{ plugin }} with
-                        a different identifier.
-                        <br>
-                        <br>
-                        To resubmit, click <a href="https://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
+                        To go back to your profile, click <a href="http://{{ request.get_host }}/profile/{{ domain }}">here</a>.
                     </div>
                 </article>
             </section>
