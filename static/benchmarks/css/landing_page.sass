@@ -231,6 +231,76 @@ button.simple_button
 .submission.example_invalid
   width: 200%
 
+// announcement pop up styling:
+#popup-notification
+  display: none
+  opacity: 0
+  transition: opacity 0.5s ease-in-out
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  display: flex
+  justify-content: center
+  align-items: center
+  &.is-active
+    display: flex
+    opacity: 1
+
+.modal-background
+  position: absolute
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  background-color: rgba(10, 10, 10, 0.65)
+
+.modal-content
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%)
+  background: white
+  border-radius: 8px
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2)
+  padding: 20px
+  width: 700px
+  min-height: 300px
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: center
+
+.box_popup
+  box-shadow: none
+  width: 100%
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: center
+
+.modal-close
+  position: absolute
+  top: 10px
+  right: 10px
+  background: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+  border: none
+  cursor: pointer
+  width: 30px
+  height: 30px
+  border-radius: 15px
+  display: flex
+  justify-content: center
+  align-items: center
+
+
+body.blur-active
+  overflow: hidden
+  > :not(#popup-notification)
+    filter: blur(5px)
+
+
 
 
 //mobile styling (below 768px)
