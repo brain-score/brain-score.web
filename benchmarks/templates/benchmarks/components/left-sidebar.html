@@ -20,3 +20,10 @@
 	<img class="menu-icon" src="{% static "/benchmarks/img/community_icon.png" %}" alt="Brain-Score Logo">
 	<span>Community</span>
 </a>
+<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">
+	<img class="menu-icon" src="{% static "/benchmarks/img/faq.png" %}" alt="Brain-Score Logo">
+	<span>FAQ</span>
+</a>
+
+<!--FAQ icon credit:-->
+<!--FAQ Icon Source credits to: <a href="https://www.flaticon.com/free-icons/help" title="help icons">Help icons created by cahiwak - Flaticon</a>-->
