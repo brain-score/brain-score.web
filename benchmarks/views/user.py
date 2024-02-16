@@ -148,6 +148,12 @@ class Tutorial(View):
         return render(request, f'benchmarks/tutorials/tutorial{self.tutorial_type}.html')
 
 
+class ReleaseNotes(View):
+
+    def get(self, request):
+        return render(request, f'benchmarks/release_notes.html')
+
+
 class Upload(View):
     domain = None
 
