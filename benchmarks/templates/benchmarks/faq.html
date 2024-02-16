@@ -1,0 +1,55 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Frequently Asked Questions</h1>
+<p>Explore answers to the Brain-Score communities common queries.</p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Each Div is a question itself:-->
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">1) What is Brain-Score? </h3>
+        <p class="benefits_info is-size-5-mobile shorter">
+            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
+            but just change all occurrences of vision to language, i.e:
+            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
+            Next, simply call the language equivalent to the above vision command, which would be:
+        </p>
+        <pre class="modified_1"><code >
+python brainscore_language score --model_identifier='distilgpt2' --benchmark_identifier='Futrell2018-pearsonr'
+        </code></pre>
+
+    <p class="benefits_info is-size-5-mobile shorter">
+        Where, in this case, we are calling the <span class="special_format">brainscore-language</span> library to score the
+        language model <span class="special_format">distilgpt2</span>
+        on the language benchmark <span class="special_format">Futrell2018-pearsonr</span>.
+    </p>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">2) What does a score of 1.0 mean?</h3>
+        <p class="benefits_info is-size-5-mobile shorter">
+            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
+            but just change all occurrences of vision to language, i.e:
+            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
+            Next, simply call the language equivalent to the above vision command, which would be:
+        </p>
+        <pre class="modified_1"><code >
+python brainscore_language score --model_identifier='distilgpt2' --benchmark_identifier='Futrell2018-pearsonr'
+        </code></pre>
+
+    <p class="benefits_info is-size-5-mobile shorter">
+        Where, in this case, we are calling the <span class="special_format">brainscore-language</span> library to score the
+        language model <span class="special_format">distilgpt2</span>
+        on the language benchmark <span class="special_format">Futrell2018-pearsonr</span>.
+    </p>
+</div>
+
+
+{% endblock %}
