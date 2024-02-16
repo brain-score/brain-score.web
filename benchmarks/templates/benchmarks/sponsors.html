@@ -1,0 +1,15 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Thank you to our sponsors</h1>
+{% endblock %}
+
+{% block content %}
+<div class="box leaderboard-table-component full" style="display: flex; justify-content: center; align-items: center; height: 100%;">
+    <div class="columns is-flex-direction-column is-justify-content-center is-align-items-center">
+        <img class="sponsors quest" src="{% static "/benchmarks/img/sponsors/quest.png" %}" />
+        <img class="sponsors epfl" src="{% static "/benchmarks/img/sponsors/epfl.png" %}" />
+    </div>
+</div>
+{% endblock %}
