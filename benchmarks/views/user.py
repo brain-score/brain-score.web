@@ -140,6 +140,11 @@ class Landing(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
 
+class Sponsors(View):
+
+    def get(self, request):
+        return render(request, 'benchmarks/sponsors.html')
+
 
 class Tutorial(View):
     tutorial_type = None
