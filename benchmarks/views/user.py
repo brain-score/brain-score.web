@@ -343,18 +343,16 @@ def extract_identifiers(zip_ref):
 
     for file_info in zip_ref.infolist():
         path_segments = file_info.filename.split('/')
-        for plugin in possible_plugins:
-            # check if __init__.py under any of the possible plugins' directories
-            if plugin in path_segments and '__init__.py' in path_segments[-1]:
-                with zip_ref.open(file_info) as file:
-                    # extract identifier pattern matches
-                    for line in TextIOWrapper(file, encoding='utf-8'):
-                        line_code = line.split('#', 1)[0]  # ignore both inline and own line comments
-                        pattern = registry_patterns.get(plugin)
-                        if pattern:
-                            matches = pattern.findall(line_code)
-                            identifiers[plugin].update(matches)
-                break
+        # ensure the path has 4 segments [zip root, plugin, plugin_name, __init__.py]
+        if len(path_segments) == 4 and path_segments[1] in possible_plugins and path_segments[-1] == '__init__.py':
+            plugin = path_segments[1]
+            with zip_ref.open(file_info) as file:
+                # extract identifier pattern matches
+                for line in TextIOWrapper(file, encoding='utf-8'):
+                    line_code = line.split('#', 1)[0].strip()
+                    if pattern := registry_patterns.get(plugin):
+                        matches = pattern.findall(line_code)
+                        identifiers[plugin].update(matches)
 
     return identifiers
 
