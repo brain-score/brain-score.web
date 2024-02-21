@@ -215,7 +215,7 @@ class Upload(View):
         return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
 
-def is_submission_original(file, submitter):
+def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, List[str]]]:
     # add metrics and data eventually
     plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkType}
 
