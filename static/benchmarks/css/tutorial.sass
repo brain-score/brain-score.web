@@ -1,0 +1,114 @@
+// Variables
+$bg-color: #f4f4f4
+$font-color: #666
+$font-family-default: monospace
+$border-color-light: #ddd
+$primary-border-color: #47B7DE
+$font-size-default: 0.9em
+
+// Mixins
+@mixin border-style($leftColor)
+  border: 1px solid $border-color-light
+  border-left: 3px solid $leftColor
+
+// Base styles for main page images
+.tutorial_main
+  width: 85%
+  padding-left: 15%
+  padding-top: 15%
+
+// Base styles for quickstart images
+.quickstart_image
+  padding: 10%
+  width: 90%
+  height: auto
+
+  &.alt
+    padding: 1%
+    margin-top: 5%
+    width: 100%
+
+
+// Base styles for deep dive images
+.tutorial_dd1_1
+  margin-top: -7%
+  width: 90%
+  padding: 10%
+
+
+// Text content styling
+.tutorial_text
+  margin-right: 5%
+
+// Button styling within tutorial context
+.button-primary
+  &.tutorial
+    margin: 5% 5% 5% 0 // Consolidated margin properties
+
+// Preformatted text styling
+pre
+  @include border-style($primary-border-color)
+  background-color: $bg-color
+  color: $font-color
+  page-break-inside: avoid
+  font-family: $font-family-default
+  font-size: $font-size-default
+  width: 90%
+  overflow: auto
+  padding: 5%
+  display: block
+  word-wrap: normal
+  line-height: 1.5
+  word-break: normal
+  max-width: 90%
+  margin-top: 14%
+
+  code
+    border-radius: 4px
+    font-family: inherit
+
+  &.modified_1
+    margin: 1% 0
+    padding: 1%
+
+// Special formatting for inline text
+span.special_format
+  background-color: $bg-color
+  color: $font-color
+  font-family: $font-family-default
+  font-size: $font-size-default
+  display: inline-block
+
+
+// Additional class for benefits_info
+.benefits_info
+  &.shorter
+    width: 90%
+
+  &.top_adjust
+    margin-top: 5%
+
+  &.submission
+    margin-top: 0
+    margin-bottom: -5%
+
+.submission.example
+  width: 75%
+  height: auto
+  margin-top: 4%
+  margin-bottom: 4%
+
+.tutorial_dd1_2
+  margin-top: 5%
+
+.tutorial_dd2_2
+  width: 85%
+  height: auto
+  margin-left: 5%
+  margin-top: 25%
+
+.tutorial_dd3
+  width: 80%
+  height: auto
+  margin-top: 5%
+

@@ -1,64 +1,107 @@
-{% extends 'benchmarks/base.html' %}
+{% extends "benchmarks/components/app-view.html" %}
 {% load static %}
-{% load compress %}
 
-{% block main %}
-{% include 'benchmarks/components/nav-bar.html' %}
+{% block banner %}
+<h1>Community</h1>
+<p>Join the growing group of scientists, engineers, and researchers who are using and developing Brain-Score.</p>
+{% endblock %}
 
-<div class="container my_container landing">
-    <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">Get involved!</h3>
-                    Whether you just want to stay on top of news and events or you're looking to roll up your sleeves and contribute to our GitHub repositories, there are many ways to participate in the active and growing Brain-Score community.
+
+{% block content %}
+
+<div class="box leaderboard-table-component full">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="collab_graphic_image_2"  src="{% static "/benchmarks/img/collaboration.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Get Involved!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Brain-Score started initially out of a research lab in Cambridge, MA in 2017, and since has grown to incorporate
+                hundreds of users across dozens of institutions.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                We also have an active support and development team that is dedicated to making Brain-Score a seamless
+                and fun experience. We constantly try to get community feedback on what is important, quality of life changes, and
+                where the platform should head. If you have thoughts about any of these points, please do not hesitate
+                to reach out.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                Whether you just want to stay on top of news and events or you're looking to roll up your sleeves and
+                contribute to our GitHub repositories, there are many ways to participate in the active and growing Brain-Score community.
+            </p>
+        </div>
+    </div>
+</div>
+<div class="box leaderboard-table-component full">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-third">
+            <div class="box">
+                <div class="content">
+                    <div class="column has-text-centered">
+                        <h3 class="benefits_heading is-size-3-mobile">Join Our Slack!</h3>
+                        <p class="benefits_info is-size-5-mobile">
+                            Join the conversation in the Brain-Score Slack workspace. Whether you're interested in planning
+                            features or just want to hang out, you're invited.
+                        </p>
+                        {% if request.GET.join_slack %}
+                            <br/>
+                            <p class="benefits_info is-size-5-mobile">
+                                <b>Thanks for joining! You should receive an invitation in the next 24 hours.</b>
+                            </p>
+                        {% else %}
+                            <form action="{% url 'join_slack' %}" method="post" class="join-slack-form">
+                                {% csrf_token %}
+                                <input class="input user-email" type="email" name="email" placeholder="email">
+                                <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
+                            is-size-6-widescreen" >Join Slack</button>
+                            </form>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <div class="columns">
-                <div class="column has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">Mailing list signup</h3>
-                    <p>Be the first to know about new features and keep up with news and events by joining our mailing list.
-                    You can opt out anytme.</p>
-                    {% if request.GET.join_mailing_list %}
-                        <br/>
-                        <p><b>Thanks for joining!</b></p>
-                    {%else%}
-                        <form action="{% url 'join_mailing_list' %}" method="post" class="join-mailing-form">
-                            {% csrf_token %}
-                            <input class="input user-email" type="email" name="email" placeholder="email">
-                            <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
-                        is-size-6-widescreen" >Sign me up</button>
-                        </form>
-                    {% endif %}
-                </div>
-                <div class="column has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">Join our Slack</h3>
-                    <p>Join the conversation in the Brain-Score Slack workspace. Whether you're interested in planning features or just want to hang out, you're invited.</p>
-                    {% if request.GET.join_slack %}
-                        <br/>
-                        <p><b>Thanks for joining!</b></p>
-                    {%else%}
-                        <form action="{% url 'join_slack' %}" method="post" class="join-slack-form">
-                            {% csrf_token %}
-                            <input class="input user-email" type="email" name="email" placeholder="email">
-                            <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
-                        is-size-6-widescreen" >Join Slack</button>
-                        </form>
-                    {% endif %}
-                </div>
-                <div class="column has-text-centered">
-                    <h3 class="benefits_heading is-size-3-mobile">GitHub</h3>
-                    <p>Want to jump right in? Brain-Score's codebase is entirely open source and we welcome user contributions.</p>
-                    <a href="https://github.com/brain-score" target="_blank" rel="noopener noreferrer"><button type="button" class="button new_design tutorial benefit_button is-size-7
-                     is-size-6-widescreen" >Go to GitHub</button></a>
+        <div class="column is-one-third">
+            <div class="box">
+                <div class="content">
+                    <div class="column has-text-centered">
+                        <h3 class="benefits_heading is-size-3-mobile">Join Our Mailing List</h3>
+                        <p class="benefits_info is-size-5-mobile">
+                            Be the first to know about new features and keep up with news and events by joining our mailing list.
+                            You can opt out anytime.
+                        </p>
+                        {% if request.GET.join_mailing_list %}
+                            <br/>
+                            <p class="benefits_info is-size-5-mobile">
+                                <b>Thanks for joining!</b>
+                            </p>
+                        {%else%}
+                            <form action="{% url 'join_mailing_list' %}" method="post" class="join-mailing-form">
+                                {% csrf_token %}
+                                <input class="input user-email" type="email" name="email" placeholder="email">
+                                <button type="submit" class="submit button new_design tutorial benefit_button is-size-7
+                                is-size-6-widescreen" >Sign me up</button>
+                            </form>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+        <div class="column is-one-third">
+            <div class="box">
+                <div class="content">
+                    <div class="column has-text-centered">
+                        <h3 class="benefits_heading is-size-3-mobile">GitHub</h3>
+                        <p class="benefits_info is-size-5-mobile">
+                            Want to jump right in? Brain-Score's codebase is entirely open source and we welcome user contributions.
+                            Feel free to open an Issue to report a bug or request a new feature.
+                        </p>
+                        <a href="https://github.com/brain-score" target="_blank" rel="noopener noreferrer"><button type="button" class="button new_design tutorial benefit_button is-size-7
+                        is-size-6-widescreen" >Go to GitHub</button></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

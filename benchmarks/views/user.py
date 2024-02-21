@@ -20,10 +20,11 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 
-from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadFileFormLanguage
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 _logger = logging.getLogger(__name__)
 
@@ -127,6 +128,7 @@ class LandingPage(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
 
+
 class Logout(View):
     domain = None
 
@@ -140,12 +142,17 @@ class Landing(View):
     def get(self, request):
         return render(request, 'benchmarks/landing_page.html')
 
+class Sponsors(View):
+
+    def get(self, request):
+        return render(request, 'benchmarks/sponsors.html')
+
 
 class Tutorial(View):
     tutorial_type = None
 
     def get(self, request):
-        return render(request, f'benchmarks/tutorial{self.tutorial_type}.html')
+        return render(request, f'benchmarks/tutorials/tutorial{self.tutorial_type}.html')
 
 
 class Upload(View):
@@ -155,18 +162,12 @@ class Upload(View):
         assert self.domain is not None
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
-        if self.domain == "language":
-            form = UploadFileFormLanguage()
-        else:
-            form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain})
+        form = UploadFileForm()
+        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
     def post(self, request):
         assert self.domain is not None
-        if self.domain == "language":
-            form = UploadFileFormLanguage(request.POST, request.FILES)
-        else:
-            form = UploadFileForm(request.POST, request.FILES)
+        form = UploadFileForm(request.POST, request.FILES)
         if not form.is_valid():
             return HttpResponse("Form is invalid", status=400)
 
@@ -180,7 +181,11 @@ class Upload(View):
             return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
         if not submission_is_original:
             plugin, identifier = submission_data
-            return render(request, 'benchmarks/already_submitted.html',
+
+            # ensure the user is not accidentally submitting the tutorial model
+            page = "tutorial" if identifier == "resnet50_tutorial" else "already"
+
+            return render(request, f'benchmarks/{page}_submitted.html',
                           {'plugin': plugin, 'identifier': identifier, "domain": self.domain})
 
         json_info = {
@@ -231,13 +236,17 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
             plugin_directory_names = plugin_has_instances(namelist, plugin)[1]
             db_table = plugin_db_mapping[plugin]
 
-            # Determine the field name based on the plugin type
+            # Determine the lookup field name based on the plugin type
             field_name = 'name' if plugin == "models" else 'identifier'
 
             # plugin_name corresponds to the directory name, plugin_identifier corresponds to actual identifiers from inits
             all_plugin_ids = plugin_directory_names + list(plugin_identifiers[plugin])
             for plugin_name_or_identifier in all_plugin_ids:
                 query_filter = {field_name: plugin_name_or_identifier}
+                
+                # check for tutorial
+                if "resnet50_tutorial" in plugin_name_or_identifier:
+                    return False, [plugin, plugin_name_or_identifier]
 
                 # check if an entry with the given identifier exists
                 if db_table.objects.filter(**query_filter).exists():
@@ -247,12 +256,27 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
                     # check to see if the submitter is the owner (or superuser)
                     if owner_id != submitter.id and not submitter.is_superuser:
                         return False, [plugin, plugin_name_or_identifier]
-                    # else, versioning will be input here
+                    # else, versioning will occur here
                         
     return True, []  # Passes all checks, then the submission is original -> good to go
 
 
-def validate_zip(file):
+def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
+    """
+    Validates the structure of a zip file. Checks for the existence of required plugins
+    and their instances, and verifies that each instance contains specific files.
+
+    :param file: Path to the zip file.
+    :return: Tuple containing a boolean for success and an error message if any.
+    """
+
+    # check if file is above 50MB. If so reject and ask users to contact Brain-Score team
+    file_size_mb = file.size / (1024 * 1024)  # Convert bytes to megabytes
+    if file_size_mb > 50:
+        return False, "Your zip file size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
+                      "If so, please contact the Brain-Score team and we can assist you in hosting your model " \
+                      "weights elsewhere."
+
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
 
@@ -263,69 +287,92 @@ def validate_zip(file):
                 
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
-        if not has_plugin:
-            return False, f"\nPlease make sure your {root.filename} folder contains at least one of the " \
-                          f"following folders:" \
-                          "[metrics, data, benchmarks, models]"
-        instances = []
-        files = []
-        for plugin in submitted_plugins:
-            has_instance, submitted_instances = plugin_has_instances(namelist, plugin)
-            instances.append(submitted_instances)
-        plugin_instance_dict = dict(zip(submitted_plugins, instances))
+        if not has_plugin:  # checks for at least one plugin
+            return False, (f"\nPlease make sure your {root.filename} folder contains at least one of the "
+                           "following valid plugin folders: [models, benchmarks, data, metrics].")
 
-        # make sure there is at least one plugin that is not empty:
-        if all(x == [] for x in plugin_instance_dict.values()):
-
-            if len(list(plugin_instance_dict.keys())) == 1:
-                return False, f"\nYour {list(plugin_instance_dict.keys())} folder is empty."
+        plugin_instance_dict = {plugin: plugin_has_instances(namelist, plugin)[1] for plugin in submitted_plugins}
+        if all(not instances for instances in plugin_instance_dict.values()):
+            folder_names = list(plugin_instance_dict.keys())
+            if len(folder_names) == 1:
+                return False, f"\nYour {folder_names[0]} folder is empty."
             else:
-                return False, f"\nYour {list(plugin_instance_dict.keys())} folders are empty."
+                return False, f"\nYour {', '.join(folder_names)} folders are empty."
 
-        for instance in plugin_instance_dict.values():
-            if len(instance) < 1:
-                pass
-            else:
-                has_files, submitted_files, broken_instance = instance_has_files(namelist, instance)
+        for instances in plugin_instance_dict.values():
+            for instance in instances:
+                has_files, _, broken_instance = instance_has_files(namelist, [instance])
                 if not has_files:
-                    return False, f"\nYour {broken_instance} folder must contain an __init__.py and a test.py folder."
-                files.append(submitted_files)
+                    return False, f"\nYour {broken_instance} folder must contain both required Python files:" \
+                                  f" __init__.py and test.py."
+
         return True, ""
 
 
-# checks that there is >= 1 plugin
-def plugins_exist(namelist):
-    acceptable_plugins = ["models", "benchmarks", "data", "metrics"]
-    plugins = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 2]
-    plugins_list = [plugin.split("/")[1].lower() for plugin in plugins]
-    if len(list(set(plugins_list) & set(acceptable_plugins))) >= 1:
-        return True, list(set(plugins_list) & set(acceptable_plugins))
-    else:
-        return False, []
+def plugins_exist(namelist: List[zipfile.ZipInfo]) -> Tuple[bool, List[str]]:
+    """
+    Checks if at least one acceptable plugin exists in the zip file.
+
+    :param namelist: List of ZipInfo objects from the zip file.
+    :return: Tuple of boolean indicating existence and list of found plugins.
+    """
+    acceptable_plugins = {"models", "benchmarks", "data", "metrics"}
+    plugins = {file.filename.split("/")[1].lower() for file in namelist if _is_plugin_path(file.filename)}
+    valid_plugins = list(plugins & acceptable_plugins)
+    return bool(valid_plugins), valid_plugins
 
 
-# makes sure every plugin has an associated instance
-def plugin_has_instances(namelist, plugin):
-    instances = [file.filename for file in namelist if file.filename.endswith("/") and file.filename.count("/") == 3]
-    instances_list = [file_path.split("/")[2] for file_path in instances if file_path.split("/")[1] == plugin]
+def plugin_has_instances(namelist: List[zipfile.ZipInfo], plugin: str) -> Tuple[bool, List[str]]:
+    """
+    Determines if a plugin has associated instances.
 
-    # make sure there is >= 1 instance submitted:
-    if len(instances_list) < 1:
-        return False, []
-    else:
-        return True, instances_list
+    :param namelist: List of ZipInfo objects from the zip file.
+    :param plugin: The plugin name to check.
+    :return: Tuple of boolean indicating existence and list of instances.
+    """
+    # Filter filenames that represent plugin instances
+    instances = [file.filename for file in namelist if file.filename.endswith("/")
+                 and file.filename.count("/") == 3
+                 and file.filename.split("/")[1] == plugin]
+
+    # Extract instance names
+    instances_list = [instance.split("/")[2] for instance in instances]
+    return bool(instances_list), instances_list
 
 
-# makes sure each instance has a __init__.py and setup.py
-def instance_has_files(namelist, instances):
-    files_list = []
+def instance_has_files(namelist: List[zipfile.ZipInfo], instances: List[str]) -> Tuple[bool, List[List[str]], str]:
+    """
+    Checks if each instance has required files (__init__.py and test.py).
+
+    :param namelist: List of ZipInfo objects from the zip file.
+    :param instances: List of instance names to check.
+    :return: Tuple of boolean indicating success, list of files, and the name of a broken instance if any.
+    """
+    required_files = {"__init__.py", "test.py"}
+    all_files = []
+
     for instance in instances:
-        files = [file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance]
-        if len(set(files) & {"__init__.py", "test.py"}) < 2:
+        files = {file.filename.split("/")[-1] for file in namelist if file.filename.split("/")[-2] == instance}
+        all_files.append(list(files))
+        if not required_files.issubset(files):
             return False, [], instance
-        files_list.append(files)
 
-    return True, files_list, None
+    return True, all_files, ''
+
+
+def _is_plugin_path(path: str) -> bool:
+    """
+    Helper function to check if a path corresponds to a plugin.
+    """
+    return path.endswith("/") and path.count("/") == 2
+
+
+def _is_instance_path(path: str, plugin: str) -> bool:
+    """
+    Helper function to check if a path corresponds to an instance of a plugin.
+    """
+    parts = path.split("/")
+    return len(parts) > 2 and parts[1] == plugin and path.endswith("/")
 
 
 def extract_identifiers(zip_ref):
@@ -383,24 +430,15 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     auth = (auth['user'], auth['password'])
 
     # language has a different URL building system than vision
-    if domain == "vision":
-        job_name = "run_benchmarks"
-        benchmark_string = ' '.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?TOKEN=trigger2scoreAmodel" \
-                      f"&email={request.user.email}" \
-                      f"&benchmarks={benchmark_string}"
-        _logger.debug(f"request_url: {request_url}")
-    else:
-        job_name = "score_plugins"
-        benchmark_string = '%20'.join(benchmarks)
-        request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                      f"?token=trigger2scoreAmodel" \
-                      f"&user_id={request.user.id}" \
-                      f"&new_benchmarks={benchmark_string}" \
-                      f"&new_models={model_name}" \
-                      f"&specified_only=True"
-        _logger.debug(f"request_url: {request_url}")
+    job_name = "score_plugins"
+    benchmark_string = '%20'.join(benchmarks)
+    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
+                  f"?token=trigger2scoreAmodel" \
+                  f"&user_id={request.user.id}" \
+                  f"&new_benchmarks={benchmark_string}" \
+                  f"&new_models={model_name}" \
+                  f"&specified_only=True"
+    _logger.debug(f"request_url: {request_url}")
 
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
