@@ -239,18 +239,16 @@ def is_submission_original(file, submitter):
             for plugin_name_or_identifier in all_plugin_ids:
                 query_filter = {field_name: plugin_name_or_identifier}
 
-                # Check if an entry with the given identifier exists
+                # check if an entry with the given identifier exists
                 if db_table.objects.filter(**query_filter).exists():
                     owner_obj = db_table.objects.get(**query_filter)
                     owner_id = getattr(owner_obj, 'owner_id', None) or getattr(owner_obj, 'owner').id
 
-                    # Check to see if the submitter is the owner (or superuser)
-                    if owner_id == submitter.id or submitter.is_superuser:
-                        # Khaled versioning here
-                        print(owner_id, submitter)
-                    else:
+                    # check to see if the submitter is the owner (or superuser)
+                    if owner_id != submitter.id and not submitter.is_superuser:
                         return False, [plugin, plugin_name_or_identifier]
-
+                    # else, versioning will be input here
+                        
     return True, []  # Passes all checks, then the submission is original -> good to go
 
 
