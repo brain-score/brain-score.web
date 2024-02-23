@@ -1,29 +1,45 @@
 {% load static %}
+<!--<a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}"><img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo"></a>-->
+<!--<a class="selected" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">-->
+<!--	<img class="menu-icon" src="{% static "/benchmarks/img/leaderboard_icon.png" %}" alt="Brain-Score Logo">-->
+<!--	<span>Leaderboard</span>-->
+<!--</a>-->
+
+{% load static %}
 <a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}"><img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo"></a>
-<a class="selected" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
-	<img class="menu-icon" src="{% static "/benchmarks/img/leaderboard_icon.png" %}" alt="Brain-Score Logo">
-	<span>Leaderboard</span>
-</a>
-<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/compare">
-	<img class="menu-icon" src="{% static "/benchmarks/img/compare_icon.png" %}" alt="Brain-Score Logo">
-	<span>Compare</span>
-</a>
-<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial ">
-	<img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Brain-Score Logo">
-	<span>Tutorials</span>
-</a>
-<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
-	<img class="menu-icon" src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Brain-Score Logo">
-	<span>Profile</span>
-</a>
-<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">
-	<img class="menu-icon" src="{% static "/benchmarks/img/community_icon.png" %}" alt="Brain-Score Logo">
-	<span>Community</span>
-</a>
-<a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">
-	<img class="menu-icon" src="{% static "/benchmarks/img/faq.png" %}" alt="Brain-Score Logo">
-	<span>FAQ</span>
+
+<a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
+    <img class="menu-icon" src="{% static "benchmarks/img/leaderboard_icon.png" %}" alt="Leaderboard Icon">
+    <span>Leaderboard</span>
 </a>
 
+<a class="{% if request.path == '/'|add:domain|add:'/compare/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/compare">
+    <img class="menu-icon" src="{% static "benchmarks/img/compare_icon.png" %}" alt="Compare Icon">
+    <span>Compare</span>
+</a>
+
+{% url 'tutorial' as tutorial_url %}
+<a class="{% if request.path == tutorial_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial">
+    <img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Tutorial Icon">
+    <span>Tutorials</span>
+</a>
+
+{% url 'profile' as profile_url %}
+<a class="{% if request.path == profile_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
+    <img class="menu-icon" src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Profile Icon">
+    <span>Profile</span>
+</a>
+
+{% url 'community' as community_url %}
+<a class="{% if request.path == community_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">
+    <img class="menu-icon" src="{% static "/benchmarks/img/community_icon.png" %}" alt="Community Icon">
+    <span>Community</span>
+</a>
+
+{% url 'faq' as faq_url %}
+<a class="{% if request.path == faq_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">
+    <img class="menu-icon" src="{% static "/benchmarks/img/faq.png" %}" alt="FAQ Icon">
+    <span>FAQ</span>
+</a>
 <!--FAQ icon credit:-->
 <!--FAQ Icon Source credits to: <a href="https://www.flaticon.com/free-icons/help" title="help icons">Help icons created by cahiwak - Flaticon</a>-->
