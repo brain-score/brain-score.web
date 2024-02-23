@@ -24,37 +24,31 @@
             1) What is the purpose of Brain-Score?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            The Brain-Score platform aims to yield strong computational models of the brain and mind. We enable researchers to quickly get a sense of the alignment of their model(s) to currently dozens of neural and behavioral measurements, and provide these models to experimentalists to prototype new experiments and make sense of biological data.
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
             2) What is a benchmark?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            A Benchmark is a set of packaged metrics and data that is used to reproduce an experiment that models can run on. These models use those metrics to generate a
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            3) What is a model?
+            3) What is a metric?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            A metric is a set of neural and behavioral measurements for a given task. This is why it is so important to have it in a Benchmark- we need to know a model performs on a given experiment against biological subjects.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            4) What is a model?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            Specifically, "model" here refers to the BrainModel API, which defines the data structure that all submitted models need to follow. The Benchmarks all adhere to this API and will therefore only be run on models conforming to it.
         </p>
          <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            4) What is a a Brain-Score?
+            5) What is a Brain-Score?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            A Brain-Score is a normalized neural-behavioral scoring from 0.0 to 1.0 based on how closely model performance aligns with the metrics at each benchmark. I.e. the output of a benchmark is a normalized score between 0 and 1 where 0 means the model does not match the measurements at all and 1 means the model matches the measurements at ceiling level (e.g. if the model obtains a score of 0.8 and the data ceiling is also 0.8, the score output by this method should be 1).
         </p>
     </div>
 </div>
@@ -65,104 +59,43 @@
     </button>
     <div class="content is-hidden">
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            5) What am I able to submit?
+            6) What am I able to submit?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            You are able to submit a compressed directory containing an __init__.py, a setup.py file, a model file, and a test.py file. The __init__.py file adds your model to the Brain-Score registry. The tests.py file can remain blank for submission. The other two files are optional, but the setup.py file outlines the requirements that your model has. The model.py file defines the model itself.
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            6) Am I able to keep my submissions private?
+            7) Am I able to keep my submissions private?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            With the Brain-Score 2.0 release, we do now support private submissions!
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            7) My submission doesn't work. Why?
+            8) My submission is not being accepted. Why?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            There are a variety of reasons that your submission is not being accepted. The best starting point is ensuring that the checks on your submission are passing. Then reach out via Slack explaining your problem and someone in our developer community will assist you in passing these checks.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            9) My submission passed. What now?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            Once the accepted submission has been processed, you should be seeing a Brain-Score of your model on the leaderboard now! If you have any further questions, please don't hesitate to reach out to our developer community in Slack.
         </p>
     </div>
 </div>
 <div class="faq_box leaderboard-table-component">
     <button class="toggle-button is-size-3-mobile" aria-expanded="false">
-      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Common problems with scoring and submissions </h3></span>
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Common problems with scoring and submissions</h3></span>
       <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
     </button>
     <div class="content is-hidden">
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            5) What am I able to submit?
+            10) My model's GitHub PR is ready to merge but hasn't been. Who should I reach out to?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
-        </p>
-        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            6) Am I able to keep my submissions private?
-        </p>
-        <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
-        </p>
-        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            7) My submission doesn't work. Why?
-        </p>
-        <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
+            You can either comment on the PR itself or reach out via Slack and someone will respond to assist you!
         </p>
     </div>
 </div>
-<div class="faq_box leaderboard-table-component">
-    <button class="toggle-button is-size-3-mobile" aria-expanded="false">
-      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">I want to contribute to development. How do I get started? </h3></span>
-      <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
-    </button>
-    <div class="content is-hidden">
-        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            5) What am I able to submit?
-        </p>
-        <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
-        </p>
-        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            6) Am I able to keep my submissions private?
-        </p>
-        <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
-        </p>
-        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
-            7) My submission doesn't work. Why?
-        </p>
-        <p class="benefits_info is-size-5-mobile shorter no_top">
-            The process is very similar for scoring a language model. First, install the needed packages in Step 1 above,
-            but just change all occurrences of vision to language, i.e:
-            <span class="special_format"> brainscore_vision</span> becomes <span class="special_format">brainscore_language</span>.
-            Next, simply call the language equivalent to the above vision command, which would be:
-        </p>
-    </div>
-</div>
-
-
 {% endblock %}
