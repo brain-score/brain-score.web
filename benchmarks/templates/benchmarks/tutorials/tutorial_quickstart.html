@@ -75,32 +75,41 @@ python brainscore_vision score --model_identifier='pixels' --benchmark_identifie
         Upon scoring completion, you should get a message like below, indicating what the score is.
     </p>
     <pre class="modified_1"><code >
-
-
-         * update with new format *
-xarray.Score (aggregation: 2)
-array([0.01538053, 0.00571393])
-Coordinates:
-* aggregation  (aggregation) U6 'center' 'error'
+&lt;xarray.Score ()&gt;
+array(0.07637264)
 Attributes:
-raw:                   xarray.Score (aggregation: 2)>\narray([0.10192326...
-ceiling:               xarray.Score (aggregation: 2)>\narray([8.21840601...
-model_identifier:      pixels
-benchmark_identifier:  dicarlo.MajajHong2015.IT-pls
+    error:                 &lt;xarray.Score ()&gt;\narray(0.00548197)
+    raw:                   &lt;xarray.Score ()&gt;\narray(0.22545106)\nAttributes:\...
+    ceiling:               &lt;xarray.DataArray ()&gt;\narray(0.81579938)\nAttribut...
+    model_identifier:      pixels
+    benchmark_identifier:  MajajHong2015public.IT-pls
+    comment:               layers: {'IT': 'pixels'}
+
 
 Process finished with exit code 0
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-                Let’s break down what these numbers mean. First off, your score is <span class="special_format">0.0153</span>, the first number
-                in the first xarray listed, along with the error, which is <span class="special_format">0.00571</span>. Next, you can see two
-                other attributes: <span class="special_format">raw</span>, which represents the unceiled score
-                <span class="special_format">0.1019</span> of your model, and the
-                ceiling <span class="special_format">8.28*10-2</span>, which is the highest score a perfect model is expected to get. Your final score above thus
-                is a simple calculation of <span class="special_format">raw/ceiling</span>.
+        Let’s break down what these numbers mean. First off, your score is <span class="special_format">0.07637264</span>, the first number
+        in the first xarray listed. Next, you can see a few other attributes: <span class="special_format">error</span>, with value
+        <span class="special_format">0.00548197</span>, which represents the error of your model; <span class="special_format">raw</span>
+        with value <span class="special_format">0.22545106</span> which represents the unceiled score that your model achieved on the
+        <span class="special_format">MajajHong2015public.IT-pls</span> benchmark; and <span class="special_format">ceiling</span>, with value <span class="special_format">0.81579938</span>,
+        which is the highest score a perfect model is expected to get.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-                 Please note that compute times may vary; running on a 2021 Macbook Pro M1 Max takes about
-                 10 minutes.
+        In this case, the <span class="special_format">MajajHong2015public.IT-pls</span> benchmark uses the standard
+        <span class="special_format">NeuralBenchmark</span> which ceiling-normalizes with explained variance
+        <span class="special_format">(r(X, Y) / r(Y, Y))^2</span>; see how this is done
+        <a href="https://github.com/brain-score/vision/blob/201482bae3f496cf6d702c956f2c3aef49b788d6/brainscore_vision/benchmark_helpers/neural_common.py#L31">here</a>.
+        This is how the final score is calculated from the <span class="special_format">ceiling</span> and <span class="special_format">raw</span> scores.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        There is also more metadata listed in this score object, such as <span class="special_format">model_identifier</span>,
+        <span class="special_format">benchmark_identifier</span>, and <span class="special_format">comment</span>.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+         Please note that compute times may vary; running on a 2021 Macbook Pro M1 Max takes about
+         10 minutes.
     </p>
 </div>
 <div class="box leaderboard-table-component">
