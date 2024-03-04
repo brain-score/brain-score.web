@@ -100,22 +100,21 @@
 44          model = ModelCommitment(identifier='my_custom_model', activations_model=activations_model,
 45                                  # specify layers to consider
 46                                  layers=['conv1', 'relu1', 'relu2'])
-47          wrapper = PytorchWrapper(identifier='my_custom_model', model=model, preprocessing=preprocessing)
-48          wrapper.image_size = 224
-49          return wrapper
+47          wrapper.image_size = 224
+48          return wrapper
+49
 50
-51
-52      def get_layers(name):
-53          assert name == 'my_custom_model'
-54          return ['conv1', 'relu1', 'relu2']
+51      def get_layers(name):
+52          assert name == 'my_custom_model'
+53          return ['conv1', 'relu1', 'relu2']
+54
 55
-56
-57      def get_bibtex(model_identifier):
-58          return """xx"""
+56      def get_bibtex(model_identifier):
+57          return """xx"""
+58
 59
-60
-61      if __name__ == '__main__':
-62          check_models.check_base_models(__name__)
+60      if __name__ == '__main__':
+61          check_models.check_base_models(__name__)
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
         Lines 1-15 are the standard imports needed for the Brain-Score library, as well as some comments regarding model
@@ -134,7 +133,7 @@
         section for why we need the ModelCommitment.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lastly,  lines 52-54 are where you tell Brain-Score which model layers to include, and lines 57-58 are where you
+        Lastly,  lines 51-53 are where you tell Brain-Score which model layers to include, and lines 56-57 are where you
         would add in your model's <span class="special_format">Bibtex</span>.
     </p>
 </div>

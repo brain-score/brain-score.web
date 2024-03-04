@@ -193,10 +193,10 @@
     <p class="benefits_info is-size-5-mobile shorter">
         Let’s explore this file in more detail: Lines 1 - 9 are standard imports. Lines
         20-21 define the <span class="special_format">get_model_list()</span> function that simply returns the model identifier.
-        Next, lines 24-38 define the <span class="special_format">get_model()</span> function that gets the model itself.
+        Next, lines 24-30 define the <span class="special_format">get_model()</span> function that gets the model itself.
         You can see on line 26 the model itself is being loaded from <span class="special_format">pytorch</span>. If you have a custom
         model that you have created yourself, check out our Custom Model Submission Guide here in
-        Deep Dive 2. Lines 41 - 43 contain the <span class="special_format">get_layers()</span> function, which returns the layers you
+        Deep Dive 2. Lines 33 - 35 contain the <span class="special_format">get_layers()</span> function, which returns the layers you
         are interested in scoring.
     </p>
     <pre class="modified_1"><code>
@@ -225,37 +225,29 @@
 23
 24      def get_model(name):
 25          assert name == 'resnet50'
-26          model = torchvision.models.resnet50(pretrained=False)
-27          download_weights(
-28          bucket='brainscore-vision',
-29          folder_path='models/resnet50-deepdive-2',
-30          filename_version_sha=[('ckpt.pth', 'C722T4BityNPpazdXWiAeu8pGBxKIudb', '0186929df5d04451995d94cd332a3603a00594fe')],
-31          save_directory=Path(__file__).parent)
-32          ckpt_path = os.path.join(os.path.dirname(__file__), 'ckpt.pth')
-33          state_dict = torch.load(ckpt_path, map_location=torch.device('cpu'))
-34          model.load_state_dict(state_dict)
-35          preprocessing = functools.partial(load_preprocess_images, image_size=224)
-36          wrapper = PytorchWrapper(identifier='resnet50', model=model, preprocessing=preprocessing)
-37          wrapper.image_size = 224
-38          return wrapper
-39
+26          model = torchvision.models.resnet50(pretrained=True)
+27          preprocessing = functools.partial(load_preprocess_images, image_size=224)
+28          wrapper = PytorchWrapper(identifier='resnet50', model=model, preprocessing=preprocessing)
+29          wrapper.image_size = 224
+30          return wrapper
+31
+32
+33      def get_layers(name):
+34          assert name == 'resnet50'
+35          return ['conv1','layer1', 'layer2', 'layer3', 'layer4', 'fc']
+36
+37
+38      def get_bibtex(model_identifier):
+39          return """xx"""
 40
-41      def get_layers(name):
-42          assert name == 'resnet50'
-43          return ['conv1','layer1', 'layer2', 'layer3', 'layer4', 'fc']
-44
-45
-46      def get_bibtex(model_identifier):
-47          return """xx"""
-48
-49
-50      if __name__ == '__main__':
-51          check_models.check_base_models(__name__)
+41
+42      if __name__ == '__main__':
+43          check_models.check_base_models(__name__)
 
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 46 and 47 define the Bibtex for the model. You can leave this blank when submitting,
-        but we highly recommend you add a reference. Finally, lines 50 - 51 defines a call to the
+        Lines 38 and 39 define the Bibtex for the model. You can leave this blank when submitting,
+        but we highly recommend you add a reference. Finally, lines 42 - 43 define a call to the
         Brain-Score scoring system to score our model locally on a mock benchmark.
     </p>
 </div>
