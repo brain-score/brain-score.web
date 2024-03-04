@@ -91,7 +91,7 @@ Process finished with exit code 0
     <p class="benefits_info is-size-5-mobile shorter">
         Let’s break down what these numbers mean. First off, your score is <span class="special_format">0.07637264</span>, the first number
         in the first xarray listed. Next, you can see a few other attributes: <span class="special_format">error</span>, with value
-        <span class="special_format">0.00548197</span>, which represents the error of your model; <span class="special_format">raw</span>
+        <span class="special_format">0.00548197</span>, which represents the error of your the score estimate; <span class="special_format">raw</span>
         with value <span class="special_format">0.22545106</span> which represents the unceiled score that your model achieved on the
         <span class="special_format">MajajHong2015public.IT-pls</span> benchmark; and <span class="special_format">ceiling</span>, with value <span class="special_format">0.81579938</span>,
         which is the highest score a perfect model is expected to get.
@@ -100,7 +100,7 @@ Process finished with exit code 0
         In this case, the <span class="special_format">MajajHong2015public.IT-pls</span> benchmark uses the standard
         <span class="special_format">NeuralBenchmark</span> which ceiling-normalizes with explained variance
         <span class="special_format">(r(X, Y) / r(Y, Y))^2</span>; see how this is done
-        <a href="https://github.com/brain-score/vision/blob/201482bae3f496cf6d702c956f2c3aef49b788d6/brainscore_vision/benchmark_helpers/neural_common.py#L31">here</a>.
+        <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/benchmark_helpers/neural_common.py">here</a>.
         This is how the final score is calculated from the <span class="special_format">ceiling</span> and <span class="special_format">raw</span> scores.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
