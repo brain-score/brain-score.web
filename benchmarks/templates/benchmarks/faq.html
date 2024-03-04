@@ -64,7 +64,7 @@
             6) What am I able to submit?
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
-            You are able to submit a compressed directory containing an __init__.py, a setup.py file, a model file, and a test.py file. The __init__.py file adds your model to the Brain-Score registry. The tests.py file can remain blank for submission. The other two files are optional, but the setup.py file outlines the requirements that your model has. The model.py file defines the model itself.
+            You can submit new plugins to Brain-Score. A plugin can be a dataset, a metric, a benchmark, or a model. You can submit plugins directly on the website as a zip file or via a pull request on Github (zip file submissions will automatically be converted into a PR). The plugin directory has to contain at least two files: an __init__.py which adds your data/metric/benchmark/model to the corresponding registry, and a test.py file in which you can define tests to ensure your plugin works as expected. If your plugin requires third-party libraries, you can include a setup.py or a requirements.txt file. You can optionally add more files, e.g. to separate the detailed implementations.
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
             7) Am I able to keep my submissions private?
