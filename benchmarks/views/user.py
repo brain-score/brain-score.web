@@ -257,7 +257,7 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
 
                 # check if an entry with the given identifier exists
                 if db_table.objects.filter(**query_filter).exists():
-                    owner_obj = db_table.objects.get(**query_filter)
+                    owner_obj = db_table.objects.filter(**query_filter).first()
                     owner_id = getattr(owner_obj, 'owner_id', None) or getattr(owner_obj, 'owner').id
 
                     # check to see if the submitter is the owner (or superuser)
