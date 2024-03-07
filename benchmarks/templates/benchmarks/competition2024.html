@@ -1,0 +1,332 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+
+{# site navigation #}
+{% block main %}
+    <nav class="navbar is-fixed-top is-transparent" role="navigation"
+         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="{{ url }}/competition" class="navbar-item">
+                    <img id="navbar-competition-logo" src="/static/benchmarks/img/logo-competition.png"/>
+                </a>
+
+                <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <a class="navbar-item" href="#overview">Overview</a>
+                    <a class="navbar-item" href="#tracks">Tracks</a>
+                    <a class="navbar-item" href="#models">Models</a>
+                    <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+                    <a class="navbar-item" href="#workshop">Workshop</a>
+                    <a class="navbar-item" href="#tutorial">Tutorial</a>
+                    <a class="navbar-item" href="#contact">Contact</a>
+                    <a class="navbar-item" href="#FAQ">FAQ</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="hero competition-hero">
+        <div class="hero-body container">
+            <p class="title">
+                2024 Brain-Score Competition
+            </p>
+        </div>
+    </section>
+
+    {# intro #}
+    <section id="intro" class="section container center">
+        <p>
+            Our ability to recognize objects in the world relies on visual processing along the ventral visual stream, a
+            set of hierarchically-organized cortical areas. Recently, machine-learning researchers and neuroscientists
+            have produced computational models that have achieved moderate success at explaining primate object
+            recognition behavior and the neural representations that support it.
+            <span class="has-text-weight-bold">
+                This second edition of the Brain-Score Competition aims to find benchmarks
+                on which the predictions of our current top models break down.
+            </span>
+        </p>
+        <br/>
+        <p>
+            In 2022, the first Brain-Score Competition lead to new and improved models of primate vision that predicted
+            existing benchmarks reasonably well.
+            In this year's Brain-Score Competition 2024, we will close the loop on testing model predictions
+            by rewarding those <span class="has-text-weight-bold">benchmarks</span>
+            that show where models are the least aligned to the primate visual ventral stream.
+            The Competition is open to the scientific community and we provide an infrastructure to evaluate
+            a variety of models on new behavioral and neural benchmarks in a standardised and unified manner.
+            In addition, we will incentivize benchmark submissions by providing visibility to participants
+            and <a href="#tracks">monetary prizes</a> (details TBA) to the winning benchmarks.
+        </p>
+        <br/>
+        <p>
+            <span class="has-text-weight-bold">
+                <a target="_blank" href="http://www.brain-score.org/profile/vision/">Submissions</a>
+                are open until June 30, 2024</span>.
+            For regular updates related to the competition, please follow
+            <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a> and join our
+            <a target="_blank" href="https://www.brain-score.org/community">community</a>.
+            Good Luck!
+        </p>
+        <br/>
+
+        <figure>
+            <img id="graphical-abstract"
+                 src="{% static "/benchmarks/img/brainscore_benchmarks.png" %}"
+                 alt="Base v. Brain Models">
+            <figcaption>Figure adapted from
+                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
+            </figcaption>
+        </figure>
+    </section>
+
+    {# overview #}
+    <section id="overview" class="section container center">
+        <h3 class="title is-3">Overview</h3>
+
+        <p>
+            Participants should submit their benchmarks through the
+            <a target="_blank" href="http://www.brain-score.org/profile/">Brain-Score platform</a>.
+            Brain-Score currently accepts any benchmark engaging on testing model predictions of
+            core object recognition behavior and neural responses (spike rates) along the ventral visual stream areas.
+            We encourage all submissions of behavioral and neural benchmarks.
+            To facilitate benchmark submission, we provide
+            <a target="_blank" href="https://github.com/brain-score/vision">helper code</a>
+            and
+            <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+            tutorials</a>.
+            You can also use existing datasets or metrics and re-combine them in novel ways.
+            Note that by using the Brain-Score platform, no model knowledge is required --
+            you can treat them like another primate subject.
+        </p>
+        <p>
+            Benchmarks have to use models in their current "operating regime".
+            This means that there are three behavioral tasks (imagenet-labeling, probabilities, odd-one-out),
+            and four brain regions to record from (V1, V2, V4, IT).
+            Until April, we will accept suggestions of other behavioral tasks provided you work with us
+            to make sure the models can engage on them.
+            The stimuli should be static images (e.g. no videos this round).
+            In this round, benchmarks should not test temporal dynamics
+            (but you can still specify a single "time_bin" from the models to record from.)
+        </p>
+    </section>
+
+    {# tracks #}
+    <section id="tracks" class="section container">
+        <h3 class="title is-3">Competition Tracks</h3>
+
+        <div class="columns">
+            <div class="column is-one-third">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Behavioral Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <p>
+                                This track will reward those benchmarks that show-case model short-comings in
+                                predicting behavior (human or non-human primate).
+                                The winning submissions will be the behavioral benchmarks with the lowest model scores,
+                                meaned over all models, i.e. as close as possible to 0.
+                                The benchmarks can target any behavioral task that the models engage on
+                                (labeling, class probabilities, odd-one-out; see the
+                                <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.Task">model interface</a>).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-one-third">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Neural Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <p>
+                                This track will reward those benchmarks that show-case model short-comings in
+                                predicting neural activity across the primate visual ventral stream.
+                                The winning submissions will be the neural benchmarks with the lowest model scores,
+                                meaned over all models, i.e. as close as possible to 0.
+                                The benchmarks can target any region(s) in the visual ventral stream: V1, V2, V4, IT
+                                (see the <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.RecordingTarget">model interface</a>).
+                                Brain recordings can be from human or non-human primates.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-half">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Top-Squash Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <p>
+                                Squash the top 3 models (mean over their scores).
+                                Any benchmark goes, neural/behavioral.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# models #}
+    <section id="models" class="section container">
+        <h3 class="title is-3">Models</h3>
+
+        <div> {# can't use ul inside p #}
+            The Brain-Score Competition 2024 will evaluate submitted benchmarks
+            against 20 models.
+            <br/>
+            The first 10 models are the top-10 models (as of 07. March 2024):
+            <ul>
+                <li>cvt_cvt-w24-384-in22k_finetuned-in1k_4</li>
+                <li>resnext101_32x8d_wsl</li>
+                <li>..todo..</li>
+            </ul>
+            The remaining 10 models are a representative set chosen from all Brain-Score submissions:
+            <ul>
+                <li>hmax</li>
+                <li>CORnet-S</li>
+                <li>..todo..</li>
+                <li>pixels</li>
+            </ul>
+        </div>
+    </section>
+
+    {# leaderboard #}
+    <section id="leaderboard" class="section container tablecenter is-centered">
+        <h3 class="title is-3">Competition Leaderboard</h3>
+        <p>coming soon...</p>
+    </section>
+
+    {# workshop #}
+    <section id="workshop" class="section container">
+        <h3 class="title is-3">Workshop</h3>
+        <p>
+            We will organize a workshop co-occurring with CCN at MIT in Cambridge, MA in early August 2024.
+            This workshop will serve to bring the community interested in testing and building models of brain processing together.
+        </p>
+        <br/>
+        <p>
+            We will invite selected participants in the Brain-Score competition to present their benchmarking work
+            during the workshop.
+        </p>
+    </section>
+
+    {# tutorial #}
+    <section id="tutorial" class="section container">
+        <h3 class="title is-3">Tutorial</h3>
+
+        <p>
+            To enter the competition, create an account on
+            <a target="_blank" href="https://www.brain-score.org/profile">the Brain-Score website</a>
+            and submit a benchmark. You can submit a benchmark by sending in a zip file on the website.
+            For new datasets, you can either host yourself or reach out to us and we will give you access to S3.
+            <span class="has-text-weight-bold">
+            Please check our <a target="_blank" href="https://www.brain-score.org/tutorial/">overview tutorials</a>
+            as well as our <a target="_blank"
+               href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">full length tutorial</a>
+            for detailed information about the submission process</span>.
+        </p>
+        <p>
+            We tried to make our tutorial as clear and easy to follow as possible for anyone with minimum Python
+            knowledge. However, if you have any issues,
+            feel free to <a target="contact">contact us</a>!
+        </p>
+    </section>
+
+    {# contact #}
+    <section id="contact" class="section container">
+        <h3 class="title is-3">Contact</h3>
+
+        <p>
+            We recommend that participants join our
+            <a target="_blank" href="https://www.brain-score.org/community">Slack Workspace</a>
+            and follow <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a>
+            for any questions, updates, benchmark support, and other assistance.
+        </p>
+    </section>
+
+    {# FAQ #}
+    <section id="FAQ" class="section container center">
+        <h3 class="title is-3">FAQ</h3>
+        <ol>
+            <li>
+                <h4>How do I submit a benchmark?</h4>
+                <p> We have a full length
+                    <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+                        tutorial</a> that walks users through the submission process.
+                </p>
+            </li>
+            <li>
+                <h4>Why did you choose these models to score on the benchmark submissions?</h4>
+                <p>
+                    The competition models are a combination of the top-10 models on existing Brain-Score benchmarks,
+                    and 10 additional models that we felt are of interest to the community.
+
+                    Please join the workshop and join the slack channel if you have input on these questions!
+                </p>
+            </li>
+            <li>
+                <h4>Who will get prizes?</h4>
+                <p>
+                    See <a href="#tracks">Tracks</a> for the prize breakdown.
+                </p>
+            </li>
+            <li>
+                <h4>Can I submit a benchmark developed by a third-party?</h4>
+                <p>
+                    If the benchmark (i.e., combination of dataset and metric) are not on brain-score.org,
+                    you can submit a new benchmark.
+                    This includes uploading existing data or implementing an existing metric.
+                    Please make sure you have the rights to use the data, do not upload personal identifying information,
+                    and cite the data collectors or metric developers!
+                </p>
+            </li>
+            <li>
+                <h4>Aren't there obvious ways to cheat?</h4>
+                <p>
+                    Yes. We are relying on the goodwill of submitters.
+                    We will manually check especially potentially winning submissions so that the benchmark is
+                    faithfully attempting to test the alignment of models to the primate visual ventral stream.
+                </p>
+            </li>
+            <li>
+                <h4>Are the models public?</h4>
+                <p>
+                    Yes. You can access all models via the
+                    <a target="_blank" href="https://github.com/brain-score/vision">Brain-Score library</a>'s
+                    `load_model` function.
+                </p>
+            </li>
+            <li>
+                <h4>Can I also submit models?</h4>
+                <p>
+                    Brain-Score always accepts model submissions.
+                    See <a href="https://www.brain-score.org/tutorial/">here</a> and
+                    <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">here</a>
+                    for tutorials.
+                    Note that this competition is aimed at benchmarks though, and there are no prizes for models in this edition.
+                </p>
+            </li>
+        </ol>
+    </section>
+{% endblock %}
