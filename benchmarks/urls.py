@@ -1,7 +1,7 @@
 from django.urls import path
 import functools
 
-from .views import index, user, model, competition, compare, community
+from .views import index, user, model, competition2022, compare, community
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -12,7 +12,7 @@ non_domain_urls = [
         path('/', user.LandingPage.as_view(), name='landing_page'),
 
         # user
-        path('competition/', competition.view, name='competition'),
+        path('competition2022/', competition2022.view, name='competition2022'),
         path('signup/', user.Signup.as_view(), name='signup'),
         path('profile/logout/', user.Logout.as_view(), name='logout'),
         path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name=f'activate'),
