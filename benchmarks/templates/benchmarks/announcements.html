@@ -1,0 +1,14 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+
+{% block main %}
+<div id="popup-notification" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <button class="modal-close" aria-label="close">×</button>
+        <div class="box_popup">
+            <p class="benefits_info is-size-4-mobile">Brain-Score 2.0 is out! Check out the release notes <a href="../release_notes">here</a>.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

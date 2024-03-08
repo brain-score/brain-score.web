@@ -1,0 +1,31 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Release Notes</h1>
+<p>An record of recent changes, improvements, and ongoing developments in the Brain-Score platform.</p>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="box leaderboard-table-component full">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="collab_graphic_image_2"  src="{% static "/benchmarks/img/collaboration.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Brain-Score 2.0 Release is Here!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Notes Here...
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                More Optional Notes here...
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                Even more optional notes here...
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
