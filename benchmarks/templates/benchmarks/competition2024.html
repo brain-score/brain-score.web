@@ -22,7 +22,6 @@
                     <a class="navbar-item" href="#overview">Overview</a>
                     <a class="navbar-item" href="#tracks">Tracks</a>
                     <a class="navbar-item" href="#models">Models</a>
-                    <a class="navbar-item" href="#leaderboard">Leaderboard</a>
                     <a class="navbar-item" href="#workshop">Workshop</a>
                     <a class="navbar-item" href="#tutorial">Tutorial</a>
                     <a class="navbar-item" href="#contact">Contact</a>
@@ -99,7 +98,7 @@
             <a target="_blank" href="https://github.com/brain-score/vision">helper code</a>
             and
             <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
-            tutorials</a>.
+                tutorials</a>.
             You can also use existing datasets or metrics and re-combine them in novel ways.
             Note that by using the Brain-Score platform, no model knowledge is required --
             you can treat them like another primate subject.
@@ -121,7 +120,7 @@
         <h3 class="title is-3">Competition Tracks</h3>
 
         <div class="columns">
-            <div class="column is-one-third">
+            <div class="column is-half">
                 <div class="card">
                     <header class="card-header">
                         <p class="card-header-title">
@@ -137,14 +136,18 @@
                                 meaned over all models, i.e. as close as possible to 0.
                                 The benchmarks can target any behavioral task that the models engage on
                                 (labeling, class probabilities, odd-one-out; see the
-                                <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.Task">model interface</a>).
+                                <a target="_blank"
+                                   href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.Task">model
+                                    interface</a>).
+
+                                There will be multiple prizes, details TBA.
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="column is-one-third">
+            <div class="column is-half">
                 <div class="card">
                     <header class="card-header">
                         <p class="card-header-title">
@@ -159,26 +162,12 @@
                                 The winning submissions will be the neural benchmarks with the lowest model scores,
                                 meaned over all models, i.e. as close as possible to 0.
                                 The benchmarks can target any region(s) in the visual ventral stream: V1, V2, V4, IT
-                                (see the <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.RecordingTarget">model interface</a>).
+                                (see the <a target="_blank"
+                                            href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html#brainscore_vision.model_interface.BrainModel.RecordingTarget">model
+                                interface</a>).
                                 Brain recordings can be from human or non-human primates.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="column is-half">
-                <div class="card">
-                    <header class="card-header">
-                        <p class="card-header-title">
-                            <span class="track">Top-Squash Track</span>
-                        </p>
-                    </header>
-                    <div class="card-content">
-                        <div class="content">
-                            <p>
-                                Squash the top 3 models (mean over their scores).
-                                Any benchmark goes, neural/behavioral.
+                                There will be multiple prizes, details TBA.
                             </p>
                         </div>
                     </div>
@@ -191,7 +180,7 @@
     <section id="models" class="section container">
         <h3 class="title is-3">Models</h3>
 
-        <div> {# can't use ul inside p #}
+        <div class="content"> {# can't use ul inside p #}
             The Brain-Score Competition 2024 will evaluate submitted benchmarks
             against 20 models.
             <br/>
@@ -211,18 +200,13 @@
         </div>
     </section>
 
-    {# leaderboard #}
-    <section id="leaderboard" class="section container tablecenter is-centered">
-        <h3 class="title is-3">Competition Leaderboard</h3>
-        <p>coming soon...</p>
-    </section>
-
     {# workshop #}
     <section id="workshop" class="section container">
         <h3 class="title is-3">Workshop</h3>
         <p>
             We will organize a workshop co-occurring with CCN at MIT in Cambridge, MA in early August 2024.
-            This workshop will serve to bring the community interested in testing and building models of brain processing together.
+            This workshop will serve to bring the community interested in testing and building models of brain
+            processing together.
         </p>
         <br/>
         <p>
@@ -243,13 +227,13 @@
             <span class="has-text-weight-bold">
             Please check our <a target="_blank" href="https://www.brain-score.org/tutorial/">overview tutorials</a>
             as well as our <a target="_blank"
-               href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">full length tutorial</a>
+                              href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">full length tutorial</a>
             for detailed information about the submission process</span>.
         </p>
         <p>
             We tried to make our tutorial as clear and easy to follow as possible for anyone with minimum Python
             knowledge. However, if you have any issues,
-            feel free to <a target="contact">contact us</a>!
+            feel free to <a href="#contact">contact us</a>!
         </p>
     </section>
 
@@ -268,65 +252,86 @@
     {# FAQ #}
     <section id="FAQ" class="section container center">
         <h3 class="title is-3">FAQ</h3>
-        <ol>
-            <li>
-                <h4>How do I submit a benchmark?</h4>
-                <p> We have a full length
-                    <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
-                        tutorial</a> that walks users through the submission process.
-                </p>
-            </li>
-            <li>
-                <h4>Why did you choose these models to score on the benchmark submissions?</h4>
-                <p>
-                    The competition models are a combination of the top-10 models on existing Brain-Score benchmarks,
-                    and 10 additional models that we felt are of interest to the community.
 
-                    Please join the workshop and join the slack channel if you have input on these questions!
-                </p>
-            </li>
-            <li>
-                <h4>Who will get prizes?</h4>
-                <p>
-                    See <a href="#tracks">Tracks</a> for the prize breakdown.
-                </p>
-            </li>
-            <li>
-                <h4>Can I submit a benchmark developed by a third-party?</h4>
-                <p>
-                    If the benchmark (i.e., combination of dataset and metric) are not on brain-score.org,
-                    you can submit a new benchmark.
-                    This includes uploading existing data or implementing an existing metric.
-                    Please make sure you have the rights to use the data, do not upload personal identifying information,
-                    and cite the data collectors or metric developers!
-                </p>
-            </li>
-            <li>
-                <h4>Aren't there obvious ways to cheat?</h4>
-                <p>
-                    Yes. We are relying on the goodwill of submitters.
-                    We will manually check especially potentially winning submissions so that the benchmark is
-                    faithfully attempting to test the alignment of models to the primate visual ventral stream.
-                </p>
-            </li>
-            <li>
-                <h4>Are the models public?</h4>
-                <p>
-                    Yes. You can access all models via the
-                    <a target="_blank" href="https://github.com/brain-score/vision">Brain-Score library</a>'s
-                    `load_model` function.
-                </p>
-            </li>
-            <li>
-                <h4>Can I also submit models?</h4>
-                <p>
-                    Brain-Score always accepts model submissions.
-                    See <a href="https://www.brain-score.org/tutorial/">here</a> and
-                    <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">here</a>
-                    for tutorials.
-                    Note that this competition is aimed at benchmarks though, and there are no prizes for models in this edition.
-                </p>
-            </li>
-        </ol>
+
+        <div class="list">
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">How do I submit a benchmark?</div>
+                    <div class="list-item-description">
+                        We have a full length
+                        <a target="_blank"
+                           href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+                            tutorial</a> that walks users through the submission process.
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Why did you choose these models to score on the benchmark submissions?</div>
+                    <div class="list-item-description">
+                        The competition models are a combination of the top-10 models on existing Brain-Score
+                        benchmarks,
+                        and 10 additional models that we felt are of interest to the community.
+
+                        Please join the workshop and join the slack channel if you have input on these questions!
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Who will get prizes?</div>
+                    <div class="list-item-description">
+                        See <a href="#tracks">Tracks</a> for the prize breakdown.
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Can I submit a benchmark developed by a third-party?</div>
+                    <div class="list-item-description">
+                        If the benchmark (i.e., combination of dataset and metric) are not on brain-score.org,
+                        you can submit a new benchmark.
+                        This includes uploading existing data or implementing an existing metric.
+                        Please make sure you have the rights to use the data, do not upload personal identifying
+                        information,
+                        and cite the data collectors or metric developers!
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Aren't there obvious ways to cheat?</div>
+                    <div class="list-item-description">
+                        Yes. We are relying on the goodwill of submitters.
+                        We will manually check especially potentially winning submissions so that the benchmark is
+                        faithfully attempting to test the alignment of models to the primate visual ventral stream.
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Are the models public?</div>
+                    <div class="list-item-description">
+                        Yes. You can access all models via the
+                        <a target="_blank" href="https://github.com/brain-score/vision">Brain-Score library</a>'s
+                        <code>load_model</code> function.
+                    </div>
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-content">
+                    <div class="list-item-title">Can I also submit models?</div>
+                    <div class="list-item-description">
+                        Brain-Score always accepts model submissions.
+                        See <a href="https://www.brain-score.org/tutorial/">here</a> and
+                        <a href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">here</a>
+                        for tutorials.
+                        Note that this competition is aimed at benchmarks though, and there are no prizes for models in
+                        this edition.
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 {% endblock %}

@@ -6,6 +6,7 @@
   "dependencies": {
     "bulma": "^0.9.3",
     "bulma-extensions": "^6.2.7",
+    "bulma-list": "^1.2.0",
     "datatables.net-dt": "^1.10.19",
     "sass": "^1.69.5"
   },
