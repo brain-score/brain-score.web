@@ -70,6 +70,11 @@ pre
   &.modified_1
     margin: 1% 0
     padding: 1%
+    &.collapsable
+      margin-bottom: 4%
+      margin-left: 2%
+      padding: 0 1%
+
 
 // Special formatting for inline text
 span.special_format
@@ -92,6 +97,14 @@ span.special_format
     margin-top: 0
     margin-bottom: -5%
 
+  &.no_top
+    margin-top: -2%
+    margin-left: 2%
+
+  &.no_top_header
+    margin-top: 2%
+    margin-left: 2%
+
 .submission.example
   width: 75%
   height: auto
@@ -112,3 +125,40 @@ span.special_format
   height: auto
   margin-top: 5%
 
+// FAW styling for collapsing
+.faq_box
+  margin-bottom: 1rem
+  border-radius: 10px
+  box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02)
+  .toggle-button
+    padding: 1rem 1.5rem // Increase padding for a larger button
+    font-size: 0.80rem // Increase font size for larger text
+    display: flex
+    align-items: center
+    justify-content: space-between
+    width: 100%
+    background: none
+    border: none
+    cursor: pointer
+    &:focus
+      outline: none
+
+    .icon
+      // Adjust icon size if using a font-based icon
+      font-size: 2.0rem // Make the icon larger to match the text size
+
+.icon-gradient
+  background: $brainscore_green
+  -webkit-background-clip: text
+  color: transparent
+  display: inline-block
+
+
+  .content
+    overflow: hidden
+    max-height: 0
+    transition: max-height 0.5s ease-in-out
+
+    &.is-shown
+      max-height: 1000px // Adjust this value based on the maximum expected content size
+      padding: 0 1.25rem

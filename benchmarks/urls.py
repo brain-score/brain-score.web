@@ -25,6 +25,7 @@ non_domain_urls = [
         path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
         path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
         path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
+        path('faq/', user.Faq.as_view(), name='faq'),
 
         # central profile page, constant across all Brain-Score domains
         path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
@@ -37,7 +38,8 @@ non_domain_urls = [
         path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
         path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
         path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
-        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_4"), name='tutorial-deepdive-4'),
+        path('tutorial/troubleshooting', user.Tutorial.as_view(tutorial_type="_troubleshooting"), name='tutorial-troubleshooting'),
+
 
 
         # need navbar links when on /profile. Default to vision.
