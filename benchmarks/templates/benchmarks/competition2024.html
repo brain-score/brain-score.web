@@ -30,23 +30,70 @@
             </div>
         </div>
     </nav>
-    <section class="hero competition-hero">
-        <div class="hero-body container">
-            <p class="title">
-                2024 Brain-Score Competition
-            </p>
-        </div>
-    </section>
 
     {# intro #}
     <section id="intro" class="section container center">
+        <div class="columns content">
+            <div class="column">
+                <blockquote>
+                    Testing on the same data over and over again can help modelers game the system.
+                </blockquote>
+            </div>
+
+            <div class="column">
+                <blockquote>
+                    Why should we trust the Brain-Score rankings on these hand-picked benchmarks?
+                </blockquote>
+            </div>
+
+            <div class="column">
+                <blockquote>
+                    We need to test models on specific hypotheses, not observational data.
+                </blockquote>
+            </div>
+
+            <div class="column">
+                <blockquote>
+                    Why should models only hit specific benchmarks? I don't care about these benchmarks!
+                </blockquote>
+            </div>
+        </div>
+
+        <p>
+            These and others are common critiques in our community of the Brain-Score platform.
+            <span class="has-text-weight-bold">We hear you!</span>
+        </p>
+        <br/>
+        <p>
+            We take pride in developing and making openly available an integrative benchmarking platform
+            that allows the community to operationalize and actively engage on this and other feedback.
+            In 2022, we organized the first Brain-Score competition for model submissions
+            in which we evaluated the models on our existing benchmarks.
+            In 2024 — we have turned the table!
+            This year, in the spirit of an adversarial collaboration —
+            we invite experimentalists and the community at large to turn their legitimate concerns
+            into concrete benchmarks that will challenge and hopefully expose the explanatory gaps between
+            our current models of primate vision and the biological brain.
+        </p>
+        <br/>
+
+        <div class="hero competition-hero">
+            <div class="hero-body container">
+                <p class="title">
+                    2024 Brain-Score Competition
+                </p>
+            </div>
+        </div>
+
+        <br/>
         <p>
             Our ability to recognize objects in the world relies on visual processing along the ventral visual stream, a
             set of hierarchically-organized cortical areas. Recently, machine-learning researchers and neuroscientists
             have produced computational models that have achieved moderate success at explaining primate object
             recognition behavior and the neural representations that support it.
             <span class="has-text-weight-bold">
-                This second edition of the Brain-Score Competition aims to find benchmarks
+                This second edition of the Brain-Score Competition aims to find
+                <span class="is-underlined">benchmarks</span>
                 on which the predictions of our current top models break down.
             </span>
         </p>
@@ -79,16 +126,6 @@
                  style="min-width: 175px">
             </div>
         </div>
-        <br/>
-
-        <figure>
-            <img id="graphical-abstract"
-                 src="{% static "/benchmarks/img/brainscore_benchmarks.png" %}"
-                 alt="Base v. Brain Models">
-            <figcaption>Figure adapted from
-                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
-            </figcaption>
-        </figure>
     </section>
 
     {# overview #}
@@ -120,6 +157,15 @@
             In this round, benchmarks should not test temporal dynamics
             (but you can still specify a single "time_bin" from the models to record from.)
         </p>
+
+        <figure>
+            <img id="graphical-abstract"
+                 src="{% static "/benchmarks/img/brainscore_benchmarks.png" %}"
+                 alt="Base v. Brain Models">
+            <figcaption>Figure adapted from
+                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
+            </figcaption>
+        </figure>
     </section>
 
     {# tracks #}
