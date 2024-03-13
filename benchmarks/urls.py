@@ -20,7 +20,6 @@ non_domain_urls = [
         path('password/',  user.Password.as_view(), name='password'),
         path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
         path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
-        path('/compare', functools.partial(compare.view, domain="vision"), name='compare'),
         path('community', functools.partial(community.view), name='community'),
         path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
         path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
@@ -43,10 +42,10 @@ non_domain_urls = [
 
         # need navbar links when on /profile. Default to vision.
         # this is a **temporary** fix until the new UI landing page is live.
-        path('profile//', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
-        path('profile//submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
-        path('profile//resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
-        path('profile//logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
+        path('profile/', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
+        path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
+        path('profile/resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
+        path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 ]
 
 all_domain_urls = [non_domain_urls]
