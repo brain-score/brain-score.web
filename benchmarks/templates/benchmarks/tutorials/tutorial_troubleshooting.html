@@ -28,7 +28,8 @@
             </p>
 
             <p class="benefits_info is-size-5-mobile">
-                If your issue is not listed here, please feel free to open a Github issue, check out the community page,
+                If your issue is not listed here, please feel free to open a Github issue, check out the
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">community</a> page,
                 or contact the Brain-Score team directly via slack or email; we are always happy to help!
             </p>
         </div>
@@ -38,7 +39,7 @@
 <!-- Each Div is a section itself:-->
 <div class="faq_box leaderboard-table-component">
     <button class="toggle-button is-size-3-mobile" aria-expanded="false">
-      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Model Submissions </h3></span>
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Model Submissions</h3></span>
       <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
     </button>
     <div class="content is-hidden">
@@ -47,7 +48,7 @@
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
             <span class="is-italic">Description:</span> This is the most common question we get, and our
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">FAQ</a> gives a nice
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">FAQ</a> provides an
             overview of what could have happened.
         </p>
         <p class="benefits_info is-size-5-mobile shorter no_top">
@@ -100,8 +101,8 @@ Traceback (most recent call last):
             <span class="is-italic">Fix:</span> We have written code that allows users to download from S3 buckets
              <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/model_helpers/s3.py">here</a>,
              specifically  the <span class="special_format">load_file_from_s3</span> function.
-             Please use this code in place of your own if you are hosting your weights on S3. We hope to add support
-             for other cloud storage, like Google Drive, very soon.
+             Please use this code in place of your own if you are hosting your weights on S3. We hope to eventually add
+             support for other cloud storage, like Google Drive.
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
             4) Console Log error: No registrations found
