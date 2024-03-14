@@ -33,15 +33,20 @@ non_domain_urls = [
         path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
 
         # central tutorial page, constant across all Brain-Score domains
-        path('tutorial/', user.Tutorial.as_view(tutorial_type=""), name='tutorial'),
+        path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
+        path('tutorials/troubleshooting', user.Tutorials.as_view(tutorial_type="troubleshooting"), name='tutorial-troubleshooting'),
 
-        path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
-        path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
-        path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
-        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
-        path('tutorial/troubleshooting', user.Tutorial.as_view(tutorial_type="_troubleshooting"), name='tutorial-troubleshooting'),
+        # model tutorials:
+        path('tutorials/models', user.Tutorials.as_view(plugin="models", tutorial_type="models"), name='model-tutorial'),
+        path('tutorials/models/quickstart', user.Tutorials.as_view(plugin="models", tutorial_type="quickstart"), name='model-tutorial-quickstart'),
+        path('tutorials/models/deepdive_1', user.Tutorials.as_view(plugin="models", tutorial_type="deepdive_1"), name='model-tutorial-deepdive-1'),
+        path('tutorials/models/deepdive_2', user.Tutorials.as_view(plugin="models", tutorial_type="deepdive_2"), name='model-tutorial-deepdive-2'),
+        path('tutorials/models/deepdive_3', user.Tutorials.as_view(plugin="models", tutorial_type="deepdive_3"), name='model-tutorial-deepdive-3'),
 
-
+        # benchmark tutorials:
+        path('tutorials/benchmarks', user.Tutorials.as_view(plugin="benchmarks", tutorial_type="benchmarks"), name='benchmark-tutorial'),
+        path('tutorials/benchmarks/package_data', user.Tutorials.as_view(plugin="benchmarks", tutorial_type="package_data"), name='benchmark-package-data'),
+        path('tutorials/benchmarks/create_benchmark', user.Tutorials.as_view(plugin="benchmarks", tutorial_type="create_benchmark"), name='benchmark-create-benchmark'),
 
         # need navbar links when on /profile. Default to vision.
         # this is a **temporary** fix until the new UI landing page is live.

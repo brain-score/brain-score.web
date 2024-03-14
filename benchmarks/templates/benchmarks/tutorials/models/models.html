@@ -1,0 +1,39 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1> Model Tutorials</h1>
+<p>Learn and explore what Brain-Score has to offer modelers. </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="tutorial_main" src="{% static "/benchmarks/img/tutorials/tutorial_main.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Welcome, Modelers!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Are you interested in how well your model aligns with neural and behavioral data? If so, check out the
+                guides below, where we walk you through how to take full advantage of all of Brain-Score's model resources.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                You can get up and running ASAP with our Quickstart, where you learn how to install Brain-Score on your
+                machine and how to score an existing model on an existing benchmark.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                Or, if you are a more seasoned user, you can explore the platform further via our Deep Dive series. Here
+                there are guided overviews of the submission system, as well as instructions on how to submit plugins.
+            </p>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/quickstart"><button class="button button-primary tutorial">Quickstart</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_1"><button class="button button-primary tutorial">Dive Deeper</button></a>
+        </div>
+    </div>
+</div>
+{% endblock %}
