@@ -1,46 +1,50 @@
-{% extends 'benchmarks/base.html' %}
+{% extends "benchmarks/components/app-view.html" %}
 {% load static %}
-{% load compress %}
 
-{% block main %}
-{% include 'benchmarks/components/nav-bar.html' %}
+{% block banner %}
+<h1> Central Profile</h1>
+<p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>
+{% endblock %}
 
-<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
-    <div class="column is-half has-text-centered-mobile">
-        <div class="container login-left">
-            {% if user %}
-                <h1 style="font-size: 1.5em;">Welcome, {{ user.email }}</h1><br>
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
 
-                <form action="{% url 'display-name' %}" method="post">
-                    {% csrf_token %}
-                    <label class="label">Display name</label>
-                    <div class="field has-addons">
-                        <p class="control">
-                            <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-                        </p>
-                        <p class="control">
-                            <input type="submit" value="Save" class="button">
-                        </p>
-                    </div>
-                </form>
-                <br>
-                <div id="domain_overviews" class="box">
-                    {% for domain in domains %}
-                        <div id="vision_overview" class="box">
-                            <div>
-                                View your <strong>{{ domain }}</strong> plugins and leaderboard
-                                <a href="https://{{ request.get_host }}/profile/{{ domain }}">here</a>.
-                                Submit new {{ domain }} plugins <a href="https://{{ request.get_host }}/profile/{{domain}}/submit">here</a>.
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <button onclick="location.href='logout/'" type="button" class="button submission">Logout</button>
-            {% else %}
-            {% endif %}
-        </div>
+
+{% block content %}
+
+{% if user %}
+    <div class="box leaderboard-table-component">
+        <h3 class="benefits_heading is-size-3-mobile">Welcome, {{ user.email }}</h3>
+
+        <form action="{% url 'display-name' %}" method="post">
+            {% csrf_token %}
+            <br>
+            <label class="label">Display name</label>
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                </p>
+                <p class="control">
+                    <input type="submit" value="Save" class="button">
+                </p>
+            </div>
+        </form>
+        <br>
+        {% for domain in domains %}
+            <div class="box">
+                <p class="benefits_info is-size-5-mobile">
+                    View your <strong>{{ domain }}</strong> plugins and leaderboard
+                    <a href="https://{{ request.get_host }}/profile/{{ domain }}">here</a>.
+                    Submit new {{ domain }} plugins <a href="https://{{ request.get_host }}/profile/{{domain}}/submit">here</a>.
+                </p>
+            </div>
+        {% endfor %}
+        <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial_no_top">Logout</button>
     </div>
-</div>
+{% else %}
+{% endif %}
+
 {% endblock %}
 
 
