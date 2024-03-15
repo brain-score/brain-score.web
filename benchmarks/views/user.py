@@ -512,10 +512,11 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain})
+            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
+            context["formatted"] = self.domain.capitalize()
             return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
@@ -524,9 +525,10 @@ class Profile(View):
             login(request, user)
             context = get_context(user, domain=self.domain)
             context["has_user"] = True
+            context["formatted"] = self.domain.capitalize()
             return render(request, 'benchmarks/profile.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()}
             return render(request, 'benchmarks/login.html', context)
 
 
