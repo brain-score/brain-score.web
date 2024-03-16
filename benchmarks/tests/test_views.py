@@ -1,4 +1,5 @@
-import pytest
+from unittest import skip
+
 from django.test import TestCase
 
 from benchmarks.views.index import _get_benchmark_shortname
@@ -28,7 +29,7 @@ class TestTable(TestCase):
         self.assertEqual(num_rows, 1 + 78)
 
 
-@pytest.skip("2022 competition is over")
+@skip("2022 competition is over")
 class TestCompetitionTable(TestCase):
     fixtures = ALL_FIXTURES
 
