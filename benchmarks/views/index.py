@@ -243,7 +243,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
     # Remove all non-public model scores, but allow users to see their own models in the table.
     if user is None:  # if we are not in a user profile, only show rows that are public
         if not show_public:
-            # show public only set for competition context. See competition.py get_context
+            # show public only set for competition context. See competition2022.py get_context
             user_selection = dict(model__public=True)
         else:
             # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
