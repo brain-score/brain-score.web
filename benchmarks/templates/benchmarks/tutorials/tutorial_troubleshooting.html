@@ -1,0 +1,152 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Troubleshooting</h1>
+<p>Common errors, and how to fix them.</p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">How to Fix Common Errors</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Our comprehensive troubleshooting guide is designed to help users navigate through common issues they might
+                encounter while using our platform, especially in the submission process. It includes step-by-step
+                solutions for a variety of problems, with the hope that users can quickly find the help they need.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                We also continually update this guide based on user feedback and emerging issues, ensuring it remains
+                a valuable tool for resolving challenges efficiently.
+            </p>
+
+            <p class="benefits_info is-size-5-mobile">
+                If your issue is not listed here, please feel free to open a Github issue, check out the
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">community</a> page,
+                or contact the Brain-Score team directly via slack or email; we are always happy to help!
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Each Div is a section itself:-->
+<div class="faq_box leaderboard-table-component">
+    <button class="toggle-button is-size-3-mobile" aria-expanded="false">
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Model Submissions</h3></span>
+      <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
+    </button>
+    <div class="content is-hidden">
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            1) My submission didn't work. What happened?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description:</span> This is the most common question we get, and our
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">FAQ</a> provides an
+            overview of what could have happened.
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> See <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">FAQ</a> page.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix: </span> If your submission is not successful, you should get an email with a link
+             that details what went wrong in your build. This is called the Console Log (or Build Log), and it details exactly
+             what happened to cause your submission to fail. We included common Console Log errors below (along with their
+             resolutions), but if your error is not on that list, feel free to reach out to the Brain-Score
+             <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">Community</a> or
+             directly to the Brain-Score Team.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            2) SSL Error when trying to run models locally
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description:</span> After implementing a Pytorch model and running score for the first time, you get:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1076)
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span>: This can sometimes occur if Pytorch is currently offline, or having issues
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix: </span> Add the following lines in the very beginning of your code and try again:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            3) Console Log error: Server is unable to locate model weights (or another file)
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description</span>: When checking your console (build) log for what might have gone
+            wrong, you see an error akin to this:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+ERROR:root:Could not run model mikes_model on benchmark Geirhos2021sketch-error_consistency because of [Errno 2] No such file or directory: '/rdma/vast-rdma/scratch/Sun/score_plugins_vision_env_142/vision/brainscore_vision/models/mikes_model/mikes_model.pth'
+Traceback (most recent call last):
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> You are trying to save your weights to a local (relative) path, or
+            for some reason the server cannot locate your <span class="special_format">.pth</span> (weights) file. Sometimes, your working path
+            on your machine might not be the same as the working path our server uses to execute runs.
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix:</span> We have written code that allows users to download from S3 buckets
+             <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/model_helpers/s3.py">here</a>,
+             specifically  the <span class="special_format">load_file_from_s3</span> function.
+             Please use this code in place of your own if you are hosting your weights on S3. We hope to eventually add
+             support for other cloud storage, like Google Drive.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            4) Console Log error: No registrations found
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description</span>: When checking your console (build) log for what might have gone
+            wrong, you see an error akin to this:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+ERROR:root:Could not run model mikes_model on benchmark ImageNet-C-noise-top1 because of No registrations found for mikes_model
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> You are trying to score a model (plugin) that does not exist yet in
+            the Brain-Score ecosystem.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix:</span> Please add your model to the <span class="special_format">model_registry</span>
+             in your submission package's <span class="special_format">__init__.py</span>. See
+             <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_1">here</a> (specifically Part 4) for more details.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            5) Console Log error: Issue with Tensorflow 1.15
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description</span>: When checking your console (build) log for what might have gone
+            wrong, you see an error akin to this:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+ERROR: Could not find a version that satisfies the requirement tensorflow==1.15
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> Usually this is caused by users trying to use Tensorflow >1.15. This
+            error occurs when our package installer attempts to reconcile conflicting TF versioning requirements
+            (server needs <=1.15, user requests >1.15). This can also happen if you force your model to use a specific
+            Python version that is >3.7.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix:</span> First, make sure you are not forcing your model to use a Python version
+             that is >3.7. Currently, Brain-Score does not support Python version >3.7 or TF versions >1.15, but we
+             will very soon, so stay tuned.
+        </p>
+
+    </div>
+</div>
+{% endblock %}
+
+

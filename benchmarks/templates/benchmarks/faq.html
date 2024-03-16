@@ -1,0 +1,142 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Frequently Asked Questions</h1>
+<p>Explore the sections below for answers to the Brain-Score communities common queries.</p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Each Div is a section itself:-->
+<div class="faq_box leaderboard-table-component">
+    <button class="toggle-button is-size-3-mobile" aria-expanded="false">
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">What is Brain-Score? </h3></span>
+      <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
+    </button>
+    <div class="content is-hidden">
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What is the purpose of Brain-Score?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            The Brain-Score platform aims to yield strong computational models of the brain and mind. We enable
+            researchers to quickly get a sense of the alignment of their model(s) to currently dozens of neural and
+            behavioral measurements, and provide these models to experimentalists to prototype new experiments and make
+            sense of biological data.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What is a benchmark?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            A benchmark is composed of data, a metric, and an experimental protocol to test models. The data is
+            typically primate (human or non-human) neural and/or behavioral data. When a model is run on a benchmark,
+            the metric outputs a score of how well the model predictions match the data.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What is a metric?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            A metric scores how similar two sets of data are. Typically these two sets are model and primate
+            measurements, but metrics are agnostic of the data source and can also be used to compare two
+            primate measurements (e.g. for ceiling estimates).
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What is a model?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            Specifically, "model" here refers to any computational model that implements the BrainModel
+            (for Brain-Score Vision) or ArtificialSubject (for Brain-Score Language) API, which defines the interface
+            that allows a conformant model to run on Brain-Score benchmarks.
+            Note that Brain-Score is agnostic to the exact model family, e.g. this could be an artificial neural
+            network or a hand-crafted predictor. As long as the model makes predictions that adhere to the API, it can
+            be tested.
+        </p>
+         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What is a score?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            The scores that Brain-Score computes are a normalized value ranging from <span class="special_format">0.0</span>
+            to <span class="special_format">1.0</span> . The score reflects how closely model predictions align with
+            biological data, e.g. neural activity or behavior, as evaluated by each benchmark's metric.
+            <span class="special_format">0</span>  means the model does not match the measurements at all
+            and <span class="special_format">1</span>  means the model matches the measurements at ceiling level such
+            that no more data can be explained due to noise in the signal (e.g. if the model obtains a score of
+            <span class="special_format">0.8</span>  and the data ceiling is also <span class="special_format">0.8</span> ,
+            the score output by this method should be <span class="special_format">1</span> ).
+        </p>
+    </div>
+</div>
+<div class="faq_box leaderboard-table-component">
+    <button class="toggle-button is-size-3-mobile" aria-expanded="false">
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">I want to use this; how do I get started? </h3></span>
+      <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
+    </button>
+    <div class="content is-hidden">
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What am I able to submit?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            You can submit new plugins to Brain-Score. A plugin can be a dataset, a metric, a benchmark, or a model.
+            You can submit plugins directly on the website as a zip file or via a pull request on Github
+            (zip file submissions will automatically be converted into a PR). The plugin directory has to contain at
+            least two files: an <span class="special_format">__init__.py</span> which adds your data/metric/benchmark/model
+            to the corresponding registry, and a <span class="special_format">test.py</span> file in which you can
+            define tests to ensure your plugin works as expected. If your plugin requires third-party libraries, you can
+            include a <span class="special_format">setup.py</span> or a<span class="special_format">requirements.txt</span> file.
+            You can optionally add more files, e.g. to separate the detailed implementations.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            How do I submit a model?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            We have created two tutorials outlining how to submit a new Brain-Score plugin-  a
+            (<a href="https://www.brain-score.org/tutorial/quickstart">Quickstart tutorial</a>)  and
+            three (<a href="https://www.brain-score.org/tutorial/deepdive_1">Deep Dive tutorials</a>).
+            The Quickstart tutorial outlines how to set up your local environment quickly and how to run the pipeline
+            locally. The Deep Dive tutorials contain direction on how to submit plugins and even provide a template
+            plugin file.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What happens to a model after I submit it?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            A pull request is opened on the Brain-Score GitHub of whichever plugin type you submitted, either
+            (<a href="https://github.com/brain-score/vision">vision</a> or <a href="https://github.com/brain-score/language">language</a>).
+            If this pull request passes all of the Jenkins tests, the PR will be merged and the scoring of your plugin
+            will begin. Once scored, the Brain-Score of your plugin will appear on the leaderboard as long as you didn't
+            ask for your model's score to be private when submitting it.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            Am I able to keep my submissions private?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            While we do not currently support private code submissions -- at the moment, all submitted code is merged
+            into our public GitHub repository -- this functionality is under development and anticipated to be available
+            soon. An automated option for including private files with your submission is also planned; in the interim,
+            please contact us with any files that need to remain private and we will upload them directly to our AWS S3.
+            This is a good way to enable model testing on your data without releasing it if you wish to keep it private:
+            Your data will not be publicly accessible but by submitting models, the community can still get a sense of
+            model alignment.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            I submitted a model but don't see it in my profile. Why not?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            There are a variety of reasons that your model may not be showing up in your profile. The submission and
+            scoring process can vary depending on server availability, so if you haven't received an email indicating
+            an error, it's possible that tests or scoring are still running. As every successful submission should
+            result in a pull request in the relevant GitHub repository
+            (<a href="https://github.com/brain-score/vision">vision</a> or
+            <a href="https://github.com/brain-score/language">language</a>), you can check to see if there is either an
+            open or closed PR with your model name in the title, which can provide further information about the status
+            of your submission. If you need assistance, you can either create a GitHub issue or reach out via Slack
+            explaining your problem and someone in our developer community will assist you.
+        </p>
+    </div>
+</div>
+{% endblock %}
