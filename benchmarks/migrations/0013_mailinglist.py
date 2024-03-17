@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('benchmarks', '0013_auto_20231208_1448'),
+        ('benchmarks', '0012_benchmarktype_owner'),
     ]
 
     operations = [
