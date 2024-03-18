@@ -155,11 +155,15 @@ class Faq(View):
         return render(request, 'benchmarks/faq.html')
 
 
-class Tutorial(View):
+class Tutorials(View):
     tutorial_type = None
+    plugin = None
 
     def get(self, request):
-        return render(request, f'benchmarks/tutorials/tutorial{self.tutorial_type}.html')
+        if self.plugin is not None:
+            return render(request, f'benchmarks/tutorials/{self.plugin}/{self.tutorial_type}.html')
+        else:
+            return render(request, f'benchmarks/tutorials/{self.tutorial_type}.html')
 
 
 class Upload(View):

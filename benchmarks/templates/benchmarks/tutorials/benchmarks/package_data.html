@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block banner %}
-<h1>Deep Dive 1</h1>
-<p>A Tour of the Submission Package </p>
+<h1>Data Packaging</h1>
+<p>How to prepare your data to become a Brain-Score benchmark </p>
 {% endblock %}
 
 {% block info_section %}
@@ -16,23 +16,23 @@
 <div class="box leaderboard-table-component">
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half">
-            <img class="tutorial_dd1_1" src="{% static "/benchmarks/img/tutorials/deep_dive_1_1.png" %}" />
+            <img class="tutorial_data_packaging" src="{% static "/benchmarks/img/tutorials/data_packaging.png" %}" />
         </div>
         <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Let's Dive Deeper!</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Let's Package Some Data!</h3>
             <p class="benefits_info is-size-5-mobile">
-                One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
-                a user can submit a model and see how it performs on many benchmarks, not just a single one.
-                Oftentimes this leads to new insights and correlations, as well as interesting findings.
+                In this guide, we will explore two sample benchmarks: one neural, and one behavioral. This should serve
+                as a baseline for those interested in packaging their own data, in preparation to turn it into a Brain-Score
+                benchmark.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                In this first Deep Dive, we will download a sample Brain-Score submission (containing the model ResNet-50),
-                and explore the parts of its submission package. You can then base your own unique submissions on our sample project.
-            </p>
-
-            <p class="benefits_info is-size-5-mobile is-italic">
-                Note: Please do not submit the tutorial file itself via the website. The following walkthrough is just
-                to let you become familiar with how submissions should be structured.
+                This section is divided into three parts: First, you need to create the
+                <span class="special_format">stimulus_set</span>, which is our wrapper for stimuli, and the
+                <span class="special_format">assembly</span>, which is our wrapper for your data. Next, we take the
+                <span class="special_format">stimulus_set</span> and <span class="special_format">assembly</span> and
+                combine them into a file, called <span class="special_format">data_packaging.py</span>. Finally, we will create
+                an <span class="special_format">__init__</span> file and a <span class="special_format">test.py</span>
+                file, which allow us to add the stimuli and data to the ecosystem, as well as ensure they are accepted properly.
             </p>
         </div>
     </div>
@@ -43,14 +43,11 @@
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                If you have not already, we highly recommend completing the Quickstart section above before
-                we start to explore our ResNet-50 model submission package. Although completion is not
-                required, the Quickstart will give you a nice background into what model scores mean, and how to score a model
-                locally on a single, publicly available benchmark.
+                In order to use Brain-Score, we have to download it.
             </p>
             <p class="benefits_info is-size-5-mobile">
                 If you have already done the Quickstart,
-                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorial/quickstart">here</a>
+                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorial/models/quickstart">here</a>
                 to install the necessary packages for Brain-Score.
             </p>
         </div>
@@ -276,7 +273,7 @@ Test successful, you are ready to submit!
                 When you submit an actual (non-tutorial) model, you will receive an email with your results
                 within 24 hours (most of the time it only takes 2-3 hours to score).
                 If you would like to explore a custom model's submission package, please visit the next
-                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/deepdive_2">here</a>.
+                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/models/deepdive_2">here</a>.
             </p>
         </div>
         <div class="column is-one-half">

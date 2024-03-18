@@ -1,0 +1,291 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Creating a Benchmark/h1>
+<p>How to create a Brain-Score benchmark with packaged data.</p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="tutorial_dd1_1" src="{% static "/benchmarks/img/tutorials/deep_dive_1_1.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Let's Create a Benchmark!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
+                a user can submit a model and see how it performs on many benchmarks, not just a single one.
+                Oftentimes this leads to new insights and correlations, as well as interesting findings.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                In this first Deep Dive, we will download a sample Brain-Score submission (containing the model ResNet-50),
+                and explore the parts of its submission package. You can then base your own unique submissions on our sample project.
+            </p>
+
+            <p class="benefits_info is-size-5-mobile is-italic">
+                Note: Please do not submit the tutorial file itself via the website. The following walkthrough is just
+                to let you become familiar with how submissions should be structured.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
+            <p class="benefits_info is-size-5-mobile">
+                If you have not already, we highly recommend completing the Quickstart section above before
+                we start to explore our ResNet-50 model submission package. Although completion is not
+                required, the Quickstart will give you a nice background into what model scores mean, and how to score a model
+                locally on a single, publicly available benchmark.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                If you have already done the Quickstart,
+                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorial/models/quickstart">here</a>
+                to install the necessary packages for Brain-Score.
+            </p>
+        </div>
+        <div class="column is-one-half">
+            <h3 class="benefits_heading is-size-3-mobile">Part 2: Download the Starter Zip File:</h3>
+            <p class="benefits_info is-size-5-mobile">
+                Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
+                upload, or through a Github PR. In this first Deep Dive, you will explore a sample model submission
+                in order to become familiar with the submission package structure. You can download the sample zip file
+                <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
+                The sample Zip file contains a properly formatted, stock version of ResNet-50 pretrained on ImageNet.
+            </p>
+             <p class="benefits_info is-size-5-mobile">
+                In Deep Dives 2 and 3, we will look at a custom model submission, as well as prepare to submit a
+                 model via Github Pull Request respectively.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Starter Submission File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        After unzipping the <span class="special_format">packaging_submission.zip</span> file, you will see that the root folder is
+        called <span class="special_format">packaging_tutorial</span>. This in turns contains another folder for the plugin itself, in
+        this case <span class="special_format">/models</span>. This <span class="special_format">/models</span> folder then
+        contains a folder called <span class="special_format"> /resnet50_tutorial</span>.
+        This final also contains 4 other Python files. The overall structure of the submission
+        package is shown below:
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        Just like the sample submission, each submission that you submit must contain at least the 2 required
+        Python files: <span class="special_format">__init__.py</span> and <span class="special_format">test.py</span>.
+        The other two files, <span class="special_format">setup.py</span> and <span class="special_format">model.py</span>,
+        are optional, but will be explored below along with the two required files. Let's explore further with the first required file,
+        <span class="special_format">__init__.py</span> file.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter is-italic">
+        Note: this would also be the same overall structure as your submission
+        package, or if you are submitting any other plugins (benchmarks, metrics, or data). Feel free
+        to base your future submissions off of this package, just please do not submit the
+    <span class="special_format">resnet50_tutorial</span> model.
+    </p>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 4: Exploring the  __init__.py  file</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        This file adds your plugin to the Brain-Score plugin registry and to the Brain-Score
+        ecosystem at large. You are registering your model to a unique global identifier. You can
+        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
+        adds the plugin to the registry. In the future, when you submit models (or other plugins),
+        you will add the plugin to our ecosystem via line 5.
+    </p>
+
+    <pre class="modified_1"><code>
+1       from brainscore_vision import model_registry
+2       from brainscore_vision.model_helpers.brain_transformation import ModelCommitment
+3       from .model import get_model, get_layers
+4
+5       model_registry['resnet50'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
+    </code></pre>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Please note: Brain-Score does not allow duplicate plugin
+        names, so if you submit another version of the same model, make sure to make the identifier unique!
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Also note: It would be prohibitively time- and resource-consuming to actually load every plugin
+        in a registry before they are needed, so the plugin discovery process relies on string parsing.
+        This unfortunately means that it’s not possible to programmatically add plugin identifiers to
+        the registry; each registration needs to be written explicitly in the form of
+        <span class="special_format">plugin_registry['my_plugin_identifier']</span>
+        Next, let’s check out the second required file, <span class="special_format">test.py</span> file.
+    </p>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 5: Exploring the test.py File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        You will notice that the submission's <span class="special_format">test.py</span> file is blank. This is a
+        temporary status, as the Brain-Score Team is currently writing a suite of tests that can be incorporated into
+        this file, that every model will run.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        For now, if you are submitting a model yourself, you can just leave this file blank, but still make sure
+        to include it in your submission package.
+    </p>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring an (optional) setup.py  File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        This file is where you can add any requirements that your model needs. You can do this by simply
+        adding the packages to the in the requirements dictionary on lines 6-8. If your model
+        had any extra requirements, such as a specific version of a package or an external git
+        repository, you would add it to the list defined on line 6. Lines 10 - 25 are just
+        administrative definitions, and can be left untouched.
+    </p>
+    <pre class="modified_1"><code>
+1       #!/usr/bin/env python
+2       # -*- coding: utf-8 -*-
+3
+4       rom setuptools import setup, find_packages
+5
+6       requirements = [ "torchvision",
+7                        "torch"
+8       ]
+9
+10      setup(
+11          packages=find_packages(exclude=['tests']),
+12          include_package_data=True,
+13          install_requires=requirements,
+14          license="MIT license",
+15          zip_safe=False,
+16          keywords='brain-score template',
+17          classifiers=[
+18              'Development Status :: 2 - Pre-Alpha',
+19              'Intended Audience :: Developers',
+20              'License :: OSI Approved :: MIT License',
+21              'Natural Language :: English',
+22              'Programming Language :: Python :: 3.7',
+23          ],
+24          test_suite='tests',
+25      )
+    </code></pre>
+    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+        Note: The reason why <span class="special_format">setup.py</span> is optional is that you can also use a
+        <span class="special_format">requirements.txt</span> or <span class="special_format">pyproject</span> file to
+        add any other requirements that you might need. If your model needs no extra packages, you can exclude this from
+        the submission package completely.
+    </p>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring an (optional) model.py  File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        This file is usually where the model itself is defined. The reason why this is optional is that using
+        <span class="special_format">model.py</span> is a convention we use to
+        separate code, but that is not needed. It is also plugin-specific. We think it is good practice,
+        however, to use a separate <span class="special_format">model.py</span> for models, to keep things neat.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Let’s explore this file in more detail: Lines 1 - 9 are standard imports. Lines
+        20-21 define the <span class="special_format">get_model_list()</span> function that simply returns the model identifier.
+        Next, lines 24-30 define the <span class="special_format">get_model()</span> function that gets the model itself.
+        You can see on line 26 the model itself is being loaded from <span class="special_format">pytorch</span>. If you have a custom
+        model that you have created yourself, check out our Custom Model Submission Guide here in
+        Deep Dive 2. Lines 33 - 35 contain the <span class="special_format">get_layers()</span> function, which returns the layers you
+        are interested in scoring.
+    </p>
+    <pre class="modified_1"><code>
+1       from brainscore_vision.model_helpers.check_submission import check_models
+2       import functools
+3       import os
+4       import torchvision.models
+5       from brainscore_vision.model_helpers.activations.pytorch import PytorchWrapper
+6       from brainscore_vision.model_helpers.activations.pytorch import load_preprocess_images
+7       from pathlib import Path
+8       from brainscore_vision.model_helpers import download_weights
+9       import torch
+10
+11      # This is an example implementation for submitting resnet-50 as a pytorch model
+12
+13      # Attention: It is important, that the wrapper identifier is unique per model!
+14      # The results will otherwise be the same due to brain-scores internal result caching mechanism.
+15      # Please load your pytorch model for usage in CPU. There won't be GPUs available for scoring your model.
+16      # If the model requires a GPU, contact the brain-score team directly.
+17      from brainscore_vision.model_helpers.check_submission import check_models
+18
+19
+20      def get_model_list():
+21          return ['resnet50']
+22
+23
+24      def get_model(name):
+25          assert name == 'resnet50'
+26          model = torchvision.models.resnet50(pretrained=True)
+27          preprocessing = functools.partial(load_preprocess_images, image_size=224)
+28          wrapper = PytorchWrapper(identifier='resnet50', model=model, preprocessing=preprocessing)
+29          wrapper.image_size = 224
+30          return wrapper
+31
+32
+33      def get_layers(name):
+34          assert name == 'resnet50'
+35          return ['conv1','layer1', 'layer2', 'layer3', 'layer4', 'fc']
+36
+37
+38      def get_bibtex(model_identifier):
+39          return """xx"""
+40
+41
+42      if __name__ == '__main__':
+43          check_models.check_base_models(__name__)
+
+    </code></pre>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Lines 38 and 39 define the Bibtex for the model. You can leave this blank when submitting,
+        but we highly recommend you add a reference. Finally, lines 42 - 43 define a call to the
+        Brain-Score scoring system to score our model locally on the <span class="special_format">MajajHong2015public.IT-pls</span>
+        benchmark.
+    </p>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        You are almost done! If you were actually submitting a model, the final step would be to run your model locally,
+        to ensure that everything is in working order. You can do this by running the
+        <span class="special_format">model.py</span> file itself. Please note that this can take ~5-10 minutes on a 2023
+        M1 Max MacBook Pro, so your run times may vary.
+        Once ran, this should produce the message below, indicating that you are ready for submission:
+        <pre class="modified_1"><code>
+Test successful, you are ready to submit!
+    </code></pre>
+
+
+
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+           <p class="benefits_info is-size-5-mobile shorter top_adjust">
+                Once you receive this message, you could rezip (after you save everything, of course) your package, and you
+                would be good to submit your model.
+           </p>
+            <p class="benefits_info is-size-5-mobile shorter ">
+                When you submit an actual (non-tutorial) model, you will receive an email with your results
+                within 24 hours (most of the time it only takes 2-3 hours to score).
+                If you would like to explore a custom model's submission package, please visit the next
+                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/models/deepdive_2">here</a>.
+            </p>
+        </div>
+        <div class="column is-one-half">
+            <img class="tutorial_dd1_2" src="{% static "/benchmarks/img/tutorials/deep_dive_1_2.png" %}" />
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}
+
+
