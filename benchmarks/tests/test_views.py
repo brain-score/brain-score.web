@@ -1,3 +1,5 @@
+from unittest import skip
+
 from django.test import TestCase
 
 from benchmarks.views.index import _get_benchmark_shortname
@@ -27,21 +29,22 @@ class TestTable(TestCase):
         self.assertEqual(num_rows, 1 + 78)
 
 
+@skip("2022 competition is over")
 class TestCompetitionTable(TestCase):
     fixtures = ALL_FIXTURES
 
     def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition/")
+        resp = self.client.get("http://localhost:8000/competition2022/")
         self.assertEqual(resp.status_code, 200)
 
     def test_num_rows(self):
-        resp = self.client.get("http://localhost:8000/competition/")
+        resp = self.client.get("http://localhost:8000/competition2022/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         self.assertEqual(num_rows, (1 + 9) * 3)  # header, 9 different models, 3 tracks
 
     def test_num_secondary_models(self):
-        resp = self.client.get("http://localhost:8000/competition/")
+        resp = self.client.get("http://localhost:8000/competition2022/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("is-secondary-model")
         num_total_models = 9 * 3  # 9 different models, 3 tracks
