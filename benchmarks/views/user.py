@@ -186,8 +186,11 @@ class Upload(View):
         request.FILES['zip_file'].seek(0)  # reset file pointer
         if not is_zip_valid:
             return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
-        if not submission_is_original:
+        if not submission_is_original:  # also checks for amount of unique identifiers
             plugin, identifier = submission_data
+
+            if plugin == 'too_many_identifiers':
+                return render(request, 'benchmarks/invalid_zip.html', {'error': identifier, "domain": self.domain})
 
             # ensure the user is not accidentally submitting the tutorial model
             page = "tutorial" if identifier == "resnet50_tutorial" else "already"
@@ -237,6 +240,11 @@ def is_submission_original(file, submitter: User) -> Tuple[bool, Union[None, Lis
 
         # grab identifiers from inits of all plugins
         plugin_identifiers = extract_identifiers(archive)
+
+        # check total number of plugin identifiers across all plugins does not exceed 5
+        total_identifiers = sum(len(identifiers) for identifiers in plugin_identifiers.values())
+        if total_identifiers > 5:
+            return False, ["too_many_identifiers", "Exceeded the maximum limit of 5 unique identifiers across all plugins."]
 
         # for each plugin submitted, make sure that the identifier does not exist already:
         for plugin in plugins:
