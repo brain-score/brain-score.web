@@ -16,23 +16,23 @@
 <div class="box leaderboard-table-component">
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half">
-            <img class="tutorial_dd1_1" src="{% static "/benchmarks/img/tutorials/deep_dive_1_1.png" %}" />
+            <img class="tutorial_data_packaging" src="{% static "/benchmarks/img/tutorials/data_packaging.png" %}" />
         </div>
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Let's Package Some Data!</h3>
             <p class="benefits_info is-size-5-mobile">
-                One of the biggest benefits Brain-Score has to offer is integrative benchmarking, in which
-                a user can submit a model and see how it performs on many benchmarks, not just a single one.
-                Oftentimes this leads to new insights and correlations, as well as interesting findings.
+                In this guide, we will explore two sample benchmarks: one neural, and one behavioral. This should serve
+                as a baseline for those interested in packaging their own data, in preparation to turn it into a Brain-Score
+                benchmark.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                In this first Deep Dive, we will download a sample Brain-Score submission (containing the model ResNet-50),
-                and explore the parts of its submission package. You can then base your own unique submissions on our sample project.
-            </p>
-
-            <p class="benefits_info is-size-5-mobile is-italic">
-                Note: Please do not submit the tutorial file itself via the website. The following walkthrough is just
-                to let you become familiar with how submissions should be structured.
+                This section is divided into three parts: First, you need to create the
+                <span class="special_format">stimulus_set</span>, which is our wrapper for stimuli, and the
+                <span class="special_format">assembly</span>, which is our wrapper for your data. Next, we take the
+                <span class="special_format">stimulus_set</span> and <span class="special_format">assembly</span> and
+                combine them into a file, called <span class="special_format">data_packaging.py</span>. Finally, we will create
+                an <span class="special_format">__init__</span> file and a <span class="special_format">test.py</span>
+                file, which allow us to add the stimuli and data to the ecosystem, as well as ensure they are accepted properly.
             </p>
         </div>
     </div>
@@ -43,10 +43,7 @@
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                If you have not already, we highly recommend completing the Quickstart section above before
-                we start to explore our ResNet-50 model submission package. Although completion is not
-                required, the Quickstart will give you a nice background into what model scores mean, and how to score a model
-                locally on a single, publicly available benchmark.
+                In order to use Brain-Score, we have to download it.
             </p>
             <p class="benefits_info is-size-5-mobile">
                 If you have already done the Quickstart,
