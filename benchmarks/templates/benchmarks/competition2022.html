@@ -292,7 +292,7 @@
         {# ideally this would be a for loop, but I don't know how to look up {benchmarks_average, benchmarks_V1} based on a variable #}
         <div id="tab-average"
              class="tab-content">
-            {% include "benchmarks/table.html" with benchmarks=benchmarks_average models=models_average %}
+            {% include "benchmarks/table.html" with benchmarks=benchmarks_average_vision models=models_average_vision %}
         </div>
         <div id="tab-V1"
              class="tab-content" style="display: none">
@@ -300,7 +300,7 @@
         </div>
         <div id="tab-behavior"
              class="tab-content" style="display: none">
-            {% include "benchmarks/table.html" with benchmarks=benchmarks_behavior models=models_behavior %}
+            {% include "benchmarks/table.html" with benchmarks=benchmarks_behavior_vision models=models_behavior_vision %}
         </div>
     </section>
 

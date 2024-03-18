@@ -19,44 +19,46 @@ def view(request):
     # the version at the time of the competition.
     included_benchmarks = [
         'average_vision',
+        'neural_vision',
         'V1',
-        'movshon.FreemanZiemba2013.V1-pls',
-        'dicarlo.Marques2020', 'V1-orientation', 'V1-spatial_frequency', 'V1-response_selectivity',
+        'FreemanZiemba2013.V1-pls',
+        'Marques2020', 'V1-orientation', 'V1-spatial_frequency', 'V1-response_selectivity',
         'V1-receptive_field_size', 'V1-surround_modulation', 'V1-texture_modulation', 'V1-response_magnitude',
-        'dicarlo.Marques2020_Ringach2002-circular_variance', 'dicarlo.Marques2020_Ringach2002-or_bandwidth',
-        'dicarlo.Marques2020_Ringach2002-orth_pref_ratio', 'dicarlo.Marques2020_Ringach2002-or_selective',
-        'dicarlo.Marques2020_Ringach2002-cv_bandwidth_ratio', 'dicarlo.Marques2020_Ringach2002-opr_cv_diff',
-        'dicarlo.Marques2020_DeValois1982-pref_or', 'dicarlo.Marques2020_DeValois1982-peak_sf',
-        'dicarlo.Marques2020_Schiller1976-sf_selective', 'dicarlo.Marques2020_Schiller1976-sf_bandwidth',
-        'dicarlo.Marques2020_Cavanaugh2002-grating_summation_field',
-        'dicarlo.Marques2020_Cavanaugh2002-surround_diameter',
-        'dicarlo.Marques2020_Cavanaugh2002-surround_suppression_index',
-        'dicarlo.Marques2020_FreemanZiemba2013-texture_modulation_index',
-        'dicarlo.Marques2020_FreemanZiemba2013-abs_texture_modulation_index',
-        'dicarlo.Marques2020_FreemanZiemba2013-texture_selectivity',
-        'dicarlo.Marques2020_FreemanZiemba2013-texture_sparseness',
-        'dicarlo.Marques2020_FreemanZiemba2013-texture_variance_ratio', 'dicarlo.Marques2020_Ringach2002-max_dc',
-        'dicarlo.Marques2020_Ringach2002-modulation_ratio', 'dicarlo.Marques2020_FreemanZiemba2013-max_texture',
-        'dicarlo.Marques2020_FreemanZiemba2013-max_noise',
+        'Marques2020_Ringach2002-circular_variance', 'Marques2020_Ringach2002-or_bandwidth',
+        'Marques2020_Ringach2002-orth_pref_ratio', 'Marques2020_Ringach2002-or_selective',
+        'Marques2020_Ringach2002-cv_bandwidth_ratio', 'Marques2020_Ringach2002-opr_cv_diff',
+        'Marques2020_DeValois1982-pref_or', 'Marques2020_DeValois1982-peak_sf',
+        'Marques2020_Schiller1976-sf_selective', 'Marques2020_Schiller1976-sf_bandwidth',
+        'Marques2020_Cavanaugh2002-grating_summation_field',
+        'Marques2020_Cavanaugh2002-surround_diameter',
+        'Marques2020_Cavanaugh2002-surround_suppression_index',
+        'Marques2020_FreemanZiemba2013-texture_modulation_index',
+        'Marques2020_FreemanZiemba2013-abs_texture_modulation_index',
+        'Marques2020_FreemanZiemba2013-texture_selectivity',
+        'Marques2020_FreemanZiemba2013-texture_sparseness',
+        'Marques2020_FreemanZiemba2013-texture_variance_ratio', 'Marques2020_Ringach2002-max_dc',
+        'Marques2020_Ringach2002-modulation_ratio', 'Marques2020_FreemanZiemba2013-max_texture',
+        'Marques2020_FreemanZiemba2013-max_noise',
         'V2',
-        'movshon.FreemanZiemba2013.V2-pls',
+        'FreemanZiemba2013.V2-pls',
         'V4',
-        'dicarlo.MajajHong2015.V4-pls', 'dicarlo.Sanghavi2020.V4-pls', 'dicarlo.SanghaviJozwik2020.V4-pls',
-        'dicarlo.SanghaviMurty2020.V4-pls',
+        'MajajHong2015.V4-pls', 'Sanghavi2020.V4-pls', 'SanghaviJozwik2020.V4-pls',
+        'SanghaviMurty2020.V4-pls',
         'IT',
-        'dicarlo.MajajHong2015.IT-pls', 'dicarlo.Sanghavi2020.IT-pls', 'dicarlo.SanghaviJozwik2020.IT-pls',
-        'dicarlo.SanghaviMurty2020.IT-pls',
-        'behavior',
-        'dicarlo.Rajalingham2018-i2n',
+        'MajajHong2015.IT-pls', 'Sanghavi2020.IT-pls', 'SanghaviJozwik2020.IT-pls',
+        'SanghaviMurty2020.IT-pls',
+        'behavior_vision',
+        'Rajalingham2018-i2n',
     ]
     assert len(included_benchmarks) == 33 + len(
-        ['average', 'V1', 'V2', 'V4', 'IT', 'behavior', 'dicarlo.Marques2020']) + 7  # (Marques 2nd level)
+        ['average_vision', 'neural_vision', 'V1', 'V2', 'V4', 'IT', 'behavior_vision', 'Marques2020']) + \
+           7  # (Marques 2nd level)
     base_filter = lambda benchmarks: benchmarks.filter(identifier__in=included_benchmarks)
     # further filter for each track
     for key, selection_filter in [
-        ('V1', lambda benchmarks: benchmarks.exclude(identifier__in=['V2', 'V4', 'IT', 'behavior'])),
-        ('behavior', lambda benchmarks: benchmarks.exclude(identifier__in=['V1', 'V2', 'V4', 'IT'])),
-        ('average', lambda benchmarks: benchmarks),  # average last to have full set of adjacent variables in context
+        ('V1', lambda benchmarks: benchmarks.exclude(identifier__in=['V2', 'V4', 'IT', 'behavior_vision'])),
+        ('behavior_vision', lambda benchmarks: benchmarks.exclude(identifier__in=['neural_vision', 'V1', 'V2', 'V4', 'IT'])),
+        ('average_vision', lambda benchmarks: benchmarks),  # average last to have full set of adjacent variables in context
     ]:
         benchmark_filter = lambda benchmarks: selection_filter(base_filter(benchmarks))
         key_context = get_context(benchmark_filter=benchmark_filter,
@@ -66,13 +68,13 @@ def view(request):
         key_context[f"models_{key}"] = key_context['models']
         del key_context['benchmarks'], key_context['models']
         context = {**context, **key_context}
-    benchmark_instances = [benchmark for benchmark in context['benchmarks_average'] if benchmark.id is not None
+    benchmark_instances = [benchmark for benchmark in context['benchmarks_average_vision'] if benchmark.id is not None
                            # ignore Marques2020 benchmarks for now since the sampled stimuli are only those from
                            # receptive-field-mapping
-                           and not benchmark.benchmark_type_id.startswith('dicarlo.Marques2020')
+                           and not benchmark.benchmark_type_id.startswith('Marques2020')
                            ]
     context['stimuli_samples'] = create_stimuli_samples(benchmark_instances, num_samples=NUM_STIMULI_SAMPLES)
-    return render(request, 'benchmarks/competition.html', context)
+    return render(request, 'benchmarks/competition2022.html', context)
 
 
 def group_by_user(models):
