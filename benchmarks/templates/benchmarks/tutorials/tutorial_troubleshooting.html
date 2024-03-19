@@ -144,6 +144,26 @@ ERROR: Could not find a version that satisfies the requirement tensorflow==1.15
              that is >3.7. Currently, Brain-Score does not support Python version >3.7 or TF versions >1.15, but we
              will very soon, so stay tuned.
         </p>
+                <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            6) Console Log error: len(logits)
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description</span>: When checking your console (build) log for what might have gone
+            wrong, you see an error akin to this:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+assert len(logits['neuroid']) == 1000
+AssertionError
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> This normally arises when Brain-Score tries to score your model on
+            ImageNet engineering benchmarks which often expect a model to be able to do 1000-way classification on ImageNet labels.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix:</span> Currently, you will still get a score for your model on neural and
+             behavioral benchmarks, but not those that threw the error (again, this is usually just engineering
+             benchmarks). Your neural and behavioral scores will still show up on your profile.
+        </p>
 
     </div>
 </div>
