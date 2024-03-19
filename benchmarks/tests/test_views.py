@@ -30,7 +30,7 @@ class TestTable(TestCase):
 
 
 @skip("2022 competition is over")
-class TestCompetitionTable(TestCase):
+class TestCompetitionTable2022(TestCase):
     fixtures = ALL_FIXTURES
 
     def test_no_errors(self):
@@ -50,6 +50,14 @@ class TestCompetitionTable(TestCase):
         num_total_models = 9 * 3  # 9 different models, 3 tracks
         num_primary_models = 4 * 3  # 4 different users, 3 tracks
         self.assertEqual(num_rows, num_total_models - num_primary_models)
+
+
+class TestCompetition2024(TestCase):
+    fixtures = ALL_FIXTURES
+
+    def test_no_errors(self):
+        resp = self.client.get("http://localhost:8000/competition2022/")
+        self.assertEqual(resp.status_code, 200)
 
 
 class TestModel(TestCase):
