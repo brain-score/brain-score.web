@@ -56,7 +56,7 @@ class TestCompetition2024(TestCase):
     fixtures = ALL_FIXTURES
 
     def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
+        resp = self.client.get("http://localhost:8000/competition2024/")
         self.assertEqual(resp.status_code, 200)
 
 
