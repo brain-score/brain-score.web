@@ -1,6 +1,5 @@
 {% load static %}
 
-{% load static %}
 <a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}"><img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo"></a>
 
 <a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
@@ -14,13 +13,13 @@
 </a>
 
 {% url 'tutorial' as tutorial_url %}
-<a class="{% if request.path == tutorial_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial">
+<a class="{% if 'tutorial' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial">
     <img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Tutorial Icon">
     <span>Tutorials</span>
 </a>
 
 {% url 'profile' as profile_url %}
-<a class="{% if request.path == profile_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
+<a class="{% if 'profile' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
     <img class="menu-icon" src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Profile Icon">
     <span>Profile</span>
 </a>
@@ -36,5 +35,3 @@
     <img class="menu-icon" src="{% static "/benchmarks/img/faq.png" %}" alt="FAQ Icon">
     <span>FAQ</span>
 </a>
-<!--FAQ icon credit:-->
-<!--FAQ Icon Source credits to: <a href="https://www.flaticon.com/free-icons/help" title="help icons">Help icons created by cahiwak - Flaticon</a>-->
