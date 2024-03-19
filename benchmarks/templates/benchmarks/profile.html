@@ -1,61 +1,54 @@
-{% extends 'benchmarks/base.html' %}
+{% extends "benchmarks/components/app-view.html" %}
 {% load static %}
-{% load compress %}
 
-{% block main %}
+{% block banner %}
+<h1>{{ formatted }} Profile</h1>
+<p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>
+{% endblock %}
 
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
 {% if user %}
-{% include 'benchmarks/components/nav-bar.html' %}
-<section id="profile" class="container center">
-    <section id="profile-info">
-        <div id="profile_overview" class="box" style="width: 75%;">
-            <h1 style="font-size: 1.5em;">Welcome, {{ user.email }}</h1>
+    <div class="box leaderboard-table-component">
+        <h3 class="benefits_heading is-size-3-mobile">Welcome, {{ user.email }}</h3>
+        <br>
+        <form action="{% url 'display-name' %}" method="post">
+            {% csrf_token %}
+            <label class="label">Display name</label>
+            <div class="field has-addons">
+                <p class="control">
+                    <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
+                </p>
+
+                <p class="control">
+                    <input type="submit" value="Save" class="button">
+                </p>
+            </div>
             <br>
-            <form action="{% url 'display-name' %}" method="post">
-                {% csrf_token %}
-                <label class="label">Display name</label>
-                <div class="field has-addons">
-                    <p class="control">
-                        <input class="input" type="text" name="display_name" value="{{ user.display_name }}">
-                    </p>
-
-                    <p class="control">
-                        <input type="submit" value="Save" class="button">
-                    </p>
-                </div>
-                <br>
-            <h4>Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.</h4>
-            <p>Past scores are below. Submissions are located at the bottom.</p>
-            </form>
-        </div>
-    </section>
-
-    <div class="columns">
-        <section id="models-profile" class="column is-9" >
-            <div id="scores">
-                <section id="leaderboard">
-                    {% block content %}
-                        <div class="box leaderboard-table-component">
-                          {% include "benchmarks/leaderboard/leaderboard-table.html" %}
-                        </div>
-                    {% endblock %}
-                </section>
-            </div>
-            <div id="benchmarks">
-                <section id="submissions" class="container center">
-                    <div id="submission_overviews" class="box">
-                        {% include "benchmarks/submissions.html" %}
-                    </div>
-                </section>
-            </div>
-            <section id="profile-logout">
-                <button onclick="location.href='logout/'" type="button" class="button submission">
-                    Logout
-                </button>
-            </section>
-        </section>
+        <p class="benefits_info is-size-5-mobile">
+            Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.
+        </p>
+        <p class="benefits_info is-size-5-mobile">
+            Past scores are below. Submissions are located at the bottom.
+        </p>
+        </form>
     </div>
-</section>
+
+    <div class="box leaderboard-table-component">
+        {% include "benchmarks/leaderboard/leaderboard-table.html" %}
+    </div>
+    <div class="box leaderboard-table-component">
+        {% include "benchmarks/submissions.html" %}
+    </div>
+    <div class="box leaderboard-table-component">
+        <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial">
+            Logout
+        </button>
+    </div>
 
 {% endif %}
 {% endblock %}
