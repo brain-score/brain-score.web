@@ -462,8 +462,10 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
                   f"?token=trigger2scoreAmodel" \
                   f"&user_id={request.user.id}" \
+                  f"&email={request.user.email}" \
                   f"&new_benchmarks={benchmark_string}" \
                   f"&new_models={model_name}" \
+                  f"&domain={domain}" \
                   f"&specified_only=True"
     _logger.debug(f"request_url: {request_url}")
 
