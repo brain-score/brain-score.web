@@ -164,7 +164,31 @@ AssertionError
              behavioral benchmarks, but not those that threw the error (again, this is usually just engineering
              benchmarks). Your neural and behavioral scores will still show up on your profile.
         </p>
-
+        </p>
+                <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            7) Install Error: AttributeError: EntryPoints
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description</span>: When running the <span class="special_format">model.py</span> file in the Deep Dives, you get an
+            error similar to this:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+“AttributeError: ‘EntryPoints’ object has no attribute ‘get’”
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> This can arise if your version of <span class="special_format">xarray</span> is too recent. We are working
+            on getting this fixed ASAP by bringing our required <span class="special_format">xarray</span> version up to date.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+             <span class="is-italic">Fix:</span> Downgrade your <span class="special_format">xarray</span> package to
+             version <span class="special_format">0.18.1</span> by running the following command:
+        </p>
+        <pre class="modified_1 collapsable"><code>
+pip install xarray==0.18.1
+        </code></pre>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+           This should remove the errors you are seeing.
+        </p>
     </div>
 </div>
 {% endblock %}
