@@ -56,7 +56,6 @@
                 {% endif %}
                 benchmark-header depth_{{ benchmark.depth }}"
               style="display:{{ not_shown_set|in_set:benchmark.identifier }}"
-              title="{{ benchmark.short_name }} {% if benchmark.ceiling and benchmark.ceiling != 'X' %}ceiling: {{ benchmark.ceiling }} {% endif %}"
           >
             <div>
               <p>
@@ -68,6 +67,7 @@
                 <span class="depth_{{ benchmark.depth }}
                            {% if benchmark.version %} instance {% endif %}
                            {% if benchmark.root_parent == 'average_{{ domain }}' %} brain_benchmark {% endif %}"
+                           title="{{ benchmark.short_name }} {% if benchmark.ceiling and benchmark.ceiling != 'X' %}ceiling: {{ benchmark.ceiling }} {% endif %}"
                       value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}
                 </span>
                 {# version #}
