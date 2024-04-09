@@ -1,55 +1,59 @@
 from django.urls import path
 import functools
 
-from .views import index, user, model, competition2022, competition2024, compare, community
+from .views import index, user, model, competition2022, competition2024, compare, community, release2_0
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
 
 non_domain_urls = [
+    # landing
+    path('', user.LandingPage.as_view(), name='landing_page'),
+    path('/', user.LandingPage.as_view(), name='landing_page'),
 
-        path('',  user.LandingPage.as_view(), name='landing_page'),
-        path('/', user.LandingPage.as_view(), name='landing_page'),
+    # global pages
+    path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
+    path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
+    path('faq/', user.Faq.as_view(), name='faq'),
+    path('community', functools.partial(community.view), name='community'),
+    path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
+    path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
+    path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
 
-        # user
-        path('competition/', competition2024.view, name='competition'),
-        path('competition2024/', competition2024.view, name='competition2024'),
-        path('competition2022/', competition2022.view, name='competition2022'),
-        path('signup/', user.Signup.as_view(), name='signup'),
-        path('profile/logout/', user.Logout.as_view(), name='logout'),
-        path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name=f'activate'),
-        path('display-name/', user.DisplayName.as_view(), name='display-name'),
-        path('password/',  user.Password.as_view(), name='password'),
-        path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
-        path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
-        path('community', functools.partial(community.view), name='community'),
-        path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
-        path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
-        path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
-        path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
-        path('faq/', user.Faq.as_view(), name='faq'),
+    # user
+    path('signup/', user.Signup.as_view(), name='signup'),
+    path('profile/logout/', user.Logout.as_view(), name='logout'),
+    path('activate/<str:uidb64>/<str:token>', user.Activate.as_view(), name=f'activate'),
+    path('display-name/', user.DisplayName.as_view(), name='display-name'),
+    path('password/', user.Password.as_view(), name='password'),
+    path('password-change/<str:uidb64>/<str:token>', user.ChangePassword.as_view(), name=f'change-password'),
 
-        # central profile page, constant across all Brain-Score domains
-        path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
-        path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+    # central profile page, constant across all Brain-Score domains
+    path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
+    path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
 
-        # central tutorial page, constant across all Brain-Score domains
-        path('tutorial/', user.Tutorial.as_view(tutorial_type=""), name='tutorial'),
+    # need navbar links when on /profile. Default to vision.
+    # this is a **temporary** fix until the new UI landing page is live.
+    path('profile/', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
+    path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
+    path('profile/resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
+    path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 
-        path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
-        path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
-        path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
-        path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
-        path('tutorial/troubleshooting', user.Tutorial.as_view(tutorial_type="_troubleshooting"), name='tutorial-troubleshooting'),
+    # central tutorial page, constant across all Brain-Score domains
+    path('tutorial/', user.Tutorial.as_view(tutorial_type=""), name='tutorial'),
 
+    path('tutorial/quickstart', user.Tutorial.as_view(tutorial_type="_quickstart"), name='tutorial-quickstart'),
+    path('tutorial/deepdive_1', user.Tutorial.as_view(tutorial_type="_deepdive_1"), name='tutorial-deepdive-1'),
+    path('tutorial/deepdive_2', user.Tutorial.as_view(tutorial_type="_deepdive_2"), name='tutorial-deepdive-2'),
+    path('tutorial/deepdive_3', user.Tutorial.as_view(tutorial_type="_deepdive_3"), name='tutorial-deepdive-3'),
+    path('tutorial/troubleshooting', user.Tutorial.as_view(tutorial_type="_troubleshooting"),
+         name='tutorial-troubleshooting'),
 
-
-        # need navbar links when on /profile. Default to vision.
-        # this is a **temporary** fix until the new UI landing page is live.
-        path('profile/', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
-        path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
-        path('profile/resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
-        path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
+    # competitions and releases
+    path('competition/', competition2024.view, name='competition'),
+    path('competition2024/', competition2024.view, name='competition2024'),
+    path('competition2022/', competition2022.view, name='competition2022'),
+    path('release2.0/', release2_0.view, name='release2.0'),
 ]
 
 all_domain_urls = [non_domain_urls]
