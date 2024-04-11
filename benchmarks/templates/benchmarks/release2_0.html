@@ -1,0 +1,102 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1>Brain-Score 2.0 Release</h1>
+    <p>Empowering Community-Driven Benchmarking for Brain Models</p>
+{% endblock %}
+
+{% block content %}
+    <h6 class="subtitle is-6 is-italic has-text-grey has-text-right">First published on 04-Apr-2024</h6>
+
+    <section id="intro" class="section container center pt-0">
+        <div class="content">
+            We are thrilled to introduce Brain-Score 2.0, a major upgrade to the Brain-Score platform
+            that empowers researchers, developers, and enthusiasts
+            in the fields of neuroscience, cognitive science, and artificial intelligence
+            to directly compare computational models of the brain
+            with human and non-human primate behavior and brain recordings.
+        </div>
+    </section>
+
+    <section id="features" class="section container center">
+        <h3 class="subtitle is-3">Here are the Brain-Score 2.0 features we are most excited about:</h3>
+
+        <h4 class="subtitle is-4">Flexibility: new plugin system for easier contribution and collaboration</h4>
+        <div class="content">
+            Brain-Score 2.0 introduces a modular
+            <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision">plugin system</a>
+            that makes it easy to develop, combine, and contribute data, metrics, benchmarks, and models.
+            Researchers can now more easily submit their own components and stress-test leading models
+            or submit their own state-of-the-art model.
+        </div>
+
+        <h4 class="subtitle is-4">Accessibility: enhanced website and documentation</h4>
+        <div class="content">
+            Brain-Score’s <a href="https://www.brain-score.org/">web presence</a> got a facelift.
+            Our revamped website provides an improved user experience with more intuitive navigation,
+            a simplified <a href="https://www.brain-score.org/vision/">leaderboard</a>, and detailed
+            <a href="https://www.brain-score.org/tutorial/">tutorials</a>.
+            We believe that making the platform easier to use is crucial for fostering collaboration and innovation.
+        </div>
+
+        <h4 class="subtitle is-4">Language: broadening to a new domain</h4>
+        <div class="content">
+            Brain-Score 2.0 introduces <a href="http://www.brain-score.org/language/">Brain-Score Language</a>,
+            which extends the Brain-Score platform from modeling the visual ventral stream to the human language
+            system.
+            The addition of Brain-Score Language reflects our philosophy that
+            the Brain-Score approach to model benchmarking is fundamentally domain agnostic,
+            and represents a step toward a future multimodal Brain-Score.
+        </div>
+    </section>
+
+    <section id="competition" class="section container center">
+        <h3 class="subtitle is-3">Brain-Score benchmarking competition</h3>
+        <div class="content">
+            In 2022, we organized the first Brain-Score competition for model submissions which were tested
+            on our existing benchmarks and led to new state-of-the-art models of the primate visual ventral stream.
+            In 2024 — we have turned the table!
+        </div>
+
+        <div class="block">
+            <a href="https://www.brain-score.org/competition/">
+                <div class="hero competition-hero">
+                    <div class="hero-body container">
+                        <p class="title">
+                            2024 Brain-Score Competition
+                        </p>
+                    </div>
+                </div>
+                <p class="has-text-centered is-italic">brain-score.org/competition</p>
+            </a>
+        </div>
+
+        <div>
+            This year, in the spirit of an adversarial collaboration — we invite experimentalists and the community at
+            large
+            to turn their legitimate concerns into concrete benchmarks that will challenge and
+            hopefully expose the explanatory gaps between our current models of primate vision and the biological brain.
+        </div>
+    </section>
+
+    <section id="future" class="section container center">
+        <h3 class="subtitle is-3">And here’s what is currently in the works:</h3>
+
+        <h4 class="subtitle is-4">Support for private code submissions</h4>
+        <div class="content">
+            While all submitted code is currently merged into our public GitHub repository,
+            support for private submissions is under active development and we anticipate it to be available soon.
+            Submissions of data can still always be kept private as was the case before.
+        </div>
+
+        <h4 class="subtitle is-4">Automatically conversion of NWB data to Brain-Score benchmarks</h4>
+        <div class="content">
+            While the 2.0 plugin system attempts to facilitate the process of benchmark creation,
+            packaging data into a Brain-Score benchmark still represents a considerable time investment.
+            We aim both to significantly reduce this burden and to encourage the adoption of standards
+            for neurophysiology data by enabling automatic conversion of appropriate data that adheres
+            to the Neurodata Without Borders (NWB) standard into Brain-Score benchmarks.
+        </div>
+    </section>
+{% endblock %}
