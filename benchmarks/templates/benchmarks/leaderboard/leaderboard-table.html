@@ -84,9 +84,9 @@
                   </span>
                 {% endif %}
                 {# info icon and box #}
-                {% if "Deng2009-top1" in benchmark.identifier %}
-                  {# icon from microsoft/fluentui-emoji#}
-                  <img src="{% static "/benchmarks/img/warning_flat.svg" %}" alt="Info icon" class="benchmark-info-icon">
+                {% if "ImageNet-top1" in benchmark.identifier %}
+                  {# icon adapted from microsoft/fluentui-emoji#}
+                  <img src="{% static "/benchmarks/img/warning_sign.svg" %}" alt="Info icon" class="benchmark-info-icon">
                   <span class="benchmark-info">Model accuracy on this benchmark might be slightly lower than expected because the default pre-processing does not center-crop (due to lower neural/behavioral alignment)</span>
                 {% endif %}
               </p>
