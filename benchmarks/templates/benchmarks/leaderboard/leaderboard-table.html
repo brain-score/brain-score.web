@@ -56,7 +56,6 @@
                 {% endif %}
                 benchmark-header depth_{{ benchmark.depth }}"
               style="display:{{ not_shown_set|in_set:benchmark.identifier }}"
-              title="{{ benchmark.short_name }} {% if benchmark.ceiling and benchmark.ceiling != 'X' %}ceiling: {{ benchmark.ceiling }} {% endif %}"
           >
             <div>
               <p>
@@ -68,6 +67,7 @@
                 <span class="depth_{{ benchmark.depth }}
                            {% if benchmark.version %} instance {% endif %}
                            {% if benchmark.root_parent == 'average_{{ domain }}' %} brain_benchmark {% endif %}"
+                           title="{{ benchmark.short_name }} {% if benchmark.ceiling and benchmark.ceiling != 'X' %}ceiling: {{ benchmark.ceiling }} {% endif %}"
                       value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}
                 </span>
                 {# version #}
@@ -82,6 +82,12 @@
                     <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
                   </span>
+                {% endif %}
+                {# info icon and box #}
+                {% if "ImageNet-top1" in benchmark.identifier %}
+                  {# icon adapted from microsoft/fluentui-emoji#}
+                  <img src="{% static "/benchmarks/img/warning_sign.svg" %}" alt="Info icon" class="benchmark-info-icon">
+                  <span class="benchmark-info">Model accuracy on this benchmark might be slightly lower than expected because the default pre-processing does not center-crop (due to lower neural/behavioral alignment)</span>
                 {% endif %}
               </p>
             </div>

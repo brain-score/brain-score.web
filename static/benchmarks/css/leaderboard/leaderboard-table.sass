@@ -173,6 +173,30 @@
                   display: var(--fa-display,inline-block)
                 .fa-up-right-and-down-left-from-center
                   display: none
+          
+          .benchmark-info-icon
+            position: absolute
+            width: 30px
+            bottom: 0
+            left: 5px
+            margin-bottom: -15px
+            margin-left: -15px
+          .benchmark-info
+            position: absolute
+            width: 160%
+            left: 5px
+            top: 140%
+            padding: 5px
+            text-wrap: wrap
+            background-color: $brainscore_gray1
+            color: $brainscore_sky
+            font-size: 0.8rem
+            font-weight: normal !important
+            line-height: 1rem
+            border-radius: 10px
+            display: none
+          .benchmark-info-icon:hover ~.benchmark-info
+            display: block    
 
     tbody
       td.rank
