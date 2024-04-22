@@ -30,7 +30,7 @@ _logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
-PLUGIN_LIMIT = 5  # used to limit the amount of plugins that can be submitted at once by a user
+PLUGIN_LIMIT = 1  # used to limit the amount of plugins that can be submitted at once by a user
 
 
 class Activate(View):
