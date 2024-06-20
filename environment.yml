@@ -13,7 +13,7 @@ dependencies:
   - boto3
   - pandas
   - pip:
-    - django_compressor=4.4
+    - django_compressor==4.4
     - colour
     - tqdm
     - requests
