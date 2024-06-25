@@ -402,7 +402,7 @@ def extract_identifiers(zip_ref):
         "models": re.compile(r"model_registry\['(.+?)'\]"),
         "benchmarks": re.compile(r"benchmark_registry\['(.+?)'\]"),
         "data": re.compile(r"data_registry\['(.+?)'\]"),
-        "metrics": re.compile(r"metrics_registry\['(.+?)'\]"),
+        "metrics": re.compile(r"metric_registry\['(.+?)'\]"),
     }
 
     # dictionary to hold identifiers for each plugin type found
