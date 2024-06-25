@@ -237,8 +237,9 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
     First, checks if the submission is below the max allowed plugin submission limit.
     If so, checks that the identifiers present within the submission are original.
     """
-    # add metrics and data eventually
-    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkType}
+    # metrics and data need to be added into the DB at some point as Tables (?), with integration of BrainIO
+    # Right now, they will be checked against BenchmarkType entries in Zip Parsing
+    plugin_db_mapping = {"models": Model, "benchmarks": BenchmarkType, "data": BenchmarkType, "metrics": BenchmarkType}
 
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
@@ -396,10 +397,12 @@ def _is_instance_path(path: str, plugin: str) -> bool:
 
 def extract_identifiers(zip_ref):
     # define patterns for each plugin type (data and metrics to be added later)
-    possible_plugins = ["models", "benchmarks"]
+    possible_plugins = ["models", "benchmarks", "data", "metrics"]
     registry_patterns = {
         "models": re.compile(r"model_registry\['(.+?)'\]"),
         "benchmarks": re.compile(r"benchmark_registry\['(.+?)'\]"),
+        "data": re.compile(r"data_registry\['(.+?)'\]"),
+        "metrics": re.compile(r"metrics_registry\['(.+?)'\]"),
     }
 
     # dictionary to hold identifiers for each plugin type found
