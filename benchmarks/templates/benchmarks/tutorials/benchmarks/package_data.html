@@ -3,7 +3,7 @@
 
 {% block banner %}
 <h1>Data Packaging</h1>
-<p>How to prepare your data to become a Brain-Score benchmark </p>
+<p>How to prepare your data to become a Brain-Score benchmark.</p>
 {% endblock %}
 
 {% block info_section %}
@@ -21,18 +21,21 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Let's Package Some Data!</h3>
             <p class="benefits_info is-size-5-mobile">
-                In this guide, we will explore two sample benchmarks: one neural, and one behavioral. This should serve
-                as a baseline for those interested in packaging their own data, in preparation to turn it into a Brain-Score
+                In this guide, we will explore a sample behavioral benchmark, <span class="special_format">Ferguson2024</span>.
+                This should serve as a baseline for those interested in packaging their own data, in preparation to turn it into a Brain-Score
                 benchmark.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                This section is divided into three parts: First, you need to create the
-                <span class="special_format">stimulus_set</span>, which is our wrapper for stimuli, and the
-                <span class="special_format">assembly</span>, which is our wrapper for your data. Next, we take the
-                <span class="special_format">stimulus_set</span> and <span class="special_format">assembly</span> and
-                combine them into a file, called <span class="special_format">data_packaging.py</span>. Finally, we will create
-                an <span class="special_format">__init__</span> file and a <span class="special_format">test.py</span>
-                file, which allow us to add the stimuli and data to the ecosystem, as well as ensure they are accepted properly.
+                This section is divided into three parts:
+                First, we are going to explore the <span class="special_format">data_packaging.py</span> file. This file
+                consists of how we upload and package both your stimuli (via a <span class="special_format">stimulus_set</span>),
+                and your data (via an <span class="special_format">assembly</span>).
+
+                Next, we will explore the <span class="special_format">__init__.py</span> file, which adds the data plugin
+                to the data registry (i.e., it tells Brain-Score that your data exists in our system).
+
+                Finally, we will explore a sample <span class="special_format">test.py</span> file, in which we ensure
+                your benchmark is structured as you expect it.
             </p>
         </div>
     </div>
@@ -43,21 +46,20 @@
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                In order to use Brain-Score, we have to download it.
+                The first thing you are going to want to do is clone the Brain-Score repository, in order to access it.
+                You can do this with commands found on the model quickstart <a href="https://www.brain-score.org/tutorials/models/quickstart">here</a>,
+                in Part 1.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                If you have already done the Quickstart,
-                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorial/models/quickstart">here</a>
-                to install the necessary packages for Brain-Score.
+                If you have already done the Quickstart, or installed Brain-Score, skip to Part 2 to the right.
             </p>
         </div>
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 2: Download the Starter Zip File:</h3>
             <p class="benefits_info is-size-5-mobile">
                 Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
-                upload, or through a Github PR. In this first Deep Dive, you will explore a sample model submission
-                in order to become familiar with the submission package structure. You can download the sample zip file
-                <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
+                upload, or through a Github PR. In this first packaging tutorial, you will explore a sample data plugin
+                in order to become familiar with it's structure. You can download the sample zip file <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
                 The sample Zip file contains a properly formatted, stock version of ResNet-50 pretrained on ImageNet.
             </p>
              <p class="benefits_info is-size-5-mobile">

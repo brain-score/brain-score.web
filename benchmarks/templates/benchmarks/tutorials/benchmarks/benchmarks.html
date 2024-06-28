@@ -20,9 +20,10 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Welcome, Benchmarkers!</h3>
             <p class="benefits_info is-size-5-mobile">
-                Our guides below detail how to take your raw data and turn it into a live Brain-Score benchmark. This
-                process is split into two main parts: packaging your stimuli and data, and actually creating the
-                benchmark. We currently support both neural and behavioral data.
+               Brain-Score uses plugins as its main way of interacting with submissions. These plugins can be models,
+               benchmarks, data, or metrics. To create a full benchmark and have it on the website, most of the time 3
+                plugins are required: a benchmark plugin (which contains the code on how the model is to be evaluated),
+                a data plugin (which
             </p>
             <p class="benefits_info is-size-5-mobile">
                 Packaging data involves wrapping up both stimuli and subject data and uploading them for models to access.
@@ -31,7 +32,7 @@
             </p>
             <p class="benefits_info is-size-5-mobile">
                 To package your data and create the benchmark, please visit the corresponding guides below. You will
-                need both your stimuli and your subject data (.csv format or similar). these guides cover both neural
+                need both your stimuli and your subject data (.csv format or similar). These guides cover both neural
                 and behavioral benchmarks.
             </p>
             <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data</button></a>
