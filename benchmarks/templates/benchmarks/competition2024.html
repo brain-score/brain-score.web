@@ -134,36 +134,14 @@
     <section id="leaderboard" class="section container tablecenter is-centered">
         <h3 class="title is-3">Competition Leaderboard</h3>
 
-        <div class="columns">
-            <div class="column is-half">
-                <div class="card">
-                    <header class="card-header">
-                        <p class="card-header-title">
-                            <span class="track">Behavioral Track</span>
-                        </p>
-                    </header>
-                    <div class="card-content">
-                        <div class="content">
-                            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_behavior_vision models=models_behavior_vision %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <h4 class="title is-4 track">Behavioral Track</h4>
+        <div class="content">
+            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_behavior_vision models=models_behavior_vision %}
+        </div>
 
-            <div class="column is-half">
-                <div class="card">
-                    <header class="card-header">
-                        <p class="card-header-title">
-                            <span class="track">Neural Track</span>
-                        </p>
-                    </header>
-                    <div class="card-content">
-                        <div class="content">
-                            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_neural_vision models=models_neural_vision %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <h4 class="title is-4 track">Neural Track</h4>
+        <div class="content">
+            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_neural_vision models=models_neural_vision %}
         </div>
     </section>
 
@@ -292,7 +270,8 @@
                             <code>effnetb1_cutmixpatch_SAM_</code></a></li>
                         <li><a href="../model/vision/1033">
                             <code>effnetb1_cutmixpatch_augmix_robust32_avge4e7_manylayers_324x288</code></a>
-                            (Winner of the 2022 competition)</li>
+                            (Winner of the 2022 competition)
+                        </li>
                         <li><a href="../model/vision/648">
                             <code>resnext101_32x32d_wsl</code></a></li>
                         <li><a href="../model/vision/1045">
@@ -325,9 +304,11 @@
                         <li><a href="../model/vision/680">
                             <code>resnet18-local_aggregation</code></a></li>
                         <li><a href="../model/vision/1044">
-                            <code>grcnn_robust_v1</code></a> (Top-3 competition 2022)</li>
+                            <code>grcnn_robust_v1</code></a> (Top-3 competition 2022)
+                        </li>
                         <li><a href="../model/vision/991">
-                            <code>custom_model_cv_18_dagger_408</code></a> (Top-3 competition 2022)</li>
+                            <code>custom_model_cv_18_dagger_408</code></a> (Top-3 competition 2022)
+                        </li>
                         <li><a href="../model/vision/734">
                             <code>ViT_L_32_imagenet1k</code></a></li>
                         <li><a href="../model/vision/563">

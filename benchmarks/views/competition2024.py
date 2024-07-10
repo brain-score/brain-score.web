@@ -40,12 +40,11 @@ def view(request):
 
             "Hebart2023-match",
 
-            # "Baker2022",
-            # "Baker2022-accuracy_delta_frankenstein", "Baker2022-accuracy_delta_fragmented",
-            # "Baker2022-inverted_accuracy_delta",
+            "Baker2022",
+            "Baker2022inverted-accuracy_delta", "Baker2022fragmented-accuracy_delta",
+            "Baker2022frankenstein-accuracy_delta",
 
-            "Coggan2024"
-            "Coggan2024_behavior-ConditionWiseAccuracySimilarity",
+            "tong.Coggan2024_behavior-ConditionWiseAccuracySimilarity",
 
             "BMD2024",
             "BMD2024.texture_1Behavioral-accuracy_distance",
@@ -53,31 +52,35 @@ def view(request):
             "BMD2024.dotted_1Behavioral-accuracy_distance",
             "BMD2024.dotted_2Behavioral-accuracy_distance",
 
-            "Malania2007",
-            "Malania2007.short2-threshold_elevation", "Malania2007.short4-threshold_elevation",
-            "Malania2007.short6-threshold_elevation", "Malania2007.short8-threshold_elevation",
-            "Malania2007.short16-threshold_elevation", "Malania2007.equal2-threshold_elevation",
-            "Malania2007.long2-threshold_elevation", "Malania2007.equal16-threshold_elevation",
-            "Malania2007.long16-threshold_elevation", "Malania2007.vernieracuity-threshold",
-
             "Maniquet2024",
             "Maniquet2024-confusion_similarity", "Maniquet2024-tasks_consistency",
+
+            "Malania2007",
+            "Malania2007.short2", "Malania2007.short4", "Malania2007.short6", "Malania2007.short8",
+            "Malania2007.short16", "Malania2007.equal2", "Malania2007.long2", "Malania2007.equal16",
+            "Malania2007.long16", "Malania2007.vernieracuity-threshold",
+
+            "Scialom2024",
+            "Scialom2024_phosphenes-allBehavioralAccuracyDistance",
+            "Scialom2024_segments-allBehavioralAccuracyDistance",
+            "Scialom2024_phosphenes-100BehavioralAccuracyDistance",
+            "Scialom2024_segments-100BehavioralAccuracyDistance",
         ],
         "neural_vision": [
             "average_vision",
             "neural_vision",
             "V1", "V2", "V4", "IT",
             "Bracci2019.anteriorVTC-rdm",
-            "Coggan2024_fMRI.V1-rdm",
-            "Coggan2024_fMRI.V2-rdm",
-            "Coggan2024_fMRI.V4-rdm",
-            "Coggan2024_fMRI.IT-rdm",
+            "Coggan2024",
+            "tong.Coggan2024_fMRI.V1-rdm",
+            "tong.Coggan2024_fMRI.V2-rdm",
+            "tong.Coggan2024_fMRI.V4-rdm",
+            "tong.Coggan2024_fMRI.IT-rdm",
         ]
     }
     admin_user = User.objects.get(id=2)
     context = {'leaderboard_keys': ['behavior_vision', 'neural_vision']}
     for key, key_benchmarks in track_benchmarks.items():
-        if key == 'neural_vision': continue  # fixme
         benchmark_filter = lambda benchmarks: benchmarks.filter(identifier__in=key_benchmarks)
         key_context = get_context(benchmark_filter=benchmark_filter,
                                   model_filter=model_filter,

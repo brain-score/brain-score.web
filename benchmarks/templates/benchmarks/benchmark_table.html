@@ -21,7 +21,7 @@
                             title="ceiling: {{ benchmark.ceiling }}"
                         {% endif %}
                             data-benchmark="{{ benchmark.short_name }}"
-                            data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
+{#                            data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"#}
                             class="rotate depth_{{ benchmark.depth }}"
                 >
                     <p>
@@ -53,27 +53,10 @@
         </thead>
         <!-- models -->
         <tbody>
-        <tr>
-            <td class="model">
-                <div class="identifier">
-                    Average model scores
-                </div>
-            </td>
-            {% for score_row in model.scores %}
-                <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
-                    data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
-                    data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
-                    class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
-                    style="{{ score_row.color }}">
-                    {{ score_row.score_ceiled }}
-                </td>
-            {% endfor %}
-        </tr>
         {% for model in models %}
             <tr>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-
                         <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
                             {{ model|display_model:user }}
                         </a>
@@ -82,7 +65,7 @@
                 {% for score_row in model.scores %}
                     <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
                         data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
-                        data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
+{#                        data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"#}
                         class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
                         style="{{ score_row.color }}">
                         {{ score_row.score_ceiled }}
