@@ -26,7 +26,7 @@ def view(request):
         # "grcnn_robust_v1",  # weights deleted on user server
         "custom_model_cv_18_dagger_408",
         "ViT_L_32_imagenet1k",
-        "mobilenet_v2_1.4_224_pytorch",
+        "mobilenet_v2_1-4_224_pytorch",
         "pixels",
     ]
     assert len(included_models) == 19
