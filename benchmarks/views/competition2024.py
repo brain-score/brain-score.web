@@ -14,22 +14,22 @@ def view(request):
         "resnext101_32x32d_wsl",
         "effnetb1_272x240",
         "resnext101_32x48d_wsl",
-        "pnasnet_large",
-        "resnet-152_v2",
+        "pnasnet_large_pytorch",
+        "resnet-152_v2_pytorch",
         "focalnet_tiny_lrf_in1k",
         "hmax",
         "alexnet",
         "CORnet-S",
         "resnet-50-robust",
         "voneresnet-50-non_stochastic",
-        "resnet18-local_aggregation",
-        "grcnn_robust_v1",
+        # "resnet18-local_aggregation",  # TF no longer supported
+        # "grcnn_robust_v1",  # weights deleted on user server
         "custom_model_cv_18_dagger_408",
         "ViT_L_32_imagenet1k",
-        "mobilenet_v2_1.4_224",
+        "mobilenet_v2_1.4_224_pytorch",
         "pixels",
     ]
-    assert len(included_models) == 21
+    assert len(included_models) == 19
     model_filter = dict(model__name__in=included_models)
 
     # benchmark filter
@@ -61,10 +61,19 @@ def view(request):
             "Malania2007.long16", "Malania2007.vernieracuity-threshold",
 
             "Scialom2024",
-            "Scialom2024_phosphenes-allBehavioralAccuracyDistance",
-            "Scialom2024_segments-allBehavioralAccuracyDistance",
-            "Scialom2024_phosphenes-100BehavioralAccuracyDistance",
-            "Scialom2024_segments-100BehavioralAccuracyDistance",
+            "Scialom2024_rgb-behavioral_accuracy",
+            "Scialom2024_phosphenes-all-behavioral_accuracy",
+            "Scialom2024_segments-all-behavioral_accuracy",
+            "Scialom2024_phosphenes-100-behavioral_accuracy",
+            "Scialom2024_segments-100-behavioral_accuracy",
+
+            "Ferguson2024",
+            "Ferguson2024circle_line-value_delta", "Ferguson2024color-value_delta",
+            "Ferguson2024convergence-value_delta", "Ferguson2024eighth-value_delta",
+            "Ferguson2024gray_easy-value_delta", "Ferguson2024gray_hard-value_delta", "Ferguson2024half-value_delta",
+            "Ferguson2024juncture-value_delta", "Ferguson2024lle-value_delta", "Ferguson2024llh-value_delta",
+            "Ferguson2024quarter-value_delta", "Ferguson2024round_f-value_delta", "Ferguson2024round_v-value_delta",
+            "Ferguson2024tilted_line-value_delta"
         ],
         "neural_vision": [
             "average_vision",
