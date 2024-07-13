@@ -53,7 +53,7 @@ def view(request):
             "BMD2024.dotted_2Behavioral-accuracy_distance",
 
             "Maniquet2024",
-            "Maniquet2024-confusion_similarity", "Maniquet2024-tasks_consistency",
+            "Maniquet2024-confusion_similarity'", "Maniquet2024-tasks_consistency",
 
             # "Malania2007",
             # "Malania2007.short2", "Malania2007.short4", "Malania2007.short6", "Malania2007.short8",
