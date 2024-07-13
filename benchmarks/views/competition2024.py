@@ -94,7 +94,8 @@ def view(request):
         key_context = get_context(benchmark_filter=benchmark_filter,
                                   model_filter=model_filter,
                                   user=admin_user,
-                                  domain="vision", show_public=True)
+                                  domain="vision", show_public=True,
+                                  compute_benchmark_average=True)
         key_context[f"benchmarks_{key}"] = key_context['benchmarks']
         key_context[f"models_{key}"] = key_context['models']
         del key_context['benchmarks'], key_context['models']

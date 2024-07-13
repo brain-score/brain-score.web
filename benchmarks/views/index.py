@@ -39,10 +39,12 @@ def view(request, domain: str):
     return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
 
 
-def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
+def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False,
+                compute_benchmark_average: bool = False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
+    model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter,
+                                 compute_benchmark_average=compute_benchmark_average)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -77,34 +79,33 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     if domain is "vision":
         citation_domain_url = 'https://www.biorxiv.org/content/early/2018/09/05/407007'
         citation_domain_title = "Brain-Score: Which Artificial Neural Network for Object Recognition is most " \
-                                "Brain-Like? "
-        citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
-                                  "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
-                                  "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
-                                  "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
-                                  "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n\t\t\t\t" \
-                                  "journal={bioRxiv preprint},\n\t\t\t\t" \
-                                  "year={2018},\n\t\t\t\t" \
-                                  "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
+                                "Brain-Like?"
+        citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n" \
+                                 "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n" \
+                                 "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
+                                 "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
+                                 "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n" \
+                                 "journal={bioRxiv preprint},\n" \
+                                 "year={2018},\n" \
+                                 "url={https://www.biorxiv.org/content/10.1101/407007v2}\n}"
     elif domain is "language":
         citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
         citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
-        citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
-                                  "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
-                                  "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
-                                  "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
-                                  "journal={Proceedings of the National Academy of Sciences},\n\t\t\t\t" \
-                                  "volume={118},\n\t\t\t\t" \
-                                  "number={45},\n\t\t\t\t" \
-                                  "pages={e2105646118},\n\t\t\t\t" \
-                                  "year={2021},\n\t\t\t\t" \
-                                  "publisher={National Acad Sciences}\n\t\t\t" \
-                                  "}"
+        citation_domain_bibtex = "@article{schrimpf2021neural,\n" \
+                                 "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n" \
+                                 "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
+                                 "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n" \
+                                 "journal={Proceedings of the National Academy of Sciences},\n" \
+                                 "volume={118},\n" \
+                                 "number={45},\n" \
+                                 "pages={e2105646118},\n" \
+                                 "year={2021},\n" \
+                                 "publisher={National Acad Sciences}\n" \
+                                 "}"
     else:
         citation_domain_url = ''
         citation_domain_title = ''
         citation_domain_bibtex = ''
-
 
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
@@ -115,14 +116,14 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             "comparison_data": json.dumps(comparison_data),
             'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
             'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
-            'citation_general_bibtex': '@article{Schrimpf2020integrative,\n\t\t\t\t'
+            'citation_general_bibtex': '@article{Schrimpf2020integrative,\n'
                                        'title={Integrative Benchmarking to Advance '
-                                       'Neurally Mechanistic Models of Human Intelligence},\n\t\t\t\t'
+                                       'Neurally Mechanistic Models of Human Intelligence},\n'
                                        'author={Schrimpf, Martin and Kubilius, Jonas and Lee, Michael J and Murty, '
-                                       'N Apurva Ratan and Ajemian, Robert and DiCarlo, James J},\n\t\t\t\t'
-                                       'journal={Neuron},\n\t\t\t\t'
-                                       'year={2020},\n\t\t\t\t'
-                                       'url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n\t\t\t}',
+                                       'N Apurva Ratan and Ajemian, Robert and DiCarlo, James J},\n'
+                                       'journal={Neuron},\n'
+                                       'year={2020},\n'
+                                       'url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n}',
             'citation_domain_url': citation_domain_url,
             'citation_domain_title': citation_domain_title,
             'citation_domain_bibtex': citation_domain_bibtex,
@@ -236,7 +237,8 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
+def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None,
+                    compute_benchmark_average: bool = False):
     """
     :param user: The user whose profile we are currently on, if any
     """
@@ -388,7 +390,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                 color=representative_color(None, min_value=0, max_value=1),
                 comment="")
     # - convert scores DataFrame into rows
-    data = []
+    model_rows = []
     for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
@@ -444,10 +446,31 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             scores=model_scores, rank=rank, build_status=build_status,
             submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
         )
-        data.append(model_row)
-    data = list(sorted(data, key=lambda model_row: model_row.rank))
+        model_rows.append(model_row)
 
-    return data
+    model_rows = list(sorted(model_rows, key=lambda model_row: model_row.rank))
+
+    if compute_benchmark_average:
+        benchmark_averages = scores.fillna(0).groupby('benchmark').mean()
+        model_scores = [ScoreDisplay(
+            benchmark=benchmark.identifier,
+            versioned_benchmark_identifier=benchmark_averages.loc[benchmark.identifier]['benchmark_version'],
+            score_ceiled=represent(benchmark_averages.loc[benchmark.identifier]['score_ceiled']),
+            score_raw=benchmark_averages.loc[benchmark.identifier]['score_raw'],
+            error=None,
+            color='gray', comment=None)
+            for benchmark in benchmarks]
+        average_row = ModelRow(
+            id=None,
+            name="Benchmark average",
+            reference_identifier=None, reference_link=None,
+            user=None, public=True, competition=None, domain=domain,
+            scores=model_scores, rank=None, build_status=None,
+            submitter=None, submission_id=None, jenkins_id=None, timestamp=None
+        )
+        model_rows.insert(0, average_row)
+
+    return model_rows
 
 
 def _get_benchmark_shortname(benchmark_type_identifier: str):
@@ -553,6 +576,7 @@ def get_visibility(model, user):
     # Model is public
     else:
         return "public"
+
 
 # Adds python functions so the HTML can do several things
 @register.filter

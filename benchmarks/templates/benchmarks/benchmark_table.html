@@ -51,13 +51,15 @@
             {% endfor %}
         </tr>
         </thead>
-        <!-- models -->
+        <!-- model rows -->
         <tbody>
         {% for model in models %}
             <tr>
                 <td class="model">
                     <div class="identifier" title="{{ model.reference_identifier }}">
-                        <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
+                        <a target="_self" rel="noopener noreferrer"
+{#                           href="{% url 'model-view' domain model.id %}"#}
+                        >
                             {{ model|display_model:user }}
                         </a>
                     </div>
