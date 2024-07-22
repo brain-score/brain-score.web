@@ -8,6 +8,7 @@
    * The Dev site and LocalHost DO NOT use HTTPS, only HTTP. Do not get spooked if you get weird CSRF errors.
 5. If Dev looks good, then merge PR into master upon approval. 
 6. Once PR is merged, create a new branch from master locally, fetch (pull) changes, and deploy to prod with this command: `eb deploy Brain-score-web-prod-updated` 
+7. Once the Prod site looks good, visit the leaderboard on both vision and language at least once, in order to populate the server-side cache. 
 
 
 
