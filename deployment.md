@@ -1,5 +1,17 @@
 # Website Deployment
 
+## Website Staging Flow/Operations (Via Command Line/PR)
+1. Test any changes on LocalHost to make sure they appear and function correctly.
+2. Open a PR with your changes on Brain-Score.web's Github. 
+3. Once PR tests pass, deploy to Dev: `eb deploy Brain-score-web-dev-updated`
+4. Test out changes on Dev: i.e., make sure everything looks good on dev using the dev link: `https://brain-score-web-dev-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com` 
+   * The Dev site and LocalHost DO NOT use HTTPS, only HTTP. Do not get spooked if you get weird CSRF errors.
+5. If Dev looks good, then merge PR into master upon approval. 
+6. Once PR is merged, create a new branch from master locally, fetch (pull) changes, and deploy to prod with this command: `eb deploy Brain-score-web-prod-updated` 
+7. Once the Prod site looks good, visit the leaderboard on both vision and language at least once, in order to populate the server-side cache. 
+
+
+
 ## Setup
 If you have not already done so:  
 * Clone this repo
@@ -16,7 +28,7 @@ If you have not already done so:
 * Check that the command line client can see the environments in the account:  `eb list`
     * If the output does not include `brain-score-web-dev` and `brain-score-web-prod`, default region or AWS credentials may be misconfigured
 
-## To Deploy
+## To Deploy (if migrations are made)
 * If there are changes to django models, make sure makemigrations has been run and the migration checked into git
 * Deploy the latest Git commit to the development environment:  `eb deploy brain-score-web-dev  --timeout 20`
     * This can take around 15 minutes
@@ -79,7 +91,7 @@ Do you want to set up SSH for your instances?
 
 
 Select a keypair.
-1) jjpr
+1) mferg
 2) [ Create new KeyPair ]
 (default is 1): 1
 ```
