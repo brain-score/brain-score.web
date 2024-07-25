@@ -31,7 +31,7 @@ Run server in dev: `DEBUG=True python manage.py runserver`
    and profiles on the localhost site. 
 3. If you get an error about `cannot connect to server` when visiting your profile, you are probably on an `https` URL, 
    which the localhost (and dev) sites do not support. To fix this, just use `http`.
-4. To change what database is used for the localhost, you can pass the string values `prod`, `dev`, and `test` in `settings.py`
+4. To change what database is used for the localhost, you can pass the string values `prod`, `dev`, `dev_18072024` and `test` in `settings.py`
    lines 150 and 138. 
    * Make sure you talk to another Brain-Score team member when using `prod` to make sure nothing major will happen!
 5. IF you do not have credentials set up, the localhost will default to a (blank) `db.sqlite3` file. 
@@ -88,12 +88,12 @@ See [deployment.md](deployment.md)
 2. For an overall Github workflow, visit the diagram [here](https://github.com/brain-score/vision/blob/master/docs/source/modules/brainscore_submission.png).
 
 ## Submisison/Upload Process
-1. Zip file is first checked for validity, then
-2. Zip file is checked for originality and ownership:
+1. Zip file is first checked for validity (`is_zip_valid`), then
+2. Zip file is checked for originality and ownership (`submission_is_original`):
    * If a zip file is both valid and original, then the submission goes through. 
    * If a zip file is not valid, a user will be redirected upon upload via the website to an error page.
 3. If a zip is not original AND a user is not the owner, then user will be redirected via website to an error page. 
-4. Zip files have the following constraints that provide a check:
+4. Zip files have the following constraints that provide a check (both `Upload()` and `validate_zip()`):
    * They must be <50MB
    * There must only be 1 plugin overall submitted (i.e. one model submitted at a time). The code itself can handle 
      multiple plugins, but we artificially cap submissions at 1 plugin for Jenkins' sake.
