@@ -19,9 +19,9 @@
             <img class="tutorial_data_packaging" src="{% static "/benchmarks/img/tutorials/data_packaging.png" %}" />
         </div>
         <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Let's Package Some Data!</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Contributing Data</h3>
             <p class="benefits_info is-size-5-mobile">
-                In this guide, we will explore a sample behavioral benchmark, <span class="special_format">Ferguson2024</span>.
+                In this section, we will explore a sample behavioral benchmark, <span class="special_format">Ferguson2024</span>.
                 This should serve as a baseline for those interested in packaging their own data, in preparation to turn it into a Brain-Score
                 benchmark.
             </p>
@@ -55,67 +55,81 @@
             </p>
         </div>
         <div class="column is-one-half">
-            <h3 class="benefits_heading is-size-3-mobile">Part 2: Download the Starter Zip File:</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Part 2: Access the Sample Data Folder:</h3>
             <p class="benefits_info is-size-5-mobile">
                 Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
                 upload, or through a Github PR. In this first packaging tutorial, you will explore a sample data plugin
-                in order to become familiar with it's structure. You can download the sample zip file <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
-                The sample Zip file contains a properly formatted, stock version of ResNet-50 pretrained on ImageNet.
+                in order to become familiar with it's structure. You can view our stock submission in your local copy
+                of Brain-Score that you cloned in Part 1. The folder we are going to be exploring is
+                <span class="special_format">vision/brainscore_vision/data/ferguson2024</span>. If you cannot access
+                a local copy of Brain-Score for some reason, the sample data folder is available on our Github
+                <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/data/ferguson2024">here</a>.
             </p>
              <p class="benefits_info is-size-5-mobile">
-                In Deep Dives 2 and 3, we will look at a custom model submission, as well as prepare to submit a
-                 model via Github Pull Request respectively.
+                 Currently (as of July 2024), benchmark submission via the website are a little buggy. Once you have your
+                 submission ready to go, reach out to Brain-Score Team member and we will submit your benchmark for you
+                 via a Github PR.
             </p>
         </div>
     </div>
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Starter Submission File</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Sample Data Folder</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        After unzipping the <span class="special_format">packaging_submission.zip</span> file, you will see that the root folder is
-        called <span class="special_format">packaging_tutorial</span>. This in turns contains another folder for the plugin itself, in
-        this case <span class="special_format">/models</span>. This <span class="special_format">/models</span> folder then
-        contains a folder called <span class="special_format"> /resnet50_tutorial</span>.
-        This final also contains 4 other Python files. The overall structure of the submission
-        package is shown below:
+        The first thing to notice in the sample data folder is the files themselves: There are 3 files and a folder.
+        We will cover each one in a separate section below.
     </p>
-    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/sample_data.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        Just like the sample submission, each submission that you submit must contain at least the 2 required
-        Python files: <span class="special_format">__init__.py</span> and <span class="special_format">test.py</span>.
-        The other two files, <span class="special_format">setup.py</span> and <span class="special_format">model.py</span>,
-        are optional, but will be explored below along with the two required files. Let's explore further with the first required file,
-        <span class="special_format">__init__.py</span> file.
+        As a brief overview, the first file is the required <span class="special_format">__init__.py</span> file, which is what
+        is used to add your data to the Brain-Score registry; i.e, it tells Brain-Score that there is a new data plugin
+        added.
     </p>
-    <p class="benefits_info is-size-5-mobile shorter is-italic">
-        Note: this would also be the same overall structure as your submission
-        package, or if you are submitting any other plugins (benchmarks, metrics, or data). Feel free
-        to base your future submissions off of this package, just please do not submit the
-    <span class="special_format">resnet50_tutorial</span> model.
+    <p class="benefits_info is-size-5-mobile shorter">
+        The second file is the <span class="special_format">requirements.txt</span> file, an optional
+        addition to your data plugin that allows Brain-Score to install any needed dependencies that are used when
+        packaging the data (note: this is not needed if you have already uploaded your data, and for most submitters can
+        be omitted).
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        The third file is the <span class="special_format">test.py</span> file, a required file that you can add tests
+        to in order to ensure your data is what you expect. THere are many stock tests that Brain-Score provides, and
+        you are encouraged to add more!
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Lastly, located in the <span class="special_format">data_packaging</span> subfolder, is a required file named
+        <span class="special_format">data_packaging.py</span>. This file ideally is just a copy of code that has already
+        been run locally in order to upload the data, and exists as a backup record if the data needs to be repackaged.
+        This file is the heart of the packaging process, as it reads in stimuli and data, converts them into Brain-Score
+        format, and uploads them to our servers.
     </p>
 </div>
 
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 4: Exploring the  __init__.py  file</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        This file adds your plugin to the Brain-Score plugin registry and to the Brain-Score
-        ecosystem at large. You are registering your model to a unique global identifier. You can
-        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
-        adds the plugin to the registry. In the future, when you submit models (or other plugins),
-        you will add the plugin to our ecosystem via line 5.
+        This first file we will look at in depth adds your data plugin to the Brain-Score plugin registry and to the Brain-Score
+        ecosystem at large. You are registering your data to a unique global identifier. You can
+        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 8
+        adds the plugin to the registry. In the future, when you submit your data (or other plugins),
+        you will add the plugin to our ecosystem via line 8.
     </p>
 
-    <pre class="modified_1"><code>
-1       from brainscore_vision import model_registry
-2       from brainscore_vision.model_helpers.brain_transformation import ModelCommitment
-3       from .model import get_model, get_layers
-4
-5       model_registry['resnet50'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
-    </code></pre>
+<img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/sample_data_init.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        Please note: Brain-Score does not allow duplicate plugin
-        names, so if you submit another version of the same model, make sure to make the identifier unique!
+        You will notice that adding a data plugin to the regisry entails providing Brain-Score with information such as a
+        <span class="special_format">csv_sha1</span> hash, a <span class="special_format">zip_version_id</span>, and other
+        fields. You will get this data returned to you after you upload your data. The process is to upload your data via
+        the data_packaging.py code, and that uploading call returns the metadata you need in order to populate this
+        <span class="special_format">__init__.py</span> file's fields.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Note: In the <span class="special_format">Ferguson2024</span> sample folder's <span class="special_format">__init__.py</span>
+        file, there are multiple additions to the registry; in fact there are 14, whereas only one is shown in the
+        screenshot above. The other 13 are different stimuli that use the same experimental setup, i.e. subjects were
+        shown a circle with line in one case, then only a colored circle in another, etc. If you are packaging your data
+        and your experiment has "sub-experiments", feel free to use this file as a template.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         Also note: It would be prohibitively time- and resource-consuming to actually load every plugin
@@ -129,132 +143,91 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 5: Exploring the test.py File</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        You will notice that the submission's <span class="special_format">test.py</span> file is blank. This is a
-        temporary status, as the Brain-Score Team is currently writing a suite of tests that can be incorporated into
-        this file, that every model will run.
+        The purpose of the data plugin's <span class="special_format">test.py</span> file is to ensure that your stimuli
+        and experimental data are what you expect. This is where you would add tests for checking the length of your
+        stimuli and data, the data types, and the correct format. You will notice that the sample folder's
+        <span class="special_format">test.py</span> contains many tests, divided
+        into two classes: <span class="special_format">TestStimulusSets</span> and <span class="special_format">TestAssemblies</span>:
     </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-        For now, if you are submitting a model yourself, you can just leave this file blank, but still make sure
-        to include it in your submission package.
-    </p>
-</div>
-<div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring an (optional) setup.py  File</h3>
-    <p class="benefits_info is-size-5-mobile shorter">
-        This file is where you can add any requirements that your model needs. You can do this by simply
-        adding the packages to the in the requirements dictionary on lines 6-8. If your model
-        had any extra requirements, such as a specific version of a package or an external git
-        repository, you would add it to the list defined on line 6. Lines 10 - 25 are just
-        administrative definitions, and can be left untouched.
-    </p>
-    <pre class="modified_1"><code>
-1       #!/usr/bin/env python
-2       # -*- coding: utf-8 -*-
-3
-4       rom setuptools import setup, find_packages
-5
-6       requirements = [ "torchvision",
-7                        "torch"
-8       ]
-9
-10      setup(
-11          packages=find_packages(exclude=['tests']),
-12          include_package_data=True,
-13          install_requires=requirements,
-14          license="MIT license",
-15          zip_safe=False,
-16          keywords='brain-score template',
-17          classifiers=[
-18              'Development Status :: 2 - Pre-Alpha',
-19              'Intended Audience :: Developers',
-20              'License :: OSI Approved :: MIT License',
-21              'Natural Language :: English',
-22              'Programming Language :: Python :: 3.7',
-23          ],
-24          test_suite='tests',
-25      )
-    </code></pre>
-    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
-        Note: The reason why <span class="special_format">setup.py</span> is optional is that you can also use a
-        <span class="special_format">requirements.txt</span> or <span class="special_format">pyproject</span> file to
-        add any other requirements that you might need. If your model needs no extra packages, you can exclude this from
-        the submission package completely.
-    </p>
-</div>
-<div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring an (optional) model.py  File</h3>
-    <p class="benefits_info is-size-5-mobile shorter">
-        This file is usually where the model itself is defined. The reason why this is optional is that using
-        <span class="special_format">model.py</span> is a convention we use to
-        separate code, but that is not needed. It is also plugin-specific. We think it is good practice,
-        however, to use a separate <span class="special_format">model.py</span> for models, to keep things neat.
-    </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-        Let’s explore this file in more detail: Lines 1 - 9 are standard imports. Lines
-        20-21 define the <span class="special_format">get_model_list()</span> function that simply returns the model identifier.
-        Next, lines 24-30 define the <span class="special_format">get_model()</span> function that gets the model itself.
-        You can see on line 26 the model itself is being loaded from <span class="special_format">pytorch</span>. If you have a custom
-        model that you have created yourself, check out our Custom Model Submission Guide here in
-        Deep Dive 2. Lines 33 - 35 contain the <span class="special_format">get_layers()</span> function, which returns the layers you
-        are interested in scoring.
-    </p>
-    <pre class="modified_1"><code>
-1       from brainscore_vision.model_helpers.check_submission import check_models
-2       import functools
-3       import os
-4       import torchvision.models
-5       from brainscore_vision.model_helpers.activations.pytorch import PytorchWrapper
-6       from brainscore_vision.model_helpers.activations.pytorch import load_preprocess_images
-7       from pathlib import Path
-8       from brainscore_vision.model_helpers import download_weights
-9       import torch
-10
-11      # This is an example implementation for submitting resnet-50 as a pytorch model
-12
-13      # Attention: It is important, that the wrapper identifier is unique per model!
-14      # The results will otherwise be the same due to brain-scores internal result caching mechanism.
-15      # Please load your pytorch model for usage in CPU. There won't be GPUs available for scoring your model.
-16      # If the model requires a GPU, contact the brain-score team directly.
-17      from brainscore_vision.model_helpers.check_submission import check_models
-18
-19
-20      def get_model_list():
-21          return ['resnet50']
-22
-23
-24      def get_model(name):
-25          assert name == 'resnet50'
-26          model = torchvision.models.resnet50(pretrained=True)
-27          preprocessing = functools.partial(load_preprocess_images, image_size=224)
-28          wrapper = PytorchWrapper(identifier='resnet50', model=model, preprocessing=preprocessing)
-29          wrapper.image_size = 224
-30          return wrapper
-31
-32
-33      def get_layers(name):
-34          assert name == 'resnet50'
-35          return ['conv1','layer1', 'layer2', 'layer3', 'layer4', 'fc']
-36
-37
-38      def get_bibtex(model_identifier):
-39          return """xx"""
-40
-41
-42      if __name__ == '__main__':
-43          check_models.check_base_models(__name__)
 
-    </code></pre>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/sample_data_test.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 38 and 39 define the Bibtex for the model. You can leave this blank when submitting,
-        but we highly recommend you add a reference. Finally, lines 42 - 43 define a call to the
-        Brain-Score scoring system to score our model locally on the <span class="special_format">MajajHong2015public.IT-pls</span>
-        benchmark.
+        <span class="special_format">TestStimulusSets</span> contains the tests for what are called <span class="special_format">Stimulus Sets</span>.
+        These are explained more below in Part 6, but are, broadly speaking, a custom wrapper for a multi-dimensional Pandas
+        DataFrame (via Xarray). These are used to store the experimental stimuli as well as their metadata, and the tests
+        in this section, as you can see in the screenshot above, mainly deal with checking the stimuli to ensure they contain
+        what is expected.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        The other Test class, <span class="special_format">TestAssemblies</span>, contains the tests for what are called
+        <span class="special_format">Assemblies</span>. These are also explained more below in Part 6, but are, again
+        broadly speaking, a custom wrapper for a multi-dimensional Pandas
+        DataFrame (via Xarray). These are used to store the experimental data (results) as well as their metadata, and the tests
+        in this section, as you can see in the screenshot above, mainly deal with checking the data to ensure it contains
+        what is expected.
     </p>
 </div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring the data_packaging.py File</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        This file is the heart of the data upload process, and is where you defined how you want your stimuli and data
+        to be packaged. This file is meant to be run once, and will upload your stimuli and data to Brain-Score. Once it
+        is run, it is good practice to include this file in your submission package, for the case the stimuli or data ever
+        need to be repackaged, there is a record of how it was done.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        There are a couple of important parts to this file, and we will briefly cover each one, as they are worth going
+        over. The first part we will look at is the <span class="special_format">create_stimulus_set_and_upload</span>
+        function, followed by the <span class="special_format">create_assembly_and_upload</span>, and finally a closer
+        look at the BrainIO upload functions <span class="special_format">package_stimulus_set</span> and
+        <span class="special_format">package_data_assembly</span>.
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/data_stimuli_1.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        The first function of note is <span class="special_format">create_stimulus_set_and_upload</span> defined, on line 16.
+        Like its namesake suggests, this function is what actually reads in the stimuli paths
+        (the <span class="special_format">for</span> loop on line 38), extracts the metadata of those stimuli from the
+        stimuli file name (lines 39-42), and puts them into a dictionary with user-defined keys (lines45-49). At this
+        point, there is no <span class="special_format">StimulusSet</span> object, but rather just a simple dictionary
+        structure. The call to the <span class="special_format">StimulusSet</span> constructor on line 51 is what makes
+        the <span class="special_format">StimulusSet</span> itself, and lines 52-53 set metadata. This function will also
+        upload the <span class="special_format">StimulusSet</span>, but that is covered below and is not shown on the
+        screenshot above. Note that the information contained in the comments on lines 19-32: this is done for
+        documentation purposes, as users or contributors unfamiliar with your stimuli might need help understanding how
+        images are named and what these fields mean.
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/data_assembly_1.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        The second function of note is <span class="special_format">create_assembly_and_upload</span> defined on line 64.
+        It is here that the experimental subject data is packaged into a DataFrame object, which is then wrapped into
+        a Brain-Score <span class="special_format">BehavioralAssembly</span>. Lines 73-80 can be safely ignored for this tutorials's
+        sake, as they deal with preliminary data preprocessing. Lines 82-96 are the most important parts here; these lines
+        take in a column of a CSV file, and place those columns into a DataFrame Object, which is then wrapped into an
+        <span class="special_format">BehavioralAssembly</span>. These columns can be seen being defined in lines 83-93, in the
+        <span class="special_format">coords</span> dict. In a nutshell, that is it for data packaging: you simply read
+        in the data and place into a Pandas Dataframe, which is then wrapped into an assembly.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        One question we often get asked
+        is "What is the <span class="special_format">all_subjects['correct']</span> on line 82 doing?". The short answer
+        is that this is setting the <span class="special_format">BehavioralAssembly</span>'s primary dimension.
+        In Xarray, which is what is used behind the scenes for
+        assemblies, there are <span class="special_format">dims</span> and <span class="special_format">coords</span>; the
+        former is how a user defines the axes of the DataFrame object, and the latter is the actual data itself that is
+        attached to that <span class="special_format">dim</span>. So in this case, you can think of the assembly as
+        having a "primary axis" called <span class="special_format">presentation</span> (defined on line 95), and each
+        presentation item has the attached coords (i.e, a <span class="special_format">stimulus_id</span>, a
+        <span class="special_format">target_present</span>, a <span class="special_format">trial_type</span>, etc. We
+        usually use the notion of "correct" or not as the main dim, which is why line 82 is set the way it is. You can
+        read more about Xarray <a href="https://www.brain-score.org/tutorials/models/quickstart">here</a> if you are interested.
+
+    </p>
+</div>
+
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        You are almost done! If you were actually submitting a model, the final step would be to run your model locally,
+        You are almost done! If you were actually submitting a data plugin, the final step would be to run your model locally,
         to ensure that everything is in working order. You can do this by running the
         <span class="special_format">model.py</span> file itself. Please note that this can take ~5-10 minutes on a 2023
         M1 Max MacBook Pro, so your run times may vary.
@@ -262,8 +235,6 @@
         <pre class="modified_1"><code>
 Test successful, you are ready to submit!
     </code></pre>
-
-
 
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half tutorial_text">

@@ -20,23 +20,23 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Welcome, Benchmarkers!</h3>
             <p class="benefits_info is-size-5-mobile">
-               Brain-Score uses plugins as its main way of interacting with submissions. These plugins can be models,
-               benchmarks, data, or metrics. To create a full benchmark and have it on the website, most of the time 3
-                plugins are required: a benchmark plugin (which contains the code on how the model is to be evaluated),
-                a data plugin (which
+                In a nutshell, if you want to add your experimental results into Brain-Score as a benchmark, the process
+                involves two main steps: first, you need to add your experimental stimuli as well as subject data. This
+                is covered in the first section of this tutorial, "Package Data".
             </p>
             <p class="benefits_info is-size-5-mobile">
-                Packaging data involves wrapping up both stimuli and subject data and uploading them for models to access.
-                Once this is done, then you can create the benchmark itself, which involves setting
-                benchmark hyperparameters, defining a metric, and defining a ceiling, amongst other things.
+                The second half involves creating and defining the benchmark file itself:
+                This is how and where you choose benchmark hyperparameters, such as visual degrees, metrics, and ceilings.
+                This is covered in the section "Create a Benchmark" of this tutorial.
             </p>
-            <p class="benefits_info is-size-5-mobile">
-                To package your data and create the benchmark, please visit the corresponding guides below. You will
-                need both your stimuli and your subject data (.csv format or similar). These guides cover both neural
-                and behavioral benchmarks.
+
+             <p class="benefits_info is-size-5-mobile">
+                 Note: Brain-Score supports three types of benchmarks, differentiated by the type of experimental data
+                 that was gathered: neural (fMRI, PSTH, EEG, etc), behavioral, and engineering. In this
+                 benchmark tutorial series, we will explore a sample behavioral benchmark, Ferguson2024.
             </p>
             <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data</button></a>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Bechmark</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark</button></a>
         </div>
     </div>
 </div>
