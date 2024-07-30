@@ -1,5 +1,53 @@
 # Website Deployment
 
+## AWS and Elastic Beanstalk
+1. The website is hosted on AWS via Elastic Beanstalk (EB) running on EC2 instances. There is both a dev and a prod
+   site, and ideally dev will always be a copy of prod (for website staging, see below).
+2. There are currently 4 EB instances visible when viewing the AWS Console (note: AWS calls the website the "console", and
+   this is different from the "console" CLI.)
+   * The web console can be accessed [here](https://us-east-2.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-2#/environments), assuming you have credentials for 
+     Brain-Score's AWS. If you do not have creds, ask a Brain-Score team member to create some for you. 
+   * The environments in use are the ones that contain the substring `updated`. The other 2 are 
+     legacy envs that are no longer active, and can probably be removed in the future. 
+3. When viewing this link above for the web console, the dev site might show a `Severe` health status - this is OK and can 
+   be safely ignored. It has to do with Django not getting along well with EB's Load Balancer. See (6) for more about the Load Balancer.
+4. Prod's status should always be green `Ok`. If it is not, then something is broken, and to troubleshoot, click on the prod 
+   instance and look at the events immediately below its information on the next page:
+   * To Troubleshoot an instance that has non-`Ok` status, you can either view the Health tab or `Logs` tab to get the logs.
+   * You can either download the last 100 lines of logs or the full logs. *This is what you will want to do to see 
+     exactly what error broke the website, usually a Django or Python error*. 
+   * If you download the logs, there will be a bunch of files in that zip. You are looking for a file called 
+     `eb-<some number hash>-stderr.log`, located in `eb-docker/containers/eb-current-app` folder.
+   * If you are troubleshooting, you can IGNORE the error (if you see it) that looks like this: 
+     `django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '<SOME IP ADDRESS>'. You may need to add '<SOME IP ADDRESS>' to ALLOWED_HOSTS.`
+     This error causes the same issue that makes dev appear as `Severe`, and deals with EB's Internal Load Balancer not
+     playing nice with Django.
+   * Most of the time, a quick `CMD-f` for the server 500 error will show you exactly what went wrong. 
+5. In the instance's console view,  can also explore other things, such as the site monitoring metrics as well. 
+6. AWS's EB Load balancer works in conjunction with Auto Scaling. This means that the Load Balancer triggers an 
+   auto scaling event, which can create up to 4 instances to run in parallel. We can change that max if need be.
+   * The Scaling Event is triggered by instance CPU utilization. If the CPU utilization is above 25%, then a new instance
+     will be launched, up to 4 times.
+   * In order to change this (if things need to be modified in the future), you can go into the instance itself and 
+     modify the triggers for auto scaling events.
+7. AWS HELP Tips/Tricks: If the site goes down, and you do not know how to fix it, contact AWS via the web portal:
+   * Top right of AWS website -> click on question mark in circle icon -> `Support Center`
+   * All the way to the right, in an orange box, click `Create Case`
+   * Choose `Technical` and then click `Next Step: Additional Information`
+   * Choose `Elastic Beanstalk` for the `Service` dropdown, and use your best judgement for the `Category` Dropdown. 
+     Usually in the past, Mike has chosen either `Environment Issue` or `Application Deployment Issue`.
+   * Choose `Production System Down` for the `Severity` dropdown.
+   * Fill in the `Subject` and `Description` fields, and attach any logs that you want (optional)
+   * For the three fields at the bottom: `Application Name` is `brain-score.web`, `Envrironment Name` is the instance 
+     itself (the one containing `updated`), and `Region` is `US-14-East`. Then click `Next Step: Solve now or 
+     contact us` at the bottom right in orange to move on to the next page. 
+   * Finally, click the `Contact us` icon in the middle of the page to open the corresponding tab, and select `Chat` as 
+     the contact method. **IMPORTANT**: Add your email/whoever else needs to be looped in into the `Additional Contacts`
+     field, as the default right now is Chris Shay, and if you do not add your email, you will not see their response 
+     (if you use the `Web` Option!)
+   * When you are chatting with them, it is easiest to simply ask the person to meet over a Chime call if they do not 
+     offer first!
+
 ## Website Staging Flow/Operations (Via Command Line/PR)
 1. Test any changes on LocalHost to make sure they appear and function correctly.
 2. Open a PR with your changes on Brain-Score.web's Github. 
@@ -12,7 +60,7 @@
 
 
 
-## Setup
+## Deployment Account Setup
 If you have not already done so:  
 * Clone this repo
 * Create and activate a `brain-score.web` conda environment using `environment.yml`
