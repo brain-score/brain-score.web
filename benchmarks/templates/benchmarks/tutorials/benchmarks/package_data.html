@@ -227,26 +227,22 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        You are almost done! If you were actually submitting a data plugin, the final step would be to run your model locally,
-        to ensure that everything is in working order. You can do this by running the
-        <span class="special_format">model.py</span> file itself. Please note that this can take ~5-10 minutes on a 2023
-        M1 Max MacBook Pro, so your run times may vary.
-        Once ran, this should produce the message below, indicating that you are ready for submission:
-        <pre class="modified_1"><code>
-Test successful, you are ready to submit!
-    </code></pre>
+        You are almost done! If you were actually submitting a data plugin, the final step would be to ensure that
+        you (1) ran your code in <span class="special_format">data_packaging.py</span> to upload stimuli and data, (2)
+        your <span class="special_format">__init__.py</span> file is populated correctly, and (3) your
+        <span class="special_format">test.py</span> file contains enough tests to accuracy cover your stimuli and data.
 
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half tutorial_text">
            <p class="benefits_info is-size-5-mobile shorter top_adjust">
-                Once you receive this message, you could rezip (after you save everything, of course) your package, and you
-                would be good to submit your model.
+                Once those 3 things are finished, you can send your files to a Brain-Score team member, who will then
+               open a Github PR for you, where you can track your data plugin's progress.
            </p>
             <p class="benefits_info is-size-5-mobile shorter ">
-                When you submit an actual (non-tutorial) model, you will receive an email with your results
-                within 24 hours (most of the time it only takes 2-3 hours to score).
-                If you would like to explore a custom model's submission package, please visit the next
-                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/models/deepdive_2">here</a>.
+                Once your PR's tests pass and it is merged, you can move onto the next section of the benchmark tutoiral,
+                <a href="https://www.brain-score.org/tutorials/benchmarks/create_benchmark">here</a>. In this second
+                half, we will cover how to actually create the benchmark evaluation itself: how to run models
+                on your stimuli, collect model data, and compare with subjects.
             </p>
         </div>
         <div class="column is-one-half">
