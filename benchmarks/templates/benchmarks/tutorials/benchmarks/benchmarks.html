@@ -1,0 +1,43 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Benchmark Tutorials</h1>
+<p>Learn and explore what Brain-Score has to offer experimentalists. </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="tutorial_main" src="{% static "/benchmarks/img/tutorials/deep_dive_3_1.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Welcome, Benchmarkers!</h3>
+            <p class="benefits_info is-size-5-mobile">
+               Brain-Score uses plugins as its main way of interacting with submissions. These plugins can be models,
+               benchmarks, data, or metrics. To create a full benchmark and have it on the website, most of the time 3
+                plugins are required: a benchmark plugin (which contains the code on how the model is to be evaluated),
+                a data plugin (which
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                Packaging data involves wrapping up both stimuli and subject data and uploading them for models to access.
+                Once this is done, then you can create the benchmark itself, which involves setting
+                benchmark hyperparameters, defining a metric, and defining a ceiling, amongst other things.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                To package your data and create the benchmark, please visit the corresponding guides below. You will
+                need both your stimuli and your subject data (.csv format or similar). These guides cover both neural
+                and behavioral benchmarks.
+            </p>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Bechmark</button></a>
+        </div>
+    </div>
+</div>
+{% endblock %}

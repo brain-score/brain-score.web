@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block banner %}
-<h1>Tutorials</h1>
-<p>Your one-stop-shop to get you up and running on Brain-Score in no time. </p>
+<h1> Model Tutorials</h1>
+<p>Learn and explore what Brain-Score has to offer modelers. </p>
 {% endblock %}
 
 {% block info_section %}
@@ -15,14 +15,13 @@
 <div class="box leaderboard-table-component">
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half">
-            <img class="tutorial_main" src="{% static "/benchmarks/img/tutorials/tutorial_main.png" %}" />
+            <img class="tutorial_models" src="{% static "/benchmarks/img/tutorials/toy_model.svg" %}" />
         </div>
         <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Welcome!</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Welcome, Modelers!</h3>
             <p class="benefits_info is-size-5-mobile">
-                We are excited that you are here. Below you will find guides and
-                links on various use cases of the platform. We hope that Brain-Score will enable you to find new
-                insights from models, benchmarks, and integrated scoring.
+                Are you interested in how well your model aligns with neural and behavioral data? If so, check out the
+                guides below, where we walk you through how to take full advantage of all of Brain-Score's model resources.
             </p>
             <p class="benefits_info is-size-5-mobile">
                 You can get up and running ASAP with our Quickstart, where you learn how to install Brain-Score on your
@@ -32,8 +31,8 @@
                 Or, if you are a more seasoned user, you can explore the platform further via our Deep Dive series. Here
                 there are guided overviews of the submission system, as well as instructions on how to submit plugins.
             </p>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models"><button class="button button-primary tutorial">Models</button></a>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks"><button class="button button-primary tutorial">Benchmarks</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/quickstart"><button class="button button-primary tutorial">Quickstart</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1"><button class="button button-primary tutorial">Dive Deeper</button></a>
         </div>
     </div>
 </div>
