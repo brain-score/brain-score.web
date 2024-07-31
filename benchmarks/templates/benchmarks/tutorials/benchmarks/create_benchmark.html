@@ -31,11 +31,6 @@
                 <span class="special_format">__init__.py</span> file, a <span class="special_format">test.py</span> file,
                 and a new <span class="special_format">benchmark.py</span> file. Each will be explored in detail below.
             </p>
-
-            <p class="benefits_info is-size-5-mobile is-italic">
-                Note: Please do not submit the tutorial file itself via the website. The following walkthrough is just
-                to let you become familiar with how submissions should be structured.
-            </p>
         </div>
     </div>
 </div>
@@ -45,77 +40,82 @@
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                If you have not already, we highly recommend completing the Quickstart section above before
-                we start to explore our ResNet-50 model submission package. Although completion is not
-                required, the Quickstart will give you a nice background into what model scores mean, and how to score a model
-                locally on a single, publicly available benchmark.
+                If you have not already, we highly recommend completing the 'Package Data' section before
+                beginning this section. Although completion is not strictly required, the Package Data section will give
+                you a nice background into the stimuli and data side of a Brain-Score benchmark.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                If you have already done the Quickstart,
-                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorial/models/quickstart">here</a>
-                to install the necessary packages for Brain-Score.
+                If you have already done the Package Data tutorial,
+                skip to step 2 to the right. Otherwise, visit please <a href="https://www.brain-score.org/tutorials/benchmarks/package_data">here</a>
+                to install the necessary packages for Brain-Score and to learn about stimuli and data packaging.
             </p>
         </div>
         <div class="column is-one-half">
-            <h3 class="benefits_heading is-size-3-mobile">Part 2: Download the Starter Zip File:</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Part 2: Access the Sample Data Folder:</h3>
             <p class="benefits_info is-size-5-mobile">
-                Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
-                upload, or through a Github PR. In this first Deep Dive, you will explore a sample model submission
-                in order to become familiar with the submission package structure. You can download the sample zip file
-                <a href="{% static "/benchmarks/packaging_tutorial.zip" %}" download="packaging_tutorial.zip">here</a>.
-                The sample Zip file contains a properly formatted, stock version of ResNet-50 pretrained on ImageNet.
+                As was the case for the package Data tutorial, we will be looking at a sample benchmark, Ferguson2024,
+                in order to understand the many parts of a benchmark plugin. You can view our stock submission in your local copy
+                of Brain-Score that you cloned in Part 1;the folder we are going to be exploring is
+                <span class="special_format">vision/brainscore_vision/benchmarks/ferguson2024</span>. If you cannot access
+                a local copy of Brain-Score for some reason, the sample data folder is available on our Github
+                <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/benchmarks/ferguson2024">here</a>.
             </p>
              <p class="benefits_info is-size-5-mobile">
-                In Deep Dives 2 and 3, we will look at a custom model submission, as well as prepare to submit a
-                 model via Github Pull Request respectively.
+                 Currently (as of July 2024), benchmark submission via the website are a little buggy. Once you have your
+                 submission ready to go, reach out to Brain-Score Team member and we will submit your benchmark for you
+                 via a Github PR.
             </p>
         </div>
     </div>
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Starter Submission File</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Sample Submission Folder</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        After unzipping the <span class="special_format">packaging_submission.zip</span> file, you will see that the root folder is
-        called <span class="special_format">packaging_tutorial</span>. This in turns contains another folder for the plugin itself, in
-        this case <span class="special_format">/models</span>. This <span class="special_format">/models</span> folder then
-        contains a folder called <span class="special_format"> /resnet50_tutorial</span>.
-        This final also contains 4 other Python files. The overall structure of the submission
-        package is shown below:
+        If you completed the "Package Data" tutorial, this folder should look very familiar. It has all the parts needed
+        of standard Brain-Score plugin (remember: a plugin can be a benchmark, a model, a metric, or data - we took a look
+        at a data plugin previously in the first part of this tutorial series). In this folder you can see  an
+        <span class="special_format">__init__.py</span>
+        file for adding your benchmark plugin to Brain-Score's registry, a <span class="special_format">requirements.txt</span>
+        file for any dependencies your benchmark might need, a <span class="special_format">test.py</span> file to create
+        certain tests for your benchmark, and finally a <span class="special_format">benchmark.py</span> file that
+        actually contains the code to run models on your stimuli and compare it to your data.
     </p>
-    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/submission_structure.png" %}" />
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_sample.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        Just like the sample submission, each submission that you submit must contain at least the 2 required
-        Python files: <span class="special_format">__init__.py</span> and <span class="special_format">test.py</span>.
-        The other two files, <span class="special_format">setup.py</span> and <span class="special_format">model.py</span>,
-        are optional, but will be explored below along with the two required files. Let's explore further with the first required file,
-        <span class="special_format">__init__.py</span> file.
+        There is also an extra folder, called <span class="special_format">helpers</span>, that contains an additional
+        python file <span class="special_format">helpers.py</span>. This is not needed for every benchmark, but contains
+        helper functions that the benchmark calls, including methods like subject statistics and metric calculators. We
+        will largely be ignoring this file, but if your hypothetical benchmark required preprocessing functions, human data
+        processing functions, or anything else, this is a good way to abstract them away from the main <span class="special_format">benchmark.py</span>
+        file, but again this is not strictly needed.
     </p>
     <p class="benefits_info is-size-5-mobile shorter is-italic">
         Note: this would also be the same overall structure as your submission
-        package, or if you are submitting any other plugins (benchmarks, metrics, or data). Feel free
-        to base your future submissions off of this package, just please do not submit the
-    <span class="special_format">resnet50_tutorial</span> model.
+        package, or if you are submitting any other plugins (models, metrics, or data). Feel free
+        to base your future submissions off of this package.
     </p>
 </div>
 
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 4: Exploring the  __init__.py  file</h3>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_init.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        This file adds your plugin to the Brain-Score plugin registry and to the Brain-Score
-        ecosystem at large. You are registering your model to a unique global identifier. You can
-        see that this file is fairly straightforward. Lines 1-3 are standard imports, and line 5
-        adds the plugin to the registry. In the future, when you submit models (or other plugins),
-        you will add the plugin to our ecosystem via line 5.
+        This file is basically the same as its cousin file we looked at in Package Data - it adds a benchmark, for
+        example <span class="special_format">Ferguson2024circle_line-value_delta</span>, to the Brain-Score registry via
+        the dictionary on lines 9-22. For a benchmark plugin, the key in the dictionary is the benchmark name, and its
+        value is a Benchmark object, which we will see soon.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        You can see here that there are 14 benchmarks that are being added to the registry, and in the case of our
+        <span class="special_format">Ferguson2024</span> benchmark, these are 14 "sub benchmarks" that each use a different
+        <span class="special_format">StimulusSet</span> and <span class="special_format">BehavioralAssembly</span>
+        (explained in the previous half of this tutorial series). These 14 benchmarks belong to a parent benchmark object,
+        <span class="special_format">Ferguson2024</span>, and are called via the 14 lambda expressions with a different
+        stimuli and data identifier. We also try to follow
+        the naming convention of <span class="special_format">AuthorYEAR-metric</span>, as shown here.
     </p>
 
-    <pre class="modified_1"><code>
-1       from brainscore_vision import model_registry
-2       from brainscore_vision.model_helpers.brain_transformation import ModelCommitment
-3       from .model import get_model, get_layers
-4
-5       model_registry['resnet50'] = lambda: ModelCommitment(identifier='resnet50', activations_model=get_model('resnet50'), layers=get_layers('resnet50'))
-    </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
         Please note: Brain-Score does not allow duplicate plugin
         names, so if you submit another version of the same model, make sure to make the identifier unique!
@@ -131,61 +131,50 @@
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 5: Exploring the test.py File</h3>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_test.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        You will notice that the submission's <span class="special_format">test.py</span> file is blank. This is a
-        temporary status, as the Brain-Score Team is currently writing a suite of tests that can be incorporated into
-        this file, that every model will run.
+        Our <span class="special_format">test.py</span> file again serves the purpose of testing our benchmark to ensure
+        scores are coming out as expected. There is a little bit of a circular dependency here, as you will not know
+        scores until you actually run your benchmark; however, you can run 1-2 models locally, and hardcode what the values
+        should be in your tests, which is what is done in the screenshot above.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        For now, if you are submitting a model yourself, you can just leave this file blank, but still make sure
-        to include it in your submission package.
+        On lines 58-71, you can see that each of the 14 benchmarks have an expected raw score associated with them that
+        is passed into a pytest object. These scores were generated via a local call to Brain-Score, and you can learn more
+        about how to do that by visiting the model tutorial
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/quickstart">Quickstart</a>.
+
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Line 73 defines the function <span class="special_format">test_model_raw_score</span>, and that is what is seen
+        in lines 74-85; we are loading a benchmark and a precomputed model's features on that benchmark, and them comparing
+        that to an expected score. Note: to do this successfully requires uploading precomputed model features to our S3
+        bucket (however you can also host externally); please contact a Team Member if you need credentials to do this. For
+        more information on how to generate precomputed model features for your tests, please see
+        <a href="https://github.com/brain-score/vision/tree/master/tests#precomputed-features">here</a> (The
+        "Precomputed features" section, and you can ignore steps 5 and 6 that are now outdated).
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        There are also other tests that are in the <span class="special_format">test.py</span> that are simply not shown
+        in the screenshot above. These include tests for existence of the benchmark, tests to ensure the benchmark ceiling
+        is working correctly, and tests to make sure the ceiled score is what it should be. Please feel free to base
+        future submission tests off of the tests in this file!
     </p>
 </div>
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring an (optional) setup.py  File</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring the (optional) requirements.txt  File</h3>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_req.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        This file is where you can add any requirements that your model needs. You can do this by simply
-        adding the packages to the in the requirements dictionary on lines 6-8. If your model
-        had any extra requirements, such as a specific version of a package or an external git
-        repository, you would add it to the list defined on line 6. Lines 10 - 25 are just
-        administrative definitions, and can be left untouched.
+        As with all Brain-Score plugins, you can use a <span class="special_format">requirements.txt</span> to define
+        any needed dependencies. If you do not include any external packages used here, such as numpy, sympy, and pandas,
+        then your benchmark will not be able to run on our servers (this will be caught in Github's PR tests). The reason
+        that this is optional is that if your plugin does not need any external packages, then you do not need to submit
+        this file.
     </p>
-    <pre class="modified_1"><code>
-1       #!/usr/bin/env python
-2       # -*- coding: utf-8 -*-
-3
-4       rom setuptools import setup, find_packages
-5
-6       requirements = [ "torchvision",
-7                        "torch"
-8       ]
-9
-10      setup(
-11          packages=find_packages(exclude=['tests']),
-12          include_package_data=True,
-13          install_requires=requirements,
-14          license="MIT license",
-15          zip_safe=False,
-16          keywords='brain-score template',
-17          classifiers=[
-18              'Development Status :: 2 - Pre-Alpha',
-19              'Intended Audience :: Developers',
-20              'License :: OSI Approved :: MIT License',
-21              'Natural Language :: English',
-22              'Programming Language :: Python :: 3.7',
-23          ],
-24          test_suite='tests',
-25      )
-    </code></pre>
-    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
-        Note: The reason why <span class="special_format">setup.py</span> is optional is that you can also use a
-        <span class="special_format">requirements.txt</span> or <span class="special_format">pyproject</span> file to
-        add any other requirements that you might need. If your model needs no extra packages, you can exclude this from
-        the submission package completely.
-    </p>
+
 </div>
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring an (optional) model.py  File</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring the benchmark.py File</h3>
     <p class="benefits_info is-size-5-mobile shorter">
         This file is usually where the model itself is defined. The reason why this is optional is that using
         <span class="special_format">model.py</span> is a convention we use to
