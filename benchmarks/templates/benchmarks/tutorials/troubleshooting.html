@@ -36,7 +36,7 @@
     </div>
 </div>
 
-<!-- Each Div is a section itself:-->
+<!-- Model Section:-->
 <div class="faq_box leaderboard-table-component">
     <button class="toggle-button is-size-3-mobile" aria-expanded="false">
       <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Model Submissions</h3></span>
@@ -143,6 +143,50 @@ ERROR: Could not find a version that satisfies the requirement tensorflow==1.15
             <span class="is-italic">Fix:</span> First, make sure you are not forcing your model to use a Python version
              that is >3.7. Currently, Brain-Score does not support Python version >3.7 or TF versions >1.15, but we
              will very soon, so stay tuned.
+        </p>
+
+    </div>
+</div>
+
+<!-- Benchmark Section:-->
+<div class="faq_box leaderboard-table-component">
+    <button class="toggle-button is-size-3-mobile" aria-expanded="false">
+      <span class="benefits_heading"><h3 class="benefits_heading is-size-3-mobile">Data and Benchmark Submissions</h3></span>
+      <span class="icon is-small"><i class="fas fa-caret-down icon-gradient"></i></span>
+    </button>
+    <div class="content is-hidden">
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            I am very confused as to how to add a benchmark into Brain-Score. What do I do?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description:</span> We recommend starting with our tutorial series, specifically
+            tailored for benchmark contributors here
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks">here</a>.
+            If you still are unsure, the more in depth documentation
+            <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">here</a> is
+            always a great place to visit as well.
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span> See <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks">benchmark tutorial</a>
+            page for an overview.
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix: </span> These tutorials should cover everything that is needed for contributing
+             a benchmark, but in general the process is this: submit your stimuli and data, and then submit a file that
+             outlines how you want your model to use Brain-Score in evaluating your subject data. Brain-Score will take
+             care of everything else; you just can call our methods!
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            2) I am getting a 403/404/400 Error when trying to upload data to BrainIO.
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Description:</span> After trying to upload stimuli or data to BrainIO, you get an
+             error saying something has failed with AWS, usually a "403 Access Denied" error or similar.
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Cause:</span>: You currently do not have the BrainIO credentials needed to upload
+        </p>
+         <p class="benefits_info is-size-5-mobile shorter no_top">
+            <span class="is-italic">Fix: </span> Reach out to a Brain-Score team member to get your credentials.
         </p>
 
     </div>
