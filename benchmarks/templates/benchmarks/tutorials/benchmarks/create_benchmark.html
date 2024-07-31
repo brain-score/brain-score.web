@@ -175,99 +175,91 @@
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring the benchmark.py File</h3>
-    <p class="benefits_info is-size-5-mobile shorter">
-        This file is usually where the model itself is defined. The reason why this is optional is that using
-        <span class="special_format">model.py</span> is a convention we use to
-        separate code, but that is not needed. It is also plugin-specific. We think it is good practice,
-        however, to use a separate <span class="special_format">model.py</span> for models, to keep things neat.
-    </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-        Let’s explore this file in more detail: Lines 1 - 9 are standard imports. Lines
-        20-21 define the <span class="special_format">get_model_list()</span> function that simply returns the model identifier.
-        Next, lines 24-30 define the <span class="special_format">get_model()</span> function that gets the model itself.
-        You can see on line 26 the model itself is being loaded from <span class="special_format">pytorch</span>. If you have a custom
-        model that you have created yourself, check out our Custom Model Submission Guide here in
-        Deep Dive 2. Lines 33 - 35 contain the <span class="special_format">get_layers()</span> function, which returns the layers you
-        are interested in scoring.
-    </p>
-    <pre class="modified_1"><code>
-1       from brainscore_vision.model_helpers.check_submission import check_models
-2       import functools
-3       import os
-4       import torchvision.models
-5       from brainscore_vision.model_helpers.activations.pytorch import PytorchWrapper
-6       from brainscore_vision.model_helpers.activations.pytorch import load_preprocess_images
-7       from pathlib import Path
-8       from brainscore_vision.model_helpers import download_weights
-9       import torch
-10
-11      # This is an example implementation for submitting resnet-50 as a pytorch model
-12
-13      # Attention: It is important, that the wrapper identifier is unique per model!
-14      # The results will otherwise be the same due to brain-scores internal result caching mechanism.
-15      # Please load your pytorch model for usage in CPU. There won't be GPUs available for scoring your model.
-16      # If the model requires a GPU, contact the brain-score team directly.
-17      from brainscore_vision.model_helpers.check_submission import check_models
-18
-19
-20      def get_model_list():
-21          return ['resnet50']
-22
-23
-24      def get_model(name):
-25          assert name == 'resnet50'
-26          model = torchvision.models.resnet50(pretrained=True)
-27          preprocessing = functools.partial(load_preprocess_images, image_size=224)
-28          wrapper = PytorchWrapper(identifier='resnet50', model=model, preprocessing=preprocessing)
-29          wrapper.image_size = 224
-30          return wrapper
-31
-32
-33      def get_layers(name):
-34          assert name == 'resnet50'
-35          return ['conv1','layer1', 'layer2', 'layer3', 'layer4', 'fc']
-36
-37
-38      def get_bibtex(model_identifier):
-39          return """xx"""
-40
-41
-42      if __name__ == '__main__':
-43          check_models.check_base_models(__name__)
 
-    </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 38 and 39 define the Bibtex for the model. You can leave this blank when submitting,
-        but we highly recommend you add a reference. Finally, lines 42 - 43 define a call to the
-        Brain-Score scoring system to score our model locally on the <span class="special_format">MajajHong2015public.IT-pls</span>
-        benchmark.
+        This file is arguably the most important file for the benchmark, as it defined how models will see stimuli, have
+        their responses recorded, and compared to humans. There are many parts to this file, so we will look at a few
+        lines at a time, starting with the benchmark class <span class="special_format">__init__</span>method.
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_init_2.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        The <span class="special_format">__init__</span>method shown above on lines 43-54 is what is called to initialize
+        your benchmark. Lines 44-51 all set important hyperparamters: the metric, the visual degrees, the number of repetitions,
+        and other fields that the benchmark uses. Lines 52-54 specifically call the <span class="special_format">super</span>
+        constructor to tell Brain-Score that each of these benchmarks are a part of the parent benchmark
+        <span class="special_format">Ferguson2024ValueDelta</span>
+    </p>
+    <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/benchmark_call.png" %}" />
+    <p class="benefits_info is-size-5-mobile shorter">
+        The <span class="special_format">__call__</span>method shown above has many important parts, and we will look at each
+        one of them. In an nutshell, this method is what actually shows the model the stimuli, computes a model score, and
+        compares that score with a human score via a metric to determine the final Brain-Score.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Let's start with Lines 63 and 64: here the <span class="special_format">place_on_screen</span> Brain-Score
+        method is called to transform your stimuli into visual degrees. The particular call on line 63 is for
+        pretraining (transfer-learning) the models to force them to be able to do a binary task. For background, the
+        Ferguson2024 benchmarks asked the subject to look at an image of objects, and return whether or not that image
+        contains an "odd-one-out". So for models not trained explicitly to perform binary classification, this
+        pretraining on line 63 and the decoder itself on line 64 force a binary output from the model, using a logistic
+        regression decoder. Note: your benchmark might be completely different as far as the task goes. We have many
+        other tasks supported in the Brain-Score, and you can always contribute a custom one. Lines 66 and 67 call the
+        <span class="special_format">place_on_screen</span> method for the actual testing stimuli themselves.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Next, line 68 is what actually shows the model the stimuli and returns a label for each stimuli, contained in this
+       case inside the <span class="special_format">model_labels_raw</span> variable. Line 69 applies some post-processing
+        on these labels in order to get them to be more human-readable, and if you were creating your own benchmark, you
+        could probably ignore these.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Lines 70 and 71 get the "human score" and the "model score" respectively. Again for context, the Ferguson2024
+        benchmarks work by comparing a human integral of a specific graph with one generated by models. This is just one
+        way to quantify human and model performance, and each benchmark has its own way of doing this. Line 72 is where
+        these two scalars are passed into a metric in order to be compared. In this case, that metric is a simple
+        value delta using a sigmoid curve. This metric takes in two scalars and returns a value between 0 and 1 based on
+        how similar the two scalars are, but note that you can use any metric you wanted, or even create a custom metric.
+        Please see <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/metrics">here</a> for a
+        list of currently supported Brain-Score metrics, and note that many use human data directly (via assemblies) or
+        a processed version (via a matrix of some description).
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Next comes the benchmark ceiling. A ceiling in this case represents the maximum score a perfect model could
+        achieve on the data, and might not always be 1. Line 73 calls the ceiling method defined in lines 84-116, and simply
+        splits the human data in half randomly and computes the metric on those two halves. Although you could choose any
+        ceiling you wanted to, we strongly encourage you to use the exact same metric you used to compare models with
+        subject data, as we believe this is a best practice. You can also precompute your ceilings, and we encourage this
+        as well. You can see this reflected in lines 30-34, where a dictionary is used to store precomputed ceiling to
+        save compute resources.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Finally, lines 74-77 adjust the raw score by the ceiling, and then returns it. Also note that lines 80-81 define
+        the function used in the benchmark's <span class="special_format">__init__.py</span> file, and if you are making
+        your own benchmark, do not forget to include this. The rest of the lines after line 81 are extra helper functions
+        for the benchmark, and can be ignored for our benchmark's sake.
     </p>
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        You are almost done! If you were actually submitting a model, the final step would be to run your model locally,
-        to ensure that everything is in working order. You can do this by running the
-        <span class="special_format">model.py</span> file itself. Please note that this can take ~5-10 minutes on a 2023
-        M1 Max MacBook Pro, so your run times may vary.
-        Once ran, this should produce the message below, indicating that you are ready for submission:
-        <pre class="modified_1"><code>
-Test successful, you are ready to submit!
-    </code></pre>
-
-
+       By now you have seen the heart of a benchmark, and hopefully feel comfortable enough with the benchmark plugin
+        system that you could upload your own. We recognize that this might be a tedious process that is bound
+        to raise questions, so please reach out to Team Member if you would like help getting your benchmark on our site.
+        There is also another, slightly more in depth benchmark tutorial (that also covers neural data)
+        <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">here</a> on our wiki.
+    </p>
 
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half tutorial_text">
            <p class="benefits_info is-size-5-mobile shorter top_adjust">
-                Once you receive this message, you could rezip (after you save everything, of course) your package, and you
-                would be good to submit your model.
+               If you were submitting your own benchmark plugin, then after you make sure you have all the files
+               that you need, you could send them to a Brain-Score team member and we would open a PR for you, where
+               you can track progress on your contribution. Once the PR's tests pass and it is merged, your benchmark
+               will be scored on the top 100 models!
            </p>
             <p class="benefits_info is-size-5-mobile shorter ">
-                When you submit an actual (non-tutorial) model, you will receive an email with your results
-                within 24 hours (most of the time it only takes 2-3 hours to score).
-                If you would like to explore a custom model's submission package, please visit the next
-                Deep Dive <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial/models/deepdive_2">here</a>.
+               If you have any more questions, please see the benchmark section of our troubleshooting page
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/troubleshooting">here</a>.
             </p>
         </div>
         <div class="column is-one-half">
