@@ -203,7 +203,7 @@
         presentation item has the attached coords (i.e, a <span class="special_format">stimulus_id</span>, a
         <span class="special_format">target_present</span>, a <span class="special_format">trial_type</span>, etc). We
         usually use the notion of "correct" or not as the main dim, which is why line 82 is set the way it is. You can
-        read more about Xarray <a href="https://www.brain-score.org/tutorials/models/quickstart">here</a> if you are interested.
+        read more about Xarray <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/quickstart">here</a> if you are interested.
 
     </p>
 </div>
@@ -245,7 +245,7 @@
             </p>
             <p class="benefits_info is-size-5-mobile shorter ">
                 Once your PR's tests pass and it is merged, you can move onto the next section of the benchmark tutorial,
-                <a href="https://www.brain-score.org/tutorials/benchmarks/create_benchmark">here</a>. In this second
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark">here</a>. In this second
                 half, we will cover how to actually create the benchmark evaluation itself: how to run models
                 on your stimuli, collect model data, and compare with subjects.
             </p>
