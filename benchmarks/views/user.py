@@ -1,11 +1,9 @@
 import json
 import logging
-import os
 import zipfile
 import re
 from typing import Tuple, Union, List
 from io import TextIOWrapper
-
 import boto3
 import requests
 from botocore.exceptions import ClientError
@@ -19,7 +17,6 @@ from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
-
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
@@ -176,7 +173,8 @@ class Upload(View):
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
         form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html', {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
+        return render(request, 'benchmarks/upload.html',
+                      {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
     def post(self, request):
         assert self.domain is not None
@@ -188,7 +186,8 @@ class Upload(View):
 
         # parse directory tree, return new html page if not valid:
         is_zip_valid, error = validate_zip(form.files.get('zip_file'))
-        submission_is_original, submission_data = is_submission_original_and_under_plugin_limit(file=form.files.get('zip_file'), submitter=user_instance)
+        submission_is_original, submission_data = is_submission_original_and_under_plugin_limit(
+            file=form.files.get('zip_file'), submitter=user_instance)
         request.FILES['zip_file'].seek(0)  # reset file pointer
         if not is_zip_valid:
             return render(request, 'benchmarks/invalid_zip.html', {'error': error, "domain": self.domain})
@@ -253,7 +252,8 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
         plugin_identifiers = extract_identifiers(archive)
         under_plugin_limit = under_identifier_limit(plugin_identifiers)
         if not under_plugin_limit:
-            return False, ["too_many_identifiers", f"Exceeded the maximum limit of {PLUGIN_LIMIT} unique identifiers across all plugins."]
+            return False, ["too_many_identifiers",
+                           f"Exceeded the maximum limit of {PLUGIN_LIMIT} unique identifiers across all plugins."]
 
         # for each plugin submitted, make sure that the identifier does not exist already:
         for plugin in plugins:
@@ -267,7 +267,7 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
             all_plugin_ids = plugin_directory_names + list(plugin_identifiers[plugin])
             for plugin_name_or_identifier in all_plugin_ids:
                 query_filter = {field_name: plugin_name_or_identifier}
-                
+
                 # check for tutorial
                 if "resnet50_tutorial" in plugin_name_or_identifier:
                     return False, [plugin, plugin_name_or_identifier]
@@ -281,7 +281,7 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
                     if owner_id != submitter.id and not submitter.is_superuser:
                         return False, [plugin, plugin_name_or_identifier]
                     # else, versioning will occur here
-                        
+
     return True, []  # Passes all checks, then the submission is original -> good to go
 
 
@@ -308,7 +308,7 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
         for item in namelist:
             if ' ' in item.filename:
                 return False, f"File '{item.filename}' contains spaces. Please remove spaces from all file names."
-                
+
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
         if not has_plugin:  # checks for at least one plugin
@@ -463,11 +463,9 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     auth = get_secret("brainscore-website_jenkins_access")
     auth = (auth['user'], auth['password'])
 
-    # language has a different URL building system than vision
-    job_name = "score_plugins"
     benchmark_string = '%20'.join(benchmarks)
-    request_url = f"{jenkins_url}/job/{job_name}/buildWithParameters" \
-                  f"?token=trigger2scoreAmodel" \
+    request_url = f"{jenkins_url}/job/score_plugins/buildWithParameters" \
+                  f"?TOKEN=trigger2scoreAmodel" \
                   f"&user_id={request.user.id}" \
                   f"&email={request.user.email}" \
                   f"&new_benchmarks={benchmark_string}" \
@@ -478,7 +476,6 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
 
     params = {'submission.config': open('result.json', 'rb')}
     response = requests.post(request_url, files=params, auth=auth)
-    response = requests.post(request_url, files=params, auth=auth)
     _logger.debug(f"response: {response}")
 
     # update frontend
@@ -487,7 +484,6 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
 
 
 def resubmit(request, domain: str):
-
     model_ids, model_names, benchmarks = collect_models_benchmarks(request)
     model_id_name_dict = dict(zip(model_ids, model_names))
 
