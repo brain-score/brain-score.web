@@ -1,0 +1,44 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1>Benchmark Tutorials</h1>
+<p>Learn and explore what Brain-Score has to offer experimentalists. </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half">
+            <img class="tutorial_main" src="{% static "/benchmarks/img/tutorials/deep_dive_3_1.png" %}" />
+        </div>
+        <div class="column is-one-half tutorial_text">
+            <h3 class="benefits_heading is-size-3-mobile">Welcome, Benchmarkers!</h3>
+            <p class="benefits_info is-size-5-mobile">
+                In a nutshell, if you want to add your experimental results into Brain-Score as a benchmark, the process
+                involves two main steps: first, you need to add your experimental stimuli as well as subject data. This
+                is covered in the first section of this tutorial, "Package Data".
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                The second half involves creating and defining the benchmark file itself:
+                This is how and where you choose benchmark hyperparameters, such as visual degrees, a metric, and
+                a ceiling. This is covered in the section "Create a Benchmark" of this tutorial.
+            </p>
+
+             <p class="benefits_info is-size-5-mobile">
+                 Note: Brain-Score supports three types of benchmarks, differentiated by the type of experimental data
+                 that was gathered: neural (fMRI, PSTH, EEG, etc), behavioral, and engineering. In this
+                 benchmark tutorial series, we will explore a sample behavioral benchmark,
+                 <span class="special_format">Ferguson2024</span>.
+            </p>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data</button></a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark</button></a>
+        </div>
+    </div>
+</div>
+{% endblock %}
