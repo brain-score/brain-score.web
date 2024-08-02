@@ -98,3 +98,12 @@ See [deployment.md](deployment.md)
    * There must only be 1 plugin overall submitted (i.e. one model submitted at a time). The code itself can handle 
      multiple plugins, but we artificially cap submissions at 1 plugin for Jenkins' sake.
    * They must not be the tutorial model (sanity check to make sure users do not submit tutorial model)
+
+# Extraneous Website Information
+1. Domain Name: Brain-Score's domain is managed via [United Domains](https://www.uniteddomains.com). Contact a Team Member 
+   for the login information.
+2. Brain-Score sends emails out from `info.brainscore@gmail.com`. This email is it's own separate gmail account, and a 
+   Team Member can give the credentials out. 
+3. Brain-Score uses AWS Secrets Manager for sensitive login information and various credentials.
+4. In Order to be able to send emails out via Django, the website has its own specific login information for the email a
+   address mentioned in #2 above. See lines 57-59 of `settings.py` for more information.
