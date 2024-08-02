@@ -64,6 +64,59 @@ section), then this WILL change the corresponding database with the migration yo
 database, but is just needed to create the actual migration file to be applied via `migrate`. 
 
 
+# Django Overview
+
+[Django](https://www.djangoproject.com) follows the Model-View-Template (MVT) architecture: 
+MVT separates Brain-Score by dividing our application into three components: 
+Models handle the data and core logic, Views manage request processing and interaction with models, and Templates handle 
+the front end.
+
+1. Models in Django represent the structure of our database - this is separate from a Brain-Score concept of a model! 
+   Each model corresponds to a single database table and defines the fields and behaviors of the data we store. 
+   For example, we have a model `User` which contains fields such as `email`,  `display_name`, `is_staff`, etc. You can 
+   see a complete set of our models in the `models.py` file. Models in Django are Python classes that inherit from 
+   `django.db.models.Model`, and each attribute of the model represents a database field. Django provides many field types 
+   and methods to interact with the database - for the most part, no Brain-Score dev should have to interact directly with 
+   the database, as Django handles all requests. 
+
+2. Views: Views in Django handle the logic behind the web pages:
+   they process user requests, interact with models (Django models, not Brain-Score models!), and return responses. Our views
+   are in the `views` folder, and many are located in the `user.py` file itself.
+   There are two main types of views, and we use both in Brain-Score:
+
+   * Function-Based Views (FBVs): Defined as Python functions.
+   * Class-Based Views (CBVs): Defined as Python classes, providing more structure and reusability. 
+   
+   Our `views.py` use CBVs extensively, including: 
+
+    * `Activate` View: Handles user activation via GET and POST requests.
+    * `Signup` View: Manages user signup, rendering the signup form, and processing form submissions.
+    * `Login` View: Handles user authentication, rendering the login form, and logging in users.
+    * `Upload` View: Manages file uploads, ensuring proper validation and processing.
+3. Templates: In Django, these are HTML files with placeholders for dynamic content. The placeholders are filled using 
+   the context data (see below). Django templates are a simple way to render dynamic content, looping, and conditional 
+   logic. Some examples in Brain-Score include:
+   * `Signup` View renders `signup.html` with a context containing the signup form.
+   * `Login` View renders `login.html` with a context containing the login form and error messages if authentication fails.
+   * `Upload` View renders `upload.html` with a context containing the upload form and domain information.
+   
+    Our templates are contained in the folder `benchmarks/templates`.
+4. Context: Django uses `contexts`. These are dictionaries containing data passed to a template; they allow dynamic 
+   rendering of HTML pages based on this data. For instance in Brain-Score:
+   * In `Signup` View's `post` method, if the signup form is valid, it passes a context containing `activation_email`, 
+     `password_email`, and form to the `login.html` template.
+   * In `Profile` View's `get` method, context is populated with user-specific data and passed to the `profile.html` template.
+
+5. GET vs POST request: In Django, GET and POST requests serve different purposes. GET requests are used to retrieve data 
+   from the server without causing any changes, commonly used for fetching and displaying information. For example, a 
+   GET request to a view might render a form or display a list of items. POST requests, on the other hand, are used to 
+   submit data to the server, typically resulting in changes like creating or updating records. For example, a 
+   POST request to a view might handle form submissions, such as user registration or file uploads. Django provides 
+   built-in handling for these requests through its views, allowing us to define separate methods for GET and POST 
+   requests to manage different behaviors and responses efficiently.
+
+
+
 ## Export as static html
 
 1. save website locally (Ctrl+S `http://localhost:8000`)
