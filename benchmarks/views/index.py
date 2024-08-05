@@ -66,7 +66,8 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                      (ENGINEERING_ROOT not in benchmark.identifier and ENGINEERING_ROOT in benchmark.root_parent)}
 
     # data for javascript comparison script
-    comparison_data = _build_comparison_data(model_rows)
+    public_models = [model_row for model_row in model_rows if model_row.public]
+    comparison_data = _build_comparison_data(public_models)
 
     # benchmarks to select from for resubmission in user profile
     submittable_benchmarks = None
