@@ -65,8 +65,9 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                      # show engineering benchmarks collapsed, but still show root
                      (ENGINEERING_ROOT not in benchmark.identifier and ENGINEERING_ROOT in benchmark.root_parent)}
 
-    # data for javascript comparison script
-    comparison_data = _build_comparison_data(model_rows)
+    # data for javascript comparison script, only use public models
+    public_models = [model_row for model_row in model_rows if model_row.public]
+    comparison_data = _build_comparison_data(public_models)
 
     # benchmarks to select from for resubmission in user profile
     submittable_benchmarks = None
@@ -79,32 +80,31 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_title = "Brain-Score: Which Artificial Neural Network for Object Recognition is most " \
                                 "Brain-Like? "
         citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
-                                  "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
-                                  "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
-                                  "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
-                                  "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n\t\t\t\t" \
-                                  "journal={bioRxiv preprint},\n\t\t\t\t" \
-                                  "year={2018},\n\t\t\t\t" \
-                                  "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
+                                 "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
+                                 "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
+                                 "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
+                                 "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n\t\t\t\t" \
+                                 "journal={bioRxiv preprint},\n\t\t\t\t" \
+                                 "year={2018},\n\t\t\t\t" \
+                                 "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
     elif domain is "language":
         citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
         citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
         citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
-                                  "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
-                                  "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
-                                  "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
-                                  "journal={Proceedings of the National Academy of Sciences},\n\t\t\t\t" \
-                                  "volume={118},\n\t\t\t\t" \
-                                  "number={45},\n\t\t\t\t" \
-                                  "pages={e2105646118},\n\t\t\t\t" \
-                                  "year={2021},\n\t\t\t\t" \
-                                  "publisher={National Acad Sciences}\n\t\t\t" \
-                                  "}"
+                                 "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
+                                 "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
+                                 "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
+                                 "journal={Proceedings of the National Academy of Sciences},\n\t\t\t\t" \
+                                 "volume={118},\n\t\t\t\t" \
+                                 "number={45},\n\t\t\t\t" \
+                                 "pages={e2105646118},\n\t\t\t\t" \
+                                 "year={2021},\n\t\t\t\t" \
+                                 "publisher={National Acad Sciences}\n\t\t\t" \
+                                 "}"
     else:
         citation_domain_url = ''
         citation_domain_title = ''
         citation_domain_bibtex = ''
-
 
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
@@ -454,13 +454,13 @@ def _get_benchmark_shortname(benchmark_type_identifier: str):
     """
     Removes the lab identifier from a benchmark name.
     e.g. "dicarlo.MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
-    
+
     Assumes that lab identifiers do not contain capital letters.
     e.g. "MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
     """
-    # 
-    # E.g., 
-    # 
+    #
+    # E.g.,
+    #
     match = re.match(r'[^A-Z]+\.(.+)', benchmark_type_identifier)
     if match:
         return match.group(1)
@@ -553,6 +553,7 @@ def get_visibility(model, user):
     # Model is public
     else:
         return "public"
+
 
 # Adds python functions so the HTML can do several things
 @register.filter
