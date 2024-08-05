@@ -65,8 +65,9 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                      # show engineering benchmarks collapsed, but still show root
                      (ENGINEERING_ROOT not in benchmark.identifier and ENGINEERING_ROOT in benchmark.root_parent)}
 
-    # data for javascript comparison script
-    comparison_data = _build_comparison_data(model_rows)
+    # data for javascript comparison script, only use public models
+    public_models = [model_row for model_row in model_rows if model_row.public]
+    comparison_data = _build_comparison_data(public_models)
 
     # benchmarks to select from for resubmission in user profile
     submittable_benchmarks = None
@@ -512,7 +513,6 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
     color += (normalized_alpha,)
     return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
 
-@cache_page(24 * 60 * 60)
 def _build_comparison_data(models):
     """
     Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
@@ -529,12 +529,11 @@ def _build_comparison_data(models):
         ]
         ```
     """
-    public_models = [model_row for model_row in models if model_row.public]  # ensure only public models are used
     data = [dict(ChainMap(*[{'model': model_row.name}] +
                            [{f"{score_row.versioned_benchmark_identifier}-score": score_row.score_ceiled,
                              f"{score_row.versioned_benchmark_identifier}-error": score_row.error}
                             for score_row in model_row.scores]))
-            for model_row in public_models]
+            for model_row in models]
     return data
 
 
