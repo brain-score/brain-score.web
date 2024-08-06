@@ -12,8 +12,8 @@
     <span>Compare</span>
 </a>
 
-{% url 'tutorial' as tutorial_url %}
-<a class="{% if 'tutorial' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorial">
+{% url 'tutorials' as tutorial_url %}
+<a class="{% if 'tutorials' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials">
     <img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Tutorial Icon">
     <span>Tutorials</span>
 </a>
