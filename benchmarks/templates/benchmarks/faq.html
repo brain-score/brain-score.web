@@ -27,7 +27,21 @@
             The Brain-Score platform aims to yield strong computational models of the brain and mind. We enable
             researchers to quickly get a sense of the alignment of their model(s) to currently dozens of neural and
             behavioral measurements, and provide these models to experimentalists to prototype new experiments and make
-            sense of biological data.
+            sense of biological data. We recommend reading the <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">perspective paper</a>
+            and the <a href="https://www.biorxiv.org/content/10.1101/407007v1">technical paper</a> that outline both the
+            ideas and the inner workings of how Brain-Score operates.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            What are all the numbers on the Brain-Score site?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            As of now on the leaderboard (Brain-Score), there are many scores that your model would obtain. These are
+            sub-divided into neural and behavioral scores which themselves are further hierarchically organized. Each
+            one of these is a set of benchmarks that tests how “brain-like” your model is to various cognitive and
+            neural data – in essence, it is a measure of how similar the model is to the brain’s visual or language
+            system. Models are also tested on “Engineering” benchmarks which do not include biological data but typically
+            test against ground truth, often for a machine learning benchmark. These are often correlated to the brain and
+            behavioral scores (e.g. more V1-like → more robust to image perturbations).
         </p>
         <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
             What is a benchmark?
@@ -136,6 +150,30 @@
             open or closed PR with your model name in the title, which can provide further information about the status
             of your submission. If you need assistance, you can either create a GitHub issue or reach out via Slack
             explaining your problem and someone in our developer community will assist you.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            I was looking at the code and I found an error in the code/docs/etc. How can I contribute?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            We welcome and encourage user participation in our code base! The easiest way to do so is to fork the
+            repository (make a copy of the Brain-Score Github repository locally and/or in your own Github), make the
+            necessary edits there, and submit a pull request (PR) to merge it into our master branch. We will then review
+            and approve the PR, and after that it is merged into our code base.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            I really like Brain-Score, and I have some ideas that I would love to talk to someone about. How do I get in touch?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            The easiest way to get in touch with us is via our Slack channel. For bugs or feature requests, we encourage you to
+            make an issue <a href="https://github.com/brain-score/vision/issues/new">here</a>, or send us an email!
+            We will also be creating a mailing list soon, so stay tuned.
+        </p>
+        <p class="benefits_info is-size-5-mobile question_text has-text-weight-bold no_top_header">
+            Is there any reward for reaching the top overall Brain-Score? Or even a top score on the individual benchmarks?
+        </p>
+        <p class="benefits_info is-size-5-mobile shorter no_top">
+            We sometimes run competitions (e.g. https://www.brainscoreworkshop.com/). A top Brain-Score result is
+            also a great way to show the goodness of your model and market its value to the community.
         </p>
     </div>
 </div>
