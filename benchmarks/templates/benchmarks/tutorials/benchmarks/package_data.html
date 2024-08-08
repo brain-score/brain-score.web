@@ -139,6 +139,15 @@
         This unfortunately means that it’s not possible to programmatically add plugin identifiers to
         the registry; each registration needs to be written explicitly in the form of
         <span class="special_format">plugin_registry['my_plugin_identifier']</span>.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Another quick note regarding naming conventions: For data plugins, identifiers for datasets vary depending on
+        the community but should ideally not include dashes (which are used in the benchmark identifier, see above).
+        For brain and cognitive science datasets, data identifiers often point to the paper or report where the data was
+        first introduced (e.g. <span class="special_format">MajajHong2015</span> or <span class="special_format">Sanghavi2020</span>).
+        When using components of datasets, we recommend separating those with a dot, and to use an underscore between multiple
+        words (e.g. <span class="special_format">MajajHong2015.IT</span> or <span class="special_format">Malania2007.vernier_only</span>).
+        For machine learning (“engineering”) datasets, data identifiers are often descriptive (e.g. <span class="special_format">ImageNet</span>).
         Next, let’s check out the second required file, <span class="special_format">data_packaging.py</span>.
     </p>
 </div>
