@@ -30,7 +30,7 @@
 
                 Next, we will take a look at the <span class="special_format">data_packaging.py</span> file. This file
                 shows how we upload and package both your stimuli (via a <span class="special_format">StimulusSet</span>),
-                and your data (via an <span class="special_format">Assembly</span>)
+                and your data (via a <span class="special_format">DataAssembly</span>)
 
                 Finally, we will explore a sample <span class="special_format">test.py</span> file, in which we ensure
                 your benchmark is structured as you expect it.
@@ -113,7 +113,7 @@
         ecosystem at large. You are registering your data to a unique global identifier. You can
         see that this file is fairly straightforward: Lines 1-3 are standard imports, and lines 8 and 16
         add the plugins to the registry (note that in the screenshot there is a <span class="special_format">StimulusSet</span>
-        (Line 8) as well as an <span class="special_format">Assembly</span> (line 16) being added to the registry -
+        (Line 8) as well as a <span class="special_format">DataAssembly</span> (line 16) being added to the registry -
         there is more about what these are in Part 5 below). In the future, when you submit your data (or other plugins),
         you will add the plugin to our ecosystem via a similar call to line 8.
     </p>
@@ -139,6 +139,15 @@
         This unfortunately means that it’s not possible to programmatically add plugin identifiers to
         the registry; each registration needs to be written explicitly in the form of
         <span class="special_format">plugin_registry['my_plugin_identifier']</span>.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Another quick note regarding naming conventions: For data plugins, identifiers for datasets vary depending on
+        the community but should ideally not include dashes (which are used in the benchmark identifier, see above).
+        For brain and cognitive science datasets, data identifiers often point to the paper or report where the data was
+        first introduced (e.g. <span class="special_format">MajajHong2015</span> or <span class="special_format">Sanghavi2020</span>).
+        When using components of datasets, we recommend separating those with a dot, and to use an underscore between multiple
+        words (e.g. <span class="special_format">MajajHong2015.IT</span> or <span class="special_format">Malania2007.vernier_only</span>).
+        For machine learning (“engineering”) datasets, data identifiers are often descriptive (e.g. <span class="special_format">ImageNet</span>).
         Next, let’s check out the second required file, <span class="special_format">data_packaging.py</span>.
     </p>
 </div>
@@ -157,14 +166,24 @@
         BrainIO upload functions <span class="special_format">package_stimulus_set</span> and
         <span class="special_format">package_data_assembly</span>.
     </p>
-
+    <p class="benefits_info is-size-5-mobile shorter">
+        Data and stimuli can be made public or kept private. It is your choice if you wish to release the data itself
+        or only the benchmark. If you choose to keep the data private, model submissions can be scored on the data, but
+        the actual data itself will not be visible. Publicly released data can also be scored against, but will be fully
+        accessible.
+    </p>
     <p class="benefits_info is-size-5-mobile shorter">
         A quick note for context: Brain-Score uses a stimuli and data packaging management system known as
-        <a href="https://github.com/brain-score/vision/tree/master/tests#precomputed-features">BrainIO</a>. BrainIO
-        provides two very useful core objects: a <span class="special_format">StimulusSet</span> and an <span class="special_format">Assembly</span>.
-        Both are custom wrappers on top of Xarray (which itself is built off of Pandas), and are used to handle multi-dimensional
-        data more efficiently, like the kind Brain-Score services. If you have any questions about BrainIO, please see the
-        docs linked above, or contact a Brain-Score team member.
+        <a href="https://github.com/brain-score/vision/tree/master/tests#precomputed-features">BrainIO</a>, because we
+        require a certain format for stimuli and data so that we can maintain them for long-term use. BrainIO
+        provides two very useful core objects: <span class="special_format">StimulusSet</span>s and <span class="special_format">DataAssembly</span>s.
+
+        <span class="special_format">StimulusSet</span>s (a subclass of pandas DataFrame) are used to maintain stimuli,
+        and <span class="special_format">DataAssembly</span>s (a subclass of xarray DataArray) are used to maintain
+        experimental measurements. Aside from unifying data from different sources, the
+        advantage of these formats is that all data are kept together with metadata such as
+        image parameters, electrode locations, and details on behavioral choices. For both <span class="special_format">StimulusSet</span> and
+        <span class="special_format">DataAssembly</span>, BrainIO provides packaging methods that upload to S3 cloud storage.
     </p>
     <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/data_stimuli_1.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
@@ -182,7 +201,32 @@
     </p>
     <img class="submission example" width="500" height="auto" src="{% static "/benchmarks/img/tutorials/data_assembly_1.png" %}" />
     <p class="benefits_info is-size-5-mobile shorter">
-        The second function of note is <span class="special_format">create_assembly_and_upload</span> defined on line 64.
+        Next, we will take a look at how a <span class="special_format">DataAssembly</span> is created. In general, a
+        <span class="special_format">DataAssembly</span> contains the actual experimental measurements as well as any metadata on them. Note
+        that these do not necessarily have to be raw data, but can also be previously published characterizations of
+        the data such as preference distributions. As such, the person submitting the data to Brain-Score does not have
+        to be involved in the data collection. If you package someone else’s data, we do however recommend checking the
+        specifics with them to avoid mis-interpretation. Overall in Brain-Score, we have encountered data in three forms:
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        <span class="special_format">NeuroidAssembly</span>: neural data recorded from “neuroids” – neurons or their analogues such as multi-unit activity
+        from Utah array electrodes. These assemblies typically contain spike rates structured in three dimensions
+        presentation x neuroid x time_bin where the presentation dimension represents stimulus presentations
+        (e.g. images x trials), the neuroid dimension represents e.g. electrodes (with metadata such as neuroid_id and location),
+        and the time_bin dimension contains information about the start (time_bin_start) and end (time_bin_end) of a time bin of spike rates.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        <span class="special_format">BehavioralAssembly</span>: behavioral measurements, typically choices in a task structured in one dimension presentation
+        that represents stimulus presentations (e.g. images x trials, with metadata on the task such as the sample object
+        and the distractor object in a match-to-sample task) with the actual choices (e.g. “dog”/”cat”, “left”/”right”) in the assembly values.
+        As stated, the screenshot above is of a sample  <span class="special_format">BehavioralAssembly</span> belonging to
+        the  <span class="special_format">Ferguson2024</span> benchmarks.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        <span class="special_format">PropertiesAssembly</span>: any kind of data in a pre-processed form, such as a surround suppression index per neuroid.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        The <span class="special_format">DataAssembly</span> itself is created in the method <span class="special_format">create_assembly_and_upload</span> defined on line 64.
         It is here that the experimental subject data is packaged into a DataFrame object, which is then wrapped into
         a BrainIO <span class="special_format">BehavioralAssembly</span>. Lines 73-80 can be safely ignored for this tutorial's
         sake, as they deal with preliminary data preprocessing. Lines 82-96 are the most important parts here; these lines
@@ -211,8 +255,9 @@
     <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring the test.py File</h3>
     <p class="benefits_info is-size-5-mobile shorter">
         The purpose of the data plugin's <span class="special_format">test.py</span> file is to ensure that your stimuli
-        and experimental data are what you expect. This is where you would add tests for checking the length of your
-        stimuli and data, the data types, and the correct format. You will notice that the sample folder's
+        and experimental data validity can be confirmed for a long time, even as details in the system might change.
+        For instance, we want to avoid accidental overwrite of a packaged experiment, and the unit tests guard against that.
+        This is where you would add tests for checking the length of your stimuli and data, the data types, and the correct format. You will notice that the sample folder's
         <span class="special_format">test.py</span> contains many tests, divided
         into two classes: <span class="special_format">TestStimulusSets</span> and <span class="special_format">TestAssemblies</span> (not shown in the screenshot below):
     </p>

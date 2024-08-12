@@ -72,6 +72,18 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 3: Exploring the Sample Submission Folder</h3>
     <p class="benefits_info is-size-5-mobile shorter">
+        The Benchmark brings together the experimental paradigm with stimuli, and a <span class="special_format">Metric</span> to compare model measurements
+        against experimental data. The paradigm typically involves telling the model candidate to perform a task or
+        start recording in a particular area, while looking at stimuli from the previously packaged StimulusSet.
+        Typically, all benchmarks inherit from <span class="special_format">BenchmarkBase</span>, a super-class requesting the
+        commonly used attributes. These attributes include the <span class="special_format">identifier</span> which uniquely designates the benchmark ,
+        the <span class="special_format">version</span> number which increases when changes to the benchmark are made a
+        <span class="special_format">ceiling_func</span> that, when run, returns a ceiling for this benchmark the
+        benchmark’s parent to group under e.g. V1, V2, V4, IT, behavior, or engineering (machine learning benchmarks),
+        and finally a <span class="special_format">bibtex</span> that is used to link to the publication from the benchmark and website
+        for further details (we are working on crediting benchmark submitters more prominently in addition to only the data source.)
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
         If you completed the "Package Data" tutorial, this folder should look very familiar. It has all the parts needed
         of standard Brain-Score plugin (remember: a plugin can be a benchmark, a model, a metric, or data - we took a look
         at a data plugin previously in the first part of this tutorial series). In this folder you can see  an
@@ -113,9 +125,8 @@
         (explained in the previous half of this tutorial). These 14 benchmarks belong to a parent benchmark object,
         <span class="special_format">Ferguson2024</span>, and are called via the 14 lambda expressions with a different
         stimuli and data identifier. For benchmarks in general, we follow the naming convention of <span class="special_format">AuthorYEAR-metric</span>
-        , as shown here in the screenshot.
+        , as shown here in the screenshot. For metric plugins, identifiers are typically descriptive (e.g. rdm, pls, accuracy).
     </p>
-
     <p class="benefits_info is-size-5-mobile shorter">
         Please note: Brain-Score does not allow duplicate plugin
         names, so if you submit another version of the same benchmark, make sure to make the identifier unique!
