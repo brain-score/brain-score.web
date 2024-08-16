@@ -30,7 +30,7 @@ python3.8 -m venv <env_name>
 source <env_name>/bin/activate
 ```
 
-Clone the repository and cd to the brain-score.web directory:
+Clone the repository and change to the brain-score.web directory:
 
 ```
 git clone https://github.com/brain-score/brain-score.web.git
