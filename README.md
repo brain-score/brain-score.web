@@ -72,7 +72,7 @@ aws_access_key_id = AWS_ACCESS_KEY_ID
 aws_secret_access_key = AWS_SECRET_ACCESS_KEY
 ```
 
-Run the website in dev:
+Return to the brain-score.web directory and run the website in dev:
 ```
 DEBUG=True python manage.py runserver
 ```
