@@ -37,19 +37,13 @@ git clone https://github.com/brain-score/brain-score.web.git
 cd brain-score.web
 ```
 
-Install dependencies:
+Install dependencies (including node dependencies):
 
 ```
 python3 -m pip install --upgrade pip
 pip3 install -r requirements.txt
-```
-
-Install node dependencies: 
-
-```
 npm install --no-optional
 ```
-
 Set up Database credentials (host and password) by first going to your home directory:
 
 ```
