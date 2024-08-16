@@ -63,7 +63,7 @@ Then make a file called config:
 touch config
 ```
 
-Then edit that file with `nano config`, paste in the following, save, and exit (REMEMBER to replace AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY with the values you received from a Brain Score admin (see note at top of page)):
+and edit that file with `nano config`, paste in the following, save, and exit (REMEMBER to replace AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY with the values you received from a Brain Score admin (see note at top of page)):
 ```
 [default]
 region = us-east-1
