@@ -1,14 +1,45 @@
 [![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
 
-# Setup
+# Setup 
+(To run the Brain-Score Website locally)
 
-Ensure you are using `<= python@3.8`
+***NOTE: Before beginning this process, contact one of the Brain-Score Administrators listed below and request an AWS_ACCESS_KEY_ID, and an AWS_SECRET_ACCESS_KEY.  You will need these to complete this process.
 
-Create and activate a virtual environment
+Brain Score Administrators:
+
+1. Kartik Pradeepan: kpradeep@mit.edu
+2. Mike Ferguson: mferg@mit.edu
+
+Once you have these values, continue by ensuring you are using `<= python@3.8`:
 
 ```
-python3 -m venv <env_name>
+<= python@3.8
+```
+You can do this by first checking if you have 3.8 installed: 
+
+```
+python3.8 --version
+```
+
+And if not install it:
+
+```
+sudo apt-get update
+sudo apt-get install python3.8
+```
+
+Create and activate a virtual environment:
+
+```
+python3.8 -m venv <env_name>
 source <env_name>/bin/activate
+```
+
+Clone the repository and cd to the brain-score.web directory:
+
+```
+git clone https://github.com/brain-score/brain-score.web.git
+cd brain-score.web
 ```
 
 Install dependencies:
@@ -18,12 +49,49 @@ python3 -m pip install --upgrade pip
 pip3 install -r requirements.txt
 ```
 
-Install node dependencies: `npm install --no-optional`
+Install node dependencies: 
 
-Create a `.env` file and add `DB_HOST` and `DB_PASSWORD` vars for the development database.
+```
+npm install --no-optional
+```
 
-Run server in dev: `DEBUG=True python manage.py runserver`
+Set up Database credentials (host and password) by first going to your home directory:
 
+```
+cd ~
+```
+
+Then make a directory called .aws and cd into that directory :
+
+```
+mkdir .aws
+cd .aws
+```
+
+Then make a file called config:
+
+```
+touch config
+```
+
+Then edit that file with `nano config`, paste in the following, save, and exit (REMEMBER to replace AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY with the values you received from a Brain Score admin (see note at top of page)):
+```
+[default]
+region = us-east-1
+output = json
+aws_access_key_id = AWS_ACCESS_KEY_ID
+aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+```
+
+Run the website in dev:
+```
+DEBUG=True python manage.py runserver
+```
+
+View the website running locally by opening a browser to the following URL:
+```
+http://localhost:8000
+```
 
 # LocalHost tips and common errors:
 1. Make sure to add `127.0.0.1` to hosts_list (`hosts_list.append("127.0.0.1)`) in `settings.py` line 53 when running locally.
