@@ -38,12 +38,6 @@
     <div class="columns is-tablet is-variable is-1-tablet">
          <div class="column is-one-half">
             <pre><code>
-# Install and activate Miniconda
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -b
-~/miniconda3/bin/conda init
-source ~/.bashrc
-
 #Create and activate a new conda environment
 conda create -y -n myenv python=3.8
 conda activate myenv3
@@ -59,7 +53,8 @@ python -m pip install -e .
             <h3 class="benefits_heading is-size-3-mobile">Step 1: Install Packages</h3>
             <p class="benefits_info is-size-5-mobile">
                 In order to use Brain-Score on your machine, you need to install it. We recommend setting up a Virtual Environment
-                for all your Brain-Score projects, but this isn't required.
+                for all your Brain-Score projects, but this isn't required.  If you need to install Conda, you can find instructions
+                on how to do so here: <a href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">Conda Website</a>
             <p class="benefits_info is-size-5-mobile shorter">
                 Run the commands to the left to install Miniconda (if necessary), create and activate a conda environment, and install the required Brain-Score packages and dependencies.
             </p>
