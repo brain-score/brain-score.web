@@ -1,3 +1,5 @@
+{% load static %}
+
 <div class="box">
   <h3 class="title">How to Interpret</h3>
   <div class="content">
@@ -6,6 +8,9 @@
       alignment between model and collected data), on every benchmark available. Benchmarks are arranged hierarchically,
       with scores for each child benchmark averaged together to create the overall score for the parent.
     </p>
+    <button id="download-csv" class="button button-ghost">Download CSV</button>
+    <textarea id="csv-data" style="display:none;">{{ csv_downloadable }}</textarea>
+    <script src="{% static 'js/download_csv.js' %}" defer></script>
   </div>
 </div>
 

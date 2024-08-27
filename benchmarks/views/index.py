@@ -44,6 +44,21 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
+    # calculate lightweight, downloadable version of model scores
+    csv_scores = []
+    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
+    for model in model_rows:
+        csv_dict = {"model_name": model.name, "scores": {}}
+        for score in model.scores:
+            benchmark_identifier = score.benchmark.identifier
+            if benchmark_identifier in benchmark_names:
+                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
+        csv_scores.append(csv_dict)
+
+    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
+    csv_df.set_index('model_name', inplace=True)
+    csv_data = csv_df.to_csv(index=True)
+
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
@@ -127,6 +142,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             'citation_domain_url': citation_domain_url,
             'citation_domain_title': citation_domain_title,
             'citation_domain_bibtex': citation_domain_bibtex,
+            'csv_downloadable': csv_data
             }
 
 
