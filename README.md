@@ -91,10 +91,8 @@ http://localhost:8000
 4. To change what database is used for the localhost, you can pass the string values `prod`, `dev`, `dev_18072024` and `test` in `settings.py`
    lines 150 and 138. 
    * Make sure you talk to another Brain-Score team member when using `prod` to make sure nothing major will happen!
-5. IF you do not have credentials set up, the localhost will default to a (blank) `db.sqlite3` file. 
-   * To set up database access, contact a Brain-Score team member. 
-6. *DO NOT* ever run migrations on dev or prod without talking to another Brain-Score team member as a check. 
-7. *DO NOT* ever run a `flush` command on `prod` or `dev`!
+5. *DO NOT* ever run migrations on dev or prod without talking to another Brain-Score team member as a check. 
+6. *DO NOT* ever run a `flush` command on `prod` or `dev`!
 
 ### LocalHost Setup Errors - Troubleshooting
 
