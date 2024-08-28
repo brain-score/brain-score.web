@@ -38,6 +38,11 @@
     <div class="columns is-tablet is-variable is-1-tablet">
          <div class="column is-one-half">
             <pre><code>
+#Create and activate a new conda environment
+conda create -y -n myenv python=3.8
+conda activate myenv
+
+#Install packages
 git clone https://github.com/brain-score/vision.git
 cd vision
 python -m pip install --upgrade pip .
@@ -47,15 +52,11 @@ python -m pip install -e .
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Step 1: Install Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                In order to use Brain-Score on your machine, you need to install it. Luckily, we have tried
-                to drastically simplify this process (we strongly recommend setting up a Virtual Environment
-                (an example shown <a href="https://docs.conda.io/en/latest/">here</a>)
-                for all your Brain-Score projects, but this is not required).
-                Run the three commands to the left in the command line of your choosing (example is for Unix-based machines).
-            </p>
-            <p class="benefits_info is-size-5-mobile">
-                This will pull the most recent copy of Brain-Score into your local machine and install
-                all the necessary packages.
+                In order to use Brain-Score on your machine, you need to install it. We recommend setting up a Virtual Environment
+                for all your Brain-Score projects, but this isn't required.  If you need to install Conda, you can find instructions
+                on how to do so here: <a href="https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html">Conda Website</a>
+            <p class="benefits_info is-size-5-mobile shorter">
+                Run the commands to the left to install Miniconda (if necessary), create and activate a conda environment, and install the required Brain-Score packages and dependencies.
             </p>
         </div>
     </div>
@@ -63,10 +64,23 @@ python -m pip install -e .
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Step 2: Run a Model on a Benchmark (via CLI)</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        Next, make sure your working directory is <span class="special_format">/vision</span> (you can confirm
-        this is the case with a <span class="special_format">pwd</span> call), and run the three commands below to score the model
-        <span class="special_format">pixels</span> on a sample benchmark’s publicly available data
-        <span class="special_format">MajajHong2015public.IT-pls</span>:
+        Next, make sure your working directory is <span class="special_format">/vision</span>, and run the command below to score the model
+        <span class="special_format">pixels</span> on the publicly available data of a benchmark called <span class="special_format">MajajHong2015public.IT-pls</span>.
+        In this command, <span class="special_format">pixels</span> is a Brain-Score "model identifier" and <span class="special_format">MajajHong2015public.IT-pls</span> is a Brain-Score "benchmark identifier".
+        You can use the same command to run other models on the  <span class="special_format">MajajHong2015public.IT-pls</span>
+        benchmark by changing the model identifier.  For example, try changing <span class="special_format">pixels</span>
+        to <span class="special_format">alexnet</span>.
+        In a similar manner, you can change the benchmark identifier in the command to run the <span class="special_format">pixels</span> with other benchmarks.  For example, try changing <span class="special_format">MajajHong2015public.IT-pls</span>
+        to <span class="special_format">Ferguson2024circle_line-value_delta</span>
+    <p class="benefits_info is-size-5-mobile shorter">
+        You can find a comprehensive collection of
+        available models in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models">brainscore_vision/models directory</a>, and you can find the model identifier for each model
+        in it's _init_.py file. Be aware that several of the models in this collection can be very memory intensive.
+        For example the resnet50 model will run on a 2024 M3 Macbook Pro with 32 Gb of RAM, but will fail on the same machine with 16Gb.
+        <p class="benefits_info is-size-5-mobile shorter">
+        Similarly You can find a comprehensive collection of
+        available benchmarks in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/benchmarks">brainscore_vision/benchmarks directory</a>, and you can find the benchmark identifier(s) for each benchmark
+        in it's _init_.py file.
     </p>
     <pre class="modified_1"><code >
 python brainscore_vision score --model_identifier='pixels' --benchmark_identifier='MajajHong2015public.IT-pls'
@@ -100,17 +114,21 @@ Process finished with exit code 0
     <p class="benefits_info is-size-5-mobile shorter">
         In this case, the <span class="special_format">MajajHong2015public.IT-pls</span> benchmark uses the standard
         <span class="special_format">NeuralBenchmark</span> which ceiling-normalizes with explained variance
-        <span class="special_format">(r(X, Y) / r(Y, Y))^2</span>; see how this is done
-        <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/benchmark_helpers/neural_common.py">here</a>.
-        This is how the final score is calculated from the <span class="special_format">ceiling</span> and <span class="special_format">raw</span> scores.
+        <span class="special_format">(r(X, Y) / r(Y, Y))^2</span>.  More specifically, a class is defined that
+        evaluates how well a brain model matches neural activity in a specific brain region during visual tasks. It does
+        this by comparing the model's outputs to actual recorded brain data, using a mathematical measure called
+        "explained variance" to assess similarity. The code adjusts or "ceils" the final score based on the maximum
+        possible accuracy (ceiling) of the model. Essentially, it checks how closely a computer model's predictions
+        align with real brain data and then calculates a final score (from the <span class="special_format">ceiling</span>
+        and <span class="special_format">raw</span> scores) that reflects that similarity. (The code for this can be found
+        <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/benchmark_helpers/neural_common.py">here</a>).
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         There is also more metadata listed in this score object, such as <span class="special_format">model_identifier</span>,
         <span class="special_format">benchmark_identifier</span>, and <span class="special_format">comment</span>.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-         Please note that compute times may vary; running on a 2021 Macbook Pro M1 Max takes about
-         10 minutes.
+         Please note that compute times may vary; running on a 2024 Macbook with an M2 Pro chip takes up to 20 minutes.
     </p>
 </div>
 <div class="box leaderboard-table-component">
