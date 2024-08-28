@@ -84,6 +84,10 @@ If you have not already done so:
     * `eb ssh brain-score-web-dev`
         * Reply "yes" to the fingerprint question
         * You should get an EC2 instance prompt like `[ec2-user@ip-172-31-32-98 ~]$`
+        * If you cannot connect via ssh this way, visit
+          [EC2 instances](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Instances:),
+          look up the public IPv4 for `brain-score-web-dev`, and connect via 
+          `ssh -i ~/.ssh/<yourprivatekeyfile> ec2-user@<IPv4>`
     * `sudo docker ps`
         * This should produce information about the Docker container running on this host
         * Note the container name;  it will likely be something like "fervent_edison"
