@@ -35,7 +35,11 @@
         <p class="benefits_info is-size-5-mobile">
             Past scores are below. Submissions are located at the bottom.
         </p>
+
         </form>
+        <button id="download-csv" class="button button-ghost">Download CSV</button>
+        <textarea id="csv-data" style="display:none;">{{ csv_downloadable }}</textarea>
+        <script src="{% static 'js/download_csv.js' %}" defer></script>
     </div>
 
     <div class="box leaderboard-table-component">
