@@ -133,6 +133,16 @@
         For now, if you are submitting a model yourself, you can just leave this file blank, but still make sure
         to include it in your submission package.
     </p>
+       <pre class="modified_1"><code>
+1       import pytest
+2       import brainscore_vision
+3
+4
+5       @pytest.mark.travis_slow
+6       def test_has_identifier():
+7           model = brainscore_vision.load_model('resnet50_tutorial')
+8           assert model.identifier == 'resnet50_tutorial'
+    </code></pre>
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 6: Exploring the model.py File</h3>
