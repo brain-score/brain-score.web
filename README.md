@@ -9,6 +9,6 @@ BrainModel interface can be scored on.
 This Repo contains all the code needed to run and configure the website, including how to set up the site locally, the 
 details of the website submission system, and both the front and back end infrastructure.
 
-See the [Developer Documentation](https://brain-score.web.readthedocs.io) for more details.
+See the [Developer Documentation](https://brain-scoreweb.readthedocs.io) for more details.
 
 Brain-Score is made by and for the community. To contribute, please [send in a pull request](https://github.com/brain-score/brain-score.web/pulls).
