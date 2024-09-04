@@ -245,22 +245,23 @@ Attributes:
 
 Process finished with exit code 0
     </code></pre>
-    <p class="benefits_info is-size-5-mobile shorter">
-        These numbers are broken down in the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>,
-        but the main point here is that if you get a message that looks like the above (likely with different numbers) then
-        your model is ready to submit.  (Please note that compute times may vary significantly depending on your local hardware setup.)
-        Once you successfully run your model locally, you can rezip your package, and you would be ready to submit your model.
-    </p>
-    <p class="benefits_info is-size-5-mobile shorter ">
-        When you submit an actual (non-tutorial) model, you'll receive an email with your results
-        within 24 hours. If you would like to explore a custom model submission package, please visit <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive #2</a>.
-    </p>
+    <div class="columns is-tablet is-variable is-1-tablet">
+        <div class="column is-one-half tutorial_text">
+            <p class="benefits_info is-size-5-mobile shorter top_adjust">
+                These numbers are broken down in the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>,
+                but the main point here is that if you get a message that looks like the above (likely with different numbers) then
+                your model is ready to submit.  (Please note that compute times may vary significantly depending on your local hardware setup.)
+                Once you successfully run your model locally, you can rezip your package, and you would be ready to submit your model.
+            </p>
+            <p class="benefits_info is-size-5-mobile shorter ">
+                When you submit an actual (non-tutorial) model, you'll receive an email with your results
+                within 24 hours. If you would like to explore a custom model submission package, please visit <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive #2</a>.
+            </p>
+        </div>
         <div class="column is-one-half">
             <img class="tutorial_dd1_2" src="{% static "/benchmarks/img/tutorials/deep_dive_1_2.png" %}" />
         </div>
     </div>
-
-
 </div>
 {% endblock %}
 
