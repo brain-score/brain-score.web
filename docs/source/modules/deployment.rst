@@ -88,7 +88,7 @@ If you have not already done so:
    * For all other prompts accept the default.
 6. Check that the command line client can see the environments in the account:  ``eb list``.
 
-   * If the output does not include ``brain-score-web-dev`` and ``brain-score-web-prod``, default region or AWS credentials may be misconfigured.
+   * If the output does not include ``brain-score-web-dev-updated`` and ``brain-score-web-prod-updated``, default region or AWS credentials may be misconfigured.
 
 To Deploy (if migrations are made)
 **********************************
@@ -130,7 +130,7 @@ To Create Elastic Beanstalk Environments
 
 If the Elastic Beanstalk environments do not exist or need to be recreated::
 
-    eb create brain-score-web-dev -c brain-score-web-dev -r us-east-2 -p Docker --envvars DEBUG=True,DOMAIN=localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com,DB_CRED=brainscore-1-ohio-cred
+    eb create brain-score-web-dev-updated -c brain-score-web-dev-updated -r us-east-2 -p Docker --envvars DEBUG=True,DOMAIN=localhost:brain-score-web-dev-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com,DB_CRED=brainscore-1-ohio-cred
 
-    eb create brain-score-web-prod -c brain-score-web-prod -r us-east-2 -p Docker --envvars DEBUG=False,DOMAIN=localhost:brain-score-web-prod.us-east-2.elasticbeanstalk.com:www.brain-score.org,DB_CRED=brainscore-prod-ohio-cred
+    eb create brain-score-web-prod-updated -c brain-score-web-prod-updated -r us-east-2 -p Docker --envvars DEBUG=False,DOMAIN=localhost:Brain-score-web-prod-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com :www.brain-score.org,DB_CRED=brainscore-prod-ohio-cred
 
