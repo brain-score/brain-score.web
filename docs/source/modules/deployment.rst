@@ -93,14 +93,14 @@ If you have not already done so:
 To Deploy (if migrations are made)
 **********************************
 
-1. If there are changes to Django models, make sure makemigrations has been run and the migration checked into git.
+1. If there are changes to Django models, make sure make migrations has been run and the migration checked into git.
 
-2. Deploy the latest Git commit to the development environment:  ``eb deploy brain-score-web-dev --timeout 20``.
+2. Deploy the latest Git commit to the development environment:  ``eb deploy brain-score-web-dev-updated --timeout 20``.
 
    * This can take around 15 minutes.
 3. If there are database migrations, apply them from within the container:
 
-   * ``eb ssh brain-score-web-dev``
+   * ``eb ssh brain-score-web-dev-updated``
 
       * Reply "yes" to the fingerprint question.
       * You should get an EC2 instance prompt like ``[ec2-user@ip-172-31-32-98 ~]$``.
@@ -121,9 +121,9 @@ To Deploy (if migrations are made)
    * Exit the container:  ``exit``.
    * Exit the EC2 host:  ``exit``.
 
-4. Check the dev website:  ``http://brain-score-web-dev.us-east-2.elasticbeanstalk.com/``.
-5. If the dev website passes tests, deploy to production:  ``eb deploy brain-score-web-prod --timeout 20``.
-6. If necessary, repeat migrations, but this time begin with ``eb ssh brain-score-web-prod``.
+4. Check the dev website:  ``https://brain-score-web-dev-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com``.
+5. If the dev website passes tests, deploy to production:  ``eb deploy brain-score-web-prod-updated --timeout 20``.
+6. If necessary, repeat migrations, but this time begin with ``eb ssh brain-score-web-prod-updated``.
 
 To Create Elastic Beanstalk Environments
 ****************************************
