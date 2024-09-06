@@ -266,23 +266,18 @@ Process finished with exit code 0
 
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 9: Model Summary Tools</h3>
-    <p class="benefits_info is-size-5-mobile shorter">
-        Depending on how a model is created, you can use one of the following tools to get summary information about it:
-    </p>
     <ul class="benefits_list">
-        <li><strong>Keras:</strong> If a model is created with Keras, the built-in <span class="special_format">model.summary()</span>
-            method can be used to display a concise summary of the model, showing the configuration of each layer,
-            including the name, type, output shape, and parameter count.</li>
-        <li><strong>PyTorch:</strong> For models built using PyTorch, the <span class="special_format">torchsummary</span>
-            package can be utilized. Install it via pip if necessary (<span class="special_format">pip install torchsummary</span>),
-            and then use <span class="special_format">from torchsummary import summary</span> to print a detailed summary
-            of the model. This can be further customized to specify different models by passing the model identifier as an argument to a script.</li>
+        <li>For models built using PyTorch, the <span class="special_format">torchsummary</span>
+            package can be utilized to get a summary of model information. Install it via pip if necessary
+            (<span class="special_format">pip install torchsummary</span>), and then use <span class="special_format">from torchsummary import summary</span>
+            to print a detailed summary of the model. This can be further customized to specify different models by
+            passing the model identifier as an argument to a script.</li>
     </ul>
     <p class="benefits_info is-size-5-mobile shorter">
         Here’s how to set up and use a customizable script in PyTorch to summarize different models by specifying a model identifier (you can
         also embed these commands in your own model or other code):
     </p>
-    <ol class="benefits_list">
+    <ol class="ordered_list">
         <li>Ensure your environment is set up as per the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>.</li>
         <li>Create a new Python file named <span class="special_format">modelsummary.py</span> in the <span class="special_format">vision</span> directory.</li>
         <li>Copy and paste the following script into the file:</li>
@@ -308,11 +303,11 @@ def main():
 
 if __name__ == "__main__":
     main()</code></pre>
-    <ol start="4" class="benefits_list">
+    <ol start="4" class="ordered_list">
         <li>Open a terminal, navigate to the <span class="special_format">vision</span> directory:</li>
     </ol>
     <pre class="modified_1"><code>cd path/to/vision</code></pre>
-    <ol start="5" class="benefits_list">
+    <ol start="5" class="ordered_list">
         <li>Run the script by typing the following command, replacing <span class="special_format">'model_name'</span>
             with the model_identifier (such as alexnet or resnet50) of the model you wish to summarize:</li>
     </ol>
@@ -323,6 +318,13 @@ if __name__ == "__main__":
         before proceeding with model evaluation or deployment.
     </p>
 </div>
+
+<style>
+.ordered_list {
+    padding-left: 0px; /* Adjust as necessary */
+    list-style-position: inside;
+}
+</style>
 
 
 
