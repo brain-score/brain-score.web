@@ -212,8 +212,6 @@
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
-
-
     <p class="benefits_info is-size-5-mobile shorter">
         You are almost done! If you were actually submitting a model, the final step prior to submission would be to run
         your model locally to ensure that everything is in working order. You can do this by first following the
@@ -266,22 +264,22 @@ Process finished with exit code 0
 
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 9: Model Summary Tools</h3>
-    <ul class="benefits_list">
-        <li>For models built using PyTorch, the <span class="special_format">torchsummary</span>
-            package can be utilized to get a summary of model information. Install it via pip if necessary
-            (<span class="special_format">pip install torchsummary</span>), and then use <span class="special_format">from torchsummary import summary</span>
-            to print a detailed summary of the model. This can be further customized to specify different models by
-            passing the model identifier as an argument to a script.</li>
-    </ul>
+    <p class="benefits_info is-size-5-mobile shorter">
+        For models built using PyTorch, the <span class="special_format">torchsummary</span>
+        package can be utilized to get a summary of model information. Install it via pip if necessary
+        (<span class="special_format">pip install torchsummary</span>), and then use <span class="special_format">from torchsummary import summary</span>
+        to print a detailed summary of the model. This can be further customized to specify different models by
+        passing the model identifier as an argument to a script.
+    </p>
     <p class="benefits_info is-size-5-mobile shorter">
         Here’s how to set up and use a customizable script in PyTorch to summarize different models by specifying a model identifier (you can
         also embed these commands in your own model or other code):
     </p>
-    <ol class="ordered_list">
-        <li>Ensure your environment is set up as per the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>.</li>
-        <li>Create a new Python file named <span class="special_format">modelsummary.py</span> in the <span class="special_format">vision</span> directory.</li>
-        <li>Copy and paste the following script into the file:</li>
-    </ol>
+    <p class="benefits_info is-size-5-mobile shorter">
+        1. Ensure your environment is set up as per the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>.<br>
+        2. Create a new Python file named <span class="special_format">modelsummary.py</span> in the <span class="special_format">vision</span> directory.<br>
+        3. Copy and paste the following script into the file:
+    </p>
     <pre class="modified_1"><code>import sys
 import torch
 import torchvision.models as models
@@ -303,14 +301,14 @@ def main():
 
 if __name__ == "__main__":
     main()</code></pre>
-    <ol start="4" class="ordered_list">
-        <li>Open a terminal, navigate to the <span class="special_format">vision</span> directory:</li>
-    </ol>
+   <p class="benefits_info is-size-5-mobile shorter">
+        4. Open a terminal, navigate to the <span class="special_format">vision</span> directory:<br>
+    </p>
     <pre class="modified_1"><code>cd path/to/vision</code></pre>
-    <ol start="5" class="ordered_list">
-        <li>Run the script by typing the following command, replacing <span class="special_format">'model_name'</span>
-            with the model_identifier (such as alexnet or resnet50) of the model you wish to summarize:</li>
-    </ol>
+    <p class="benefits_info is-size-5-mobile shorter">
+        5. Run the script by typing the following command, replacing <span class="special_format">'model_name'</span>
+            with the model_identifier (such as alexnet or resnet50) of the model you wish to summarize:<br>
+    </p>
     <pre class="modified_1"><code>python modelsummary.py model_name</code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
         This will execute the script and print a detailed summary of the specified model, which is invaluable for
