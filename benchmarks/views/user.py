@@ -460,7 +460,7 @@ def collect_models_benchmarks(request):
 def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     # submit to jenkins
     jenkins_url = "http://www.brain-score-jenkins.com:8080"
-    auth = get_secret("brainscore-website_jenkins_access")
+    auth = get_secret("brainscore-website_jenkins_access_aws")
     auth = (auth['user'], auth['password'])
 
     benchmark_string = '%20'.join(benchmarks)
