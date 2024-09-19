@@ -218,8 +218,8 @@ class Upload(View):
         _logger.debug(f"request user: {request.user.get_full_name()}")
 
         # submit to jenkins
-        jenkins_url = "http://braintree.mit.edu:8080"
-        auth = get_secret("brainscore-website_jenkins_access")
+        jenkins_url = "http://www.brain-score-jenkins.com:8080"
+        auth = get_secret("brainscore-website_jenkins_access_aws")
         auth = (auth['user'], auth['password'])
         request_url = f"{jenkins_url}/job/create_github_pr/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
@@ -459,8 +459,8 @@ def collect_models_benchmarks(request):
 
 def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     # submit to jenkins
-    jenkins_url = "http://braintree.mit.edu:8080"
-    auth = get_secret("brainscore-website_jenkins_access")
+    jenkins_url = "http://www.brain-score-jenkins.com:8080"
+    auth = get_secret("brainscore-website_jenkins_access_aws")
     auth = (auth['user'], auth['password'])
 
     benchmark_string = '%20'.join(benchmarks)
