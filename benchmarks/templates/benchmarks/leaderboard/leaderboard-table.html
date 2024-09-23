@@ -16,8 +16,8 @@
   <select class="benchmark-sort">
     <option value="" disabled selected>Sort by Benchmarks</option>
     <option value="average">Sort by average</option>
-    {% for name in benchmark_names %}
-      <option value="{{name}}">{{ name }}</option>
+     {% for benchmark in benchmarks %}
+      <option value="{{ benchmark.short_name }}">{{ benchmark.short_name }}</option>
     {% endfor %}
   </select>
   <div class="legend">
