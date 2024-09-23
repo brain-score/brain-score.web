@@ -274,13 +274,16 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
 
                 # check if an entry with the given identifier exists
                 if db_table.objects.filter(**query_filter).exists():
-                    owner_obj = db_table.objects.filter(**query_filter).first()
-                    owner_id = getattr(owner_obj, 'owner_id', None) or getattr(owner_obj, 'owner').id
+                    return False, [plugin, plugin_name_or_identifier]
 
-                    # check to see if the submitter is the owner (or superuser)
-                    if owner_id != submitter.id and not submitter.is_superuser:
-                        return False, [plugin, plugin_name_or_identifier]
-                    # else, versioning will occur here
+                    # CURRENTLY DISABLED PENDING MODEL VERSIONING
+                    # owner_obj = db_table.objects.filter(**query_filter).first()
+                    # owner_id = getattr(owner_obj, 'owner_id', None) or getattr(owner_obj, 'owner').id
+                    #
+                    # # check to see if the submitter is the owner (or superuser)
+                    # if owner_id != submitter.id and not submitter.is_superuser:
+                    #     return False, [plugin, plugin_name_or_identifier]
+                    # # else, versioning will occur here
 
     return True, []  # Passes all checks, then the submission is original -> good to go
 
@@ -483,23 +486,27 @@ def submit_to_jenkins(request, domain, model_name, benchmarks=None):
     _logger.debug("Job triggered successfully")
 
 
+# CURRENTLY DISABLED PENDING MODEL VERSIONING
 def resubmit(request, domain: str):
-    model_ids, model_names, benchmarks = collect_models_benchmarks(request)
-    model_id_name_dict = dict(zip(model_ids, model_names))
+    return render(request, 'benchmarks/submission_error.html',
+                  {'error': "Brain-Score is not currently accepting model resubmissions."})
 
-    if len(model_ids) == 0 or len(benchmarks) == 0:
-        return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
-
-    for model_id, model_name in model_id_name_dict.items():
-        json_info = {
-            "domain": domain,
-            "user_id": request.user.id,
-            "model_ids": [model_id],
-        }
-        with open('result.json', 'w') as fp:
-            json.dump(json_info, fp)
-        submit_to_jenkins(request, domain, model_name, benchmarks)
-    return render(request, 'benchmarks/success.html', {"domain": domain})
+    # model_ids, model_names, benchmarks = collect_models_benchmarks(request)
+    # model_id_name_dict = dict(zip(model_ids, model_names))
+    #
+    # if len(model_ids) == 0 or len(benchmarks) == 0:
+    #     return render(request, 'benchmarks/submission_error.html', {'error': "No model ids and benchmarks found"})
+    #
+    # for model_id, model_name in model_id_name_dict.items():
+    #     json_info = {
+    #         "domain": domain,
+    #         "user_id": request.user.id,
+    #         "model_ids": [model_id],
+    #     }
+    #     with open('result.json', 'w') as fp:
+    #         json.dump(json_info, fp)
+    #     submit_to_jenkins(request, domain, model_name, benchmarks)
+    # return render(request, 'benchmarks/success.html', {"domain": domain})
 
 
 class DisplayName(View):
