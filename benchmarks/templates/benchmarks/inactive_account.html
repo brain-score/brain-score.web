@@ -1,0 +1,30 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+{% include 'benchmarks/components/nav-bar.html' %}
+<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
+    <div class="column is-half has-text-centered-mobile">
+        <div class="container login-left">
+            <section id="success" class="container center">
+                <article class="message">
+                    <div class="message-header">
+                        <p>It seems your account is not activated. </p>
+                    </div>
+                    <div class="message-body">
+                        To fix this, please check your email ({{ user_email }}) for an activate link, from info.brainscore@gmail.com.
+                        <br>
+                        <br>
+                       Note: if you are trying to reset your password and are getting an 'Incorrect Password' Message
+                        following password reset, this is also caused by not having an activated account.
+                        <br>
+                        <br>
+                        <p class="create-account"><a href="/profile">Return to Login</a></p>
+                    </div>
+                </article>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

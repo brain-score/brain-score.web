@@ -529,7 +529,18 @@ class ProfileAccount(View):
             return render(request, 'benchmarks/central_profile.html', context)
 
     def post(self, request):
-        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        username = request.POST['username']
+        User = get_user_model()
+
+        try:
+            user = User.objects.get(email=username)
+            if not user.is_active:  # quick check to make sure user is active
+                context = {"user_email": username}
+                return render(request, 'benchmarks/inactive_account.html', context)
+        except User.DoesNotExist:
+            context = {"Incorrect": True, 'form': LoginForm, "domains": ["vision", "language"]}
+            return render(request, 'benchmarks/login.html', context)
+        user = authenticate(request, username=username, password=request.POST['password'])
         if user is not None:
             login(request, user)
             context = {"domains": ["vision", "language"]}
