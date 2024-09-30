@@ -1,9 +1,19 @@
-{% extends 'benchmarks/base.html' %}
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
 
-{% block main %}
+{% block banner %}
+<h1>Model Information</h1>
+<p>Here you can both view individual model data as well as download it. </p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/leaderboard/info-section.html" %}
+{% endblock %}
+
+{% block content %}
 <section class="individual_model container center">
     {% if model.public %}
-        <h1 class="title">{{ model.name }}</h1>
+        <h3 class="benefits_heading is-size-3-mobile">{{ model.name }}</h3>
         {% if model.reference_identifier %}
             <a href="{{ model.reference_link }}">{{ model.reference_identifier }}</a>
         {% endif %}
@@ -17,6 +27,7 @@
     {% endif %}
 
     {% if submission_details_visible %}
+        <br>
         <div class="box">
             <span class='fine_print'>The following information is only visible to you (the model owner):</span><br><br>
             <span class='information'>Model Name:</span> {{ model.name }}<br>
@@ -78,6 +89,7 @@
     <span class='fine_print'>
        Model rank shown below is with respect to all public models.<br>
     </span>
+    <br>
     <div class="benchmark_scores">
         {% for score_row in model.scores %}
         {% if score_row.score_ceiled %}
@@ -200,6 +212,7 @@
 
 
     {# BrainModel info #}
+    <br>
     <h2 id="brainmodel" class="title-is-2">BrainModel translation</h2>
     <div class="content">
         <div class="box has-background-info-light has-text-info">
