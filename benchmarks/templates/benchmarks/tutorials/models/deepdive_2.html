@@ -125,20 +125,23 @@
 61          check_models.check_base_models(__name__)
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 1-15 are the standard imports needed for the Brain-Score library, as well as some comments regarding model
-        GPU uses. Next, lines 18-33 define the model itself, via a class named <span class="special_format">MyCustomModel</span>.
-        This is where you would add in your custom model, or you can simply import it if your model is complex/located in a different file.
+        Lines 1-15 are the standard imports needed for the Brain-Score library. Next, lines 18-33 define the custom
+        neural network model called MyCustomModel using PyTorch.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 36-37 tells Brain-Score which models to look at. You can add as many models as you would like, but just
-        make sure to add their names here. As we only have one model, which we named <span class="special_format">my_custom_model</span>,
-        this is the only model defined in the list on line 37.
+        The <span class="special_format">init</span> function on lines 19-25 initializes the model by setting up its layers.
+        More specifically, in line 21, a convolution layer is created which takes a stimuli with 3 channels (typically RGB),
+        applies 2 filters, and uses a 3x3 kernel. Line 22 uses a ReLU activation function to introduce non-linearity after convolution.
+        Line 23 calculates the input size for the fully connected layer based on the output of the convolution layer
+        (assuming an input image size of 224x2). In line 24, a fully connected layer connects the flattened output of the
+        convolution layer to a 1000-dimensional output. How the conv1 layer is producing a flattened output is described
+        in Line 30 in the forward function using x.view(x.size(0)). Finally, in line 25, another ReLU activation function
+        is used to transform the output of the fully connected layer.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Line 42 is a call to Brain-Score's built in vision model <span class="special_format">preprocessing</span>. This is standard, and you should not have
-        to worry too much about this.  Next up are line 43 and 44, which allow us to actually get the activations model
-        from our PyTorch Wrapper and to make the model into a Brain-Score <span class="special_format">ModelCommitment</span>, respectively. See the below
-        section for why we need the ModelCommitment.
+        Line 42 is a call to Brain-Score's built in vision model <span class="special_format">preprocessing</span>. Next up
+        are line 43 and 44, which allow us to actually get the activations model from our PyTorch Wrapper and to make
+        the model into a Brain-Score <span class="special_format">ModelCommitment</span>, respectively.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         Lastly,  lines 51-53 are where you tell Brain-Score which model layers to include, and lines 56-57 are where you
