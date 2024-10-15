@@ -10,17 +10,17 @@
             <section id="success" class="container center">
                 <article class="message">
                     <div class="message-header">
-                        <p>Error:  {{ identifier }} already exists. </p>
+                        <p>It seems your account is not activated. </p>
                     </div>
                     <div class="message-body">
-                       There already is a {{ plugin }} plugin '{{ identifier }}' in the Brain-Score system.
-                       Currently, Brain-Score does not support resubmitting {{ plugin }} with the same identifier.
+                        To fix this, please check your email ({{ user_email }}) for an activate link, from info.brainscore@gmail.com.
                         <br>
                         <br>
-                        Please resubmit with a different identifier.
+                       Note: if you are trying to reset your password and are getting an 'Incorrect Password' Message
+                        following password reset, this is also caused by not having an activated account.
                         <br>
                         <br>
-                        To resubmit, click <a href="https://{{ request.get_host }}/profile/{{ domain }}/submit">here</a>.
+                        <p class="create-account"><a href="/profile">Return to Login</a></p>
                     </div>
                 </article>
             </section>

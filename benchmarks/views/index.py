@@ -56,8 +56,12 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         csv_scores.append(csv_dict)
 
     csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
-    csv_df.set_index('model_name', inplace=True)
-    csv_data = csv_df.to_csv(index=True)
+
+    if not csv_df.empty:  # check if the DataFrame is empty
+        csv_df.set_index('model_name', inplace=True)
+        csv_data = csv_df.to_csv(index=True)
+    else:
+        csv_data = "No models submitted yet."
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name

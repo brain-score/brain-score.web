@@ -3,7 +3,7 @@
 
 {% block banner %}
 <h1>Deep Dive 2</h1>
-<p>Exploring a Custom Model Submission Package </p>
+<p>Creating and Submitting Custom Model Packages </p>
 {% endblock %}
 
 {% block info_section %}
@@ -20,21 +20,22 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Custom Models</h3>
             <p class="benefits_info is-size-5-mobile">
-                In this second Deep Dive, we will explore a custom model submission package, available for download
-                <a href="{% static "/benchmarks/custom_packaging_tutorial.zip" %}" download="custom_packaging_tutorial.zip">here</a>.
-                However, in order to do this tutorial, we highly recommend you complete both
-                the Quickstart and Deep Dive 1, as they will show you how to both score a model locally and
-                structure your submission package for upload.
+                Deep Dive #2 will go over how to create and submit your own custom model
+                package. This Deep Dive assumes that you have completed both the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>
+                and <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>,
+                so if you have not yet completed those, please do so before continuing.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                Luckily, the submission package for a custom model is nearly identical to our sample project Zip that
-                we explored in Deep Dive 1. The only changes will be to the <span class="special_format">__init__.py</span>
-                file <span class="special_format">model.py</span> files, as we need to define our model and add it into the
-                Brain-Score ecosystem.
+                <strong>Part 1</strong> will discuss how the tutorial model package from <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>
+                can be modified to create your own custom model. In particular, we'll look at a single required change in the
+                <span class="special_format">__init__.py</span> file, and more extensive changes required in the
+                <span class="special_format">model.py</span> file. <strong>Part 2</strong> will cover some resources that
+                might be beneficial in creating your own models, and finally, <strong>Part 3</strong> will provide directions on how to submit your model
+                through the BrainScore website, as well as directly through the BrainScore GitHub repository.
             </p>
+
             <p class="benefits_info is-size-5-mobile is-italic">
-                Note: As with Deep Dive 1, please do not submit the model that you prepare in this tutorial. This guide
-                if for illustration purposes only.
+                NOTE: Please do not actually submit the model that you prepare in this tutorial.
             </p>
         </div>
     </div>
@@ -43,14 +44,21 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 1: Defining the Model Itself</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        Luckily, the submission package for a custom model is nearly identical to our sample project Zip that
-        we explored in Deep Dive 1. The only changes will be to the <span class="special_format">__init__.py</span>
-        file <span class="special_format">model.py</span> files, as we need to define our model and add it into the
+        The submission package for a custom model is nearly identical to the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">sample resnet50_tutorial submission folder</a> we examined in
+        detail in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>. The only changes will be to the
+        <span class="special_format">model.py</span> and the <span class="special_format">__init__.py</span> files as we need to first define our model and then add it to the
         Brain-Score ecosystem.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        We will start our exploration of a custom model submission via the <span class="special_format">model.py</span> file, which actually contains the model.
-        Let's take a look below at this file...
+        First, regarding <span class="special_format">__init__.py</span> file; this file is discussed in detail in
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>, and as stated there,
+        it's important to ensure that the identifier you specify in for the model_registry is unique.
+    </p>
+
+        <p class="benefits_info is-size-5-mobile shorter">
+        Next, let's look at the <span class="special_format">model.py</span> file.  The  <span class="special_format">model.py</span> file in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">sample resnet50_tutorial submission folder</a>
+        that we looked at in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a> was used to load a pre-trained model.  Instead of loading a pre-trained model,
+        we show here how to use the <span class="special_format">model.py</span> file to define a completely new model.
     </p>
 
         <pre class="modified_1"><code>
@@ -117,20 +125,23 @@
 61          check_models.check_base_models(__name__)
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 1-15 are the standard imports needed for the Brain-Score library, as well as some comments regarding model
-        GPU uses. Next, lines 18-33 define the model itself, via a class named <span class="special_format">MyCustomModel</span>.
-        This is where you would add in your custom model, or you can simply import it if your model is complex/located in a different file.
+        Lines 1-15 are the standard imports needed for the Brain-Score library. Next, lines 18-33 define the custom
+        neural network model called MyCustomModel using PyTorch.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Lines 36-37 tells Brain-Score which models to look at. You can add as many models as you would like, but just
-        make sure to add their names here. As we only have one model, which we named <span class="special_format">my_custom_model</span>,
-        this is the only model defined in the list on line 37.
+        The <span class="special_format">init</span> function on lines 19-25 initializes the model by setting up its layers.
+        More specifically, in line 21, a convolution layer is created which takes a stimuli with 3 channels (typically RGB),
+        applies 2 filters, and uses a 3x3 kernel. Line 22 uses a ReLU activation function to introduce non-linearity after convolution.
+        Line 23 calculates the input size for the fully connected layer based on the output of the convolution layer
+        (assuming an input image size of 224x2). In line 24, a fully connected layer connects the flattened output of the
+        convolution layer to a 1000-dimensional output. How the conv1 layer is producing a flattened output is described
+        in Line 30 in the forward function using x.view(x.size(0)). Finally, in line 25, another ReLU activation function
+        is used to transform the output of the fully connected layer.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Line 42 is a call to Brain-Score's built in vision model <span class="special_format">preprocessing</span>. This is standard, and you should not have
-        to worry too much about this.  Next up are line 43 and 44, which allow us to actually get the activations model
-        from our PyTorch Wrapper and to make the model into a Brain-Score <span class="special_format">ModelCommitment</span>, respectively. See the below
-        section for why we need the ModelCommitment.
+        Line 42 is a call to Brain-Score's built in vision model <span class="special_format">preprocessing</span>. Next up
+        are line 43 and 44, which allow us to actually get the activations model from our PyTorch Wrapper and to make
+        the model into a Brain-Score <span class="special_format">ModelCommitment</span>, respectively.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         Lastly,  lines 51-53 are where you tell Brain-Score which model layers to include, and lines 56-57 are where you
@@ -140,23 +151,22 @@
 <div class="box leaderboard-table-component">
     <div class="columns is-tablet is-variable is-1-tablet">
         <div class="column is-one-half">
-            <h3 class="benefits_heading is-size-3-mobile">Part 2: Adding your Model to the Brain-Score Ecosystem</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Part 2: Additional Resources for Creating Your Model</h3>
             <p class="benefits_info is-size-5-mobile shorter">
-                The last piece of the custom submission package we will explore is the <span class="special_format">__init__.py</span> file. This file is nearly identical
-                to the <span class="special_format">__init__.py</span> file in the previous Deep Dive, the only difference is that we
-                replaced the <span class="special_format">resnet-50</span> model with our custom model, named the
-                <span class="special_format">my_custom_model</span>. If you were submitting a custom model, be sure to add it to the
-                <span class="special_format">model_registry</span> list on line 5.
+             When creating a custom model, we recommend following the guidelines and processes for creating PyTorch models.
+             An excellent tutorial can be found on the <a href="https://pytorch.org/tutorials/beginner/introyt/modelsyt_tutorial.html">PyTorch model creation page</a>.
+            </p>
+             <p class="benefits_info is-size-5-mobile shorter">
+             This page gives background on the types of model layers available (such as linear, convolutional, recurrent,
+             or data manipulation layers) as well as different types of activation functions, and even some discussion of
+             advanced architectures like transformers.
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
-                It is at this point that, in keeping with the process outlined in Deep Dive 1,
-                that you would run the <span class="special_format">model.py</span> file and look for the success message. After that, you could zip your package and
-                submit it! Feel free to explore the last Deep Dive
-                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3">here</a>,
-                which covers how to submit a plugin via a Github Pull Request (PR).
-            <p class="benefits_info is-size-5-mobile is-italic">
-                Note: As with Deep Dive 1, please do not submit the model that you prepare in this tutorial. This guide
-                is for illustration purposes only.
+             NOTE:  If you adhere to PyTorch's recommended procedures, your model should be compatible with BrainScore.
+             However, please ensure that the outputs of any layers for which you want BrainScore to evaluate layer
+             activations are formatted as tensors. It's important to note that while PyTorch models can be created
+             such that layers output data in other formats, such as tuples or numpy arrays, BrainScore requires
+             tensor-formatted layer outputs for proper evaluation.
             </p>
         </div>
          <div class="column is-one-half">
@@ -164,6 +174,34 @@
         </div>
     </div>
 </div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: How To Submit Your Completed Model</h3>
+            <p class="benefits_info is-size-5-mobile">
+                There are two ways to submit your completed model.  The first is through the <a href="https://www.brain-score.org/">BrainScore website</a>
+                and the second is directly through the <a href="https://github.com/brain-score">BrainScore Github repository</a> for
+                the appropriate domain (Vision or Language).  If you submit through the website, your submission package must be set up
+                with the proper directory structure described in Part 3 of <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>, and
+                then compressed into a zip file.  If you submit through a Github PR, then you just need the model folder containing the four files
+                (also) described in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                To submit directly through Github, prepare your
+                submission folder with the four files discussed in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>
+                Then place this folder in <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models">/models (for Vision)</a>
+                or <a href="https://github.com/brain-score/language/tree/main/brainscore_language/models">/models (for Language)</a>.
+                Then simply open a Pull Request and a member of the Brain-Score team
+                will review it and either merge it or suggest changes. Once this PR is merged,
+                it will be scored, and you will receive an email containing those scores.
+                NOTE: If you are submitting a plugin without other changes and don't need a review,
+                you can use the automerge tag with your PR and it will be merged automatically after merging tests.
+            </p>
+            <p class="benefits_info is-size-5-mobile">
+                The second way to submit is through the <a href="https://www.brain-score.org/">BrainScore website</a>.  Click on either Vision or Language,
+                and then click on the "Submit" button on the right hand side of the page, and follow the instructions to submit.  NOTE:  You will have
+                to first create a BrainScore account and be logged in to submit a custom model.
+            </p>
+</div>
+
 {% endblock %}
 
 
