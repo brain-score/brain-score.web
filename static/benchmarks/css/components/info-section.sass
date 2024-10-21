@@ -8,3 +8,25 @@
       font-weight: bold
       font-size: 1.5em
       color: $brainscore_green
+
+
+  // Hide info section on screens below 1024px (mobile and tablet)
+  @media (max-width: 1024px)
+    display: none
+
+// expand table to full width on mobile
+.column.is-three-quarters.main-cell
+   @media (max-width: 1024px)
+    width: 100%
+    position: absolute
+    left: 0
+
+.banner.box.gradient
+  @media (max-width: 1024px)
+    width: 146%
+    margin-left: -45%
+    //position: absolute
+    //left: 0
+
+
+

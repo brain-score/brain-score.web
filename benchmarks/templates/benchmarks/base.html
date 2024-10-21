@@ -29,7 +29,7 @@
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1024">
 
     {% compress css %}
         <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
@@ -65,6 +65,7 @@
     <script defer src="{% static "/benchmarks/js/countdown.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/collapsible_faq.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/download_csv.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/mobile_warning.js" %}"></script>
     {% endcompress %}
 
     <script type="application/ld+json">
@@ -100,6 +101,9 @@
     <meta name="twitter:image" content="{{logo_url}}">
 
     <title>{{title}}</title>
+
+
+
 </head>
 
 <body>
