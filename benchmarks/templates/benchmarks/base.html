@@ -29,6 +29,7 @@
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
+    <!-- Force desktop site, even on mobile -->
     <meta name="viewport" content="width=1024">
 
     {% compress css %}
@@ -107,8 +108,17 @@
 </head>
 
 <body>
+    <div id="mobile-warning-modal" class="mobile-warning-modal is-hidden">
+        <div class="modal-content">
+          <p>You're viewing Brain-Score on a mobile device. For the best experience — featuring interactive benchmarks and
+              detailed visualizations — we recommend using a desktop. You can still proceed with the mobile version below.</p>
+          <button id="dismiss-modal-btn" class="button button-primary">Proceed with Mobile Version</button>
+        </div>
+    </div>
     <main>
-        {% block main %}{% endblock %}
+        <div id="main-content" class="main-content">
+            {% block main %}{% endblock %}
+        </div>
     </main>
 </body>
 
