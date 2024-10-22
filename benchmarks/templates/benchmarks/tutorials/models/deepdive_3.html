@@ -30,11 +30,11 @@
             <p class="benefits_info is-size-5-mobile">
                 Deep Dive 3 will go over how to create and submit your own custom model
                 package. This Deep Dive assumes that you have completed both the <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart Tutorial</a>,
-                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>, and
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a>, and
                 <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive 2</a> so if you have not yet completed those, please do so before continuing.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                <strong>Part 1</strong> will discuss how the tutorial model package from <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>
+                <strong>Part 1</strong> will discuss how the tutorial model package from <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a>
                 can be modified to create your own custom model. In particular, we'll look at a single required change in the
                 <span class="special_format">__init__.py</span> file, and more extensive changes required in the
                 <span class="special_format">model.py</span> file. <strong>Part 2</strong> will cover some resources that
@@ -59,13 +59,13 @@
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         First, regarding <span class="special_format">__init__.py</span> file; this file is discussed in detail in
-        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a>, and as stated there,
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a>, and as stated there,
         it's important to ensure that the identifier you specify in for the model_registry is unique.
     </p>
 
         <p class="benefits_info is-size-5-mobile shorter">
         Next, let's look at the <span class="special_format">model.py</span> file.  The  <span class="special_format">model.py</span> file in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">sample resnet50_tutorial submission folder</a>
-        that we looked at in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive #1</a> was used to load a pre-trained model.  Instead of loading a pre-trained model,
+        that we looked at in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a> was used to load a pre-trained model.  Instead of loading a pre-trained model,
         we show here how to use the <span class="special_format">model.py</span> file to define a completely new model.
     </p>
 
