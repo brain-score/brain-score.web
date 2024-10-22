@@ -4,13 +4,13 @@
 {% block banner %}
     <h1>Deep Dive 1  <span style="font-size: 0.6em; font-weight: normal;">(Brain-Score Philosophy and Background)</span></h1>
         <span style="font-size: 1.5em;">
-    <p>
-        <a href="https://www.brain-score.org/tutorials/models/quickstart" style="margin-right: 25px;">Quickstart</a>
-        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1" style="margin-right: 25px;">Deep Dive 1</a>
-        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2" style="margin-right: 25px;">Deep Dive 2</a>
-        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3" style="margin-right: 25px;">Deep Dive 3</a>
-    </p>
-</span>
+            <p>
+                <a href="https://www.brain-score.org/tutorials/models/quickstart" style="margin-right: 25px;">Quickstart</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1" style="margin-right: 25px;">Deep Dive 1</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2" style="margin-right: 25px;">Deep Dive 2</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3" style="margin-right: 25px;">Deep Dive 3</a>
+            </p>
+        </span>
 
 {% endblock %}
 
@@ -27,88 +27,86 @@
         <div class="column is-one-half">
             <img class="tutorial_dd1_1" src="{% static "/benchmarks/img/tutorials/deep_dive_1_1.png" %}" />
         </div>
-        <div class="column is-one-half tutorial_text">
-            <h3 class="benefits_heading is-size-3-mobile">Let's Get Started!</h3>
-            <p class="benefits_info is-size-5-mobile">
-                In this first Deep Dive, we provide resources intended to help new users come up to speed
-                on the theory and background of Brain-Score.  In particular, we provide links to publications and
-                presentations, as well as other documentation and code.
-            </p>
-            <p class="benefits_info is-size-5-mobile">
-                Even a brand-new user with no prior Brain-Score experience that goes through these recommended sources
-                will come away with an understanding of what and why Brain-Score is what it is.  The following Deep Dives
-                will then fill in the gaps on how to use it.
-            </p>
-        </div>
+                <div class="column is-one-half tutorial_text">
+                    <h3 class="benefits_heading is-size-3-mobile">Let's Get Started!</h3>
+                    <p class="benefits_info is-size-5-mobile">
+                        In this first Deep Dive, we provide resources intended to help new users come up to speed
+                        on the theory and background of Brain-Score.  In particular, we provide links to publications and
+                        presentations, as well as other documentation and code.
+                    </p>
+                    <p class="benefits_info is-size-5-mobile">
+                        Even a brand-new user with no prior Brain-Score experience that goes through these recommended sources
+                        will come away with an understanding of what and why Brain-Score is what it is.  The following Deep Dives
+                        will then fill in the gaps on how to use it.
+                    </p>
+                </div>
     </div>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 1: Recommended Brain-Score Papers and Publications</h3>
+        <div class="benefits_info is-size-5-mobile">
+            <strong>The Philosophy of Integrative Benchmarking:</strong><br>
+            <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence</a>
+        </div>
+
+        <div class="benefits_info is-size-5-mobile">
+            <strong>Implementations:</strong><br>
+            <a href="https://www.biorxiv.org/content/10.1101/407007">Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?</a><br>
+            <a href="https://www.pnas.org/doi/10.1073/pnas.2105646118">The neural architecture of language: Integrative modeling converges on predictive processing</a><br>
+            <a href="https://aclanthology.org/2020.acl-demos.10/">SyntaxGym: An Online Platform for Targeted Evaluation of Language Models</a>
+        </div>
+
+        <div class="benefits_info is-size-5-mobile">
+            <strong>Building models that improve on benchmarks:</strong><br>
+            <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Performance-optimized hierarchical models predict neural responses in higher visual cortex</a><br>
+            <a href="https://papers.nips.cc/paper/9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs</a><br>
+            <a href="https://openreview.net/forum?id=SudzH-vWQ-c">Bag of Tricks for Training Brain-Like Deep Neural Networks</a>
+        </div>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 2: Recommended Brain-Score Presentations</h3>
+        <div class="benefits_info is-size-5-mobile">
+            <strong>Jim DiCarlo Quest Launch Presentation</strong><br>
+            <a href="https://www.youtube.com/watch?v=Vem0Ilrbf3c">MIT Quest for Intelligence Launch: The Future of Intelligence Science</a>
+        </div>
+
+        <div class="benefits_info is-size-5-mobile">
+            <strong>Martin Schrimpf Thesis Defense (Passcode: Bra1ns@MIT!)</strong><br>
+            <a href="https://mit.zoom.us/rec/share/1cpD1oeDfpcknQGewjN8n6zxpH5VdxKiAxR7htjtghDDonV2Rakqkdiudf9BH9KG.XWxQNgexE2CtFDGP">Martin Schrimpf - Thesis Defense - Speaker View</a><br>
+            <a href="https://mschrimpf.altervista.org/wp-content/uploads/2022/03/20220131-Thesis-Defense-trimmed.pdf">Advancing System Models of Brain Processing via Integrative Benchmarking</a>
+        </div>
+
+        <div class="benefits_info is-size-5-mobile">
+            <strong>NeurIPS'19 oral:</strong><br>
+            <a href="https://slideslive.com/38922322/brainlike-object-recognition-with-highperforming-shallow-recurrent-anns">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs </a><br>
+            <a href="https://mschrimpf.altervista.org/wp-content/uploads/2019/12/2019-12-14-NeurIPS-oral-trimmed.pdf">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs</a><br>
+            <a href="https://www.clubhouse.com/room/M8nr65DL?utm_medium=ch_room_xerc&amp;utm_campaign=zvtQCp89BVESlqcZz_shzw-134862">Clubhouse: Neural Architecture of Language-Models, ML, and more!</a><br>
+            <a href="https://mschrimpf.altervista.org/wp-content/uploads/2022/03/20220314-Hartshorne-and-Prudhommeaux-labs-BC.pdf">The neural architecture of language: Integrative modeling converges on predictive processing</a>
+        </div>
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 1: Recommended Brain-Score Papers and Publications</h3>
-             <div class="benefits_info is-size-5-mobile">
-                <strong>The Philosophy of Integrative Benchmarking:</strong><br>
-                <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence</a>
-            </div>
-
-            <div class="benefits_info is-size-5-mobile">
-                <strong>Implementations:</strong><br>
-                <a href="https://www.biorxiv.org/content/10.1101/407007">Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?</a><br>
-                <a href="https://www.pnas.org/doi/10.1073/pnas.2105646118">The neural architecture of language: Integrative modeling converges on predictive processing</a><br>
-                <a href="https://aclanthology.org/2020.acl-demos.10/">SyntaxGym: An Online Platform for Targeted Evaluation of Language Models</a>
-            </div>
-
-            <div class="benefits_info is-size-5-mobile">
-                <strong>Building models that improve on benchmarks:</strong><br>
-                <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Performance-optimized hierarchical models predict neural responses in higher visual cortex</a><br>
-                <a href="https://papers.nips.cc/paper/9441-brain-like-object-recognition-with-high-performing-shallow-recurrent-anns">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs</a><br>
-                <a href="https://openreview.net/forum?id=SudzH-vWQ-c">Bag of Tricks for Training Brain-Like Deep Neural Networks</a>
-            </div>
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Documentation for Vision</h3>
+         <div class="benefits_info is-size-5-mobile">
+            <strong>Documentation for Vision:</strong><br>
+            <a href="https://brain-score.readthedocs.io/">Brain-Score readthedocs</a><br>
+            <a href="https://www.brain-score.org/tutorials/models">Brain-Score Model Tutorials</a><br>
+            <a href="https://www.brain-score.org/tutorials/benchmarks">Brain-Score Benchmark Tutorials</a>
+        </div>
+</div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 2: Recommended Brain-Score Presentations</h3>
-            <div class="benefits_info is-size-5-mobile">
-                <strong>Jim DiCarlo Quest Launch Presentation</strong><br>
-                <a href="https://www.youtube.com/watch?v=Vem0Ilrbf3c">MIT Quest for Intelligence Launch: The Future of Intelligence Science</a>
-            </div>
-
-            <div class="benefits_info is-size-5-mobile">
-                <strong>Martin Schrimpf Thesis Defense (Passcode: Bra1ns@MIT!)</strong><br>
-                <a href="https://mit.zoom.us/rec/share/1cpD1oeDfpcknQGewjN8n6zxpH5VdxKiAxR7htjtghDDonV2Rakqkdiudf9BH9KG.XWxQNgexE2CtFDGP">Martin Schrimpf - Thesis Defense - Speaker View</a><br>
-                <a href="https://mschrimpf.altervista.org/wp-content/uploads/2022/03/20220131-Thesis-Defense-trimmed.pdf">Advancing System Models of Brain Processing via Integrative Benchmarking</a>
-            </div>
-
-            <div class="benefits_info is-size-5-mobile">
-                <strong>NeurIPS'19 oral:</strong><br>
-                <a href="https://slideslive.com/38922322/brainlike-object-recognition-with-highperforming-shallow-recurrent-anns">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs </a><br>
-                <a href="https://mschrimpf.altervista.org/wp-content/uploads/2019/12/2019-12-14-NeurIPS-oral-trimmed.pdf">Brain-Like Object Recognition with High-Performing Shallow Recurrent ANNs</a><br>
-                <a href="https://www.clubhouse.com/room/M8nr65DL?utm_medium=ch_room_xerc&amp;utm_campaign=zvtQCp89BVESlqcZz_shzw-134862">Clubhouse: Neural Architecture of Language-Models, ML, and more!</a><br>
-                <a href="https://mschrimpf.altervista.org/wp-content/uploads/2022/03/20220314-Hartshorne-and-Prudhommeaux-labs-BC.pdf">The neural architecture of language: Integrative modeling converges on predictive processing</a>
-            </div>
-
-            </div>
-            <div class="box leaderboard-table-component">
-                <h3 class="benefits_heading is-size-3-mobile">Part 3: Documentation for Vision</h3>
-             <div class="benefits_info is-size-5-mobile">
-                <strong>Documentation for Vision:</strong><br>
-                <a href="https://brain-score.readthedocs.io/">Brain-Score readthedocs</a><br>
-                <a href="https://www.brain-score.org/tutorials/models">Brain-Score Model Tutorials</a><br>
-                <a href="https://www.brain-score.org/tutorials/benchmarks">Brain-Score Benchmark Tutorials</a>
-            </div>
-
-            </div>
-            <div class="box leaderboard-table-component">
-                <h3 class="benefits_heading is-size-3-mobile">Part 4: Code</h3>
-                 <div class="benefits_info is-size-5-mobile">
-                    <strong>Relevant Code:</strong><br>
-                    <a href="https://github.com/mschrimpf/neural-nlp">neural-nlp</a><br>
-                    <a href="https://github.com/language-brainscore/langbrainscore/">langbrainscore</a><br>
-                    <a href="https://github.com/cpllab/syntaxgym-core">syntaxgym-core</a><br>
-                    <a href="https://github.com/brain-score/brain-score/">vision</a><br>
-                    <a href="https://github.com/brain-score/sample-model-submission">sample-model-submission</a><br>
-                    <a href="https://github.com/brain-score/candidate_models">candidate_models</a>
-                </div>
-
-            </div>
+    <h3 class="benefits_heading is-size-3-mobile">Part 4: Code</h3>
+         <div class="benefits_info is-size-5-mobile">
+            <strong>Relevant Code:</strong><br>
+            <a href="https://github.com/mschrimpf/neural-nlp">neural-nlp</a><br>
+            <a href="https://github.com/language-brainscore/langbrainscore/">langbrainscore</a><br>
+            <a href="https://github.com/cpllab/syntaxgym-core">syntaxgym-core</a><br>
+            <a href="https://github.com/brain-score/brain-score/">vision</a><br>
+            <a href="https://github.com/brain-score/sample-model-submission">sample-model-submission</a><br>
+            <a href="https://github.com/brain-score/candidate_models">candidate_models</a>
+        </div>
+</div>
 
 <style>
 .ordered_list {
@@ -116,12 +114,6 @@
     list-style-position: inside;
 }
 </style>
-
-
-
-
-
-
 
 {% endblock %}
 
