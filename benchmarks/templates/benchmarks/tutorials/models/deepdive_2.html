@@ -34,8 +34,8 @@
                 interesting findings.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                In this first Deep Dive, we will examine a sample Brain-Score submission package containing the model ResNet-50.
-                You can then base your own unique submission packages on this sample.  In Deep Dives 2 and 3, we'll
+                In this second Deep Dive, we will examine a sample Brain-Score submission package containing the model ResNet-50.
+                You can then base your own unique submission packages on this sample.  In Deep Dive 3 we'll
                 explore custom model submissions and how to submit models via GitHub Pull Requests.
             </p>
             <p class="benefits_info is-size-5-mobile is-italic">
@@ -61,8 +61,8 @@
             <p class="benefits_info is-size-5-mobile">
                 Brain-Score allows users to submit packages in two ways: directly to the site, via a Zip file
                 upload, or through a Github PR. In this Deep Dive, you will explore a sample model submission
-                in order to become familiar with the submission package structure. You can view the sample submission folder (resnet50_tutorial)
-                <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">here</a>.
+                in order to become familiar with the submission package structure. Here you can view the
+                <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">sample submission folder</a>.
                 This sample submission folder contains a properly formatted, stock version of ResNet-50 pretrained on ImageNet.
             </p>
         </div>
@@ -162,7 +162,7 @@
         An alternative approach to passing in layer names can be seen
         <a href="https://github.com/brain-score/vision/blob/3c27e4ae955832272402736aca2ed8974dfd110e/brainscore_vision/models/densenet_201_pytorch/model.py#L35">here</a>.
          And if you have a custom model that you have created yourself, check out our Custom Model Submission Guide in
-        <a href="https://www.brain-score.org/tutorials/models/deepdive_2">Deep Dive 2</a>.
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3">Deep Dive 3</a>.
     </p>
     <pre class="modified_1"><code>
 1       from brainscore_vision.model_helpers.check_submission import check_models
@@ -261,7 +261,7 @@ Process finished with exit code 0
             </p>
             <p class="benefits_info is-size-5-mobile shorter ">
                 When you submit an actual (non-tutorial) model, you'll receive an email with your results
-                within 24 hours. If you would like to explore a custom model submission package, please visit <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive #2</a>.
+                within 24 hours. If you would like to explore a custom model submission package, please visit <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive 2</a>.
             </p>
         </div>
         <div class="column is-one-half">
