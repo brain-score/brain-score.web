@@ -17,7 +17,7 @@ from django.shortcuts import render
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
-from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
+from benchmarks.forms import SignupForm, LoginForm, UploadFileForm, UploadNWBMetadataForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
@@ -234,6 +234,57 @@ class Upload(View):
         _logger.debug("Job triggered successfully")
         return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
+class ConvertNWB(View):
+    domain = None
+
+    def get(self, request):
+        assert self.domain is not None
+        if request.user.is_anonymous:
+            return HttpResponseRedirect(f'../profile/{self.domain}')
+        form = UploadNWBMetadataForm()
+        return render(request, 'benchmarks/convert_nwb.html',
+                      {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
+    
+    def post(self, request):
+        assert self.domain is not None
+        form = UploadNWBMetadataForm(request.POST, request.FILES)
+        
+        metadata_json = form.files.get('json_file')
+        json_data = json.load(metadata_json)
+        with open('submission.json', 'w') as fp:
+            json.dump(json_data, fp)
+
+        user_instance = User.objects.get_by_natural_key(request.user.email)
+        json_info = {
+            "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
+            "user_id": user_instance.id,
+            "public": str('public' in request.POST),
+            "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
+            "domain": self.domain
+        }
+
+        with open('result.json', 'w') as fp:
+            json.dump(json_info, fp)
+
+        _logger.debug(request.user.get_full_name())
+        _logger.debug(f"request user: {request.user.get_full_name()}")
+
+        # submit to jenkins
+        jenkins_url = "http://www.brain-score-jenkins.com:8080"
+        auth = get_secret("brainscore-website_jenkins_access_aws")
+        auth = (auth['user'], auth['password'])
+        request_url = f"{jenkins_url}/job/brainscore_nwb_converter/buildWithParameters" \
+                      f"?TOKEN=trigger2convertNWB" \
+                      f"&email={request.user.email}"
+        _logger.debug(f"request_url: {request_url}")
+        params = {'metadata.json': open('submission.json', 'rb'), 'submission.config': open('result.json', 'rb'), 'dandiset.zip': request.FILES['dandiset_file']}
+        response = requests.post(request_url, files=params, auth=auth)
+        _logger.debug(f"response: {response}")
+
+        # update frontend
+        response.raise_for_status()
+        _logger.debug("Job triggered successfully")
+        return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
 def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tuple[bool, Union[None, List[str]]]:
     """
