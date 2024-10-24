@@ -46,6 +46,15 @@ class UploadFileForm(forms.Form):
         fields = ('zip_file', 'public', 'competition')
 
 
+class UploadNWBMetadataForm(forms.Form):
+    json_file = forms.FileField(label="JSON", help_text='Required')
+    dandiset_file = forms.FileField(label="Optionally, also upload your DANDIset directly", required=False)
+
+    class Meta:
+        model = UploadPlaceHolder
+        fields = ('json_file', 'dandiset_file')
+
+
 class ChangePasswordForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super(ChangePasswordForm, self).__init__(*args, **kwargs)
