@@ -163,10 +163,6 @@ $(document).ready(function () {
             .attr("transform", "rotate(-90)")
             .text(yName);
 
-        g.selectAll(".tick text")
-            .style("fill", "currentColor");
-
-
         // create svg objects
         var objects = g.append("svg")
             .classed("objects", true)

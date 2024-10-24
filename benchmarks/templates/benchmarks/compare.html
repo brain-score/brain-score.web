@@ -9,8 +9,6 @@
 {% block content %}
 <div class="comparison">
     <div class="card">
-        <h3 id="label-description">x <span>vs</span> y</h3>
-
         <div class="controls-container">
             <div class="xlabel-container" class="searchable-dropdown">
                 <select id="xlabel">
@@ -19,6 +17,7 @@
                     {% endfor %}
                 </select>
             </div>
+            <span><b>vs</b></span>
             <div class="ylabel-container" class="searchable-dropdown">
                 <select id="ylabel">
                     {% for benchmark in benchmarks %}
