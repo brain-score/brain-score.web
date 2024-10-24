@@ -19,7 +19,7 @@ Brain Score Administrators:
 
 Once you have these values, continue by ensuring you are using ``<= python@3.8``. You can do this by first checking if you have 3.8 installed::
 
-    python3.8 --version
+    python3.11 --version
 
 And if not, install it::
 
@@ -28,7 +28,7 @@ And if not, install it::
 
 Next, create and activate a virtual environment::
 
-    python3.8 -m venv <env_name>
+    python3.11 -m venv <env_name>
     source <env_name>/bin/activate
 
 Then, clone the repository and change to the ``brain-score.web`` directory::
