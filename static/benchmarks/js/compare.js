@@ -178,4 +178,24 @@ $(document).ready(function () {
         .on("change", updatePlot);
 
     updatePlot();
+
+    function setDropdownValue(xName, yName) {
+        const select_xlabel = document.getElementById('xlabel');
+        select_xlabel.value = xName;
+        const select_ylabel = document.getElementById('ylabel');
+        select_ylabel.value = yName;
+        updatePlot();
+        const element = document.getElementById("controls-container");
+        element.scrollIntoView({ behavior: "smooth" });
+    };
+    
+    $("#objectClassificationButton").click(function() {
+        setDropdownValue("ImageNet-top1_v1", "average_vision_v0")
+    });
+    $("#objectClassificationButton2").click(function() {
+        setDropdownValue("average_vision_v0", "neural_vision_v0")
+    });
+    $("#objectClassificationButton3").click(function() {
+        setDropdownValue("neural_vision_v0", "average_vision_v0")
+    });
 });
