@@ -11,7 +11,7 @@ $(document).ready(function () {
         return;
     }
 
-    var margin = {top: 0, right: 0, bottom: 20, left: 60},
+    var margin = {top: 0, right: 0, bottom: 40, left: 60},
         outerWidth = 600,
         outerHeight = 400,
         width = outerWidth - margin.left - margin.right,
@@ -50,13 +50,23 @@ $(document).ready(function () {
         return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
     }
 
+    // Function to make a string human-readable
+    function humanReadable(text) {
+        return text
+            .replace(/([a-z])([A-Z])/g, '$1 $2')  // Adds space before capital letters in camel case
+            .replace(/(\b[a-zA-Z]+)(\d+)(?!V1\b)/g, '$1 $2')  // Adds space between letters and digits, ignoring "V1"
+             .replace(/(\d+)([a-zA-Z])(?!V1\b)/g, '$1 $2')  // Adds space between digits and letters, ignoring "V1"
+             .replace(/[_]/g, ' ')  // Replace all '_' with spaces
+             .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
+    }
+
 // from http://bl.ocks.org/williaster/10ef968ccfdc71c30ef8
 // Handler for dropdown value change
     var updatePlot = function () {
         xKey = $(xlabel_selector).prop('value') + "-score";
         yKey = $(ylabel_selector).prop('value') + "-score";
-        var xName = $(xlabel_selector).find('option:selected').text(),
-            yName = $(ylabel_selector).find('option:selected').text();
+        var xName = humanReadable($(xlabel_selector).find('option:selected').text()),
+            yName = humanReadable($(ylabel_selector).find('option:selected').text());
         $(label_description_selector).html(xName + ' <span>vs</span> ' + yName);
 
 
@@ -134,27 +144,28 @@ $(document).ready(function () {
         g.append("g")
             .classed("x axis", true)
             .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-
-
-        g.append("text")
+            .call(xAxis)
+            .append("text")
             .attr("x", width / 2)
-            .attr("y", height + margin.bottom - 4)
+            .attr("y",  margin.bottom - 6)
             .attr("text-anchor", "middle")
             .attr("fill", "currentColor")
             .text(xName);
 
         g.append("g")
             .classed("y axis", true)
-            .call(yAxis);
-
-        g.append("text")
+            .call(yAxis)
+            .append("text")
             .attr("text-anchor", "middle")
-            .attr("x",  -height / 2)
-            .attr("y", -8)
+            .attr("x", -height / 2)
+            .attr("y", -36)
             .attr("fill", "currentColor")
             .attr("transform", "rotate(-90)")
             .text(yName);
+
+        g.selectAll(".tick text")
+            .style("fill", "currentColor");
+
 
         // create svg objects
         var objects = g.append("svg")
@@ -178,6 +189,14 @@ $(document).ready(function () {
         .on("change", updatePlot);
 
     updatePlot();
+
+    $('#xlabel').select2({
+        placeholder: "Select or type",
+    });
+
+    $('#ylabel').select2({
+        placeholder: "Select or type",
+    });
 
     function setDropdownValue(xName, yName) {
         const select_xlabel = document.getElementById('xlabel');

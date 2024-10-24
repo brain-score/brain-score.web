@@ -12,14 +12,14 @@
         <h3 id="label-description">x <span>vs</span> y</h3>
 
         <div class="controls-container">
-            <div class="xlabel-container">
+            <div class="xlabel-container" class="searchable-dropdown">
                 <select id="xlabel">
                     {% for benchmark in benchmarks %}
                         <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="ylabel-container">
+            <div class="ylabel-container" class="searchable-dropdown">
                 <select id="ylabel">
                     {% for benchmark in benchmarks %}
                         <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
