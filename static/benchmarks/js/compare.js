@@ -42,8 +42,8 @@ $(document).ready(function () {
         svg.select(".y.axis").call(yAxis);
 
         svg.selectAll(".dot")
-            .attr("transform", transform)
-            .attr("r", dot_size * d3.event.scale);
+            .attr("transform", transform);
+
     }
 
     function transform(d) {
@@ -136,9 +136,25 @@ $(document).ready(function () {
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
 
+
+        g.append("text")
+            .attr("x", width / 2)
+            .attr("y", height + margin.bottom - 4)
+            .attr("text-anchor", "middle")
+            .attr("fill", "currentColor")
+            .text(xName);
+
         g.append("g")
             .classed("y axis", true)
             .call(yAxis);
+
+        g.append("text")
+            .attr("text-anchor", "middle")
+            .attr("x",  -height / 2)
+            .attr("y", -8)
+            .attr("fill", "currentColor")
+            .attr("transform", "rotate(-90)")
+            .text(yName);
 
         // create svg objects
         var objects = g.append("svg")
