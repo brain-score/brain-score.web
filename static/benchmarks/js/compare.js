@@ -55,9 +55,9 @@ $(document).ready(function () {
         return text
             .replace(/([a-z])([A-Z])/g, '$1 $2')  // Adds space before capital letters in camel case
             .replace(/(\b[a-zA-Z]+)(\d+)(?!V1\b)/g, '$1 $2')  // Adds space between letters and digits, ignoring "V1"
-             .replace(/(\d+)([a-zA-Z])(?!V1\b)/g, '$1 $2')  // Adds space between digits and letters, ignoring "V1"
-             .replace(/[_]/g, ' ')  // Replace all '_' with spaces
-             .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
+            .replace(/(\d+)([a-zA-Z])(?!V1\b)/g, '$1 $2')  // Adds space between digits and letters, ignoring "V1"
+            .replace(/[_]/g, ' ')  // Replace all '_' with spaces
+            .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
     }
 
 // from http://bl.ocks.org/williaster/10ef968ccfdc71c30ef8
@@ -203,7 +203,78 @@ $(document).ready(function () {
         const element = document.getElementById("controls-container");
         element.scrollIntoView({ behavior: "smooth" });
     };
-    
+
+    function getFileName(extension) {
+        var file_name = $(xlabel_selector).find('option:selected').text() + "_VS_" + $(ylabel_selector).find('option:selected').text() + extension;
+        return file_name
+    };
+
+    function inlineStyles(element) {
+        console.log(element);
+        const cssStyles = window.getComputedStyle(element);
+        console.log(cssStyles);
+        for (let i = 0; i < cssStyles.length; i++) {
+            const styleName = cssStyles[i];
+            console.log(styleName);
+            console.log(element);
+            element.style[styleName] = cssStyles.getPropertyValue(styleName);
+    }
+
+    Array.from(element.children).forEach(child => inlineStyles(child));
+   }
+ 
+
+    $("#downloadSVGButton").click(function() {
+        var serializer = new XMLSerializer();
+        const svgNode = d3.select('svg').node();
+        const clonedSvg = svgNode.cloneNode(true);
+        inlineStyles(clonedSvg);
+        var xmlString = serializer.serializeToString(clonedSvg);
+        var imgData = 'data:image/svg+xml;base64,' + btoa(xmlString);
+        
+        // Create a temporary anchor element
+        const a = document.createElement('a');
+        a.href = imgData;
+        a.download = getFileName(".svg"); // Set the download attribute with a filename
+
+        // Append anchor to body
+        document.body.appendChild(a);
+
+        // Trigger download
+        a.click();
+
+        // Remove anchor from body
+        document.body.removeChild(a);
+    });
+
+    function makeCSV() {
+        const headers = Object.keys(data[0]);
+        const rows = data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
+        return [headers.join(','), ...rows].join('\n');
+    };
+
+    $("#downloadCSVButton").click(function() {
+        csvData = makeCSV() 
+        // Create a Blob from the CSV string
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element
+        const a = document.createElement('a');
+        a.href = url;
+        var file_name = getFileName(".csv")
+        a.download = file_name; // Set the download attribute with a filename
+
+        // Append anchor to body
+        document.body.appendChild(a);
+
+        // Trigger download
+        a.click();
+
+        // Remove anchor from body
+        document.body.removeChild(a);
+    });
+
     $("#objectClassificationButton").click(function() {
         setDropdownValue("ImageNet-top1_v1", "average_vision_v0")
     });
