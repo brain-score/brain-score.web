@@ -126,6 +126,17 @@ $(document).ready(function () {
         return { slope, intercept };
     }
 
+
+    // Define the SVG and clip path
+    svg.append("defs")
+        .append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("x", margin.left)
+        .attr("y", margin.top)
+        .attr("width", width)
+        .attr("height", height);
+
     var updatePlot = function () {
         xKey = $(xlabel_selector).prop('value') + "-score";
         yKey = $(ylabel_selector).prop('value') + "-score";
@@ -201,6 +212,7 @@ $(document).ready(function () {
         g = svg
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .attr("clip-path", "url(#clip)")  // Apply clip path here
             .call(zoomBeh);
 
         xAxis = d3.svg.axis()
@@ -292,7 +304,8 @@ $(document).ready(function () {
             .attr("y2", y(yEnd))
             .attr("stroke-width", 2)
             .attr("stroke", "lightgrey")
-            .attr("stroke-dasharray", "4,4");
+            .attr("stroke-dasharray", "4,4")
+            .attr("clip-path", "url(#clip)");  // Ensure line is also clipped
 
 
         var objects = g.append("svg")
