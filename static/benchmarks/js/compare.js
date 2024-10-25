@@ -122,7 +122,7 @@ $(document).ready(function () {
         var xName = humanReadable($(xlabel_selector).find('option:selected').text());
         var yName = humanReadable($(ylabel_selector).find('option:selected').text());
 
-        var titleHTML = '<strong>' + xName + '</strong> <span style="color: #078930;">vs</span> <strong>' + yName + '</strong>';
+        var titleHTML = '<strong>' + xName + '</strong> <span style="color: #078930;"> vs </span> <strong>' + yName + '</strong>';
         $(label_description_selector).html(titleHTML);
 
         d3.selectAll("svg > *").remove();
@@ -244,8 +244,8 @@ $(document).ready(function () {
             .attr("x", width - 50)  // Positioning it towards the top-right corner
             .attr("y", 20)
             .attr("text-anchor", "end")
-            .attr("fill", "red")
-            .style("font-size", "12px")
+            .attr("fill", "black")
+            .style("font-size", "16px")
             .text("Correlation: " + correlation.toFixed(2));
 
         // plotting the line
@@ -255,8 +255,9 @@ $(document).ready(function () {
             .attr("y1", y(yStart))
             .attr("x2", x(xEnd))
             .attr("y2", y(yEnd))
-            .attr("stroke", "red")
-            .attr("stroke-width", 2);
+            .attr("stroke-width", 2)
+            .attr("stroke", "lightgrey")
+            .attr("stroke-dasharray", "4,4");
 
 
         var objects = g.append("svg")
