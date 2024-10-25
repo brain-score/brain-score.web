@@ -7,8 +7,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="comparison">
-    <div class="card">
+<div class="comparison columns">
+    <div class="card column">
         <div class="controls-container">
             <div class="xlabel-container" class="searchable-dropdown">
                 <select id="xlabel">
@@ -17,7 +17,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <span><b>vs</b></span>
+            <span id="vs">vs</span>
             <div class="ylabel-container" class="searchable-dropdown">
                 <select id="ylabel">
                     {% for benchmark in benchmarks %}
@@ -28,27 +28,31 @@
         </div>
 
         <div id="comparison-scatter"></div>
-        <div id="defaults">
-            <ul>
-                <li>
-                    <b>Object classification performance is correlated with brain alignment.</b><br>
-                    Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
-                    <br>
-                    <button id="objectClassificationButton">Explore</button>
-                </li>
-                <li>
-                    <b>Object classification performance is correlated with brain alignment.</b><br>
-                    Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
-                    <br>
-                    <button id="objectClassificationButton2">Explore</button>
-                </li>
-                <li>
-                    <b>Object classification performance is correlated with brain alignment.</b><br>
-                    Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
-                    <br>
-                    <button id="objectClassificationButton3">Explore</button>
-                </li>
+        <div class="download-container">
+            <button id="downloadSVGButton">Download plot as SVG</button>
+            <button id="downloadCSVButton">Download data as CSV</button>
         </div>
+    </div>
+    <div class="card column" id="defaults">
+        <ul>
+            <li>
+                <b>Object classification performance is correlated with brain alignment.</b><br>
+                Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
+                <br>
+                <button id="objectClassificationButton">Explore</button>
+            </li>
+            <li>
+                <b>Object classification performance is correlated with brain alignment.</b><br>
+                Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
+                <br>
+                <button id="objectClassificationButton2">Explore</button>
+            </li>
+            <li>
+                <b>Object classification performance is correlated with brain alignment.</b><br>
+                Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
+                <br>
+                <button id="objectClassificationButton3">Explore</button>
+            </li>
     </div>
 </div>
 {% endblock %}
