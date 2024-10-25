@@ -105,12 +105,12 @@ $(document).ready(function () {
         const rSquared = correlation * correlation;  // Calculate R^2
 
         // // Calculate the t-statistic
-        // const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
+        const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
         
         // // Calculate the p-value (2-tailed) using jStat's cumulative distribution function
-        // const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
+        const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
 
-        return { correlation, rSquared };  // Return correlation, R^2, and p-value
+        return { correlation, rSquared, pValue };  // Return correlation, R^2, and p-value
     }
 
 
@@ -159,7 +159,7 @@ $(document).ready(function () {
         // Calculate the correlation
         var xValues = filtered_data.map(d => +d[xKey]);
         var yValues = filtered_data.map(d => +d[yKey]);
-        var { correlation, rSquared } = calculateCorrelation(xValues, yValues);
+        var { correlation, rSquared, pValue } = calculateCorrelation(xValues, yValues);
 
 
         // Calculate regression line
@@ -269,14 +269,19 @@ $(document).ready(function () {
             .style("font-size", "16px")
             .text("R²: " + rSquared.toFixed(2));
 
-        // g.append("text")
-        //     .attr("class", "r2-text")
-        //     .attr("x", width - 50)  // Positioning it towards the top-right corner
-        //     .attr("y", 60)          // Adjust y-position to be below the correlation text
-        //     .attr("text-anchor", "end")
-        //     .attr("fill", "black")
-        //     .style("font-size", "16px")
-        //     .text("p-value: " + pValue.toFixed(3));
+        g.append("text")
+            .attr("class", "r2-text")
+            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("y", 60)          // Adjust y-position to be below the correlation text
+            .attr("text-anchor", "end")
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text(() => {
+                // Format p-value conditionally
+                return pValue >= 0.01 
+                    ? `p-value: ${pValue.toFixed(2)}`  // Show two decimal places
+                    : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
+            });
 
         // plotting the line
         g.append("line")
