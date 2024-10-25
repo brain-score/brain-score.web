@@ -69,7 +69,7 @@ $(document).ready(function () {
 
         svg.selectAll(".dot")
             .attr("transform", transform)
-            .attr("r", dot_size * d3.event.scale);
+            .attr("r", dot_size);
         // Update the regression line based on zoom
         updateRegressionLine();
     }
@@ -88,7 +88,8 @@ $(document).ready(function () {
             .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
     }
 
-    // Calculate Pearson correlation coefficient
+
+    // Calculate Pearson correlation coefficient, R^2, and p-value
     function calculateCorrelation(xArr, yArr) {
         const n = xArr.length;
         const sumX = xArr.reduce((a, b) => a + b, 0);
@@ -100,8 +101,18 @@ $(document).ready(function () {
         const numerator = (n * sumXY) - (sumX * sumY);
         const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
-        return denominator === 0 ? 0 : numerator / denominator;
+        const correlation = denominator === 0 ? 0 : numerator / denominator;
+        const rSquared = correlation * correlation;  // Calculate R^2
+
+        // // Calculate the t-statistic
+        // const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
+        
+        // // Calculate the p-value (2-tailed) using jStat's cumulative distribution function
+        // const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
+
+        return { correlation, rSquared };  // Return correlation, R^2, and p-value
     }
+
 
     // Calculate Linear Regression Slope and Intercept
     function calculateLinearRegression(xArr, yArr) {
@@ -122,7 +133,7 @@ $(document).ready(function () {
         var xName = humanReadable($(xlabel_selector).find('option:selected').text());
         var yName = humanReadable($(ylabel_selector).find('option:selected').text());
 
-        var titleHTML = '<strong>' + xName + '</strong> <span style="color: #078930;"> vs </span> <strong>' + yName + '</strong>';
+        var titleHTML = '<strong>' + xName + '</strong> <span style="color: #078930;">vs</span> <strong>' + yName + '</strong>';
         $(label_description_selector).html(titleHTML);
 
         d3.selectAll("svg > *").remove();
@@ -139,6 +150,7 @@ $(document).ready(function () {
 
         svg.call(tip);
 
+		// filter data to guard against empty "" or "X" scores turning into NaNs that mess up d3
         var filtered_data = comparison_data.filter(row =>
             row[xKey].length > 0 && !isNaN(row[xKey]) &&
             row[yKey].length > 0 && !isNaN(row[yKey]));
@@ -147,7 +159,7 @@ $(document).ready(function () {
         // Calculate the correlation
         var xValues = filtered_data.map(d => +d[xKey]);
         var yValues = filtered_data.map(d => +d[yKey]);
-        var correlation = calculateCorrelation(xValues, yValues);
+        var { correlation, rSquared } = calculateCorrelation(xValues, yValues);
 
 
         // Calculate regression line
@@ -246,7 +258,25 @@ $(document).ready(function () {
             .attr("text-anchor", "end")
             .attr("fill", "black")
             .style("font-size", "16px")
-            .text("Correlation: " + correlation.toFixed(2));
+            .text("Pearson R: " + correlation.toFixed(2));
+
+        g.append("text")
+            .attr("class", "r2-text")
+            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("y", 40)          // Adjust y-position to be below the correlation text
+            .attr("text-anchor", "end")
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text("R²: " + rSquared.toFixed(2));
+
+        // g.append("text")
+        //     .attr("class", "r2-text")
+        //     .attr("x", width - 50)  // Positioning it towards the top-right corner
+        //     .attr("y", 60)          // Adjust y-position to be below the correlation text
+        //     .attr("text-anchor", "end")
+        //     .attr("fill", "black")
+        //     .style("font-size", "16px")
+        //     .text("p-value: " + pValue.toFixed(3));
 
         // plotting the line
         g.append("line")
@@ -291,4 +321,25 @@ $(document).ready(function () {
         tags: true,
         allowClear: true
     });
+
+    function setDropdownValue(xName, yName) {
+        $("#xlabel").val(xName);
+        $("#xlabel").trigger("change");
+        $("#ylabel").val(yName);
+        $("#ylabel").trigger("change");
+        updatePlot();
+        // const element = document.getElementById("controls-container");
+        // element.scrollIntoView({ behavior: "smooth" });
+    };
+    
+    $("#objectClassificationButton").click(function() {
+        setDropdownValue("ImageNet-top1_v1", "average_vision_v0")
+    });
+    $("#objectClassificationButton2").click(function() {
+        setDropdownValue("average_vision_v0", "neural_vision_v0")
+    });
+    $("#objectClassificationButton3").click(function() {
+        setDropdownValue("neural_vision_v0", "average_vision_v0")
+    });
+
 });
