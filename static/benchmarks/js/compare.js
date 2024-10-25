@@ -298,15 +298,16 @@ $(document).ready(function () {
         // const element = document.getElementById("controls-container");
         // element.scrollIntoView({ behavior: "smooth" });
     };
-    
-    $("#objectClassificationButton").click(function() {
-        setDropdownValue("ImageNet-top1_v1", "average_vision_v0")
-    });
-    $("#objectClassificationButton2").click(function() {
-        setDropdownValue("average_vision_v0", "neural_vision_v0")
-    });
-    $("#objectClassificationButton3").click(function() {
-        setDropdownValue("neural_vision_v0", "average_vision_v0")
+
+    $("details").click(function() {
+        $("details").not(this).removeAttr("open");
+        if (this.id == "objectClassification") {
+            setDropdownValue("ImageNet-top1_v1", "average_vision_v0");
+        } else if (this.id == "alignmnetV1") {
+            setDropdownValue("FreemanZiemba2013.V1-pls_v2", "ImageNet-C-top1_v0`");
+        } else if (this.id == "V1likeProperties"){
+            setDropdownValue("Marques2020_v0", "Rajalingham2018-i2n_v2");
+        }
     });
 
 });
