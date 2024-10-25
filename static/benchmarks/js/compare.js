@@ -88,7 +88,8 @@ $(document).ready(function () {
             .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
     }
 
-    // Calculate Pearson correlation coefficient
+
+    // Calculate Pearson correlation coefficient, R^2, and p-value
     function calculateCorrelation(xArr, yArr) {
         const n = xArr.length;
         const sumX = xArr.reduce((a, b) => a + b, 0);
@@ -100,8 +101,18 @@ $(document).ready(function () {
         const numerator = (n * sumXY) - (sumX * sumY);
         const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
-        return denominator === 0 ? 0 : numerator / denominator;
+        const correlation = denominator === 0 ? 0 : numerator / denominator;
+        const rSquared = correlation * correlation;  // Calculate R^2
+
+        // // Calculate the t-statistic
+        const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
+        
+        // // Calculate the p-value (2-tailed) using jStat's cumulative distribution function
+        const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
+
+        return { correlation, rSquared, pValue };  // Return correlation, R^2, and p-value
     }
+
 
     // Calculate Linear Regression Slope and Intercept
     function calculateLinearRegression(xArr, yArr) {
@@ -114,6 +125,17 @@ $(document).ready(function () {
         const intercept = (sumY - slope * sumX) / n;
         return { slope, intercept };
     }
+
+
+    // Define the SVG and clip path
+    svg.append("defs")
+        .append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("x", margin.left)
+        .attr("y", margin.top)
+        .attr("width", width)
+        .attr("height", height);
 
     var updatePlot = function () {
         xKey = $(xlabel_selector).prop('value') + "-score";
@@ -145,7 +167,7 @@ $(document).ready(function () {
         // Calculate the correlation
         var xValues = filtered_data.map(d => +d[xKey]);
         var yValues = filtered_data.map(d => +d[yKey]);
-        var correlation = calculateCorrelation(xValues, yValues);
+        var { correlation, rSquared, pValue } = calculateCorrelation(xValues, yValues);
 
 
         // Calculate regression line
@@ -187,6 +209,7 @@ $(document).ready(function () {
         g = svg
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .attr("clip-path", "url(#clip)")  // Apply clip path here
             .call(zoomBeh);
 
         xAxis = d3.svg.axis()
@@ -242,9 +265,32 @@ $(document).ready(function () {
             .attr("x", width - 50)  // Positioning it towards the top-right corner
             .attr("y", 20)
             .attr("text-anchor", "end")
-            .attr("fill", "red")
-            .style("font-size", "12px")
-            .text("Correlation: " + correlation.toFixed(2));
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text("Pearson R: " + correlation.toFixed(2));
+
+        g.append("text")
+            .attr("class", "r2-text")
+            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("y", 40)          // Adjust y-position to be below the correlation text
+            .attr("text-anchor", "end")
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text("R²: " + rSquared.toFixed(2));
+
+        g.append("text")
+            .attr("class", "r2-text")
+            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("y", 60)          // Adjust y-position to be below the correlation text
+            .attr("text-anchor", "end")
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text(() => {
+                // Format p-value conditionally
+                return pValue >= 0.01 
+                    ? `p-value: ${pValue.toFixed(2)}`  // Show two decimal places
+                    : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
+            });
 
         // plotting the line
         g.append("line")
@@ -253,8 +299,10 @@ $(document).ready(function () {
             .attr("y1", y(yStart))
             .attr("x2", x(xEnd))
             .attr("y2", y(yEnd))
-            .attr("stroke", "red")
-            .attr("stroke-width", 2);
+            .attr("stroke-width", 2)
+            .attr("stroke", "lightgrey")
+            .attr("stroke-dasharray", "4,4")
+            .attr("clip-path", "url(#clip)");  // Ensure line is also clipped
 
 
         var objects = g.append("svg")
