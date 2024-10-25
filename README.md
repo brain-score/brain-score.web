@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/brain-score/brain-score.web.svg?branch=master)](https://travis-ci.com/brain-score/brain-score.web)
+[![Build Status](https://app.travis-ci.com/brain-score/brain-score.web.svg?token=vqt7d2yhhpLGwHsiTZvT&branch=master)](https://app.travis-ci.com/brain-score/brain-score.web)
 
 Brain-Score is a platform to evaluate computational models of vision and language on their match to behavioral and 
 neural measurements in the domain of language processing. The intent of Brain-Score is to adopt many (ideally all) 
