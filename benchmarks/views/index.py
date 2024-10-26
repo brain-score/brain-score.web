@@ -376,7 +376,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner', 'submission')
+    model_meta = Model.objects.select_related('reference', 'owner', 'submission', 'submission__submitter')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
