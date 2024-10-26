@@ -218,8 +218,7 @@
                                     <td class="bar depth_{{ score_row.benchmark.depth }}">
                                         <div class="bar_container">
                                             <div class="bar"
-                                                 style="background-color:{{ score_row.color }};
-                                                         --score:{{ score_row.score_ceiled|score_style }}%;">
+                                                 style="{{ score_row.color }}">
                                                 {{ score_row.score_ceiled }}
                                             </div>
                                             <span class="label zero">0</span>
