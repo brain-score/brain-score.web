@@ -11,12 +11,6 @@ from pathlib import Path
 from typing import Union, List, Tuple
 
 import numpy as np
-from PIL import Image
-from brainio.assemblies import NeuroidAssembly
-from brainio.stimuli import StimulusSet
-from brainscore_vision import load_benchmark
-from brainscore_vision.benchmark_helpers.screen import place_on_screen
-from brainscore_vision.model_interface import BrainModel
 from django.http import HttpResponse
 from numpy.random import RandomState
 from tqdm import tqdm
@@ -27,37 +21,43 @@ _logger = logging.getLogger(__name__)
 static_directory = Path(__file__).parent.parent.parent / 'static' / 'benchmarks' / 'img'
 
 
-class ImageStorerDummyModel(BrainModel):
-    def __init__(self):
-        self._time_bins = None
-        self.stimuli = None
-
-    @property
-    def identifier(self) -> str:
-        return 'imagestorer-dummymodel'
-
-    def visual_degrees(self) -> int:
-        return 8
-
-    def look_at(self, stimuli: Union[StimulusSet, List[str]], number_of_trials=1):
-        if len(stimuli) == 1:  # configuration stimuli, e.g. Kar2019 or Marques2020. Return to get to the real stimuli
-            return NeuroidAssembly([[np.arange(len(self._time_bins))]], coords={
-                **{'neuroid_id': ('neuroid', [123]), 'neuroid_num': ('neuroid', [123])},
-                **{column: ('presentation', values) for column, values in stimuli.iteritems()},
-                **{'time_bin_start': ('time_bin', [start for start, end in self._time_bins]),
-                   'time_bin_end': ('time_bin', [end for start, end in self._time_bins])},
-            }, dims=['presentation', 'neuroid', 'time_bin'])
-        self.stimuli = stimuli
-        raise StopIteration()
-
-    def start_task(self, task: BrainModel.Task, fitting_stimuli=None):
-        pass
-
-    def start_recording(self, recording_target: BrainModel.RecordingTarget, time_bins=List[Tuple[int]]):
-        self._time_bins = time_bins
-
-
 def sample_benchmark_images(request):
+    # import locally. When the regular website is run, these dependencies will not be installed.
+    from PIL import Image
+    from brainio.assemblies import NeuroidAssembly
+    from brainio.stimuli import StimulusSet
+    from brainscore_vision import load_benchmark
+    from brainscore_vision.model_interface import BrainModel
+
+    class ImageStorerDummyModel(BrainModel):
+        def __init__(self):
+            self._time_bins = None
+            self.stimuli = None
+
+        @property
+        def identifier(self) -> str:
+            return 'imagestorer-dummymodel'
+
+        def visual_degrees(self) -> int:
+            return 8
+
+        def look_at(self, stimuli: Union[StimulusSet, List[str]], number_of_trials=1):
+            if len(stimuli) == 1:  # configuration stimuli, e.g. Kar2019 or Marques2020. Return to get to the real stimuli
+                return NeuroidAssembly([[np.arange(len(self._time_bins))]], coords={
+                    **{'neuroid_id': ('neuroid', [123]), 'neuroid_num': ('neuroid', [123])},
+                    **{column: ('presentation', values) for column, values in stimuli.iteritems()},
+                    **{'time_bin_start': ('time_bin', [start for start, end in self._time_bins]),
+                       'time_bin_end': ('time_bin', [end for start, end in self._time_bins])},
+                }, dims=['presentation', 'neuroid', 'time_bin'])
+            self.stimuli = stimuli
+            raise StopIteration()
+
+        def start_task(self, task: BrainModel.Task, fitting_stimuli=None):
+            pass
+
+        def start_recording(self, recording_target: BrainModel.RecordingTarget, time_bins=List[Tuple[int]]):
+            self._time_bins = time_bins
+
     num_samples = 30
     max_height = 90
     replace = False
@@ -134,7 +134,12 @@ def sample_benchmark_images(request):
 
 
 def visual_degree_samples(visual_degrees_samples=(8, 4, 12), base_degrees=8):
-    base_image = Path(__file__).parent / 'base.png'
+    # import locally. When the regular website is run, these dependencies will not be installed.
+    from PIL import Image
+    from brainio.stimuli import StimulusSet
+    from brainscore_vision.benchmark_helpers.screen import place_on_screen
+
+    base_image = static_directory / 'visual_degrees' / 'base.png'
     stimulus_set = StimulusSet([{'stimulus_id': 'base'}])
     stimulus_set.image_paths = {'base': base_image}
     stimulus_set.identifier = 'visual_degrees_base'
