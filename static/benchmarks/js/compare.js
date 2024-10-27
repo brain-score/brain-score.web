@@ -60,7 +60,7 @@ $(document).ready(function () {
         const yEnd = slope * xEnd + intercept;
 
         // Update the regression line with the new start and end points
-        svg.select(".regression-line")
+        svg.select("#regression-line")
             .attr("x1", x(xStart))
             .attr("y1", y(yStart))
             .attr("x2", x(xEnd))
@@ -117,17 +117,6 @@ $(document).ready(function () {
         const intercept = (sumY - slope * sumX) / n;
         return {slope, intercept};
     }
-
-
-    // Define the SVG and clip path
-    svg.append("defs")
-        .append("clipPath")
-        .attr("id", "clip")
-        .append("rect")
-        .attr("x", margin.left)
-        .attr("y", margin.top)
-        .attr("width", width)
-        .attr("height", height);
 
     function updatePlot() {
         xKey = $(xlabel_selector).prop('value') + "-score";
@@ -192,7 +181,6 @@ $(document).ready(function () {
         g = svg
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-            .attr("clip-path", "url(#clip)")  // Apply clip path here
             .call(zoomBeh);
 
         xAxis = d3.svg.axis()
@@ -221,7 +209,7 @@ $(document).ready(function () {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .style("fill", "black")
-            .text(xName);  // Use the human-readable xName here
+            .text(xName);
 
         svg.selectAll(".x.axis text")
             .style("fill", "black");
@@ -272,17 +260,16 @@ $(document).ready(function () {
                     : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
             });
 
-        // plotting the line
+        // plot regression line
         g.append("line")
-            .attr("class", "regression-line")
+            .attr("id", "regression-line")
             .attr("x1", x(xStart))
             .attr("y1", y(yStart))
             .attr("x2", x(xEnd))
             .attr("y2", y(yEnd))
             .attr("stroke-width", 2)
             .attr("stroke", "lightgrey")
-            .attr("stroke-dasharray", "4,4")
-            .attr("clip-path", "url(#clip)");  // Ensure line is also clipped
+            .attr("stroke-dasharray", "4,4");
 
 
         const objects = g.append("svg")
@@ -363,6 +350,7 @@ $(document).ready(function () {
     });
 
     function makeCSV() {
+        // TODO: only data for selected benchmarks
         const headers = Object.keys(comparison_data[0]);
         const rows = comparison_data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
         return [headers.join(','), ...rows].join('\n');
