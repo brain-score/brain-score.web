@@ -11,8 +11,8 @@ $(document).ready(function () {
     }
 
     const margin = {top: 0, right: 0, bottom: 40, left: 60},
-        outerWidth = 600,
-        outerHeight = 400,
+        outerWidth = $(container_selector).width(),
+        outerHeight = $(container_selector).width() * 2/3,
         width = outerWidth - margin.left - margin.right,
         height = outerHeight - margin.top - margin.bottom;
 
