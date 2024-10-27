@@ -45,23 +45,8 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
     # calculate lightweight, downloadable version of model scores
-    csv_scores = []
-    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
-    for model in model_rows:
-        csv_dict = {"model_name": model.name, "scores": {}}
-        for score in model.scores:
-            benchmark_identifier = score.benchmark.identifier
-            if benchmark_identifier in benchmark_names:
-                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
-        csv_scores.append(csv_dict)
+    csv_data = _build_scores_dataframe(benchmarks, model_rows)
 
-    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
-
-    if not csv_df.empty:  # check if the DataFrame is empty
-        csv_df.set_index('model_name', inplace=True)
-        csv_data = csv_df.to_csv(index=True)
-    else:
-        csv_data = "No models submitted yet."
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -148,6 +133,27 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             'citation_domain_bibtex': citation_domain_bibtex,
             'csv_downloadable': csv_data
             }
+
+
+def _build_scores_dataframe(benchmarks, model_rows):
+    csv_scores = []
+    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
+    for model in model_rows:
+        csv_dict = {"model_name": model.name, "scores": {}}
+        for score in model.scores:
+            benchmark_identifier = score.benchmark.identifier
+            if benchmark_identifier in benchmark_names:
+                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
+        csv_scores.append(csv_dict)
+    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
+
+    if not csv_df.empty:  # check if the DataFrame is empty
+        csv_df.set_index('model_name', inplace=True)
+        csv_data = csv_df.to_csv(index=True)
+    else:
+        csv_data = "No models submitted yet."
+
+    return csv_data
 
 
 def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
