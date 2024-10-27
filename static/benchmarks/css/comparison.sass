@@ -1,7 +1,6 @@
 @import "rotate"
 
 .comparison
-  width: 134%
 
   .card
     margin-bottom: 20px
@@ -12,7 +11,6 @@
       font-size: 20px
 
     .controls-container
-      display: flex
       margin-bottom: 20px
 
       span#vs
@@ -30,7 +28,6 @@
       border-radius: 5px
 
   .download-container
-    display: flex
     justify-content: space-around
     margin-bottom: 20px
 
@@ -56,6 +53,17 @@
 
   .tick
     fill: #4A4A4A
+
+// pre-selectors
+.comparison_selector
+  cursor: pointer
+
+  >p
+    border: 1px solid darkgray
+    border-radius: 20px
+    padding: 1em 2.5em
+    margin-top: 0.5em
+    margin-bottom: 0.5em
 
 .d3-tip
   line-height: 1

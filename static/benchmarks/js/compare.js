@@ -391,12 +391,14 @@ $(document).ready(function () {
     });
 
     // example selections for correlations in literature
-    $("details.comparison_selector").click(function () {
-        $("details.comparison_selector").not(this).removeAttr("open");
+    $(".comparison_selector").click(function () {
+        $(this).children('div').show(); // unhide own contents
+        $(".comparison_selector").not(this).children('div').hide(); // hide others
         const x = $(this).attr('data-benchmark-x');
         const y = $(this).attr('data-benchmark-y');
         $("#xlabel").val(x).trigger('change');
         $("#ylabel").val(y).trigger('change');
         updatePlot();
     });
+    $(".comparison_selector").children('div').hide(); // hide all initially -- do here so that non-js still works
 });
