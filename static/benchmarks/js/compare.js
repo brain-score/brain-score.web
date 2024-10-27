@@ -151,17 +151,17 @@ $(document).ready(function () {
         svg.call(tip);
 
         const [filtered_data, xValues, yValues] = getDeduplicatedValues();
-        var {correlation, rSquared, pValue} = calculateCorrelation(xValues, yValues);
+        const {correlation, rSquared, pValue} = calculateCorrelation(xValues, yValues);
 
         // Calculate regression line
-        var {slope, intercept} = calculateLinearRegression(xValues, yValues);
+        const {slope, intercept} = calculateLinearRegression(xValues, yValues);
         // Define the endpoints for the line
-        var xStart = d3.min(xValues);
-        var xEnd = d3.max(xValues);
-        var yStart = slope * xStart + intercept;
-        var yEnd = slope * xEnd + intercept;
+        const xStart = d3.min(xValues);
+        const xEnd = d3.max(xValues);
+        const yStart = slope * xStart + intercept;
+        const yEnd = slope * xEnd + intercept;
 
-        var xMax = d3.max(filtered_data, function (d) {
+        const xMax = d3.max(filtered_data, function (d) {
                 return d[xKey];
             }) * 1.05,
             xMin = d3.min(filtered_data, function (d) {
@@ -183,7 +183,7 @@ $(document).ready(function () {
         x.domain([xMin, xMax]);
         y.domain([yMin, yMax]);
 
-        var zoomBeh = d3.behavior.zoom()
+        const zoomBeh = d3.behavior.zoom()
             .x(x)
             .y(y)
             .scaleExtent([0, 500])
@@ -242,10 +242,10 @@ $(document).ready(function () {
         svg.selectAll(".y.axis text")
             .style("fill", "black");
 
-        // Correlation plotting
+        // Correlation plotting -- position towards the top, horizontally next to each other
         g.append("text")
             .attr("class", "correlation-text")
-            .attr("x", 20)  // Positioning it towards the top-left corner
+            .attr("x", 150)
             .attr("y", 20)
             .attr("fill", "black")
             .style("font-size", "16px")
@@ -253,16 +253,16 @@ $(document).ready(function () {
 
         g.append("text")
             .attr("class", "r2-text")
-            .attr("x", 20)  // Positioning it towards the top-left corner
-            .attr("y", 40)          // Adjust y-position to be below the correlation text
+            .attr("x", 280)
+            .attr("y", 20)
             .attr("fill", "black")
             .style("font-size", "16px")
             .text("R²: " + rSquared.toFixed(2));
 
         g.append("text")
             .attr("class", "r2-text")
-            .attr("x", 20)  // Positioning it towards the top-left corner
-            .attr("y", 60)          // Adjust y-position to be below the correlation text
+            .attr("x", 355)
+            .attr("y", 20)
             .attr("fill", "black")
             .style("font-size", "16px")
             .text(() => {
@@ -285,7 +285,7 @@ $(document).ready(function () {
             .attr("clip-path", "url(#clip)");  // Ensure line is also clipped
 
 
-        var objects = g.append("svg")
+        const objects = g.append("svg")
             .classed("objects", true)
             .attr("width", width)
             .attr("height", height);
@@ -299,6 +299,14 @@ $(document).ready(function () {
             .style("fill", color)
             .on("mouseover", tip.show)
             .on("mouseout", tip.hide);
+
+        // add Brain-Score logo
+        g.append("svg:image")
+            .attr('x', 5)
+            .attr('y', 0)
+            .attr('width', 120)
+            .attr('height', 28)
+            .attr("xlink:href", logo_url);
     }
 
     $(xlabel_selector + ', ' + ylabel_selector)
@@ -369,7 +377,7 @@ $(document).ready(function () {
         // Create a temporary anchor element
         const a = document.createElement('a');
         a.href = url;
-        var file_name = getFileName(".csv")
+        const file_name = getFileName(".csv")
         a.download = file_name; // Set the download attribute with a filename
 
         // Append anchor to body
