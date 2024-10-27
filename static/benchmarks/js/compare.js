@@ -1,53 +1,57 @@
 $(document).ready(function () {
     // adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
 
-    var container_selector = "div#comparison-scatter",
-        xlabel_selector = '#xlabel',
-        ylabel_selector = '#ylabel',
-        label_description_selector = "#label-description";
+    const container_selector = "div#comparison-scatter";
+    const xlabel_selector = '#xlabel';
+    const ylabel_selector = '#ylabel';
 
     // make sure we have a container to work with, otherwise abort
     if ($(container_selector).length < 1) {
         return;
     }
 
-    var margin = {top: 0, right: 0, bottom: 40, left: 60},
+    const margin = {top: 0, right: 0, bottom: 40, left: 60},
         outerWidth = 600,
         outerHeight = 400,
         width = outerWidth - margin.left - margin.right,
         height = outerHeight - margin.top - margin.bottom;
 
-    var dot_size = 8,
+    const dot_size = 8,
         color = '#078930';
 
-    var idKey = "model",
+    let idKey = "model",
         xKey = null,
         yKey = null;
 
-    var g = null,
+    let g = null,
         xAxis = null,
         yAxis = null;
 
-    var x = null,
+    let x = null,
         y = null;
 
-    var svg = d3.select(container_selector)
+    const svg = d3.select(container_selector)
         .append("svg")
         .attr("width", outerWidth)
         .attr("height", outerHeight)
         .attr("fill", "white");
 
-    function updateRegressionLine() {
+    function getDeduplicatedValues() {
         // Filter data to guard against empty "" or "X" scores turning into NaNs
-        var filtered_data = comparison_data.filter(row =>
+        const filtered_data = comparison_data.filter(row =>
             row[xKey].length > 0 && !isNaN(row[xKey]) &&
             row[yKey].length > 0 && !isNaN(row[yKey]));
-        
-                // Calculate the correlation
-        var xValues = filtered_data.map(d => +d[xKey]);
-        var yValues = filtered_data.map(d => +d[yKey]);
 
-        const { slope, intercept } = calculateLinearRegression(xValues, yValues);
+        // Calculate the correlation
+        const xValues = filtered_data.map(d => +d[xKey]);
+        const yValues = filtered_data.map(d => +d[yKey]);
+        return [filtered_data, xValues, yValues];
+    }
+
+    function updateRegressionLine() {
+        const [filtered_data, xValues, yValues] = getDeduplicatedValues();
+
+        const {slope, intercept} = calculateLinearRegression(xValues, yValues);
 
         // Calculate line endpoints within the current x-axis range
         const xStart = x.domain()[0];
@@ -63,6 +67,10 @@ $(document).ready(function () {
             .attr("y2", y(yEnd));
     }
 
+    function transform(d) {
+        return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
+    }
+
     function zoom() {
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
@@ -73,21 +81,6 @@ $(document).ready(function () {
         // Update the regression line based on zoom
         updateRegressionLine();
     }
-
-    function transform(d) {
-        return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
-    }
-
-    // Function to make a string human-readable
-    function humanReadable(text) {
-        return text
-            .replace(/([a-z])([A-Z])/g, '$1 $2')  // Adds space before capital letters in camel case
-            .replace(/(\b[a-zA-Z]+)(\d+)(?!V1\b)/g, '$1 $2')  // Adds space between letters and digits, ignoring "V1"
-            .replace(/(\d+)([a-zA-Z])(?!V1\b)/g, '$1 $2')  // Adds space between digits and letters, ignoring "V1"
-            .replace(/[_]/g, ' ')  // Replace all '_' with spaces
-            .replace(/[-]/g, ' - ');  // Replace all '-' with ' - '
-    }
-
 
     // Calculate Pearson correlation coefficient, R^2, and p-value
     function calculateCorrelation(xArr, yArr) {
@@ -106,11 +99,10 @@ $(document).ready(function () {
 
         // // Calculate the t-statistic
         const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
-        
         // // Calculate the p-value (2-tailed) using jStat's cumulative distribution function
         const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
 
-        return { correlation, rSquared, pValue };  // Return correlation, R^2, and p-value
+        return {correlation, rSquared, pValue};  // Return correlation, R^2, and p-value
     }
 
 
@@ -123,7 +115,7 @@ $(document).ready(function () {
         const sumX2 = xArr.map(xi => xi * xi).reduce((a, b) => a + b, 0);
         const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
         const intercept = (sumY - slope * sumX) / n;
-        return { slope, intercept };
+        return {slope, intercept};
     }
 
 
@@ -137,12 +129,12 @@ $(document).ready(function () {
         .attr("width", width)
         .attr("height", height);
 
-    var updatePlot = function () {
+    function updatePlot() {
         xKey = $(xlabel_selector).prop('value') + "-score";
         yKey = $(ylabel_selector).prop('value') + "-score";
 
-        var xName = humanReadable($(xlabel_selector).find('option:selected').text());
-        var yName = humanReadable($(ylabel_selector).find('option:selected').text());
+        const xName = $(xlabel_selector).find('option:selected').text();
+        const yName = $(ylabel_selector).find('option:selected').text();
 
         d3.selectAll("svg > *").remove();
 
@@ -158,20 +150,11 @@ $(document).ready(function () {
 
         svg.call(tip);
 
-		// filter data to guard against empty "" or "X" scores turning into NaNs that mess up d3
-        var filtered_data = comparison_data.filter(row =>
-            row[xKey].length > 0 && !isNaN(row[xKey]) &&
-            row[yKey].length > 0 && !isNaN(row[yKey]));
-
-
-        // Calculate the correlation
-        var xValues = filtered_data.map(d => +d[xKey]);
-        var yValues = filtered_data.map(d => +d[yKey]);
-        var { correlation, rSquared, pValue } = calculateCorrelation(xValues, yValues);
-
+        const [filtered_data, xValues, yValues] = getDeduplicatedValues();
+        var {correlation, rSquared, pValue} = calculateCorrelation(xValues, yValues);
 
         // Calculate regression line
-        var { slope, intercept } = calculateLinearRegression(xValues, yValues);
+        var {slope, intercept} = calculateLinearRegression(xValues, yValues);
         // Define the endpoints for the line
         var xStart = d3.min(xValues);
         var xEnd = d3.max(xValues);
@@ -240,7 +223,7 @@ $(document).ready(function () {
             .style("fill", "black")
             .text(xName);  // Use the human-readable xName here
 
-        svg.selectAll(".x.axis text")  
+        svg.selectAll(".x.axis text")
             .style("fill", "black");
 
         g.append("g")
@@ -256,38 +239,35 @@ $(document).ready(function () {
             .style("fill", "black")
             .text(yName);  // Use the human-readable yName here
 
-        svg.selectAll(".y.axis text") 
+        svg.selectAll(".y.axis text")
             .style("fill", "black");
 
         // Correlation plotting
         g.append("text")
             .attr("class", "correlation-text")
-            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("x", 20)  // Positioning it towards the top-left corner
             .attr("y", 20)
-            .attr("text-anchor", "end")
             .attr("fill", "black")
             .style("font-size", "16px")
             .text("Pearson R: " + correlation.toFixed(2));
 
         g.append("text")
             .attr("class", "r2-text")
-            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("x", 20)  // Positioning it towards the top-left corner
             .attr("y", 40)          // Adjust y-position to be below the correlation text
-            .attr("text-anchor", "end")
             .attr("fill", "black")
             .style("font-size", "16px")
             .text("R²: " + rSquared.toFixed(2));
 
         g.append("text")
             .attr("class", "r2-text")
-            .attr("x", width - 50)  // Positioning it towards the top-right corner
+            .attr("x", 20)  // Positioning it towards the top-left corner
             .attr("y", 60)          // Adjust y-position to be below the correlation text
-            .attr("text-anchor", "end")
             .attr("fill", "black")
             .style("font-size", "16px")
             .text(() => {
                 // Format p-value conditionally
-                return pValue >= 0.01 
+                return pValue >= 0.01
                     ? `p-value: ${pValue.toFixed(2)}`  // Show two decimal places
                     : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
             });
@@ -319,13 +299,14 @@ $(document).ready(function () {
             .style("fill", color)
             .on("mouseover", tip.show)
             .on("mouseout", tip.hide);
-    };
+    }
 
     $(xlabel_selector + ', ' + ylabel_selector)
         .on("change", updatePlot);
 
     updatePlot();
 
+    // typing functionality in select dropdowns
     $('#xlabel').select2({
         placeholder: "Select or type",
         tags: true,
@@ -337,69 +318,52 @@ $(document).ready(function () {
         allowClear: true
     });
 
-    function setDropdownValue(xName, yName) {
-        $("#xlabel").val(xName);
-        $("#xlabel").trigger("change");
-        $("#ylabel").val(yName);
-        $("#ylabel").trigger("change");
-        updatePlot();
-        // const element = document.getElementById("controls-container");
-        // element.scrollIntoView({ behavior: "smooth" });
-    };
-
-    function getFileName(extension) {
-        var file_name = $(xlabel_selector).find('option:selected').text() + "_VS_" + $(ylabel_selector).find('option:selected').text() + extension;
-        return file_name
-    };
+    // download functionality
 
     function inlineStyles(element) {
-        console.log(element);
         const cssStyles = window.getComputedStyle(element);
-        console.log(cssStyles);
         for (let i = 0; i < cssStyles.length; i++) {
             const styleName = cssStyles[i];
-            console.log(styleName);
-            console.log(element);
             element.style[styleName] = cssStyles.getPropertyValue(styleName);
+        }
+
+        Array.from(element.children).forEach(child => inlineStyles(child));
     }
 
-    Array.from(element.children).forEach(child => inlineStyles(child));
-   }
- 
+    function getFileName(extension) {
+        let xlabel = $(xlabel_selector).find('option:selected').text();
+        let ylabel = $(ylabel_selector).find('option:selected').text();
+        return xlabel + "_VS_" + ylabel + extension
+    }
 
-    $("#downloadSVGButton").click(function() {
-        var serializer = new XMLSerializer();
+    $("#downloadSVGButton").click(function () {
+        const serializer = new XMLSerializer();
         const svgNode = d3.select('svg').node();
         const clonedSvg = svgNode.cloneNode(true);
         inlineStyles(clonedSvg);
-        var xmlString = serializer.serializeToString(clonedSvg);
-        var imgData = 'data:image/svg+xml;base64,' + btoa(xmlString);
-        
+        const xmlString = serializer.serializeToString(clonedSvg);
+        const imgData = 'data:image/svg+xml;base64,' + btoa(xmlString);
+
         // Create a temporary anchor element
         const a = document.createElement('a');
         a.href = imgData;
         a.download = getFileName(".svg"); // Set the download attribute with a filename
 
-        // Append anchor to body
-        document.body.appendChild(a);
-
-        // Trigger download
-        a.click();
-
-        // Remove anchor from body
-        document.body.removeChild(a);
+        document.body.appendChild(a); // Append anchor to body
+        a.click(); // Trigger download
+        document.body.removeChild(a); // Remove anchor from body
     });
 
     function makeCSV() {
-        const headers = Object.keys(data[0]);
-        const rows = data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
+        const headers = Object.keys(comparison_data[0]);
+        const rows = comparison_data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
         return [headers.join(','), ...rows].join('\n');
-    };
+    }
 
-    $("#downloadCSVButton").click(function() {
-        csvData = makeCSV() 
+    $("#downloadCSVButton").click(function () {
+        csvData = makeCSV()
         // Create a Blob from the CSV string
-        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvData], {type: 'text/csv;charset=utf-8;'});
         const url = URL.createObjectURL(blob);
 
         // Create a temporary anchor element
@@ -418,15 +382,13 @@ $(document).ready(function () {
         document.body.removeChild(a);
     });
 
-    $("details").click(function() {
-        $("details").not(this).removeAttr("open");
-        if (this.id == "objectClassification") {
-            setDropdownValue("ImageNet-top1_v1", "average_vision_v0");
-        } else if (this.id == "alignmnetV1") {
-            setDropdownValue("FreemanZiemba2013.V1-pls_v2", "ImageNet-C-top1_v0`");
-        } else if (this.id == "V1likeProperties"){
-            setDropdownValue("Marques2020_v0", "Rajalingham2018-i2n_v2");
-        }
+    // example selections for correlations in literature
+    $("details.comparison_selector").click(function () {
+        $("details.comparison_selector").not(this).removeAttr("open");
+        const x = $(this).attr('data-benchmark-x');
+        const y = $(this).attr('data-benchmark-y');
+        $("#xlabel").val(x).trigger('change');
+        $("#ylabel").val(y).trigger('change');
+        updatePlot();
     });
-
 });

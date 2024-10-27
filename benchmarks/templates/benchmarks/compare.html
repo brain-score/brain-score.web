@@ -2,62 +2,88 @@
 {% load static %}
 
 {% block banner %}
-<h1>Compare</h1>
-<p>Reveal model details by hovering over dots. Scrolling zooms in and out.</p>
+    <h1>Compare</h1>
+    <p>
+        The comparison tool on this page enables you to compare the scores of computational models across
+        neural, behavioral, and engineering benchmarks. This facilitates new discoveries by highlighting connections
+        between e.g. model performance and their alignment with diverse aspects of brain and behavioral data.
+        Integrating models and benchmarks on Brain-Score is a key enabler of such discoveries,
+        and allows for new synergies at the intersection of brain and cognitive sciences and machine learning.
+    </p>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <p>
-        The comparison tool on this page enables you to compare the scores of computational models across neural, behavioral, and engineering benchmarks. This facilitates new discoveries by highlighting connections between e.g. model performance and their alignment with diverse aspects of brain and behavioral data. Integrating models and benchmarks on Brain-Score is a key enabler of such discoveries, and allows for new synergies at the intersection of brain and cognitive sciences and machine learning.
-    </p>
-</div>
-<div class="comparison columns">
-    <div class="card column">
-        <div class="controls-container">
-            <div class="xlabel-container" class="searchable-dropdown">
-                <select id="xlabel">
-                    {% for benchmark in benchmarks %}
-                        <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                    {% endfor %}
-                </select>
+    <div class="comparison columns">
+        <div class="card column">
+            <div class="controls-container">
+                <div class="xlabel-container searchable-dropdown">
+                    <select id="xlabel">
+                        {% for benchmark in benchmarks %}
+                            <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <span id="vs">vs</span>
+                <div class="ylabel-container searchable-dropdown">
+                    <select id="ylabel">
+                        {% for benchmark in benchmarks %}
+                            <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <span id="vs">vs</span>
-            <div class="ylabel-container" class="searchable-dropdown">
-                <select id="ylabel">
-                    {% for benchmark in benchmarks %}
-                        <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
 
-        <div id="comparison-scatter"></div>
-        <div class="download-container">
-            <button id="downloadSVGButton" class="button">Download plot as SVG</button>
-            <button id="downloadCSVButton" class="button">Download data as CSV</button>
+            <div id="comparison-scatter"></div>
+            <div class="download-container">
+                <button id="downloadSVGButton" class="button">Download plot as SVG</button>
+                <button id="downloadCSVButton" class="button">Download data as CSV</button>
+            </div>
+        </div>
+        <div class="card column" id="defaults">
+            <p>Examples of discovered relationships in the literature:</p>
+            <details class="comparison_selector"
+                     data-benchmark-x="ImageNet-top1_v1" data-benchmark-y="average_vision_v0">
+                <summary>
+                    <button class="button">
+                        Object classification performance is correlated with brain alignment.
+                    </button>
+                </summary>
+                Researchers found that the performance of computational models in
+                classifying the object in an image (aka the popular Computer Vision ImageNet benchmark)
+                is correlated with the alignment of the model to brain and behavioral data.
+                This is true across different stages of the ventral stream
+                and has been covered in several publications (e.g.
+                <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>),
+                <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>).
+                This connection between machine learning and neuroscience desiderata implies a striking
+                synergy between research in these two domains, as building better-performing models might also
+                lead to better models of the brain.
+            </details>
+            <details class="comparison_selector"
+                     data-benchmark-x="FreemanZiemba2013.V1-pls_v2" data-benchmark-y="ImageNet-C-top1_v0">
+                <summary><b>Alignment to early visual cortex V1 is correlated with model robustness.</b></summary>
+                The more similar model representations are to recordings from primary visual cortex V1,
+                the more robust the output of the model is to perturbations in the input
+                such as image distortions and adversarial attacks
+                (<a href="https://proceedings.neurips.cc/paper/2020/hash/98b17f068d5d9b7668e19fb8ae470841-Abstract.html">
+                Dapello & Marques et al. 2020</a>).
+                This finding is based on Brain-Score V1 benchmarks with data from
+                <a href="https://www.nature.com/articles/nn.3402">Freeman & Ziemba et al. 2013</a> as well as
+                <a href="https://arxiv.org/abs/1903.12261">ImageNet-C</a>,
+                and inspired the development of the VOneNet model.
+            </details>
+            <details class="comparison_selector"
+                     data-benchmark-x="Marques2020_v0" data-benchmark-y="Rajalingham2018-i2n_v2">
+                <summary><b>Models that exhibit more V1-like properties in early stages are more aligned to
+                    behavior.</b></summary>
+                As we make models more aligned to a diverse set of properties that have been discovered
+                in primary visual cortex V1 -- such as receptive field sizes, response selectivity,
+                surround and texture modulation, -- these more brain-aligned models also produce more human-like
+                behavioral choices on a match-to-sample task. The V1 properties here have been compiled by
+                <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al. 2021</a>
+                from many classic neuroscience studies, and the behavioral data was collected by
+                <a href="https://www.jneurosci.org/content/38/33/7255.short">Rajalingham et al. 2018</a>.
+            </details>
         </div>
     </div>
-    <div class="card column" id="defaults">
-        <ul>
-            <li>
-                <details id="objectClassification">
-                    <summary><b>Object classification performance is correlated with brain alignment.</b></summary>
-                    Researchers found that the performance of computational models in classifying the object in an image (aka the popular Computer Vision ImageNet benchmark) is correlated with the alignment of the model to brain and behavioral data. This is true across different stages of the ventral stream and has been covered in several publications (e.g. <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a>), <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a>, <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006897">Cadena et al. 2019</a>). This connection between machine learning and neuroscience desiderata implies a striking synergy between research in these two domains, as building better-performing models might also lead to better models of the brain.
-                </details>
-            </li>
-            <li>
-                <details id="alignmnetV1">
-                    <summary><b>Alignment to early visual cortex V1 is correlated with model robustness.</b></summary>
-                    The more similar model representations are to recordings from primary visual cortex V1, the more robust the output of the model is to perturbations in the input such as image distortions and adversarial attacks (<a href="https://proceedings.neurips.cc/paper/2020/hash/98b17f068d5d9b7668e19fb8ae470841-Abstract.html">Dapello & Marques et al. 2020</a>). This finding is based on Brain-Score V1 benchmarks with data from <a href="https://www.nature.com/articles/nn.3402">Freeman & Ziemba et al. 2013</a> as well as <a href="https://arxiv.org/abs/1903.12261">ImageNet-C</a>, and inspired the development of the VOneNet model.
-                </details>
-            </li>
-            <li>
-                <details id="V1likeProperties">
-                    <summary><b>Models that exhibit more V1-like properties in early stages are more aligned to behavior.</b></summary>
-                    As we make models more aligned to a diverse set of properties that have been discovered in primary visual cortex V1 -- such as receptive field sizes, response selectivity, surround and texture modulation, -- these more brain-aligned models also produce more human-like behavioral choices on a match-to-sample task. The V1 properties here have been compiled by <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al. 2021</a> from many classic neuroscience studies, and the behavioral data was collected by <a href="https://www.jneurosci.org/content/38/33/7255.short">Rajalingham et al. 2018</a>.
-                </details>
-            </li>
-    </div>
-</div>
 {% endblock %}
