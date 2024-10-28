@@ -260,6 +260,14 @@ $(document).ready(function () {
                     : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
             });
 
+        g.append("text")
+            .attr("class", "r2-text")
+            .attr("x", 500)
+            .attr("y", 20)
+            .attr("fill", "black")
+            .style("font-size", "16px")
+            .text("n=" + filtered_data.length + " models");
+
         // plot regression line
         g.append("line")
             .attr("id", "regression-line")
