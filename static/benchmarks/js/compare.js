@@ -12,7 +12,7 @@ $(document).ready(function () {
 
     const margin = {top: 0, right: 0, bottom: 40, left: 60},
         outerWidth = $(container_selector).width(),
-        outerHeight = $(container_selector).width() * 2/3,
+        outerHeight = $(container_selector).width() * 2 / 3,
         width = outerWidth - margin.left - margin.right,
         height = outerHeight - margin.top - margin.bottom;
 
@@ -340,21 +340,20 @@ $(document).ready(function () {
     }
 
     $("#downloadSVGButton").click(function () {
-        const serializer = new XMLSerializer();
         const svgNode = d3.select('svg').node();
         const clonedSvg = svgNode.cloneNode(true);
         inlineStyles(clonedSvg);
-        const xmlString = serializer.serializeToString(clonedSvg);
-        const imgData = 'data:image/svg+xml;base64,' + btoa(xmlString);
+        let svgData = clonedSvg.outerHTML;
+        svgData = svgData.replace('xlink:href="/static/benchmarks/img/logo.png"',
+            'xlink:href="' + window.location.origin + '/static/benchmarks/img/logo.png"')
+        const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
 
-        // Create a temporary anchor element
-        const a = document.createElement('a');
-        a.href = imgData;
-        a.download = getFileName(".svg"); // Set the download attribute with a filename
-
-        document.body.appendChild(a); // Append anchor to body
-        a.click(); // Trigger download
-        document.body.removeChild(a); // Remove anchor from body
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(svgBlob);
+        downloadLink.download = getFileName(".svg");
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     });
 
     function makeCSV() {
