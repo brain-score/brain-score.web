@@ -1,0 +1,35 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+
+{% block banner %}
+    <h1>Explore Benchmarks and Models</h1>
+{% endblock %}
+
+
+{% block content %}
+    <div class="columns">
+        <div class="column">
+            <div class="banner box benchmark-box">
+                <h2 class="title is-title-2">{{ benchmarks|length }} public Benchmarks</h2>
+            </div>
+
+            <div>
+                {% for benchmark in benchmarks %}
+                    <a class="tag benchmark-tag">{{ benchmark.benchmark_type__identifier }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="column">
+            <div class="banner box model-box">
+                <h2 class="title is-title-2">{{ models|length }} public Models</h2>
+            </div>
+
+            <div>
+                {% for model in models %}
+                    <a class="tag model-tag" href="{% url 'model-view' domain model.id %}" class="">{{ model.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,7 +1,8 @@
-from django.urls import path
 import functools
 
-from .views import index, user, model, competition2022, competition2024, compare, community, release2_0
+from django.urls import path
+
+from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, explore
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -79,6 +80,8 @@ for domain in supported_domains:
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'resubmit'),
         path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
+
+        path(f'{domain}/explore', functools.partial(explore.view, domain=domain), name=f'{domain}-explore'),
         path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
         path(f'{domain}/compare/', functools.partial(compare.view, domain=domain), name='compare'),
     ]
