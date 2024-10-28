@@ -39,8 +39,8 @@ $(document).ready(function () {
     function getDeduplicatedValues() {
         // Filter data to guard against empty "" or "X" scores turning into NaNs
         const filtered_data = comparison_data.filter(row =>
-            row[xKey].length > 0 && !isNaN(row[xKey]) &&
-            row[yKey].length > 0 && !isNaN(row[yKey]));
+            row[xKey.replace('-score', '-is_complete')] == 1 && row[xKey].length > 0 && !isNaN(row[xKey]) &&
+            row[yKey.replace('-score', '-is_complete')] == 1 && row[yKey].length > 0 && !isNaN(row[yKey]));
 
         // Calculate the correlation
         const xValues = filtered_data.map(d => +d[xKey]);
