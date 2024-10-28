@@ -34,9 +34,14 @@
             </div>
 
             <div id="comparison-scatter"></div>
-            <div class="download-container">
-                <button id="downloadSVGButton" class="button">Download plot as SVG</button>
-                <button id="downloadCSVButton" class="button">Download data as CSV</button>
+            <div class="download-container columns">
+                <div class="column">
+                    <button id="downloadSVGButton" class="button">Download plot as SVG</button>
+                </div>
+                <div class="column is-narrow"></div>
+                <div class="column has-text-right">
+                    <button id="downloadCSVButton" class="button">Download data as CSV</button>
+                </div>
             </div>
         </div>
 
@@ -46,7 +51,7 @@
 
             <h6 class="subtitle subtitle-is-6">Examples of relationships discovered in the literature:</h6>
             <div class="comparison_selector"
-                 data-benchmark-x="ImageNet-top1_v1" data-benchmark-y="MajajHong2015.IT-pls_v3" >
+                 data-benchmark-x="ImageNet-top1_v1" data-benchmark-y="MajajHong2015.IT-pls_v3">
                 <p class="" data-identifier="comparison_selector-imagenet_average">
                     Object classification performance is correlated with brain alignment.
                 </p>
@@ -56,8 +61,10 @@
                     is correlated with the alignment of the model to brain and behavioral data.
                     This is true across different stages of the ventral stream
                     and has been covered in several publications (e.g.,
-                    <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a> with a smaller image dataset,
-                    <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a> with ImageNet).
+                    <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a> with a
+                    smaller image dataset,
+                    <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a> with
+                    ImageNet).
                     This connection between machine learning and neuroscience desiderata implies a striking
                     synergy between research in these two domains, as building better-performing models might also
                     lead to better models of the brain.
@@ -90,7 +97,8 @@
                     in primary visual cortex V1 -- such as receptive field sizes, response selectivity,
                     surround and texture modulation, -- these more brain-aligned models also produce more human-like
                     behavioral choices on a match-to-sample task. The V1 properties here have been compiled by
-                    <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al. 2021</a>
+                    <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al.
+                        2021</a>
                     from many classic neuroscience studies, and the behavioral data was collected by
                     <a href="https://www.jneurosci.org/content/38/33/7255.short">Rajalingham et al. 2018</a>.
                 </div>
