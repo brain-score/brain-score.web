@@ -47,7 +47,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     # calculate lightweight, downloadable version of model scores
     csv_data = _build_scores_dataframe(benchmarks, model_rows)
 
-
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
     for benchmark in benchmarks:  # remove lab for more compactness
@@ -109,7 +108,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_url = ''
         citation_domain_title = ''
         citation_domain_bibtex = ''
-
 
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
@@ -274,13 +272,13 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             user_selection = dict(model__public=True)
         else:
             # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-            user_selection = dict(score_ceiled__isnull=False)
+            user_selection = dict(score_raw__isnull=False)
     elif user.is_superuser:
         user_selection = dict()
     else:
         # if we are in a user profile, show all rows that this user owns (regardless of public/private)
         # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-        user_selection = dict(model__owner=user, score_ceiled__isnull=False)
+        user_selection = dict(model__owner=user, score_raw__isnull=False)
 
     # Database stores scores for actual instances
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
