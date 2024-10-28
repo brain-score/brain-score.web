@@ -358,14 +358,15 @@ $(document).ready(function () {
     });
 
     function makeCSV() {
-        // TODO: only data for selected benchmarks
-        const headers = Object.keys(comparison_data[0]);
-        const rows = comparison_data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
+        // only data for selected benchmarks
+        [filtered_data, x, y] = getDeduplicatedValues();
+        const headers = ['model', xKey, yKey];
+        const rows = filtered_data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
         return [headers.join(','), ...rows].join('\n');
     }
 
     $("#downloadCSVButton").click(function () {
-        csvData = makeCSV()
+        const csvData = makeCSV();
         // Create a Blob from the CSV string
         const blob = new Blob([csvData], {type: 'text/csv;charset=utf-8;'});
         const url = URL.createObjectURL(blob);
@@ -373,8 +374,7 @@ $(document).ready(function () {
         // Create a temporary anchor element
         const a = document.createElement('a');
         a.href = url;
-        const file_name = getFileName(".csv")
-        a.download = file_name; // Set the download attribute with a filename
+        a.download = getFileName(".csv"); // Set the download attribute with a filename
 
         // Append anchor to body
         document.body.appendChild(a);
