@@ -1,6 +1,8 @@
 {% load static %}
 
-<a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}"><img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo"></a>
+<a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}">
+    <img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo">
+</a>
 
 <a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
     <img class="menu-icon" src="{% static "benchmarks/img/leaderboard_icon.png" %}" alt="Leaderboard Icon">
@@ -12,34 +14,99 @@
     <span>Compare</span>
 </a>
 
-{% url 'tutorials' as tutorial_url %}
-<a class="{% if 'tutorials' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials">
-    <img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Tutorial Icon">
-    <span>Tutorials</span>
-</a>
+<div class="dropdown">
+    <a class="{% if 'tutorials' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials">
+        <img class="menu-icon" src="{% static "/benchmarks/img/tutorial_icon.png" %}" alt="Tutorial Icon">
+        <span>Tutorials</span>
+    </a>
+    <div class="dropdown-content">
+        <div class="nested-dropdown">
+            <a href="https://www.brain-score.org/tutorials/models">Models</a>
+            <div class="nested-dropdown-content">
+                <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart</a>
+                <a href="https://www.brain-score.org/tutorials/models/deepdive_1">Deep Dive 1</a>
+                <a href="https://www.brain-score.org/tutorials/models/deepdive_2">Deep Dive 2</a>
+                <a href="https://www.brain-score.org/tutorials/models/deepdive_3">Deep Dive 3</a>
+            </div>
+        </div>
+        <a href="https://www.brain-score.org/tutorials/benchmarks">Benchmarks</a>
+    </div>
+</div>
 
-{% url 'profile' as profile_url %}
 <a class="{% if 'profile' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
     <img class="menu-icon" src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Profile Icon">
     <span>Profile</span>
 </a>
 
-{% url 'community' as community_url %}
 <a class="{% if request.path == community_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/community">
     <img class="menu-icon" src="{% static "/benchmarks/img/community_icon.png" %}" alt="Community Icon">
     <span>Community</span>
 </a>
 
-{% url 'faq' as faq_url %}
-<!--Attribution Purposes: (LEAVE IN): Icons made by <a href="https://www.flaticon.com/free-icons/help" title="help icons">Help icons created by cahiwak - Flaticon</a>"-->
 <a class="{% if request.path == faq_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/faq">
     <img class="menu-icon" src="{% static "/benchmarks/img/faq.png" %}" alt="FAQ Icon">
     <span>FAQ</span>
 </a>
 
-{% url 'comp2024' as comp2024_url %}
-<!--Attribution Purposes: (LEAVE IN): Icons made by <a href="https://www.freepik.com" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/"-->
 <a class="{% if request.path == comp2024_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/competition2024">
     <img class="menu-icon" src="{% static "/benchmarks/img/competition.png" %}" alt="Comp 24Icon">
     <span>Competition 2024</span>
 </a>
+
+<style>
+/* Dropdown container */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown content hidden by default */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Dropdown links styling */
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Show dropdown content on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Change color on hover */
+.dropdown-content a:hover {
+    background-color: #ddd;
+}
+
+/* Nested dropdown */
+.nested-dropdown {
+    position: relative;
+}
+
+/* Nested dropdown content hidden by default */
+.nested-dropdown-content {
+    display: none;
+    position: absolute;
+    left: 160px;
+    top: 0;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Show nested dropdown on hover */
+.nested-dropdown:hover .nested-dropdown-content {
+    display: block;
+}
+</style>
