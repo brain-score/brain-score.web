@@ -11,6 +11,7 @@ import pandas as pd
 from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
+from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
 from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
