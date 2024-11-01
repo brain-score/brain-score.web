@@ -25,6 +25,11 @@
                     <i class="fa-brands fa-github"></i> Find on GitHub
                 </a>
             </button>
+
+            {# Contributor #}
+            <button class="button">
+                Contributed by: {{ model|display_submitter:user|default:"" }}
+            </button>
         </p>
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
