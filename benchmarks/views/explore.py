@@ -12,6 +12,6 @@ def view(request, domain):
                   .filter(benchmark_type__domain=domain, benchmark_type__visible=True)
                   .order_by('benchmark_type__identifier', '-version')
                   .distinct('benchmark_type__identifier')
-                  .values('benchmark_type__identifier', 'version'))
+                  .values('id', 'benchmark_type__identifier', 'version'))
     context = {'domain': domain, 'models': models, 'benchmarks': benchmarks}
     return render(request, 'benchmarks/explore.html', context)

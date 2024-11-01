@@ -16,7 +16,7 @@
 
             <div>
                 {% for benchmark in benchmarks %}
-                    <a class="tag benchmark-tag">{{ benchmark.benchmark_type__identifier }}</a>
+                    <a class="tag benchmark-tag" href="{% url 'benchmark-view' domain benchmark.id %}">{{ benchmark.benchmark_type__identifier }}</a>
                 {% endfor %}
             </div>
         </div>
@@ -27,7 +27,7 @@
 
             <div>
                 {% for model in models %}
-                    <a class="tag model-tag" href="{% url 'model-view' domain model.id %}" class="">{{ model.name }}</a>
+                    <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
                 {% endfor %}
             </div>
         </div>
