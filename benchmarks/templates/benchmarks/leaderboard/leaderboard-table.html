@@ -55,9 +55,9 @@
           >
             <div>
               <p>
-                {# reference link #}
-                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                  <a href="{{ benchmark.benchmark_type.reference.url }}" target="_blank" rel="noopener noreferrer">
+                {# link if it's an instance (i.e., has id) #}
+                {% if benchmark.id %}
+                  <a href="{% url 'benchmark-view' domain benchmark.id %}">
                 {% endif %}
                 {# identifier #}
                 <span class="depth_{{ benchmark.depth }}
@@ -68,7 +68,7 @@
                 </span>
                 {# version #}
                 {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
-                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                {% if benchmark.id %}
                   </a>
                 {% endif %}
                 {# number of child benchmarks, ignore roots #}

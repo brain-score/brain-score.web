@@ -123,7 +123,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_title = ''
         citation_domain_bibtex = ''
 
-
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
     return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'benchmark_names': benchmark_names,
