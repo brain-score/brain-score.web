@@ -35,7 +35,8 @@
                 Ceiling
             </p>
             {% if benchmark.ceiling %}
-                <span class="has-text-weight-bold">{{ benchmark.ceiling|floatformat:2 }}</span>
+                <span class="has-text-weight-bold">{{ benchmark.ceiling|floatformat:2 }}</span>.
+                <p>Note that scores are relative to this ceiling.</p>
             {% else %}
                 Not available
             {% endif %}
