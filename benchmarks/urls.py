@@ -1,7 +1,10 @@
-from django.urls import path
 import functools
 
-from .views import index, user, model, competition2022, competition2024, compare, community, release2_0
+from django.conf import settings
+from django.urls import path
+
+from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
+    content_utils
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -43,7 +46,7 @@ non_domain_urls = [
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
     path('tutorials/troubleshooting', user.Tutorials.as_view(tutorial_type="troubleshooting"),
          name='tutorial-troubleshooting'),
-
+    # - model tutorials
     path('tutorials/models', user.Tutorials.as_view(plugin="models", tutorial_type="models"), name='model-tutorial'),
     path('tutorials/models/quickstart', user.Tutorials.as_view(plugin="models", tutorial_type="quickstart"),
          name='model-tutorial-quickstart'),
@@ -53,8 +56,7 @@ non_domain_urls = [
          name='model-tutorial-deepdive-2'),
     path('tutorials/models/deepdive_3', user.Tutorials.as_view(plugin="models", tutorial_type="deepdive_3"),
          name='model-tutorial-deepdive-3'),
-
-    # benchmark tutorials:
+    # - benchmark tutorials
     path('tutorials/benchmarks', user.Tutorials.as_view(plugin="benchmarks", tutorial_type="benchmarks"),
          name='benchmark-tutorial'),
     path('tutorials/benchmarks/package_data', user.Tutorials.as_view(plugin="benchmarks", tutorial_type="package_data"),
@@ -62,6 +64,8 @@ non_domain_urls = [
     path('tutorials/benchmarks/create_benchmark',
          user.Tutorials.as_view(plugin="benchmarks", tutorial_type="create_benchmark"),
          name='benchmark-create-benchmark'),
+    # - brain model explanation
+    path('brain_model', brain_model.view, name='brain-model'),
 
     # competitions and releases
     path('competition/', competition2024.view, name='competition'),
@@ -83,6 +87,11 @@ for domain in supported_domains:
         path(f'{domain}/compare/', functools.partial(compare.view, domain=domain), name='compare'),
     ]
     all_domain_urls.append(domain_urls)
+
+if settings.DEBUG:
+    all_domain_urls.append([
+        path('content_utils/sample_benchmark_images/', content_utils.sample_benchmark_images, name='sample_benchmark_images'),
+    ])
 
 # collapse all domains into 1D list (from 2D)
 urlpatterns = sum(all_domain_urls, [])
