@@ -14,6 +14,7 @@ non_domain_urls = [
     path('/', user.LandingPage.as_view(), name='landing_page'),
 
     # global pages
+    path('explore', partial(explore.view, domain="vision"), name='explore'),
     path('compare', partial(compare.view, domain="vision"), name='compare'),
     path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
     path('faq/', user.Faq.as_view(), name='faq'),
