@@ -26,4 +26,4 @@ sqlparse==0.4.4
 tqdm==4.65.0
 typing_extensions==4.7.1
 tzdata==2023.3
-urllib3==1.26.16
+urllib3==1.26.19
