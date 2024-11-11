@@ -1,0 +1,91 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h2 class="title is-2" id="brainmodel">BrainModel</h2>
+    <p>
+        Brain-Score operates on BrainModels. A BrainModel can be treated like an experimental subject, with
+        methods such as recording from a cortical region and performing a behavioral task (see the
+        <a href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html">
+            <i class="fa-brands fa-readme"></i> docs
+        </a>).
+
+        Many models submitted to Brain-Score are what we call a BaseModel. These are often variants of
+        models from the machine learning community without a particular commitment to the brain and no
+        knowledge of what e.g. "V1" is. To engage with these models and for ease-of-use, such BaseModels
+        are typically converted into BrainModels by making commitments to the brain such as committing
+        layers to cortical regions on separate datasets.
+    </p>
+{% endblock %}
+
+{% block info_section %}
+    {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+    {# region layer map #}
+    <div id="region_layer_map" class="card box content">
+        <div class="card-content">
+            <p class="subtitle is-3">
+                Region Layer Commitment
+            </p>
+            <div class="">
+                BaseModel layers have to be committed to cortical regions.
+                For BaseModels that are automatically translated into BrainModels
+                this is done on separate public data.
+                The same layers are thus used when recording from the same cortical region,
+                e.g. always the same layer for V1 instead of different layers per benchmark.
+            </div>
+            <div class="">
+                By default, committing layers to regions is done with a layer selection on separate public data:
+                each model is tested on its alignment to brain data from each region (V1, V2, V4, IT)
+                and the best layer is committed to that region.
+                At the end of this step, the model thus has a fixed, unchangeable layer commitment
+                for each region.
+            </div>
+        </div>
+    </div>
+
+    {# visual degrees #}
+    <div id="visual_degrees" class="card box content">
+        <div class="card-content">
+            <p class="subtitle is-3">
+                Visual Angle
+            </p>
+            <div class="content">
+                Models have to declare their field-of-view so that stimuli can be displayed like they were
+                displayed to experimental subjects.
+                For instance, if experimental stimuli were shown at 4 degrees and a model's field-of-view is
+                larger than that, then the stimuli are padded such that the core stimulus will make up 4 degrees
+                in the model's field-of-view.
+                Here's an example for a model declaring 8 visual degrees as its input.
+            </div>
+
+            <div class="columns">
+                <div class="column">
+                    <p class="has-text-centered">Base image, presented at 8 degrees:</p>
+                    <figure class="image is-marginless is-256x256">
+                        <img src="/static/benchmarks/img/visual_degrees/benchmark8_model8.png"
+                             alt="visual degrees 8 to 8"/>
+                    </figure>
+                </div>
+                <div class="column">
+                    <p class="has-text-centered">If image is presented at 4 degrees, model sees:</p>
+                    <figure class="image is-marginless is-256x256">
+                        <img src="/static/benchmarks/img/visual_degrees/benchmark4_model8.png"
+                             alt="visual degrees 8 to 4"/>
+                    </figure>
+                </div>
+                <div class="column">
+                    <p class="has-text-centered">If image is presented at 12 degrees, model sees:</p>
+                    <figure class="image is-marginless is-256x256">
+                        <img src="/static/benchmarks/img/visual_degrees/benchmark12_model8.png"
+                             alt="visual degrees 8 to 12"/>
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
