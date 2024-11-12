@@ -164,6 +164,22 @@
         </div>
     </section>
 
+    {# leaderboard #}
+    <section id="leaderboard" class="section container tablecenter is-centered">
+        <h3 class="title is-3">Competition Leaderboard</h3>
+
+        <h4 class="title is-4 track">Behavioral Track</h4>
+        <div class="content">
+            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_behavior_vision models=models_behavior_vision %}
+        </div>
+
+        <h4 class="title is-4 track">Neural Track</h4>
+        <div class="content">
+            {% include "benchmarks/benchmark_table.html" with benchmarks=benchmarks_neural_vision models=models_neural_vision %}
+        </div>
+    </section>
+
+
     {# overview #}
     <section id="overview" class="section container center">
         <h3 class="title is-3">Overview</h3>
