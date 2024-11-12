@@ -1,13 +1,11 @@
+import itertools
 import json
 import logging
 import re
-import datetime
-from math import isnan
 from collections import ChainMap
 from collections import namedtuple
-from collections import OrderedDict
+from typing import Union
 
-import itertools
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -16,7 +14,7 @@ from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
-from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr
+from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
 
 _logger = logging.getLogger(__name__)
 
@@ -124,7 +122,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_url = ''
         citation_domain_title = ''
         citation_domain_bibtex = ''
-
 
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
@@ -376,7 +373,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner', 'submission')
+    model_meta = Model.objects.select_related('reference', 'owner', 'submission', 'submission__submitter')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
@@ -444,7 +441,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         else:  # if a model does not have an average score, it will not be included in the rank
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
-        reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
+        model_reference = reference_identifier(meta.reference)
 
         # model
         competition = meta.competition
@@ -460,7 +457,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         model_row = ModelRow(
             id=meta.id,
             name=meta.name,
-            reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
+            reference_identifier=model_reference, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public, competition=competition, domain=domain,
             scores=model_scores, rank=rank, build_status=build_status,
             submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
@@ -574,6 +571,11 @@ def get_visibility(model, user):
     # Model is public
     else:
         return "public"
+
+
+def reference_identifier(reference: Reference) -> Union[str, None]:
+    return f"{reference.author} et al., {reference.year}" if reference else None
+
 
 # Adds python functions so the HTML can do several things
 @register.filter
