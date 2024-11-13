@@ -63,69 +63,6 @@
     <span>Competition 2024</span>
 </a>
 
-<style>
-/* Dropdown container */
-.dropdown {
-    position: relative;
-    display: inline-block;
-    width:300px;
-}
-
-/* Dropdown content hidden by default */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: white;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-    z-index: 1;
-    transform: translateX(67px);
-}
-
-/* Dropdown links styling */
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-}
-
-.dropdown:hover > .dropdown-content {
-    display: block;
-}
-
-/* Change color on hover */
-.dropdown-content a:hover {
-    background-color: #ddd;
-}
-
-/* Nested dropdown */
-.nested-dropdown {
-    position: relative;
-}
-
-/* Nested dropdown content hidden by default */
-.nested-dropdown-content {
-    display: none;
-    position: absolute;
-    left: 160px;
-    top: 0;
-    background-color: white;
-    width: 180px;
-    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-    z-index: 1;
-}
-
-.nested-dropdown-content a {
-    font-size: 0.9em;
-}
-
-/* Show nested dropdown on hover */
-.nested-dropdown:hover .nested-dropdown-content {
-    display: block;
-}
-</style>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const dropdownContent = document.querySelector(".dropdown-content");
