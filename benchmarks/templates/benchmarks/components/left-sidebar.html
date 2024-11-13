@@ -9,6 +9,11 @@
     <span>Leaderboard</span>
 </a>
 
+<a class="{% if request.path == '/'|add:domain|add:'/explore/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/explore">
+    <img class="menu-icon" src="{% static "benchmarks/img/total_benchmarks_icon.png" %}" alt="Explore Icon">
+    <span>Explore</span>
+</a>
+
 <a class="{% if request.path == '/'|add:domain|add:'/compare/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/compare">
     <img class="menu-icon" src="{% static "benchmarks/img/compare_icon.png" %}" alt="Compare Icon">
     <span>Compare</span>
