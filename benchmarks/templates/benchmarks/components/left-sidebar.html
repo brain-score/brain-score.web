@@ -4,16 +4,19 @@
     <img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo">
 </a>
 
+{% url 'leaderboard' as leaderboard_url %}
 <a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
     <img class="menu-icon" src="{% static "benchmarks/img/leaderboard_icon.png" %}" alt="Leaderboard Icon">
     <span>Leaderboard</span>
 </a>
 
-<a class="{% if request.path == '/'|add:domain|add:'/explore/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/explore">
+{% url 'explore' as explore_url %}
+<a class="{% if '/vision/explore' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/vision/explore">
     <img class="menu-icon" src="{% static "benchmarks/img/total_benchmarks_icon.png" %}" alt="Explore Icon">
     <span>Explore</span>
 </a>
 
+{% url 'compare' as compare_url %}
 <a class="{% if request.path == '/'|add:domain|add:'/compare/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/compare">
     <img class="menu-icon" src="{% static "benchmarks/img/compare_icon.png" %}" alt="Compare Icon">
     <span>Compare</span>
