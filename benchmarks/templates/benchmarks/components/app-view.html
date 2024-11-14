@@ -23,6 +23,7 @@
     {% endblock %}
   </div>
 
+  {% block main_content %}
   <div class="columns main-content">
     <div class="column is-three-quarters main-cell">
       {% block content %}{% endblock %}
@@ -32,5 +33,6 @@
       {% block info_section %}{% endblock %}
     </div>
   </div>
+  {% endblock %}
 </div>
 {% endblock %}

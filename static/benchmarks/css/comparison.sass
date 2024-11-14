@@ -1,7 +1,6 @@
 @import "rotate"
 
 .comparison
-  width: 134%
 
   .card
     margin-bottom: 20px
@@ -11,12 +10,13 @@
       margin-bottom: 10px
       font-size: 20px
 
-      span
-        font-weight: bold
-
     .controls-container
-      display: flex
       margin-bottom: 20px
+
+      span#vs
+        font-weight: bold
+        margin-right: 5px
+        margin-left: 5px
 
   .xlabel-container, .ylabel-container
     text-align: center
@@ -26,6 +26,10 @@
       height: 30px
       margin-right: 15px
       border-radius: 5px
+
+  .download-container
+    justify-content: space-around
+    margin-bottom: 20px
 
   rect
     fill: transparent
@@ -46,6 +50,20 @@
 
   .dot
     fill-opacity: .5
+
+  .tick
+    fill: #4A4A4A
+
+// pre-selectors
+.comparison_selector
+  cursor: pointer
+
+  >p
+    border: 1px solid darkgray
+    border-radius: 20px
+    padding: 1em 2.5em
+    margin-top: 0.5em
+    margin-bottom: 0.5em
 
 .d3-tip
   line-height: 1
