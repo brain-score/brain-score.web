@@ -1,10 +1,11 @@
 import functools
-
+from functools import partial
 from django.conf import settings
 from django.urls import path
 
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils
+    content_utils, benchmark, explore
+
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -15,13 +16,14 @@ non_domain_urls = [
     path('/', user.LandingPage.as_view(), name='landing_page'),
 
     # global pages
-    path('compare', functools.partial(compare.view, domain="vision"), name='compare'),
+    path('explore', partial(explore.view, domain="vision"), name='explore'),
+    path('compare', partial(compare.view, domain="vision"), name='compare'),
     path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
     path('faq/', user.Faq.as_view(), name='faq'),
-    path('community', functools.partial(community.view), name='community'),
+    path('community', partial(community.view), name='community'),
     path('community/join/slack', community.JoinSlack.as_view(), name="join_slack"),
     path('community/join/mailing-list', community.JoinMailingList.as_view(), name="join_mailing_list"),
-    path('unsubscribe', functools.partial(community.Unsubscribe.as_view()), name='unsubscribe'),
+    path('unsubscribe', partial(community.Unsubscribe.as_view()), name='unsubscribe'),
 
     # user
     path('signup/', user.Signup.as_view(), name='signup'),
@@ -39,7 +41,7 @@ non_domain_urls = [
     # this is a **temporary** fix until the new UI landing page is live.
     path('profile/', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
     path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
-    path('profile/resubmit/', functools.partial(user.resubmit, domain="vision"), name='vision-resubmit'),
+    path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 
     # central tutorial page, constant across all Brain-Score domains
@@ -78,13 +80,16 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        path(f'{domain}/', functools.partial(index, domain=domain), name='index'),
+        path(f'{domain}/', partial(index, domain=domain), name='index'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
-        path(f'profile/<str:domain>/resubmit/', functools.partial(user.resubmit, domain=domain), name=f'resubmit'),
+        path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
         path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
-        path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
-        path(f'{domain}/compare/', functools.partial(compare.view, domain=domain), name='compare'),
+
+        path(f'{domain}/explore', partial(explore.view, domain=domain), name=f'{domain}-explore'),
+        path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
+        path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
+        path(f'{domain}/compare/', partial(compare.view, domain=domain), name='compare'),
     ]
     all_domain_urls.append(domain_urls)
 
