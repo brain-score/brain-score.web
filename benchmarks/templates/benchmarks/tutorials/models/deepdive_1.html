@@ -2,16 +2,8 @@
 {% load static %}
 
 {% block banner %}
-    <h1>Deep Dive 1  <span style="font-size: 0.6em; font-weight: normal;">(Brain-Score Philosophy and Background)</span></h1>
-        <span style="font-size: 1.5em;">
-            <p>
-                <a href="https://www.brain-score.org/tutorials/models/quickstart" style="margin-right: 25px;">Quickstart</a>
-                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1" style="margin-right: 25px;">Deep Dive 1</a>
-                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2" style="margin-right: 25px;">Deep Dive 2</a>
-                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3" style="margin-right: 25px;">Deep Dive 3</a>
-            </p>
-        </span>
-
+<h1>Deep Dive 1</h1>
+<p>A Tour of the Submission Package </p>
 {% endblock %}
 
 
@@ -42,8 +34,24 @@
                 </div>
     </div>
 </div>
+
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 1: Recommended Brain-Score Papers and Publications</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 1: The Philosophy of BrainScore</h3>
+    <div class="benefits_info is-size-5-mobile">
+        A potentially organizing goal of the brain and cognitive sciences is to accurately explain domains of human
+        intelligence as executable, neurally mechanistic models. Years of research have led to models that capture
+        experimental results in individual behavioral tasks and individual brain regions. We here advocate for taking
+        the next step: integrating experimental results from many laboratories into suites of benchmarks that, when
+        considered together, push mechanistic models toward explaining entire domains of intelligence, such as vision,
+        language, and motor control. Given recent successes of neurally mechanistic models and the surging availability
+        of neural, anatomical, and behavioral data, we believe that now is the time to create integrative benchmarking
+        platforms (such as BrainScore) that incentivize ambitious, unified models.
+    </div>
+</div>
+
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 2: Recommended Brain-Score Papers and Publications</h3>
         <div class="benefits_info is-size-5-mobile">
             <strong>The Philosophy of Integrative Benchmarking:</strong><br>
             <a href="https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X">Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence</a>
@@ -64,7 +72,7 @@
         </div>
 </div>
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 2: Recommended Brain-Score Presentations</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 3: Recommended Brain-Score Presentations</h3>
         <div class="benefits_info is-size-5-mobile">
             <strong>Jim DiCarlo Quest Launch Presentation</strong><br>
             <a href="https://www.youtube.com/watch?v=Vem0Ilrbf3c">MIT Quest for Intelligence Launch: The Future of Intelligence Science</a>
@@ -86,7 +94,7 @@
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 3: Documentation for Vision</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 4: Documentation for Vision</h3>
          <div class="benefits_info is-size-5-mobile">
             <strong>Documentation for Vision:</strong><br>
             <a href="https://brain-score.readthedocs.io/">Brain-Score readthedocs</a><br>
@@ -96,7 +104,7 @@
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 4: Code</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 5: Code</h3>
          <div class="benefits_info is-size-5-mobile">
             <strong>Relevant Code:</strong><br>
             <a href="https://github.com/mschrimpf/neural-nlp">neural-nlp</a><br>
