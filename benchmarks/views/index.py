@@ -1,13 +1,11 @@
+import itertools
 import json
 import logging
 import re
-import datetime
-from math import isnan
 from collections import ChainMap
 from collections import namedtuple
-from collections import OrderedDict
+from typing import Union
 
-import itertools
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -16,7 +14,7 @@ from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
-from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr
+from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
 
 _logger = logging.getLogger(__name__)
 
@@ -45,23 +43,7 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
     # calculate lightweight, downloadable version of model scores
-    csv_scores = []
-    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
-    for model in model_rows:
-        csv_dict = {"model_name": model.name, "scores": {}}
-        for score in model.scores:
-            benchmark_identifier = score.benchmark.identifier
-            if benchmark_identifier in benchmark_names:
-                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
-        csv_scores.append(csv_dict)
-
-    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
-
-    if not csv_df.empty:  # check if the DataFrame is empty
-        csv_df.set_index('model_name', inplace=True)
-        csv_data = csv_df.to_csv(index=True)
-    else:
-        csv_data = "No models submitted yet."
+    csv_data = _build_scores_dataframe(benchmarks, model_rows)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -125,7 +107,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
         citation_domain_title = ''
         citation_domain_bibtex = ''
 
-
     benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
 
     return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'benchmark_names': benchmark_names,
@@ -148,6 +129,27 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             'citation_domain_bibtex': citation_domain_bibtex,
             'csv_downloadable': csv_data
             }
+
+
+def _build_scores_dataframe(benchmarks, model_rows):
+    csv_scores = []
+    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
+    for model in model_rows:
+        csv_dict = {"model_name": model.name, "scores": {}}
+        for score in model.scores:
+            benchmark_identifier = score.benchmark.identifier
+            if benchmark_identifier in benchmark_names:
+                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
+        csv_scores.append(csv_dict)
+    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
+
+    if not csv_df.empty:  # check if the DataFrame is empty
+        csv_df.set_index('model_name', inplace=True)
+        csv_data = csv_df.to_csv(index=True)
+    else:
+        csv_data = "No models submitted yet."
+
+    return csv_data
 
 
 def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
@@ -268,13 +270,13 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             user_selection = dict(model__public=True)
         else:
             # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-            user_selection = dict(score_ceiled__isnull=False)
+            user_selection = dict(score_raw__isnull=False)
     elif user.is_superuser:
         user_selection = dict()
     else:
         # if we are in a user profile, show all rows that this user owns (regardless of public/private)
         # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-        user_selection = dict(model__owner=user, score_ceiled__isnull=False)
+        user_selection = dict(model__owner=user, score_raw__isnull=False)
 
     # Database stores scores for actual instances
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
@@ -307,7 +309,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                                  'overall_order': benchmark.overall_order,
                                  'model': score.model.id,
                                  'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error,
-                                 'comment': score.comment})
+                                 'comment': score.comment, 'is_complete': 1})
                 benchmark_scores = pd.DataFrame(rows)
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
@@ -323,8 +325,9 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                 if len(missing_scores) > 0:
                     missing_scores = pd.DataFrame(missing_scores, columns=['model', 'benchmark'])
                     missing_scores['score_raw'] = missing_scores['score_ceiled'] = np.nan
+                    missing_scores['is_complete'] = 0
                     children_scores = pd.concat((children_scores, missing_scores))
-                # compute average of children scores
+                # compute average of children scores -- treat missing scores as 0 for averaging
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean(numeric_only=True)
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
                 if len(benchmark_scores) > 0:
@@ -376,7 +379,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
 
     # arrange into per-model scores
     # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner', 'submission')
+    model_meta = Model.objects.select_related('reference', 'owner', 'submission', 'submission__submitter')
     model_meta = {model.id: model for model in model_meta}
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
@@ -390,7 +393,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'])
     ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
         'benchmark', 'versioned_benchmark_identifier',
-        'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
+        'score_raw', 'score_ceiled', 'error', 'color', 'comment', 'is_complete'])
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
@@ -401,22 +404,22 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                 benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max),
-                comment="")
+                comment="", is_complete=False)
         else:
             no_score[versioned_benchmark_identifier] = ScoreDisplay(
                 benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=0, max_value=1),
-                comment="")
+                comment="", is_complete=False)
     # - convert scores DataFrame into rows
     data = []
     for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
-        for score_ceiled, score_raw, error, benchmark, version, comment in zip(
+        for score_ceiled, score_raw, error, benchmark, version, comment, is_complete in zip(
                 group['score_ceiled'], group['score_raw'], group['error'],
                 group['benchmark'], group['benchmark_version'],
-                group['comment']):
+                group['comment'], group['is_complete']):
             versioned_benchmark_identifier = f'{benchmark}_v{version}'
             benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
             benchmark = benchmark_lookup[versioned_benchmark_identifier]
@@ -429,7 +432,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             score_display = ScoreDisplay(benchmark=benchmark,
                                          versioned_benchmark_identifier=versioned_benchmark_identifier,
                                          score_ceiled=score_ceiled, score_raw=score_raw, error=error,
-                                         color=color, comment=comment)
+                                         color=color, comment=comment, is_complete=is_complete)
             model_scores[versioned_benchmark_identifier] = score_display
         # fill in missing scores
         model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}']
@@ -444,7 +447,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         else:  # if a model does not have an average score, it will not be included in the rank
             _logger.warning(f"Model {model_id} not found in model_ranks")
             rank = max(model_ranks['rank']) + 1
-        reference_identifier = f"{meta.reference.author} et al., {meta.reference.year}" if meta.reference else None
+        model_reference = reference_identifier(meta.reference)
 
         # model
         competition = meta.competition
@@ -460,7 +463,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         model_row = ModelRow(
             id=meta.id,
             name=meta.name,
-            reference_identifier=reference_identifier, reference_link=meta.reference.url if meta.reference else None,
+            reference_identifier=model_reference, reference_link=meta.reference.url if meta.reference else None,
             user=meta.owner, public=meta.public, competition=competition, domain=domain,
             scores=model_scores, rank=rank, build_status=build_status,
             submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
@@ -552,7 +555,8 @@ def _build_comparison_data(models):
     """
     data = [dict(ChainMap(*[{'model': model_row.name}] +
                            [{f"{score_row.versioned_benchmark_identifier}-score": score_row.score_ceiled,
-                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error}
+                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error,
+                             f"{score_row.versioned_benchmark_identifier}-is_complete": score_row.is_complete}
                             for score_row in model_row.scores]))
             for model_row in models]
     return data
@@ -574,6 +578,11 @@ def get_visibility(model, user):
     # Model is public
     else:
         return "public"
+
+
+def reference_identifier(reference: Reference) -> Union[str, None]:
+    return f"{reference.author} et al., {reference.year}" if reference else None
+
 
 # Adds python functions so the HTML can do several things
 @register.filter

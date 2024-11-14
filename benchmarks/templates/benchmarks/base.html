@@ -29,7 +29,8 @@
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Force desktop site, even on mobile -->
+    <meta name="viewport" content="width=1024">
 
     {% compress css %}
         <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
@@ -43,10 +44,12 @@
     <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js" integrity="sha512-6HrPqAvK+lZElIZ4mZ64fyxIBTsaX5zAFZg2V/2WT+iKPrFzTzvx6QAsLW2OaLwobhMYBog/+bvmIEEGXi0p1w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery.countdown/2.2.0/jquery.countdown.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.4/jstat.min.js"></script>
 
     {# data #}
     <script type="text/javascript">
         comparison_data = {{ comparison_data|safe }};
+        logo_url = "{{ logo_url }}";
     </script>
 
     {# own sources #}
@@ -65,6 +68,7 @@
     <script defer src="{% static "/benchmarks/js/countdown.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/collapsible_faq.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/download_csv.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/mobile_warning.js" %}"></script>
     {% endcompress %}
 
     <script type="application/ld+json">
@@ -100,11 +104,23 @@
     <meta name="twitter:image" content="{{logo_url}}">
 
     <title>{{title}}</title>
+
+
+
 </head>
 
 <body>
+    <div id="mobile-warning-modal" class="mobile-warning-modal is-hidden">
+        <div class="modal-content">
+          <p>You're viewing Brain-Score on a mobile device. For the best experience — featuring interactive benchmarks and
+              detailed visualizations — we recommend using a desktop. You can still proceed with the mobile version below.</p>
+          <button id="dismiss-modal-btn" class="button button-primary">Proceed with Mobile Version</button>
+        </div>
+    </div>
     <main>
-        {% block main %}{% endblock %}
+        <div id="main-content" class="main-content">
+            {% block main %}{% endblock %}
+        </div>
     </main>
 </body>
 
