@@ -5,7 +5,7 @@ import re
 from collections import ChainMap
 from collections import namedtuple
 from typing import Union
-
+from django.core.cache import cache
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -13,7 +13,8 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
-
+from dateutil.parser import parse as parse_datetime
+import time
 from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
 
 _logger = logging.getLogger(__name__)
@@ -30,10 +31,169 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
+ModelRow = namedtuple('ModelRow', [
+    'id', 'name',
+    'reference_identifier', 'reference_link',
+    'user', 'public', 'competition', 'domain',
+    'rank', 'scores',
+    'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'
+])
 
-@cache_page(24 * 60 * 60)
+ScoreDisplay = namedtuple('ScoreDisplay', [
+    'benchmark', 'versioned_benchmark_identifier',
+    'score_raw', 'score_ceiled', 'error', 'color', 'comment', 'is_complete'
+])
+
+def model_row_to_dict(model_row):
+    """Convert ModelRow to a dictionary for caching"""
+    try:
+        return {
+            'id': model_row.id,
+            'name': model_row.name,
+            'reference_identifier': model_row.reference_identifier,
+            'reference_link': model_row.reference_link,
+            'user_id': model_row.user.id if model_row.user else None,
+            'user_name': model_row.user.display_name if model_row.user else None,  # Add this
+            'public': model_row.public,
+            'competition': model_row.competition,
+            'domain': model_row.domain,
+            'rank': model_row.rank,
+            'scores': [score_display_to_dict(score) for score in model_row.scores],
+            'build_status': model_row.build_status,
+            'submitter': model_row.submitter,
+            'submission_id': model_row.submission_id,
+            'jenkins_id': model_row.jenkins_id,
+            'timestamp': model_row.timestamp.isoformat() if model_row.timestamp else None
+        }
+    except Exception as e:
+        print(f"Error in model_row_to_dict: {str(e)}")
+        raise
+
+def score_display_to_dict(score):
+    """Convert ScoreDisplay to a dictionary for caching"""
+    try:
+        return {
+            'benchmark_id': score.benchmark.id,
+            'benchmark_identifier': score.benchmark.identifier,  # Add this
+            'benchmark_type_id': score.benchmark.benchmark_type_id,  # Add this
+            'versioned_benchmark_identifier': score.versioned_benchmark_identifier,
+            'score_raw': score.score_raw,
+            'score_ceiled': score.score_ceiled,
+            'error': score.error,
+            'color': score.color,
+            'comment': score.comment,
+            'is_complete': score.is_complete,
+            # Add any additional benchmark metadata needed
+            'benchmark_meta': {
+                'depth': score.benchmark.depth,
+                'root_parent': score.benchmark.root_parent,
+                'overall_order': score.benchmark.overall_order,
+                'number_of_all_children': score.benchmark.number_of_all_children
+            }
+        }
+    except Exception as e:
+        print(f"Error in score_display_to_dict: {str(e)}")
+        raise
+
+def dict_to_model_row(d, benchmarks, users):
+    """Convert dictionary back to ModelRow"""
+    try:
+        scores = [dict_to_score_display(score_dict, benchmarks) for score_dict in d['scores']]
+        user = users.get(d['user_id']) if d['user_id'] else None
+        
+        # Create a mock user object if needed
+        if user is None and d.get('user_name'):
+            from collections import namedtuple
+            MockUser = namedtuple('MockUser', ['id', 'display_name'])
+            user = MockUser(id=d['user_id'], display_name=d['user_name'])
+        
+        return ModelRow(
+            id=d['id'],
+            name=d['name'],
+            reference_identifier=d['reference_identifier'],
+            reference_link=d['reference_link'],
+            user=user,
+            public=d['public'],
+            competition=d['competition'],
+            domain=d['domain'],
+            rank=d['rank'],
+            scores=scores,
+            build_status=d['build_status'],
+            submitter=d['submitter'],
+            submission_id=d['submission_id'],
+            jenkins_id=d['jenkins_id'],
+            timestamp=parse_datetime(d['timestamp']) if d['timestamp'] else None
+        )
+    except Exception as e:
+        print(f"Error in dict_to_model_row: {str(e)}")
+        raise
+
+def dict_to_score_display(d, benchmarks):
+    """Convert dictionary back to ScoreDisplay"""
+    try:
+        # Find matching benchmark using both id and identifier
+        benchmark = next(
+            (b for b in benchmarks 
+             if b.id == d['benchmark_id'] and b.identifier == d['benchmark_identifier']),
+            None
+        )
+        
+        if benchmark is None:
+            print(f"Warning: Could not find benchmark with id {d['benchmark_id']}")
+            # Create a mock benchmark if needed
+            from collections import namedtuple
+            MockBenchmark = namedtuple('MockBenchmark', [
+                'id', 'identifier', 'benchmark_type_id', 'depth',
+                'root_parent', 'overall_order', 'number_of_all_children'
+            ])
+            benchmark = MockBenchmark(
+                id=d['benchmark_id'],
+                identifier=d['benchmark_identifier'],
+                benchmark_type_id=d['benchmark_type_id'],
+                depth=d['benchmark_meta']['depth'],
+                root_parent=d['benchmark_meta']['root_parent'],
+                overall_order=d['benchmark_meta']['overall_order'],
+                number_of_all_children=d['benchmark_meta']['number_of_all_children']
+            )
+            
+        return ScoreDisplay(
+            benchmark=benchmark,
+            versioned_benchmark_identifier=d['versioned_benchmark_identifier'],
+            score_raw=d['score_raw'],
+            score_ceiled=d['score_ceiled'],
+            error=d['error'],
+            color=d['color'],
+            comment=d['comment'],
+            is_complete=d['is_complete']
+        )
+    except Exception as e:
+        print(f"Error in dict_to_score_display: {str(e)}")
+        raise
+
 def view(request, domain: str):
     context = get_context(domain=domain)
+    
+    # Convert models to dictionaries for caching
+    cacheable_context = context.copy()
+    cacheable_context['models'] = [model_row_to_dict(model) for model in context['models']]
+    
+    # Ensure we cache all necessary context
+    required_keys = [
+        'models', 'benchmarks', 'benchmark_parents', 
+        'uniform_parents', 'not_shown_set', 'BASE_DEPTH',
+        'domain', 'benchmark_names'
+    ]
+    
+    missing_keys = [key for key in required_keys if key not in cacheable_context]
+    if missing_keys:
+        print(f"Warning: Missing keys in cacheable context: {missing_keys}")
+    
+    # Store in cache for model view to use
+    cache_key = f'leaderboard_context_{domain}'
+    print(f"Caching leaderboard context with key: {cache_key}")
+    print(f"Caching context with keys: {cacheable_context.keys()}")
+    cache.set(cache_key, cacheable_context, 24 * 60 * 60)  # Cache for 24 hours
+    time.sleep(60)
     return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
 
 
@@ -463,10 +623,19 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
         model_row = ModelRow(
             id=meta.id,
             name=meta.name,
-            reference_identifier=model_reference, reference_link=meta.reference.url if meta.reference else None,
-            user=meta.owner, public=meta.public, competition=competition, domain=domain,
-            scores=model_scores, rank=rank, build_status=build_status,
-            submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
+            reference_identifier=model_reference, 
+            reference_link=meta.reference.url if meta.reference else None,
+            user=meta.owner, 
+            public=meta.public, 
+            competition=competition, 
+            domain=domain,
+            scores=model_scores, 
+            rank=rank, 
+            build_status=build_status,
+            submitter=submitter, 
+            submission_id=submission_id, 
+            jenkins_id=jenkins_id, 
+            timestamp=timestamp
         )
         data.append(model_row)
     data = list(sorted(data, key=lambda model_row: model_row.rank))

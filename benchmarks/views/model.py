@@ -1,58 +1,120 @@
 import logging
 from ast import literal_eval
-from collections import ChainMap, OrderedDict, namedtuple
+from collections import ChainMap, OrderedDict
 import json
-
 import numpy as np
 from django.http import Http404
 from django.shortcuts import render
 from django.template.defaulttags import register
-
+from django.core.cache import cache
+from django.contrib.auth import get_user_model
+from dateutil.parser import parse as parse_datetime
+from collections import namedtuple
+import time
 from .index import (_collect_benchmarks, _collect_models, _build_scores_dataframe,
                    _build_comparison_data, _collect_submittable_benchmarks,
-                   BASE_DEPTH, ENGINEERING_ROOT, get_context)
+                   BASE_DEPTH, ENGINEERING_ROOT, get_context, model_row_to_dict, 
+                   dict_to_model_row, dict_to_score_display)
 from ..models import BenchmarkType, Model
 
 _logger = logging.getLogger(__name__)
 
 def view(request, id: int, domain: str):
-    model, model_context, reference_context = determine_context(id, request, domain, model_filter={"model_id":id})
+    # Try to get cached leaderboard context first
+    cache_key = f'leaderboard_context_{domain}'
+    print(f"Attempting to get cached context with key: {cache_key}")
+    cached_context = cache.get(cache_key)
+    
+    if cached_context:
+        print(f"Found cached context with {len(cached_context['models'])} models")
+        try:
+            # Convert cached dictionaries back to objects
+            User = get_user_model()
+            users = {user.id: user for user in User.objects.all()}
+            reference_context = cached_context.copy()
+            
+            # Ensure benchmarks are properly loaded
+            if 'benchmarks' not in reference_context:
+                print("No benchmarks in cached context, collecting fresh benchmarks")
+                reference_context['benchmarks'] = _collect_benchmarks(domain)
+            
+            # Convert cached model dictionaries back to ModelRow objects
+            reference_context['models'] = [
+                dict_to_model_row(model_dict, reference_context['benchmarks'], users) 
+                for model_dict in cached_context['models']
+            ]
+            
+            # Verify other required context keys
+            required_keys = ['benchmark_parents', 'uniform_parents', 'not_shown_set', 'BASE_DEPTH']
+            missing_keys = [key for key in required_keys if key not in reference_context]
+            if missing_keys:
+                print(f"Missing required keys in cached context: {missing_keys}")
+                # Add missing keys from fresh context
+                fresh_context = get_context(show_public=True, domain=domain)
+                for key in missing_keys:
+                    reference_context[key] = fresh_context[key]
+            
+            print("Successfully reconstructed context from cache")
+            
+        except Exception as e:
+            print(f"Error reconstructing cached context: {str(e)}")
+            print("Falling back to fresh context")
+            reference_context = get_context(show_public=True, domain=domain)
+    else:
+        print("No cached context found, getting fresh context")
+        reference_context = get_context(show_public=True, domain=domain)
 
-    # takes care of odd issue where valueError is raised when
-    # models are scored on some benchmarks, but not others.
+    # Get model and context
+    model, model_context = determine_context(id, request, domain, reference_context)
+
     try:
         contextualize_scores(model, reference_context)
-    except ValueError:
+    except ValueError as e:
+        print(f"Error contextualizing scores: {str(e)}")
         pass
+
     model_context['model'] = model
     del model_context['models']
-    # visual degrees
-    visual_degrees = Model.objects.get(id=model.id).visual_degrees
-    model_context['visual_degrees'] = visual_degrees
-    # layer assignment
-    layers = get_layers(model)
-    model_context['layers'] = layers
+    
+    # Add visual degrees and layers
+    try:
+        model_obj = Model.objects.get(id=model.id)
+        visual_degrees = model_obj.visual_degrees
+        model_context['visual_degrees'] = visual_degrees
+        model_context['layers'] = get_layers(model)
+    except Exception as e:
+        print(f"Error getting model details: {str(e)}")
+        model_context['visual_degrees'] = None
+        model_context['layers'] = {}
 
-    # only show detailed model info to superuser or owner:
-    if request.user.is_superuser or model.user.id == request.user.id:
+    # Show detailed model info to superuser or owner
+    if request.user.is_superuser or (model.user and model.user.id == request.user.id):
         model_context['submission_details_visible'] = True
+    
+    # Print final context keys for debugging
+    print(f"Final context keys: {model_context.keys()}")
+
+    time.sleep(60)
+    
     return render(request, 'benchmarks/model.html', model_context)
 
-
-def determine_context(id, request, domain: str, model_filter=None):
-    # this is a bit hacky: we're loading scores for *all* public models as well as *all* of the user's models
-    # so we're loading a lot of unnecessary detail. But it lets us re-use already existing code.
-    reference_context = get_context(show_public=True, model_filter=model_filter, domain=domain)
-    # first check if model is in public list
-    model_context = reference_context
+def determine_context(id, request, domain, reference_context):
+    """Modified to use cached reference context"""
+    # First check if model is in public list
     model = [m for m in reference_context['models'] if m.id == id]
-    if len(model) != 1 and not request.user.is_anonymous:  # model not found in public list, try user's private
-        model_context = get_model_context(request.user)
-        model = [m for m in model_context['models'] if m.id == id]
+    
+    if len(model) != 1 and not request.user.is_anonymous:
+        # Model not found in public list, try user's private models
+        user_context = get_model_context(request.user)
+        model = [m for m in user_context['models'] if m.id == id]
+        model_context = user_context
+    else:
+        model_context = reference_context
+
     if len(model) != 1:
         raise Http404(f"Model with id {id} not found or user does not have access")
-    model = model[0]
-    return model, model_context, reference_context
+        
+    return model[0], model_context
 
 def get_model_context(show_public: bool, model_id: int, domain: str, user=None):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False)
@@ -63,7 +125,7 @@ def get_model_context(show_public: bool, model_id: int, domain: str, user=None):
     model_rows = _collect_models(
         domain=domain,
         benchmarks=benchmarks,
-        show_public=show_public,  # We want to show the model regardless of public status (access control handled elsewhere)
+        show_public=show_public,  # We want to show the model regardless of public status
         user=user,
         score_filter=model_filter
     )
@@ -136,7 +198,6 @@ def contextualize_scores(model, reference_context):
         score = score_rank_class(*([getattr(score, field) for field in score._fields] + [median, best, rank]))
         model.scores[i] = score
 
-
 def get_layers(model):
     LAYERS_MARKER = 'layers: '
     layer_comments = [score.comment.replace(LAYERS_MARKER, '') for score in model.scores
@@ -149,7 +210,6 @@ def get_layers(model):
                                  sorted(merged_layers.items(),
                                         key=lambda region_layer: region_order[region_layer[0]])])
     return merged_layers
-
 
 def simplify_score(score):
     try:
