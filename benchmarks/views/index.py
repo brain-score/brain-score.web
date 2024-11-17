@@ -6,6 +6,7 @@ from collections import ChainMap
 from collections import namedtuple
 from typing import Union
 
+from django.utils.functional import wraps
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -14,6 +15,9 @@ from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
 
+import hashlib
+from django.core.cache import cache
+import sys
 from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
 
 _logger = logging.getLogger(__name__)
@@ -31,12 +35,61 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
+# Move definition of namedtuples to the top of the file to ensure they are available in the cache decorator.
+# Previously inside collect_models function which prevented them from being pickled properly during caching.
+ModelRow = namedtuple('ModelRow', [
+    'id', 'name', 'reference_identifier', 'reference_link',
+    'user', 'public', 'competition', 'domain',
+    'rank', 'scores', 'build_status', 'submitter', 
+    'submission_id', 'jenkins_id', 'timestamp'
+])
+
+ScoreDisplay = namedtuple('ScoreDisplay', [
+    'benchmark', 'versioned_benchmark_identifier',
+    'score_raw', 'score_ceiled', 'error', 'color', 
+    'comment', 'is_complete'
+])
+
+def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
+    def decorator(func):
+        @wraps(func)
+        def wrapper(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
+            # Create a cache key based on the function arguments
+            cache_key_parts = [
+                'get_context',
+                domain,
+                str(user.id if user else 'anonymous'),
+                str(show_public),
+                # Convert filters to strings for cache key
+                str(hash(str(benchmark_filter))) if benchmark_filter else 'no_benchmark_filter',
+                str(hash(str(model_filter))) if model_filter else 'no_model_filter'
+            ]
+            cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
+
+            # Try to get cached result
+            cached_result = cache.get(cache_key)
+            if cached_result is not None:
+                return cached_result
+
+            # Calculate result if not cached
+            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                        model_filter=model_filter, show_public=show_public)
+            
+            # Cache the result
+            cache.set(cache_key, result, timeout)
+            return result
+        return wrapper
+    return decorator
+
+# Keep leaderboard caching for now
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
     context = get_context(domain=domain)
     return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
 
 
+# Cache get_context for faster loading of leaderboard view and model card view
+@cache_get_context()
 def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
@@ -384,16 +437,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
-    # - prepare data structures
-    ModelRow = namedtuple('ModelRow', field_names=[
-        'id', 'name',
-        'reference_identifier', 'reference_link',
-        'user', 'public', 'competition', 'domain',
-        'rank', 'scores',
-        'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'])
-    ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
-        'benchmark', 'versioned_benchmark_identifier',
-        'score_raw', 'score_ceiled', 'error', 'color', 'comment', 'is_complete'])
+
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
