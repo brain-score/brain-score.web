@@ -2,55 +2,33 @@
   <div class="loading-spinner"></div>
 </div>
 
-<style>
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
-
 <script>
+/**
+ * LoadingSpinner module handles displaying and hiding a loading spinner overlay
+ * to indicate background processing to users. Currently only used for the
+ * leaderboard page when loading model cards but can be used elsewhere.
+ */
 const LoadingSpinner = {
+  /**
+   * Shows the loading spinner overlay and adds beforeunload event listener
+   * to handle page navigation attempts while loading.
+   */
   show: function() {
     document.getElementById('loading-overlay').style.display = 'flex';
-    
-    // Listen for navigation cancellation
     window.addEventListener('beforeunload', this.handleCancel);
   },
-  
+  //Hides the loading spinner overlay and removes the beforeunload event listener.
   hide: function() {
-    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('loading-overlay').style.display = 'none'; 
     window.removeEventListener('beforeunload', this.handleCancel);
   },
-  
+  // Event handler that hides the spinner when user attempts to leave/reload page.
   handleCancel: function(event) {
     LoadingSpinner.hide();
   }
 };
 
-// Also listen for the browser's back/forward buttons
+// Hide spinner when user navigates back/forward in browser history
 window.addEventListener('popstate', function() {
   LoadingSpinner.hide();
 });
