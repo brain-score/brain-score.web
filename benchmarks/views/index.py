@@ -98,7 +98,7 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
         return wrapper
     return decorator
 
-# Keep leaderboard caching for now. Can likely be deprecated in the future.
+# Keep leaderboard caching for now.
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
     context = get_context(domain=domain)
@@ -107,6 +107,7 @@ def view(request, domain: str):
 
 # get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
 # request, the cached results is served faster
+@cache_get_context()
 def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
