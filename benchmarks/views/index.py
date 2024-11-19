@@ -32,7 +32,7 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
-# Move definition of namedtuples to the top of the file to ensure they are available in the cache decorator.
+# Move declaration of the namedtuples to the top of the file to ensure they are available in the cache decorator.
 # Previously inside collect_models function which prevented them from being pickled properly during caching.
 ModelRow = namedtuple('ModelRow', [
     'id', 'name', 'reference_identifier', 'reference_link',
