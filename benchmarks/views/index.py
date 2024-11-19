@@ -71,8 +71,8 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                           model_filter=model_filter, show_public=show_public)
             
-            # Generate MD5 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
-            cache_key = hashlib.md5('_'.join(key_parts).encode()).hexdigest()
+            # Generate SHA256 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
+            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
             
             # Try to get cached result
             cached_result = cache.get(cache_key)
@@ -96,8 +96,8 @@ def view(request, domain: str):
     # Pre-cache public context for model cards
     public_context = get_context(domain=domain, show_public=True)
     # Cache leaderboard context that is ultimately rendered in the leaderboard view
-    private_context = get_context(domain=domain)
-    return render(request, 'benchmarks/leaderboard/leaderboard.html', private_context)
+    leaderboard_context = get_context(domain=domain)
+    return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
 # request, the cached results is served faster
