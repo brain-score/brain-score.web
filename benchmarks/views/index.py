@@ -56,40 +56,37 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
     Args:
         timeout (int): Cache timeout in seconds. Defaults to 24 hours.
     '''
-    def decorator(func): # Take function to be decorated (i.e., get_context)
-        @wraps(func) # Preserving original function's metadata attributes
-        def wrapper(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
-            # (CASE 1: Public data) Try to get global cache if requesting public data
+    def decorator(func):  # Take function to be decorated (i.e., get_context)
+        @wraps(func)  # Preserving original function's metadata attributes
+        def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+            # Determine which type of cache key to use
             if show_public and not user:
-                # Create unique key for public data cache
-                global_key_parts = ['global_context', domain,'public']
-                # Generate MD5 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
-                global_cache_key = hashlib.md5('_'.join(global_key_parts).encode()).hexdigest()
+                # (CASE 1: Public data) Create unique key for public data cache
+                key_parts = ['global_context', domain, 'public']
+            elif user:
+                # (CASE 2: User data) Create unique key for user-specific cache
+                key_parts = ['user_context', domain, str(user.id), str(show_public)]
+            else:
+                # (CASE 3: No caching) Neither public nor user-specific
+                return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                          model_filter=model_filter, show_public=show_public)
+            
+            # Generate MD5 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
+            cache_key = hashlib.md5('_'.join(key_parts).encode()).hexdigest()
+            
+            # Try to get cached result
+            cached_result = cache.get(cache_key)
+            if cached_result is not None:
+                return cached_result  # Return cached data if found
 
-                # Try to get cached public data
-                global_cached_result = cache.get(global_cache_key)
-                if global_cached_result is not None:
-                    return global_cached_result # Return cached data if found
-
-            # (CASE 2: User data) If not public or global cache missing, check user-specific cache for user-specific data. Similar log as above.
-            if user:
-                user_key_parts = ['user_context', domain, str(user.id), str(show_public)]
-                user_cache_key = hashlib.md5('_'.join(user_key_parts).encode()).hexdigest()
-                user_cached_result = cache.get(user_cache_key)
-                if user_cached_result is not None:
-                    return user_cached_result
-
-            # (CASE 3: No cache found) If no cache found, calculate result as normal
+            # If no cache found, calculate result as normal
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                         model_filter=model_filter, show_public=show_public)
-
+            
             # Store result in cache appropriately (i.e., for users or globally)
-            if show_public and not user:
-                cache.set(global_cache_key, result, timeout) # Cache public data
-            elif user:
-                cache.set(user_cache_key, result, timeout) # Cache user data
-
+            cache.set(cache_key, result, timeout)
             return result
+
         return wrapper
     return decorator
 
