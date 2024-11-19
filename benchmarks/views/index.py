@@ -5,7 +5,9 @@ import re
 from collections import ChainMap
 from collections import namedtuple
 from typing import Union
-
+from django.utils.functional import wraps
+import hashlib
+from django.core.cache import cache
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -30,13 +32,76 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
+# Move declaration of the namedtuples to the top of the file to ensure they are available in the cache decorator.
+# Previously inside collect_models function which prevented them from being pickled properly during caching.
+ModelRow = namedtuple('ModelRow', [
+    'id', 'name', 'reference_identifier', 'reference_link',
+    'user', 'public', 'competition', 'domain',
+    'rank', 'scores', 'build_status', 'submitter', 
+    'submission_id', 'jenkins_id', 'timestamp'
+])
 
+ScoreDisplay = namedtuple('ScoreDisplay', [
+    'benchmark', 'versioned_benchmark_identifier',
+    'score_raw', 'score_ceiled', 'error', 'color', 
+    'comment', 'is_complete'
+])
+
+def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
+    '''
+    Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
+    Two-level caching:
+        - Global cache for public data
+        - User-specific cache for non-public data
+    Args:
+        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
+    '''
+    def decorator(func):  # Take function to be decorated (i.e., get_context)
+        @wraps(func)  # Preserving original function's metadata attributes
+        def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+            # Determine which type of cache key to use
+            if show_public and not user:
+                # (CASE 1: Public data) Create unique key for public data cache
+                key_parts = ['global_context', domain, 'public']
+            elif user:
+                # (CASE 2: User data) Create unique key for user-specific cache
+                key_parts = ['user_context', domain, str(user.id), str(show_public)]
+            else:
+                # (CASE 3: No caching) Neither public nor user-specific
+                return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                          model_filter=model_filter, show_public=show_public)
+            
+            # Generate SHA256 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
+            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
+            
+            # Try to get cached result
+            cached_result = cache.get(cache_key)
+            if cached_result is not None:
+                return cached_result  # Return cached data if found
+
+            # If no cache found, calculate result as normal
+            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                        model_filter=model_filter, show_public=show_public)
+            
+            # Store result in cache appropriately (i.e., for users or globally)
+            cache.set(cache_key, result, timeout)
+            return result
+
+        return wrapper
+    return decorator
+
+# Keep leaderboard caching for now.
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
-    context = get_context(domain=domain)
-    return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
+    # Pre-cache public context for model cards
+    public_context = get_context(domain=domain, show_public=True)
+    # Cache leaderboard context that is ultimately rendered in the leaderboard view
+    leaderboard_context = get_context(domain=domain)
+    return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
-
+# get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
+# request, the cached results is served faster
+@cache_get_context()
 def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
@@ -384,16 +449,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
-    # - prepare data structures
-    ModelRow = namedtuple('ModelRow', field_names=[
-        'id', 'name',
-        'reference_identifier', 'reference_link',
-        'user', 'public', 'competition', 'domain',
-        'rank', 'scores',
-        'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'])
-    ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
-        'benchmark', 'versioned_benchmark_identifier',
-        'score_raw', 'score_ceiled', 'error', 'color', 'comment', 'is_complete'])
+
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
