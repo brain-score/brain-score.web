@@ -8,26 +8,51 @@
   display: flex
   justify-content: center
   align-items: center
-  z-index: 1000
+  z-index: 9999
+  opacity: 0
+  visibility: hidden
+  transition: opacity 0.3s ease, visibility 0.3s ease
 
-.loading-spinner
-  width: 50px
-  height: 50px
-  border: 5px solid #f3f3f3
-  border-top: 5px solid $brainscore_blue
-  border-radius: 50%
-  -webkit-animation: spin 1s linear infinite  // Add webkit prefix
-  animation: spin 1s linear infinite
+  &.visible
+    opacity: 1
+    visibility: visible
 
-// Add webkit-prefixed keyframes
-@-webkit-keyframes spin
+.loading-icon
+  width: 100px
+  height: 100px
+  position: relative
+  animation: breathe 2s ease-in-out infinite  // Add breathing animation
+  
+  &::before
+    content: ''
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    background: linear-gradient(-45deg, $brainscore_green, $brainscore_blue, $brainscore_green, $brainscore_blue)
+    background-size: 400% 400%
+    animation: gradient 2s ease infinite
+    mask-image: url('../img/white_Brain-Score_icon.png')
+    mask-size: contain
+    mask-repeat: no-repeat
+    mask-position: center
+    -webkit-mask-image: url('../img/white_Brain-Score_icon.png')
+    -webkit-mask-size: contain
+    -webkit-mask-repeat: no-repeat
+    -webkit-mask-position: center
+
+// Add breathing keyframes
+@keyframes breathe
+  0%, 100%
+    transform: scale(1)
+  50%
+    transform: scale(1.2)  // Increase size by 20%
+
+@keyframes gradient
   0%
-    -webkit-transform: rotate(0deg)
+    background-position: 0% 50%
+  50%
+    background-position: 100% 50%
   100%
-    -webkit-transform: rotate(360deg)
-
-@keyframes spin
-  0%
-    transform: rotate(0deg)
-  100%
-    transform: rotate(360deg)
+    background-position: 0% 50%
