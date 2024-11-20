@@ -98,10 +98,9 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
 def get_cache_last_updated():
     last_updated = cache.get('leaderboard_last_updated')
     if last_updated:
-        # Convert to EST
-        est = pytz.timezone('US/Eastern')
-        last_updated = last_updated.astimezone(est)
-        return last_updated.strftime('%Y-%m-%d %I:%M %p EST')
+        # ISO format for javascript to convert to local time
+        return last_updated.isoformat()
+    # If the cache is empty, return 'Never' (This should never happen)
     return 'Never'
 
 # Keep leaderboard caching for now.
