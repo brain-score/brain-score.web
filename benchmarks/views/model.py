@@ -125,3 +125,8 @@ def scores_bibtex(scores):
     _, idx = np.unique(bibtexs, return_index=True)
     bibtexs = np.array(bibtexs)[np.sort(idx)]
     return bibtexs
+
+
+@register.filter
+def should_hide(benchmark) -> bool:
+    return benchmark.depth >= 1 or benchmark.benchmark_type_id.startswith('engineering')

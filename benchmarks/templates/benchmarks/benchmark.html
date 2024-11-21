@@ -1,0 +1,181 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1 class="title">{{ benchmark.benchmark_type.identifier }}</h1>
+    <p>
+        {# Paper #}
+        {% if reference_identifier %}
+            <button class="button">
+                <a href="{{ reference_url }}" target="_blank">
+                    <i class="fas fa-file-alt"></i> {{ reference_identifier }}
+                </a>
+            </button>
+        {% else %}
+            <button class="button disabled">
+                No reference provided
+            </button>
+        {% endif %}
+
+        {# Code #}
+        <button class="button">
+            <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ benchmark.benchmark_type.domain }}%20{{ benchmark.benchmark_type.identifier }}&type=code"
+               target="_blank">
+                <i class="fa-brands fa-github"></i> Find on GitHub
+            </a>
+        </button>
+    </p>
+{% endblock %}
+
+{# Right-hand info #}
+{% block info_section %}
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Ceiling
+            </p>
+            {% if benchmark.ceiling %}
+                <span class="has-text-weight-bold">{{ benchmark.ceiling|floatformat:2 }}</span>.
+                <p>Note that scores are relative to this ceiling.</p>
+            {% else %}
+                Not available
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Data: {{ data_identifier }}
+            </p>
+            <span>
+                {# Stimuli #}
+                {% if benchmark.meta and benchmark.meta.number_of_stimuli %}
+                    {{ benchmark.meta.number_of_stimuli }} stimuli
+                {% endif %}
+
+                {# Brain/behavior data #}
+                {% if benchmark.meta and benchmark.meta.number_of_recording_sites %}
+                    recordings from
+                    {{ benchmark.meta.number_of_recording_sites }}
+                    sites in
+                    {{ benchmark.meta.recording_sites }}
+                {% endif %}
+                {% if benchmark.meta and benchmark.meta.behavioral_task %}
+                    {{ benchmark.meta.behavioral_task }} task
+                {% endif %}
+            </span>
+            <button class="button">
+                <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ benchmark.benchmark_type.domain }}%20{{ data_identifier }}&type=code"
+                   target="_blank">
+                    <i class="fa-brands fa-github"></i> Find on GitHub
+                </a>
+            </button>
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Metric: {{ metric_identifier }}
+            </p>
+            <button class="button">
+                <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ benchmark.benchmark_type.domain }}%20{{ metric_identifier }}&type=code"
+                   target="_blank">
+                    <i class="fa-brands fa-github"></i> Find on GitHub
+                </a>
+            </button>
+        </div>
+    </div>
+{% endblock %}
+
+
+{# Center content #}
+{% block content %}
+    {# image samples #}
+    <div class="box">
+        <h3 id="scores" class="title is-3">Sample stimuli</h3>
+        <div class="content samples_container is-overflow-wrap">
+            {% for sample in '0123456789'|make_list %}
+                <img class="stimulus_sample"
+                     src="/static/benchmarks/img/benchmark_samples/{{ versioned_benchmark_identifier }}/{{ sample }}.png"
+                     alt="sample {{ sample }}"/>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Usage #}
+    <div class="box">
+        <h4 class="subtitle is-4">
+            How to use
+        </h4>
+        <div class="columns">
+            <div class="column is-two-thirds">
+                    <pre class="mt-0">
+from brainscore_{{ benchmark.benchmark_type.domain }} import load_benchmark
+benchmark = load_benchmark("{{ benchmark.benchmark_type.identifier }}")
+score = benchmark(my_model)</pre>
+            </div>
+            <div class="column is-one-third">
+                <div class="block">
+                    <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmarks.html"
+                       target="_blank">
+                        <i class="fa-brands fa-readme"></i> Benchmark API
+                    </a>
+                </div>
+                <div class="block">
+                    <a href="https://github.com/brain-score/{{ benchmark.domain }}/tree/master/examples"
+                       target="_blank">
+                        <i class="fa-brands fa-github"></i> Code examples
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Scores #}
+    <div class="">
+        <div class="columns mb-0">
+            <div class="column">
+                <h3 id="scores" class="title is-3">Model scores</h3>
+            </div>
+            <div class="column filters">
+                {% include "benchmarks/leaderboard/legend.html" %}
+            </div>
+        </div>
+
+        <div class="content benchmark_scores">
+
+            <div class="leaderboard-table-container">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th class="">
+                            <p>Rank</p>
+                        </th>
+                        <th class="">
+                            <p>Model</p>
+                        </th>
+                        <th class="">
+                            <p>Score</p>
+                        </th>
+                    </tr>
+                    </thead>
+                    <!-- models -->
+                    {% include "benchmarks/leaderboard/table-body.html" %}
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    {# bibtex #}
+    <div class="box">
+        <h2 class="subtitle is-4">
+            Benchmark bibtex
+        </h2>
+        <div class="content">
+            <pre class="mt-0">{{ reference_bibtex }}</pre>
+        </div>
+    </div>
+{% endblock %}
