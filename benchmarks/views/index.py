@@ -15,6 +15,8 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
+from django.utils import timezone
+import pytz
 
 from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
 
@@ -85,10 +87,21 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
             
             # Store result in cache appropriately (i.e., for users or globally)
             cache.set(cache_key, result, timeout)
+            # Store last updated time for leaderboard
+            cache.set('leaderboard_last_updated', timezone.now())
             return result
 
         return wrapper
     return decorator
+
+# Add a helper function to get the last update time
+def get_cache_last_updated():
+    last_updated = cache.get('leaderboard_last_updated')
+    if last_updated:
+        # ISO format for javascript to convert to local time
+        return last_updated.isoformat()
+    # If the cache is empty, return 'Never' (This should never happen)
+    return 'Never'
 
 # Keep leaderboard caching for now.
 @cache_page(24 * 60 * 60)
@@ -97,6 +110,9 @@ def view(request, domain: str):
     public_context = get_context(domain=domain, show_public=True)
     # Cache leaderboard context that is ultimately rendered in the leaderboard view
     leaderboard_context = get_context(domain=domain)
+    # Add last updated time to context
+    leaderboard_context['last_updated'] = get_cache_last_updated()
+
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
