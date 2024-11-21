@@ -86,10 +86,10 @@ for domain in supported_domains:
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
         path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
 
-        path(f'{domain}/explore', partial(explore.view, domain=domain), name=f'{domain}-explore'),
+        path(f'{domain}/explore/', partial(explore.view, domain=domain), name=f'{domain}-explore'),
         path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
         path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
-        path(f'{domain}/compare/', partial(compare.view, domain=domain), name='compare'),
+        path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
     ]
     all_domain_urls.append(domain_urls)
 
