@@ -1,7 +1,7 @@
 from django.urls import path
 import functools
 
-from .views import index, user, model, competition2022, competition2024, compare, community, release2_0
+from .views import index, user, model, compare, model_inference, community, competition2022, competition2024, release2_0
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -81,6 +81,7 @@ for domain in supported_domains:
         path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
         path(f'model/<str:domain>/<int:id>', functools.partial(model.view, domain=domain), name='model-view'),
         path(f'{domain}/compare/', functools.partial(compare.view, domain=domain), name='compare'),
+        path(f'{domain}/inference/', model_inference.Inference.as_view(domain=domain), name='inference'),
     ]
     all_domain_urls.append(domain_urls)
 

@@ -1,0 +1,82 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1 class="title">Inference (Beta)</h1>
+{% endblock %}
+
+{# Right-hand info #}
+{% block info_section %}
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Selected Model:
+            </p>
+            <span class="has-text-weight-bold">{{ model.identifier }}</span>
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Region and Layer Selection
+            </p>
+            <span class="">
+                Neural predictions for region {{ region }} using layer {{ model.layer }}
+            </span>
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="card-content">
+            <p class="subtitle is-5">
+                Mapping
+            </p>
+            <span class="">
+                Mapping to {{ mapping.identifier }}:
+                {{ mapping.num_neural_sites }} neural sites
+                in region {{ mapping.region }} via {{ mapping.regression }}
+            </span>
+        </div>
+    </div>
+{% endblock %}
+
+
+{# Center content #}
+{% block content %}
+    <section class="individual_model container center">
+        <div class="content">
+            {# Stimuli #}
+{#            <h3 class="title is-3">Stimuli</h3>#}
+{#            <div class="content samples_container is-overflow-wrap">#}
+{#                {% for sample in stimuli %}#}
+{#                    <img class="stimulus_sample"#}
+{#                         src="{{ sample }}"#}
+{#                         alt="{{ sample }}"/>#}
+{#                {% endfor %}#}
+{#            </div>#}
+
+            {# predictions #}
+            <h3 class="title is-3">Neural Site Predictions for Your Stimuli</h3>
+            <div class="content">
+                <table>
+                    {% for stimulus_row in neural_activity %}
+                        <tr>
+                            <td class="stimulus_sample">
+                                <img class="stimulus_sample"
+{#                                     src="{{ stimulus_row|get_stimulus:stimuli }}"#}
+                                     src="{% static "/benchmarks/img/benchmark_samples/BMD2024.dotted_1Behavioral-accuracy_distance_v1/0.png" %}"
+                                     alt="{{ stimulus_row|get_stimulus:stimuli }}"/>
+                            </td>
+                            {% for cell in stimulus_row %}
+                                <td class="inference_prediction" style="background-color: rgb(0, {{ cell.values }}, 0)">
+{#                                    {{ cell|floatformat:2 }}#}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}

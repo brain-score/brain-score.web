@@ -1,0 +1,38 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1 class="title">Inference (Beta)</h1>
+{% endblock %}
+
+{# Center content #}
+{% block content %}
+    <section class="individual_model container center">
+        <div class="content">
+            {# Stimuli #}
+            <h3 class="title is-3">Stimuli</h3>
+
+            <form action="" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <p class="special">
+                        <br>
+                        {{ field.label_tag }}
+                        {{ field }}
+                        <br>
+                        {% if field.help_text %}
+                            <small style="display: none">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p style="color: red">{{ error }}</p>
+                        {% endfor %}
+                    </p>
+                {% endfor %}
+                <br>
+                <button type="submit" class="button submission">Run inference on stimuli</button>
+                <br>
+            </form>
+        </div>
+    </section>
+{% endblock %}
