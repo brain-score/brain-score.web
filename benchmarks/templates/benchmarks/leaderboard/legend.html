@@ -1,14 +1,5 @@
-{% load static %}
-
 <div class="legend">
     <label>Score Legend</label>
     <span>Min Alignment</span>
     <span class="legend-right">Max Alignment</span>
-    <div class="cache-status">
-        Last updated: <span class="last-updated-time" data-timestamp="{{ last_updated }}"></span>
-    </div>
 </div>
-
-{% block js%}
-  <script defer src="{% static 'benchmarks/js/cache-status.js' %}"></script>
-{% endblock %}
