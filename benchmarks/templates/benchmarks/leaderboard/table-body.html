@@ -1,0 +1,53 @@
+<tbody>
+  {% for model in models %}
+    <tr
+      {% if model.primary_model_id %}
+        data-parent="{{ model.primary_model_id }}"
+        style="display: none"
+        class="is-secondary-model"
+      {% endif %}
+    >
+      <td class="rank">{{ model.rank }}</td>
+      <td class="model">
+        <div class="identifier" title="{{ model.reference_identifier }}">
+          <!-- Add spinner component when model card is clicked -->
+          <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}" onclick="LoadingSpinner.show()">
+            {{ model|display_model:user }}
+          </a>
+        </div>
+        {% if model.owner %}
+            <div class="submitter">
+                {{ model|display_submitter:user|default:"" }}
+            </div>
+        {% endif %}
+        {% if not model.primary_model_id and model.num_secondary_models %}
+          <span class="collapsible_control is_expandable competition-models-more"
+                data-identifier="{{ model.id }}">
+          {{ model.num_secondary_models }} more models from this user
+          </span>
+        {% elif model.num_secondary_models == 0 %} {# show empty line to align with other rows #}
+          <span class="competition-models-more">&nbsp;</span>
+        {% endif %}
+      </td>
+      {% for score_row in model.scores %}
+        <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
+            data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
+            {% if benchmark_parents %}
+              data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
+            {% endif %}
+            class="display-square depth_{{ score_row.benchmark.depth }}"
+            style="display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }}">
+          <div style="{{ score_row.color }};">
+            {{ score_row.score_ceiled }}
+          </div>
+        </td>
+      {% endfor %}
+      {% if has_user %}
+        <td class="model-public-checkbox">
+          <input type="checkbox" value="{{ model.id }}"
+                 class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
+        </td>
+      {% endif %}
+    </tr>
+  {% endfor %}
+</tbody>

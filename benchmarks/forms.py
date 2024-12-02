@@ -48,7 +48,7 @@ class UploadFileForm(forms.Form):
 
 class UploadNWBMetadataForm(forms.Form):
     json_file = forms.FileField(label="JSON", help_text='Required')
-    dandiset_file = forms.FileField(label="Optionally, also upload your DANDIset directly", required=False)
+    dandiset_file = forms.FileField(label="Optionally, you can also upload your DANDIset directly", required=False)
 
     class Meta:
         model = UploadPlaceHolder

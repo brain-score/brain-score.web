@@ -259,7 +259,6 @@ class ConvertNWB(View):
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
             "user_id": user_instance.id,
             "public": str('public' in request.POST),
-            "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
             "domain": self.domain
         }
 

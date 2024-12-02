@@ -1,3 +1,0 @@
-"brain-score @ git+https://github.com/brain-score/brain-score"
-fire
-Pillow

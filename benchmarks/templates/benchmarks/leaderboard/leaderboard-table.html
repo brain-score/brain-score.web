@@ -20,11 +20,7 @@
       <option value="{{ benchmark.short_name }}">{{ benchmark.short_name }}</option>
     {% endfor %}
   </select>
-  <div class="legend">
-    <label>Score Legend</label>
-    <span>No Alignment</span>
-    <span class="legend-right">Alignment at ceiling</span>
-  </div>
+  {% include "benchmarks/leaderboard/legend.html" %}
   <div class="leaderboard-breadcrumb"></div>
 </div>
 <div class="leaderboard-table-container">
@@ -59,9 +55,9 @@
           >
             <div>
               <p>
-                {# reference link #}
-                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
-                  <a href="{{ benchmark.benchmark_type.reference.url }}" target="_blank" rel="noopener noreferrer">
+                {# link if it's an instance (i.e., has id) #}
+                {% if benchmark.id %}
+                  <a href="{% url 'benchmark-view' domain benchmark.id %}">
                 {% endif %}
                 {# identifier #}
                 <span class="depth_{{ benchmark.depth }}
@@ -72,7 +68,7 @@
                 </span>
                 {# version #}
                 {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
-                {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
+                {% if benchmark.id %}
                   </a>
                 {% endif %}
                 {# number of child benchmarks, ignore roots #}
@@ -99,54 +95,7 @@
       </tr>
     </thead>
     <!-- models -->
-    <tbody>
-      {% for model in models %}
-        <tr
-          {% if model.primary_model_id %}
-            data-parent="{{ model.primary_model_id }}"
-            style="display: none"
-            class="is-secondary-model"
-          {% endif %}
-        >
-          <td class="rank">{{ model.rank }}</td>
-          <td class="model">
-            <div class="identifier" title="{{ model.reference_identifier }}">
-              <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
-                {{ model|display_model:user }}
-              </a>
-            </div>
-            <div class="submitter">
-                {{ model|display_submitter:user|default:"" }}
-            </div>
-            {% if not model.primary_model_id and model.num_secondary_models %}
-              <span class="collapsible_control is_expandable competition-models-more"
-                    data-identifier="{{ model.id }}">
-              {{ model.num_secondary_models }} more models from this user
-              </span>
-            {% elif model.num_secondary_models == 0 %} {# show empty line to align with other rows #}
-              <span class="competition-models-more">&nbsp;</span>
-            {% endif %}
-          </td>
-          {% for score_row in model.scores %}
-            <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
-                data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
-                data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
-                class="display-square depth_{{ score_row.benchmark.depth }}"
-                style="display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }}">
-              <div style="{{ score_row.color }};">
-                {{ score_row.score_ceiled }}
-              </div>
-            </td>
-          {% endfor %}
-          {% if has_user %}
-            <td class="model-public-checkbox">
-              <input type="checkbox" value="{{ model.id }}"
-                     class="public model-public-checkbox" {% if model.public %} checked {% endif %}>
-            </td>
-          {% endif %}
-        </tr>
-      {% endfor %}
-    </tbody>
+      {% include "benchmarks/leaderboard/table-body.html" %}
   </table>
 </div>
 {% if has_user %}
