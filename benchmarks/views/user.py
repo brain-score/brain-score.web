@@ -277,7 +277,9 @@ class ConvertNWB(View):
                       f"?TOKEN=trigger2convertNWB" \
                       f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
-        params = {'metadata.json': open('submission.json', 'rb'), 'submission.config': open('result.json', 'rb'), 'dandiset.zip': request.FILES['dandiset_file']}
+        params = {'metadata.json': open('submission.json', 'rb'), 'submission.config': open('result.json', 'rb')}
+        if 'dandiset_file' in request.FILES:
+            params['dandiset.zip'] = request.FILES['dandiset_file']
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 
