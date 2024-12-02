@@ -9,6 +9,25 @@
         <div class="container login-left vision_submit">
             <h1 style="font-size: 2em;">Submission System, {{ formatted }} </h1>
             <br>
+
+            <!-- Submission status section -->
+            <div class="submission-status"></div>
+                <h2 style="font-size: 1.25em;">Submission Limits</h2>
+                <div class="submission-info">
+                    <p>Daily submissions: {{ submission_status.daily_submissions }}/{{ SUBMISSION_DAILY_LIMIT }}</p>
+                    <p>Recent submissions: {{ submission_status.burst_submissions }}/{{ SUBMISSION_BURST_LIMIT }}</p>
+                    {% if submission_status.cooldown_remaining > 0 %}
+                        <p class="warning">Cooldown period: {{ submission_status.cooldown_remaining|divisibleby:3600 }}h {{ submission_status.cooldown_remaining|remainder:3600|divisibleby:60 }}m remaining</p>
+                    {% endif %}
+                </div>
+                <p class="submission-rules">
+                    • Maximum {{ SUBMISSION_BURST_LIMIT }} submissions before {{ SUBMISSION_COOLDOWN_HOURS }}h cooldown<br>
+                    • Maximum {{ SUBMISSION_DAILY_LIMIT }} submissions per day
+                </p>
+            </div>
+            <br>
+            <!--End submission status section-->
+
             <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can either be a {{ domain }} model, benchmark, dataset,
             or metric. </h1>
             <p class="benefits_info is-size-5-mobile shorter submission">
@@ -45,4 +64,33 @@
         </div>
     </div>
 </div>
+
+<style>
+    .submission-status {
+        background-color: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .submission-info {
+        margin: 10px 0;
+    }
+    
+    .submission-rules {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 10px;
+    }
+    
+    .warning {
+        color: #d9534f;
+    }
+    
+    button[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
 {% endblock %}

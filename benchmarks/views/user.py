@@ -176,11 +176,26 @@ class Upload(View):
 
     def get(self, request):
         assert self.domain is not None
+        
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
+        
+        # Get status of previous submissions for the user
+        status = get_submission_status(request.user)
+
         form = UploadFileForm()
-        return render(request, 'benchmarks/upload.html',
-                      {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
+
+        # Add previous context to the submission status contexts
+        context = {
+            'form': form, 
+            'domain': self.domain, 
+            'formatted': self.domain.capitalize(),
+            'submission_status': status,
+            'SUBMISSION_BURST_LIMIT': SUBMISSION_BURST_LIMIT,
+            'SUBMISSION_DAILY_LIMIT': SUBMISSION_DAILY_LIMIT,
+            'SUBMISSION_COOLDOWN_HOURS': SUBMISSION_COOLDOWN_SECONDS // 3600,  # Convert to hours for display
+        }
+        return render(request, 'benchmarks/upload.html', context)
 
     def post(self, request):
         assert self.domain is not None
@@ -189,6 +204,11 @@ class Upload(View):
             return HttpResponse("Form is invalid", status=400)
 
         user_instance = User.objects.get_by_natural_key(request.user.email)
+
+        # Check submission limits
+        can_submit, error_message = check_submission_limits(user_instance)
+        if not can_submit:
+            return render(request, 'benchmarks/invalid_zip.html', {'error': error_message, "domain": self.domain})
 
         # parse directory tree, return new html page if not valid:
         is_zip_valid, error = validate_zip(form.files.get('zip_file'))
