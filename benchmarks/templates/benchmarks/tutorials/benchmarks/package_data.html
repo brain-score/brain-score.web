@@ -24,16 +24,17 @@
                 benchmark.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                This section is divided into three parts:
-                First, we will explore the <span class="special_format">__init__.py</span> file, which adds the data plugin
+                This section is divided into seven parts:
+                In <strong>Part 1</strong>, we will install the required packages.  In <strong>Part 2</strong>, we'll access a sample data folder for an example benchmark.
+                In <strong>Part 3</strong>, we'll take a close look at the contents of the sample data folder.
+                In <strong>Part 4</strong>, we'll examine the <span class="special_format">__init__.py</span> file, which adds the data plugin
                 to the data registry (i.e., it tells Brain-Score that your data exists in our system).
-
-                Next, we will take a look at the <span class="special_format">data_packaging.py</span> file. This file
+                In <strong>Part 5</strong>, we'll take a look at the <span class="special_format">data_packaging.py</span> file. This file
                 shows how we upload and package both your stimuli (via a <span class="special_format">StimulusSet</span>),
-                and your data (via a <span class="special_format">DataAssembly</span>)
-
-                Finally, we will explore a sample <span class="special_format">test.py</span> file, in which we ensure
-                your benchmark is structured as you expect it.
+                and your data (via a <span class="special_format">DataAssembly</span>).
+                In <strong>Part 6</strong>, we'll go through a sample <span class="special_format">test.py</span> file, in which we ensure
+                your benchmark is structured properly.
+                And finally, in <strong>Part 7</strong>, we'll discuss how all of this ties together.
             </p>
         </div>
     </div>
@@ -43,29 +44,27 @@
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 1: Install Necessary Packages</h3>
             <p class="benefits_info is-size-5-mobile">
-                The first thing you are going to want to do is clone the Brain-Score repository, in order to access our code
-                locally. You can do this with commands found on Part 1 of the model quickstart
-                <a href="https://www.brain-score.org/tutorials/models/quickstart">here</a>.
+
+                First, clone the Brain-Score repository to access our code
+                locally. You can do this with commands found on Part 1 of the
+                <a href="https://www.brain-score.org/tutorials/models/quickstart">Model Quickstart</a>.
+                If you have already done the Quickstart, or installed Brain-Score, move on to Part 2.
             </p>
-            <p class="benefits_info is-size-5-mobile">
-                If you have already done the Quickstart, or installed Brain-Score, skip to Part 2 to the right.
-            </p>
+
         </div>
         <div class="column is-one-half">
             <h3 class="benefits_heading is-size-3-mobile">Part 2: Access the Sample Data Folder</h3>
             <p class="benefits_info is-size-5-mobile">
                 Brain-Score allows users to submit plugins in two ways: directly to the site, via a Zip file
-                upload, or through a Github PR. In this first part of the benchmark tutorial covering data packaging, you
-                will explore a sample data plugin in order to become familiar with its structure; you can view our sample
-                submission in your local copy of Brain-Score that you cloned in Part 1. The folder we are going to be exploring is
-                <span class="special_format">vision/brainscore_vision/data/ferguson2024</span>. If you cannot access
-                a local copy of Brain-Score, the sample data folder is also available on our Github
+                upload, or through a Github PR. Here, you will explore a sample data plugin in order to become familiar
+                with its structure; you can view our sample submission in your local version of Brain-Score that you cloned
+                in Part 1. The folder we are going to be exploring is <span class="special_format">vision/brainscore_vision/data/ferguson2024</span>.
+                If you cannot access a local copy of Brain-Score, the sample data folder is also available on our Github
                 <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/data/ferguson2024">here</a>.
             </p>
              <p class="benefits_info is-size-5-mobile">
-                 Currently (as of August 2024), benchmark submission via the website are a little buggy; so if you want
-                 to submit your own benchmark, once you have your submission ready to go, simply reach out to Brain-Score
-                 Team member and we will submit your benchmark for you, via a Github PR.
+                 If after following the guidelines in this tutorial, you still have any issues submitting your own benchmark,
+                 please reach out to Brain-Score Team member and we will submit your benchmark via a Github PR.
             </p>
         </div>
     </div>
@@ -87,7 +86,7 @@
         The second file is the <span class="special_format">requirements.txt</span> file, an optional
         addition to your data plugin that allows Brain-Score to install any needed dependencies that are used when
         packaging the data (note: this is not needed if you have already uploaded your data, and for most submitters can
-        be omitted and will not be covered here).
+        be omitted).
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         The third file is the required <span class="special_format">test.py</span> file where you can add tests
@@ -109,7 +108,7 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 4: Exploring the  __init__.py  file</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        This first file we will look at in depth adds your data plugin to the Brain-Score plugin registry and to the Brain-Score
+        This file adds your data plugin to the Brain-Score plugin registry and to the Brain-Score
         ecosystem at large. You are registering your data to a unique global identifier. You can
         see that this file is fairly straightforward: Lines 1-3 are standard imports, and lines 8 and 16
         add the plugins to the registry (note that in the screenshot there is a <span class="special_format">StimulusSet</span>
@@ -134,9 +133,9 @@
         and your experiment has "sub-experiments", feel free to use this file as a template.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Also note: It would be prohibitively time- and resource-consuming to actually load every plugin
+        Also note: It would be prohibitively expensive to actually load every plugin
         in a registry before they are needed, so the plugin discovery process relies on string parsing.
-        This unfortunately means that it’s not possible to programmatically add plugin identifiers to
+        This means that it’s not possible to programmatically add plugin identifiers to
         the registry; each registration needs to be written explicitly in the form of
         <span class="special_format">plugin_registry['my_plugin_identifier']</span>.
     </p>
@@ -167,9 +166,9 @@
         <span class="special_format">package_data_assembly</span>.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        Data and stimuli can be made public or kept private. It is your choice if you wish to release the data itself
+        Data and stimuli can be made public or kept private. It is your choice if you wish to release the data
         or only the benchmark. If you choose to keep the data private, model submissions can be scored on the data, but
-        the actual data itself will not be visible. Publicly released data can also be scored against, but will be fully
+        the actual data itself will not be visible. Publicly released data can also be used for scoring, but will be fully
         accessible.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
@@ -205,8 +204,8 @@
         <span class="special_format">DataAssembly</span> contains the actual experimental measurements as well as any metadata on them. Note
         that these do not necessarily have to be raw data, but can also be previously published characterizations of
         the data such as preference distributions. As such, the person submitting the data to Brain-Score does not have
-        to be involved in the data collection. If you package someone else’s data, we do however recommend checking the
-        specifics with them to avoid mis-interpretation. Overall in Brain-Score, we have encountered data in three forms:
+        to be involved in the data collection. If you package someone else’s data, we recommend checking the
+        specifics with them to avoid misinterpretation. Overall in Brain-Score, we have encountered data in three forms:
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         <span class="special_format">NeuroidAssembly</span>: neural data recorded from “neuroids” – neurons or their analogues such as multi-unit activity
