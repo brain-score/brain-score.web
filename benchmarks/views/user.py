@@ -18,17 +18,23 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
-from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
+from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, Submission
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count
 
 _logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
 PLUGIN_LIMIT = 1  # used to limit the amount of plugins that can be submitted at once by a user
-
+SUBMISSION_BURST_LIMIT = 5 # max submissions before cooldown
+SUBMISSION_COOLDOWN_SECONDS = 60 * 60 * 3 # 3 hour cooldown in seconds
+SUBMISSION_DAILY_LIMIT = 10 # max submissions per day
+SECONDS_PER_DAY = 60 * 60 * 24 # 24 hours in seconds (hard limit for the daily submission limit)
 
 class Activate(View):
 
@@ -234,6 +240,68 @@ class Upload(View):
         _logger.debug("Job triggered successfully")
         return render(request, 'benchmarks/success.html', {"domain": self.domain})
 
+def check_submission_limits(user) -> Tuple[bool, str]:
+    '''
+    Check if a user has exceeded their submission limits.
+    Returns (can_submit, error_message)
+    '''
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    status = get_submission_status(user)
+    
+    # If the user has reached the max daily submission limit, return False and an error message
+    if status['daily_submissions'] >= SUBMISSION_DAILY_LIMIT:
+        seconds_until_reset = SECONDS_PER_DAY - (now - today_start).total_seconds()
+        hours = int(seconds_until_reset // 3600)
+        minutes = int((seconds_until_reset % 3600) // 60)
+        return False, f"You have reached the daily submission limit of {SUBMISSION_DAILY_LIMIT} submissions. Please try again in {hours}h {minutes}m."
+    
+    # If the user has reached the max burst submission limit, return False and an error message
+    if status['burst_submissions'] >= SUBMISSION_BURST_LIMIT and status['cooldown_remaining'] > 0:
+        hours = int(status['cooldown_remaining'] // 3600)
+        minutes = int((status['cooldown_remaining'] % 3600) // 60)
+        return False, f"You have made {status['burst_submissions']}/{SUBMISSION_BURST_LIMIT} submissions in the last {SUBMISSION_COOLDOWN_SECONDS} seconds. Please wait {hours}h {minutes}m before submitting again."
+    
+    return True, ""
+
+def get_submission_status(user) -> dict:
+    """
+    Returns the current submission status for a user.
+    """
+    now = timezone.now()
+    
+    # Count the number of submissions made by the user in the last 24 hours
+    daily_submissions = Submission.objects.filter(
+        submitter=user,
+        timestamp__gte=now - timedelta(seconds=SECONDS_PER_DAY)
+    ).count()
+    
+    # Count the number of recent submissions within cooldown period
+    recent_submissions = Submission.objects.filter(
+        submitter=user,
+        timestamp__gte=now - timedelta(seconds=SUBMISSION_COOLDOWN_SECONDS)
+    ).count()
+    
+    # Calculate cooldown time remaining if in cooldown period
+    cooldown_remaining = 0
+    if recent_submissions >= SUBMISSION_BURST_LIMIT:
+        latest_submission = Submission.objects.filter(
+            submitter=user
+        ).order_by('-timestamp').first()
+        
+        # Calculate the time remaining until the cooldown period ends
+        if latest_submission:
+            cooldown_end = latest_submission.timestamp + timedelta(seconds=SUBMISSION_COOLDOWN_SECONDS)
+            time_remaining = cooldown_end - now
+            cooldown_remaining = max(0, int(time_remaining.total_seconds()))
+    
+    return {
+        'daily_submissions': daily_submissions,
+        'daily_remaining': SUBMISSION_DAILY_LIMIT - daily_submissions,
+        'burst_submissions': recent_submissions,
+        'burst_remaining': SUBMISSION_BURST_LIMIT - recent_submissions,
+        'cooldown_remaining': cooldown_remaining,
+    }
 
 def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tuple[bool, Union[None, List[str]]]:
     """
