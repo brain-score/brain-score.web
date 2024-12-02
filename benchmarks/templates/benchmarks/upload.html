@@ -14,8 +14,8 @@
             <div class="submission-status"></div>
                 <h2 style="font-size: 1.25em;">Submission Limits</h2>
                 <div class="submission-info">
-                    <p>Daily submissions: {{ submission_status.daily_submissions }}/{{ SUBMISSION_DAILY_LIMIT }}</p>
-                    <p>Recent submissions: {{ submission_status.burst_submissions }}/{{ SUBMISSION_BURST_LIMIT }}</p>
+                    <p>Daily submissions: {{ submission_status.daily_submission_count }}/{{ SUBMISSION_DAILY_LIMIT }}</p>
+                    <p>Recent submissions: {{ submission_status.burst_submissions_count }}/{{ SUBMISSION_BURST_LIMIT }}</p>
                     {% if submission_status.cooldown_remaining > 0 %}
                         <p class="warning">Cooldown period: {{ submission_status.cooldown_remaining|divisibleby:3600 }}h {{ submission_status.cooldown_remaining|remainder:3600|divisibleby:60 }}m remaining</p>
                     {% endif %}

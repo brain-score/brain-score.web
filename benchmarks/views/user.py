@@ -270,17 +270,17 @@ def check_submission_limits(user) -> Tuple[bool, str]:
     status = get_submission_status(user)
     
     # If the user has reached the max daily submission limit, return False and an error message
-    if status['daily_submissions'] >= SUBMISSION_DAILY_LIMIT:
+    if status['daily_submission_count'] >= SUBMISSION_DAILY_LIMIT:
         seconds_until_reset = SECONDS_PER_DAY - (now - today_start).total_seconds()
         hours = int(seconds_until_reset // 3600)
         minutes = int((seconds_until_reset % 3600) // 60)
         return False, f"You have reached the daily submission limit of {SUBMISSION_DAILY_LIMIT} submissions. Please try again in {hours}h {minutes}m."
     
     # If the user has reached the max burst submission limit, return False and an error message
-    if status['burst_submissions'] >= SUBMISSION_BURST_LIMIT and status['cooldown_remaining'] > 0:
+    if status['burst_submission_count'] >= SUBMISSION_BURST_LIMIT and status['cooldown_remaining'] > 0:
         hours = int(status['cooldown_remaining'] // 3600)
         minutes = int((status['cooldown_remaining'] % 3600) // 60)
-        return False, f"You have made {status['burst_submissions']}/{SUBMISSION_BURST_LIMIT} submissions in the last {SUBMISSION_COOLDOWN_SECONDS} seconds. Please wait {hours}h {minutes}m before submitting again."
+        return False, f"You have made {status['burst_submission_count']}/{SUBMISSION_BURST_LIMIT} submissions in the last {SUBMISSION_COOLDOWN_SECONDS} seconds. Please wait {hours}h {minutes}m before submitting again."
     
     return True, ""
 
@@ -291,20 +291,20 @@ def get_submission_status(user) -> dict:
     now = timezone.now()
     
     # Count the number of submissions made by the user in the last 24 hours
-    daily_submissions = Submission.objects.filter(
+    daily_submission_count = Submission.objects.filter(
         submitter=user,
         timestamp__gte=now - timedelta(seconds=SECONDS_PER_DAY)
     ).count()
     
     # Count the number of recent submissions within cooldown period
-    recent_submissions = Submission.objects.filter(
+    recent_submission_count = Submission.objects.filter(
         submitter=user,
         timestamp__gte=now - timedelta(seconds=SUBMISSION_COOLDOWN_SECONDS)
     ).count()
     
     # Calculate cooldown time remaining if in cooldown period
     cooldown_remaining = 0
-    if recent_submissions >= SUBMISSION_BURST_LIMIT:
+    if recent_submission_count >= SUBMISSION_BURST_LIMIT:
         latest_submission = Submission.objects.filter(
             submitter=user
         ).order_by('-timestamp').first()
@@ -316,10 +316,10 @@ def get_submission_status(user) -> dict:
             cooldown_remaining = max(0, int(time_remaining.total_seconds()))
     
     return {
-        'daily_submissions': daily_submissions,
-        'daily_remaining': SUBMISSION_DAILY_LIMIT - daily_submissions,
-        'burst_submissions': recent_submissions,
-        'burst_remaining': SUBMISSION_BURST_LIMIT - recent_submissions,
+        'daily_submission_count': daily_submission_count,
+        'daily_remaining': SUBMISSION_DAILY_LIMIT - daily_submission_count,
+        'burst_submission_count': recent_submission_count,
+        'burst_remaining': SUBMISSION_BURST_LIMIT - recent_submission_count,
         'cooldown_remaining': cooldown_remaining,
     }
 
