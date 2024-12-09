@@ -21,12 +21,16 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Let's Create a Benchmark!</h3>
             <p class="benefits_info is-size-5-mobile">
-                Welcome to the second half of our Benchmark tutorial, where we will cover how to actually create
-                a benchmark, given you have already packaged your data. We will do this by again looking at a sample
+                Here we will cover how to actually create a benchmark with your packaged data. We'll do this by looking at a sample
                 benchmark, <span class="special_format">Ferguson2024</span>, and exploring how it is structured.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                This section has three main parts, corresponding to the three main files that make up a benchmark plugin.
+                This section is divided into eight parts.
+                In <strong>Part 1</strong> we'll ensure you have the required packages installed.
+                In <strong>Part 2</strong>, we'll go over how to access a sample benchmark folder.
+                In <strong>Part 3</strong>, we'll cover the structure of the sample benchmark folder.
+                In <strong>Part 4</strong> through <strong>Part 7</strong> we'll examine each of the four files in the sample benchmark folder.
+                And finally in <strong>Part 8</strong>, we discuss how everything fits together.
                 If you just packaged your data, then you probably can guess what some of these files are: there is an
                 <span class="special_format">__init__.py</span> file, a <span class="special_format">test.py</span> file,
                 and a new <span class="special_format">benchmark.py</span> file. Each will be explored in detail below.
@@ -46,12 +50,12 @@
             </p>
             <p class="benefits_info is-size-5-mobile">
                 If you have already done the Package Data tutorial, feel free to
-                skip to step 2 to the right. Otherwise, visit please <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data">here</a>
+                skip to step 2 to the right. Otherwise, visit please <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data">the Package Data tutorial</a>
                 to install the necessary packages for Brain-Score and to learn more about stimuli and data packaging.
             </p>
         </div>
         <div class="column is-one-half">
-            <h3 class="benefits_heading is-size-3-mobile">Part 2: Access the Sample Data Folder:</h3>
+            <h3 class="benefits_heading is-size-3-mobile">Part 2: Access the Sample Benchmark Submission Folder:</h3>
             <p class="benefits_info is-size-5-mobile">
                 As was the case for the Package Data tutorial, we will be looking at a sample benchmark, <span class="special_format">Ferguson2024</span>,
                 in order to understand the many parts of a benchmark plugin. You can view our sample submission folder in your local copy
@@ -257,8 +261,6 @@
        By now you have seen the heart of a benchmark, and hopefully feel comfortable enough with the benchmark plugin
         system that you could upload your own. We recognize that this might be a tedious process that is bound
         to raise questions, so please reach out to Team Member if you would like help getting your benchmark on our site.
-        There is also another, slightly more in depth benchmark tutorial (that also covers neural data)
-        <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">here</a> on our wiki.
     </p>
 
     <div class="columns is-tablet is-variable is-1-tablet">
