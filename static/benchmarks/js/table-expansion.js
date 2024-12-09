@@ -5,8 +5,8 @@ $(document).ready(function () {
     if (document.querySelector('.leaderboard-table-component')) {
         $('th[data-benchmark]').click(onClickExpandCollapseBenchmark);
         
-        // Get URL parameters immediately
-        const benchmark = new URLSearchParams(window.location.search).get('benchmark');
+        // Get URL parameters
+        const benchmark = new URLSearchParams(window.location.search).get('parent-benchmark');
         if (!benchmark) return;
 
         // Use requestAnimationFrame to wait for cache to load
@@ -53,7 +53,7 @@ $(document).ready(function () {
             }
         }
 
-        const newUrl = `/${domain}/leaderboard/?benchmark=${benchmark}`;
+        const newUrl = `/${domain}/leaderboard/?parent-benchmark=${benchmark}`;
         updateUrl(newUrl);
     }
 
