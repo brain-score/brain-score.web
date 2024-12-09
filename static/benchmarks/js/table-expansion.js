@@ -5,17 +5,20 @@ $(document).ready(function () {
     if (document.querySelector('.leaderboard-table-component')) {
         $('th[data-benchmark]').click(onClickExpandCollapseBenchmark);
         
-        // Parse URL parameters and set initial state
-        const urlParams = new URLSearchParams(window.location.search);
-        const benchmark = urlParams.get('benchmark');
+        // Get URL parameters immediately
+        const benchmark = new URLSearchParams(window.location.search).get('benchmark');
+        if (!benchmark) return;
 
-        if (benchmark) {
-            const targetElement = $(`[data-benchmark="${benchmark}"]`)[0];
+        // Use requestAnimationFrame to wait for cache to load
+        requestAnimationFrame(() => {
+            const targetElement = document.querySelector(`[data-benchmark="${benchmark}"]`);
             if (targetElement) {
-                expandParent({ currentTarget: targetElement });
+                onClickExpandCollapseBenchmark({
+                    currentTarget: targetElement,
+                    type: "initial-load"
+                });
             }
-        }
-        return;
+        });
     }
 
     function onClickExpandCollapseBenchmark(event) {
@@ -51,8 +54,7 @@ $(document).ready(function () {
         }
 
         const newUrl = `/${domain}/leaderboard/?benchmark=${benchmark}`;
-        console.log("New URL:", newUrl); // Debugging log
-        updateUrlAndTrackView(newUrl);
+        updateUrl(newUrl);
     }
 
     function expandChild(event) {
@@ -112,7 +114,7 @@ $(document).ready(function () {
         });
     }
     // Function to update the URL and send a pageview to Google Analytics
-    function updateUrlAndTrackView(newUrl) {
+    function updateUrl(newUrl) {
         // Update the URL without reloading the page
         history.pushState(null, '', newUrl);
 
