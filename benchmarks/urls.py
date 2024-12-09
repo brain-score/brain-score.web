@@ -81,6 +81,8 @@ all_domain_urls = [non_domain_urls]
 for domain in supported_domains:
     domain_urls = [
         path(f'{domain}/', partial(index, domain=domain), name='index'),
+     path(f'{domain}/leaderboard/', partial(index, domain=domain), name=f'{domain}-leaderboard'),
+
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
