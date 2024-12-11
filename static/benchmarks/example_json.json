@@ -1,7 +1,6 @@
 {
     "dandiset_id": "000788",
     "nwb_file_path": "sub-pico/sub-pico_ecephys.nwb",
-    "exp_path": "/home/ubuntu/vision/brainscore_vision/nwb_integration/",
     "identifier": "DataGenerationTrial_emogan",
     "assembly": {
         "region": ["IT"],
