@@ -2,6 +2,7 @@ import functools
 from functools import partial
 from django.conf import settings
 from django.urls import path
+from django.shortcuts import redirect
 
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
     content_utils, benchmark, explore
@@ -80,8 +81,9 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        path(f'{domain}/', partial(index, domain=domain), name='index'),
-     path(f'{domain}/leaderboard/', partial(index, domain=domain), name=f'{domain}-leaderboard'),
+        #path(f'{domain}/', partial(index, domain=domain), name='index'),
+     path(f'{domain}/', lambda request: redirect(f'leaderboard/', permanent=True)),
+        path(f'{domain}/leaderboard/', partial(index, domain=domain), name=f'{domain}-leaderboard'),
 
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
