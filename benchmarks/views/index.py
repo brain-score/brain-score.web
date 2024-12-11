@@ -15,8 +15,8 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
 from tqdm import tqdm
-
 from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
+from django.utils.cache import learn_cache_key, patch_response_headers
 
 _logger = logging.getLogger(__name__)
 
@@ -67,15 +67,15 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
                 # (CASE 2: User data) Create unique key for user-specific cache
                 key_parts = ['user_context', domain, str(user.id), str(show_public)]
             else:
-                # (CASE 3: No caching) Neither public nor user-specific
-                return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                          model_filter=model_filter, show_public=show_public)
-            
+                # (CASE 3: Original leaderboard view)
+                key_parts = ['global_context', domain, 'private']
+
             # Generate SHA256 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
             cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
             
             # Try to get cached result
             cached_result = cache.get(cache_key)
+
             if cached_result is not None:
                 return cached_result  # Return cached data if found
 
@@ -90,12 +90,32 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
         return wrapper
     return decorator
 
-# Keep leaderboard caching for now.
-@cache_page(24 * 60 * 60)
+def cache_page_ignore_params(timeout):
+    '''
+    This decorator is used to cache the leaderboard view irrespective of the URL query parameters.
+    This was created to replace @cache_page because URL parameters would be determined to be a new
+    page and therefore require a new cache key.
+    Because the leaderboard view contains all the information we need regardless of the view, we just
+    load the original view expand/collapse as needed.
+    '''
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            # Remove query parameters from the cache key
+            cache_key = f'views.decorators.cache.cache_page.{request.path}'
+            
+            response = cache.get(cache_key)
+            if response is None:
+                response = view_func(request, *args, **kwargs)
+                patch_response_headers(response, timeout)
+                cache.set(cache_key, response, timeout)
+            
+            return response
+        return _wrapped_view
+    return decorator
+
+@cache_page_ignore_params(24 * 60 * 60)
 def view(request, domain: str):
-    # Pre-cache public context for model cards
     public_context = get_context(domain=domain, show_public=True)
-    # Cache leaderboard context that is ultimately rendered in the leaderboard view
     leaderboard_context = get_context(domain=domain)
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
@@ -228,6 +248,7 @@ def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=N
     root_benchmarks = root_benchmarks.order_by('order')
     root_trees = []
     for root_benchmark in root_benchmarks:
+
         root_tree = Tree(value=root_benchmark, depth=0)
         root_trees.append(root_tree)
         traverse_todo = [root_tree]
@@ -323,6 +344,34 @@ def _collect_submittable_benchmarks(benchmarks, user):
                            if benchmark_type_id in previously_evaluated_benchmarks}
     return benchmark_selection
 
+def _collect_models_optimized(domain: str, benchmarks, show_public, user=None, score_filter=None):
+    """
+    :param user: The user whose profile we are currently on, if any
+    """
+    # Remove all non-public model scores, but allow users to see their own models in the table.
+    if user is None:  # if we are not in a user profile, only show rows that are public
+        if not show_public:
+            # show public only set for competition context. See competition2022.py get_context
+            user_selection = dict(model__public=True)
+        else:
+            # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
+            user_selection = dict(score_raw__isnull=False)
+    elif user.is_superuser:
+        user_selection = dict()
+    else:
+        # if we are in a user profile, show all rows that this user owns (regardless of public/private)
+        # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
+        user_selection = dict(model__owner=user, score_raw__isnull=False)
+
+    # Database stores scores for actual instances
+    benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
+    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
+
+    # Fetch scores
+    all_scores = Score.objects.filter(**user_selection,
+                                      **(score_filter if score_filter else {}),
+                                      benchmark__in=benchmark_todos).select_related('model', 'benchmark')
+    
 
 def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
     """
