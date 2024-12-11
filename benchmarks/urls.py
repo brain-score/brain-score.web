@@ -81,19 +81,18 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        #path(f'{domain}/', partial(index, domain=domain), name='index'),
      path(f'{domain}/', lambda request: redirect(f'leaderboard/', permanent=True)),
-        path(f'{domain}/leaderboard/', partial(index, domain=domain), name=f'{domain}-leaderboard'),
+     path(f'{domain}/leaderboard/', partial(index, domain=domain), name=f'{domain}-leaderboard'),
 
-        path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
-        path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
-        path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
-        path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
+     path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
+     path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
+     path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
+     path(f'profile/{domain}/logout/', user.Logout.as_view(domain=domain), name=f'{domain}-logout'),
 
-        path(f'{domain}/explore/', partial(explore.view, domain=domain), name=f'{domain}-explore'),
-        path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
-        path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
-        path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
+     path(f'{domain}/explore/', partial(explore.view, domain=domain), name=f'{domain}-explore'),
+     path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
+     path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
+     path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
     ]
     all_domain_urls.append(domain_urls)
 
