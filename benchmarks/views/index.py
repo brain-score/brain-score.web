@@ -250,7 +250,6 @@ def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=N
     root_benchmarks = root_benchmarks.order_by('order')
     root_trees = []
     for root_benchmark in root_benchmarks:
-
         root_tree = Tree(value=root_benchmark, depth=0)
         root_trees.append(root_tree)
         traverse_todo = [root_tree]
