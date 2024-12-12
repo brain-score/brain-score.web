@@ -115,7 +115,9 @@ def cache_page_ignore_params(timeout):
 
 @cache_page_ignore_params(24 * 60 * 60)
 def view(request, domain: str):
+    # Pre-cache public context for model cards
     public_context = get_context(domain=domain, show_public=True)
+    # Cache leaderboard context that is ultimately rendered in the leaderboard view
     leaderboard_context = get_context(domain=domain)
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
