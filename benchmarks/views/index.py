@@ -345,34 +345,6 @@ def _collect_submittable_benchmarks(benchmarks, user):
                            if benchmark_type_id in previously_evaluated_benchmarks}
     return benchmark_selection
 
-def _collect_models_optimized(domain: str, benchmarks, show_public, user=None, score_filter=None):
-    """
-    :param user: The user whose profile we are currently on, if any
-    """
-    # Remove all non-public model scores, but allow users to see their own models in the table.
-    if user is None:  # if we are not in a user profile, only show rows that are public
-        if not show_public:
-            # show public only set for competition context. See competition2022.py get_context
-            user_selection = dict(model__public=True)
-        else:
-            # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-            user_selection = dict(score_raw__isnull=False)
-    elif user.is_superuser:
-        user_selection = dict()
-    else:
-        # if we are in a user profile, show all rows that this user owns (regardless of public/private)
-        # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-        user_selection = dict(model__owner=user, score_raw__isnull=False)
-
-    # Database stores scores for actual instances
-    benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
-    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
-
-    # Fetch scores
-    all_scores = Score.objects.filter(**user_selection,
-                                      **(score_filter if score_filter else {}),
-                                      benchmark__in=benchmark_todos).select_related('model', 'benchmark')
-    
 
 def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
     """
