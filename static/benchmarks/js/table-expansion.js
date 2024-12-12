@@ -4,7 +4,21 @@ $(document).ready(function () {
 
     if (document.querySelector('.leaderboard-table-component')) {
         $('th[data-benchmark]').click(onClickExpandCollapseBenchmark);
-        return;
+        
+        // Get URL parameters
+        const benchmark = new URLSearchParams(window.location.search).get('parent-benchmark');
+        if (!benchmark) return;
+
+        // Use requestAnimationFrame to wait for cache to load
+        requestAnimationFrame(() => {
+            const targetElement = document.querySelector(`[data-benchmark="${benchmark}"]`);
+            if (targetElement) {
+                onClickExpandCollapseBenchmark({
+                    currentTarget: targetElement,
+                    type: "initial-load"
+                });
+            }
+        });
     }
 
     function onClickExpandCollapseBenchmark(event) {
@@ -29,6 +43,18 @@ $(document).ready(function () {
             expandParent(event);
         }
 
+        let benchmark = event.currentTarget.dataset.benchmark;
+
+        // If expanding, set the URL to the parent benchmark
+        if (!isClosed) {
+            const parentBenchmark = event.currentTarget.dataset.parent;
+            if (parentBenchmark) {
+                benchmark = parentBenchmark.replace('_v0', '');
+            }
+        }
+
+        const newUrl = `/${domain}/leaderboard/?parent-benchmark=${benchmark}`;
+        updateUrl(newUrl);
     }
 
     function expandChild(event) {
@@ -87,5 +113,14 @@ $(document).ready(function () {
             });
         });
     }
+    // Function to update the URL and send a pageview to Google Analytics
+    function updateUrl(newUrl) {
+        // Update the URL without reloading the page
+        history.pushState(null, '', newUrl);
 
+        // Send a pageview event to Google Analytics
+        gtag('config', GTAG_ID, {
+            'page_path': newUrl
+        });
+    }
 });
