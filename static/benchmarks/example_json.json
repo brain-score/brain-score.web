@@ -1,7 +1,7 @@
 {
-    "dandiset_id": "000788",
-    "nwb_file_path": "sub-pico/sub-pico_ecephys.nwb",
-    "identifier": "DataGenerationTrial_emogan",
+    "dandiset_id": "Dandiset id, i.e. 000788",
+    "nwb_file_path": "path to the NWB file within the overall Dandiset, i.e. for a Dandiset structure of 000788/sub-pico/sub-pico_ecephys.nwb, this value should be sub-pico/sub-pico_ecephys.nwb",
+    "identifier": "identifier for your data, i.e. DataGenerationTrial_emogan",
     "assembly": {
         "region": ["IT"],
         "presentation": 8500,
