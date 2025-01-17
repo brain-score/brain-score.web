@@ -592,7 +592,7 @@ def normalize_alpha(value, min_value, max_value):
     slope = -.9 / (min_value - max_value)
     intercept = .1 - slope * min_value
     result = slope * value + intercept
-    return result
+    return float(result)
 
 
 def represent(value):
