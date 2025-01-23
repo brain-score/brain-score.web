@@ -8,18 +8,13 @@ AWS and Elastic Beanstalk
 
 1. The website is hosted on AWS via Elastic Beanstalk (EB) running on EC2 instances. There is both a dev and a prod site,
    and ideally, dev will always be a copy of prod (for website staging, see below).
-2. There are currently 4 EB instances visible when viewing the AWS Console (note: AWS calls the website the "console",
-   and this is different from the "console" CLI):
+2. There are currently 2 EB instances visible when viewing the AWS Console (note: AWS calls the website the "console",
+   and this is different from the "console" CLI): dev and prod.
 
    * The web console can be accessed `here <https://us-east-2.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-2#/environments>`_,
      assuming you have credentials for Brain-Score's AWS. If you do not have creds, ask a Brain-Score team member to create some for you.
-   * The environments in use are the ones that contain the substring ``updated``. The other 2 are legacy environments
-     that are no longer active and can probably be removed in the future.
-3. When viewing this link above for the web console, the dev site might show a ``Severe`` health status—this is OK and
-   can be safely ignored. It has to do with Django not getting along well with EB's Load Balancer. See (6) for more
-   about the Load Balancer.
-4. Prod's status should always be green ``Ok``. If it is not, then something is broken. To troubleshoot, click on the
-   prod instance and look at the events immediately below its information on the next page:
+3. Dev and Prod's status should always be green ``Ok``. If it is not, then something is broken. To troubleshoot, click on the
+    instance and look at the events immediately below its information on the next page:
 
    * To Troubleshoot an instance that has non-``Ok`` status, you can either view the Health tab or ``Logs`` tab to get the logs.
    * You can either download the last 100 lines of logs or the full logs. *This is what you will want to do to see exactly
@@ -83,8 +78,8 @@ If you have not already done so:
 5. Initialize your ``awsebcli`` settings with ``eb init``.
 
    * When it asks "Select a default region", select "us-east-2 : US East (Ohio)".
-   * It should find application "brain-score.web" in account 613927419654 and suggest it; select that.
-   * For "Select a keypair" select "Create new KeyPair" (unless you already have a keypair in us-east-2 for account 613927419654).
+   * It should find application "brain-score.web" in account ********657 and suggest it; select that.
+   * For "Select a keypair" select "Create new KeyPair" (unless you already have a keypair in us-east-2 for account ********657).
    * For all other prompts accept the default.
 6. Check that the command line client can see the environments in the account:  ``eb list``.
 
@@ -95,12 +90,12 @@ To Deploy (if migrations are made)
 
 1. If there are changes to Django models, make sure makemigrations has been run and the migration checked into git.
 
-2. Deploy the latest Git commit to the development environment:  ``eb deploy brain-score-web-dev --timeout 20``.
+2. Deploy the latest Git commit to the development environment:  ``eb deploy Brain-score-web-dev-updated --timeout 20``.
 
    * This can take around 15 minutes.
 3. If there are database migrations, apply them from within the container:
 
-   * ``eb ssh brain-score-web-dev``
+   * ``eb ssh Brain-score-web-dev-updated``
 
       * Reply "yes" to the fingerprint question.
       * You should get an EC2 instance prompt like ``[ec2-user@ip-172-31-32-98 ~]$``.
@@ -121,7 +116,7 @@ To Deploy (if migrations are made)
    * Exit the container:  ``exit``.
    * Exit the EC2 host:  ``exit``.
 
-4. Check the dev website:  ``http://brain-score-web-dev.us-east-2.elasticbeanstalk.com/``.
+4. Check the dev website:  ``Brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com ``.
 5. If the dev website passes tests, deploy to production:  ``eb deploy brain-score-web-prod --timeout 20``.
 6. If necessary, repeat migrations, but this time begin with ``eb ssh brain-score-web-prod``.
 
