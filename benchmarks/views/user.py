@@ -285,7 +285,7 @@ class ConvertNWB(View):
         # update frontend
         response.raise_for_status()
         _logger.debug("Job triggered successfully")
-        return render(request, 'benchmarks/success.html', {"domain": self.domain})
+        return render(request, 'benchmarks/success_nwb.html', {"domain": self.domain})
 
 def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tuple[bool, Union[None, List[str]]]:
     """
