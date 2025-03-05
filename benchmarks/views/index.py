@@ -1,12 +1,9 @@
-import itertools
 import json
 import logging
-import re
-from collections import ChainMap
-from collections import namedtuple
 from typing import Union
 from django.utils.functional import wraps
 import hashlib
+from django.db.models import Q
 from django.core.cache import cache
 import numpy as np
 import pandas as pd
@@ -14,9 +11,10 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
-from tqdm import tqdm
-
-from benchmarks.models import BenchmarkType, BenchmarkInstance, Model, Score, generic_repr, Reference
+import json
+import numpy as np
+from time import time
+from benchmarks.models import Score, Reference, FinalBenchmarkContext, FinalModelContext, BenchmarkMinMax
 
 _logger = logging.getLogger(__name__)
 
@@ -32,21 +30,6 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
-# Move declaration of the namedtuples to the top of the file to ensure they are available in the cache decorator.
-# Previously inside collect_models function which prevented them from being pickled properly during caching.
-ModelRow = namedtuple('ModelRow', [
-    'id', 'name', 'reference_identifier', 'reference_link',
-    'user', 'public', 'competition', 'domain',
-    'rank', 'scores', 'build_status', 'submitter', 
-    'submission_id', 'jenkins_id', 'timestamp'
-])
-
-ScoreDisplay = namedtuple('ScoreDisplay', [
-    'benchmark', 'versioned_benchmark_identifier',
-    'score_raw', 'score_ceiled', 'error', 'color', 
-    'comment', 'is_complete'
-])
-
 def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
     '''
     Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
@@ -59,246 +42,381 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
     def decorator(func):  # Take function to be decorated (i.e., get_context)
         @wraps(func)  # Preserving original function's metadata attributes
         def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
-            # Determine which type of cache key to use
+            # Generate a more specific cache key that includes model_filter and benchmark_filter info
             if show_public and not user:
                 # (CASE 1: Public data) Create unique key for public data cache
                 key_parts = ['global_context', domain, 'public']
+                if benchmark_filter:
+                    key_parts.append('benchmark_filtered')
+                if model_filter:
+                    key_parts.append('model_filtered')
             elif user:
-                # (CASE 2: User data) Create unique key for user-specific cache
+                # (CASE 2: User data) Create unique key for user-specific cache that includes public data
                 key_parts = ['user_context', domain, str(user.id), str(show_public)]
+                if benchmark_filter:
+                    key_parts.append('benchmark_filtered')
+                if model_filter:
+                    key_parts.append('model_filtered')
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                           model_filter=model_filter, show_public=show_public)
             
-            # Generate SHA256 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
+            # Generate SHA256 hash
             cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
             
             # Try to get cached result
             cached_result = cache.get(cache_key)
             if cached_result is not None:
-                return cached_result  # Return cached data if found
+                return cached_result
 
-            # If no cache found, calculate result as normal
+            # If no cache found, calculate result
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                         model_filter=model_filter, show_public=show_public)
             
-            # Store result in cache appropriately (i.e., for users or globally)
+            # For user contexts, also cache the public data within the user context
+            if user and not show_public:
+                result['public_models'] = [m for m in result['models'] if getattr(m, 'public', True)]
+            
+            # Store result in cache
             cache.set(cache_key, result, timeout)
             return result
 
         return wrapper
     return decorator
 
-# Keep leaderboard caching for now.
-@cache_page(24 * 60 * 60)
+def cache_base_model_query(timeout=24 * 60 * 60):  # 24 hour cache by default
+    def decorator(func):
+        @wraps(func)
+        def wrapper(domain="vision"):
+            # Create unique key for domain
+            key_parts = ['base_model_query', domain]
+            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
+            
+            # Try to get cached result
+            cached_result = cache.get(cache_key)
+            if cached_result is not None:
+                return cached_result
+            
+            # If no cache found, calculate result
+            result = func(domain)
+            
+            # Store result in cache
+            cache.set(cache_key, result, timeout)
+            return result
+        return wrapper
+    return decorator
+
+#@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
+def get_base_model_query(domain="vision"):
+    """Get the base model query for a domain before any filtering"""
+    return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
+
+
+#@cache_page(1 * 15 * 60)
 def view(request, domain: str):
-    # Pre-cache public context for model cards
-    public_context = get_context(domain=domain, show_public=True)
-    # Cache leaderboard context that is ultimately rendered in the leaderboard view
-    leaderboard_context = get_context(domain=domain)
+    # Get the authenticated user if any
+    user = request.user if request.user.is_authenticated else None
+    
+    # Get the appropriate context based on user authentication
+    start_time = time()
+    if user:
+        # User is authenticated - get personalized context
+        leaderboard_context = get_context(user=user, domain=domain, show_public=False)
+    else:
+        # No user - get public context
+        leaderboard_context = get_context(domain=domain, show_public=True)
+    end_time = time()
+    print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
+   
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
-# get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
-# request, the cached results is served faster
-@cache_get_context()
-def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
-    benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
-                                     benchmark_filter=benchmark_filter)
-    model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
-
-    # calculate lightweight, downloadable version of model scores
-    csv_data = _build_scores_dataframe(benchmarks, model_rows)
-
-    # to save vertical space, we strip the lab name in front of benchmarks.
-    uniform_benchmarks = {}  # keeps the original benchmark name
-    for benchmark in benchmarks:  # remove lab for more compactness
-        uniform_benchmarks[benchmark.benchmark_type.identifier] = benchmark.identifier
-        benchmark.ceiling = represent(benchmark.ceiling)
-        benchmark.identifier = f'{benchmark.identifier}_v{benchmark.version}'
-    # map from a benchmark to its parent, the benchmark id is <benchmarkname>_v<version>,
-    # parent have always version 0 (only to match the pattern).
-    # We set here parent nodes as value -> abstract nodes so they must have version 0.
-    benchmark_parents = {
-        benchmark.identifier: f'{benchmark.benchmark_type.parent.identifier}_v0'
-        if benchmark.benchmark_type.parent else None
-        for benchmark in benchmarks}
-    # configure benchmark level shown by default
-    # we're going to use the fact that all benchmark instances currently point to their direct parent
-    uniform_parents = set(benchmark_parents.values())
-    not_shown_set = {benchmark.identifier for benchmark in benchmarks
-                     if benchmark.depth > BASE_DEPTH or
-                     # show engineering benchmarks collapsed, but still show root
-                     (ENGINEERING_ROOT not in benchmark.identifier and ENGINEERING_ROOT in benchmark.root_parent)}
-
-    # data for javascript comparison script
-    public_models = [model_row for model_row in model_rows if model_row.public]
-    comparison_data = _build_comparison_data(public_models)
-
-    # benchmarks to select from for resubmission in user profile
-    submittable_benchmarks = None
-    if user is not None:
-        submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user)
-
-    # need to hardcode this
-    if domain is "vision":
-        citation_domain_url = 'https://www.biorxiv.org/content/early/2018/09/05/407007'
-        citation_domain_title = "Brain-Score: Which Artificial Neural Network for Object Recognition is most " \
-                                "Brain-Like? "
-        citation_domain_bibtex = "@article{SchrimpfKubilius2018BrainScore,\n\t\t\t\t" \
-                                  "title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n\t\t\t\t" \
-                                  "author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and " \
-                                  "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan " \
-                                  "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n\t\t\t\t" \
-                                  "journal={bioRxiv preprint},\n\t\t\t\t" \
-                                  "year={2018},\n\t\t\t\t" \
-                                  "url={https://www.biorxiv.org/content/10.1101/407007v2}\n\t\t\t}"
-    elif domain is "language":
-        citation_domain_url = 'https://www.pnas.org/content/118/45/e2105646118'
-        citation_domain_title = "The neural architecture of language: Integrative modeling converges on predictive processing"
-        citation_domain_bibtex = "@article{schrimpf2021neural,\n\t\t\t\t" \
-                                  "title={The neural architecture of language: Integrative modeling converges on predictive processing},\n\t\t\t\t" \
-                                  "author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina " \
-                                  "and Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n\t\t\t\t" \
-                                  "journal={Proceedings of the National Academy of Sciences},\n\t\t\t\t" \
-                                  "volume={118},\n\t\t\t\t" \
-                                  "number={45},\n\t\t\t\t" \
-                                  "pages={e2105646118},\n\t\t\t\t" \
-                                  "year={2021},\n\t\t\t\t" \
-                                  "publisher={National Acad Sciences}\n\t\t\t" \
-                                  "}"
-    else:
-        citation_domain_url = ''
-        citation_domain_title = ''
-        citation_domain_bibtex = ''
-
-    benchmark_names = [b.identifier for b in list(filter(lambda b: b.number_of_all_children == 0, benchmarks))]
-
-    return {'domain': domain, 'models': model_rows, 'benchmarks': benchmarks, 'benchmark_names': benchmark_names,
-            'submittable_benchmarks': submittable_benchmarks,
-            "benchmark_parents": benchmark_parents, "uniform_parents": uniform_parents,
-            "not_shown_set": not_shown_set, "BASE_DEPTH": BASE_DEPTH, "has_user": False,
-            "comparison_data": json.dumps(comparison_data),
-            'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
-            'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
-            'citation_general_bibtex': '@article{Schrimpf2020integrative,\n\t\t\t\t'
-                                       'title={Integrative Benchmarking to Advance '
-                                       'Neurally Mechanistic Models of Human Intelligence},\n\t\t\t\t'
-                                       'author={Schrimpf, Martin and Kubilius, Jonas and Lee, Michael J and Murty, '
-                                       'N Apurva Ratan and Ajemian, Robert and DiCarlo, James J},\n\t\t\t\t'
-                                       'journal={Neuron},\n\t\t\t\t'
-                                       'year={2020},\n\t\t\t\t'
-                                       'url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n\t\t\t}',
-            'citation_domain_url': citation_domain_url,
-            'citation_domain_title': citation_domain_title,
-            'citation_domain_bibtex': citation_domain_bibtex,
-            'csv_downloadable': csv_data
-            }
-
-
-def _build_scores_dataframe(benchmarks, model_rows):
-    csv_scores = []
-    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
-    for model in model_rows:
-        csv_dict = {"model_name": model.name, "scores": {}}
-        for score in model.scores:
-            benchmark_identifier = score.benchmark.identifier
-            if benchmark_identifier in benchmark_names:
-                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
-        csv_scores.append(csv_dict)
-    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
-
-    if not csv_df.empty:  # check if the DataFrame is empty
-        csv_df.set_index('model_name', inplace=True)
-        csv_data = csv_df.to_csv(index=True)
-    else:
-        csv_data = "No models submitted yet."
-
-    return csv_data
-
-
-def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
-    # build tree structure of parent relationships
-    benchmark_types = BenchmarkType.objects.select_related('reference')
-    if not user_page:  # on public overview, only show visible benchmarks
-        benchmark_types = benchmark_types.filter(visible=True)
-    root_benchmarks = benchmark_types.filter(identifier__in=[f"average_{domain}", f"engineering_{domain}"])
+@cache_get_context(timeout=1 * 15 * 60)
+def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+    # ------------------------------------------------------------------
+    # 1) QUERY MATERIALIZED VIEW FOR BENCHMARK AND MODEL CONTEXT
+    # Still need to:
+    # - filter by benchmark_filter if benchmark_filter is not None
+    # - filter by model_filter if model_filter is not None
+    # - add new color points for comparison data when user navigates from profile to compare (new feature)
+    # - add private benchmarks for private leaderboard aggregation
+    # ------------------------------------------------------------------ 
     if benchmark_filter:
-        root_benchmarks = benchmark_filter(root_benchmarks)
-    root_benchmarks = root_benchmarks.order_by('order')
-    root_trees = []
-    for root_benchmark in root_benchmarks:
-        root_tree = Tree(value=root_benchmark, depth=0)
-        root_trees.append(root_tree)
-        traverse_todo = [root_tree]
-        # traverse the tree, filling in children in the process
-        while traverse_todo:
-            node = traverse_todo.pop()
-            children = benchmark_types.filter(parent=node.value)
-            if benchmark_filter:
-                children = benchmark_filter(children)
-            children = children.order_by('order')
-            children = [Tree(value=child, parent=node, depth=node.depth + 1) for child in children]
-            node.children = children
-            traverse_todo += children
+        benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
+    else:
+        # If user is superuser, show all benchmarks, otherwise only show visible ones
+        if user and user.is_superuser:
+            benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain).order_by('overall_order'))
+        else:
+            benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
+    
+    # Build model query based on user permissions
+    start_time = time()
+    all_model_data = get_base_model_query(domain)
+    end_time = time()
+    print(f"Time taken to get base model query: {end_time - start_time} seconds")
+    if user is None:
+        # Public view - only show public models
+        models = all_model_data.filter(public=True)
+    elif user.is_superuser:
+        # Superuser sees everything
+        models = all_model_data
+    else:
+        # Filter for user's models
+        models = all_model_data.filter(Q(user__id=user.id))
 
-    def count_all_children(tree: Tree):
-        """ compute total number of children per tree """
-        count = 0
-        for child in tree.children:
-            count += count_all_children(child)
-        tree.number_of_all_children = count
-        if len(tree.children) == 0:
-            count += 1  # count as instance if no further children
-        return count
+    # Convert to list only when needed for ranking and further processing
+    models = list(models)
 
-    overall_order = 0
+    # Apply any additional model filters
+    if model_filter:
+        model_query = list(model_filter(models))
+    
+    # Order by rank initially, but we'll recalculate ranks later
+    models.sort(key=lambda m: getattr(m, 'rank', float('inf')))
+    
+    # Recalculate ranks based on the filtered set of models
+    model_rows_reranked = _recalculate_model_ranks(models, domain)
+    
+    # ------------------------------------------------------------------
+    # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
+    # ------------------------------------------------------------------ 
+    benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
+    benchmark_parents = {
+        bench.identifier: (f"{bench.parent['identifier']}_v0" if bench.parent and 'identifier' in bench.parent else None)
+        for bench in benchmarks
+    }
+    uniform_parents = set(benchmark_parents.values())
+    not_shown_set = {
+        bench.identifier for bench in benchmarks
+        if bench.depth > BASE_DEPTH
+        or (ENGINEERING_ROOT not in bench.identifier
+            and ENGINEERING_ROOT in bench.root_parent)
+    }
+    
+    # Add submittable benchmarks for logged-in users
+    submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
+    
+    # Build CSV data and comparison data
+    csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
+    
+    # ------------------------------------------------------------------
+    # 3) PREPARE FINAL CONTEXT
+    # ------------------------------------------------------------------ 
+    context = {
+        'domain': domain,
+        'models': model_rows_reranked,
+        'benchmarks': benchmarks,
+        'benchmark_names': benchmark_names,
+        'submittable_benchmarks': submittable_benchmarks,
+        'benchmark_parents': benchmark_parents,
+        'uniform_parents': uniform_parents,
+        'not_shown_set': not_shown_set,
+        'BASE_DEPTH': BASE_DEPTH,
+        'has_user': user is not None,
+        'comparison_data': json.dumps(comparison_data),
+        'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
+        'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
+        'citation_general_bibtex': (
+            '@article{Schrimpf2020integrative,\n'
+            '  title={Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence},\n'
+            '  author={Schrimpf, Martin and Kubilius, Jonas and Lee, Michael J and Murty, N Apurva Ratan and '
+            'Ajemian, Robert and DiCarlo, James J},\n'
+            '  journal={Neuron},\n'
+            '  year={2020},\n'
+            '  url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n'
+            '}'
+        ),
+    }
+    
+    # Add domain-specific citation information
+    if domain == "vision":
+        context.update({
+            'citation_domain_url': 'https://www.biorxiv.org/content/early/2018/09/05/407007',
+            'citation_domain_title': 'Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?',
+            'citation_domain_bibtex': ("@article{SchrimpfKubilius2018BrainScore,\n"
+                                  "  title={Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?},\n"
+                                  "  author={Martin Schrimpf and Jonas Kubilius and Ha Hong and Najib J. Majaj and "
+                                  "Rishi Rajalingham and Elias B. Issa and Kohitij Kar and Pouya Bashivan and Jonathan "
+                                  "Prescott-Roy and Franziska Geiger and Kailyn Schmidt and Daniel L. K. Yamins and James J. DiCarlo},\n"
+                                  "  journal={bioRxiv preprint},\n"
+                                  "  year={2018},\n"
+                                  "  url={https://www.biorxiv.org/content/10.1101/407007v2}\n"
+                                  "}")
+        })
+    elif domain == "language":
+        context.update({
+            'citation_domain_url': 'https://www.pnas.org/content/118/45/e2105646118',
+            'citation_domain_title': "The neural architecture of language: Integrative modeling converges on predictive processing",
+            'citation_domain_bibtex': ("@article{schrimpf2021neural,\n"
+                                  "  title={The neural architecture of language: Integrative modeling converges on predictive processing},\n"
+                                  "  author={Schrimpf, Martin and Blank, Idan Asher and Tuckute, Greta and Kauf, Carina and "
+                                  "Hosseini, Eghbal A and Kanwisher, Nancy and Tenenbaum, Joshua B and Fedorenko, Evelina},\n"
+                                  "  journal={Proceedings of the National Academy of Sciences},\n"
+                                  "  volume={118},\n"
+                                  "  number={45},\n"
+                                  "  pages={e2105646118},\n"
+                                  "  year={2021}\n"
+                                  "}")
+        })
+    else:
+        context.update({
+            'citation_domain_url': '',
+            'citation_domain_title': '',
+            'citation_domain_bibtex': ''
+        })
+    
+    context['csv_downloadable'] = csv_data
+    return context
 
-    def set_instance_meta(instance, node, tree):
-        """ sets meta attributes of a benchmark instance according to its tree node """
-        instance.parent = node.parent.value if node.parent else None
-        instance.root_parent = tree.value.identifier
-        instance.depth = node.depth
-        instance.number_of_all_children = node.number_of_all_children
-        nonlocal overall_order
-        instance.overall_order = overall_order
-        overall_order += 1
 
-    # gather actual benchmark instances and insert dummy instances for parents
-    benchmarks = []
-    for tree in root_trees:
-        count_all_children(tree)
-        # traverse the tree depth-first to go from highest parent to lowest child, corresponding to the website display
-        traverse_todo = [tree]
-        while traverse_todo:
-            node = traverse_todo.pop(0)  # pop first item --> recent child hierarchy with lowest order
-            if node.children:  # if abstract benchmark hierarchy, insert dummy instance
-                instance = BenchmarkInstance(benchmark_type=node.value, version=None, ceiling=None, ceiling_error=None)
-                instance.children = [child.value.identifier for child in node.children]
-                traverse_todo = node.children + traverse_todo
-                instance.version = int(0)
-                set_instance_meta(instance, node, tree)
-                benchmarks.append(instance)
-            else:  # no children --> it's a specific instance
-                if user_page:
-                    instances = BenchmarkInstance.objects.select_related('benchmark_type') \
-                        .filter(benchmark_type=node.value)
-                    for instance in instances:
-                        set_instance_meta(instance, node, tree)
-                        benchmarks.append(instance)
-                else:
-                    instance = BenchmarkInstance.objects \
-                        .select_related('benchmark_type', 'benchmark_type__reference', 'meta') \
-                        .filter(benchmark_type=node.value).latest('version')  # latest instance for this type
-                    set_instance_meta(instance, node, tree)
-                    benchmarks.append(instance)
-    # add shortcut to identifier
-    for benchmark in benchmarks:
-        benchmark.identifier = benchmark.benchmark_type.identifier
-        shortname = _get_benchmark_shortname(benchmark.benchmark_type.identifier)
-        benchmark.short_name = shortname
-    return benchmarks
+def _recalculate_model_ranks(models, domain="vision"):
+    """
+    Recalculate model ranks based on the average_{domain} benchmark scores.
+    Uses standard competition ranking (equal scores get equal ranks).
+    
+    Args:
+        models: QuerySet or list of FinalModelContext objects
+        domain: Domain to use for ranking (e.g., "vision", "language")
+        
+    Returns:
+        List of FinalModelContext objects with updated ranks
+    """
+    # Convert QuerySet to list if needed
+    if not isinstance(models, list):
+        models = list(models)
+    
+    # Create a list to store model IDs and their average scores
+    model_scores = []
+    models_without_scores = []
+    
+    # Extract average_{domain} scores for each model
+    for model in models:
+        if model.scores is not None:
+            # Find the average_{domain} score
+            average_score = None
+            for score in model.scores:
+                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                if benchmark_id == f"average_{domain}":
+                    # Try to get score_ceiled_raw first, then fall back to score_ceiled
+                    average_score = score.get("score_ceiled_raw", score.get("score_ceiled"))
+                    # Convert string score to float if needed
+                    if isinstance(average_score, str):
+                        try:
+                            average_score = float(average_score)
+                        except ValueError:
+                            # Handle "X" or other non-numeric values
+                            average_score = None
+                    break
+            
+            # If we found a valid average score, add it to our list
+            if average_score is not None and not np.isnan(average_score):
+                model_scores.append((model, average_score))
+            else:
+                # Keep track of models without valid scores separately
+                models_without_scores.append(model)
+    
+    # Sort models by score in descending order (only those with valid scores)
+    model_scores.sort(key=lambda x: x[1], reverse=True)
+    
+    # Create a dictionary mapping model IDs to ranks using standard competition ranking
+    # (equal scores get equal ranks, next rank is skipped)
+    rank_map = {}
+    current_rank = 1
+    previous_score = None
+    
+    for i, (model, score) in enumerate(model_scores):
+        if i == 0 or score != previous_score:
+            # New score, assign the current rank
+            rank_map[model.model_id] = current_rank
+            # Update for next iteration
+            current_rank = i + 2  # Skip next rank if this was a tie
+        else:
+            # Same score as previous, assign the same rank
+            rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
+        
+        previous_score = score
+    
+    # Update ranks for each model with valid scores
+    for model, _ in model_scores:
+        model.rank = rank_map[model.model_id]
+    
+    # Assign a high rank to models without valid scores
+    next_rank = len(model_scores) + 1
+    for model in models_without_scores:
+        model.rank = next_rank
+        next_rank += 1
+    
+    # Combine both lists and sort by rank
+    all_models = [model for model, _ in model_scores] + models_without_scores
+    all_models.sort(key=lambda model: model.rank)
+    
+    return all_models
 
+
+def _build_model_data(benchmarks, models):
+    """
+    Build both comparison data and scores dataframe in a single pass through models.
+    Returns: (csv_data, comparison_data) tuple
+    comparison_data: Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
+        ```
+        [
+            {"dicarlo.Rajalingham2018-i2n_v2-score": .521,
+             "dicarlo.Rajalingham2018-i2n_v2-error": 0.00391920504344273,
+             "behavior_v0-score": ".521",
+             ...,
+             "model": "mobilenet_v2_1.0_224",
+            },
+            ...
+        ]
+        ```
+    csv_data: Build a dataframe of model scores for download as CSV.
+    """
+    # Pre-compute benchmark names set for O(1) lookup
+    benchmark_names = {benchmark.benchmark_type_id for benchmark in benchmarks}
+    
+    # Initialize containers
+    records = []  # For scores dataframe
+    comparison_data = []  # For comparison trends\
+    
+    # Single pass through models
+    for model in models:
+        # Initialize both data structures for this model
+        record = {
+            "model_name": model.name,
+            "layers": json.dumps(model.layers) if model.layers else ""  # Add layers column
+        }
+        model_data = {
+            "model": model.name
+        }
+        
+        # Process all scores for this model
+        if model.scores is not None:
+            for score in model.scores:
+                benchmark_id = score["benchmark"]["benchmark_type_id"]
+                versioned_benchmark_id = score["versioned_benchmark_identifier"]
+            # Add to scores dataframe if it's a relevant benchmark
+                if benchmark_id in benchmark_names:
+                    record[benchmark_id] = score["score_ceiled"]
+            
+                model_data.update({
+                    f"{versioned_benchmark_id}-score": score['score_ceiled'],
+                    f"{versioned_benchmark_id}-error": score['error'],
+                    f"{versioned_benchmark_id}-is_complete": score['is_complete']
+                })
+        
+            # Add to both result sets
+            records.append(record)
+            comparison_data.append(model_data)
+    
+    # Create DataFrame and convert to CSV
+    csv_data = "No models submitted yet."
+    if records:
+        df = pd.DataFrame.from_records(records)
+        df.set_index('model_name', inplace=True)
+        csv_data = df.to_csv(index=True)
+    
+    return csv_data, comparison_data
 
 def _collect_submittable_benchmarks(benchmarks, user):
     """
@@ -324,241 +442,6 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
-def _collect_models(domain: str, benchmarks, show_public, user=None, score_filter=None):
-    """
-    :param user: The user whose profile we are currently on, if any
-    """
-    # Remove all non-public model scores, but allow users to see their own models in the table.
-    if user is None:  # if we are not in a user profile, only show rows that are public
-        if not show_public:
-            # show public only set for competition context. See competition2022.py get_context
-            user_selection = dict(model__public=True)
-        else:
-            # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-            user_selection = dict(score_raw__isnull=False)
-    elif user.is_superuser:
-        user_selection = dict()
-    else:
-        # if we are in a user profile, show all rows that this user owns (regardless of public/private)
-        # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-        user_selection = dict(model__owner=user, score_raw__isnull=False)
-
-    # Database stores scores for actual instances
-    benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
-    benchmark_lookup = {f'{benchmark.identifier}_v{benchmark.version}': benchmark for benchmark in benchmarks}
-    all_scores = Score.objects.filter(**user_selection,
-                                      **(score_filter if score_filter else {}),
-                                      benchmark__in=benchmark_todos)
-    all_scores = all_scores.select_related('model')
-
-    # iteratively collect scores for all benchmarks. We start with the actual instances, storing their respective
-    # parents to traverse up the hierarchy which we iteratively visit until empty.
-    scores = None
-    while benchmark_todos:
-        benchmark = benchmark_todos.pop(0)
-        _logger.debug(f"Processing scores for benchmark {benchmark}")
-        if not hasattr(benchmark, 'children'):  # actual instance without children, we can just retrieve the scores
-            benchmark_scores = all_scores.filter(benchmark=benchmark)
-            if len(benchmark_scores) > 0:
-                rows = []
-                for score in benchmark_scores:
-                    # many engineering benchmarks (e.g. ImageNet) don't have a notion of a primate ceiling.
-                    # instead, we display the raw score if there is no ceiled score.
-                    benchmark_id = f'{benchmark.identifier}_v{benchmark.version}'
-                    if ENGINEERING_ROOT not in benchmark_lookup[benchmark_id].root_parent \
-                            or score.score_ceiled is not None:
-                        score_ceiled = score.score_ceiled
-                    else:
-                        score_ceiled = score.score_raw
-                    rows.append({'benchmark': benchmark.identifier, 'benchmark_version': benchmark.version,
-                                 'overall_order': benchmark.overall_order,
-                                 'model': score.model.id,
-                                 'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error,
-                                 'comment': score.comment, 'is_complete': 1})
-                benchmark_scores = pd.DataFrame(rows)
-                scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
-        else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
-            if scores is not None:
-                children_scores = scores[scores['benchmark'].isin(benchmark.children)]
-                # guard against multiple scores for one combination of (benchmark, version, model)
-                children_scores = children_scores.drop_duplicates()
-                # fill in models that don't have a score
-                combinatorial_model_benchmark_set = set(itertools.product(
-                    set(children_scores['model']), benchmark.children))  # the full combination of models x benchmarks
-                actual_model_benchmark_set = set(zip(children_scores['model'], children_scores['benchmark']))
-                missing_scores = combinatorial_model_benchmark_set - actual_model_benchmark_set
-                if len(missing_scores) > 0:
-                    missing_scores = pd.DataFrame(missing_scores, columns=['model', 'benchmark'])
-                    missing_scores['score_raw'] = missing_scores['score_ceiled'] = np.nan
-                    missing_scores['is_complete'] = 0
-                    children_scores = pd.concat((children_scores, missing_scores))
-                # compute average of children scores -- treat missing scores as 0 for averaging
-                benchmark_scores = children_scores.fillna(0).groupby('model').mean(numeric_only=True)
-                # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
-                if len(benchmark_scores) > 0:
-                    all_children_nan = children_scores.groupby('model').apply(
-                        lambda group: all(group['score_raw'].isna()))
-                    for value_column in ['score_ceiled', 'score_raw', 'error']:
-                        benchmark_scores[value_column][all_children_nan] = np.nan
-                # restore model index
-                benchmark_scores = benchmark_scores.reset_index()
-                # add meta
-                benchmark_scores['benchmark'] = benchmark.identifier
-                benchmark_scores['benchmark_version'] = 0
-                benchmark_scores['comment'] = None
-                scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
-        if benchmark.parent:
-            parent = [parent_candidate for parent_candidate in benchmarks
-                      if parent_candidate.identifier == benchmark.parent.identifier]
-            assert len(parent) == 1
-            parent = parent[0]
-            if parent in benchmark_todos:
-                continue  # already in list
-            # Process benchmarks deeper in the hierarchy first, i.e. process benchmarks with more parents before
-            # benchmarks with fewer parents. This is to avoid cases such as the following:
-            # ```
-            #   V1
-            #     - FreemanZiemba2013.V1-pls
-            #     - V1-response_magnitude
-            #       - Marques2020_Ringach2002-max_dc
-            # ```
-            # In this case, if the FreemanZiemba2013.V1-pls benchmark is processed first, it will add V1 to the todos.
-            # V1 will thus be processed next, at which point the scores for V1-response_magnitude are however not
-            # processed yet. Thus, we want to work our way from the bottom up.
-            benchmark_todos.append(parent)
-            benchmark_todos = list(sorted(benchmark_todos, key=lambda benchmark: benchmark.depth, reverse=True))
-    # setup benchmark metadata for all scores
-    if scores is None:
-        return []
-    minmax = {}
-    for criteria, group in scores.groupby(['benchmark', 'benchmark_version']):
-        benchmark_id = f'{criteria[0]}_v{int(criteria[1])}'
-        bench_minmax = (
-            np.nanmin(group['score_ceiled'].fillna(value=np.nan)),
-            np.nanmax(group['score_ceiled'].fillna(value=np.nan))
-            # this is an ugly hack to make the gray less visually dominant on the page
-            * (2.5 if ENGINEERING_ROOT in benchmark_lookup[benchmark_id].root_parent else 1))
-        if bench_minmax[0] == bench_minmax[1]:
-            bench_minmax = (0, 1)
-        minmax[benchmark_id] = bench_minmax
-
-    # arrange into per-model scores
-    # - prepare model meta
-    model_meta = Model.objects.select_related('reference', 'owner', 'submission', 'submission__submitter')
-    model_meta = {model.id: model for model in model_meta}
-    # - prepare rank
-    model_ranks = scores[scores['benchmark'] == f'average_{domain}']
-    model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
-
-    # - prepare "no score" objects for when a model-benchmark score is missing
-    no_score = {}
-    for benchmark in benchmarks:
-        versioned_benchmark_identifier = f'{benchmark.identifier}_v{benchmark.version}'
-        if versioned_benchmark_identifier in minmax:
-            benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
-            no_score[versioned_benchmark_identifier] = ScoreDisplay(
-                benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
-                score_ceiled="", score_raw="", error="",
-                color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max),
-                comment="", is_complete=False)
-        else:
-            no_score[versioned_benchmark_identifier] = ScoreDisplay(
-                benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
-                score_ceiled="", score_raw="", error="",
-                color=representative_color(None, min_value=0, max_value=1),
-                comment="", is_complete=False)
-    # - convert scores DataFrame into rows
-    data = []
-    for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
-        model_scores = {}
-        # fill in computed scores
-        for score_ceiled, score_raw, error, benchmark, version, comment, is_complete in zip(
-                group['score_ceiled'], group['score_raw'], group['error'],
-                group['benchmark'], group['benchmark_version'],
-                group['comment'], group['is_complete']):
-            versioned_benchmark_identifier = f'{benchmark}_v{version}'
-            benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
-            benchmark = benchmark_lookup[versioned_benchmark_identifier]
-            color = representative_color(
-                score_ceiled,
-                colors=colors_redgreen if ENGINEERING_ROOT not in benchmark.root_parent
-                else colors_gray,
-                min_value=benchmark_min, max_value=benchmark_max)
-            score_ceiled = represent(score_ceiled)
-            score_display = ScoreDisplay(benchmark=benchmark,
-                                         versioned_benchmark_identifier=versioned_benchmark_identifier,
-                                         score_ceiled=score_ceiled, score_raw=score_raw, error=error,
-                                         color=color, comment=comment, is_complete=is_complete)
-            model_scores[versioned_benchmark_identifier] = score_display
-        # fill in missing scores
-        model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}']
-                        if f'{benchmark.identifier}_v{benchmark.version}' in model_scores
-                        else no_score[f'{benchmark.identifier}_v{benchmark.version}']
-                        for benchmark in benchmarks]
-
-        # put everything together, adding model meta
-        meta = model_meta[model_id]
-        if model_id in model_ranks['model'].values:
-            rank = model_ranks[model_ranks['model'] == model_id]['rank'].squeeze()
-        else:  # if a model does not have an average score, it will not be included in the rank
-            _logger.warning(f"Model {model_id} not found in model_ranks")
-            rank = max(model_ranks['rank']) + 1
-        model_reference = reference_identifier(meta.reference)
-
-        # model
-        competition = meta.competition
-        domain = meta.domain
-
-        # submission
-        submitter = meta.submission.submitter
-        submission_id = meta.submission.id
-        timestamp = meta.submission.timestamp
-        build_status = meta.submission.status
-        jenkins_id = meta.submission.jenkins_id
-
-        model_row = ModelRow(
-            id=meta.id,
-            name=meta.name,
-            reference_identifier=model_reference, reference_link=meta.reference.url if meta.reference else None,
-            user=meta.owner, public=meta.public, competition=competition, domain=domain,
-            scores=model_scores, rank=rank, build_status=build_status,
-            submitter=submitter, submission_id=submission_id, jenkins_id=jenkins_id, timestamp=timestamp
-        )
-        data.append(model_row)
-    data = list(sorted(data, key=lambda model_row: model_row.rank))
-
-    return data
-
-
-def _get_benchmark_shortname(benchmark_type_identifier: str):
-    """
-    Removes the lab identifier from a benchmark name.
-    e.g. "dicarlo.MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
-    
-    Assumes that lab identifiers do not contain capital letters.
-    e.g. "MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
-    """
-    # 
-    # E.g., 
-    # 
-    match = re.match(r'[^A-Z]+\.(.+)', benchmark_type_identifier)
-    if match:
-        return match.group(1)
-    else:
-        return benchmark_type_identifier
-
-
-class Tree:
-    def __init__(self, value, depth, parent=None, children=None):
-        self.value = value
-        self.depth = depth
-        self.parent = parent
-        self.children = children
-
-    def __repr__(self):
-        return generic_repr(self)
-
-
 def normalize_value(value, min_value, max_value):
     normalized_value = (value - min_value) / (max_value - min_value)
     return .7 * normalized_value  # scale down to avoid extremely green colors
@@ -574,17 +457,23 @@ def normalize_alpha(value, min_value, max_value):
 
 
 def represent(value):
-    if value is None or np.isnan(value):  # None in sqlite, nan in postgres
+    if isinstance(value, (int, float)):  # None in sqlite, nan in postgres
+        return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
+    if value is None:
+        return ""
+    elif value == "NaN":
         return "X"
-    return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
-
 
 def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
+    #if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
+    if not isinstance(value, (int, float)):    
         return f"background-color: {color_None}"
     normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
     step = int(100 * normalized_value)
-    color = colors[step]
+    try:
+        color = colors[step]
+    except IndexError:
+        color = colors[-1]
     color = tuple(c * 255 for c in color.rgb)
     fallback_color = tuple(round(c) for c in color)
     normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
@@ -593,44 +482,21 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
     return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
 
 
-def _build_comparison_data(models):
-    """
-    Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
-    :return: an array where each dictionary element contains a model's scores on all benchmarks, e.g.
-        ```
-        [
-            {"dicarlo.Rajalingham2018-i2n_v2-score": .521,
-             "dicarlo.Rajalingham2018-i2n_v2-error": 0.00391920504344273,
-             "behavior_v0-score": ".521",
-             ...,
-             "model": "mobilenet_v2_1.0_224",
-            },
-            ...
-        ]
-        ```
-    """
-    data = [dict(ChainMap(*[{'model': model_row.name}] +
-                           [{f"{score_row.versioned_benchmark_identifier}-score": score_row.score_ceiled,
-                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error,
-                             f"{score_row.versioned_benchmark_identifier}-is_complete": score_row.is_complete}
-                            for score_row in model_row.scores]))
-            for model_row in models]
-    return data
-
-
-# controls how model name and submitter appear on leaderboard:
 def get_visibility(model, user):
+    """
+    Determine the visibility level of a model based on the user's permissions.
+    Returns: 'private_owner', 'private_not_owner', or 'public'
+    """
     # Handles private competition models:
     if (not model.public) and (model.competition is not None):
-
         # Model is a private competition model, and user is logged in (or superuser)
-        if (user is not None) and (user.is_superuser or model.user.id == user.id):
+        if (user is not None) and (user.is_superuser or 
+                                  (isinstance(model.user, dict) and model.user.get('id') == user.id) or
+                                  (hasattr(model.user, 'id') and model.user.id == user.id)):
             return "private_owner"
-
         # Model is a private competition model, and user is NOT logged in (or NOT superuser)
         else:
             return "private_not_owner"
-
     # Model is public
     else:
         return "public"
@@ -679,6 +545,24 @@ def get_initial_characters(dictionary, key):
 # Checks if the parent's name or the part of the parent's name after the first period are in the given dictionary.
 @register.filter
 def get_parent_item(dictionary, key):
+    # Handle case where dictionary is actually a string
+    if isinstance(dictionary, str):
+        return None
+        
+    # Use .get() to avoid KeyError for dictionaries
+    return_value = dictionary.get(key, "")
+    if not return_value:
+        return None
+    # Optionally, process the string if you want to strip a lab prefix.
+    if "." in return_value:
+        parts = return_value.split('.')
+        # For example, if you want to return everything after the first dot:
+        return ".".join(parts[1:])
+    else:
+        return return_value
+
+@register.filter
+def get_parent_item_old(dictionary, key):
     return_value = dictionary[key]
     return_string = ""
     if not return_value:
@@ -718,11 +602,20 @@ def display_model(model, user):
 def display_submitter(model, user):
     visibility = get_visibility(model, user)
     if visibility == "private_owner":
-        return model.user.display_name
+        if isinstance(model.user, dict):
+            return model.user.get("display_name", "")
+        else:
+            return getattr(model.user, "display_name", "")
     elif visibility == "private_not_owner":
-        return f"Anonymous Submitter #{model.user.id}"
+        if isinstance(model.user, dict):
+            return f"Anonymous Submitter #{model.user.get('id', '')}"
+        else:
+            return f"Anonymous Submitter #{getattr(model.user, 'id', '')}"
     else:
-        return model.user.display_name
+        if isinstance(model.user, dict):
+            return model.user.get("display_name", "")
+        else:
+            return getattr(model.user, "display_name", "")
 
 
 # controls how the benchmark roots are displayed in the comparison graphs
@@ -733,3 +626,8 @@ def simplify_domain(benchmark_name: str) -> str:
         if benchmark_name.startswith(f"{suffixed_name}_"):
             return suffixed_name
     return benchmark_name
+
+@register.filter
+def get_model_display_name(model, user):
+    """Template filter for getting model display name"""
+    return display_model(model, user)

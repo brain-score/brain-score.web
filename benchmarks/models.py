@@ -231,3 +231,102 @@ class MailingList(models.Model):
     indexes = [
         models.Index(fields=['email']),
     ]
+
+# In benchmarks/models.py
+from django.db import models
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
+class PreDecodedJSONField(models.JSONField):
+    """
+    A JSONField variant that directly handles dict/list values,
+    skipping the parent's from_db_value logic if it's already 
+    a Python dict or list.
+    """
+    def from_db_value(self, value, expression, connection):
+        # 1) If DB returned None, just pass it
+        if value is None:
+            return None
+
+        # 2) If DB gave us dict/list, return as is
+        if isinstance(value, (dict, list)):
+            return value
+
+        # 3) Otherwise assume it's a JSON string, parse with json.loads
+        return json.loads(value)
+
+class FinalBenchmarkContext(models.Model):
+    benchmark_type_id = models.CharField(max_length=255, primary_key=True)
+    version = models.IntegerField()
+    ceiling = models.CharField(max_length=32)
+    ceiling_error = models.FloatField(null=True, blank=True)
+    meta_id = models.IntegerField(null=True, blank=True)
+    # Use the custom field class directly, not `models.PreDecodedJSONField`
+    children = PreDecodedJSONField(null=True, blank=True)
+    parent = PreDecodedJSONField(null=True, blank=True)
+    visible = models.BooleanField(default=True)
+    owner_id = models.IntegerField(null=True, blank=True)
+    root_parent = models.CharField(max_length=64)
+    domain = models.CharField(max_length=64)
+
+    benchmark_url = models.CharField(max_length=255)
+    benchmark_reference_identifier = models.CharField(max_length=255)
+    benchmark_bibtex = models.TextField()
+
+    depth = models.IntegerField()
+    number_of_all_children = models.IntegerField()
+    overall_order = models.IntegerField()
+    identifier = models.CharField(max_length=255)
+    short_name = models.CharField(max_length=255)
+    benchmark_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mv_final_benchmark_context'
+
+    @property
+    def id(self):
+        """Provide an 'id' so that templates using {{ benchmark.id}} still work. Can make chage in db too"""
+        return self.benchmark_id
+
+class FinalModelContext(models.Model):
+    model_id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=255)
+    reference_identifier = models.CharField(max_length=255, null=True, blank=True)
+    url = models.CharField(max_length=512, null=True, blank=True)
+    user = PreDecodedJSONField(null=True, blank=True)
+    user_id = models.IntegerField(null=True, blank=True)
+    owner = PreDecodedJSONField(null=True, blank=True)
+    public = models.BooleanField()
+    competition = models.CharField(max_length=255, null=True, blank=True)
+    domain = models.CharField(max_length=64)
+    visual_degrees = models.IntegerField(null=True, blank=True)
+    layers = PreDecodedJSONField(null=True, blank=True)
+    rank = models.IntegerField()
+    scores = PreDecodedJSONField(null=True, blank=True)
+    build_status = models.CharField(max_length=64)
+    submitter = PreDecodedJSONField(null=True, blank=True)
+    submission_id = models.IntegerField(null=True, blank=True)
+    jenkins_id = models.IntegerField(null=True, blank=True)
+    timestamp = models.DateTimeField(null=True, blank=True)
+    primary_model_id = models.IntegerField(null=True, blank=True)
+    num_secondary_models = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mv_final_model_context'
+
+    @property
+    def id(self):
+        """Provide an 'id' so that templates using {{ model.id}} still work. Can make chage in db too"""
+        return self.model_id
+
+class BenchmarkMinMax(models.Model):
+    benchmark_identifier = models.CharField(max_length=255, primary_key=True)
+    bench_id = models.CharField(max_length=255)
+    min_score = models.FloatField()
+    max_score = models.FloatField()
+
+    class Meta:
+        managed = False
+        db_table = 'mv_benchmark_minmax'
