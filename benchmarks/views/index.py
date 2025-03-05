@@ -11,6 +11,8 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 import json
 import numpy as np
 from time import time
@@ -130,6 +132,13 @@ def view(request, domain: str):
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
+
+def ajax_table_body(request, domain):
+    """Ajax view to render only the table-body fragment."""
+    user = request.user if request.user.is_authenticated else None
+    leaderboard_context = get_context(user=user, domain=domain, show_public=(user is None))
+    html = render_to_string('benchmarks/leaderboard/table-body.html', leaderboard_context, request=request)
+    return JsonResponse({'html': html})
 
 @cache_get_context(timeout=1 * 15 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):

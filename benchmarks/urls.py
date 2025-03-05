@@ -2,9 +2,11 @@ import functools
 from functools import partial
 from django.conf import settings
 from django.urls import path
+from .views.index import view as index, ajax_table_body
+from .views.index import ajax_table_body
 
-from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore
+from .views import user, model, competition2022, competition2024, compare, community, release2_0, brain_model, content_utils, benchmark, explore
+
 
 
 # all currently supported Brain-Score domains:
@@ -74,6 +76,7 @@ non_domain_urls = [
     path('competition2024/', competition2024.view, name='competition2024'),
     path('competition2022/', competition2022.view, name='competition2022'),
     path('release2.0/', release2_0.view, name='release2.0'),
+    path('<str:domain>/ajax/table-body/', ajax_table_body, name='ajax-table-body'),
 ]
 
 all_domain_urls = [non_domain_urls]

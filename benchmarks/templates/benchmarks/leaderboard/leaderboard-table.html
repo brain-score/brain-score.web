@@ -95,7 +95,10 @@
       </tr>
     </thead>
     <!-- models -->
-      {% include "benchmarks/leaderboard/table-body.html" %}
+      <tbody id="table-body-placeholder">
+  <tr><td colspan="10">Loading data...</td></tr>
+</tbody>
+
   </table>
 </div>
 {% if has_user %}
@@ -104,3 +107,19 @@
 {% else %}
   <p>No data.</p>
 {% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch("{% url 'ajax-table-body' domain %}")
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('table-body-placeholder').innerHTML = data.html;
+      })
+      .catch(error => {
+        console.error("Error loading table data:", error);
+        document.getElementById('table-body-placeholder').innerHTML = '<tr><td colspan="10">Failed to load data.</td></tr>';
+      });
+  });
+  </script>
+  
+  
