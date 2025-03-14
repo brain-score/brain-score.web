@@ -620,3 +620,25 @@ def simplify_domain(benchmark_name: str) -> str:
             return suffixed_name
     return benchmark_name
 
+
+'''
+Old functions that are part of unit tests
+These functions need to be rewritten.
+'''
+
+def _get_benchmark_shortname(benchmark_type_identifier: str):
+    """
+    Removes the lab identifier from a benchmark name.
+    e.g. "dicarlo.MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
+    
+    Assumes that lab identifiers do not contain capital letters.
+    e.g. "MajajHong2015.V4-pls --> MajajHong2015.V4-pls"
+    """
+    # 
+    # E.g., 
+    # 
+    match = re.match(r'[^A-Z]+\.(.+)', benchmark_type_identifier)
+    if match:
+        return match.group(1)
+    else:
+        return benchmark_type_identifier
