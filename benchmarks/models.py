@@ -3,6 +3,7 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import json
 
 
 class UserManager(BaseUserManager):
@@ -232,11 +233,6 @@ class MailingList(models.Model):
         models.Index(fields=['email']),
     ]
 
-# In benchmarks/models.py
-from django.db import models
-from django.core.serializers.json import DjangoJSONEncoder
-import json
-
 class PreDecodedJSONField(models.JSONField):
     """
     A JSONField variant that directly handles dict/list values,
@@ -261,18 +257,15 @@ class FinalBenchmarkContext(models.Model):
     ceiling = models.CharField(max_length=32)
     ceiling_error = models.FloatField(null=True, blank=True)
     meta_id = models.IntegerField(null=True, blank=True)
-    # Use the custom field class directly, not `models.PreDecodedJSONField`
     children = PreDecodedJSONField(null=True, blank=True)
     parent = PreDecodedJSONField(null=True, blank=True)
     visible = models.BooleanField(default=True)
     owner_id = models.IntegerField(null=True, blank=True)
     root_parent = models.CharField(max_length=64)
     domain = models.CharField(max_length=64)
-
     benchmark_url = models.CharField(max_length=255)
     benchmark_reference_identifier = models.CharField(max_length=255)
     benchmark_bibtex = models.TextField()
-
     depth = models.IntegerField()
     number_of_all_children = models.IntegerField()
     overall_order = models.IntegerField()
@@ -321,6 +314,7 @@ class FinalModelContext(models.Model):
         """Provide an 'id' so that templates using {{ model.id}} still work. Can make chage in db too"""
         return self.model_id
 
+# Not currently used but will be needed for leaderboard views to recompute color scales
 class BenchmarkMinMax(models.Model):
     benchmark_identifier = models.CharField(max_length=255, primary_key=True)
     bench_id = models.CharField(max_length=255)
