@@ -233,11 +233,16 @@ class MailingList(models.Model):
         models.Index(fields=['email']),
     ]
 
-class PreDecodedJSONField(models.JSONField):
+class JSONBField(models.JSONField):
     """
-    A JSONField variant that directly handles dict/list values,
-    skipping the parent's from_db_value logic if it's already 
-    a Python dict or list.
+    Django's standard JSONField tries to decode JSON "strings" into dicts/lists.
+    However, in the materialized view creation, JSONB instead of JSON is used.
+    Psycopg2 automatically converts JSONB to python dicts/lists.
+
+    JSONField led to a TypeError because it would receive a string instead of
+    an already decoded Python object.
+
+    JSONB is also more performant for large datasets (like FinalModelContext)
     """
     def from_db_value(self, value, expression, connection):
         # 1) If DB returned None, just pass it
@@ -257,8 +262,8 @@ class FinalBenchmarkContext(models.Model):
     ceiling = models.CharField(max_length=32)
     ceiling_error = models.FloatField(null=True, blank=True)
     meta_id = models.IntegerField(null=True, blank=True)
-    children = PreDecodedJSONField(null=True, blank=True)
-    parent = PreDecodedJSONField(null=True, blank=True)
+    children = JSONBField(null=True, blank=True)
+    parent = JSONBField(null=True, blank=True)
     visible = models.BooleanField(default=True)
     owner_id = models.IntegerField(null=True, blank=True)
     root_parent = models.CharField(max_length=64)
@@ -287,18 +292,18 @@ class FinalModelContext(models.Model):
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
     url = models.CharField(max_length=512, null=True, blank=True)
-    user = PreDecodedJSONField(null=True, blank=True)
+    user = JSONBField(null=True, blank=True)
     user_id = models.IntegerField(null=True, blank=True)
-    owner = PreDecodedJSONField(null=True, blank=True)
+    owner = JSONBField(null=True, blank=True)
     public = models.BooleanField()
     competition = models.CharField(max_length=255, null=True, blank=True)
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
-    layers = PreDecodedJSONField(null=True, blank=True)
+    layers = JSONBField(null=True, blank=True)
     rank = models.IntegerField()
-    scores = PreDecodedJSONField(null=True, blank=True)
+    scores = JSONBField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
-    submitter = PreDecodedJSONField(null=True, blank=True)
+    submitter = JSONBField(null=True, blank=True)
     submission_id = models.IntegerField(null=True, blank=True)
     jenkins_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
