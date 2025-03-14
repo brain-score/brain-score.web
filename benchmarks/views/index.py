@@ -14,13 +14,16 @@ from django.views.decorators.cache import cache_page
 import json
 import numpy as np
 from time import time
-from benchmarks.models import Score, Reference, FinalBenchmarkContext, FinalModelContext, BenchmarkMinMax
+from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 
 _logger = logging.getLogger(__name__)
 
 BASE_DEPTH = 1
 ENGINEERING_ROOT = 'engineering'
 
+'''
+Reference for previous color scheme
+'''
 colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
 colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
 # scale colors: highlight differences at the top-end of the spectrum more than at the lower end
@@ -112,7 +115,9 @@ def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-
+'''
+REPLACE CACHE_PAGE CRON WITH TRIGGER-BASED CACHING
+'''
 #@cache_page(1 * 15 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
@@ -131,15 +136,16 @@ def view(request, domain: str):
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
-@cache_get_context(timeout=1 * 15 * 60)
+#@cache_get_context(timeout=1 * 15 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
-    # 1) QUERY MATERIALIZED VIEW FOR BENCHMARK AND MODEL CONTEXT
-    # Still need to:
-    # - filter by benchmark_filter if benchmark_filter is not None
-    # - filter by model_filter if model_filter is not None
-    # - add new color points for comparison data when user navigates from profile to compare (new feature)
-    # - add private benchmarks for private leaderboard aggregation
+    # TO-DO
+    # - Re-introduce score roll-up aggregation for custom views
+    # - Add private benchmarks for private leaderboard aggregation
+    # ------------------------------------------------------------------ 
+
+    # ------------------------------------------------------------------
+    # 1) QUERY MATERIALIZED VIEWS
     # ------------------------------------------------------------------ 
     if benchmark_filter:
         benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
@@ -151,18 +157,18 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
     
     # Build model query based on user permissions
-    start_time = time()
+    # Necessary to wrap query in function to allow caching of query results. 
+    # For now, it is disabled. Provided minimal performance gains.
     all_model_data = get_base_model_query(domain)
-    end_time = time()
-    print(f"Time taken to get base model query: {end_time - start_time} seconds")
+
     if user is None:
         # Public view - only show public models
         models = all_model_data.filter(public=True)
     elif user.is_superuser:
-        # Superuser sees everything
+        # Superuser sees everything (super user profile view)
         models = all_model_data
     else:
-        # Filter for user's models
+        # Filter for user's models (user profile view)
         models = all_model_data.filter(Q(user__id=user.id))
 
     # Convert to list only when needed for ranking and further processing
@@ -176,10 +182,13 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     models.sort(key=lambda m: getattr(m, 'rank', float('inf')))
     
     # Recalculate ranks based on the filtered set of models
+    # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
     model_rows_reranked = _recalculate_model_ranks(models, domain)
     
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
+    # Materialized views for some of these exist, but simple list comprehension was fast enough.
+    # If model list grows, consider using the materialized views.
     # ------------------------------------------------------------------ 
     benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
     benchmark_parents = {
@@ -198,6 +207,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
     
     # Build CSV data and comparison data
+    # Combined to a single pass through models to avoid redundant calculations.
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
     
     # ------------------------------------------------------------------
@@ -372,19 +382,19 @@ def _build_model_data(benchmarks, models):
         ```
     csv_data: Build a dataframe of model scores for download as CSV.
     """
-    # Pre-compute benchmark names set for O(1) lookup
+    # Pre-compute benchmark names set
     benchmark_names = {benchmark.benchmark_type_id for benchmark in benchmarks}
     
-    # Initialize containers
-    records = []  # For scores dataframe
-    comparison_data = []  # For comparison trends\
+    # Initialize lists of dictionaries to store data
+    records = []  # For CSV download
+    comparison_data = []  # For comparison page
     
     # Single pass through models
     for model in models:
         # Initialize both data structures for this model
         record = {
             "model_name": model.name,
-            "layers": json.dumps(model.layers) if model.layers else ""  # Add layers column
+            "layers": json.dumps(model.layers) if model.layers else ""  # Add layer map information to CSV download as a column
         }
         model_data = {
             "model": model.name
@@ -395,7 +405,7 @@ def _build_model_data(benchmarks, models):
             for score in model.scores:
                 benchmark_id = score["benchmark"]["benchmark_type_id"]
                 versioned_benchmark_id = score["versioned_benchmark_identifier"]
-            # Add to scores dataframe if it's a relevant benchmark
+                # Add to scores dataframe if it's a relevant benchmark
                 if benchmark_id in benchmark_names:
                     record[benchmark_id] = score["score_ceiled"]
             
@@ -418,6 +428,7 @@ def _build_model_data(benchmarks, models):
     
     return csv_data, comparison_data
 
+# Resubmissions are currently not supported. Retaining for future use.
 def _collect_submittable_benchmarks(benchmarks, user):
     """
     gather benchmarks that:
@@ -442,10 +453,19 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
+# Preserving the original color scheme for now. No longer used as color is determined in database materialized view.
+# May need the following four functions for custom views.
+def represent(value):
+    if isinstance(value, (int, float)):  # None in sqlite, nan in postgres
+        return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
+    if value is None:
+        return ""
+    elif value == "NaN":
+        return "X"
+    
 def normalize_value(value, min_value, max_value):
     normalized_value = (value - min_value) / (max_value - min_value)
     return .7 * normalized_value  # scale down to avoid extremely green colors
-
 
 def normalize_alpha(value, min_value, max_value):
     # intercept and slope equations are from solving `y = slope * x + intercept`
@@ -454,15 +474,6 @@ def normalize_alpha(value, min_value, max_value):
     intercept = .1 - slope * min_value
     result = slope * value + intercept
     return float(result)
-
-
-def represent(value):
-    if isinstance(value, (int, float)):  # None in sqlite, nan in postgres
-        return "{:.3f}".format(value).lstrip('0') if value < 1 else "{:.1f}".format(value)
-    if value is None:
-        return ""
-    elif value == "NaN":
-        return "X"
 
 def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
     #if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
@@ -501,12 +512,12 @@ def get_visibility(model, user):
     else:
         return "public"
 
-
+# Used in benchmark.py view to generate a string identifier for a reference
+# benchmark.py has not been updated to leverage materialized view as it was fast already.
 def reference_identifier(reference: Reference) -> Union[str, None]:
     return f"{reference.author} et al., {reference.year}" if reference else None
 
-
-# Adds python functions so the HTML can do several things
+# Adds python functions so the HTML can retrieve dictionary items
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
@@ -548,7 +559,6 @@ def get_parent_item(dictionary, key):
     # Handle case where dictionary is actually a string
     if isinstance(dictionary, str):
         return None
-        
     # Use .get() to avoid KeyError for dictionaries
     return_value = dictionary.get(key, "")
     if not return_value:
@@ -560,23 +570,6 @@ def get_parent_item(dictionary, key):
         return ".".join(parts[1:])
     else:
         return return_value
-
-@register.filter
-def get_parent_item_old(dictionary, key):
-    return_value = dictionary[key]
-    return_string = ""
-    if not return_value:
-        return None
-    if "." in return_value:
-        for i in return_value.split('.')[1:]:
-            if return_string == "":
-                return_string += i
-            else:
-                return_string += "." + i
-    else:
-        return_string = return_value
-    return return_string
-
 
 @register.filter
 def format_score(score):
@@ -627,7 +620,3 @@ def simplify_domain(benchmark_name: str) -> str:
             return suffixed_name
     return benchmark_name
 
-@register.filter
-def get_model_display_name(model, user):
-    """Template filter for getting model display name"""
-    return display_model(model, user)

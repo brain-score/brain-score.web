@@ -1,28 +1,19 @@
 import logging
-from ast import literal_eval
-from collections import ChainMap, OrderedDict, namedtuple
-
 import numpy as np
 from django.http import Http404
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
-from ..models import BenchmarkType, Model, FinalModelContext
+from ..models import Model, FinalModelContext
 
 _logger = logging.getLogger(__name__)
-
-import time
 
 def view(request, id: int, domain: str):
     user = request.user if request.user.is_authenticated else None
     
     try:
-        start_time = time.time()
-        # Get the model from FinalModelContext
-        start_time2 = time.time()
         model_obj = FinalModelContext.objects.get(model_id=id, domain=domain)
-        print(f"Time taken to get model from FinalModelContext: {time.time() - start_time2} seconds")
         
         # Check if user has permission to view this model
         if not model_obj.public:
@@ -35,15 +26,14 @@ def view(request, id: int, domain: str):
                 if model_owner_id != user.id:
                     # User is not the owner, but can still see with redacted info
                     pass
-        # Get context based on user authentication - this will include both public and private data
-        start_time2 = time.time()
+
+        # Get context based on user authentication
         context = get_context(user=user, domain=domain, show_public=False) if user else get_context(domain=domain, show_public=True)
-        print(f"Time taken to get possible user-specific context: {time.time() - start_time2} seconds")
         
         # The public models are now cached within the user context
         public_models = context.get('public_models', context['models']) if user else context['models']
         
-        # Determine if submission details should be visible
+        # Determine if submission details should be visible (in most/possible all cases, owner == submitter, and therefore, this can be condensed)
         is_owner = False
         if user and model_obj.user:
             if isinstance(model_obj.user, dict):
@@ -65,6 +55,8 @@ def view(request, id: int, domain: str):
         
         # Try to find the model in the context
         filtered_models = [model for model in context['models'] if model.model_id == id]
+
+        # The below is used to make use of get_context caching and provides a fallback in case returned cache is missing data
         if filtered_models:
             # Found in context, use this for complete data
             model = filtered_models[0]
@@ -112,14 +104,13 @@ def view(request, id: int, domain: str):
         
         # Add layer information if available
         model_context['layers'] = getattr(model, 'layers', None)
-        end_time = time.time()
-        print(f"Total model card time taken: {end_time - start_time} seconds")
         return render(request, 'benchmarks/model.html', model_context)
         
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
 
-
+# Generate per-benchmark rankings for a model
+# This should be moved to database materialized view in future
 def add_benchmark_rankings(model, reference_context):
     """
     Add per-benchmark ranking information to each score in the model
@@ -290,7 +281,6 @@ def get_score_best(score_row):
     except (ValueError, TypeError):
         return 0
 
-
 @register.filter
 def get_score_median(score_row):
     """Get median score from score row dictionary"""
@@ -299,7 +289,7 @@ def get_score_median(score_row):
     except (ValueError, TypeError):
         return 0
 
-
+# Database returns layers in alphabetical order, so reorder them in specific sequence
 @register.filter
 def order_layers(layers_dict):
     """Order layers in the specific sequence: V1, V2, V4, IT"""
@@ -308,7 +298,6 @@ def order_layers(layers_dict):
         
     # Define the desired order
     desired_order = ['V1', 'V2', 'V4', 'IT']
-    
     # Create a list to store ordered items
     ordered_items = []
     
@@ -323,7 +312,6 @@ def order_layers(layers_dict):
             ordered_items.append((key, value))
             
     return ordered_items
-
 
 @register.filter
 def has_valid_score(score_row):

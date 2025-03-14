@@ -1,3 +1,4 @@
+import json
 
 # all currently supported Brain-Score domains:
 supported_domains = ["vision", "language"]
@@ -15,4 +16,13 @@ def domain_processor(request):
     # by default, return vision
     return {
         "domain": "vision"
+    }
+
+# Add empty comparison_data to all template contexts by default.
+# This is used to avoid errors when the comparison_data is not 
+# available (due to base.html being loaded before the model.html)
+def common_variables(request):
+    """Add common variables to all template contexts."""
+    return {
+        'comparison_data': json.dumps([]),  # Default empty array
     }
