@@ -198,14 +198,16 @@
 </div>
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring the (optional) Region-Layer Mapping</h3>
-    <p class="benefits_info is-size-5-mobile shorter">
+    <p class="benefits_info is-size-5-mobile">
         Brain-Score allows users to specify a region-layer mapping for models. This mapping assigns a specific layer from <span class="special_format">model.py</span> file 
         to a particular brain region, ensuring it remains fixed when evaluated across different benchmarks.
     </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-        We provide two methods for specifying a region-layer mapping:<br><br>
-            1. (The preferred method) Passing a <span class="special_format">region_layer_mapping</span> argument in your <span class="special_format">__init__.py</span> model_registry 
-            entry (<a href="https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/models/voneresnet_50_3/__init__.py#L8">Example</a>).
+    <p class="benefits_info is-size-5-mobile">
+        We provide two methods for specifying a region-layer mapping:
+    </p>
+    <ol class="benefits_info is-size-5-mobile ordered_list">
+        <li>(The preferred method) Passing a <span class="special_format">region_layer_mapping</span> argument in your <span class="special_format">__init__.py</span> model_registry 
+            entry (<a href="https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/models/voneresnet_50_3/__init__.py#L8">Example</a>).</li>
 
     <pre class="modified_1"><code>
 1       model_registry['resnet50_tutorial'] = lambda: ModelCommitment(identifier='resnet50_tutorial', 
@@ -215,8 +217,8 @@
 
     </code></pre><br>
 
-            2. Providing a <span class="special_format">{model_identifier}.json</span> file in a <span class="special_format">region_layer_map/</span> 
-            folder within your submission package (<a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial/region_layer_map">Example</a>).
+        <li>Providing a <span class="special_format">{model_identifier}.json</span> file in a <span class="special_format">region_layer_map/</span> 
+            folder within your submission package (<a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial/region_layer_map">Example</a>).</li>
 
     <pre class="modified_1"><code>
 1       {
@@ -226,22 +228,25 @@
 5           "IT": "fc" 
 6       }
     </code></pre>
+    </ol>
 
     Importantly, when using the JSON file approach, each layer-mapping for each model identifier must be contained in its own JSON file and be named <span class="special_format">{model_identifier}.json</span>.
 
     </p>
-    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+    <p class="benefits_info is-size-5-mobile has-text-weight-bold is-italic">
         While optional, we <b>recommend</b> specifying this mapping for models with layers designed to replicate specific brain regions.
         If pre-committed, the layer names must match those returned by the <span class="special_format">get_layers()</span> function in the <span class="special_format">model.py</span>.
     </p>
-    <p class="benefits_info is-size-5-mobile shorter">
-        Note: If a submission does not include a <span class="special_format">region_layer_mapping</span> JSON file, the layer mapping will be automatically computed before scoring using
-        <a href=""https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
+    <p class="benefits_info is-size-5-mobile">
+        <b>Note:</b> If a submission does not include a <span class="special_format">region_layer_mapping</span> JSON file, the layer mapping will be automatically computed before scoring using
+        <a href="https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
+    </p>
+    <p class="benefits_info is-size-5-mobile ordered_list">
         This standard mappping assigns layers to each region <b>independently</b>, meaning:
         <li>A region does not need to be mapped to a unique layer.</li>
         <li>Regions do not have to follow a specific order.</li>
     </p>
-    <p class="benefits_info is-size-5-mobile shorter">
+    <p class="benefits_info is-size-5-mobile">
         This intentional flexibility is particularly relevant for models with layers that were intended to replicate specific brain regions, as there is no guarantee that the layer names will match the region names unless pre-committed.
         As such, for this types of models, we  <b>strongly recommend</b> specifying a region-layer mapping.
     </p>
