@@ -227,18 +227,18 @@
 6       }
     </code></pre>
     </p>
-    <p class="benefits_info is-size-5-mobile shorter">
+    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
         While optional, we <b>recommend</b> specifying this mapping for models with layers designed to replicate specific brain regions.
         If pre-committed, the layer names must match those returned by the <span class="special_format">get_layers()</span> function in the <span class="special_format">model.py</span>.
     </p>
-    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+    <p class="benefits_info is-size-5-mobile shorter">
         Note: If a submission does not include a <span class="special_format">region_layer_mapping</span> JSON file, the layer mapping will be automatically computed before scoring using
         <a href=""https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
         This standard mappping assigns layers to each region <b>independently</b>, meaning:
+        <li>A region does not need to be mapped to a unique layer.</li>
+        <li>Regions do not have to follow a specific order.</li>
     </p>
-        <li><b><i>A region does not need to be mapped to a unique layer.</i></b></li>
-        <li><b><i>Regions do not have to follow a specific order.</i></b></li>
-    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+    <p class="benefits_info is-size-5-mobile shorter">
         This intentional flexibility is particularly relevant for models with layers that were intended to replicate specific brain regions, as there is no guarantee that the layer names will match the region names unless pre-committed.
         As such, for this types of models, we  <b>strongly recommend</b> specifying a region-layer mapping.
     </p>
