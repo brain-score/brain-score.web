@@ -235,6 +235,7 @@
     <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
         Note: If submissions do not include a region_layer_mapping JSON file, layer mapping will be computed upon submission prior to scoring using 
         <a href=""https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
+        Standard region-layer mapping is performed for each region independent of other regions. As such, we do not enforce each region must be mapped to a unique layer or that regions followed a particular order.
         This is especially relevant to models with layers that were designed to replicate specific regions of the brain, as there is no guarantee that the layer names will match the region names unless pre-committed.
     </p>
 </div>
