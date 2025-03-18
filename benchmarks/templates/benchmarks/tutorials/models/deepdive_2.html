@@ -197,7 +197,49 @@
     </code></pre>
 </div>
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring an (optional) requirements.txt  File</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring the (optional) Region-Layer Mapping</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Brain-Score allows users to specify a region-layer mapping for models. This is where a specific layer of a model provided by the <span class="special_format">model.py</span> file is 
+        committed to a specific region of the brain and does not change when scored against different benchmarks. 
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        We provide two methods for specifying a region-layer mapping:<br><br>
+            1. (The preferred method) Passing a <span class="special_format">region_layer_mapping</span> argument in your <span class="special_format">__init__.py</span> model_registry 
+            entry (<a href="https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/models/voneresnet_50_3/__init__.py#L8">Example</a>).
+
+    <pre class="modified_1"><code>
+1       model_registry['resnet50_tutorial'] = lambda: ModelCommitment(identifier='resnet50_tutorial', 
+2           activations_model=get_model('resnet50_tutorial'), 
+3           layers=get_layers('resnet50_tutorial'), 
+4           region_layer_mapping={"V1": "layer1", "V2": "layer3", "V4": "layer4", "IT": "fc"})
+
+    </code></pre><br>
+
+            2. Providing a <span class="special_format">{model_identifier}.json</span> file in a <span class="special_format">region_layer_map/</span> 
+            folder in your submission package (<a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial/region_layer_map">Example</a>).
+
+    <pre class="modified_1"><code>
+1       {
+2           "V1": "layer1", 
+3           "V2": "layer3", 
+4           "V4": "layer4",
+5           "IT": "fc" 
+6       }
+    </code></pre>
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter">
+        While this is optional, we recommend providing this information for models that may have specific layers that were designed to replicate specific regions of the brain.
+
+        If pre-committed, the layer names must match layer names that are returned by the <span class="special_format">get_layers()</span> function in the model.py file.
+    </p>
+    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+        Note: If submissions do not include a region_layer_mapping JSON file, layer mapping will be computed upon submission prior to scoring using 
+        <a href=""https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
+        This is especially relevant to models with layers that were designed to replicate specific regions of the brain, as there is no guarantee that the layer names will match the region names unless pre-committed.
+    </p>
+</div>
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Part 8: Exploring an (optional) requirements.txt  File</h3>
     <p class="benefits_info is-size-5-mobile shorter">
         The (optional) <a href="https://github.com/brain-score/vision/blob/master/brainscore_vision/models/resnet50_tutorial/requirements.txt">requirements.txt file</a>
         is where you can add any requirements that your model needs (such as a specific version of a package or an external git
@@ -214,7 +256,7 @@
     </p>
 </div>
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 8: Putting it All Together </h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 9: Putting it All Together </h3>
     <p class="benefits_info is-size-5-mobile shorter">
         You are almost done! If you were actually submitting a model, the final step prior to submission would be to run
         your model locally to ensure that everything is in working order. You can do this by first following the
@@ -266,7 +308,7 @@ Process finished with exit code 0
 </div>
 
 <div class="box leaderboard-table-component">
-    <h3 class="benefits_heading is-size-3-mobile">Part 9: Model Summary Tools</h3>
+    <h3 class="benefits_heading is-size-3-mobile">Part 10: Model Summary Tools</h3>
     <p class="benefits_info is-size-5-mobile shorter">
         For models built using PyTorch, the <span class="special_format">torchsummary</span>
         package can be utilized to get a summary of model information. Install it via pip if necessary
