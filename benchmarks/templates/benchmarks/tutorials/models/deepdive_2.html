@@ -199,8 +199,8 @@
 <div class="box leaderboard-table-component">
     <h3 class="benefits_heading is-size-3-mobile">Part 7: Exploring the (optional) Region-Layer Mapping</h3>
     <p class="benefits_info is-size-5-mobile shorter">
-        Brain-Score allows users to specify a region-layer mapping for models. This is where a specific layer of a model provided by the <span class="special_format">model.py</span> file is 
-        committed to a specific region of the brain and does not change when scored against different benchmarks. 
+        Brain-Score allows users to specify a region-layer mapping for models. This mapping assigns a specific layer from <span class="special_format">model.py</span> file 
+        to a particular brain region, ensuring it remains fixed when evaluated across different benchmarks.
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         We provide two methods for specifying a region-layer mapping:<br><br>
@@ -216,7 +216,7 @@
     </code></pre><br>
 
             2. Providing a <span class="special_format">{model_identifier}.json</span> file in a <span class="special_format">region_layer_map/</span> 
-            folder in your submission package (<a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial/region_layer_map">Example</a>).
+            folder within your submission package (<a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial/region_layer_map">Example</a>).
 
     <pre class="modified_1"><code>
 1       {
@@ -228,15 +228,19 @@
     </code></pre>
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
-        While this is optional, we recommend providing this information for models that may have specific layers that were designed to replicate specific regions of the brain.
-
-        If pre-committed, the layer names must match layer names that are returned by the <span class="special_format">get_layers()</span> function in the model.py file.
+        While optional, we <b>recommend</b> specifying this mapping for models with layers designed to replicate specific brain regions.
+        If pre-committed, the layer names must match those returned by the <span class="special_format">get_layers()</span> function in the <span class="special_format">model.py</span>.
     </p>
     <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
-        Note: If submissions do not include a region_layer_mapping JSON file, layer mapping will be computed upon submission prior to scoring using 
+        Note: If a submission does not include a <span class="special_format">region_layer_mapping</span> JSON file, the layer mapping will be automatically computed before scoring using
         <a href=""https://github.com/brain-score/vision/blob/39b214b9201cf067b4aa9b67777bf9c063871fe0/brainscore_vision/model_helpers/brain_transformation/__init__.py#L13">STANDARD_REGION_BENCHMARKS</a>.
-        Standard region-layer mapping is performed for each region independent of other regions. As such, we do not enforce each region must be mapped to a unique layer or that regions followed a particular order.
-        This is especially relevant to models with layers that were designed to replicate specific regions of the brain, as there is no guarantee that the layer names will match the region names unless pre-committed.
+        This standard mappping assigns layers to each region <b>independently</b>, meaning:
+    </p>
+        <li><b><i>A region does not need to be mapped to a unique layer.</i></b></li>
+        <li><b><i>Regions do not have to follow a specific order.</i></b></li>
+    <p class="benefits_info is-size-5-mobile shorter has-text-weight-bold is-italic">
+        This intentional flexibility is particularly relevant for models with layers that were intended to replicate specific brain regions, as there is no guarantee that the layer names will match the region names unless pre-committed.
+        As such, for this types of models, we  <b>strongly recommend</b> specifying a region-layer mapping.
     </p>
 </div>
 <div class="box leaderboard-table-component">
