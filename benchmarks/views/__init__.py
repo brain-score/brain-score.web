@@ -1,2 +1,2 @@
-from .index import view as index, show_token
+from .index import view as index
 from ..utils import refresh_cache

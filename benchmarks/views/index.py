@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Union
 from django.utils.functional import wraps
-import hashlib
 from django.db.models import Q
 from django.core.cache import cache
 import numpy as np
@@ -15,22 +14,7 @@ import json
 import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-import secrets
-import requests
-
-# Import cache utilities from utils.py
-from ..utils import (
-    cache_get_context,
-    cache_base_model_query,
-    invalidate_domain_cache,
-    refresh_cache,
-    trigger_recache,
-    show_token
-)
+from ..utils import cache_get_context
 
 _logger = logging.getLogger(__name__)
 
