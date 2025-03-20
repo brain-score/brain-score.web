@@ -129,7 +129,7 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
+    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
