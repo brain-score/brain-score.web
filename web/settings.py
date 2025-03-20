@@ -129,7 +129,7 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
+    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
@@ -250,3 +250,16 @@ LOGGING = {
         },
     },
 }
+
+# Cache refresh token for triggering cache invalidation
+try:
+    # Try to get the token from AWS Secrets Manager first
+    cache_refresh_secrets = get_secret("brainscore-cache-refresh", REGION_NAME)
+    CACHE_REFRESH_TOKEN = cache_refresh_secrets["token"]
+except Exception as e:  # Catch all exceptions, not just NoCredentialsError
+    # Fall back to environment variable
+    CACHE_REFRESH_TOKEN = os.getenv("CACHE_REFRESH_TOKEN")
+    # For development only - generate a token if none exists
+    if not CACHE_REFRESH_TOKEN and DEBUG:
+        import secrets
+        CACHE_REFRESH_TOKEN = secrets.token_hex(16)

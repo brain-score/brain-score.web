@@ -15,6 +15,22 @@ import json
 import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import secrets
+import requests
+
+# Import cache utilities from utils.py
+from ..utils import (
+    cache_get_context,
+    cache_base_model_query,
+    invalidate_domain_cache,
+    refresh_cache,
+    trigger_recache,
+    show_token
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -33,82 +49,6 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
-def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
-    '''
-    Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
-    Two-level caching:
-        - Global cache for public data
-        - User-specific cache for non-public data
-    Args:
-        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
-    '''
-    def decorator(func):  # Take function to be decorated (i.e., get_context)
-        @wraps(func)  # Preserving original function's metadata attributes
-        def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
-            # Generate a more specific cache key that includes model_filter and benchmark_filter info
-            if show_public and not user:
-                # (CASE 1: Public data) Create unique key for public data cache
-                key_parts = ['global_context', domain, 'public']
-                if benchmark_filter:
-                    key_parts.append('benchmark_filtered')
-                if model_filter:
-                    key_parts.append('model_filtered')
-            elif user:
-                # (CASE 2: User data) Create unique key for user-specific cache that includes public data
-                key_parts = ['user_context', domain, str(user.id), str(show_public)]
-                if benchmark_filter:
-                    key_parts.append('benchmark_filtered')
-                if model_filter:
-                    key_parts.append('model_filtered')
-            else:
-                # (CASE 3: No caching) Neither public nor user-specific
-                return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                          model_filter=model_filter, show_public=show_public)
-            
-            # Generate SHA256 hash
-            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
-            
-            # Try to get cached result
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                return cached_result
-
-            # If no cache found, calculate result
-            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                        model_filter=model_filter, show_public=show_public)
-            
-            # For user contexts, also cache the public data within the user context
-            if user and not show_public:
-                result['public_models'] = [m for m in result['models'] if getattr(m, 'public', True)]
-            
-            # Store result in cache
-            cache.set(cache_key, result, timeout)
-            return result
-
-        return wrapper
-    return decorator
-
-def cache_base_model_query(timeout=24 * 60 * 60):  # 24 hour cache by default
-    def decorator(func):
-        @wraps(func)
-        def wrapper(domain="vision"):
-            # Create unique key for domain
-            key_parts = ['base_model_query', domain]
-            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
-            
-            # Try to get cached result
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                return cached_result
-            
-            # If no cache found, calculate result
-            result = func(domain)
-            
-            # Store result in cache
-            cache.set(cache_key, result, timeout)
-            return result
-        return wrapper
-    return decorator
 
 #@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 def get_base_model_query(domain="vision"):
@@ -136,7 +76,8 @@ def view(request, domain: str):
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
-#@cache_get_context(timeout=1 * 15 * 60)
+# Maintain 24-hr cache for leaderboard view
+@cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # TO-DO
