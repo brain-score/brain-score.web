@@ -68,11 +68,14 @@
         can be named anything (in this case it's called "packaging_tutorial").  The root folder contains another folder
         for the plugin itself, in this case <span class="special_format">/models</span>.
         This <span class="special_format">/models</span> folder then contains a folder called
-        <span class="special_format"> /resnet50_tutorial</span>.
+        <span class="special_format"> /resnet50_tutorial</span>. (NOTE: If you plan to submit through the website, the contents
+        of your zip file must be structured using this folder structure).
     </p>
     <p class="benefits_info is-size-5-mobile shorter">
         The <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models/resnet50_tutorial">resnet50_tutorial folder</a> in the repo
-        is an example of a properly formatted submission folder; it contains 3 Python files and a single .txt file.
+        is an example of a properly formatted submission folder (NOTE: this is only innermost folder in the code inset.
+        If you submit through the website ensure you place it properly in the required folder structure in your zip file).
+        This folder contains 3 Python files and a single .txt file.
         Just like this example, all submissions must contain at least three Python files:
         <span class="special_format">__init__.py</span>, <span class="special_format">test.py</span>,
         and <span class="special_format">model.py</span> (these are required).
@@ -315,6 +318,14 @@ if __name__ == "__main__":
         verifying the correct architecture setup and ensuring that all layers are properly connected and configured
         before proceeding with model evaluation or deployment.
     </p>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Moving on...</h3>
+         <div class="benefits_info is-size-5-mobile">
+            In <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3">Deep Dive 3</a>,
+             we will walk though what a custom model submission looks like, and how to submit one via either the website, or with a GitHub PR.
+        </div>
 </div>
 
 <style>
