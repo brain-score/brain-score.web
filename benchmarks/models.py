@@ -127,6 +127,45 @@ class BenchmarkMeta(models.Model):
     class Meta:
         db_table = 'brainscore_benchmarkmeta'
 
+class BenchmarkStimuliMeta(models.Model):
+    num_stimuli = models.IntegerField(null=True, default=None)
+    datatype = models.CharField(max_length=100, null=True, default="image")
+    stimuli_subtype = models.CharField(max_length=100, null=True, default=None)
+    total_size_MB = models.FloatField(null=True, default=None)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_stimuli_meta'
+
+
+class BenchmarkDataMeta(models.Model):
+    benchmark_type = models.CharField(max_length=100, null=True, default=None)
+    task = models.CharField(max_length=100, null=True, default=None)
+    region = models.CharField(max_length=100, null=True, default=None)
+    hemisphere = models.CharField(max_length=100, null=True, default=None)
+    num_recording_sites = models.IntegerField(null=True, default=None)
+    duration_ms = models.FloatField(null=True, default=None)
+    species = models.CharField(max_length=100, null=True, default=None)
+    datatype = models.CharField(max_length=100, null=True, default=None)
+    num_subjects = models.IntegerField(null=True, default=None)
+    pre_processing = models.CharField(max_length=100, null=True, default=None)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_data_meta'
+
+
+class BenchmarkMetricMeta(models.Model):
+    type = models.CharField(max_length=100, null=True, default=None)
+    reference = models.CharField(max_length=100, null=True, default=None)
+    public = models.BooleanField(default=False, null=False)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_metric_meta'
 
 class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
@@ -134,6 +173,9 @@ class BenchmarkInstance(models.Model):
     ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
     meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
+    stimuli_meta = models.OneToOneField(BenchmarkStimuliMeta, null=True, on_delete=models.CASCADE)
+    data_meta = models.OneToOneField(BenchmarkDataMeta, null=True, on_delete=models.CASCADE)
+    metric_meta = models.OneToOneField(BenchmarkMetricMeta, null=True, on_delete=models.CASCADE)
 
     def __repr__(self):
         return generic_repr(self)
@@ -202,6 +244,24 @@ class Model(models.Model):
     class Meta:
         db_table = 'brainscore_model'
 
+
+class ModelMeta(models.Model):
+    model = models.OneToOneField(Model, on_delete=models.CASCADE, primary_key=True)
+    architecture = models.CharField(max_length=100, null=True, default=None)
+    model_family = models.CharField(max_length=100, null=True, default=None)
+    total_parameter_count = models.IntegerField(null=True, default=None)
+    trainable_parameter_count = models.IntegerField(null=True, default=None)
+    total_layers = models.IntegerField(null=True, default=None)
+    trainable_layers = models.IntegerField(null=True, default=None)
+    model_size_mb = models.FloatField(null=True, default=None)
+    training_dataset = models.CharField(max_length=100, null=True, default=None)
+    task_specialization = models.CharField(max_length=100, null=True, default=None)
+    brainscore_link = models.CharField(max_length=256, null=True, default=None)
+    hugging_face_link = models.CharField(max_length=256, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_modelmeta'
 
 class Score(models.Model):
     benchmark = models.ForeignKey(BenchmarkInstance, on_delete=models.PROTECT)
