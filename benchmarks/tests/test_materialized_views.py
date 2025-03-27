@@ -45,6 +45,5 @@ class TestMaterializedViews(BaseTestCase):
             # Verify count increased
             cursor.execute("SELECT COUNT(*) FROM mv_final_model_context")
             new_count = cursor.fetchone()[0]
-            print(f"old count: {initial_count}, new count: {new_count}")
             self.assertGreater(new_count, initial_count, 
                              "mv_model_scores should reflect new data after refresh")
