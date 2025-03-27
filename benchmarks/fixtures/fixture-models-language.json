@@ -1,6 +1,7 @@
 [
   {
     "model": "benchmarks.Model",
+    "pk": 89,
     "fields": {
       "name": "glove-840b",
       "reference": null,
@@ -16,6 +17,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 90,
     "fields": {
       "name": "ScLM",
       "reference": null,
@@ -31,6 +33,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 91,
     "fields": {
       "name": "gpt2-xl",
       "reference": null,
@@ -46,6 +49,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 92,
     "fields": {
       "name": "distilgpt2",
       "reference": null,
@@ -61,6 +65,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 93,
     "fields": {
       "name": "lm1b",
       "reference": null,
@@ -76,6 +81,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 94,
     "fields": {
       "name": "Earley-parser",
       "reference": null,
@@ -91,6 +97,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 95,
     "fields": {
       "name": "rnn-g",
       "reference": null,
@@ -106,6 +113,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 96,
     "fields": {
       "name": "BigNet-1",
       "reference": null,
@@ -121,6 +129,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 97,
     "fields": {
       "name": "DEVNet100",
       "reference": null,
