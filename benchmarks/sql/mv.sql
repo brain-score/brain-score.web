@@ -305,33 +305,6 @@ JOIN mv_final_benchmark_context fbt
   ON bs.benchmark_type_id = fbt.benchmark_type_id;
 
 
-
-DROP MATERIALIZED VIEW IF EXISTS mv_base_scores_fixed CASCADE;
-CREATE MATERIALIZED VIEW mv_base_scores_fixed AS
-SELECT
-  bs.id,
-  bs.model_id,
-  bs.benchmark_type_id,
-  bs.benchmark_id,
-  bs.version,
-  bs.overall_order,
-  bs.score_raw::float8,
-  CASE
-    WHEN fbt.root_parent ILIKE '%engineering%' THEN bs.score_raw::float8
-    WHEN bs.score_ceiled IS NULL OR bs.score_ceiled::text = 'NaN' THEN 'NaN'::float8
-    ELSE bs.score_ceiled::float8
-  END AS score_ceiled,
-  bs.error,
-  bs.comment,
-  bs.is_complete
-FROM mv_base_scores_fixed_engineering bs
-JOIN mv_final_benchmark_context fbt
-  ON bs.benchmark_type_id = fbt.benchmark_type_id;
-
-
-
-
-
 ------------------------------------------------------------
 -- STEP C: Aggregate Scores
 ------------------------------------------------------------
@@ -346,102 +319,6 @@ DROP MATERIALIZED VIEW IF EXISTS mv_all_models CASCADE;
 CREATE MATERIALIZED VIEW mv_all_models AS
 SELECT DISTINCT model_id
 FROM mv_base_scores_fixed_engineering;
-
-DROP MATERIALIZED VIEW IF EXISTS mv_full_grid CASCADE;
-CREATE MATERIALIZED VIEW mv_full_grid AS
-WITH all_models AS (
-    SELECT * FROM mv_all_models
-)
-SELECT
-  dc.parent_identifier,
-  am.model_id,
-  dc.child_identifier
-FROM mv_direct_children dc
-CROSS JOIN all_models am;
-
-DROP MATERIALIZED VIEW IF EXISTS mv_grid_enhanced CASCADE;
-CREATE MATERIALIZED VIEW mv_grid_enhanced AS
-SELECT
-  fg.parent_identifier,
-  fg.model_id,
-  bs.benchmark_type_id,
-  bs.benchmark_id,
-  fg.child_identifier,
-  bs.score_raw,
-  bs.score_ceiled,
-  fbc.root_parent,
-  bs.error,
-  bs.comment
-FROM mv_full_grid fg
-LEFT JOIN mv_base_scores_fixed_engineering bs
-  ON bs.model_id = fg.model_id
-  AND bs.benchmark_type_id = fg.child_identifier
-LEFT JOIN mv_final_benchmark_context fbc
-  ON fbc.benchmark_type_id = fg.child_identifier;
-
-
-DROP MATERIALIZED VIEW IF EXISTS mv_model_candidates CASCADE;
-CREATE MATERIALIZED VIEW mv_model_candidates AS
-WITH
-  -- 1. Unnest the children array for each parent.
-  direct_children AS (
-    SELECT
-      parent_id AS parent_identifier,
-      jsonb_array_elements_text(children) AS child_identifier
-    FROM mv_benchmark_children
-  ),
-  -- 2. For each direct child, retrieve all descendant leaf benchmarks.
-  descendant_leaves AS (
-    SELECT
-      dc.parent_identifier,
-      t.identifier AS leaf_identifier
-    FROM direct_children dc
-    -- Here we require that the child's identifier appears as a distinct token in the descendant's sort_path.
-    -- We assume that in our sort_path, children are concatenated with '-' as a delimiter.
-    JOIN mv_benchmark_tree t
-      ON t.sort_path LIKE '%-' || dc.child_identifier || '%'
-    JOIN mv_leaf_status ls
-      ON ls.benchmark_identifier = t.identifier
-    WHERE ls.is_leaf = TRUE
-  )
--- 3. For each descendant leaf, join with the base scores (with NaNs fixed) to get the model_id.
-SELECT DISTINCT
-  dl.parent_identifier,
-  bs.model_id
-FROM descendant_leaves dl
-JOIN mv_base_scores_fixed bs
-  ON bs.benchmark_type_id = dl.leaf_identifier;
-
-
-
-DROP MATERIALIZED VIEW IF EXISTS mv_models_per_parent CASCADE;
-CREATE MATERIALIZED VIEW mv_models_per_parent AS
-SELECT
-  mc.parent_identifier,
-  mc.model_id,
-  dc.child_identifier
-FROM mv_direct_children dc
-JOIN mv_model_candidates mc
-  ON dc.parent_identifier = mc.parent_identifier;
-
-
-DROP MATERIALIZED VIEW IF EXISTS mv_grid_with_scores CASCADE;
-CREATE MATERIALIZED VIEW mv_grid_with_scores AS
-SELECT DISTINCT ON (bs.model_id, bs.benchmark_type_id)
-  mpp.parent_identifier,
-  mpp.model_id,
-  mpp.child_identifier,
-  bs.id AS score_id,
-  bs.benchmark_id,
-  bs.score_raw,
-  bs.score_ceiled,
-  bs.error,
-  bs.comment
-FROM mv_models_per_parent mpp
-LEFT JOIN mv_base_scores_fixed_engineering bs
-  ON bs.model_id = mpp.model_id
-  AND bs.benchmark_type_id = mpp.child_identifier;
-
 
 DROP TABLE IF EXISTS final_agg_scores CASCADE;
 CREATE TABLE final_agg_scores (
@@ -470,84 +347,87 @@ BEGIN
   -- Clear the table first.
   TRUNCATE final_agg_scores;
 
-  -- Insert leaf scores.
-  INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
-  SELECT
-    bs.id,
-    t.identifier,
-    bs.benchmark_id,
-    bs.model_id,
-    bs.score_raw,
-    bs.score_ceiled,
-    t.depth,
-    t.sort_path,
-    t.root_parent,
-    bs.error,
-    bs.comment,
-    TRUE    -- is_leaf= true
-  FROM mv_benchmark_tree t
-  JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
-  JOIN mv_base_scores_fixed_engineering bs ON bs.benchmark_type_id = t.identifier
-  WHERE ls.is_leaf = TRUE
-  AND t.visible = TRUE;
-
-  -- Determine the maximum depth in the tree.
-  SELECT MAX(depth) INTO max_depth FROM mv_benchmark_tree;
-
-  -- Loop from max_depth-1 down to 0.
-  FOR d IN REVERSE max_depth-1 .. 0 LOOP
-    INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, is_leaf)
+  -- Get max_depth, handle NULL case
+  SELECT COALESCE(MAX(depth), 0) INTO max_depth FROM mv_benchmark_tree;
+  
+  -- Only proceed if we have data
+  IF max_depth > 0 THEN
+    -- Insert leaf scores.
+    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
     SELECT
-      p.identifier AS benchmark,
-      s.model_id,
+      bs.id,
+      t.identifier,
+      bs.benchmark_id,
+      bs.model_id,
+      bs.score_raw,
+      bs.score_ceiled,
+      t.depth,
+      t.sort_path,
+      t.root_parent,
+      bs.error,
+      bs.comment,
+      TRUE    -- is_leaf= true
+    FROM mv_benchmark_tree t
+    JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
+    JOIN mv_base_scores_fixed_engineering bs ON bs.benchmark_type_id = t.identifier
+    WHERE ls.is_leaf = TRUE
+    AND t.visible = TRUE;
 
-      -- Compute score_raw
-      CASE
-        WHEN SUM(CASE WHEN s.score_raw IS NOT NULL AND s.score_raw = s.score_raw THEN 1 ELSE 0 END) > 0 THEN
-          -- At least one numeric score
-          SUM(COALESCE(NULLIF(s.score_raw, 'NaN'::float8), 0)) / COUNT(*)::float8
-        WHEN SUM(CASE WHEN s.score_raw <> s.score_raw THEN 1 ELSE 0 END) > 0 THEN
-          -- All scores are NaN or NULL, at least one is NaN
-          'NaN'::float8
-        ELSE
-          -- All scores are NULL
-          NULL
-      END AS score_raw,
+    -- Loop from max_depth-1 down to 0.
+    FOR d IN REVERSE max_depth-1 .. 0 LOOP
+      INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, is_leaf)
+      SELECT
+        p.identifier AS benchmark,
+        s.model_id,
 
-      -- Compute score_ceiled
-      CASE
-        WHEN SUM(CASE WHEN s.score_ceiled IS NOT NULL AND s.score_ceiled = s.score_ceiled THEN 1 ELSE 0 END) > 0 THEN
-          SUM(COALESCE(NULLIF(s.score_ceiled, 'NaN'::float8), 0)) / COUNT(*)::float8
-        WHEN SUM(CASE WHEN s.score_ceiled <> s.score_ceiled THEN 1 ELSE 0 END) > 0 THEN
-          'NaN'::float8
-        ELSE
-          NULL
-      END AS score_ceiled,
+        -- Compute score_raw
+        CASE
+          WHEN SUM(CASE WHEN s.score_raw IS NOT NULL AND s.score_raw = s.score_raw THEN 1 ELSE 0 END) > 0 THEN
+            -- At least one numeric score
+            SUM(COALESCE(NULLIF(s.score_raw, 'NaN'::float8), 0)) / COUNT(*)::float8
+          WHEN SUM(CASE WHEN s.score_raw <> s.score_raw THEN 1 ELSE 0 END) > 0 THEN
+            -- All scores are NaN or NULL, at least one is NaN
+            'NaN'::float8
+          ELSE
+            -- All scores are NULL
+            NULL
+        END AS score_raw,
 
-      p.depth,
-      p.sort_path,
-      FALSE -- is_leaf = false
-    FROM mv_benchmark_tree p
-    JOIN mv_benchmark_children bc ON p.identifier = bc.parent_id
-    -- For each parent, join to its direct children's scores.
-    JOIN final_agg_scores s
-      ON s.benchmark = ANY (
-           SELECT jsonb_array_elements_text(bc.children)
-         ) AND s.model_id = s.model_id  -- Keep same model_id
-    WHERE p.depth = d
-    GROUP BY p.identifier, s.model_id, p.depth, p.sort_path;
-  END LOOP;
+        -- Compute score_ceiled
+        CASE
+          WHEN SUM(CASE WHEN s.score_ceiled IS NOT NULL AND s.score_ceiled = s.score_ceiled THEN 1 ELSE 0 END) > 0 THEN
+            SUM(COALESCE(NULLIF(s.score_ceiled, 'NaN'::float8), 0)) / COUNT(*)::float8
+          WHEN SUM(CASE WHEN s.score_ceiled <> s.score_ceiled THEN 1 ELSE 0 END) > 0 THEN
+            'NaN'::float8
+          ELSE
+            NULL
+        END AS score_ceiled,
 
-  -- Update each row to compute the ultimate root parent.
-  UPDATE final_agg_scores f
-  SET root_parent = (
-    SELECT t0.identifier
-    FROM mv_benchmark_tree t0
-    WHERE t0.depth = 0
-      AND f.sort_path LIKE t0.sort_path || '%'
-    LIMIT 1
-  )
-  WHERE f.root_parent IS NULL;
+        p.depth,
+        p.sort_path,
+        FALSE -- is_leaf = false
+      FROM mv_benchmark_tree p
+      JOIN mv_benchmark_children bc ON p.identifier = bc.parent_id
+      -- For each parent, join to its direct children's scores.
+      JOIN final_agg_scores s
+        ON s.benchmark = ANY (
+             SELECT jsonb_array_elements_text(bc.children)
+           ) AND s.model_id = s.model_id  -- Keep same model_id
+      WHERE p.depth = d
+      GROUP BY p.identifier, s.model_id, p.depth, p.sort_path;
+    END LOOP;
+
+    -- Update root parent
+    UPDATE final_agg_scores f
+    SET root_parent = (
+      SELECT t0.identifier
+      FROM mv_benchmark_tree t0
+      WHERE t0.depth = 0
+        AND f.sort_path LIKE t0.sort_path || '%'
+      LIMIT 1
+    )
+    WHERE f.root_parent IS NULL;
+  END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -596,25 +476,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT populate_final_agg_scores();
-SELECT fix_parent_scores();
-
-DROP MATERIALIZED VIEW IF EXISTS mv_recursive_agg_scores CASCADE;
-CREATE MATERIALIZED VIEW mv_recursive_agg_scores AS
-WITH ranked AS (
-  SELECT
-    *,
-    ROW_NUMBER() OVER (
-      PARTITION BY model_id, benchmark
-      ORDER BY depth DESC, sort_path, model_id
-    ) AS rn
-  FROM final_agg_scores
-)
-SELECT *
-FROM ranked
-WHERE rn = 1;
-
-
+--SELECT populate_final_agg_scores();
+--SELECT fix_parent_scores();
 
 ------------------------------------------------------------
 -- STEP D: Add metadata to aggregated scores
@@ -1278,22 +1141,17 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_model_data;
     REFRESH MATERIALIZED VIEW mv_base_scores;
     REFRESH MATERIALIZED VIEW mv_base_scores_fixed_engineering;
-    REFRESH MATERIALIZED VIEW mv_base_scores_fixed;
     REFRESH MATERIALIZED VIEW mv_direct_children;
     REFRESH MATERIALIZED VIEW mv_all_models;
-    REFRESH MATERIALIZED VIEW mv_full_grid;
-    REFRESH MATERIALIZED VIEW mv_grid_enhanced;
-    REFRESH MATERIALIZED VIEW mv_model_candidates;
-    REFRESH MATERIALIZED VIEW mv_models_per_parent;
-    REFRESH MATERIALIZED VIEW mv_grid_with_scores;
 
-    -- Update the permanent table using the function
-    RAISE NOTICE 'Performing aggregation';
-    PERFORM populate_final_agg_scores();
+    -- Only try to populate if we have data
+    IF EXISTS (SELECT 1 FROM mv_benchmark_tree LIMIT 1) THEN
+        RAISE NOTICE 'Performing aggregation';
+        PERFORM populate_final_agg_scores();
+    END IF;
 
     -- Refresh additional materialized views depending on updated data
     RAISE NOTICE 'Refreshing Model-related Context';
-    REFRESH MATERIALIZED VIEW mv_recursive_agg_scores;
     REFRESH MATERIALIZED VIEW mv_model_scores;
     REFRESH MATERIALIZED VIEW mv_benchmark_minmax;
     REFRESH MATERIALIZED VIEW mv_model_scores_enriched;
@@ -1305,4 +1163,4 @@ END;
 $$ LANGUAGE plpgsql;
 
 
---SELECT refresh_all_materialized_views();
+SELECT refresh_all_materialized_views();
