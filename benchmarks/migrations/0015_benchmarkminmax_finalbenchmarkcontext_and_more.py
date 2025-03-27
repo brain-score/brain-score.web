@@ -82,10 +82,5 @@ class Migration(migrations.Migration):
                 'db_table': 'mv_final_model_context',
                 'managed': False,
             },
-        ),
-        migrations.AlterField(
-            model_name='submission',
-            name='id',
-            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
-        ),
+        )
     ]
