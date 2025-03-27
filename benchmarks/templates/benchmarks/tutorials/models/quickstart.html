@@ -6,6 +6,8 @@
     <p>Getting started for those with tight deadlines. </p>
 {% endblock %}
 
+
+
 {% block info_section %}
   {% include "benchmarks/tutorials/tutorial-info-section.html" %}
 {% endblock %}
@@ -18,9 +20,8 @@
             <h3 class="benefits_heading is-size-3-mobile">Let's Jump Right In</h3>
             <p class="benefits_info is-size-5-mobile">
                 The Brain-Score platform allows users to score models on public data via the command line
-                on your machine, once installed. It also allows scoring models on all data
-                (public and private) via the website. In the section we will cover how to use the CLI to
-                score a model on public data.
+                on your own machine. It also allows scoring models on all data
+                (public and private) via the website.
             </p>
             <p class="benefits_info is-size-5-mobile">
                 We highly recommend you complete this quickstart before trying to submit a model to the site. Not only will
@@ -75,7 +76,7 @@ python -m pip install -e .
     <p class="benefits_info is-size-5-mobile shorter">
         You can find a comprehensive collection of
         available models in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/models">brainscore_vision/models directory</a>, and you can find the model identifier for each model
-        in it's _init_.py file. Be aware that several of the models in this collection can be very memory intensive.
+        in its _init_.py file. Be aware that several of the models in this collection can be very memory intensive.
         For example the resnet50 model will run on a 2024 M3 Macbook Pro with 32 Gb of RAM, but will fail on the same machine with 16Gb.
         <p class="benefits_info is-size-5-mobile shorter">
         Similarly You can find a comprehensive collection of
@@ -104,7 +105,7 @@ Attributes:
 Process finished with exit code 0
     </code></pre>
     <p class="benefits_info is-size-5-mobile shorter">
-        Let’s break down what these numbers mean. First off, your score is <span class="special_format">0.07637264</span>, the first number
+        Let’s break down what these numbers mean. First, your score is <span class="special_format">0.07637264</span>, the first number
         in the first xarray listed. Next, you can see a few other attributes: <span class="special_format">error</span>, with value
         <span class="special_format">0.00548197</span>, which represents the error of your the score estimate; <span class="special_format">raw</span>
         with value <span class="special_format">0.22545106</span> which represents the unceiled score that your model achieved on the
@@ -141,16 +142,16 @@ Process finished with exit code 0
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
                 In <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a>,
-                we will cover the submission package, and you can use this as a formatting guide for
-                your future submissions.
+                we will provide resources for new users on the background and philosophy of Brain-Score.
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
                 In <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive 2</a>,
-                we will walkthough what a custom model submission looks like, and how to submit one.
+                we will cover the submission package. You can use this as a formatting guide for
+                your own future submissions.
             </p>
             <p class="benefits_info is-size-5-mobile shorter">
                 Finally, in <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3">Deep Dive 3</a>,
-                we will cover how to submit a plugin via a Github Pull Request (PR).
+                we will walk though what a custom model submission looks like, and how to submit one via either the website, or with a GitHub PR.
             </p>
         </div>
         <div class="column is-one-half">

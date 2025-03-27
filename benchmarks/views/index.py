@@ -5,7 +5,9 @@ import re
 from collections import ChainMap
 from collections import namedtuple
 from typing import Union
-
+from django.utils.functional import wraps
+import hashlib
+from django.core.cache import cache
 import numpy as np
 import pandas as pd
 from colour import Color
@@ -30,36 +32,83 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
+# Move declaration of the namedtuples to the top of the file to ensure they are available in the cache decorator.
+# Previously inside collect_models function which prevented them from being pickled properly during caching.
+ModelRow = namedtuple('ModelRow', [
+    'id', 'name', 'reference_identifier', 'reference_link',
+    'user', 'public', 'competition', 'domain',
+    'rank', 'scores', 'build_status', 'submitter', 
+    'submission_id', 'jenkins_id', 'timestamp'
+])
 
+ScoreDisplay = namedtuple('ScoreDisplay', [
+    'benchmark', 'versioned_benchmark_identifier',
+    'score_raw', 'score_ceiled', 'error', 'color', 
+    'comment', 'is_complete'
+])
+
+def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
+    '''
+    Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
+    Two-level caching:
+        - Global cache for public data
+        - User-specific cache for non-public data
+    Args:
+        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
+    '''
+    def decorator(func):  # Take function to be decorated (i.e., get_context)
+        @wraps(func)  # Preserving original function's metadata attributes
+        def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+            # Determine which type of cache key to use
+            if show_public and not user:
+                # (CASE 1: Public data) Create unique key for public data cache
+                key_parts = ['global_context', domain, 'public']
+            elif user:
+                # (CASE 2: User data) Create unique key for user-specific cache
+                key_parts = ['user_context', domain, str(user.id), str(show_public)]
+            else:
+                # (CASE 3: No caching) Neither public nor user-specific
+                return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                          model_filter=model_filter, show_public=show_public)
+            
+            # Generate SHA256 hash (to avoid invalid characters, too many characters, etc.). Not necessary but good practice.
+            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
+            
+            # Try to get cached result
+            cached_result = cache.get(cache_key)
+            if cached_result is not None:
+                return cached_result  # Return cached data if found
+
+            # If no cache found, calculate result as normal
+            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+                        model_filter=model_filter, show_public=show_public)
+            
+            # Store result in cache appropriately (i.e., for users or globally)
+            cache.set(cache_key, result, timeout)
+            return result
+
+        return wrapper
+    return decorator
+
+# Keep leaderboard caching for now.
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
-    context = get_context(domain=domain)
-    return render(request, 'benchmarks/leaderboard/leaderboard.html', context)
+    # Pre-cache public context for model cards
+    public_context = get_context(domain=domain, show_public=True)
+    # Cache leaderboard context that is ultimately rendered in the leaderboard view
+    leaderboard_context = get_context(domain=domain)
+    return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
-
+# get_context is used for both leaderboard and model views. We can cache the results of it so that after the first
+# request, the cached results is served faster
+@cache_get_context()
 def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_filter=None, show_public=False):
     benchmarks = _collect_benchmarks(domain, user_page=True if user is not None else False,
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
     # calculate lightweight, downloadable version of model scores
-    csv_scores = []
-    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
-    for model in model_rows:
-        csv_dict = {"model_name": model.name, "scores": {}}
-        for score in model.scores:
-            benchmark_identifier = score.benchmark.identifier
-            if benchmark_identifier in benchmark_names:
-                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
-        csv_scores.append(csv_dict)
-
-    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
-
-    if not csv_df.empty:  # check if the DataFrame is empty
-        csv_df.set_index('model_name', inplace=True)
-        csv_data = csv_df.to_csv(index=True)
-    else:
-        csv_data = "No models submitted yet."
+    csv_data = _build_scores_dataframe(benchmarks, model_rows)
 
     # to save vertical space, we strip the lab name in front of benchmarks.
     uniform_benchmarks = {}  # keeps the original benchmark name
@@ -145,6 +194,27 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             'citation_domain_bibtex': citation_domain_bibtex,
             'csv_downloadable': csv_data
             }
+
+
+def _build_scores_dataframe(benchmarks, model_rows):
+    csv_scores = []
+    benchmark_names = [benchmark.identifier for benchmark in benchmarks]
+    for model in model_rows:
+        csv_dict = {"model_name": model.name, "scores": {}}
+        for score in model.scores:
+            benchmark_identifier = score.benchmark.identifier
+            if benchmark_identifier in benchmark_names:
+                csv_dict["scores"][benchmark_identifier] = score.score_ceiled
+        csv_scores.append(csv_dict)
+    csv_df = pd.DataFrame([{**{"model_name": model["model_name"]}, **model["scores"]} for model in csv_scores])
+
+    if not csv_df.empty:  # check if the DataFrame is empty
+        csv_df.set_index('model_name', inplace=True)
+        csv_data = csv_df.to_csv(index=True)
+    else:
+        csv_data = "No models submitted yet."
+
+    return csv_data
 
 
 def _collect_benchmarks(domain: str, user_page: bool = False, benchmark_filter=None):
@@ -265,13 +335,13 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             user_selection = dict(model__public=True)
         else:
             # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-            user_selection = dict(score_ceiled__isnull=False)
+            user_selection = dict(score_raw__isnull=False)
     elif user.is_superuser:
         user_selection = dict()
     else:
         # if we are in a user profile, show all rows that this user owns (regardless of public/private)
         # also only show non-null, i.e. non-erroneous scores. Successful zero scores would be NaN
-        user_selection = dict(model__owner=user, score_ceiled__isnull=False)
+        user_selection = dict(model__owner=user, score_raw__isnull=False)
 
     # Database stores scores for actual instances
     benchmark_todos = [benchmark for benchmark in benchmarks if not hasattr(benchmark, 'children')]
@@ -304,7 +374,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                                  'overall_order': benchmark.overall_order,
                                  'model': score.model.id,
                                  'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error,
-                                 'comment': score.comment})
+                                 'comment': score.comment, 'is_complete': 1})
                 benchmark_scores = pd.DataFrame(rows)
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
@@ -320,8 +390,9 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                 if len(missing_scores) > 0:
                     missing_scores = pd.DataFrame(missing_scores, columns=['model', 'benchmark'])
                     missing_scores['score_raw'] = missing_scores['score_ceiled'] = np.nan
+                    missing_scores['is_complete'] = 0
                     children_scores = pd.concat((children_scores, missing_scores))
-                # compute average of children scores
+                # compute average of children scores -- treat missing scores as 0 for averaging
                 benchmark_scores = children_scores.fillna(0).groupby('model').mean(numeric_only=True)
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
                 if len(benchmark_scores) > 0:
@@ -378,16 +449,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
     # - prepare rank
     model_ranks = scores[scores['benchmark'] == f'average_{domain}']
     model_ranks['rank'] = model_ranks['score_ceiled'].fillna(0).rank(method='min', ascending=False).astype(int)
-    # - prepare data structures
-    ModelRow = namedtuple('ModelRow', field_names=[
-        'id', 'name',
-        'reference_identifier', 'reference_link',
-        'user', 'public', 'competition', 'domain',
-        'rank', 'scores',
-        'build_status', 'submitter', 'submission_id', 'jenkins_id', 'timestamp'])
-    ScoreDisplay = namedtuple('ScoreDisplay', field_names=[
-        'benchmark', 'versioned_benchmark_identifier',
-        'score_raw', 'score_ceiled', 'error', 'color', 'comment'])
+
     # - prepare "no score" objects for when a model-benchmark score is missing
     no_score = {}
     for benchmark in benchmarks:
@@ -398,22 +460,22 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                 benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=benchmark_min, max_value=benchmark_max),
-                comment="")
+                comment="", is_complete=False)
         else:
             no_score[versioned_benchmark_identifier] = ScoreDisplay(
                 benchmark=benchmark, versioned_benchmark_identifier=versioned_benchmark_identifier,
                 score_ceiled="", score_raw="", error="",
                 color=representative_color(None, min_value=0, max_value=1),
-                comment="")
+                comment="", is_complete=False)
     # - convert scores DataFrame into rows
     data = []
     for model_id, group in tqdm(scores.groupby('model'), desc='model rows'):
         model_scores = {}
         # fill in computed scores
-        for score_ceiled, score_raw, error, benchmark, version, comment in zip(
+        for score_ceiled, score_raw, error, benchmark, version, comment, is_complete in zip(
                 group['score_ceiled'], group['score_raw'], group['error'],
                 group['benchmark'], group['benchmark_version'],
-                group['comment']):
+                group['comment'], group['is_complete']):
             versioned_benchmark_identifier = f'{benchmark}_v{version}'
             benchmark_min, benchmark_max = minmax[versioned_benchmark_identifier]
             benchmark = benchmark_lookup[versioned_benchmark_identifier]
@@ -426,7 +488,7 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             score_display = ScoreDisplay(benchmark=benchmark,
                                          versioned_benchmark_identifier=versioned_benchmark_identifier,
                                          score_ceiled=score_ceiled, score_raw=score_raw, error=error,
-                                         color=color, comment=comment)
+                                         color=color, comment=comment, is_complete=is_complete)
             model_scores[versioned_benchmark_identifier] = score_display
         # fill in missing scores
         model_scores = [model_scores[f'{benchmark.identifier}_v{benchmark.version}']
@@ -508,7 +570,7 @@ def normalize_alpha(value, min_value, max_value):
     slope = -.9 / (min_value - max_value)
     intercept = .1 - slope * min_value
     result = slope * value + intercept
-    return result
+    return float(result)
 
 
 def represent(value):
@@ -549,7 +611,8 @@ def _build_comparison_data(models):
     """
     data = [dict(ChainMap(*[{'model': model_row.name}] +
                            [{f"{score_row.versioned_benchmark_identifier}-score": score_row.score_ceiled,
-                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error}
+                             f"{score_row.versioned_benchmark_identifier}-error": score_row.error,
+                             f"{score_row.versioned_benchmark_identifier}-is_complete": score_row.is_complete}
                             for score_row in model_row.scores]))
             for model_row in models]
     return data

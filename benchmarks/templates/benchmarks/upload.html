@@ -11,12 +11,14 @@
             <br>
             <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can either be a {{ domain }} model, benchmark, dataset,
             or metric. </h1>
+            <div style="margin: 20px 0;"></div>
+            <h1 style="font-size: 1.0em; font-weight: bold;">DISCLAIMER: Private submissions keep scores private, but all code will
+            still be publicly visible in the vision repo. </h1>
             <p class="benefits_info is-size-5-mobile shorter submission">
                 You may submit either a new plugin or a revision for a plugin that you have already submitted.
-                (You must be the original submitter of a plugin in order to submit a revision).
-                <br>
-                See <a href="https://brain-score-core.readthedocs.io/en/latest/modules/glossary.html#term-Plug-in">
-                this template</a> for more information on plugin submissions.
+                (You must be the original submitter of a plugin to submit a revision). Details on proper submission
+                formatting are available in the <a href="https://www.brain-score.org/tutorials/models">
+                model tutorials</a>.
             </p>
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
