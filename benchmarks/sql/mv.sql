@@ -850,6 +850,8 @@ score_stats AS (
         ELSE NULL
       END AS valid_score
     FROM base b
+    -- Only take rows from public models
+    WHERE b.public = True
   ) sub
   GROUP BY sub.bi, sub.ver
 ),
