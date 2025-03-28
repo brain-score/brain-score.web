@@ -1146,8 +1146,9 @@ BEGIN
 
     -- Only try to populate if we have data
     IF EXISTS (SELECT 1 FROM mv_benchmark_tree LIMIT 1) THEN
-        RAISE NOTICE 'Performing aggregation';
+        RAISE NOTICE 'Performing Aggregation';
         PERFORM populate_final_agg_scores();
+        PERFORM fix_parent_scores();
     END IF;
 
     -- Refresh additional materialized views depending on updated data

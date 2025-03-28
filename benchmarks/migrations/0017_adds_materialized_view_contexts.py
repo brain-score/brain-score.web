@@ -11,6 +11,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            sql=open('benchmarks/sql/mv.sql').read(),
+            reverse_sql=''  # No reverse SQL needed as these are materialized views
+        ),
         migrations.CreateModel(
             name='BenchmarkMinMax',
             fields=[
