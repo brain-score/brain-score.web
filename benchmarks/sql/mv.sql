@@ -845,6 +845,9 @@ score_stats AS (
       b.benchmark_identifier AS bi,
       b.version AS ver,
       b.computed_score,
+      -- SUGGESTION: This part in particular might be producing discrepancies in the median score
+      -- because nan and nulls may be handled differently from legancy approach.
+      -- This is more noticable in engineering benchmarks due to high failure rate.
       CASE
         WHEN b.computed_score::text NOT ILIKE 'nan' THEN b.computed_score
         ELSE NULL
@@ -1014,7 +1017,7 @@ score_json AS (
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
-                    WHEN score_ceiled_value = 1 THEN '1'
+                    WHEN score_ceiled_value = 1 THEN '1.0'
                     -- FM0.000 determines the formatting of text
                     WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
                     ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
