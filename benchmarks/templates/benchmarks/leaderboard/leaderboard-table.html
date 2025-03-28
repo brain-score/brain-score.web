@@ -33,11 +33,11 @@
         <th class="model-header">
           <p>Model</p>
         </th>
-        <!
+        <!--
           Each of the cells in table/heading have a lot of information
           of what benchmark they are and who their parent is. This allows
           for QuerySelecting and using some of the filters from index.py
-        >
+        -->
         {% for benchmark in benchmarks %}
           <th data-benchmark="{{ benchmark.short_name }}"
               data-parent="{{ benchmark_parents|get_parent_item:benchmark.identifier }}"
