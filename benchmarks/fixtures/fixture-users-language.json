@@ -1,6 +1,7 @@
 [
   {
     "model": "benchmarks.user",
+    "pk": 5,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
@@ -15,6 +16,7 @@
   },
   {
     "model": "benchmarks.user",
+    "pk": 6,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
@@ -29,6 +31,7 @@
   },
   {
     "model": "benchmarks.user",
+    "pk": 7,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
@@ -43,6 +46,7 @@
   },
   {
     "model": "benchmarks.user",
+    "pk": 8,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
@@ -57,6 +61,7 @@
   },
   {
     "model": "benchmarks.user",
+    "pk": 9,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",
@@ -71,6 +76,7 @@
   },
   {
     "model": "benchmarks.user",
+    "pk": 10,
     "fields": {
       "password": "dummy",
       "last_login": "2020-07-17T18:42:42.594Z",

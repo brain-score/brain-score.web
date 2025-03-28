@@ -3,8 +3,8 @@
 Brain-Score Website Developer Documentation
 ###########################################
 
-.. image:: https://travis-ci.com/brain-score/brain-score.web.svg?branch=master
-    :target: https://travis-ci.com/brain-score/brain-score.web
+.. image:: http://brain-score-jenkins.com:8080/buildStatus/icon?job=web/web_daily_test
+    :target: http://brain-score-jenkins.com:8080/buildStatus/icon?job=web/web_daily_test
 
 LocalHost Setup
 ***************
