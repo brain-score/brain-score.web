@@ -131,7 +131,7 @@ class BenchmarkStimuliMeta(models.Model):
     num_stimuli = models.IntegerField(null=True, default=None)
     datatype = models.CharField(max_length=100, null=True, default="image")
     stimuli_subtype = models.CharField(max_length=100, null=True, default=None)
-    total_size_MB = models.FloatField(null=True, default=None)
+    total_size_mb = models.FloatField(null=True, default=None)
     brainscore_link = models.CharField(max_length=200, null=True, default=None)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
 
@@ -337,6 +337,9 @@ class FinalBenchmarkContext(models.Model):
     identifier = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
+    benchmark_data_meta = JSONBField(null=True, blank=True)
+    benchmark_metric_meta = JSONBField(null=True, blank=True)
+    benchmark_stimuli_meta = JSONBField(null=True, blank=True)
 
     class Meta:
         managed = False
@@ -369,7 +372,7 @@ class FinalModelContext(models.Model):
     timestamp = models.DateTimeField(null=True, blank=True)
     primary_model_id = models.IntegerField(null=True, blank=True)
     num_secondary_models = models.IntegerField(null=True, blank=True)
-
+    model_meta = JSONBField(null=True, blank=True)
     class Meta:
         managed = False
         db_table = 'mv_final_model_context'

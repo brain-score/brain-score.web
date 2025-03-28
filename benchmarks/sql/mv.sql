@@ -1,4 +1,4 @@
--- THIS STILL IS A WORK IN PROGRESS AND NEEDS TO BE CLEANED UP. 
+-- THIS STILL IS A WORK IN PROGRESS AND NEEDS TO BE CLEANED UP.
 -- THERE ARE STILL MATERIALIZED VIEWS THAT ARE NOT USED ANYMORE.
 
 
@@ -175,7 +175,39 @@ SELECT
       ELSE
           t.identifier
   END AS short_name,
-  bi.id AS benchmark_id
+  bi.id AS benchmark_id,
+------------------------------------------------------------------------------
+-- NEW: JSONB columns for data_meta, metric_meta, stimuli_meta
+------------------------------------------------------------------------------
+jsonb_build_object(
+    'benchmark_type', bdm.benchmark_type,
+    'task', bdm.task,
+    'region', bdm.region,
+    'hemisphere', bdm.hemisphere,
+    'num_recording_sites', bdm.num_recording_sites,
+    'duration_ms', bdm.duration_ms,
+    'species', bdm.species,
+    'datatype', bdm.datatype,
+    'num_subjects', bdm.num_subjects,
+    'pre_processing', bdm.pre_processing,
+    'brainscore_link', bdm.brainscore_link,
+    'extra_notes', bdm.extra_notes
+  ) AS benchmark_data_meta,
+  jsonb_build_object(
+    'type', bmm.type,
+    'reference', bmm.reference,
+    'public', bmm.public,
+    'brainscore_link', bmm.brainscore_link,
+    'extra_notes', bmm.extra_notes
+  ) AS benchmark_metric_meta,
+  jsonb_build_object(
+    'num_stimuli', bsm.num_stimuli,
+    'datatype', bsm.datatype,
+    'stimuli_subtype', bsm.stimuli_subtype,
+    'total_size_mb', bsm.total_size_mb,
+    'brainscore_link', bsm.brainscore_link,
+    'extra_notes', bsm.extra_notes
+  ) AS benchmark_stimuli_meta
 FROM mv_benchmark_tree t
 JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
 LEFT JOIN mv_latest_benchmark_instance li
@@ -189,8 +221,13 @@ LEFT JOIN brainscore_benchmarkinstance bi
 LEFT JOIN mv_benchmark_children bc
   ON t.identifier = bc.parent_id
 LEFT JOIN brainscore_reference br
-  ON t.reference_id = br.id; -- Join to get benchmark reference information
-
+  ON t.reference_id = br.id
+LEFT JOIN brainscore_benchmark_data_meta bdm
+  ON bdm.benchmark_type = t.identifier
+LEFT JOIN brainscore_benchmark_metric_meta bmm
+  ON bmm.type = t.identifier
+LEFT JOIN brainscore_benchmark_stimuli_meta bsm
+  ON bsm.datatype = t.identifier;
 
 
 
@@ -349,7 +386,7 @@ BEGIN
 
   -- Get max_depth, handle NULL case
   SELECT COALESCE(MAX(depth), 0) INTO max_depth FROM mv_benchmark_tree;
-  
+
   -- Only proceed if we have data
   IF max_depth > 0 THEN
     -- Insert leaf scores.
@@ -1090,20 +1127,22 @@ SELECT
   sm.timestamp,
   u2.id AS user_id,
   NULL::INTEGER AS primary_model_id,
-  0 AS num_secondary_models
---   -- Additional columns from brainscore_modelmeta
---   mm2.architecture,
---   mm2.model_family,
---   mm2.total_parameter_count,
---   mm2.total_layers,
---   mm2.training_dataset,
---   mm2.task_specialization,
---   mm2.brainscore_link,
---   mm2.huggingface_link,
---   mm2.trainable_parameter_count,
---   mm2.trainable_layers,
---   mm2."model_size_MB", --wrap in quotes due to case errors
---   mm2.extra_notes
+  0 AS num_secondary_models,
+  -- Additional columns from brainscore_modelmeta stored in a JSONB
+  jsonb_build_object(
+    'architecture', mm2.architecture,
+    'model_family', mm2.model_family,
+    'total_parameter_count', mm2.total_parameter_count,
+    'trainable_parameter_count', mm2.trainable_parameter_count,
+    'total_layers', mm2.total_layers,
+    'trainable_layers', mm2.trainable_layers,
+    'model_size_mb', mm2.model_size_mb,
+    'training_dataset', mm2.training_dataset,
+    'task_specialization', mm2.task_specialization,
+    'brainscore_link', mm2.brainscore_link,
+    'hugging_face_link', mm2.hugging_face_link,
+    'extra_notes', mm2.extra_notes
+  ) AS model_meta
 FROM model_meta mm
 LEFT JOIN brainscore_user u ON mm.owner_id = u.id
 LEFT JOIN submission_meta sm ON mm.submission_id = sm.submission_id
@@ -1111,8 +1150,8 @@ LEFT JOIN brainscore_user u2 ON sm.submitter_id = u2.id
 LEFT JOIN model_ranks mr ON mm.id = mr.model_id
 LEFT JOIN mv_model_scores_json sc ON mm.id = sc.model_id
 LEFT JOIN reference_meta rm ON mm.reference_id = rm.reference_id
-LEFT JOIN final_layers fl ON mm.id = fl.model_id;
--- LEFT JOIN brainscore_modelmeta mm2 ON mm.name = mm2.identifier;
+LEFT JOIN final_layers fl ON mm.id = fl.model_id
+LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id;
 
 
 

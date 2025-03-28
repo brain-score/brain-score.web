@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                 ('num_stimuli', models.IntegerField(default=None, null=True)),
                 ('datatype', models.CharField(default='image', max_length=100, null=True)),
                 ('stimuli_subtype', models.CharField(default=None, max_length=100, null=True)),
-                ('total_size_MB', models.FloatField(default=None, null=True)),
+                ('total_size_mb', models.FloatField(default=None, null=True)),
                 ('brainscore_link', models.CharField(default=None, max_length=200, null=True)),
                 ('extra_notes', models.CharField(default=None, max_length=1000, null=True)),
             ],

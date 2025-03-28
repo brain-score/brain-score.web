@@ -55,6 +55,9 @@ class Migration(migrations.Migration):
                 ('identifier', models.CharField(max_length=255)),
                 ('short_name', models.CharField(max_length=255)),
                 ('benchmark_id', models.IntegerField(blank=True, null=True)),
+                ('benchmark_data_meta', benchmarks.models.JSONBField(blank=True, null=True)),
+                ('benchmark_metric_meta', benchmarks.models.JSONBField(blank=True, null=True)),
+                ('benchmark_stimuli_meta', benchmarks.models.JSONBField(blank=True, null=True)),
             ],
             options={
                 'db_table': 'mv_final_benchmark_context',
@@ -85,6 +88,7 @@ class Migration(migrations.Migration):
                 ('timestamp', models.DateTimeField(blank=True, null=True)),
                 ('primary_model_id', models.IntegerField(blank=True, null=True)),
                 ('num_secondary_models', models.IntegerField(blank=True, null=True)),
+                ('model_meta', benchmarks.models.JSONBField(blank=True, null=True)),
             ],
             options={
                 'db_table': 'mv_final_model_context',
