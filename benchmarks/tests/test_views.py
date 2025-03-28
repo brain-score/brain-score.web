@@ -1,6 +1,10 @@
 from unittest import skip
 from django.test import TestCase
 from django.db import connection
+import logging
+
+# Set up logger at the top of the file
+logger = logging.getLogger(__name__)
 
 ALL_FIXTURES = [
     'fixture-users.json',
@@ -27,17 +31,27 @@ class BaseTestCase(TestCase):
     def setUpTestData(cls):
         """
         This runs once for the entire test class *after* the fixtures are loaded.
-        Sets up materialized views for all test classes that inherit from this base class.
+        Refreshes materialized views for all test classes that inherit from this base class.
         """
         super().setUpTestData()
 
-        # 1. Read your SQL file
-        with open("benchmarks/sql/mv.sql", "r") as f:
-            mv_script = f.read()
-
-        # 2. Execute the SQL against the test database
-        with connection.cursor() as cursor:
-            cursor.execute(mv_script)
+        logger.info("Starting materialized view refresh")
+        try:
+            # Execute the refresh function to update materialized views
+            with connection.cursor() as cursor:
+                logger.debug("Executing refresh_all_materialized_views()")
+                cursor.execute("SELECT refresh_all_materialized_views();")
+                logger.info("Successfully refreshed materialized views") 
+        # Some error handling
+        except connection.OperationalError as e:
+            logger.error(f"Database connection error while refreshing views: {str(e)}")
+            raise RuntimeError("Database connection failed during materialized view refresh")
+        except connection.ProgrammingError as e:
+            logger.error(f"SQL error while refreshing views: {str(e)}")
+            raise RuntimeError("SQL error during materialized view refresh")
+        except Exception as e:
+            logger.error(f"Unexpected error while refreshing views: {str(e)}")
+            raise RuntimeError(f"Unexpected error during materialized view refresh: {str(e)}")
 
 
 class TestTable(BaseTestCase):
