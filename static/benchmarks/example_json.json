@@ -1,0 +1,16 @@
+{
+    "dandiset_id": "Dandiset id, i.e. 000788",
+    "nwb_file_path": "path to the NWB file within the overall Dandiset, i.e. for a Dandiset structure of 000788/sub-pico/sub-pico_ecephys.nwb, this value should be sub-pico/sub-pico_ecephys.nwb",
+    "identifier": "identifier for your data, i.e. DataGenerationTrial_emogan",
+    "assembly": {
+        "region": ["IT"],
+        "presentation": 8500,
+        "neuroid": 18,
+        "start_time_ms": 0,
+        "stop_time_ms": 300,
+        "tb_ms": 10
+    },
+    "stimulus_set": {
+        "length": 170
+    }
+}
