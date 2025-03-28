@@ -860,8 +860,8 @@ score_stats AS (
 ),
 -- Compute the per-benchmark ranking using row_number(), treating NaN as NULL so they rank last.
 -- This is used for model card benchmark tree when providing individual ranks for benchmark.
--- SUGGESTION: Not really a suggestion but this works well. When modifying the above step,
--- consider that this step may not need modification.
+-- SUGGESTION: This doesn't really work. Should be refactored entirely. Would save around 1.5 seconds
+-- when loading the model card page
 ranked AS (
   SELECT
     b.benchmark_identifier AS bi,

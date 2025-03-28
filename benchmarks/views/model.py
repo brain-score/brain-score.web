@@ -31,6 +31,7 @@ def view(request, id: int, domain: str):
                     pass
 
         # Get context based on user authentication
+        # If an unauthenticated user visits a model page, cached context is returned.
         context = get_context(user=user, domain=domain, show_public=False) if user else get_context(domain=domain, show_public=True)
         
         # The public models are now cached within the user context
@@ -49,7 +50,7 @@ def view(request, id: int, domain: str):
             if isinstance(model_obj.submitter, dict):
                 is_submitter = user.id == model_obj.submitter.get('id')
             else:
-                is_submitter = user.id =w= model_obj.submitter.id
+                is_submitter = user.id == model_obj.submitter.id
         
         submission_details_visible = user and (user.is_superuser or is_owner or is_submitter)
         
@@ -81,7 +82,7 @@ def view(request, id: int, domain: str):
                     add_benchmark_rankings(model, ranking_context)
                 except ValueError:
                     pass
-        
+
         # Prepare the context for the template
         model_context = {
             'model': model,
@@ -111,14 +112,36 @@ def view(request, id: int, domain: str):
 # This should be moved to database materialized view in future
 def add_benchmark_rankings(model, reference_context):
     """
-    Add per-benchmark ranking information to each score in the model
+    Add per-benchmark ranking information to each score in the model.
+    For both public and private models: compute rank against public models + self
     """
     # Get all public models for comparison
     public_models = [m for m in reference_context['models'] if getattr(m, 'public', True)]
-
-    # Process each score in the model
-    for i, score in enumerate(model.scores):
-        # Skip if score is not a dictionary
+    
+    # Pre-compute scores for each benchmark to avoid repeated lookups
+    benchmark_scores = {}
+    for other_model in public_models + [model]:
+        if getattr(other_model, 'model_id', None) == getattr(model, 'model_id', None):
+            continue
+        for other_score in getattr(other_model, 'scores', []) or []:
+            if not isinstance(other_score, dict):
+                continue
+            versioned_id = other_score.get('versioned_benchmark_identifier')
+            if not versioned_id:
+                continue
+            score_value = other_score.get('score_ceiled')
+            if score_value in ('', 'X', None):
+                continue
+            try:
+                score_float = float(score_value)
+                if versioned_id not in benchmark_scores:
+                    benchmark_scores[versioned_id] = []
+                benchmark_scores[versioned_id].append(score_float)
+            except (ValueError, TypeError):
+                continue
+    
+    # Process scores more efficiently
+    for score in model.scores:
         if not isinstance(score, dict):
             continue
             
@@ -126,42 +149,17 @@ def add_benchmark_rankings(model, reference_context):
         if not versioned_benchmark_id:
             continue
             
-        # Get the score value
         score_ceiled = score.get('score_ceiled')
-        
-        # Skip if score is not valid
         if score_ceiled in ('', 'X', None):
             score['rank'] = score_ceiled
             continue
             
         try:
             score_value = float(score_ceiled)
-            
-            # Collect all scores for this benchmark from public models
-            other_scores = []
-            for other_model in public_models:
-                # Skip comparing with itself
-                if getattr(other_model, 'model_id', None) == getattr(model, 'model_id', None):
-                    continue
-                    
-                for other_score in getattr(other_model, 'scores', []) or []:
-                    if isinstance(other_score, dict) and other_score.get('versioned_benchmark_identifier') == versioned_benchmark_id:
-                        other_score_value = other_score.get('score_ceiled')
-                        if other_score_value not in ('', 'X', None):
-                            try:
-                                other_scores.append(float(other_score_value))
-                            except (ValueError, TypeError):
-                                pass
-            
-            # Calculate rank (number of better scores + 1)
+            other_scores = benchmark_scores.get(versioned_benchmark_id, [])
             better_scores = [s for s in other_scores if s > score_value]
-            rank = len(better_scores) + 1
-            
-            # Add the rank to the score dictionary
-            score['rank'] = rank
-            
+            score['rank'] = len(better_scores) + 1
         except (ValueError, TypeError):
-            # If score can't be converted to float, set rank to N/A
             score['rank'] = 'N/A'
 
 
