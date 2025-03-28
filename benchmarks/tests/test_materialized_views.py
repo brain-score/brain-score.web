@@ -47,3 +47,7 @@ class TestMaterializedViews(BaseTestCase):
             new_count = cursor.fetchone()[0]
             self.assertGreater(new_count, initial_count, 
                              "mv_model_scores should reflect new data after refresh")
+            
+'''
+Consider adding tests for successful aggregation of a new score for a model
+'''

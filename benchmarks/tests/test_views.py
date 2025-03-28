@@ -98,6 +98,37 @@ class TestLanguage(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, '<h1 class="title">Anonymous Model #89</h1>')
 
+@skip("2022 competition is over")
+class TestCompetitionTable2022(BaseTestCase):
+    def test_no_errors(self):
+        resp = self.client.get("http://localhost:8000/competition2022/")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_num_rows(self):
+        resp = self.client.get("http://localhost:8000/competition2022/")
+        content = resp.content.decode('utf-8')
+        num_rows = content.count("<tr")
+        self.assertEqual(num_rows, (1 + 9) * 3)  # header, 9 different models, 3 tracks
+
+    def test_num_secondary_models(self):
+        resp = self.client.get("http://localhost:8000/competition2022/")
+        content = resp.content.decode('utf-8')
+        num_rows = content.count("is-secondary-model")
+        num_total_models = 9 * 3  # 9 different models, 3 tracks
+        num_primary_models = 4 * 3  # 4 different users, 3 tracks
+        self.assertEqual(num_rows, num_total_models - num_primary_models)
+
+
+class TestCompetition2024(BaseTestCase):
+    def test_no_errors(self):
+        resp = self.client.get("http://localhost:8000/competition2024/")
+        self.assertEqual(resp.status_code, 200)
+
+
+"""
+The below are no longer used as they are now handled by the materialized views
+"""
+
 """
 class TestBenchmarkShortname:
     fixtures = ALL_FIXTURES
@@ -141,29 +172,3 @@ class TestIdentifierVersionSplit(TestCase):
         self.assertEqual(identifier, 'dicarlo.Marques2020_Ringach2002-circular_variance')
         self.assertEqual(version, '1')
 """
-
-@skip("2022 competition is over")
-class TestCompetitionTable2022(BaseTestCase):
-    def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        self.assertEqual(resp.status_code, 200)
-
-    def test_num_rows(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr")
-        self.assertEqual(num_rows, (1 + 9) * 3)  # header, 9 different models, 3 tracks
-
-    def test_num_secondary_models(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("is-secondary-model")
-        num_total_models = 9 * 3  # 9 different models, 3 tracks
-        num_primary_models = 4 * 3  # 4 different users, 3 tracks
-        self.assertEqual(num_rows, num_total_models - num_primary_models)
-
-
-class TestCompetition2024(BaseTestCase):
-    def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition2024/")
-        self.assertEqual(resp.status_code, 200)

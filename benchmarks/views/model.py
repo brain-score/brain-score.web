@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
-from ..models import Model, FinalModelContext
+from ..models import FinalModelContext
 from time import time
 _logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ def add_benchmark_rankings(model, reference_context):
             except (ValueError, TypeError):
                 continue
     
-    # Process scores more efficiently
+    # Process scores
     for score in model.scores:
         if not isinstance(score, dict):
             continue
@@ -148,7 +148,10 @@ def add_benchmark_rankings(model, reference_context):
         versioned_benchmark_id = score.get('versioned_benchmark_identifier')
         if not versioned_benchmark_id:
             continue
-            
+        
+        # If score is invalid, set rank to be same as invalid score
+        # i.e., if score is empty, rank is empty. If score is "X", rank is "X", if score is nan, rank is nan
+        # Allows us to preserve invalid state in the rank and avoid casting invalid score to float
         score_ceiled = score.get('score_ceiled')
         if score_ceiled in ('', 'X', None):
             score['rank'] = score_ceiled

@@ -23,6 +23,7 @@ ENGINEERING_ROOT = 'engineering'
 
 '''
 Reference for previous color scheme
+Used for benchmark cards
 '''
 colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
 colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
@@ -35,14 +36,17 @@ color_None = '#e0e1e2'
 
 
 #@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
+# Explore caching entire leaderboard context without any filtering
+# which is then used downstream. Unclear if this has performance benefits.
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-'''
-REPLACE CACHE_PAGE CRON WITH TRIGGER-BASED CACHING
-'''
-#@cache_page(1 * 15 * 60)
+
+# Cache the leaderboard HTML page for 15 minutes at a time
+# Server-side HTML caching until leaderboard views are introduced.
+# Consider using client-side caching in the future
+@cache_page(1 * 15 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
@@ -50,7 +54,7 @@ def view(request, domain: str):
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
-        # User is authenticated - get personalized context
+        # User is authenticated - get personalized context (used for profile views)
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
@@ -63,12 +67,6 @@ def view(request, domain: str):
 # Maintain 24-hr cache for leaderboard view
 @cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
-    # ------------------------------------------------------------------
-    # TO-DO
-    # - Re-introduce score roll-up aggregation for custom views
-    # - Add private benchmarks for private leaderboard aggregation
-    # ------------------------------------------------------------------ 
-
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
     # ------------------------------------------------------------------ 
@@ -115,12 +113,17 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Materialized views for some of these exist, but simple list comprehension was fast enough.
     # If model list grows, consider using the materialized views.
     # ------------------------------------------------------------------ 
+    # Identify leaf benchmarks (actual runnable benchmarks and not parents)
     benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
+    # Identify parents and map children to parents
     benchmark_parents = {
         bench.identifier: (f"{bench.parent['identifier']}_v0" if bench.parent and 'identifier' in bench.parent else None)
         for bench in benchmarks
-    }
+    }   
+    # Identify uniform parents (parents that are the same for all children)
     uniform_parents = set(benchmark_parents.values())
+    # Identify benchmarks that should not be shown (depth > BASE_DEPTH or engineering root in root_parent)
+    # Controls which benchmarks are visible in the leaderboard table based on depth and type (i.e., vision vs engineering)
     not_shown_set = {
         bench.identifier for bench in benchmarks
         if bench.depth > BASE_DEPTH
@@ -128,7 +131,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             and ENGINEERING_ROOT in bench.root_parent)
     }
     
-    # Add submittable benchmarks for logged-in users
+    # Add submittable benchmarks for authenticated users
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
     
     # Build CSV data and comparison data
