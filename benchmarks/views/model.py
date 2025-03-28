@@ -6,12 +6,15 @@ from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
 from ..models import Model, FinalModelContext
-
+from time import time
 _logger = logging.getLogger(__name__)
 
 def view(request, id: int, domain: str):
+    start_time = time()
+    # Check if user is logged in
     user = request.user if request.user.is_authenticated else None
     
+    # Try to get model object
     try:
         model_obj = FinalModelContext.objects.get(model_id=id, domain=domain)
         
@@ -93,17 +96,12 @@ def view(request, id: int, domain: str):
             'visibility': visibility,
             'model_name': display_model(model_obj, user),
             'submitter_name': display_submitter(model_obj, user),
+            'visual_degrees': model.visual_degrees,
+            'layers': getattr(model, 'layers', None),
         }
         
-        # Add visual degrees if available
-        try:
-            db_model = Model.objects.get(id=id)
-            model_context['visual_degrees'] = db_model.visual_degrees
-        except Model.DoesNotExist:
-            model_context['visual_degrees'] = None
-        
-        # Add layer information if available
-        model_context['layers'] = getattr(model, 'layers', None)
+        end_time = time()
+        print(f"Total time taken to get model context: {end_time - start_time} seconds")
         return render(request, 'benchmarks/model.html', model_context)
         
     except FinalModelContext.DoesNotExist:

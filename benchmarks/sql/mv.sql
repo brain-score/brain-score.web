@@ -2,12 +2,12 @@
 -- ********************************************************************************
 -- NOTE FROM AUTHOR:
 -- This file builds a hierarchical "benchmark tree," infers leaf (end) benchmarks,
--- performs score aggregations for abstract parent benchmarks via functions, 
--- and finally enriches model data with certain-benchmark metadata and styling 
+-- performs score aggregations for abstract parent benchmarks via functions,
+-- and finally enriches model data with certain-benchmark metadata and styling
 -- information
 
--- Certain materialized views are used in the final scoreboard processes, 
--- while others might no longer be used. 
+-- Certain materialized views are used in the final scoreboard processes,
+-- while others might no longer be used.
 -- Search for "SUGGESTION" notes below for possible cleanup suggestions.
 -- ********************************************************************************
 
@@ -78,7 +78,7 @@ GROUP BY parent_id;
 
 -- ********************************************************************************
 -- STEP 3: For Each Benchmark Type, Pick the Latest Instance
--- "mv_latest_benchmark_instance" is joined in final contexts to pick the newest 
+-- "mv_latest_benchmark_instance" is joined in final contexts to pick the newest
 -- version for leaf benchmarks.
 -- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_latest_benchmark_instance CASCADE;
@@ -279,8 +279,8 @@ LEFT JOIN brainscore_submission s ON m.submission_id = s.id;
 
 -- ********************************************************************************
 -- STEP B.0: Base Scores for Leaf Benchmarks (mv_base_scores)
--- For each model and each leaf benchmark instance, pick the "best" score if 
--- multiple exist, preferring non-null & highest. This shouldn't be the case but 
+-- For each model and each leaf benchmark instance, pick the "best" score if
+-- multiple exist, preferring non-null & highest. This shouldn't be the case but
 -- somehow certain model-benchmark scores have duplicates (NaN and then a valid score).
 -- IMPORTANT: This is the foundation for aggregated scoring.
 -- ********************************************************************************
@@ -336,7 +336,7 @@ LEFT JOIN s_ranked s
 
 -- ********************************************************************************
 -- STEP B.1: "mv_base_scores_fixed_engineering"
--- This view modifies 'score_ceiled' for engineering-type benchmarks to remain 
+-- This view modifies 'score_ceiled' for engineering-type benchmarks to remain
 -- the raw score for engineering tasks. Used heavily in final aggregation steps
 -- to treat engineering benchmarks differently.
 -- ********************************************************************************
@@ -490,54 +490,78 @@ $$ LANGUAGE plpgsql;
 -- Called after "populate_final_agg_scores()".
 DROP FUNCTION IF EXISTS fix_parent_scores();
 CREATE OR REPLACE FUNCTION fix_parent_scores() RETURNS void AS $$
+DECLARE
+  max_depth INT;
+  current_depth INT;
 BEGIN
-  -- Drop existing intermediate table. 
-  -- SUGGESTION:Could use truncate instead like in populate_final_agg_scores()
+  -- SUGGESTION: Could use truncate instead like in populate_final_agg_scores()
   -- Just need to create tables appropriately
-  DROP TABLE IF EXISTS intermediate_parent_stats;
 
-  -- Create an intermediate table of parent statistics.
-  CREATE TABLE intermediate_parent_stats AS
-  WITH parent_stats AS (
-    SELECT
-      p.benchmark AS parent_benchmark,
-      p.model_id,
-      TRIM(p.sort_path) AS parent_sort_path,
-      COUNT(*) FILTER (WHERE c.score_ceiled IS NULL) AS count_null,
-      COUNT(*) FILTER (WHERE c.score_ceiled IS NOT NULL
-                          AND c.score_ceiled::text ILIKE 'nan') AS count_nan,
-      COUNT(*) FILTER (WHERE c.score_ceiled IS NOT NULL
-                          AND c.score_ceiled::text NOT ILIKE 'nan') AS count_numeric
-    FROM final_agg_scores p
-    JOIN final_agg_scores c
-      ON c.model_id = p.model_id
-      AND c.depth = p.depth + 1
-      AND TRIM(c.sort_path) LIKE TRIM(p.sort_path) || '-%'
-    WHERE p.is_leaf = false
-    GROUP BY p.benchmark, p.model_id, TRIM(p.sort_path)
-  )
-  SELECT * FROM parent_stats;
+  /*
+    We first find the maximum depth in final_agg_scores.
+    Then we iterate from that maximum depth down to 1.
+    In each iteration, we build an "intermediate_parent_stats" table
+    for the parent rows at depth = current_depth - 1 based on child rows
+    at depth = current_depth. Then we update the parent scores for that level.
+    This way, we bubble up the correct scores one level at a time
+    until we reach the root(s).
+  */
+  SELECT MAX(depth) INTO max_depth
+  FROM final_agg_scores;
 
-  -- Use the intermediate stats to update parent's score_ceiled.
-  -- Set as Null or NaN appropriately for different use cases.
-  -- If all children are NULL, set parent to NULL.
-  -- If all children are NaN, set parent to NaN.
-  -- If some children are NULL and others are NaN, set parent to NaN.
-  UPDATE final_agg_scores p
-  SET score_ceiled = CASE
-      WHEN ips.count_numeric = 0 AND ips.count_nan = 0 THEN NULL
-      WHEN p.score_ceiled = 0 THEN 'NaN'::numeric
-      WHEN ips.count_numeric = 0 AND ips.count_nan > 0 THEN 'NaN'::numeric
-      ELSE p.score_ceiled
-    END
-  FROM intermediate_parent_stats ips
-  WHERE p.benchmark = ips.parent_benchmark
-    AND p.model_id = ips.model_id
-    AND TRIM(p.sort_path) = ips.parent_sort_path
-    AND p.score_ceiled = 0.0
-    AND p.is_leaf = false;
+  FOR current_depth IN REVERSE max_depth..1 LOOP
+
+    -- Drop existing intermediate table.
+    DROP TABLE IF EXISTS intermediate_parent_stats;
+
+    -- Create an intermediate table of parent statistics.
+    CREATE TABLE intermediate_parent_stats AS
+    WITH parent_stats AS (
+      SELECT
+        p.benchmark AS parent_benchmark,
+        p.model_id,
+        TRIM(p.sort_path) AS parent_sort_path,
+        COUNT(*) FILTER (WHERE c.score_ceiled IS NULL) AS count_null,
+        COUNT(*) FILTER (WHERE c.score_ceiled IS NOT NULL
+                            AND c.score_ceiled::text ILIKE 'nan') AS count_nan,
+        COUNT(*) FILTER (WHERE c.score_ceiled IS NOT NULL
+                            AND c.score_ceiled::text NOT ILIKE 'nan') AS count_numeric
+      FROM final_agg_scores p
+      JOIN final_agg_scores c
+        ON c.model_id = p.model_id
+        -- Compare exactly one level down for each pass:
+        AND c.depth = current_depth
+        AND p.depth = current_depth - 1
+        AND TRIM(c.sort_path) LIKE TRIM(p.sort_path) || '-%'
+      GROUP BY p.benchmark, p.model_id, TRIM(p.sort_path)
+    )
+    SELECT * FROM parent_stats;
+
+    -- Use the intermediate stats to update parent's score_ceiled.
+    -- Set as Null or NaN appropriately for different use cases.
+    -- If all children are NULL, set parent to NULL.
+    -- If there no valid children scores, but parent was set to 0, change it to NaN.
+    -- If all children are NaN, set parent to NaN.
+    -- If some children are NULL and others are NaN, set parent to NaN.
+    UPDATE final_agg_scores p
+    SET score_ceiled = CASE
+        WHEN ips.count_numeric = 0 AND ips.count_nan = 0 THEN NULL
+        WHEN ips.count_numeric = 0 AND p.score_ceiled = 0 THEN 'NaN'::numeric
+        WHEN ips.count_numeric = 0 AND ips.count_nan > 0 THEN 'NaN'::numeric
+        ELSE p.score_ceiled
+      END
+    FROM intermediate_parent_stats ips
+    WHERE p.benchmark = ips.parent_benchmark
+      AND p.model_id = ips.model_id
+      AND TRIM(p.sort_path) = ips.parent_sort_path
+      AND p.score_ceiled = 0.0
+      AND p.is_leaf = false;
+
+  END LOOP;
+
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- ********************************************************************************
 -- STEP D: Add benchmark metadata to aggregated scores (mv_model_scores)
@@ -545,9 +569,9 @@ $$ LANGUAGE plpgsql;
 -- that references the fully aggregated "final_agg_scores" table.
 -- It joins final context info and basic model info.
 
--- SUGGESTION: It is unclear at the time of writing this how much of the 
--- benchmark metadata needs to be embedded here vs in the mv_final_benchmark_context MV. 
--- Currently, excludes post-metadata-tagging-system metadata. 
+-- SUGGESTION: It is unclear at the time of writing this how much of the
+-- benchmark metadata needs to be embedded here vs in the mv_final_benchmark_context MV.
+-- Currently, excludes post-metadata-tagging-system metadata.
 --Tbh, it should probably be included.
 -- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_scores CASCADE;
@@ -831,7 +855,7 @@ score_stats AS (
 ),
 -- Compute the per-benchmark ranking using row_number(), treating NaN as NULL so they rank last.
 -- This is used for model card benchmark tree when providing individual ranks for benchmark.
--- SUGGESTION: Not really a suggestion but this works well. When modifying the above step, 
+-- SUGGESTION: Not really a suggestion but this works well. When modifying the above step,
 -- consider that this step may not need modification.
 ranked AS (
   SELECT
@@ -848,7 +872,7 @@ ranked AS (
     ) AS benchmark_rank
   FROM base b
 )
-SELECT 
+SELECT
   b.benchmark_id,
   b.benchmark_id_version,
   b.benchmark_identifier,
@@ -988,6 +1012,8 @@ score_json AS (
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
+                    WHEN score_ceiled_value = 1 THEN '1'
+                    -- FM0.000 determines the formatting of text
                     WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
                     ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
                   END,
@@ -1014,7 +1040,7 @@ FROM score_json;
 
 -- ********************************************************************************
 -- STEP H: Join per-model score JSON with model metadata
--- "mv_final_model_context" is the final state used by the leaderboard/card views 
+-- "mv_final_model_context" is the final state used by the leaderboard/card views
 -- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_final_model_context CASCADE;
 CREATE MATERIALIZED VIEW mv_final_model_context AS
@@ -1264,6 +1290,5 @@ BEGIN
     RAISE NOTICE 'Completed';
 END;
 $$ LANGUAGE plpgsql;
-
 
 SELECT refresh_all_materialized_views();

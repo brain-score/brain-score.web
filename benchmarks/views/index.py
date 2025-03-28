@@ -280,7 +280,8 @@ def _recalculate_model_ranks(models, domain="vision"):
     next_rank = len(model_scores) + 1
     for model in models_without_scores:
         model.rank = next_rank
-        next_rank += 1
+    # Increment next rank to account for models without valid scores
+    next_rank += 1
     
     # Combine both lists and sort by rank
     all_models = [model for model, _ in model_scores] + models_without_scores
