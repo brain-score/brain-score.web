@@ -263,3 +263,5 @@ except Exception as e:  # Catch all exceptions, not just NoCredentialsError
     if not CACHE_REFRESH_TOKEN and DEBUG:
         import secrets
         CACHE_REFRESH_TOKEN = secrets.token_hex(16)
+        print(f"Generated CACHE_REFRESH_TOKEN: {CACHE_REFRESH_TOKEN}")
+        # If in DEBUG mode, visit http://localhost:8000/debug/show_token/ to see the token
