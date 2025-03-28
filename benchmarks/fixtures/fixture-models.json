@@ -1,7 +1,7 @@
 [
   {
     "model": "benchmarks.Model",
-    "pk" : 1,
+    "pk": 1,
     "fields": {
       "name": "alexnet1",
       "reference": [
@@ -18,7 +18,7 @@
   },
   {
     "model": "benchmarks.Model",
-    "pk" : 2,
+    "pk": 2,
     "fields": {
       "name": "alexnet2",
       "reference": [
@@ -36,6 +36,7 @@
 
   {
     "model": "benchmarks.Model",
+    "pk": 3,
     "fields": {
       "name": "alexnet",
       "reference": [
@@ -52,6 +53,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 4,
     "fields": {
       "name": "squeezenet1_0",
       "reference": [
@@ -68,6 +70,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 5,
     "fields": {
       "name": "squeezenet1_1",
       "reference": [
@@ -84,6 +87,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 6,
     "fields": {
       "name": "resnet-18",
       "reference": [
@@ -100,6 +104,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 7,
     "fields": {
       "name": "resnet-34",
       "reference": [
@@ -116,6 +121,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 8,
     "fields": {
       "name": "resnet-50-pytorch",
       "reference": [
@@ -132,6 +138,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 9,
     "fields": {
       "name": "resnet-50-robust",
       "reference": [
@@ -148,6 +155,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 10,
     "fields": {
       "name": "vgg-16",
       "reference": [
@@ -164,6 +172,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 11,
     "fields": {
       "name": "vgg-19",
       "reference": [
@@ -180,6 +189,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 12,
     "fields": {
       "name": "vggface",
       "reference": [
@@ -196,6 +206,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 13,
     "fields": {
       "name": "xception",
       "reference": [
@@ -212,6 +223,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 14,
     "fields": {
       "name": "densenet-121",
       "reference": [
@@ -228,6 +240,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 15,
     "fields": {
       "name": "densenet-169",
       "reference": [
@@ -244,6 +257,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 16,
     "fields": {
       "name": "densenet-201",
       "reference": [
@@ -260,6 +274,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 17,
     "fields": {
       "name": "inception_v1",
       "reference": [
@@ -276,6 +291,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 18,
     "fields": {
       "name": "inception_v2",
       "reference": [
@@ -292,6 +308,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 19,
     "fields": {
       "name": "inception_v3",
       "reference": [
@@ -308,6 +325,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 20,
     "fields": {
       "name": "inception_v4",
       "reference": [
@@ -324,6 +342,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 21,
     "fields": {
       "name": "inception_resnet_v2",
       "reference": [
@@ -340,6 +359,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 22,
     "fields": {
       "name": "resnet-50_v1",
       "reference": [
@@ -356,6 +376,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 23,
     "fields": {
       "name": "resnet-101_v1",
       "reference": [
@@ -372,6 +393,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 24,
     "fields": {
       "name": "resnet-152_v1",
       "reference": [
@@ -388,6 +410,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 25,
     "fields": {
       "name": "resnet-50_v2",
       "reference": [
@@ -404,6 +427,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 26,
     "fields": {
       "name": "resnet-101_v2",
       "reference": [
@@ -420,6 +444,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 27,
     "fields": {
       "name": "resnet-152_v2",
       "reference": [
@@ -436,6 +461,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 28,
     "fields": {
       "name": "nasnet_mobile",
       "reference": [
@@ -452,6 +478,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 29,
     "fields": {
       "name": "nasnet_large",
       "reference": [
@@ -468,6 +495,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 30,
     "fields": {
       "name": "pnasnet_large",
       "reference": [
@@ -484,6 +512,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 31,
     "fields": {
       "name": "bagnet9",
       "reference": [
@@ -500,6 +529,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 32,
     "fields": {
       "name": "bagnet17",
       "reference": [
@@ -516,6 +546,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 33,
     "fields": {
       "name": "bagnet33",
       "reference": [
@@ -532,6 +563,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 34,
     "fields": {
       "name": "resnet50-SIN",
       "reference": [
@@ -548,6 +580,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 35,
     "fields": {
       "name": "resnet50-SIN_IN",
       "reference": [
@@ -564,6 +597,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 36,
     "fields": {
       "name": "resnet50-SIN_IN_IN",
       "reference": [
@@ -580,6 +614,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 37,
     "fields": {
       "name": "resnext101_32x8d_wsl",
       "reference": [
@@ -596,6 +631,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 38,
     "fields": {
       "name": "resnext101_32x16d_wsl",
       "reference": [
@@ -612,6 +648,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 39,
     "fields": {
       "name": "resnext101_32x32d_wsl",
       "reference": [
@@ -628,6 +665,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 40,
     "fields": {
       "name": "resnext101_32x48d_wsl",
       "reference": [
@@ -644,6 +682,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 41,
     "fields": {
       "name": "fixres_resnext101_32x48d_wsl",
       "reference": [
@@ -660,6 +699,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 42,
     "fields": {
       "name": "dcgan",
       "reference": null,
@@ -674,6 +714,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 43,
     "fields": {
       "name": "convrnn_224",
       "reference": null,
@@ -688,6 +729,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 44,
     "fields": {
       "name": "mobilenet_v1_1.0_224",
       "reference": [
@@ -704,6 +746,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 45,
     "fields": {
       "name": "mobilenet_v1_1.0_192",
       "reference": [
@@ -720,6 +763,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 46,
     "fields": {
       "name": "mobilenet_v1_1.0_160",
       "reference": [
@@ -736,6 +780,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 47,
     "fields": {
       "name": "mobilenet_v1_1.0_128",
       "reference": [
@@ -752,6 +797,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 48,
     "fields": {
       "name": "mobilenet_v1_0.75_224",
       "reference": [
@@ -768,6 +814,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 49,
     "fields": {
       "name": "mobilenet_v1_0.75_192",
       "reference": [
@@ -784,6 +831,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 50,
     "fields": {
       "name": "mobilenet_v1_0.75_160",
       "reference": [
@@ -800,6 +848,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 51,
     "fields": {
       "name": "mobilenet_v1_0.75_128",
       "reference": [
@@ -816,6 +865,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 52,
     "fields": {
       "name": "mobilenet_v1_0.5_224",
       "reference": [
@@ -832,6 +882,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 53,
     "fields": {
       "name": "mobilenet_v1_0.5_192",
       "reference": [
@@ -848,6 +899,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 54,
     "fields": {
       "name": "mobilenet_v1_0.5_160",
       "reference": [
@@ -864,6 +916,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 55,
     "fields": {
       "name": "mobilenet_v1_0.5_128",
       "reference": [
@@ -880,6 +933,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 56,
     "fields": {
       "name": "mobilenet_v1_0.25_224",
       "reference": [
@@ -896,6 +950,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 57,
     "fields": {
       "name": "mobilenet_v1_0.25_192",
       "reference": [
@@ -912,6 +967,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 58,
     "fields": {
       "name": "mobilenet_v1_0.25_160",
       "reference": [
@@ -928,6 +984,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 59,
     "fields": {
       "name": "mobilenet_v1_0.25_128",
       "reference": [
@@ -944,6 +1001,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 60,
     "fields": {
       "name": "mobilenet_v2_1.4_224",
       "reference": [
@@ -960,6 +1018,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 61,
     "fields": {
       "name": "mobilenet_v2_1.3_224",
       "reference": [
@@ -976,6 +1035,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 62,
     "fields": {
       "name": "mobilenet_v2_1.0_224",
       "reference": [
@@ -992,6 +1052,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 63,
     "fields": {
       "name": "mobilenet_v2_1.0_192",
       "reference": [
@@ -1008,6 +1069,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 64,
     "fields": {
       "name": "mobilenet_v2_1.0_160",
       "reference": [
@@ -1024,6 +1086,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 65,
     "fields": {
       "name": "mobilenet_v2_1.0_128",
       "reference": [
@@ -1040,6 +1103,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 66,
     "fields": {
       "name": "mobilenet_v2_1.0_96",
       "reference": [
@@ -1056,6 +1120,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 67,
     "fields": {
       "name": "mobilenet_v2_0.75_224",
       "reference": [
@@ -1072,6 +1137,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 68,
     "fields": {
       "name": "mobilenet_v2_0.75_192",
       "reference": [
@@ -1088,6 +1154,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 69,
     "fields": {
       "name": "mobilenet_v2_0.75_160",
       "reference": [
@@ -1104,6 +1171,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 70,
     "fields": {
       "name": "mobilenet_v2_0.75_128",
       "reference": [
@@ -1120,6 +1188,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 71,
     "fields": {
       "name": "mobilenet_v2_0.75_96",
       "reference": [
@@ -1136,6 +1205,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 72,
     "fields": {
       "name": "mobilenet_v2_0.5_224",
       "reference": [
@@ -1152,6 +1222,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 73,
     "fields": {
       "name": "mobilenet_v2_0.5_192",
       "reference": [
@@ -1168,6 +1239,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 74,
     "fields": {
       "name": "mobilenet_v2_0.5_160",
       "reference": [
@@ -1184,6 +1256,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 75,
     "fields": {
       "name": "mobilenet_v2_0.5_128",
       "reference": [
@@ -1200,6 +1273,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 76,
     "fields": {
       "name": "mobilenet_v2_0.5_96",
       "reference": [
@@ -1216,6 +1290,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 77,
     "fields": {
       "name": "mobilenet_v2_0.35_224",
       "reference": [
@@ -1232,6 +1307,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 78,
     "fields": {
       "name": "mobilenet_v2_0.35_192",
       "reference": [
@@ -1248,6 +1324,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 79,
     "fields": {
       "name": "mobilenet_v2_0.35_160",
       "reference": [
@@ -1264,6 +1341,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 80,
     "fields": {
       "name": "mobilenet_v2_0.35_128",
       "reference": [
@@ -1280,6 +1358,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 81,
     "fields": {
       "name": "mobilenet_v2_0.35_96",
       "reference": [
@@ -1296,6 +1375,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 82,
     "fields": {
       "name": "CORnet-Z",
       "reference": [
@@ -1312,6 +1392,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 83,
     "fields": {
       "name": "CORnet-S",
       "reference": [
@@ -1328,6 +1409,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 84,
     "fields": {
       "name": "CORnet-S101010",
       "reference": null,
@@ -1342,6 +1424,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 85,
     "fields": {
       "name": "CORnet-S222",
       "reference": null,
@@ -1356,6 +1439,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 86,
     "fields": {
       "name": "CORnet-S444",
       "reference": null,
@@ -1370,6 +1454,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 87,
     "fields": {
       "name": "CORnet-S484",
       "reference": null,
@@ -1384,6 +1469,7 @@
   },
   {
     "model": "benchmarks.Model",
+    "pk": 88,
     "fields": {
       "name": "CORnet-S10rep",
       "reference": null,
