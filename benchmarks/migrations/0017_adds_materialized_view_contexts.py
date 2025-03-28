@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql=open('benchmarks/sql/mv.sql').read(),
-            reverse_sql=''  # No reverse SQL needed as these are materialized views
+            # No reverse SQL needed as these are mostly materialized views. 
+            # There are two tables (final_agg_scores and intermediate_parent_stats) that are used as
+            # intermediate tables to create the materialized views to allow functions to be used.
+            # May need to add a reverse SQL to drop these intermediate tables.
+            reverse_sql=''
         ),
         migrations.CreateModel(
             name='BenchmarkMinMax',
