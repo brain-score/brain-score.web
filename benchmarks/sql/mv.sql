@@ -1,19 +1,29 @@
--- THIS STILL IS A WORK IN PROGRESS AND NEEDS TO BE CLEANED UP.
--- THERE ARE STILL MATERIALIZED VIEWS THAT ARE NOT USED ANYMORE.
+
+-- ********************************************************************************
+-- NOTE FROM AUTHOR:
+-- This file builds a hierarchical "benchmark tree," infers leaf (end) benchmarks,
+-- performs score aggregations for abstract parent benchmarks via functions, 
+-- and finally enriches model data with certain-benchmark metadata and styling 
+-- information
+
+-- Certain materialized views are used in the final scoreboard processes, 
+-- while others might no longer be used. 
+-- Search for "SUGGESTION" notes below for possible cleanup suggestions.
+-- ********************************************************************************
 
 
--- ***************************************************************
+-- ********************************************************************************
 --
---  _get_benchmarks()
+--  GATHER BENCHMARK CONTEXT
 --
--- ***************************************************************
+-- ********************************************************************************
 
--- ***************************************************************
+-- ********************************************************************************
 -- STEP 1: Build the Recursive Benchmark Tree with a DFS Sort Path
--- For roots, use LPAD(order::text, 5, '0'); for children,
--- concatenate the parent's sort_path, a hyphen, and LPAD(child.order::text, 5, '0')
--- (and optionally the child identifier for tie-breaking).
--- ***************************************************************
+-- "mv_benchmark_tree" is used widely downstream to query the hierarchy.
+-- For roots, we pad their "order" with zeros (LPAD) and attach their identifier.
+-- For children, we recursively append the parent's sort_path.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_benchmark_tree CASCADE;
 CREATE MATERIALIZED VIEW mv_benchmark_tree AS
 WITH RECURSIVE tree AS (
@@ -52,9 +62,11 @@ WITH RECURSIVE tree AS (
 )
 SELECT * FROM tree;
 
--------------------------------------------------------------
--- STEP 2: Aggregate Immediate Children for Each Benchmark
--------------------------------------------------------------
+-- ********************************************************************************
+-- STEP 2: Aggregate immediate children for each Benchmark
+-- "mv_benchmark_children" is used in later steps when deriving
+-- whether a benchmark is a leaf and to list sub-benchmarks.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_benchmark_children CASCADE;
 CREATE MATERIALIZED VIEW mv_benchmark_children AS
 SELECT
@@ -64,9 +76,11 @@ FROM mv_benchmark_tree
 WHERE parent_id IS NOT NULL
 GROUP BY parent_id;
 
--------------------------------------------------------------
--- STEP 3: For Each Benchmark Type, Pick the Latest Instance (for leaves)
--------------------------------------------------------------
+-- ********************************************************************************
+-- STEP 3: For Each Benchmark Type, Pick the Latest Instance
+-- "mv_latest_benchmark_instance" is joined in final contexts to pick the newest 
+-- version for leaf benchmarks.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_latest_benchmark_instance CASCADE;
 CREATE MATERIALIZED VIEW mv_latest_benchmark_instance AS
 SELECT
@@ -75,10 +89,10 @@ SELECT
 FROM brainscore_benchmarkinstance bi
 GROUP BY bi.benchmark_type_id;
 
--------------------------------------------------------------
+-- ********************************************************************************
 -- STEP 4: Mark Each Benchmark as Leaf (has no children) or Parent
--- Here we determine if a given node in the tree is a leaf.
--------------------------------------------------------------
+-- "mv_leaf_status" is joined to distinguish leaf vs. parent.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_leaf_status CASCADE;
 CREATE MATERIALIZED VIEW mv_leaf_status AS
 SELECT
@@ -93,14 +107,17 @@ SELECT
   t.sort_path
 FROM mv_benchmark_tree t;
 
--------------------------------------------------------------
+-- ********************************************************************************
 -- STEP 5: Final Benchmark Context
--- Join the tree, leaf-status, latest instance data, and children.
+-- Join the tree, leaf-status, latest instance data, children, and all associated
+-- benchmark metadata. Benchmark can be described by the associated stimuli, data,
+-- metric, and ceiling metadata.
 -- For leaves we use the latest instance version; for abstract parent nodes, version = 0.
--- Also, overall_order is computed by ordering on our DFS sort_path.
+-- Overall_order is computed by ordering on our DFS sort_path.
 -- The descendant count is computed as the number of leaf nodes in the subtree
 -- (minus 1 for a leaf itself).
--------------------------------------------------------------
+-- This is used downstream for final scoring/aggregation MVs, etc.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_final_benchmark_context CASCADE;
 CREATE MATERIALIZED VIEW mv_final_benchmark_context AS
 SELECT
@@ -147,7 +164,7 @@ SELECT
   br.url AS benchmark_url,
   (br.author || ' et al., ' || br.year) AS benchmark_reference_identifier,
   br.bibtex AS benchmark_bibtex,
-  -- Count descendant leaves: count leaves in the subtree (using the DFS sort_path) minus one if current is a leaf.
+  -- Count descendant leaves: count leaves in the subtree (using the sort_path) minus one if current is a leaf.
   (
     SELECT COUNT(*)
     FROM mv_leaf_status ls2
@@ -176,9 +193,7 @@ SELECT
           t.identifier
   END AS short_name,
   bi.id AS benchmark_id,
-------------------------------------------------------------------------------
--- NEW: JSONB columns for data_meta, metric_meta, stimuli_meta
-------------------------------------------------------------------------------
+-- JSONB columns for data_meta, metric_meta, stimuli_meta
 jsonb_build_object(
     'benchmark_type', bdm.benchmark_type,
     'task', bdm.task,
@@ -231,17 +246,17 @@ LEFT JOIN brainscore_benchmark_stimuli_meta bsm
 
 
 
--- ***************************************************************
+-- ********************************************************************************
 --
---  _get_models()
+--  GATHER MODEL CONTEXT
 --
--- ***************************************************************
+-- ********************************************************************************
 
-------------------------------------------------------------
--- STEP A: Model Metadata MV (mv_model_data)
--- This view selects the public model rows
--- and joins in reference, submission, and user info.
-------------------------------------------------------------
+-- ********************************************************************************
+-- STEP A: Model Metadata (mv_model_data)
+-- Captures model rows + reference + submission + user info
+-- to be referenced later in final model score contexts.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_data CASCADE;
 CREATE MATERIALIZED VIEW mv_model_data AS
 SELECT
@@ -262,12 +277,13 @@ FROM brainscore_model m
 LEFT JOIN brainscore_reference r ON m.reference_id = r.id
 LEFT JOIN brainscore_submission s ON m.submission_id = s.id;
 
-
-------------------------------------------------------------
--- STEP B: Base Scores for Leaf Benchmarks (mv_base_scores)
--- Modify to include all combinations of models and benchmarks,
--- including missing scores as NULLs.
-------------------------------------------------------------
+-- ********************************************************************************
+-- STEP B.0: Base Scores for Leaf Benchmarks (mv_base_scores)
+-- For each model and each leaf benchmark instance, pick the "best" score if 
+-- multiple exist, preferring non-null & highest. This shouldn't be the case but 
+-- somehow certain model-benchmark scores have duplicates (NaN and then a valid score).
+-- IMPORTANT: This is the foundation for aggregated scoring.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_base_scores CASCADE;
 CREATE MATERIALIZED VIEW mv_base_scores AS
 WITH s_ranked AS (
@@ -318,7 +334,12 @@ LEFT JOIN s_ranked s
   AND s.rn = 1;
 
 
--- Separate view where score_ceiled is fixed for engineering benchmarks
+-- ********************************************************************************
+-- STEP B.1: "mv_base_scores_fixed_engineering"
+-- This view modifies 'score_ceiled' for engineering-type benchmarks to remain 
+-- the raw score for engineering tasks. Used heavily in final aggregation steps
+-- to treat engineering benchmarks differently.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_base_scores_fixed_engineering CASCADE;
 CREATE MATERIALIZED VIEW mv_base_scores_fixed_engineering AS
 SELECT
@@ -342,21 +363,14 @@ JOIN mv_final_benchmark_context fbt
   ON bs.benchmark_type_id = fbt.benchmark_type_id;
 
 
-------------------------------------------------------------
--- STEP C: Aggregate Scores
-------------------------------------------------------------
-DROP MATERIALIZED VIEW IF EXISTS mv_direct_children CASCADE;
-CREATE MATERIALIZED VIEW mv_direct_children AS
-SELECT
-  parent_id AS parent_identifier,
-  jsonb_array_elements_text(children) AS child_identifier
-FROM mv_benchmark_children;
-
-DROP MATERIALIZED VIEW IF EXISTS mv_all_models CASCADE;
-CREATE MATERIALIZED VIEW mv_all_models AS
-SELECT DISTINCT model_id
-FROM mv_base_scores_fixed_engineering;
-
+-- ********************************************************************************
+-- STEP C: Aggregate Scores for all Benchmarks
+-- These aggregations steps create "final_agg_scores", a table (not MV).
+-- "populate_final_agg_scores()" calculates leaf and parent-level scores.
+-- "fix_parent_scores()" further corrects parent scores if children are all NaN/NULL.
+-- ********************************************************************************
+-- "final_agg_scores" is a permanent table storing hierarchical aggregation.
+-- A table was necessary because functions cannot be used on MVs
 DROP TABLE IF EXISTS final_agg_scores CASCADE;
 CREATE TABLE final_agg_scores (
   score_id          integer,
@@ -373,21 +387,22 @@ CREATE TABLE final_agg_scores (
   is_leaf           boolean
 );
 
-
-
+-- This function populates "final_agg_scores" by first inserting
+-- all leaf scores, then iteratively rolling them up to parents
+-- from the bottom-up. Called during the main refresh function.
 DROP FUNCTION IF EXISTS populate_final_agg_scores();
 CREATE OR REPLACE FUNCTION populate_final_agg_scores() RETURNS void AS $$
 DECLARE
   d integer;
   max_depth integer;
 BEGIN
-  -- Clear the table first.
+  -- Clear the table first
   TRUNCATE final_agg_scores;
 
   -- Get max_depth, handle NULL case
   SELECT COALESCE(MAX(depth), 0) INTO max_depth FROM mv_benchmark_tree;
 
-  -- Only proceed if we have data
+  -- Only proceed if we have data (should always be true)
   IF max_depth > 0 THEN
     -- Insert leaf scores.
     INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
@@ -403,14 +418,14 @@ BEGIN
       t.root_parent,
       bs.error,
       bs.comment,
-      TRUE    -- is_leaf= true
+      TRUE    -- sets is_leaf= true
     FROM mv_benchmark_tree t
     JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
     JOIN mv_base_scores_fixed_engineering bs ON bs.benchmark_type_id = t.identifier
     WHERE ls.is_leaf = TRUE
     AND t.visible = TRUE;
 
-    -- Loop from max_depth-1 down to 0.
+    -- Loop from max_depth-1 down to 0 (i.e., roll up scores to compute parents)
     FOR d IN REVERSE max_depth-1 .. 0 LOOP
       INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, is_leaf)
       SELECT
@@ -442,7 +457,7 @@ BEGIN
 
         p.depth,
         p.sort_path,
-        FALSE -- is_leaf = false
+        FALSE -- sets parent nodes to is_leaf = false
       FROM mv_benchmark_tree p
       JOIN mv_benchmark_children bc ON p.identifier = bc.parent_id
       -- For each parent, join to its direct children's scores.
@@ -468,10 +483,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- "fix_parent_scores()" adjusts parent nodes if child scores
+-- are all NaN or missing.
+-- This function was necessary as a workaround for parents being set
+-- as 0.000 during the populate_final_agg_scores() step.
+-- Called after "populate_final_agg_scores()".
 DROP FUNCTION IF EXISTS fix_parent_scores();
 CREATE OR REPLACE FUNCTION fix_parent_scores() RETURNS void AS $$
 BEGIN
-  -- Drop any existing intermediate table.
+  -- Drop existing intermediate table. 
+  -- SUGGESTION:Could use truncate instead like in populate_final_agg_scores()
+  -- Just need to create tables appropriately
   DROP TABLE IF EXISTS intermediate_parent_stats;
 
   -- Create an intermediate table of parent statistics.
@@ -497,6 +519,10 @@ BEGIN
   SELECT * FROM parent_stats;
 
   -- Use the intermediate stats to update parent's score_ceiled.
+  -- Set as Null or NaN appropriately for different use cases.
+  -- If all children are NULL, set parent to NULL.
+  -- If all children are NaN, set parent to NaN.
+  -- If some children are NULL and others are NaN, set parent to NaN.
   UPDATE final_agg_scores p
   SET score_ceiled = CASE
       WHEN ips.count_numeric = 0 AND ips.count_nan = 0 THEN NULL
@@ -513,12 +539,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---SELECT populate_final_agg_scores();
---SELECT fix_parent_scores();
+-- ********************************************************************************
+-- STEP D: Add benchmark metadata to aggregated scores (mv_model_scores)
+-- "mv_model_scores" is the immediate post-aggregation layer
+-- that references the fully aggregated "final_agg_scores" table.
+-- It joins final context info and basic model info.
 
-------------------------------------------------------------
--- STEP D: Add metadata to aggregated scores
-------------------------------------------------------------
+-- SUGGESTION: It is unclear at the time of writing this how much of the 
+-- benchmark metadata needs to be embedded here vs in the mv_final_benchmark_context MV. 
+-- Currently, excludes post-metadata-tagging-system metadata. 
+--Tbh, it should probably be included.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_scores CASCADE;
 CREATE MATERIALIZED VIEW mv_model_scores AS
 SELECT
@@ -573,9 +604,13 @@ LEFT JOIN brainscore_submission s
 
 
 
-------------------------------------------------------------
--- STEP E: Compute min/max per benchmark (for coloring)
-------------------------------------------------------------
+-- ********************************************************************************
+-- STEP E: Compute Min/Max per Benchmark and generate color scales
+-- Used by "mv_model_scores_enriched" to determine color scaling.
+-- SUGGESTION: This view is currently a Django Model. If not needed for re-computing
+-- color scaling for leaderboard views, it should be removed (from the Django Model)
+-- ********************************************************************************
+-- Compute min/max per benchmark (mv_benchmark_minmax)
 DROP MATERIALIZED VIEW IF EXISTS mv_benchmark_minmax CASCADE;
 CREATE MATERIALIZED VIEW mv_benchmark_minmax AS
 
@@ -650,7 +685,9 @@ LEFT JOIN
 CROSS JOIN
     constants;
 
-
+-- Helper function for coloring cells based on normalized score.
+-- Referenced in "mv_model_scores_enriched".
+-- Renders a gradient from red-to-green, or gray if engineering.
 CREATE OR REPLACE FUNCTION representative_color_sql_precomputed(
     value FLOAT,
     min_value FLOAT,
@@ -742,17 +779,18 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
 
-
-
-
-
-------------------------------------------------------------
--- STEP F: Add min/max to mv_model_scores
-------------------------------------------------------------
+-- ********************************************************************************
+-- STEP F: "mv_model_scores_enriched"
+-- This merges "mv_model_scores" with "mv_benchmark_minmax" to
+-- provide coloring, min/max, and computed aggregation score.
+-- This materialized view is the closest thing to the CSV download however
+-- with much more metadata.
+-- Used by "mv_model_scores_json" for final JSON assembly.
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_scores_enriched CASCADE;
 CREATE MATERIALIZED VIEW mv_model_scores_enriched AS
 WITH base AS (
-  SELECT --DISTINCT ON (ms.benchmark_identifier, ms.model_id)
+  SELECT
     ms.*,
     bsfe.score_raw AS bs_score_raw,
     bsfe.score_ceiled AS bs_score_ceiled,
@@ -768,6 +806,8 @@ WITH base AS (
    AND bsfe.benchmark_id = ms.benchmark_id
 ),
 -- Compute median and best score per benchmark group using only valid numbers.
+-- SUGGESTION: This is a bit hacky. Median and mean are not producing identical results
+-- for the model card benchmark tree table. Consider revaluating this step.
 score_stats AS (
   SELECT DISTINCT ON (sub.bi)
     sub.bi,
@@ -790,6 +830,9 @@ score_stats AS (
   GROUP BY sub.bi, sub.ver
 ),
 -- Compute the per-benchmark ranking using row_number(), treating NaN as NULL so they rank last.
+-- This is used for model card benchmark tree when providing individual ranks for benchmark.
+-- SUGGESTION: Not really a suggestion but this works well. When modifying the above step, 
+-- consider that this step may not need modification.
 ranked AS (
   SELECT
     b.benchmark_identifier AS bi,
@@ -805,7 +848,7 @@ ranked AS (
     ) AS benchmark_rank
   FROM base b
 )
-SELECT --DISTINCT ON (b.benchmark_identifier, b.model_id)
+SELECT 
   b.benchmark_id,
   b.benchmark_id_version,
   b.benchmark_identifier,
@@ -873,10 +916,13 @@ LEFT JOIN ranked r
 
 
 
-
-------------------------------------------------------------
--- STEP G: Assemble json in _get_models() return
-------------------------------------------------------------
+-- ********************************************************************************
+-- STEP G: Assemble JSON in _get_models()-like return.
+-- _get_models() was the original function that was used in Django.
+-- "mv_model_scores_json" compiles everything for each model into a JSON object,
+-- used as the final scoreboard output. Specifically, each model will have a JSON
+-- object with ALL scores for ALL benchmarks, alongside all metadata will provided above
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_scores_json CASCADE;
 CREATE MATERIALIZED VIEW mv_model_scores_json AS
 WITH score_with_value AS (
@@ -900,8 +946,14 @@ WITH score_with_value AS (
           AND b.model_id     = ms.model_id
     LEFT JOIN brainscore_benchmarkmeta bm
            ON bm.id = ms.meta_id
+    -- SUGGESTION: This isn't necessary however is a catch if we have overlapping identifiers between domains.
     WHERE ms.benchmark_domain = ms.model_domain
 ),
+-- This determines the JSON structure for how scoring is organized for each model.
+-- Was used to replicate ScoreDisplay namedTuple that was originally used but provides
+-- much more metadata.
+-- SUGGESTION: Certain fields could be renamed for clarity. This field names were used
+-- to minimize the changes to the Django Template Logic.
 score_json AS (
     SELECT
         model_id,
@@ -960,15 +1012,16 @@ FROM score_json;
 
 
 
-
-
-------------------------------------------------------------
+-- ********************************************************************************
 -- STEP H: Join per-model score JSON with model metadata
-------------------------------------------------------------
+-- "mv_final_model_context" is the final state used by the leaderboard/card views 
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_final_model_context CASCADE;
 CREATE MATERIALIZED VIEW mv_final_model_context AS
 WITH
-  -- Existing CTEs remain unchanged
+  -- SUGGESTION: This is a bit of a mess. Consider refactoring.
+  -- The CTEs for the model_meta and submission_meta do not provide
+  -- utility vs normal joins
   model_meta AS (
     SELECT
       m.id,
@@ -991,6 +1044,11 @@ WITH
       s.jenkins_id
     FROM brainscore_submission s
   ),
+  -- Ranking models based on "average_<domain>" benchmarks if they are public.
+  -- SUGGESTION:This is currently not used in the Django index.py as private leaderboards
+  -- necessitate re-ranking. If re-ranking is not needed, this would have
+  -- sped up the leaderboard view by a couple hundred milliseconds. Consider still keeping
+  -- this to quickly see top models per domain from within the database.
   model_ranks AS (
       SELECT
         ms.model_id,
@@ -1020,7 +1078,12 @@ WITH
     FROM brainscore_reference r
   ),
 
-  -- New CTEs for layers extraction and processing
+  -- Hacky CTEs for layers extraction, processing and storing into JSONB.
+  -- Necessary because layer information is stored in a piece-wise manner in
+  -- the brainscore_score.comment field. Could be cleaned up.
+  -- SUGGESTION: This orders the layers in alphabetical order. In Django, we
+  -- reorder the layers based on V1>V2>V4>IT. Consider adding it to this step
+  -- and removing it from Django.
   layer_comments AS (
     SELECT
       ms.model_id,
@@ -1165,7 +1228,9 @@ LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id;
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 
-
+-- "refresh_all_materialized_views()" orchestrates all creation/refresh
+-- of the hierarchy and scoring MVs, plus calls aggregation functions.
+-- Called at the end to ensure everything is up-to-date.
 CREATE OR REPLACE FUNCTION refresh_all_materialized_views() RETURNS void AS $$
 BEGIN
   -- Refresh materialized views in the correct order
@@ -1180,8 +1245,6 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_model_data;
     REFRESH MATERIALIZED VIEW mv_base_scores;
     REFRESH MATERIALIZED VIEW mv_base_scores_fixed_engineering;
-    REFRESH MATERIALIZED VIEW mv_direct_children;
-    REFRESH MATERIALIZED VIEW mv_all_models;
 
     -- Only try to populate if we have data
     IF EXISTS (SELECT 1 FROM mv_benchmark_tree LIMIT 1) THEN
