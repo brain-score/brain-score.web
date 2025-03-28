@@ -41,6 +41,15 @@
                 Not available
             {% endif %}
         </div>
+
+        <div class="card-content">
+            {% if benchmark.inter_subject_ceiling %}
+            <p class="subtitle is-5">
+                Inter-subject ceiling
+            </p>
+                <span class="has-text-weight-bold">{{ benchmark.inter_subject_ceiling|floatformat:2 }}</span>.
+            {% endif %}
+        </div>
     </div>
 
     <div class="box">
