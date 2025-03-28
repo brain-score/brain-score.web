@@ -494,17 +494,17 @@ DECLARE
   max_depth INT;
   current_depth INT;
 BEGIN
-  -- SUGGESTION: Could use truncate instead like in populate_final_agg_scores()
-  -- Just need to create tables appropriately
 
   /*
     We first find the maximum depth in final_agg_scores.
-    Then we iterate from that maximum depth down to 1.
+    Then we iterate from that maximum depth up to 1.
     In each iteration, we build an "intermediate_parent_stats" table
     for the parent rows at depth = current_depth - 1 based on child rows
     at depth = current_depth. Then we update the parent scores for that level.
     This way, we bubble up the correct scores one level at a time
     until we reach the root(s).
+    SUGGESTION: It is likely that we can combine this function with populate_final_agg_scores()
+    to reduce the number of steps.
   */
   SELECT MAX(depth) INTO max_depth
   FROM final_agg_scores;
@@ -513,8 +513,9 @@ BEGIN
 
     -- Drop existing intermediate table.
     DROP TABLE IF EXISTS intermediate_parent_stats;
-
     -- Create an intermediate table of parent statistics.
+    -- SUGGESTION: Could use truncate instead like in populate_final_agg_scores()
+    -- Just need to create tables appropriately above
     CREATE TABLE intermediate_parent_stats AS
     WITH parent_stats AS (
       SELECT
@@ -529,7 +530,7 @@ BEGIN
       FROM final_agg_scores p
       JOIN final_agg_scores c
         ON c.model_id = p.model_id
-        -- Compare exactly one level down for each pass:
+        -- Compare exactly one level up for each pass:
         AND c.depth = current_depth
         AND p.depth = current_depth - 1
         AND TRIM(c.sort_path) LIKE TRIM(p.sort_path) || '-%'
@@ -572,7 +573,7 @@ $$ LANGUAGE plpgsql;
 -- SUGGESTION: It is unclear at the time of writing this how much of the
 -- benchmark metadata needs to be embedded here vs in the mv_final_benchmark_context MV.
 -- Currently, excludes post-metadata-tagging-system metadata.
---Tbh, it should probably be included.
+-- Tbh, it should probably be included.
 -- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_model_scores CASCADE;
 CREATE MATERIALIZED VIEW mv_model_scores AS
@@ -712,6 +713,7 @@ CROSS JOIN
 -- Helper function for coloring cells based on normalized score.
 -- Referenced in "mv_model_scores_enriched".
 -- Renders a gradient from red-to-green, or gray if engineering.
+-- Attempts to replicate the behavior of the original Django function.
 CREATE OR REPLACE FUNCTION representative_color_sql_precomputed(
     value FLOAT,
     min_value FLOAT,
@@ -807,7 +809,7 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- STEP F: "mv_model_scores_enriched"
 -- This merges "mv_model_scores" with "mv_benchmark_minmax" to
 -- provide coloring, min/max, and computed aggregation score.
--- This materialized view is the closest thing to the CSV download however
+-- This materialized view is the closest thing to the CSV download format however
 -- with much more metadata.
 -- Used by "mv_model_scores_json" for final JSON assembly.
 -- ********************************************************************************
@@ -830,8 +832,6 @@ WITH base AS (
    AND bsfe.benchmark_id = ms.benchmark_id
 ),
 -- Compute median and best score per benchmark group using only valid numbers.
--- SUGGESTION: This is a bit hacky. Median and mean are not producing identical results
--- for the model card benchmark tree table. Consider revaluating this step.
 score_stats AS (
   SELECT DISTINCT ON (sub.bi)
     sub.bi,
@@ -845,9 +845,9 @@ score_stats AS (
       b.benchmark_identifier AS bi,
       b.version AS ver,
       b.computed_score,
-      -- SUGGESTION: This part in particular might be producing discrepancies in the median score
-      -- because nan and nulls may be handled differently from legancy approach.
-      -- This is more noticable in engineering benchmarks due to high failure rate.
+      -- SUGGESTION: The part below in particular might be producing discrepancies in the median score
+      -- because nan and nulls are handled differently from legancy approach.
+      -- This is more noticable in engineering benchmarks due to high failure rate (i.e. many NaN scores)
       CASE
         WHEN b.computed_score::text NOT ILIKE 'nan' THEN b.computed_score
         ELSE NULL
@@ -861,7 +861,7 @@ score_stats AS (
 -- Compute the per-benchmark ranking using row_number(), treating NaN as NULL so they rank last.
 -- This is used for model card benchmark tree when providing individual ranks for benchmark.
 -- SUGGESTION: This doesn't really work. Should be refactored entirely. Would save around 1.5 seconds
--- when loading the model card page
+-- when loading the model card page if can be successfully done in database.
 ranked AS (
   SELECT
     b.benchmark_identifier AS bi,
@@ -979,9 +979,9 @@ WITH score_with_value AS (
     WHERE ms.benchmark_domain = ms.model_domain
 ),
 -- This determines the JSON structure for how scoring is organized for each model.
--- Was used to replicate ScoreDisplay namedTuple that was originally used but provides
+-- Was used to replicate ScoreDisplay namedTuple that was originally used by _get_context but provides
 -- much more metadata.
--- SUGGESTION: Certain fields could be renamed for clarity. This field names were used
+-- SUGGESTION: Certain fields could be renamed for clarity. The field names were used
 -- to minimize the changes to the Django Template Logic.
 score_json AS (
     SELECT
@@ -1051,7 +1051,7 @@ DROP MATERIALIZED VIEW IF EXISTS mv_final_model_context CASCADE;
 CREATE MATERIALIZED VIEW mv_final_model_context AS
 WITH
   -- SUGGESTION: This is a bit of a mess. Consider refactoring.
-  -- The CTEs for the model_meta and submission_meta do not provide
+  -- These CTEs for the model_meta and submission_meta do not provide
   -- utility vs normal joins
   model_meta AS (
     SELECT
@@ -1173,7 +1173,7 @@ WITH
   region_order AS (
     SELECT
       identifier AS region,
-      "order" AS region_order  -- "order" is a reserved keyword, so use quotes
+      "order" AS region_order  -- "order" is a reserved SQL keyword, so use quotes to specify it is a column name
     FROM brainscore_benchmarktype
   ),
   ordered_layers AS (
