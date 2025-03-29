@@ -238,11 +238,11 @@ LEFT JOIN mv_benchmark_children bc
 LEFT JOIN brainscore_reference br
   ON t.reference_id = br.id
 LEFT JOIN brainscore_benchmark_data_meta bdm
-  ON bdm.benchmark_type = t.identifier
+  ON bdm.id = bi.data_meta_id
 LEFT JOIN brainscore_benchmark_metric_meta bmm
-  ON bmm.type = t.identifier
+  ON bmm.id = bi.metric_meta_id
 LEFT JOIN brainscore_benchmark_stimuli_meta bsm
-  ON bsm.datatype = t.identifier;
+  ON bsm.id = bi.stimuli_meta_id;
 
 
 
