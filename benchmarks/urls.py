@@ -66,6 +66,9 @@ non_domain_urls = [
     path('tutorials/benchmarks/create_benchmark',
          user.Tutorials.as_view(plugin="benchmarks", tutorial_type="create_benchmark"),
          name='benchmark-create-benchmark'),
+    # - use case tutorials
+    path('tutorials/use-cases/use-cases', user.Tutorials.as_view(tutorial_type="use-cases/use-cases"), name='use-case-tutorial'),
+
     # - brain model explanation
     path('brain_model', brain_model.view, name='brain-model'),
 
