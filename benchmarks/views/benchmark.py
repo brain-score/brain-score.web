@@ -5,7 +5,8 @@ from django.db.models import F
 from django.shortcuts import render
 
 from benchmarks.models import BenchmarkInstance, Score
-from benchmarks.views.index import represent, representative_color, reference_identifier
+from benchmarks.views.index import represent, reference_identifier
+from benchmarks.utils import representative_color
 
 _logger = logging.getLogger(__name__)
 

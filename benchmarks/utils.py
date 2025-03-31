@@ -7,14 +7,29 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Q
-from benchmarks.models import FinalBenchmarkContext
+from benchmarks.models import FinalBenchmarkContext, BenchmarkMinMax
 from tqdm import tqdm
-import json
 import numpy as np
+from colour import Color
+
 logger = logging.getLogger(__name__)
 
-# Cache utility functions and decorators
 
+'''
+Reference for previous color scheme
+Used for benchmark cards
+'''
+colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
+colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
+# scale colors: highlight differences at the top-end of the spectrum more than at the lower end
+a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
+colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
+colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
+color_suffix = '_color'
+color_None = '#e0e1e2'
+
+
+# Cache utility functions and decorators
 def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
     '''
     Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
@@ -414,6 +429,13 @@ def recompute_upstream_scores(model_benchmark_pairs):
     from itertools import groupby
     from operator import attrgetter
     
+     # Get min/max values for each benchmark type
+    minmax_values = {
+        mm.benchmark_identifier: (mm.min_score, mm.max_score)
+        for mm in BenchmarkMinMax.objects.all()
+    }
+
+
     # Sort by model_id and sort_path
     pairs.sort(key=lambda x: (x.model_id, x.sort_path))
     
@@ -498,11 +520,29 @@ def recompute_upstream_scores(model_benchmark_pairs):
                 parent.score_ceiled_raw = new_score
                 score_str = (
                     "" if new_score is None
-                    else "NaN" if isinstance(new_score, float) and np.isnan(new_score)
+                    else "X" if isinstance(new_score, float) and np.isnan(new_score)
                     else f".{int(new_score * 1000)}"
                 )
                 parent.score_ceiled = score_str
                 parent.score_ceiled_label = score_str
+
+                # Update color based on min/max values and benchmark type
+                if parent.benchmark_type_id in minmax_values and new_score is not None:
+                    try:
+                        min_val, max_val = minmax_values[parent.benchmark_type_id]
+                    except:
+                        min_val, max_val = 0, 1
+                    # Use gray colors for engineering benchmarks
+                    if 'engineering' in parent.sort_path:
+                        parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_gray)
+                    else:
+                        parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_redgreen)
+                else:
+                    # Use gray colors for engineering benchmarks even without min/max values
+                    if 'engineering' in parent.sort_path:
+                        parent.color = representative_color(new_score, colors=colors_gray)
+                    else:
+                        parent.color = representative_color(new_score, colors=colors_redgreen)
     
     return pairs
 
@@ -533,3 +573,36 @@ def print_structure(data, indent=0):
     else:
         print(f"{spacing}{data} ({type(data).__name__})")
 
+
+
+def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
+    if not isinstance(value, (int, float)):    
+        return f"background-color: {color_None}"
+    if np.isnan(value):
+        return f"background-color: {color_None}"
+    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+    step = int(100 * normalized_value)
+    try:
+        color = colors[step]
+    except IndexError:
+        color = colors[-1]
+    color = tuple(c * 255 for c in color.rgb)
+    fallback_color = tuple(round(c) for c in color)
+    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
+        if min_value is not None else (100 * value)
+    color += (normalized_alpha,)
+    return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
+
+ 
+def normalize_value(value, min_value, max_value):
+    normalized_value = (value - min_value) / (max_value - min_value)
+    return .7 * normalized_value  # scale down to avoid extremely green colors
+
+def normalize_alpha(value, min_value, max_value):
+    # intercept and slope equations are from solving `y = slope * x + intercept`
+    # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
+    slope = -.9 / (min_value - max_value)
+    intercept = .1 - slope * min_value
+    result = slope * value + intercept
+    return float(result)
+   

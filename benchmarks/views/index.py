@@ -21,20 +21,6 @@ _logger = logging.getLogger(__name__)
 BASE_DEPTH = 1
 ENGINEERING_ROOT = 'engineering'
 
-'''
-Reference for previous color scheme
-Used for benchmark cards
-'''
-colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
-colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
-# scale colors: highlight differences at the top-end of the spectrum more than at the lower end
-a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
-colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
-colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
-color_suffix = '_color'
-color_None = '#e0e1e2'
-
-
 #@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 # Explore caching entire leaderboard context without any filtering
 # which is then used downstream. Unclear if this has performance benefits.
@@ -406,36 +392,6 @@ def represent(value):
         return ""
     elif value == "NaN":
         return "X"
-    
-def normalize_value(value, min_value, max_value):
-    normalized_value = (value - min_value) / (max_value - min_value)
-    return .7 * normalized_value  # scale down to avoid extremely green colors
-
-def normalize_alpha(value, min_value, max_value):
-    # intercept and slope equations are from solving `y = slope * x + intercept`
-    # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
-    slope = -.9 / (min_value - max_value)
-    intercept = .1 - slope * min_value
-    result = slope * value + intercept
-    return float(result)
-
-def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    #if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
-    if not isinstance(value, (int, float)):    
-        return f"background-color: {color_None}"
-    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
-    step = int(100 * normalized_value)
-    try:
-        color = colors[step]
-    except IndexError:
-        color = colors[-1]
-    color = tuple(c * 255 for c in color.rgb)
-    fallback_color = tuple(round(c) for c in color)
-    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
-        if min_value is not None else (100 * value)
-    color += (normalized_alpha,)
-    return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
-
 
 def get_visibility(model, user):
     """
