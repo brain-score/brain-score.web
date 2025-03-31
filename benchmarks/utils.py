@@ -10,6 +10,7 @@ from django.db.models import Q
 from benchmarks.models import FinalBenchmarkContext
 from tqdm import tqdm
 import json
+import numpy as np
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
@@ -267,7 +268,6 @@ def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
         elif pattern['type'] == 'contains':
             kwargs = {f"{field}__contains": pattern['value']}
             exclusion_conditions |= Q(**kwargs)
-    print(f"The length of the queryset is {len(queryset)}")
     # Apply exclusions
     return queryset.exclude(exclusion_conditions)
 """
@@ -398,8 +398,113 @@ def rebuild_model_tree(model_benchmark_pairs):
         del model_data["scores_temp"]
 
     models = list(models_dict.values())
-    print(f"Successfully rebuilt {len(models)} models")
     return models
+
+
+def recompute_upstream_scores(model_benchmark_pairs):
+    """
+    Recomputes upstream (parent) benchmark scores after filtering.
+    Works with flattened model-benchmark pairs and maintains score computation rules.
+    Only updates score values in existing objects, preserving all other data.
+    """
+    pairs = list(model_benchmark_pairs)
+    if not pairs:
+        return pairs
+        
+    from itertools import groupby
+    from operator import attrgetter
+    
+    # Sort by model_id and sort_path
+    pairs.sort(key=lambda x: (x.model_id, x.sort_path))
+    
+    # Get unique model IDs for progress tracking
+    unique_models = list({pair.model_id for pair in pairs})
+    
+    for model_id in tqdm(unique_models, desc="Recomputing scores", unit="model"):
+        model_pairs = [p for p in pairs if p.model_id == model_id]
+        
+        # Create a mapping of sort_paths to their objects
+        path_to_score = {pair.sort_path: pair for pair in model_pairs}
+        
+        # Group paths by their level (number of segments)
+        paths_by_level = {}
+        for path in path_to_score.keys():
+            level = path.count('-')
+            if level not in paths_by_level:
+                paths_by_level[level] = []
+            paths_by_level[level].append(path)
+        
+        # Process from deepest level up
+        for level in sorted(paths_by_level.keys(), reverse=True):
+            if level == 0:  # Skip root level
+                continue
+            
+            # Process each path at this level
+            for path in paths_by_level[level]:
+                # Get parent path by removing last segment
+                parent_path = '-'.join(path.split('-')[:-2])
+                if not parent_path or parent_path not in path_to_score:
+                    continue
+                
+                # Find all siblings (direct children of the parent)
+                siblings = []
+                parent_prefix = parent_path + '-'
+                for sibling_path in paths_by_level[level]:
+                    if sibling_path.startswith(parent_prefix):
+                        siblings.append(path_to_score[sibling_path])
+                
+                if not siblings:
+                    continue
+                
+                # Get parent benchmark object
+                parent = path_to_score[parent_path]
+                
+                # Extract scores from siblings and convert to floats
+                sibling_scores = []
+                for s in siblings:
+                    try:
+                        if s.score_ceiled_raw and isinstance(s.score_ceiled_raw, str):
+                            # Convert string score to float, removing leading '.' if present
+                            score_str = s.score_ceiled_raw.lstrip('.')
+                            score = float(score_str)
+                            sibling_scores.append(score)
+                        elif isinstance(s.score_ceiled_raw, (int, float)):
+                            sibling_scores.append(float(s.score_ceiled_raw))
+                        else:
+                            sibling_scores.append(None)
+                    except (ValueError, TypeError):
+                        sibling_scores.append(None)
+                
+                # Apply score computation rules
+                if all(score is None for score in sibling_scores):
+                    new_score = None
+                elif any(isinstance(score, float) and np.isnan(score) for score in sibling_scores) and \
+                     all(score is None or (isinstance(score, float) and np.isnan(score)) for score in sibling_scores):
+                    new_score = float('nan')
+                else:
+                    # Get valid scores (not None and not NaN)
+                    valid_scores = [
+                        score for score in sibling_scores 
+                        if score is not None 
+                        and isinstance(score, float) 
+                        and not np.isnan(score)
+                    ]
+                    if valid_scores:
+                        new_score = sum(valid_scores) / len(siblings)
+                    else:
+                        new_score = None
+                
+                # Update score fields in parent
+                parent.score_ceiled_raw = new_score
+                score_str = (
+                    "" if new_score is None
+                    else "NaN" if isinstance(new_score, float) and np.isnan(new_score)
+                    else f".{int(new_score * 1000)}"
+                )
+                parent.score_ceiled = score_str
+                parent.score_ceiled_label = score_str
+    
+    return pairs
 
 
 def print_structure(data, indent=0):

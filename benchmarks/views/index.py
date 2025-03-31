@@ -14,7 +14,7 @@ import json
 import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference, FlattenedModelContext, BenchmarkMinMax
-from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns, rebuild_model_tree, print_structure
+from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns, rebuild_model_tree, print_structure, recompute_upstream_scores
 
 _logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
 
-    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['engineering_vision'], domain="vision"))
+    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['neural_vision'], domain="vision"))
 
     # Get the appropriate context based on user authentication
     start_time = time()
@@ -75,9 +75,8 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     if benchmark_filter:
         benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain, visible=True)).order_by('overall_order'))
         all_model_data = benchmark_filter(FlattenedModelContext.objects.filter(model_domain=domain, model_public=True))
-        print(f"The length of the benchmark_filtered queryset is {len(all_model_data)}")
-        models = rebuild_model_tree(all_model_data)
-        print_structure(models[0])
+        models = recompute_upstream_scores(all_model_data)
+        models = rebuild_model_tree(models)
     else:
         # If user is superuser, show all benchmarks, otherwise only show visible ones
         if user and user.is_superuser:
