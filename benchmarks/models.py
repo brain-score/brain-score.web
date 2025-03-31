@@ -332,6 +332,8 @@ class FinalBenchmarkContext(models.Model):
     benchmark_reference_identifier = models.CharField(max_length=255)
     benchmark_bibtex = models.TextField()
     depth = models.IntegerField()
+    sort_path = models.TextField()
+    is_leaf = models.BooleanField()
     number_of_all_children = models.IntegerField()
     overall_order = models.IntegerField()
     identifier = models.CharField(max_length=255)
@@ -392,3 +394,62 @@ class BenchmarkMinMax(models.Model):
     class Meta:
         managed = False
         db_table = 'mv_benchmark_minmax'
+
+class FlattenedModelContext(models.Model):
+    """
+    Django model for the 'mv_flattened_model_context' materialized view,
+    which holds one row per (model × benchmark).
+    Used for leaderboard views
+    """
+    id = models.BigIntegerField(primary_key=True)
+    model_id = models.IntegerField(blank=True, null=True)
+    model_name = models.TextField(blank=True, null=True)
+    model_domain = models.CharField(max_length=255, blank=True, null=True)
+    model_public = models.BooleanField(default=False)
+    submission_id = models.IntegerField(blank=True, null=True)
+    build_status = models.CharField(max_length=255, blank=True, null=True)
+    submission_timestamp = models.DateTimeField(blank=True, null=True)
+    jenkins_id = models.CharField(max_length=255, blank=True, null=True)
+    model_reference_identifier = models.IntegerField(blank=True, null=True)
+    model_author = models.TextField(blank=True, null=True)
+    model_year = models.TextField(blank=True, null=True)
+    model_url = models.TextField(blank=True, null=True)
+    model_bibtex = models.TextField(blank=True, null=True)
+    visual_degrees = models.FloatField(blank=True, null=True)
+    overall_rank = models.IntegerField(blank=True, null=True)
+    model_owner_info = JSONBField(blank=True, null=True)
+    submitter_info = JSONBField(blank=True, null=True)
+    competition = models.BooleanField(default=False)
+    model_meta = JSONBField(blank=True, null=True)
+    layers = JSONBField(blank=True, null=True)
+
+    benchmark_type_id = models.CharField(max_length=255, blank=True, null=True)
+    benchmark_identifier = models.CharField(max_length=255, blank=True, null=True)
+    benchmark_short_name = models.CharField(max_length=255, blank=True, null=True)
+    benchmark_parent = JSONBField(blank=True, null=True)
+    benchmark_version = models.IntegerField(blank=True, null=True)
+
+    score_raw = models.CharField(max_length=255, blank=True, null=True)
+    score_ceiled_raw = models.CharField(max_length=255, blank=True, null=True)
+    score_ceiled_label = models.CharField(max_length=255, blank=True, null=True)
+    error = models.CharField(max_length=255, blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    score_visual_degrees = models.CharField(max_length=255, blank=True, null=True)
+    color = models.CharField(max_length=255, blank=True, null=True)
+    median_score = models.CharField(max_length=255, blank=True, null=True)
+    best_score = models.CharField(max_length=255, blank=True, null=True)
+    benchmark_rank = models.CharField(max_length=255, blank=True, null=True)
+    is_complete = models.CharField(max_length=255, blank=True, null=True)
+
+    benchmark_data_meta = JSONBField(blank=True, null=True)
+    benchmark_metric_meta = JSONBField(blank=True, null=True)
+    benchmark_stimuli_meta = JSONBField(blank=True, null=True)
+
+    is_leaf = models.BooleanField(default=False)
+    depth = models.IntegerField(blank=True, null=True)
+    sort_path = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mv_flattened_model_context'
+

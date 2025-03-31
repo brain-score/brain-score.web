@@ -13,8 +13,8 @@ from django.views.decorators.cache import cache_page
 import json
 import numpy as np
 from time import time
-from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
-from ..utils import cache_get_context
+from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference, FlattenedModelContext, BenchmarkMinMax
+from ..utils import cache_get_context, get_benchmark_exclusion_list
 
 _logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def get_base_model_query(domain="vision"):
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
-    
+    get_benchmark_exclusion_list(["V1", "IT"],domain=domain)
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:

@@ -154,6 +154,8 @@ SELECT
   t.owner_id,
   t.root_parent,
   t.depth,
+  t.sort_path,
+  ls.is_leaf,
   -- Include the domain column from mv_benchmark_tree
   t.domain AS domain,
   -- Include the benchmark's own reference_id
@@ -886,6 +888,7 @@ SELECT
   b.score_ceiled,
   b.version,
   b.overall_order,
+  bt.sort_path,
   b.root_parent,
   b.parent,
   b.meta_id,
@@ -932,6 +935,8 @@ SELECT
   s.best_score,
   r.benchmark_rank
 FROM base b
+LEFT JOIN mv_benchmark_tree bt
+  ON bt.identifier = b.benchmark_identifier
 LEFT JOIN mv_benchmark_minmax mmx
   ON mmx.benchmark_identifier = b.benchmark_identifier
   AND mmx.benchmark_id_version = b.benchmark_identifier || '_v' || b.version
@@ -1248,6 +1253,109 @@ LEFT JOIN final_layers fl ON mm.id = fl.model_id
 LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id;
 
 
+DROP MATERIALIZED VIEW IF EXISTS mv_flattened_model_context CASCADE;
+CREATE MATERIALIZED VIEW mv_flattened_model_context AS
+WITH combined AS (
+  -- Start by pulling each model row from mv_final_model_context
+  -- together with the per-model 'scores' array from mv_model_scores_json.
+  SELECT
+    fmc.model_id,
+    fmc.name                 AS model_name,
+    fmc.domain               AS model_domain,
+    fmc.public               AS model_public,
+    fmc.submission_id,
+    fmc.build_status,
+    fmc.timestamp            AS submission_timestamp,
+    fmc.jenkins_id,
+    fmc.reference_identifier         AS model_reference_identifier,
+    fmc.author               AS model_author,
+    fmc.year                 AS model_year,
+    fmc.url                  AS model_url,
+    fmc.bibtex               AS model_bibtex,
+    fmc.visual_degrees,
+    fmc.rank                 AS overall_rank,
+    fmc."user"               AS model_owner_info,
+    fmc.submitter            AS submitter_info,
+    fmc.competition,
+    fmc.model_meta,
+    fmc.layers,  -- from the "final_layers" logic if present
+    -- 'scores' is a JSON array of benchmark‐score objects,
+    -- one per benchmark for this model.
+    s.scores
+  FROM mv_final_model_context fmc
+  LEFT JOIN mv_model_scores_json s
+         ON fmc.model_id = s.model_id
+)
+SELECT
+  row_number() OVER (ORDER BY combined.model_id,
+                                (each_score -> 'benchmark' ->> 'benchmark_type_id'),
+                                (each_score -> 'benchmark' ->> 'version')::int
+                     ) AS id,
+  -- Keep all model-level columns (one row per model so far)
+  combined.model_id,
+  combined.model_name,
+  combined.model_domain,
+  combined.model_public,
+  combined.submission_id,
+  combined.build_status,
+  combined.submission_timestamp,
+  combined.jenkins_id,
+  combined.model_reference_identifier,
+  combined.model_author,
+  combined.model_year,
+  combined.model_url,
+  combined.model_bibtex,
+  combined.visual_degrees,
+  combined.overall_rank,
+  combined.model_owner_info,
+  combined.submitter_info,
+  combined.competition,
+  combined.model_meta,
+  combined.layers,
+
+  -- Flatten out each benchmark entry within 'scores' by CROSS JOIN LATERAL
+  each_score -> 'benchmark' ->> 'benchmark_type_id' AS benchmark_type_id,
+  each_score -> 'benchmark' ->> 'identifier'        AS benchmark_identifier,
+  each_score -> 'benchmark' ->> 'short_name'        AS benchmark_short_name,
+  each_score -> 'benchmark' ->> 'parent'            AS benchmark_parent,
+  (each_score -> 'benchmark' ->> 'version')::int    AS benchmark_version,
+
+  -- Individual score fields and styling
+  each_score ->> 'score_raw'       AS score_raw,
+  each_score ->> 'score_ceiled_raw' AS score_ceiled_raw,
+  each_score ->> 'score_ceiled'    AS score_ceiled_label,
+  each_score ->> 'error'           AS error,
+  each_score ->> 'comment'         AS comment,
+  each_score ->> 'visual_degrees'  AS score_visual_degrees,
+  each_score ->> 'color'           AS color,
+  each_score ->> 'median'          AS median_score,
+  each_score ->> 'best'            AS best_score,
+  each_score ->> 'rank'            AS benchmark_rank,
+  each_score ->> 'is_complete'     AS is_complete,
+
+  -- Bring in the benchmark‐metadata columns (data, metric, stimuli)
+  fbc.benchmark_data_meta,
+  fbc.benchmark_metric_meta,
+  fbc.benchmark_stimuli_meta,
+
+  -- Bring in some useful information from mv_leaf_status
+  ls.is_leaf,
+  ls.depth,
+  ls.sort_path
+
+FROM combined
+-- Expand the model's "scores" array into multiple rows (one per benchmark)
+CROSS JOIN LATERAL jsonb_array_elements(combined.scores) each_score
+
+-- Join in full benchmark metadata if needed
+LEFT JOIN mv_final_benchmark_context fbc
+       ON fbc.benchmark_type_id = each_score -> 'benchmark' ->> 'benchmark_type_id'
+      AND fbc.version           = (each_score -> 'benchmark' ->> 'version')::int
+
+-- Join mv_leaf_status for useful benchmark tree traversal information
+LEFT JOIN mv_leaf_status ls
+         ON ls.benchmark_identifier = (each_score -> 'benchmark' ->> 'benchmark_type_id');
+;
 
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
@@ -1291,6 +1399,10 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_model_scores_enriched;
     REFRESH MATERIALIZED VIEW mv_model_scores_json;
     REFRESH MATERIALIZED VIEW mv_final_model_context;
+
+    -- Refresh Flattened Model Context for leaderboard views
+    RAISE NOTICE 'Flattening Model Context';
+    REFRESH MATERIALIZED VIEW mv_flattened_model_context;
 
     RAISE NOTICE 'Completed';
 END;

@@ -6,7 +6,8 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-
+from django.db.models import Q
+from benchmarks.models import FinalBenchmarkContext
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
@@ -202,3 +203,65 @@ def show_token(request):
     return JsonResponse({
         "token": settings.CACHE_REFRESH_TOKEN
     })
+
+
+"""
+Leaderboard Views Related Functions
+"""
+
+def get_benchmark_exclusion_list(identifiers, domain="vision"):
+    """
+    Get a list of benchmark identifiers that should be excluded from the leaderboard.
+    """
+    # Get all benchmark identifiers and sort paths
+    benchmark_paths = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).values_list('short_name', 'sort_path').distinct())
+    
+    # Generate exclusion patterns for each identifier
+    exclusion_patterns = []
+
+    for identifier, sort_path in benchmark_paths:
+        if identifier in identifiers:
+            exclusion_patterns.append({
+                'type': 'contains',
+                'field': 'sort_path',
+                'value': sort_path
+            })
+            
+    return exclusion_patterns
+
+def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
+    """
+    Apply exclusion patterns to any queryset.
+    
+    Args:
+        queryset: Any Django queryset
+        patterns: List of pattern dictionaries from get_benchmark_exclusion_patterns()
+        field_mapping: Optional dictionary mapping standard field names to model-specific ones
+                      e.g., {'sort_path': 'benchmark_sort_path'} for FlattenedModelContext
+        
+    Returns:
+        Filtered queryset with exclusions applied
+    """
+
+    if not patterns:
+        return queryset
+
+    # Use default field mapping if none provided
+    if field_mapping is None:
+        field_mapping = {}
+    
+    # Build exclusion conditions
+    for pattern in patterns:
+        # Get the field name for this model (or use default)
+        field = field_mapping.get(pattern['field'], pattern['field'])
+
+        # Build the query condition based on pattern type
+        if pattern['type'] == 'exact':
+            kwargs = {field: pattern['value']}
+            exclusion_conditions |= Q(**kwargs)
+        elif pattern['type'] == 'contains':
+            kwargs = {f"{field}__contains": pattern['value']}
+            exclusion_conditions |= Q(**kwargs)
+    
+    # Apply exclusions
+    return queryset.exclude(exclusion_conditions)
