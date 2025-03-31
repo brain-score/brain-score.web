@@ -8,6 +8,8 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Q
 from benchmarks.models import FinalBenchmarkContext
+from tqdm import tqdm
+import json
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
@@ -265,7 +267,7 @@ def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
         elif pattern['type'] == 'contains':
             kwargs = {f"{field}__contains": pattern['value']}
             exclusion_conditions |= Q(**kwargs)
-    
+    print(f"The length of the queryset is {len(queryset)}")
     # Apply exclusions
     return queryset.exclude(exclusion_conditions)
 """
@@ -273,6 +275,156 @@ domain = "vision"
 benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['V1', 'IT'], domain=domain))
 benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
 """
+def rebuild_model_tree(model_benchmark_pairs):
+    """
+    Rebuild the model structure from flattened model-benchmark pairs,
+    returning a list of dictionaries that match the FinalModelContext schema.
+    
+    Args:
+        model_benchmark_pairs: List of FlattenedModelContext objects
+        
+    Returns:
+        List of restructured model dictionaries.
+    """
+    models_dict = {}
+    all_benchmark_ids = set()
 
-def rebuild_model_tree():
-    return
+    # Count unique models (by model_id) for progress display
+    unique_models = set(item.model_id for item in model_benchmark_pairs)
+    total_models = len(unique_models)
+
+    # Process each pair and group by model_id
+    for item in tqdm(model_benchmark_pairs, desc=f"Rebuilding {total_models} models", unit="pairs"):
+        model_id = item.model_id
+
+        if model_id not in models_dict:
+            models_dict[model_id] = {
+                "id": model_id,
+                "model_id": model_id,  # integer
+                "name": item.model_name,
+                "reference_identifier": item.model_reference_identifier,
+                "url": item.model_url,
+                # For JSONB fields, keep them as dictionaries (or None if not provided)
+                "user": item.submitter_info if isinstance(item.submitter_info, dict) else None,
+                "user_id": item.submitter_info.get('id') if isinstance(item.submitter_info, dict) and 'id' in item.submitter_info else None,
+                "owner": item.model_owner_info if isinstance(item.model_owner_info, dict) else None,
+                "public": bool(item.model_public),
+                "competition": item.competition if item.competition else None,
+                "domain": item.model_domain,
+                # Ensure visual_degrees is an integer or None
+                "visual_degrees": int(item.visual_degrees) if item.visual_degrees is not None else None,
+                "layers": item.layers if item.layers else None,
+                # Overall rank is stored as an integer
+                "rank": int(item.overall_rank) if item.overall_rank is not None else 0,
+                # This will be populated below
+                "scores": None,
+                "build_status": item.build_status if item.build_status else "",
+                "submitter": item.submitter_info if isinstance(item.submitter_info, dict) else None,
+                "submission_id": item.submission_id if item.submission_id is not None else None,
+                "jenkins_id": item.jenkins_id if item.jenkins_id is not None else None,
+                "timestamp": item.submission_timestamp,  # assuming this is already a datetime object
+                "primary_model_id": None,  # To be set later if needed
+                "num_secondary_models": 0,
+                "model_meta": item.model_meta if item.model_meta else None,
+                # Temporary dictionary to accumulate scores by benchmark identifier
+                "scores_temp": {}
+            }
+
+        # Add the score for this benchmark if available
+        if item.benchmark_identifier:
+            all_benchmark_ids.add(item.benchmark_identifier)
+            
+            benchmark = {
+                "url": getattr(item, 'benchmark_url', None),
+                "meta": getattr(item, 'benchmark_meta', None),
+                "year": getattr(item, 'benchmark_year', None),
+                "depth": item.depth,
+                "author": getattr(item, 'benchmark_author', None),
+                "bibtex": getattr(item, 'benchmark_bibtex', None),
+                "parent": item.benchmark_parent,
+                "ceiling": getattr(item, 'benchmark_ceiling', "X"),
+                "meta_id": getattr(item, 'benchmark_meta_id', None),
+                "version": item.benchmark_version,
+                "children": getattr(item, 'benchmark_children', None),
+                "identifier": item.benchmark_identifier,
+                "short_name": item.benchmark_short_name,
+                "root_parent": getattr(item, 'benchmark_root_parent', "average_vision"),
+                "ceiling_error": getattr(item, 'benchmark_ceiling_error', None),
+                "overall_order": getattr(item, 'benchmark_overall_order', item.depth),
+                "benchmark_type_id": item.benchmark_type_id,
+                "reference_identifier": getattr(item, 'benchmark_reference_identifier', None),
+                "number_of_all_children": getattr(item, 'benchmark_number_of_all_children', 0)
+            }
+            
+            score = {
+                "best": item.best_score,
+                "rank": item.benchmark_rank,
+                "color": item.color,
+                "error": item.error,
+                "median": getattr(item, 'median_score', None),
+                "comment": getattr(item, 'comment', None),
+                "benchmark": benchmark,
+                "score_raw": item.score_raw,
+                # Use score_ceiled_label if available; otherwise, compute a fallback
+                "score_ceiled": item.score_ceiled_label if hasattr(item, 'score_ceiled_label') else (
+                    f".{int(item.score_ceiled_raw * 1000)}" if item.score_ceiled_raw is not None else ""
+                ),
+                "visual_degrees": item.visual_degrees,
+                "score_ceiled_raw": item.score_ceiled_raw,
+                "versioned_benchmark_identifier": f"{item.benchmark_identifier}",
+                "is_complete": 1 if item.is_complete == 'True' else 0,
+            }
+            
+            models_dict[model_id]["scores_temp"][item.benchmark_identifier] = score
+
+    # Determine canonical benchmark order from the FinalBenchmarkContext model
+    canonical_benchmarks = FinalBenchmarkContext.objects.filter(
+        identifier__in=list(all_benchmark_ids)
+    ).order_by('overall_order')
+    canonical_order = [b.identifier for b in canonical_benchmarks]
+
+    # Convert temporary scores dictionary into an ordered list for each model
+    for model_id, model_data in models_dict.items():
+        scores_list = []
+        # First add scores following the canonical order
+        for bench_id in canonical_order:
+            if bench_id in model_data["scores_temp"]:
+                scores_list.append(model_data["scores_temp"][bench_id])
+        # Then add any scores not in the canonical order
+        for bench_id, score in model_data["scores_temp"].items():
+            if bench_id not in canonical_order:
+                scores_list.append(score)
+        model_data["scores"] = scores_list
+        del model_data["scores_temp"]
+
+    models = list(models_dict.values())
+    print(f"Successfully rebuilt {len(models)} models")
+    return models
+
+
+def print_structure(data, indent=0):
+    spacing = ' ' * indent
+    if isinstance(data, dict):
+        for key, value in data.items():
+            print(f"{spacing}{key}: {type(value).__name__}")
+            # If the value is a dictionary, recurse into it
+            if isinstance(value, dict):
+                print_structure(value, indent + 2)
+            # If the value is a list, check its contents
+            elif isinstance(value, list):
+                if value:  # if list is not empty
+                    # Check the type of the first element
+                    first_type = type(value[0]).__name__
+                    print(f"{spacing}  [List of {first_type}]")
+                    # If the first element is a dictionary, you can optionally inspect each one
+                    if isinstance(value[0], dict):
+                        for i, item in enumerate(value):
+                            print(f"{spacing}    - Element {i}:")
+                            print_structure(item, indent + 6)
+    elif isinstance(data, list):
+        for i, item in enumerate(data):
+            print(f"{spacing}Element {i}:")
+            print_structure(item, indent + 2)
+    else:
+        print(f"{spacing}{data} ({type(data).__name__})")
+
