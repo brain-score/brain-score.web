@@ -14,7 +14,7 @@ import json
 import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference, FlattenedModelContext, BenchmarkMinMax
-from ..utils import cache_get_context, get_benchmark_exclusion_list
+from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns
 
 _logger = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ def get_base_model_query(domain="vision"):
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
-    get_benchmark_exclusion_list(["V1", "IT"],domain=domain)
+    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['V1', 'IT'], domain="vision"))
+
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
@@ -58,7 +59,7 @@ def view(request, domain: str):
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True)
+        leaderboard_context = get_context(domain=domain, show_public=True, benchmark_filter=benchmark_filter)
     end_time = time()
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    
@@ -71,7 +72,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # 1) QUERY MATERIALIZED VIEWS
     # ------------------------------------------------------------------ 
     if benchmark_filter:
-        benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
+        benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain, visible=True)).order_by('overall_order'))
     else:
         # If user is superuser, show all benchmarks, otherwise only show visible ones
         if user and user.is_superuser:
@@ -79,10 +80,10 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         else:
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
     
-    # Build model query based on user permissions
-    # Necessary to wrap query in function to allow caching of query results. 
-    # For now, it is disabled. Provided minimal performance gains.
-    all_model_data = get_base_model_query(domain)
+            # Build model query based on user permissions
+            # Necessary to wrap query in function to allow caching of query results. 
+            # For now, it is disabled. Provided minimal performance gains.
+            all_model_data = get_base_model_query(domain)
 
     if user is None:
         # Public view - only show public models

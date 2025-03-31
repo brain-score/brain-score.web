@@ -250,6 +250,9 @@ def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
     if field_mapping is None:
         field_mapping = {}
     
+    # Initialize exclusion_conditions as an empty Q object
+    exclusion_conditions = Q()
+
     # Build exclusion conditions
     for pattern in patterns:
         # Get the field name for this model (or use default)
@@ -265,3 +268,11 @@ def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
     
     # Apply exclusions
     return queryset.exclude(exclusion_conditions)
+"""
+domain = "vision"
+benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['V1', 'IT'], domain=domain))
+benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
+"""
+
+def rebuild_model_tree():
+    return
