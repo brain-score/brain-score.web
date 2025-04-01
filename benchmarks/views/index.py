@@ -37,7 +37,7 @@ def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
 
-    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['neural_vision'], domain="vision"))
+    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list([], domain="vision"))
 
     # Get the appropriate context based on user authentication
     start_time = time()

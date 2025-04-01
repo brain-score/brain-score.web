@@ -11,6 +11,7 @@ from benchmarks.models import FinalBenchmarkContext, BenchmarkMinMax
 from tqdm import tqdm
 import numpy as np
 from colour import Color
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -429,12 +430,14 @@ def recompute_upstream_scores(model_benchmark_pairs):
     from itertools import groupby
     from operator import attrgetter
     
-     # Get min/max values for each benchmark type
+    # Debug model ID - set to None to disable debug output
+    model_id_debug = 2330  # Replace with the model ID you want to debug
+    
+    # Get min/max values for each benchmark type
     minmax_values = {
         mm.benchmark_identifier: (mm.min_score, mm.max_score)
         for mm in BenchmarkMinMax.objects.all()
     }
-
 
     # Sort by model_id and sort_path
     pairs.sort(key=lambda x: (x.model_id, x.sort_path))
@@ -443,6 +446,12 @@ def recompute_upstream_scores(model_benchmark_pairs):
     unique_models = list({pair.model_id for pair in pairs})
     
     for model_id in tqdm(unique_models, desc="Recomputing scores", unit="model"):
+        if model_id_debug is not None and model_id != model_id_debug:
+            continue
+            
+        print(f"\n{'='*80}")
+        print(f"Processing model_id: {model_id}")
+        print(f"{'='*80}")
         model_pairs = [p for p in pairs if p.model_id == model_id]
         
         # Create a mapping of sort_paths to their objects
@@ -451,35 +460,63 @@ def recompute_upstream_scores(model_benchmark_pairs):
         # Group paths by their level (number of segments)
         paths_by_level = {}
         for path in path_to_score.keys():
-            level = path.count('-')
+            # Count segments based on the -ddddd- pattern
+            level = len(re.findall(r'-\d{5}-', path))
             if level not in paths_by_level:
                 paths_by_level[level] = []
             paths_by_level[level].append(path)
+            
+        print(f"\nFound {len(paths_by_level)} levels: {sorted(paths_by_level.keys(), reverse=True)}")
         
         # Process from deepest level up
         for level in sorted(paths_by_level.keys(), reverse=True):
             if level == 0:  # Skip root level
                 continue
+                
+            print(f"\n{'-'*40}")
+            print(f"Processing level {level}")
+            print(f"{'-'*40}")
             
             # Process each path at this level
             for path in paths_by_level[level]:
-                # Get parent path by removing last segment
-                parent_path = '-'.join(path.split('-')[:-2])
+                # Get parent path by finding the last occurrence of -ddddd- pattern
+                # and taking everything before it
+                match = list(re.finditer(r'-\d{5}-', path))
+                if not match or len(match) < 1:
+                    print(f"  Skipping path {path}: No valid parent path found")
+                    continue
+                    
+                last_separator = match[-1]
+                parent_path = path[:last_separator.start()]
+                
                 if not parent_path or parent_path not in path_to_score:
+                    print(f"  Skipping path {path}: No valid parent path found")
                     continue
                 
-                # Find all siblings (direct children of the parent)
+                # Find all direct children of this parent, regardless of their level
                 siblings = []
                 parent_prefix = parent_path + '-'
-                for sibling_path in paths_by_level[level]:
-                    if sibling_path.startswith(parent_prefix):
-                        siblings.append(path_to_score[sibling_path])
+                for all_path in path_to_score.keys():
+                    if all_path.startswith(parent_prefix):
+                        # Count number of -ddddd- patterns to determine if it's a direct child
+                        parent_segments = len(re.findall(r'-\d{5}-', parent_path))
+                        child_segments = len(re.findall(r'-\d{5}-', all_path))
+                        if child_segments == parent_segments + 1:  # Direct child has one more -ddddd- pattern
+                            siblings.append(path_to_score[all_path])
                 
                 if not siblings:
+                    print(f"  Skipping parent {parent_path}: No siblings found")
                     continue
                 
                 # Get parent benchmark object
                 parent = path_to_score[parent_path]
+                
+                # Debug print the parent and children
+                print(f"\n  Parent benchmark: {parent.benchmark_identifier}")
+                print(f"  Parent path: {parent_path}")
+                print("  Children benchmarks:")
+                for sib in siblings:
+                    print(f"    - {sib.benchmark_identifier}: score={sib.score_ceiled_raw}")
                 
                 # Extract scores from siblings and convert to floats
                 sibling_scores = []
@@ -497,12 +534,16 @@ def recompute_upstream_scores(model_benchmark_pairs):
                     except (ValueError, TypeError):
                         sibling_scores.append(None)
                 
+                print(f"  Raw sibling scores after conversion: {sibling_scores}")
+                
                 # Apply score computation rules
                 if all(score is None for score in sibling_scores):
                     new_score = None
+                    print("  Score computation: All child scores are None -> Parent score = None")
                 elif any(isinstance(score, float) and np.isnan(score) for score in sibling_scores) and \
                      all(score is None or (isinstance(score, float) and np.isnan(score)) for score in sibling_scores):
                     new_score = float('nan')
+                    print("  Score computation: At least one NaN and rest None -> Parent score = NaN")
                 else:
                     # Get valid scores (not None and not NaN)
                     valid_scores = [
@@ -515,8 +556,10 @@ def recompute_upstream_scores(model_benchmark_pairs):
                         new_score = sum(valid_scores) / len(siblings)
                     else:
                         new_score = None
+                    print(f"  Score computation: sum({valid_scores})/{len(siblings)} = {new_score}")
                 
                 # Update score fields in parent
+                old_score = parent.score_ceiled_raw
                 parent.score_ceiled_raw = new_score
                 score_str = (
                     "" if new_score is None
@@ -530,19 +573,27 @@ def recompute_upstream_scores(model_benchmark_pairs):
                 if parent.benchmark_type_id in minmax_values and new_score is not None:
                     try:
                         min_val, max_val = minmax_values[parent.benchmark_type_id]
+                        print(f"  Using min/max values: {min_val}, {max_val}")
                     except:
                         min_val, max_val = 0, 1
+                        print("  No min/max values found, using defaults: 0, 1")
                     # Use gray colors for engineering benchmarks
                     if 'engineering' in parent.sort_path:
+                        print("  Using gray color scheme for engineering benchmark")
                         parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_gray)
                     else:
+                        print("  Using red-green color scheme for non-engineering benchmark")
                         parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_redgreen)
                 else:
                     # Use gray colors for engineering benchmarks even without min/max values
                     if 'engineering' in parent.sort_path:
+                        print("  Using gray color scheme for engineering benchmark (no min/max)")
                         parent.color = representative_color(new_score, colors=colors_gray)
                     else:
+                        print("  Using red-green color scheme for non-engineering benchmark (no min/max)")
                         parent.color = representative_color(new_score, colors=colors_redgreen)
+                
+                print(f"  Updated {parent.benchmark_identifier}: {old_score} -> {new_score} (display: {score_str})")
     
     return pairs
 
