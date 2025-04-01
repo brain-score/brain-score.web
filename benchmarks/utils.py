@@ -13,6 +13,7 @@ import numpy as np
 from colour import Color
 import re
 from django.db import connection
+import fnmatch
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +233,26 @@ Leaderboard Views Related Functions
 def get_benchmark_exclusion_list(identifiers, domain="vision"):
     """
     Get a list of benchmark identifiers that should be excluded from the leaderboard.
+    
+    Args:
+        identifiers: List of benchmark identifiers or patterns to exclude.
+                    Can include wildcards (e.g., "Coggan*" will match any benchmark containing "Coggan")
+                    
+        domain: The domain to filter benchmarks by (default: "vision")
+        The function supports standard Unix shell-style wildcards:
+            - * matches any sequence of characters
+            - ? matches any single character
+            - [seq] matches any character in seq
+                - "[ABC]vision" matches "Avision", "Bvision", or "Cvision"
+                - "[a-z]" matches any lowercase letter
+            - [!seq] matches any character not in seq
+                - "[!ABC]vision" matches any benchmark containing "vision" except "Avision", "Bvision", or "Cvision"
+        For example:
+            - "Coggan*" matches "Coggan2021", "Coggan2022", etc.
+            - "*vision*" matches any benchmark containing "vision"
+            - "*202?" matches any benchmark ending with 2020-2029
+    Returns:
+        List of exclusion patterns to be used with apply_exclusion_patterns()
     """
     # Get all benchmark identifiers and sort paths
     benchmark_paths = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).values_list('short_name', 'sort_path').distinct())
@@ -240,7 +261,8 @@ def get_benchmark_exclusion_list(identifiers, domain="vision"):
     exclusion_patterns = []
 
     for identifier, sort_path in benchmark_paths:
-        if identifier in identifiers:
+        # Check if this benchmark matches any of the exclusion patterns
+        if any(fnmatch.fnmatch(identifier, pattern) for pattern in identifiers):
             exclusion_patterns.append({
                 'type': 'contains',
                 'field': 'sort_path',
