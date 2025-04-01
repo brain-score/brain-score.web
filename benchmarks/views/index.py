@@ -13,27 +13,13 @@ from django.views.decorators.cache import cache_page
 import json
 import numpy as np
 from time import time
-from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
-from ..utils import cache_get_context
+from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference, FlattenedModelContext, BenchmarkMinMax
+from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns, rebuild_model_tree, recompute_upstream_scores, update_benchmark_children_count
 
 _logger = logging.getLogger(__name__)
 
 BASE_DEPTH = 1
 ENGINEERING_ROOT = 'engineering'
-
-'''
-Reference for previous color scheme
-Used for benchmark cards
-'''
-colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
-colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
-# scale colors: highlight differences at the top-end of the spectrum more than at the lower end
-a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
-colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
-colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
-color_suffix = '_color'
-color_None = '#e0e1e2'
-
 
 #@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 # Explore caching entire leaderboard context without any filtering
@@ -50,7 +36,9 @@ def get_base_model_query(domain="vision"):
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
-    
+
+    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(["Coggan*", "engineering_vision"], domain="vision"))
+
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
@@ -58,7 +46,7 @@ def view(request, domain: str):
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True)
+        leaderboard_context = get_context(domain=domain, show_public=True)#, benchmark_filter=benchmark_filter)
     end_time = time()
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    
@@ -71,28 +59,32 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # 1) QUERY MATERIALIZED VIEWS
     # ------------------------------------------------------------------ 
     if benchmark_filter:
-        benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
+        benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain, visible=True)).order_by('overall_order'))
+        benchmarks = update_benchmark_children_count(benchmarks)
+        all_model_data = benchmark_filter(FlattenedModelContext.objects.filter(model_domain=domain, model_public=True))
+        models = recompute_upstream_scores(all_model_data)
+        models = rebuild_model_tree(models)
     else:
         # If user is superuser, show all benchmarks, otherwise only show visible ones
         if user and user.is_superuser:
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain).order_by('overall_order'))
         else:
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
-    
-    # Build model query based on user permissions
-    # Necessary to wrap query in function to allow caching of query results. 
-    # For now, it is disabled. Provided minimal performance gains.
-    all_model_data = get_base_model_query(domain)
 
-    if user is None:
-        # Public view - only show public models
-        models = all_model_data.filter(public=True)
-    elif user.is_superuser:
-        # Superuser sees everything (super user profile view)
-        models = all_model_data
-    else:
-        # Filter for user's models (user profile view)
-        models = all_model_data.filter(Q(user__id=user.id))
+        # Build model query based on user permissions
+        # Necessary to wrap query in function to allow caching of query results. 
+        # For now, it is disabled. Provided minimal performance gains.
+        all_model_data = get_base_model_query(domain)
+
+        if user is None:
+            # Public view - only show public models
+            models = all_model_data.filter(public=True)
+        elif user.is_superuser:
+            # Superuser sees everything (super user profile view)
+            models = all_model_data
+        else:
+            # Filter for user's models (user profile view)
+            models = all_model_data.filter(Q(user__id=user.id))
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)
@@ -227,69 +219,68 @@ def _recalculate_model_ranks(models, domain="vision"):
     # Create a list to store model IDs and their average scores
     model_scores = []
     models_without_scores = []
-    
+
     # Extract average_{domain} scores for each model
     for model in models:
-        if model.scores is not None:
-            # Find the average_{domain} score
+        scores = get_value(model, "scores")
+        if scores is not None:
             average_score = None
-            for score in model.scores:
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
-                if benchmark_id == f"average_{domain}":
+            for score in scores:
+                benchmark = get_value(score, "benchmark", {})
+                benchmark_type_id = get_value(benchmark, "benchmark_type_id")
+                if benchmark_type_id == f"average_{domain}":
                     # Try to get score_ceiled_raw first, then fall back to score_ceiled
-                    average_score = score.get("score_ceiled_raw", score.get("score_ceiled"))
+                    average_score = get_value(score, "score_ceiled_raw", get_value(score, "score_ceiled"))
                     # Convert string score to float if needed
                     if isinstance(average_score, str):
                         try:
                             average_score = float(average_score)
                         except ValueError:
-                            # Handle "X" or other non-numeric values
                             average_score = None
                     break
-            
-            # If we found a valid average score, add it to our list
+
             if average_score is not None and not np.isnan(average_score):
                 model_scores.append((model, average_score))
             else:
-                # Keep track of models without valid scores separately
                 models_without_scores.append(model)
-    
+        else:
+            models_without_scores.append(model)
+
     # Sort models by score in descending order (only those with valid scores)
     model_scores.sort(key=lambda x: x[1], reverse=True)
-    
+
     # Create a dictionary mapping model IDs to ranks using standard competition ranking
-    # (equal scores get equal ranks, next rank is skipped)
     rank_map = {}
     current_rank = 1
     previous_score = None
-    
+
     for i, (model, score) in enumerate(model_scores):
+        model_id = get_value(model, "model_id")
         if i == 0 or score != previous_score:
-            # New score, assign the current rank
-            rank_map[model.model_id] = current_rank
-            # Update for next iteration
+            rank_map[model_id] = current_rank
             current_rank = i + 2  # Skip next rank if this was a tie
         else:
-            # Same score as previous, assign the same rank
-            rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
-        
+            # Use the same rank as the previous model
+            prev_model = model_scores[i - 1][0]
+            prev_model_id = get_value(prev_model, "model_id")
+            rank_map[model_id] = rank_map[prev_model_id]
         previous_score = score
-    
+
     # Update ranks for each model with valid scores
     for model, _ in model_scores:
-        model.rank = rank_map[model.model_id]
-    
+        model_id = get_value(model, "model_id")
+        set_value(model, "rank", rank_map[model_id])
+
     # Assign a high rank to models without valid scores
     next_rank = len(model_scores) + 1
     for model in models_without_scores:
-        model.rank = next_rank
-    # Increment next rank to account for models without valid scores
+        set_value(model, "rank", next_rank)
     next_rank += 1
-    
+
     # Combine both lists and sort by rank
     all_models = [model for model, _ in model_scores] + models_without_scores
-    all_models.sort(key=lambda model: model.rank)
-    
+    all_models.sort(key=lambda model: get_value(model, "rank"))
+
     return all_models
 
 
@@ -322,16 +313,16 @@ def _build_model_data(benchmarks, models):
     for model in models:
         # Initialize both data structures for this model
         record = {
-            "model_name": model.name,
-            "layers": json.dumps(model.layers) if model.layers else ""  # Add layer map information to CSV download as a column
+            "model_name": get_value(model, "name"),
+            "layers": json.dumps(get_value(model, "layers")) if get_value(model, "layers") else ""  # Add layer map information to CSV download as a column
         }
         model_data = {
-            "model": model.name
+            "model": get_value(model, "name")
         }
         
         # Process all scores for this model
-        if model.scores is not None:
-            for score in model.scores:
+        if get_value(model, "scores") is not None:
+            for score in get_value(model, "scores"):
                 benchmark_id = score["benchmark"]["benchmark_type_id"]
                 versioned_benchmark_id = score["versioned_benchmark_identifier"]
                 # Add to scores dataframe if it's a relevant benchmark
@@ -382,6 +373,17 @@ def _collect_submittable_benchmarks(benchmarks, user):
     return benchmark_selection
 
 
+def get_value(item, key, default=None):
+    if isinstance(item, dict):
+        return item.get(key, default)
+    return getattr(item, key, default)
+
+def set_value(item, key, value):
+    if isinstance(item, dict):
+        item[key] = value
+    else:
+        setattr(item, key, value)
+
 # Preserving the original color scheme for now. No longer used as color is determined in database materialized view.
 # May need the following four functions for custom views.
 def represent(value):
@@ -391,36 +393,6 @@ def represent(value):
         return ""
     elif value == "NaN":
         return "X"
-    
-def normalize_value(value, min_value, max_value):
-    normalized_value = (value - min_value) / (max_value - min_value)
-    return .7 * normalized_value  # scale down to avoid extremely green colors
-
-def normalize_alpha(value, min_value, max_value):
-    # intercept and slope equations are from solving `y = slope * x + intercept`
-    # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
-    slope = -.9 / (min_value - max_value)
-    intercept = .1 - slope * min_value
-    result = slope * value + intercept
-    return float(result)
-
-def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    #if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
-    if not isinstance(value, (int, float)):    
-        return f"background-color: {color_None}"
-    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
-    step = int(100 * normalized_value)
-    try:
-        color = colors[step]
-    except IndexError:
-        color = colors[-1]
-    color = tuple(c * 255 for c in color.rgb)
-    fallback_color = tuple(round(c) for c in color)
-    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
-        if min_value is not None else (100 * value)
-    color += (normalized_alpha,)
-    return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
-
 
 def get_visibility(model, user):
     """
@@ -428,7 +400,7 @@ def get_visibility(model, user):
     Returns: 'private_owner', 'private_not_owner', or 'public'
     """
     # Handles private competition models:
-    if (not model.public) and (model.competition is not None):
+    if (not get_value(model, "public")) and (get_value(model, "competition") is not None):
         # Model is a private competition model, and user is logged in (or superuser)
         if (user is not None) and (user.is_superuser or 
                                   (isinstance(model.user, dict) and model.user.get('id') == user.id) or
@@ -512,11 +484,11 @@ def format_score(score):
 def display_model(model, user):
     visibility = get_visibility(model, user)
     if visibility == "private_owner":
-        return model.name
+        return get_value(model, "name")
     elif visibility == "private_not_owner":
-        return f"Model #{model.id}"
+        return f"Model #{get_value(model, 'id')}"
     else:
-        return model.name
+        return get_value(model, "name")
 
 
 # controls the way model submitter appears (name vs Anonymous Submitter) in table
