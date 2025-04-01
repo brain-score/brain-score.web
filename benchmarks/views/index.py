@@ -37,7 +37,7 @@ def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
 
-    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(["engineering_vision"], domain="vision"))
+    benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(["Coggan*", "engineering_vision"], domain="vision"))
 
     # Get the appropriate context based on user authentication
     start_time = time()
@@ -46,7 +46,7 @@ def view(request, domain: str):
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True, benchmark_filter=benchmark_filter)
+        leaderboard_context = get_context(domain=domain, show_public=True)#, benchmark_filter=benchmark_filter)
     end_time = time()
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    

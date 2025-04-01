@@ -190,7 +190,7 @@ def refresh_cache(request, domain="vision"):
 
 
 # Function for testing trigger via code
-def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:8000"):
+def trigger_recache(domain="vision", rebuild=True, base_url="https://brain-score.org"):
     """
     Programmatically trigger cache refresh.
     
@@ -309,11 +309,8 @@ def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
             exclusion_conditions |= Q(**kwargs)
     # Apply exclusions
     return queryset.exclude(exclusion_conditions)
-"""
-domain = "vision"
-benchmark_filter = lambda benchmarks: apply_exclusion_patterns(benchmarks, get_benchmark_exclusion_list(['V1', 'IT'], domain=domain))
-benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
-"""
+ 
+
 def rebuild_model_tree(model_benchmark_pairs):
     """
     Rebuild the model structure from flattened model-benchmark pairs,
@@ -446,26 +443,11 @@ def recompute_upstream_scores(model_benchmark_pairs):
     Works with flattened model-benchmark pairs and maintains score computation rules.
     Only updates score values in existing objects, preserving all other data.
     """
-    def debug_print(model_id, message, indent=0):
-        """Helper function for debug output
-        Args:
-            model_id: Current model being processed
-            message: Message to print
-            indent: Number of spaces to indent (default 0)
-        """
-        if model_id_debug is None or model_id == model_id_debug:
-            print(" " * indent + message)
-
     pairs = list(model_benchmark_pairs)
     if not pairs:
         return pairs
         
-    from itertools import groupby
-    from operator import attrgetter
     import re
-    
-    # Debug model ID - set to None to see output for all models
-    model_id_debug = 2330
     
     # Get min/max values for each benchmark type
     minmax_values = {
@@ -480,93 +462,49 @@ def recompute_upstream_scores(model_benchmark_pairs):
     unique_models = list({pair.model_id for pair in pairs})
     
     for model_id in tqdm(unique_models, desc="Recomputing scores", unit="model"):
-        debug_print(model_id, f"\n{'='*80}")
-        debug_print(model_id, f"Processing model_id: {model_id}")
-        debug_print(model_id, f"{'='*80}")
-        
         model_pairs = [p for p in pairs if p.model_id == model_id]
-        
-        # Create a mapping of sort_paths to their objects
         path_to_score = {pair.sort_path: pair for pair in model_pairs}
         
-        # Group paths by their level (number of segments)
-        paths_by_level = {}
+        # Group paths by their level and parent path
+        parents_by_level = {}
         for path in path_to_score.keys():
-            # Count segments based on the -ddddd- pattern
             level = len(re.findall(r'-\d{5}-', path))
-            if level not in paths_by_level:
-                paths_by_level[level] = []
-            paths_by_level[level].append(path)
-            
-        debug_print(model_id, f"\nFound {len(paths_by_level)} levels: {sorted(paths_by_level.keys(), reverse=True)}")
-        
-        # First, count all children for each path
-        path_children_count = {}
-        for path in path_to_score.keys():
-            # Initialize count for this path
-            if path not in path_children_count:
-                path_children_count[path] = 0
-                
-            # Count all descendants of this path
-            for other_path in path_to_score.keys():
-                if other_path.startswith(path + '-') and other_path != path:
-                    path_children_count[path] += 1
-        
-        # Process from deepest level up
-        for level in sorted(paths_by_level.keys(), reverse=True):
             if level == 0:  # Skip root level
                 continue
                 
-            debug_print(model_id, f"\n{'-'*40}")
-            debug_print(model_id, f"Processing level {level}")
-            debug_print(model_id, f"{'-'*40}")
-            
-            for path in paths_by_level[level]:
-                # Get parent path by finding the last occurrence of -ddddd- pattern
-                # and taking everything before it
-                match = list(re.finditer(r'-\d{5}-', path))
-                if not match or len(match) < 1:
-                    debug_print(model_id, f"  Skipping path {path}: No valid parent path found", indent=2)
-                    continue
-                    
-                last_separator = match[-1]
-                parent_path = path[:last_separator.start()]
+            # Get parent path
+            match = list(re.finditer(r'-\d{5}-', path))
+            if match:
+                parent_path = path[:match[-1].start()]
+                if parent_path in path_to_score:  # Only process if parent exists
+                    if level not in parents_by_level:
+                        parents_by_level[level] = set()
+                    parents_by_level[level].add(parent_path)
+        
+        # Process from deepest level up
+        for level in sorted(parents_by_level.keys(), reverse=True):
+            # Process each unique parent at this level
+            for parent_path in parents_by_level[level]:
+                parent = path_to_score[parent_path]
                 
-                if not parent_path or parent_path not in path_to_score:
-                    debug_print(model_id, f"  Skipping path {path}: No valid parent path found", indent=2)
-                    continue
-                
-                # Find all direct children of this parent, regardless of their level
+                # Find all direct children
                 siblings = []
                 parent_prefix = parent_path + '-'
-                for all_path in path_to_score.keys():
-                    if all_path.startswith(parent_prefix):
-                        # Count number of -ddddd- patterns to determine if it's a direct child
+                for child_path in path_to_score.keys():
+                    if child_path.startswith(parent_prefix):
                         parent_segments = len(re.findall(r'-\d{5}-', parent_path))
-                        child_segments = len(re.findall(r'-\d{5}-', all_path))
-                        if child_segments == parent_segments + 1:  # Direct child has one more -ddddd- pattern
-                            siblings.append(path_to_score[all_path])
+                        child_segments = len(re.findall(r'-\d{5}-', child_path))
+                        if child_segments == parent_segments + 1:
+                            siblings.append(path_to_score[child_path])
                 
                 if not siblings:
-                    debug_print(model_id, f"  Skipping parent {parent_path}: No siblings found", indent=2)
                     continue
                 
-                # Get parent benchmark object
-                parent = path_to_score[parent_path]
-                               
-                # Debug print the parent and children
-                debug_print(model_id, f"\n  Parent benchmark: {parent.benchmark_identifier}", indent=2)
-                debug_print(model_id, f"  Parent path: {parent_path}", indent=2)
-                debug_print(model_id, "  Children benchmarks:", indent=2)
-                for sib in siblings:
-                    debug_print(model_id, f"    - {sib.benchmark_identifier}: score={sib.score_ceiled_raw}", indent=4)
-                
-                # Extract scores from siblings and convert to floats
+                # Extract and convert scores
                 sibling_scores = []
                 for s in siblings:
                     try:
                         if s.score_ceiled_raw and isinstance(s.score_ceiled_raw, str):
-                            # Convert string score to float, removing leading '.' if present
                             score_str = s.score_ceiled_raw.lstrip('.')
                             score = float(score_str)
                             sibling_scores.append(score)
@@ -577,18 +515,13 @@ def recompute_upstream_scores(model_benchmark_pairs):
                     except (ValueError, TypeError):
                         sibling_scores.append(None)
                 
-                debug_print(model_id, f"  Raw sibling scores after conversion: {sibling_scores}", indent=2)
-                
                 # Apply score computation rules
                 if all(score is None for score in sibling_scores):
                     new_score = None
-                    debug_print(model_id, "  Score computation: All child scores are None -> Parent score = None", indent=2)
                 elif any(isinstance(score, float) and np.isnan(score) for score in sibling_scores) and \
                      all(score is None or (isinstance(score, float) and np.isnan(score)) for score in sibling_scores):
                     new_score = float('nan')
-                    debug_print(model_id, "  Score computation: At least one NaN and rest None -> Parent score = NaN", indent=2)
                 else:
-                    # Get valid scores (not None and not NaN)
                     valid_scores = [
                         score for score in sibling_scores 
                         if score is not None 
@@ -599,44 +532,34 @@ def recompute_upstream_scores(model_benchmark_pairs):
                         new_score = sum(valid_scores) / len(siblings)
                     else:
                         new_score = None
-                    debug_print(model_id, f"  Score computation: sum({valid_scores})/{len(siblings)} = {new_score}", indent=2)
                 
                 # Update score fields in parent
-                old_score = parent.score_ceiled_raw
                 parent.score_ceiled_raw = new_score
                 score_str = (
                     "" if new_score is None
                     else "X" if isinstance(new_score, float) and np.isnan(new_score)
-                    else f".{int(new_score * 1000)}"
+                    else "1.0" if new_score == 1.0
+                    else f".{f'{new_score:.3f}'.replace('0.', '')}"
                 )
                 parent.score_ceiled = score_str
                 parent.score_ceiled_label = score_str
 
-                # Update color based on min/max values and benchmark type
+                # Update color
                 if parent.benchmark_type_id in minmax_values and new_score is not None:
                     try:
                         min_val, max_val = minmax_values[parent.benchmark_type_id]
-                        debug_print(model_id, f"  Using min/max values: {min_val}, {max_val}", indent=2)
                     except:
                         min_val, max_val = 0, 1
-                        debug_print(model_id, "  No min/max values found, using defaults: 0, 1", indent=2)
-                    # Use gray colors for engineering benchmarks
+                    
                     if 'engineering' in parent.sort_path:
-                        debug_print(model_id, "  Using gray color scheme for engineering benchmark", indent=2)
                         parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_gray)
                     else:
-                        debug_print(model_id, "  Using red-green color scheme for non-engineering benchmark", indent=2)
                         parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_redgreen)
                 else:
-                    # Use gray colors for engineering benchmarks even without min/max values
                     if 'engineering' in parent.sort_path:
-                        debug_print(model_id, "  Using gray color scheme for engineering benchmark (no min/max)", indent=2)
                         parent.color = representative_color(new_score, colors=colors_gray)
                     else:
-                        debug_print(model_id, "  Using red-green color scheme for non-engineering benchmark (no min/max)", indent=2)
                         parent.color = representative_color(new_score, colors=colors_redgreen)
-                
-                debug_print(model_id, f"  Updated {parent.benchmark_identifier}: {old_score} -> {new_score} (display: {score_str})", indent=2)
     
     return pairs
 
