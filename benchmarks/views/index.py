@@ -14,7 +14,7 @@ import json
 import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference, FlattenedModelContext, BenchmarkMinMax
-from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns, rebuild_model_tree, print_structure, recompute_upstream_scores
+from ..utils import cache_get_context, get_benchmark_exclusion_list, apply_exclusion_patterns, rebuild_model_tree, recompute_upstream_scores, update_benchmark_children_count
 
 _logger = logging.getLogger(__name__)
 
@@ -60,6 +60,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # ------------------------------------------------------------------ 
     if benchmark_filter:
         benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain, visible=True)).order_by('overall_order'))
+        benchmarks = update_benchmark_children_count(benchmarks)
         all_model_data = benchmark_filter(FlattenedModelContext.objects.filter(model_domain=domain, model_public=True))
         models = recompute_upstream_scores(all_model_data)
         models = rebuild_model_tree(models)
