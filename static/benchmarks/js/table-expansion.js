@@ -1,6 +1,7 @@
 $(document).ready(function () {
     const domain = location.pathname.split('/').filter(i => i)[0] || 'vision';
     const isRootIdentifier = (e) => e.currentTarget.dataset.benchmark === `average_${domain}`;
+
     if (document.querySelector('.leaderboard-table-component')) {
         $('th[data-benchmark]').click(onClickExpandCollapseBenchmark);
         return;
@@ -13,6 +14,7 @@ $(document).ready(function () {
         // If the user clicks on the breadcrumb link matching the root identifier execute.
         // And all other cases handle the click.
         if (!benchmarkCount || (event.type !== "breadcrumb-click" && isRootIdentifier(event))) { return; }
+
         // start by hiding everything
         $('[data-benchmark]').css('display','none');
         // reshow the element that was actually clicked
@@ -33,6 +35,7 @@ $(document).ready(function () {
         const benchmark = event.currentTarget.dataset.benchmark;
         // the `$=` attribute selector e.g. [attr$=val] matches a suffix
         $(`[data-benchmark$="${benchmark}_v0"],[data-parent="${benchmark}_v0"]`).css('display', '');
+
         if (isRootIdentifier(event)) {
              $('[data-parent="None"]').css('display', '');
         }
