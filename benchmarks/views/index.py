@@ -405,8 +405,9 @@ def normalize_alpha(value, min_value, max_value):
     return float(result)
 
 def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    #if value is None or np.isnan(value):  # it seems that depending on database backend, nans are either None or nan
     if not isinstance(value, (int, float)):    
+        return f"background-color: {color_None}"
+    if np.isnan(value):
         return f"background-color: {color_None}"
     normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
     step = int(100 * normalized_value)
