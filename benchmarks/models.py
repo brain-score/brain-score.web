@@ -3,6 +3,7 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import json
 
 
 class UserManager(BaseUserManager):
@@ -126,6 +127,45 @@ class BenchmarkMeta(models.Model):
     class Meta:
         db_table = 'brainscore_benchmarkmeta'
 
+class BenchmarkStimuliMeta(models.Model):
+    num_stimuli = models.IntegerField(null=True, default=None)
+    datatype = models.CharField(max_length=100, null=True, default="image")
+    stimuli_subtype = models.CharField(max_length=100, null=True, default=None)
+    total_size_mb = models.FloatField(null=True, default=None)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_stimuli_meta'
+
+
+class BenchmarkDataMeta(models.Model):
+    benchmark_type = models.CharField(max_length=100, null=True, default=None)
+    task = models.CharField(max_length=100, null=True, default=None)
+    region = models.CharField(max_length=100, null=True, default=None)
+    hemisphere = models.CharField(max_length=100, null=True, default=None)
+    num_recording_sites = models.IntegerField(null=True, default=None)
+    duration_ms = models.FloatField(null=True, default=None)
+    species = models.CharField(max_length=100, null=True, default=None)
+    datatype = models.CharField(max_length=100, null=True, default=None)
+    num_subjects = models.IntegerField(null=True, default=None)
+    pre_processing = models.CharField(max_length=100, null=True, default=None)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_data_meta'
+
+
+class BenchmarkMetricMeta(models.Model):
+    type = models.CharField(max_length=100, null=True, default=None)
+    reference = models.CharField(max_length=100, null=True, default=None)
+    public = models.BooleanField(default=False, null=False)
+    brainscore_link = models.CharField(max_length=200, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_benchmark_metric_meta'
 
 class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
@@ -133,6 +173,9 @@ class BenchmarkInstance(models.Model):
     ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
     meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
+    stimuli_meta = models.OneToOneField(BenchmarkStimuliMeta, null=True, on_delete=models.CASCADE)
+    data_meta = models.OneToOneField(BenchmarkDataMeta, null=True, on_delete=models.CASCADE)
+    metric_meta = models.OneToOneField(BenchmarkMetricMeta, null=True, on_delete=models.CASCADE)
 
     def __repr__(self):
         return generic_repr(self)
@@ -202,6 +245,24 @@ class Model(models.Model):
         db_table = 'brainscore_model'
 
 
+class ModelMeta(models.Model):
+    model = models.OneToOneField(Model, on_delete=models.CASCADE, primary_key=True)
+    architecture = models.CharField(max_length=100, null=True, default=None)
+    model_family = models.CharField(max_length=100, null=True, default=None)
+    total_parameter_count = models.IntegerField(null=True, default=None)
+    trainable_parameter_count = models.IntegerField(null=True, default=None)
+    total_layers = models.IntegerField(null=True, default=None)
+    trainable_layers = models.IntegerField(null=True, default=None)
+    model_size_mb = models.FloatField(null=True, default=None)
+    training_dataset = models.CharField(max_length=100, null=True, default=None)
+    task_specialization = models.CharField(max_length=100, null=True, default=None)
+    brainscore_link = models.CharField(max_length=256, null=True, default=None)
+    hugging_face_link = models.CharField(max_length=256, null=True, default=None)
+    extra_notes = models.CharField(max_length=1000, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_modelmeta'
+
 class Score(models.Model):
     benchmark = models.ForeignKey(BenchmarkInstance, on_delete=models.PROTECT)
     model = models.ForeignKey(Model, on_delete=models.PROTECT)
@@ -231,3 +292,132 @@ class MailingList(models.Model):
     indexes = [
         models.Index(fields=['email']),
     ]
+
+class JSONBField(models.JSONField):
+    """
+    Django's standard JSONField tries to decode JSON "strings" into dicts/lists.
+    However, in the materialized view creation, JSONB instead of JSON is used.
+    Psycopg2 automatically converts JSONB to python dicts/lists.
+
+    JSONField led to a TypeError because it would receive a string instead of
+    an already decoded Python object.
+
+    JSONB is also more performant for large datasets (like FinalModelContext)
+    """
+    def from_db_value(self, value, expression, connection):
+        # 1) If DB returned None, just pass it
+        if value is None:
+            return None
+
+        # 2) If DB gave us dict/list, return as is
+        if isinstance(value, (dict, list)):
+            return value
+
+        # 3) Otherwise assume it's a JSON string, parse with json.loads
+        return json.loads(value)
+
+class FinalBenchmarkContext(models.Model):
+    """
+    Materialized view for benchmark context.
+    Used to provide a similar output as _collect_benchmarks() previously
+    used in /views/index.py.
+    """
+    benchmark_type_id = models.CharField(max_length=255, primary_key=True)
+    version = models.IntegerField()
+    ceiling = models.CharField(max_length=32)
+    ceiling_error = models.FloatField(null=True, blank=True)
+    meta_id = models.IntegerField(null=True, blank=True)
+    # Children returns a list of direct children of the benchmark else Null
+    children = JSONBField(null=True, blank=True)
+    # Parent returns a JSON object with the following keys:
+    # identifier, domain, reference_id, order, parent_id, visible, owner_id
+    parent = JSONBField(null=True, blank=True)
+    visible = models.BooleanField(default=True)
+    owner_id = models.IntegerField(null=True, blank=True)
+    root_parent = models.CharField(max_length=64)
+    domain = models.CharField(max_length=64)
+    benchmark_url = models.CharField(max_length=255)
+    benchmark_reference_identifier = models.CharField(max_length=255)
+    benchmark_bibtex = models.TextField()
+    depth = models.IntegerField()
+    number_of_all_children = models.IntegerField()
+    overall_order = models.IntegerField()
+    identifier = models.CharField(max_length=255)
+    short_name = models.CharField(max_length=255)
+    benchmark_id = models.IntegerField(null=True, blank=True)
+    # Metadata related fields that returns a JSON object of the above metadata objects. 
+    # Columns become keys in the JSON object.
+    benchmark_data_meta = JSONBField(null=True, blank=True)
+    benchmark_metric_meta = JSONBField(null=True, blank=True)
+    benchmark_stimuli_meta = JSONBField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mv_final_benchmark_context'
+
+    @property
+    def id(self):
+        """Provide an 'id' so that templates using {{ benchmark.id}} still work. Can make chage in db too"""
+        return self.benchmark_id
+
+class FinalModelContext(models.Model):
+    """
+    Materialized view for model context.
+    Used to provide a similar output as _collect_models() previously
+    used in /views/index.py.
+    """
+    model_id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=255)
+    reference_identifier = models.CharField(max_length=255, null=True, blank=True)
+    url = models.CharField(max_length=512, null=True, blank=True)
+    # User returns a JSON object with the following keys:
+    # id, email, is_staff, is_active, last_login, display_name, is_superuser
+    user = JSONBField(null=True, blank=True)
+    user_id = models.IntegerField(null=True, blank=True)
+    # Owner returns a JSON object with the same keys as user
+    owner = JSONBField(null=True, blank=True)
+    public = models.BooleanField()
+    competition = models.CharField(max_length=255, null=True, blank=True)
+    domain = models.CharField(max_length=64)
+    visual_degrees = models.IntegerField(null=True, blank=True)
+    # Layers returns a JSON object with the following keys:
+    # IT, V1, V2, V4
+    layers = JSONBField(null=True, blank=True)
+    rank = models.IntegerField()
+    # Scores returns a JSON object with all scores for a model with the following keys:
+    # Best, rank, color, error, median, comment, benchmark, score_raw, is_complete, score_ceiled (str), visual_degrees, score_ceiled_raw (int), versioned_benchmark_identifier, score_raw, score_ceiled_raw, score_ceiled, error, comment, visual_degrees, color, median, best, rank, is_complete
+    # The benchmark key returns a dictionary with the following keys:
+    # id, url, meta, year, year, depth, author, bibtex, parent
+    # Parent is itself a dictionary with the following keys:
+    # order, domain, visible, owner_id, parent_id, identifier, reference_id
+    scores = JSONBField(null=True, blank=True)
+    build_status = models.CharField(max_length=64)
+    # Submitter returns a JSON object with the same keys as user
+    submitter = JSONBField(null=True, blank=True)
+    submission_id = models.IntegerField(null=True, blank=True)
+    jenkins_id = models.IntegerField(null=True, blank=True)
+    timestamp = models.DateTimeField(null=True, blank=True)
+    primary_model_id = models.IntegerField(null=True, blank=True)
+    num_secondary_models = models.IntegerField(null=True, blank=True)
+    # Model_meta related fields that returns a JSON object of the above metadata objects. 
+    # Columns become keys in the JSON object.
+    model_meta = JSONBField(null=True, blank=True)
+    class Meta:
+        managed = False
+        db_table = 'mv_final_model_context'
+
+    @property
+    def id(self):
+        """Provide an 'id' so that templates using {{ model.id}} still work. Can make chage in db too"""
+        return self.model_id
+
+# Not currently used but will be needed for leaderboard views to recompute color scales
+class BenchmarkMinMax(models.Model):
+    benchmark_identifier = models.CharField(max_length=255, primary_key=True)
+    bench_id = models.CharField(max_length=255)
+    min_score = models.FloatField()
+    max_score = models.FloatField()
+
+    class Meta:
+        managed = False
+        db_table = 'mv_benchmark_minmax'
