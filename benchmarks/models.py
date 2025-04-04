@@ -317,12 +317,20 @@ class JSONBField(models.JSONField):
         return json.loads(value)
 
 class FinalBenchmarkContext(models.Model):
+    """
+    Materialized view for benchmark context.
+    Used to provide a similar output as _collect_benchmarks() previously
+    used in /views/index.py.
+    """
     benchmark_type_id = models.CharField(max_length=255, primary_key=True)
     version = models.IntegerField()
     ceiling = models.CharField(max_length=32)
     ceiling_error = models.FloatField(null=True, blank=True)
     meta_id = models.IntegerField(null=True, blank=True)
+    # Children returns a list of direct children of the benchmark else Null
     children = JSONBField(null=True, blank=True)
+    # Parent returns a JSON object with the following keys:
+    # identifier, domain, reference_id, order, parent_id, visible, owner_id
     parent = JSONBField(null=True, blank=True)
     visible = models.BooleanField(default=True)
     owner_id = models.IntegerField(null=True, blank=True)
@@ -337,6 +345,8 @@ class FinalBenchmarkContext(models.Model):
     identifier = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
+    # Metadata related fields that returns a JSON object of the above metadata objects. 
+    # Columns become keys in the JSON object.
     benchmark_data_meta = JSONBField(null=True, blank=True)
     benchmark_metric_meta = JSONBField(null=True, blank=True)
     benchmark_stimuli_meta = JSONBField(null=True, blank=True)
@@ -351,27 +361,46 @@ class FinalBenchmarkContext(models.Model):
         return self.benchmark_id
 
 class FinalModelContext(models.Model):
+    """
+    Materialized view for model context.
+    Used to provide a similar output as _collect_models() previously
+    used in /views/index.py.
+    """
     model_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
     url = models.CharField(max_length=512, null=True, blank=True)
+    # User returns a JSON object with the following keys:
+    # id, email, is_staff, is_active, last_login, display_name, is_superuser
     user = JSONBField(null=True, blank=True)
     user_id = models.IntegerField(null=True, blank=True)
+    # Owner returns a JSON object with the same keys as user
     owner = JSONBField(null=True, blank=True)
     public = models.BooleanField()
     competition = models.CharField(max_length=255, null=True, blank=True)
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
+    # Layers returns a JSON object with the following keys:
+    # IT, V1, V2, V4
     layers = JSONBField(null=True, blank=True)
     rank = models.IntegerField()
+    # Scores returns a JSON object with all scores for a model with the following keys:
+    # Best, rank, color, error, median, comment, benchmark, score_raw, is_complete, score_ceiled (str), visual_degrees, score_ceiled_raw (int), versioned_benchmark_identifier, score_raw, score_ceiled_raw, score_ceiled, error, comment, visual_degrees, color, median, best, rank, is_complete
+    # The benchmark key returns a dictionary with the following keys:
+    # id, url, meta, year, year, depth, author, bibtex, parent
+    # Parent is itself a dictionary with the following keys:
+    # order, domain, visible, owner_id, parent_id, identifier, reference_id
     scores = JSONBField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
+    # Submitter returns a JSON object with the same keys as user
     submitter = JSONBField(null=True, blank=True)
     submission_id = models.IntegerField(null=True, blank=True)
     jenkins_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
     primary_model_id = models.IntegerField(null=True, blank=True)
     num_secondary_models = models.IntegerField(null=True, blank=True)
+    # Model_meta related fields that returns a JSON object of the above metadata objects. 
+    # Columns become keys in the JSON object.
     model_meta = JSONBField(null=True, blank=True)
     class Meta:
         managed = False
