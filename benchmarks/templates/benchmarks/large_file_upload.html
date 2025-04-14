@@ -1,0 +1,57 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+{% include 'benchmarks/components/nav-bar.html' %}
+<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
+    <div class="column is-half has-text-centered-mobile">
+        <div class="container login-left vision_submit">
+            <h1 style="font-size: 1.5em;">Large File Upload Portal</h1>
+            <br>
+            <h1 style="font-size: 1.00em;">Below you can upload large files to Brain-Score's storage. Common uses
+                include uploading weight files, subject data, or stimuli. You can view your
+                file later based on the returned link. If you need to re-upload, simply upload the same file again. Your
+                old files will still be kept (i.e., file versioning is enabled). <span class="has-text-weight-bold"> Please note: all files uploaded will
+                be publicly available to all Brain-Score users. If you would like to
+                upload private files, please contact the Brain-Score Team.</span></h1>
+
+            <p class="is-size-3-mobile shorter has-text-weight-bold is-italic">
+
+            </p>
+            <div style="margin: 20px 0;"></div>
+            <p class="benefits_info is-size-6-mobile shorter submission">
+
+            </p>
+            <form id="upload-form">
+                {% csrf_token %}
+                <!-- A file input for the user to select their file -->
+                <p class="special">
+                    <label for="fileInput">Select file:</label>
+                    <input type="file" id="fileInput" name="file" required>
+                    <br>
+                </p>
+                <br>
+                <button type="submit" class="button submission">Upload Large File</button>
+                <br>
+            </form>
+            <br>
+            <div id="upload-progress" style="display: none;">
+                <!-- Progress text displaying x MB / y MB and percentage -->
+                <div id="progress-text" style="margin-bottom: 5px; text-align: center;"></div>
+                <!-- Progress Bar -->
+                <div id="progress-container" style="width: 100%; background: #ddd; height: 20px; margin-bottom: 10px;">
+                    <div id="progress" style="width: 0; height: 100%; background: #4CAF50;"></div>
+                </div>
+            </div>
+
+            <div id="message"></div>
+            <p style="font-size: 12px"><a href="/profile/{{ domain }}">Return to {{ domain }} profile page</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
+{% endblock %}

@@ -44,6 +44,9 @@ non_domain_urls = [
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 
+    # Large File upload page:
+    path('profile/large_file_upload/', user.LargeFileUpload.as_view(), name=f'large_file_upload'),
+
     # central tutorial page, constant across all Brain-Score domains
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
     path('tutorials/troubleshooting', user.Tutorials.as_view(tutorial_type="troubleshooting"),

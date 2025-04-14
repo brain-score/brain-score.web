@@ -2,6 +2,7 @@ import json
 import logging
 import zipfile
 import re
+import uuid
 from typing import Tuple, Union, List
 from io import TextIOWrapper
 import boto3
@@ -22,6 +23,7 @@ from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.conf import settings
 
 _logger = logging.getLogger(__name__)
 
@@ -163,6 +165,54 @@ class Tutorials(View):
             return render(request, f'benchmarks/tutorials/{self.plugin}/{self.tutorial_type}.html')
         else:
             return render(request, f'benchmarks/tutorials/{self.tutorial_type}.html')
+
+
+class LargeFileUpload(View):
+    plugin = None
+
+    def get(self, request):
+        return render(request, f'benchmarks/large_file_upload.html')
+
+    def post(self, request):
+        # Expecting the client to send file_name and file_type, e.g. via AJAX
+        file_name = request.POST.get("file_name")
+        file_type = request.POST.get("file_type") or "application/octet-stream"
+
+        if not file_name:
+            return JsonResponse({'error': 'Missing file information'}, status=400)
+
+        # Initialize the boto3 S3 client using the default credentials
+        s3_client = boto3.client('s3', region_name=settings.REGION_NAME,
+                                 endpoint_url="https://s3.us-east-2.amazonaws.com")
+
+        # Create a unique object key; here we simply use a folder and the original file name
+        object_key = f"test_1/{file_name}"
+
+        try:
+            # Generate a presigned POST that allows a form upload directly to S3.
+            presigned_post = s3_client.generate_presigned_post(
+                Bucket="test-large-file-uploads-quest",
+                Key=object_key,
+                Fields={
+                    "Content-Type": file_type,
+                    "x-amz-acl": "public-read"  # use "x-amz-acl" instead of "acl"
+                },
+                Conditions=[
+                    {"Content-Type": file_type},
+                    {"x-amz-acl": "public-read"}
+                ],
+                ExpiresIn=3600
+            )
+        except Exception as e:
+            # In case there is any issue generating the presigned POST, return an error.
+            return JsonResponse({'error': f"Error generating presigned POST: {str(e)}"}, status=500)
+
+        # Return the URL and the required form fields, plus the object key for reference.
+        return JsonResponse({
+            'url': presigned_post['url'],
+            'fields': presigned_post['fields'],
+            'key': object_key
+        })
 
 
 class Upload(View):
@@ -555,7 +605,8 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
+            return render(request, 'benchmarks/login.html',
+                          {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
@@ -571,7 +622,8 @@ class Profile(View):
             context["formatted"] = self.domain.capitalize()
             return render(request, 'benchmarks/profile.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain,
+                       'formatted': self.domain.capitalize()}
             return render(request, 'benchmarks/login.html', context)
 
 
