@@ -175,7 +175,9 @@ class LargeFileUpload(View):
 
     def post(self, request):
         # Expecting the client to send file_name and file_type, e.g. via AJAX
+        plugin_type = request.POST.get("bucket_choice")
         file_name = request.POST.get("file_name")
+        user_id = request.user.id if request.user.is_authenticated else 2  # default to Brain-Score team
         file_type = request.POST.get("file_type") or "application/octet-stream"
 
         if not file_name:
@@ -186,12 +188,12 @@ class LargeFileUpload(View):
                                  endpoint_url="https://s3.us-east-2.amazonaws.com")
 
         # Create a unique object key; here we simply use a folder and the original file name
-        object_key = f"test_1/{file_name}"
+        object_key = f"brainscore-vision/{plugin_type}/user_{user_id}/{file_name}"
 
         try:
             # Generate a presigned POST that allows a form upload directly to S3.
             presigned_post = s3_client.generate_presigned_post(
-                Bucket="test-large-file-uploads-quest",
+                Bucket="brainscore-storage",
                 Key=object_key,
                 Fields={
                     "Content-Type": file_type,
@@ -206,6 +208,8 @@ class LargeFileUpload(View):
         except Exception as e:
             # In case there is any issue generating the presigned POST, return an error.
             return JsonResponse({'error': f"Error generating presigned POST: {str(e)}"}, status=500)
+
+
 
         # Return the URL and the required form fields, plus the object key for reference.
         return JsonResponse({

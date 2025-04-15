@@ -16,7 +16,9 @@ document.getElementById('upload-form').addEventListener('submit', function(event
     const formData = new URLSearchParams();
     formData.append('file_name', fileName);
     formData.append('file_type', fileType);
+    formData.append('bucket_choice', document.getElementById('bucketChoice').value);
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    console.log("Request body string:", formData.toString());
 
     // Step 1: Request a presigned POST from the Django backend
     fetch(window.location.href, {
