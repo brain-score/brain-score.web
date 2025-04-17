@@ -103,6 +103,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'benchmarks.context_processors.common_variables',
             ],
         },
     },
@@ -249,3 +250,18 @@ LOGGING = {
         },
     },
 }
+
+# Cache refresh token for triggering cache invalidation
+try:
+    # Try to get the token from AWS Secrets Manager first
+    cache_refresh_secrets = get_secret("brainscore-cache-refresh", REGION_NAME)
+    CACHE_REFRESH_TOKEN = cache_refresh_secrets["token"]
+except Exception as e:  # Catch all exceptions, not just NoCredentialsError
+    # Fall back to environment variable
+    CACHE_REFRESH_TOKEN = os.getenv("CACHE_REFRESH_TOKEN")
+    # For development only - generate a token if none exists
+    if not CACHE_REFRESH_TOKEN and DEBUG:
+        import secrets
+        CACHE_REFRESH_TOKEN = secrets.token_hex(16)
+        print(f"Generated CACHE_REFRESH_TOKEN: {CACHE_REFRESH_TOKEN}")
+        # If in DEBUG mode, visit http://localhost:8000/debug/show_token/ to see the token
