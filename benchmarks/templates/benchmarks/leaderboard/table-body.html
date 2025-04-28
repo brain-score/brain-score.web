@@ -15,7 +15,7 @@
             {{ model|display_model:user }}
           </a>
         </div>
-        {% if model.owner %}
+        {% if model.user %}
             <div class="submitter">
                 {{ model|display_submitter:user|default:"" }}
             </div>
