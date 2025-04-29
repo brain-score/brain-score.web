@@ -15,7 +15,6 @@
             {{ model|display_model:user }}
           </a>
         </div>
-        {% comment %}
         {% if model.owner %}
             <div class="submitter">
                 {{ model|display_submitter:user|default:"" }}
@@ -27,9 +26,8 @@
           {{ model.num_secondary_models }} more models from this user
           </span>
         {% elif model.num_secondary_models == 0 %} {# show empty line to align with other rows #}
-          <span class="competition-models-more">&nbsp;</span>
+          <span class="competition-models-more"></span>
           {% endif %}
-          {% endcomment %}
       </td>
       {% for score_row in model.scores %}
         <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"
