@@ -48,6 +48,78 @@ class TestMaterializedViews(BaseTestCase):
             self.assertGreater(new_count, initial_count, 
                              "mv_model_scores should reflect new data after refresh")
             
-'''
-Consider adding tests for successful aggregation of a new score for a model
-'''
+    def test_aggregation_with_new_benchmark(self):
+        """Tests if average_vision score updates correctly when a new benchmark score is added"""
+        
+        print("\n\nUsing  mobilenet_v1_0.25_128 on FreemanZiemba2013.V1-pls for aggregation test")
+        
+        with connection.cursor() as cursor:
+            # 1. First get mobilenet's current average_vision
+            cursor.execute("""
+                SELECT model_id, score_ceiled
+                FROM mv_model_scores_enriched 
+                WHERE benchmark_identifier = 'average_vision' 
+                AND model_id = (
+                    SELECT id FROM brainscore_model 
+                    WHERE name = 'mobilenet_v1_0.25_128'
+                )
+            """)
+            model_id, initial_average = cursor.fetchone()
+
+            # Print all existing scores for this model and benchmark before modification
+            cursor.execute("""
+                SELECT s.*, b.benchmark_type_id, b.version
+                FROM brainscore_score s
+                JOIN brainscore_benchmarkinstance b ON s.benchmark_id = b.id
+                WHERE s.model_id = %s
+                AND b.benchmark_type_id = 'movshon.FreemanZiemba2013.V1-pls'
+            """, [model_id])
+            print("\n\nExisting entry for FreemanZiemba2013.V1-pls:")
+            for row in cursor.fetchall():
+                print(row)
+
+            print(f"\nAverage vision with the above score for FreemanZiemba2013.V1-pls: {initial_average}")
+
+            # 2. Update the existing score instead of inserting a new one
+            cursor.execute("""
+                UPDATE brainscore_score 
+                SET score_ceiled = 0.04,
+                    score_raw = 0.02,
+                    end_timestamp = NOW()
+                WHERE model_id = %s
+                AND benchmark_id = (
+                    SELECT id FROM brainscore_benchmarkinstance 
+                    WHERE benchmark_type_id = 'movshon.FreemanZiemba2013.V1-pls' 
+                    AND version = 2
+                )
+            """, [model_id])
+
+            # Print all scores after modification
+            cursor.execute("""
+                SELECT s.*, b.benchmark_type_id, b.version
+                FROM brainscore_score s
+                JOIN brainscore_benchmarkinstance b ON s.benchmark_id = b.id
+                WHERE s.model_id = %s
+                AND b.benchmark_type_id = 'movshon.FreemanZiemba2013.V1-pls'
+            """, [model_id])
+            print("\nUpdated entry for FreemanZiemba2013.V1-pls:")
+            for row in cursor.fetchall():
+                print(row)
+
+            # 3. Refresh the materialized views
+            cursor.execute("SELECT refresh_all_materialized_views()")
+
+            # 4. Get the new average_vision
+            cursor.execute("""
+                SELECT score_ceiled 
+                FROM mv_model_scores_enriched 
+                WHERE model_id = %s
+                AND benchmark_identifier = 'average_vision'
+            """, [model_id])
+            new_average = cursor.fetchone()[0]
+
+            print(f"\nAverage vision after modification of score for FreemanZiemba2013.V1-pls: {new_average}")
+
+            # 5. Verify the average changed
+            self.assertNotEqual(initial_average, new_average, 
+                              "average_vision should change after adding new benchmark score")
