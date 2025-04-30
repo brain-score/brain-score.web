@@ -1,0 +1,96 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+    <h1>Use Cases</h1>
+    <p> 
+        Below you will find a curated set of examples notebooks demonstrating typical Brain-Score use cases,
+        available as Jupyter Notebooks. To ensure they are always up to date, the notebooks are maintained 
+        in our <a href="https://github.com/brain-score/vision/examples">vision</a> repository. Each link
+        below will take you directly to the latest version on GitHub.
+    </p>
+{% endblock %}
+
+
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Scoring Models</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Score models locally on public benchmarks.
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Perform Region-Layer Mapping</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Region-Layer Mapping is a fundamental step in converting a BaseModel into a Brain-Score model.
+        Here, `get_layers`are benchmarked against `STANDARD_REGION_BENCHMARKS` and subsequently
+        committed to a specific region.
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Explore Neural Benchmarks</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Explore Behavioral Benchmarks</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Creating Neural Benchmarks</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Creating Behavioral Benchmarks</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+
+    </p>
+    <button class="button">
+        <a href="test_link" target="_blank">
+            <i class="fas fa-file-alt"></i> View Notebook on GitHub
+        </a>
+    </button>
+</div>
+
+{% endblock %}
