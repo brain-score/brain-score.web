@@ -1,6 +1,7 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+
 {% block banner %}
 <h1> Central Profile</h1>
 <p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>
@@ -41,11 +42,58 @@
             </div>
         {% endfor %}
         <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial_no_top">Logout</button>
-        <button onclick="location.href='large_file_upload'" type="button" class="button button-primary tutorial_no_top">Upload Large File</button>
+    </div>
+    <div class="box leaderboard-table-component">
+        <h3 class="benefits_heading is-size-3-mobile">User Uploaded Files</h3>
+        <br>
+        <div class="notification is-light">
+          <strong>Total storage used:</strong>
+          {{ total_used_gb }} GB / {{ quota_gb }} GB
+        </div>
+        {% if files_submitted %}
+            <table class="table is-striped is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Upload Time</th>
+                        <th>Folder</th>
+                        <th> File Size </th>
+                        <th> Versions</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in files_submitted %}
+                        <tr>
+                            <td>{{ f.filename }}</td>
+                            <td>{{ f.upload_datetime|date:"F j, Y g:i A" }}</td>
+                            <td>/{{ f.plugin_type }}</td>
+                            <td>{{ f.file_size_bytes|filesizeformat }}</td>
+                            <td>
+                                <a href="https://us-east-2.console.aws.amazon.com/s3/object/brainscore-storage?bucket
+                                Type=general&prefix=brainscore-vision%2F{{ f.plugin_type }}%2Fuser_{{ request.user.id }}%2F{{ f.filename }}&region=us-east-2&tab=versions#"
+                               target="_blank">
+                              View
+                            </a>
+                            </td>
+                            <td>
+                                <a href="{{ f.link }}" target="_blank" class="button is-small is-link">
+                                  Download
+                                </a>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+          <p>No files submitted yet.</p>
+        {% endif %}
+        <button onclick="location.href='large_file_upload'" type="button" class="button button-primary tutorial_no_top">Upload New Large File</button>
     </div>
 {% else %}
 {% endif %}
-
 {% endblock %}
 
 

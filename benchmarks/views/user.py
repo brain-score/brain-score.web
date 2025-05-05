@@ -19,11 +19,12 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
-from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
+from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.conf import settings
+from django.db.models import Sum
 
 _logger = logging.getLogger(__name__)
 
@@ -174,14 +175,29 @@ class LargeFileUpload(View):
         return render(request, f'benchmarks/large_file_upload.html')
 
     def post(self, request):
+
+        #MAX_BYTES =  (1024 ** 2)
+        MAX_BYTES = 5 * (1024 ** 3)
+
         # Expecting the client to send file_name and file_type, e.g. via AJAX
         plugin_type = request.POST.get("bucket_choice")
         file_name = request.POST.get("file_name")
         user_id = request.user.id if request.user.is_authenticated else 2  # default to Brain-Score team
+        owner = request.user if request.user.is_authenticated else User.objects.get(pk=2)
         file_type = request.POST.get("file_type") or "application/octet-stream"
+        file_size = int(request.POST.get('file_size', 0))
 
         if not file_name:
             return JsonResponse({'error': 'Missing file information'}, status=400)
+
+        # sum all prior uploads
+        total_used = FileUploadTracker.objects.filter(owner=owner) \
+                         .aggregate(total=Sum('file_size_bytes'))['total'] or 0
+
+        if total_used + file_size > MAX_BYTES:
+            return JsonResponse({
+                'error': f'You have exceeded your {round(MAX_BYTES / (1024 ** 3), 3)} GB quota. Please contact the Brain-Score team.'
+            }, status=400)
 
         # Initialize the boto3 S3 client using the default credentials
         s3_client = boto3.client('s3', region_name=settings.REGION_NAME,
@@ -209,7 +225,17 @@ class LargeFileUpload(View):
             # In case there is any issue generating the presigned POST, return an error.
             return JsonResponse({'error': f"Error generating presigned POST: {str(e)}"}, status=500)
 
-
+        public_url = (
+            f"https://brainscore-storage.s3.{settings.REGION_NAME}.amazonaws.com/"
+            f"{object_key}"
+        )
+        FileUploadTracker.objects.create(
+            filename=file_name,
+            link=public_url,
+            owner=owner,
+            plugin_type=plugin_type,
+            file_size_bytes=file_size,
+        )
 
         # Return the URL and the required form fields, plus the object key for reference.
         return JsonResponse({
@@ -579,7 +605,18 @@ class ProfileAccount(View):
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            context = {"domains": ["vision", "language"]}
+            # Fetch all uploads by this user
+            files_submitted = FileUploadTracker.objects.filter(
+                owner=request.user
+            ).order_by('-upload_datetime')
+
+            total_size_used = files_submitted.aggregate(total=Sum('file_size_bytes'))['total'] or 0
+
+            context = {
+                "domains": ["vision", "language"],
+                "files_submitted": files_submitted,
+                "total_used_gb": round(total_size_used / 1024**3, 3),
+                'quota_gb': 5.0}
             return render(request, 'benchmarks/central_profile.html', context)
 
     def post(self, request):
@@ -597,7 +634,13 @@ class ProfileAccount(View):
         user = authenticate(request, username=username, password=request.POST['password'])
         if user is not None:
             login(request, user)
-            context = {"domains": ["vision", "language"]}
+            files_submitted = FileUploadTracker.objects.filter(
+                owner=user
+            ).order_by('-upload_datetime')
+            context = {
+                "domains": ["vision", "language"],
+                "files_submitted": files_submitted
+            }
             return render(request, 'benchmarks/central_profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm, "domains": ["vision", "language"]}
