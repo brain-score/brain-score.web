@@ -141,28 +141,9 @@ class TestMaterializedViews(BaseTestCase):
             # Get contexts from both implementations
             new_context = new_get_context(domain=domain, user=user, show_public=show_public)
             legacy_context = legacy_get_context(domain=domain, user=user, show_public=show_public)
-            
-            print(f"\nDomain: {domain}")
-            print(f"Initial new models count: {len(new_context['models'])}")
-            
+             
             # Filter legacy context to only include public models
-            legacy_context['models'] = [model for model in legacy_context['models'] if model.public]
-            
-            # Filter out models that have no valid scores (score_raw is not null)
-            # Materialized view implementation does not filter out models with no valid scores, so we do it here (for now)
-            filtered_models = []
-            for model in new_context['models']:
-                if model.scores is not None:
-                    valid_scores = [score for score in model.scores if score.get('score_raw') is not None]
-                    if valid_scores:
-                        filtered_models.append(model)
-                    else:
-                        print(f"Excluding model {model.model_id} - {model.name} (no valid scores)")
-            new_context['models'] = filtered_models
-            
-            print(f"After filtering new models count: {len(new_context['models'])}")
-            print(f"Legacy models count: {len(legacy_context['models'])}")
-            
+            legacy_context['models'] = [model for model in legacy_context['models'] if model.public]          
 
             # Compare key fields that should be identical
             self.assertEqual(new_context['domain'], legacy_context['domain'], 
