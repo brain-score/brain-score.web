@@ -134,8 +134,7 @@ class TestMaterializedViews(BaseTestCase):
             # (domain, user, show_public)
             ("vision", None, True),  # Public vision view
             ("language", None, True), # Public language view
-        ]
-        
+        ]        
 
         for domain, user, show_public in test_cases:
             # Get contexts from both implementations
