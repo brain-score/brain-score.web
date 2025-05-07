@@ -1017,7 +1017,9 @@ score_json AS (
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
-                    WHEN score_ceiled_value = 1 THEN '1.0'
+                    WHEN score_ceiled_value >= 1
+                        THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
+                                    , 'FM0.0')                               -- always “#.0”
                     -- FM0.000 determines the formatting of text
                     WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
                     ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
@@ -1254,9 +1256,7 @@ WHERE
     FROM jsonb_array_elements(sc.scores) AS score
     WHERE
       (score->>'score_ceiled') IS NOT NULL
-      AND (score->>'score_ceiled') <> ''
       AND (score->>'score_ceiled') <> 'X'
-      AND lower(score->>'score_ceiled') <> 'nan'
   );
 
 
