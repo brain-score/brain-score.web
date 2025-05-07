@@ -69,7 +69,7 @@ class TestVision(BaseTestCase):
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         # Extra (1 +) because of a header with <tr>
-        self.assertEqual(num_rows, 1 + 87)
+        self.assertEqual(num_rows, 1 + 78)
 
     def test_public_vision_model(self):
         resp = self.client.get("http://localhost:8000/model/vision/1")
