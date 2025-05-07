@@ -303,6 +303,8 @@ def _build_model_data(benchmarks, models):
         # Initialize both data structures for this model
         record = {
             "model_name": model.name,
+            "model_id": model.model_id,
+            "rank": model.rank,
             "layers": json.dumps(model.layers) if model.layers else ""  # Add layer map information to CSV download as a column
         }
         model_data = {
