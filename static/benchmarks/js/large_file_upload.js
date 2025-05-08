@@ -72,16 +72,39 @@ document.getElementById('upload-form').addEventListener('submit', function(event
         // Monitor state changes for success or failure.
         bucket = "test-large-file-uploads-quest"
         const bucketUrl = "https://" + bucket + ".s3.us-east-2.amazonaws.com/" + objectKey;
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 204 || xhr.status === 200) {
-                    document.getElementById('message').innerHTML =
-                        "Upload successful! You can access your object <a href='" + bucketUrl +
-                        "' target='_blank'>here</a>.";
-                } else {
-                    document.getElementById('message').innerText = "Upload failed. S3 responded with status: " + xhr.status;
-                }
-            }
+               xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            if (xhr.status === 204 || xhr.status === 200) {
+                // Step (3): finalize on our server to grab the VersionId
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                fetch('/profile/large_file_upload/finalize/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                       object_key: objectKey,
+                        plugin_type: document.getElementById('bucketChoice').value,
+                        csrfmiddlewaretoken: csrfToken
+                    }).toString()
+               })
+                .then(r => r.json())
+                .then(data => {
+                   if (data.error) {
+                        document.getElementById('message').innerText = data.error;
+                   } else {
+                        // show the last 5 chars of version_id
+                       const shortVer = data.version_id.slice(-5);
+                       document.getElementById('message').innerHTML =
+                           `Upload complete! 
+                            <a href="${data.public_url}" target="_blank">Download</a>`;
+                   }
+                })
+                .catch(err => {
+                    document.getElementById('message').innerText = "Error finalizing upload: " + err;
+               });
+            } else {
+                document.getElementById('message').innerText =
+                    "Upload failed. S3 responded with status: " + xhr.status;
+           }
         };
 
         // Send the form data to S3.

@@ -43,6 +43,7 @@
         {% endfor %}
         <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial_no_top">Logout</button>
     </div>
+
     <div class="box leaderboard-table-component">
         <h3 class="benefits_heading is-size-3-mobile">User Uploaded Files</h3>
         <br>
@@ -50,50 +51,93 @@
           <strong>Total storage used:</strong>
           {{ total_used_gb }} GB / {{ quota_gb }} GB
         </div>
+
         {% if files_submitted %}
+            <style>
+              .copy-cell { position: relative; }
+              .python-tooltip {
+                display: none;
+                position: absolute;
+                top: 2.5em;
+                left: 0;
+                background: white;
+                border: 1px solid #ccc;
+                padding: 1em;
+                z-index: 10;
+                width: 30em;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .copy-cell:hover .python-tooltip {
+                display: block;
+              }
+              .python-tooltip pre {
+                margin-left: 0;
+                margin-top: 1.0em;
+                margin-bottom: 1.0em;
+                background: #f5f5f5;
+                padding: 0.5em;
+                overflow-x: auto;
+              }
+            </style>
+
             <table class="table is-striped is-hoverable is-fullwidth">
                 <thead>
                     <tr>
                         <th>Filename</th>
                         <th>Upload Time</th>
                         <th>Folder</th>
-                        <th> File Size </th>
-                        <th> Versions</th>
-                        <th>Access</th>
+                        <th>File Size</th>
+                        <th>Version ID</th>
+                        <th>To Use</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for f in files_submitted %}
                         <tr>
-                            <td>{{ f.filename }}</td>
+                            <td>
+                              <a href="{{ f.link }}" target="_blank" class="has-text-link">
+                                {{ f.filename }}
+                              </a>
+                            </td>
                             <td>{{ f.upload_datetime|date:"F j, Y g:i A" }}</td>
                             <td>/{{ f.plugin_type }}</td>
                             <td>{{ f.file_size_bytes|filesizeformat }}</td>
                             <td>
-                                <a href="https://us-east-2.console.aws.amazon.com/s3/object/brainscore-storage?bucket
-                                Type=general&prefix=brainscore-vision%2F{{ f.plugin_type }}%2Fuser_{{ request.user.id }}%2F{{ f.filename }}&region=us-east-2&tab=versions#"
-                               target="_blank">
-                              View
-                            </a>
+                              {% if f.version_id %}
+                                <code style="color: #45C676">…{{ f.version_id|slice:"-5:" }}</code>
+                              {% else %}
+                                <code style="color: #45C676">None</code>
+                              {% endif %}
                             </td>
-                            <td>
-                                <a href="{{ f.link }}" target="_blank" class="button is-small is-link">
-                                  Download
-                                </a>
+                            <td class="copy-cell">
+                              <button type="button"
+                                      class="button is-small is-link copy-btn"
+                                      data-code='file = load_file(bucket="brainscore-storage", folder_name="brainscore-vision/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                relative_path="{{f.filename}}",
+                version_id="{{f.version_id}}",
+                )'>
+                                Copy Code
+                              </button>
+                              <div class="python-tooltip">
+                                <p>To use this file, copy and paste the code below into your Brain-Score plugin file:</p>
+                                <pre><code>file = load_file(bucket="brainscore-storage", folder_name="brainscore-vision/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                relative_path="{{f.filename}}",
+                version_id="{{f.version_id}}",
+                )</code></pre>
+                              </div>
                             </td>
-
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
         {% else %}
           <p>No files submitted yet.</p>
         {% endif %}
-        <button onclick="location.href='large_file_upload'" type="button" class="button button-primary tutorial_no_top">Upload New Large File</button>
+
+        <button onclick="location.href='large_file_upload'" type="button" class="button button-primary tutorial_no_top">
+          Upload New Large File
+        </button>
     </div>
 {% else %}
 {% endif %}
 {% endblock %}
-
-
