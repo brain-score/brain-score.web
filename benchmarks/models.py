@@ -362,53 +362,57 @@ class FinalBenchmarkContext(models.Model):
 
 class FinalModelContext(models.Model):
     """
-    Materialized view for model context.
-    Used to provide a similar output as _collect_models() previously
-    used in /views/index.py.
+    Represents a materialized view of model context, used to replicate the output of
+    the previously used `_collect_models()` method in /views/index.py.
     """
+
+    # Core model metadata
     model_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
     url = models.CharField(max_length=512, null=True, blank=True)
-    # User returns a JSON object with the following keys:
-    # id, email, is_staff, is_active, last_login, display_name, is_superuser
-    user = JSONBField(null=True, blank=True)
-    user_id = models.IntegerField(null=True, blank=True)
-    # Owner returns a JSON object with the same keys as user
-    owner = JSONBField(null=True, blank=True)
-    public = models.BooleanField()
-    competition = models.CharField(max_length=255, null=True, blank=True)
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
-    # Layers returns a JSON object with the following keys:
-    # IT, V1, V2, V4
-    layers = JSONBField(null=True, blank=True)
     rank = models.IntegerField()
-    # Scores returns a JSON object with all scores for a model with the following keys:
-    # Best, rank, color, error, median, comment, benchmark, score_raw, is_complete, score_ceiled (str), visual_degrees, score_ceiled_raw (int), versioned_benchmark_identifier, score_raw, score_ceiled_raw, score_ceiled, error, comment, visual_degrees, color, median, best, rank, is_complete
-    # The benchmark key returns a dictionary with the following keys:
-    # id, url, meta, year, year, depth, author, bibtex, parent
-    # Parent is itself a dictionary with the following keys:
-    # order, domain, visible, owner_id, parent_id, identifier, reference_id
-    scores = JSONBField(null=True, blank=True)
-    build_status = models.CharField(max_length=64)
-    # Submitter returns a JSON object with the same keys as user
-    submitter = JSONBField(null=True, blank=True)
+
+    # User & ownership information
+    user = JSONBField(null=True, blank=True)  # keys: id, email, is_staff, is_active, last_login, display_name, is_superuser
+    user_id = models.IntegerField(null=True, blank=True)
+    owner = JSONBField(null=True, blank=True)  # same structure as 'user'
+    submitter = JSONBField(null=True, blank=True)  # same structure as 'user'
+
+    # Submission & build info
     submission_id = models.IntegerField(null=True, blank=True)
+    build_status = models.CharField(max_length=64)
     jenkins_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
+
+    # Model relationships
     primary_model_id = models.IntegerField(null=True, blank=True)
     num_secondary_models = models.IntegerField(null=True, blank=True)
-    # Model_meta related fields that returns a JSON object of the above metadata objects. 
-    # Columns become keys in the JSON object.
+
+    # Evaluation and score-related fields
+    layers = JSONBField(null=True, blank=True)  # keys: IT, V1, V2, V4
+    scores = JSONBField(null=True, blank=True)
+    # `scores` includes nested metadata for benchmarks and parent benchmarks.
+
+    # Competition or publication context
+    competition = models.CharField(max_length=255, null=True, blank=True)
+    public = models.BooleanField()
+
+    # Composite metadata
     model_meta = JSONBField(null=True, blank=True)
+    # Keys mirror the individual metadata fields above.
+
     class Meta:
         managed = False
         db_table = 'mv_final_model_context'
 
     @property
     def id(self):
-        """Provide an 'id' so that templates using {{ model.id}} still work. Can make chage in db too"""
+        """
+        Aliases `model_id` as `id` for compatibility with templates expecting `model.id`.
+        """
         return self.model_id
 
 # Not currently used but will be needed for leaderboard views to recompute color scales
