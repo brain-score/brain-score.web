@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Union
+from typing import Union, List, Dict, Any, Tuple
+from django.contrib.auth.models import User
 from django.utils.functional import wraps
 from django.db.models import Q
 from django.core.cache import cache
@@ -49,6 +50,8 @@ def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
     
+    print(f"Type of user: {type(user)}")
+
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
@@ -203,7 +206,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     return context
 
 
-def filter_and_rank_models(models, domain="vision"):
+def filter_and_rank_models(models, domain: str = "vision"):
     """
     Filters out models without a valid average_{domain} score (must be a number or "X") and recalculates ranks.
     Returns a list of models with updated ranks.
@@ -280,7 +283,9 @@ def filter_and_rank_models(models, domain="vision"):
     return ranked_models
 
 
-def _build_model_data(benchmarks, models):
+def _build_model_data(benchmarks: List[FinalBenchmarkContext], 
+                      models: List[FinalModelContext]
+                      ) -> Tuple[Union[str, pd.DataFrame], List[Dict[str, Any]]]:
     """
     Build both comparison data and scores dataframe in a single pass through models.
     Returns: (csv_data, comparison_data) tuple
@@ -345,7 +350,7 @@ def _build_model_data(benchmarks, models):
     return csv_data, comparison_data
 
 # Resubmissions are currently not supported. Retaining for future use.
-def _collect_submittable_benchmarks(benchmarks, user):
+def _collect_submittable_benchmarks(benchmarks: List[FinalBenchmarkContext], user: User) -> Dict:
     """
     gather benchmarks that:
     - any of a user's models have been evaluated on, if user is not a superuser
