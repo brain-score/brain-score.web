@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def cache_base_model_query(timeout=24 * 60 * 60):  # 24 hour cache by default
     return decorator
 
 
-def invalidate_domain_cache(domain="vision"):
+def invalidate_domain_cache(domain: str = "vision") -> int:
     """
     Invalidates all caches for a specific domain by incrementing the version number.
     This is more efficient than deleting individual cache keys.
@@ -116,7 +116,7 @@ def invalidate_domain_cache(domain="vision"):
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
-def refresh_cache(request, domain="vision"):
+def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     """
     Endpoint to manually trigger cache refresh for leaderboard data.
     Can be called via Jenkins job with proper authentication token or URL visit
@@ -171,7 +171,7 @@ def refresh_cache(request, domain="vision"):
     })
 
 
-def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:8000"):
+def trigger_recache(domain: str = "vision", rebuild: bool = True, base_url: str = "http://localhost:8000") -> dict:
     """
     Trigger cache refresh via code. Not used in production.
     
@@ -195,7 +195,7 @@ def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:80
         return {"status": "error", "message": str(e)} 
     
 @require_http_methods(["GET"])
-def show_token(request):
+def show_token(request: HttpRequest) -> JsonResponse:
     """
     Debug view to show the current token.
     Only available in localhost DEBUG mode.
