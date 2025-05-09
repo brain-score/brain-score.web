@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import requests
 from functools import wraps
 from django.core.cache import cache
 from django.conf import settings
@@ -129,8 +130,11 @@ def refresh_cache(request, domain="vision"):
         token: Token to authenticate request
         rebuild: Boolean whether to rebuild the cache immediately
     """
+    # Extract hostname from request without port
+    hostname = request.get_host().split(':')[0]
+
     # For debugging - show token info
-    if settings.DEBUG and request.GET.get('show_token') == 'true':
+    if settings.DEBUG and request.GET.get('show_token') == 'true' and hostname in ['localhost', '127.0.0.1']:
         return JsonResponse({
             "token": settings.CACHE_REFRESH_TOKEN,
             "note": "Use this token in the 'token' parameter to refresh the cache"
@@ -167,10 +171,9 @@ def refresh_cache(request, domain="vision"):
     })
 
 
-# Function for testing trigger via code
 def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:8000"):
     """
-    Programmatically trigger cache refresh.
+    Trigger cache refresh via code. Not used in production.
     
     Args:
         domain: The domain to refresh cache for (e.g., "vision", "language")
@@ -179,9 +182,7 @@ def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:80
         
     Returns:
         Dict: The response JSON
-    """
-    import requests
-    
+    """    
     token = settings.CACHE_REFRESH_TOKEN
     url = f"{base_url}/refresh_cache/{domain}/"
     params = {"token": token, "rebuild": str(rebuild).lower()}
@@ -195,9 +196,14 @@ def trigger_recache(domain="vision", rebuild=True, base_url="http://localhost:80
     
 @require_http_methods(["GET"])
 def show_token(request):
-    """Debug view to show the current token."""
-    if not settings.DEBUG:
-        return JsonResponse({"error": "Only available in DEBUG mode"}, status=403)
+    """
+    Debug view to show the current token.
+    Only available in localhost DEBUG mode.
+    """
+    hostname = request.get_host().split(':')[0]
+
+    if not settings.DEBUG or hostname not in ['localhost', '127.0.0.1']:
+        return JsonResponse({"error": "Only available in DEBUG mode on localhost"}, status=403)
     
     return JsonResponse({
         "token": settings.CACHE_REFRESH_TOKEN

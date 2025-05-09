@@ -75,6 +75,7 @@ non_domain_urls = [
     path('release2.0/', release2_0.view, name='release2.0'),
 
     # Add the refresh_cache URL and make domain specific
+    # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
 ]
 
