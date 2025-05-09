@@ -248,19 +248,28 @@ def filter_and_rank_models(models, domain="vision"):
     rank_map = {}
     current_rank = 1
     previous_score = None
+    tied_count = 0
+    
     for i, (model, score, is_x) in enumerate(model_scores):
         if is_x:
             # All "X" get the same rank (after all valids)
             break
+            
         if i == 0 or score != previous_score:
+            # If we had a tie, increment rank by the number of tied models
+            if tied_count > 0:
+                current_rank += tied_count
+            tied_count = 1
             rank_map[model.model_id] = current_rank
-            current_rank = i + 2
         else:
+            # This is a tie, use the same rank as the previous model
+            tied_count += 1
             rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
+            
         previous_score = score
 
     # Assign the same rank to all "X" (after all valids)
-    x_rank = current_rank
+    x_rank = current_rank + tied_count
     for model, score, is_x in model_scores:
         if is_x:
             model.rank = x_rank

@@ -85,6 +85,49 @@ class TestVision(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, '<h1 class="title">Anonymous Model #2</h1>')
 
+    def test_correct_ranking(self):
+        """Test that the ranking is incrementing correctly with identical scores"""
+        resp = self.client.get("http://localhost:8000/vision/")
+        self.assertEqual(resp.status_code, 200)
+        
+        # Find the models with identical scores
+        content = resp.content.decode('utf-8')
+        
+        # Find the ranks for these models
+        densenet_rank = None
+        resnet_rank = None
+        prev_rank = None
+        next_rank = None
+        
+        # Parse the HTML to find the ranks
+        lines = content.split('\n')
+        
+        # First pass: find the ranks for our target models
+        for i, line in enumerate(lines):
+            if 'densenet-169' in line:
+                # Look for the rank in the same tr element
+                for j in range(max(0, i-5), i+1):  # Look back a few lines to find the rank
+                    if 'class="rank">' in lines[j]:
+                        densenet_rank = int(lines[j].split('class="rank">')[1].split('</td>')[0])
+                        break
+            elif 'resnet-101_v2' in line:
+                # Look for the rank in the same tr element
+                for j in range(max(0, i-5), i+1):  # Look back a few lines to find the rank
+                    if 'class="rank">' in lines[j]:
+                        resnet_rank = int(lines[j].split('class="rank">')[1].split('</td>')[0])
+                        break
+        
+        print(f"densenet_rank: {densenet_rank}, resnet_rank: {resnet_rank}")
+    
+        # Verify the ranks
+        self.assertIsNotNone(densenet_rank, "Could not find densenet-169 rank")
+        self.assertIsNotNone(resnet_rank, "Could not find resnet-101_v2 rank")
+        self.assertEqual(densenet_rank, resnet_rank, "Models with identical scores should have the same rank")
+        self.assertIsNotNone(prev_rank, "Could not find previous rank")
+        self.assertIsNotNone(next_rank, "Could not find next rank")
+        self.assertEqual(prev_rank, densenet_rank - 1, "Previous rank should be one less")
+        self.assertEqual(next_rank, densenet_rank + 2, "Next rank should be one more")
+
 
 class TestLanguage(BaseTestCase):
     def test_language_leaderboard(self):
