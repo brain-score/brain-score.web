@@ -346,6 +346,7 @@ class FinalBenchmarkContext(models.Model):
     identifier = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
+
     # Metadata related fields that returns a JSON object of the above metadata objects. 
     # Columns become keys in the JSON object.
     benchmark_data_meta = JSONBField(null=True, blank=True)
