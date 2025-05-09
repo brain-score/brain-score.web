@@ -329,6 +329,7 @@ class FinalBenchmarkContext(models.Model):
     meta_id = models.IntegerField(null=True, blank=True)
     # Children returns a list of direct children of the benchmark else Null
     children = JSONBField(null=True, blank=True)
+
     # Parent returns a JSON object with the following keys:
     # identifier, domain, reference_id, order, parent_id, visible, owner_id
     parent = JSONBField(null=True, blank=True)
