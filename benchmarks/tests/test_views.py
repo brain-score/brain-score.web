@@ -118,7 +118,22 @@ class TestVision(BaseTestCase):
                         break
         
         print(f"densenet_rank: {densenet_rank}, resnet_rank: {resnet_rank}")
-    
+        
+        # Second pass: find the previous and next ranks
+        if densenet_rank is not None and resnet_rank is not None:
+            for line in lines:
+                if 'class="rank">' in line:
+                    rank = int(line.split('class="rank">')[1].split('</td>')[0])
+                    print(f"Found rank: {rank}")
+                    if rank == densenet_rank - 1:
+                        prev_rank = rank
+                        print(f"Found prev_rank: {prev_rank}")
+                    elif rank == densenet_rank + 2:
+                        next_rank = rank
+                        print(f"Found next_rank: {next_rank}")
+                        if prev_rank is not None:  # Only break if we've found both
+                            break
+        
         # Verify the ranks
         self.assertIsNotNone(densenet_rank, "Could not find densenet-169 rank")
         self.assertIsNotNone(resnet_rank, "Could not find resnet-101_v2 rank")
