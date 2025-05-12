@@ -169,3 +169,40 @@ class TestMaterializedViews(BaseTestCase):
                             f"Benchmark parents mismatch for {domain} view")
             self.assertEqual(new_context['not_shown_set'], legacy_context['not_shown_set'],
                             f"Not shown set mismatch for {domain} view")
+            
+    def test_compare_score_between_legacy_and_new_implementation(self):
+        """Test that the new materialized view implementation of get_context() produces equivalent output to the legacy implementation"""
+        from benchmarks.views.index import get_context as new_get_context
+        from benchmarks.tests.test_helpers.legacy_index import get_context as legacy_get_context
+        
+        domain = "vision"
+        user = None
+        show_public = True
+
+        new_context = new_get_context(domain=domain, user=user, show_public=show_public)
+        legacy_context = legacy_get_context(domain=domain, user=user, show_public=show_public)
+
+        new_row = new_context['models'][0]
+        legacy_row = legacy_context['models'][0]
+
+        # Make sure we are comparing the same model
+        self.assertEqual(new_row.name, legacy_row.name)
+        self.assertEqual(new_row.id, legacy_row.id)        
+
+        # Get the score for the model in the new context
+        new_score = new_row.scores[0]
+        legacy_score = legacy_row.scores[0]
+
+        # Compare score_ceiled
+        self.assertEqual(
+            float(new_score['score_ceiled'].strip('.')),  # Convert '.390' to 0.390
+            float(legacy_score.score_ceiled.strip('.')),  # Convert '.390' to 0.390
+            "Score ceiled mismatch between new and legacy implementation"
+        )
+
+        self.assertEqual(
+            new_score['benchmark']['identifier'],  # Changed from 'benchmark_identifier' to 'benchmark']['identifier'
+            legacy_score.benchmark.identifier,
+            "Benchmark identifier mismatch between new and legacy implementation"
+        )
+
