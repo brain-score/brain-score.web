@@ -42,9 +42,8 @@ def get_base_model_query(domain="vision"):
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
 
-# Cache the leaderboard HTML page for 15 minutes at a time
+# Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.
-# Consider using client-side caching in the future
 @cache_page(24 * 60 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
