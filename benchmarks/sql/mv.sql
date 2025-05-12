@@ -1237,6 +1237,7 @@ SELECT
     'task_specialization', mm2.task_specialization,
     'brainscore_link', mm2.brainscore_link,
     'hugging_face_link', mm2.hugging_face_link,
+    'runnable', mm2.runnable,
     'extra_notes', mm2.extra_notes
   ) AS model_meta
 FROM model_meta mm
