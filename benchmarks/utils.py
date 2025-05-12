@@ -1,3 +1,5 @@
+from typing import Callable, Optional, Dict, Any, List, Union
+from django.contrib.auth.models import User
 import hashlib
 import logging
 import requests
@@ -11,19 +13,37 @@ from django.http import JsonResponse, HttpRequest
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
-
-def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
-    '''
+def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
+    """
     Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
     Two-level caching:
         - Global cache for public data
         - User-specific cache for non-public data
     Args:
         timeout (int): Cache timeout in seconds. Defaults to 24 hours.
-    '''
+    """
     def decorator(func):  # Take function to be decorated (i.e., get_context)
         @wraps(func)  # Preserving original function's metadata attributes
-        def wrapper(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+        def wrapper(
+            user: Optional[User] = None,
+            domain: str = "vision",
+            benchmark_filter: Optional[str] = None,
+            model_filter: Optional[str] = None,
+            show_public: bool = False
+        ) -> Dict[str, Any]:
+            """
+            Wrapper function that implements the caching logic.
+            
+            Args:
+                user (Optional[User]): The user requesting the context, if any
+                domain (str): The domain to get context for (e.g. "vision", "language")
+                benchmark_filter (Optional[str]): Filter to apply to benchmarks
+                model_filter (Optional[str]): Filter to apply to models
+                show_public (bool): Whether to show only public data
+            
+            Returns:
+                Dict[str, Any]: The context dictionary containing models, benchmarks, and other data
+            """            
             # Get cache version from cache or set to 1 if not exists
             cache_version_key = f'cache_version_{domain}'
             cache_version = cache.get(cache_version_key, 1) # Get cache version from cache or set to 1 if not exists
@@ -75,10 +95,28 @@ def cache_get_context(timeout=24 * 60 * 60):  # 24 hour cache by default
     return decorator
 
 
-def cache_base_model_query(timeout=24 * 60 * 60):  # 24 hour cache by default
-    def decorator(func):
+def cache_base_model_query(timeout: int = 24 * 60 * 60) -> Callable:
+    """
+    Decorator that caches results of base model query function for faster loading.
+    
+    Args:
+        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
+    
+    Returns:
+        Callable: Decorated function that implements caching logic
+    """
+    def decorator(func: Callable[[str], Dict[str, Any]]) -> Callable[[str], Dict[str, Any]]:
         @wraps(func)
-        def wrapper(domain="vision"):
+        def wrapper(domain: str = "vision") -> Dict[str, Any]:
+            """
+            Wrapper function that implements the caching logic for base model queries.
+            
+            Args:
+                domain (str): The domain to get base models for (e.g. "vision", "language")
+            
+            Returns:
+                Dict[str, Any]: The base model query results
+            """
             # Create unique key for domain
             key_parts = ['base_model_query', domain]
             cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
