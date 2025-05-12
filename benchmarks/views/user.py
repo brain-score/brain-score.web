@@ -176,8 +176,8 @@ class LargeFileUpload(View):
 
     def post(self, request):
 
-        #MAX_BYTES =  (1024 ** 2)
         MAX_BYTES = 5 * (1024 ** 3)
+        EXEMPT_EMAILS = []  # list of users we want exempt (besides superusers) from 5GB limit,
 
         # Expecting the client to send file_name and file_type, e.g. via AJAX
         plugin_type = request.POST.get("bucket_choice")
@@ -186,6 +186,7 @@ class LargeFileUpload(View):
         owner = request.user if request.user.is_authenticated else User.objects.get(pk=2)
         file_type = request.POST.get("file_type") or "application/octet-stream"
         file_size = int(request.POST.get('file_size', 0))
+        domain = "vision"  # hardcoded for now
 
         if not file_name:
             return JsonResponse({'error': 'Missing file information'}, status=400)
@@ -194,7 +195,12 @@ class LargeFileUpload(View):
         total_used = FileUploadTracker.objects.filter(owner=owner) \
                          .aggregate(total=Sum('file_size_bytes'))['total'] or 0
 
-        if total_used + file_size > MAX_BYTES:
+        if request.user.is_authenticated:
+            is_exempt = (request.user.is_superuser or request.user.email in EXEMPT_EMAILS)
+        else:
+            is_exempt = False
+
+        if not is_exempt and (total_used + file_size > MAX_BYTES):
             return JsonResponse({
                 'error': f'You have exceeded your {round(MAX_BYTES / (1024 ** 3), 3)} GB quota. Please contact the Brain-Score team.'
             }, status=400)
@@ -229,19 +235,50 @@ class LargeFileUpload(View):
             f"https://brainscore-storage.s3.{settings.REGION_NAME}.amazonaws.com/"
             f"{object_key}"
         )
-        FileUploadTracker.objects.create(
-            filename=file_name,
-            link=public_url,
-            owner=owner,
-            plugin_type=plugin_type,
-            file_size_bytes=file_size,
-        )
 
         # Return the URL and the required form fields, plus the object key for reference.
         return JsonResponse({
             'url': presigned_post['url'],
             'fields': presigned_post['fields'],
-            'key': object_key
+            'key': object_key,
+            'file_size_bytes': file_size,
+            'domain': domain,
+        })
+
+class FinalizeUpload(View):
+    def post(self, request):
+        object_key = request.POST.get('object_key')
+        bucket = "brainscore-storage"
+        s3 = boto3.client('s3', region_name=settings.REGION_NAME)
+
+        # List versions and pick the latest
+        versions = s3.list_object_versions(Bucket=bucket, Prefix=object_key).get('Versions', [])
+        latest = next((v for v in versions
+                         if v['Key']==object_key and v['IsLatest']), None)
+        if not latest:
+            return JsonResponse({'error':'version not found'}, status=500)
+
+        version_id = latest['VersionId']
+        public_url = (
+          f"https://{bucket}.s3.{settings.REGION_NAME}.amazonaws.com/"
+          f"{object_key}?versionId={version_id}"
+        )
+
+        size = latest['Size']
+        # Record it in the DB
+        FileUploadTracker.objects.create(
+            filename = object_key.rsplit('/',1)[-1],
+            link = public_url,
+            owner = request.user,
+            plugin_type = request.POST.get('plugin_type'),
+            version_id = version_id,
+            file_size_bytes = int(request.POST.get('file_size_bytes', 0)),
+            domain = request.POST.get('domain'),
+        )
+
+        return JsonResponse({
+            'version_id': version_id,
+            'public_url': public_url
         })
 
 
@@ -383,7 +420,6 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
         return False, "Your zip file size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
                       "If so, please contact the Brain-Score team and we can assist you in hosting your model " \
                       "weights elsewhere."
-
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
 
@@ -635,7 +671,7 @@ class ProfileAccount(View):
         if user is not None:
             login(request, user)
             files_submitted = FileUploadTracker.objects.filter(
-                owner=user
+                owner_id=user.id
             ).order_by('-upload_datetime')
             context = {
                 "domains": ["vision", "language"],

@@ -46,6 +46,7 @@ non_domain_urls = [
 
     # Large File upload page:
     path('profile/large_file_upload/', user.LargeFileUpload.as_view(), name=f'large_file_upload'),
+    path('profile/large_file_upload/finalize/', user.FinalizeUpload.as_view(), name='finalize_upload'),
 
     # central tutorial page, constant across all Brain-Score domains
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
