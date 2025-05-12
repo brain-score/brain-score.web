@@ -50,8 +50,6 @@ def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
     
-    print(f"Type of user: {type(user)}")
-
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
