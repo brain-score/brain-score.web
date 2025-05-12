@@ -319,19 +319,44 @@ class JSONBField(models.JSONField):
 class FinalBenchmarkContext(models.Model):
     """
     Materialized view for benchmark context.
-    Used to provide a similar output as _collect_benchmarks() previously
-    used in /views/index.py.
+
+    This view aggregates benchmark information including hierarchy, metadata, and relationships.
+    It replaces the previous _collect_benchmarks() functionality from views/index.py.
+
+    Attributes:
+        benchmark_type_id (str): Primary key, unique identifier for the benchmark type (e.g., MajajHong2015.IT-pls, Ferguson2024)
+        version (int): Version number of the benchmark
+        ceiling (str): Ceiling score for the benchmark
+        ceiling_error (float, optional): Error margin for the ceiling score
+        children (dict, optional): JSON object containing direct child benchmark identifiers (e.g., ["Ferguson2024llh-value_delta", "Ferguson2024round_f-value_delta", ...])
+        parent (dict, optional): JSON object with parent benchmark info including:
+            - identifier: Parent benchmark identifier (e.g., "behavior_vision")
+            - domain: Domain of parent benchmark (e.g., "vision")
+            - reference_id: Reference ID (e.g., "null" for parents)
+            - order: Display order (e.g., 2)
+            - parent_id: Parent's parent ID (e.g., "average_vision")
+            - visible: Visibility status (e.g., True)
+            - owner_id: Owner's user ID (e.g., 2)
+        visible (bool): Whether the benchmark is visible in the UI
+        domain (str): Domain of the benchmark (e.g. 'vision')
+        benchmark_url (str): Benchmark reference URL
+        benchmark_reference_identifier (str): Reference identifier for the benchmark (e.g., "Ferguson et al., 2024")
+        benchmark_bibtex (str): BibTeX citation for the benchmark
+        depth (int): Depth in the benchmark hierarchy (e.g., 2)
+        number_of_all_children (int): Total number of child benchmarks (e.g., 14)
+        overall_order (int): Global ordering of the benchmark
+        identifier (str): Unique identifier for the benchmark (e.g., identifier + version; "Ferguson2024_v0")
+        short_name (str): Display name for the benchmark (e.g., Ferguson2024)
+        benchmark_data_meta (dict, optional): JSON object containing benchmark data metadata
+        benchmark_metric_meta (dict, optional): JSON object containing benchmark metric metadata
+        benchmark_stimuli_meta (dict, optional): JSON object containing benchmark stimuli metadata
     """
     benchmark_type_id = models.CharField(max_length=255, primary_key=True)
     version = models.IntegerField()
     ceiling = models.CharField(max_length=32)
     ceiling_error = models.FloatField(null=True, blank=True)
     meta_id = models.IntegerField(null=True, blank=True)
-    # Children returns a list of direct children of the benchmark else Null
     children = JSONBField(null=True, blank=True)
-
-    # Parent returns a JSON object with the following keys:
-    # identifier, domain, reference_id, order, parent_id, visible, owner_id
     parent = JSONBField(null=True, blank=True)
     visible = models.BooleanField(default=True)
     owner_id = models.IntegerField(null=True, blank=True)
@@ -364,11 +389,70 @@ class FinalBenchmarkContext(models.Model):
 
 class FinalModelContext(models.Model):
     """
-    Represents a materialized view of model context, used to replicate the output of
-    the previously used `_collect_models()` method in /views/index.py.
+    Materialized view for model context.
+
+    This view aggregations all model-related information including scores, layers, and metadata.
+    It replaces the previously used `_collect_models()` method in /views/index.py.
+
+    Attributes:
+        model_id (int): Primary key, unique identifier for the model
+        name (str): Name of the model
+        reference_identifier (str, optional): Reference identifier for the model's publication
+        url (str, optional): URL to model details or repository
+        domain (str): Domain of the model (e.g. 'vision')
+        visual_degrees (int, optional): Visual degrees used in model evaluation
+        rank (int): Model's ranking
+        user (dict, optional): JSON object containing user info with keys:
+            - id: User ID
+            - email: User email
+            - is_staff: Staff status
+            - is_active: Active status
+            - last_login: Last login timestamp
+            - display_name: User's display name
+            - is_superuser: Superuser status
+        owner (dict, optional): JSON object with owner information (same structure as user)
+        submitter (dict, optional): JSON object with submitter information (same structure as user)
+        build_status (str): Current build status of the model
+        layers (dict, optional): JSON object containing layer information for IT, V1, V2, V4
+        scores (dict, optional): Nested JSON object containing benchmark scores and metadata with each dictionary containingkeys:
+            - best:
+            - rank
+            - color
+            - error
+            - median
+            - comment
+            - benchmark (dict): JSON object of appropriate FinalBenchmarkContext
+                - id 
+                - url
+                - meta
+                - year
+                - depth
+                - author
+                - bibtex
+                - parent
+                - ceiling
+                - meta_id
+                - version
+                - children
+                - identifier
+                - short_name
+                - root_parent
+                - ceiling_error
+                - overall_order
+                - benchmark_type_id
+                - reference_identifier
+                - number_of_all_children
+            - score_raw (float)
+            - is_complete
+            - score_ceiled_raw (float)
+            - score_ceiled (string of score_ceiled_raw with three decimal places)
+            - visual_degrees
+            - versioned_benchmark_identifier
+        competition (str, optional): Competition the model is part of
+        public (bool): Whether the model is publicly visible
+        model_meta (dict, optional): JSON object containing model metadata including (see modelmeta table; attributes become keys)
     """
 
-    # Core model metadata
     model_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
@@ -376,35 +460,21 @@ class FinalModelContext(models.Model):
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
     rank = models.IntegerField()
-
-    # User & ownership information
-    user = JSONBField(null=True, blank=True)  # keys: id, email, is_staff, is_active, last_login, display_name, is_superuser
+    user = JSONBField(null=True, blank=True) 
     user_id = models.IntegerField(null=True, blank=True)
-    owner = JSONBField(null=True, blank=True)  # same structure as 'user'
-    submitter = JSONBField(null=True, blank=True)  # same structure as 'user'
-
-    # Submission & build info
+    owner = JSONBField(null=True, blank=True) 
+    submitter = JSONBField(null=True, blank=True) 
     submission_id = models.IntegerField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
     jenkins_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True)
-
-    # Model relationships
     primary_model_id = models.IntegerField(null=True, blank=True)
     num_secondary_models = models.IntegerField(null=True, blank=True)
-
-    # Evaluation and score-related fields
     layers = JSONBField(null=True, blank=True)  # keys: IT, V1, V2, V4
     scores = JSONBField(null=True, blank=True)
-    # `scores` includes nested metadata for benchmarks and parent benchmarks.
-
-    # Competition or publication context
     competition = models.CharField(max_length=255, null=True, blank=True)
     public = models.BooleanField()
-
-    # Composite metadata
     model_meta = JSONBField(null=True, blank=True)
-    # Keys mirror the individual metadata fields above.
 
     class Meta:
         managed = False
