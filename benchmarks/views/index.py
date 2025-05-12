@@ -45,7 +45,7 @@ def get_base_model_query(domain="vision"):
 # Cache the leaderboard HTML page for 15 minutes at a time
 # Server-side HTML caching until leaderboard views are introduced.
 # Consider using client-side caching in the future
-@cache_page(24 * 60 * 60)
+#@cache_page(1 * 60 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
@@ -59,7 +59,9 @@ def view(request, domain: str):
         # No user - get public context
         leaderboard_context = get_context(domain=domain, show_public=True)
     end_time = time()
-    print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
+    time_taken = f"Total time taken to get leaderboard context: {end_time - start_time} seconds"
+    _logger.debug(time_taken)
+    print(time_taken)
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
