@@ -199,9 +199,10 @@ class TestMaterializedViews(BaseTestCase):
             float(legacy_score.score_ceiled.strip('.')),  # Convert '.390' to 0.390
             "Score ceiled mismatch between new and legacy implementation"
         )
-
+        
+        # Compare benchmark identifier
         self.assertEqual(
-            new_score['benchmark']['identifier'],  # Changed from 'benchmark_identifier' to 'benchmark']['identifier'
+            new_score['benchmark']['identifier'],
             legacy_score.benchmark.identifier,
             "Benchmark identifier mismatch between new and legacy implementation"
         )
