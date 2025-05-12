@@ -101,7 +101,12 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Apply any additional model filters
     if model_filter:
         model_query = list(model_filter(models))
-       
+
+    public_runnable = pd.read_csv('benchmarks/views/model_status.csv')
+    public_runnable = set(public_runnable[public_runnable['status'] == True]['model'].tolist())
+
+    models = [model for model in models if model.name in public_runnable]
+
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
     model_rows_reranked = filter_and_rank_models(models, domain)
