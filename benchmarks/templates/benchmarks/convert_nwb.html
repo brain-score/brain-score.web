@@ -1,0 +1,56 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+
+{% block banner %}
+<h1> Convert NWB Data </h1>
+<p>Here you can convert your NWB data to a BrainScore Benchmark!</p>
+{% endblock %}
+
+{% block info_section %}
+  {% include "benchmarks/tutorials/tutorial-info-section.html" %}
+{% endblock %}
+
+
+{% block content %}
+
+{% if user %}
+    <div class="box leaderboard-table-component">
+       <h4 class="title is-4"> To convert, upload a JSON file containing the required NWB metadata.</h4>
+        <br>
+        
+          <p>Feel free to download a reference template JSON file  <a href="{% static "benchmarks/example_json.json" %}" download> here</a>,
+            and fill in the required values.</p>
+        <br>
+
+        <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <p class="special">
+                    <br>
+                    {{ field.label_tag }}
+                    <br>
+                    {{ field }}
+                    <br>
+                    {% if field.help_text %}
+                        <small style="display: none">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p style="color: red">{{ error }}</p>
+                    {% endfor %}
+                </p>
+            {% endfor %}
+            </p>
+            <br>
+            <button type="submit" class="button submission">Package Data</button>
+            <br>
+        </form>
+        <br>
+        <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial_no_top">Logout</button>
+    </div>
+{% else %}
+{% endif %}
+
+{% endblock %}
+
+

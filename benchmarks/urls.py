@@ -42,6 +42,7 @@ non_domain_urls = [
     path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
+    path('profile/nwb/', user.ConvertNWB.as_view(domain="vision"), name=f'convert-nwb'),
 
     # central tutorial page, constant across all Brain-Score domains
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
