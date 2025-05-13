@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                 ('task_specialization', models.CharField(default=None, max_length=100, null=True)),
                 ('brainscore_link', models.CharField(default=None, max_length=256, null=True)),
                 ('hugging_face_link', models.CharField(default=None, max_length=256, null=True)),
+                ('runnable', models.BooleanField(default=None, null=True)),
                 ('extra_notes', models.CharField(default=None, max_length=1000, null=True)),
             ],
             options={

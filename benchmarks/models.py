@@ -258,6 +258,7 @@ class ModelMeta(models.Model):
     task_specialization = models.CharField(max_length=100, null=True, default=None)
     brainscore_link = models.CharField(max_length=256, null=True, default=None)
     hugging_face_link = models.CharField(max_length=256, null=True, default=None)
+    runnable = models.BooleanField(default=None, null=True)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
 
     class Meta:
@@ -299,7 +300,7 @@ class JSONBField(models.JSONField):
     However, in the materialized view creation, JSONB instead of JSON is used.
     Psycopg2 automatically converts JSONB to python dicts/lists.
 
-    JSONField led to a TypeError because it would receive a string instead of
+    JSONField will lead to a TypeError because it would receive a string instead of
     an already decoded Python object.
 
     JSONB is also more performant for large datasets (like FinalModelContext)
@@ -351,6 +352,7 @@ class FinalBenchmarkContext(models.Model):
         benchmark_metric_meta (dict, optional): JSON object containing benchmark metric metadata
         benchmark_stimuli_meta (dict, optional): JSON object containing benchmark stimuli metadata
     """
+
     benchmark_type_id = models.CharField(max_length=255, primary_key=True)
     version = models.IntegerField()
     ceiling = models.CharField(max_length=32)
@@ -372,7 +374,7 @@ class FinalBenchmarkContext(models.Model):
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
 
-    # Metadata related fields that returns a JSON object of the above metadata objects.
+    # Metadata related fields that returns a JSON object of the above metadata objects. 
     # Columns become keys in the JSON object.
     benchmark_data_meta = JSONBField(null=True, blank=True)
     benchmark_metric_meta = JSONBField(null=True, blank=True)
@@ -415,14 +417,14 @@ class FinalModelContext(models.Model):
         build_status (str): Current build status of the model
         layers (dict, optional): JSON object containing layer information for IT, V1, V2, V4
         scores (dict, optional): Nested JSON object containing benchmark scores and metadata with each dictionary containingkeys:
-            - best:
+            - best
             - rank
             - color
             - error
             - median
             - comment
             - benchmark (dict): JSON object of appropriate FinalBenchmarkContext
-                - id
+                - id 
                 - url
                 - meta
                 - year
@@ -460,10 +462,10 @@ class FinalModelContext(models.Model):
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
     rank = models.IntegerField()
-    user = JSONBField(null=True, blank=True)
+    user = JSONBField(null=True, blank=True) 
     user_id = models.IntegerField(null=True, blank=True)
-    owner = JSONBField(null=True, blank=True)
-    submitter = JSONBField(null=True, blank=True)
+    owner = JSONBField(null=True, blank=True) 
+    submitter = JSONBField(null=True, blank=True) 
     submission_id = models.IntegerField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
     jenkins_id = models.IntegerField(null=True, blank=True)
@@ -497,7 +499,7 @@ class BenchmarkMinMax(models.Model):
     class Meta:
         managed = False
         db_table = 'mv_benchmark_minmax'
-
+        
 class FileUploadTracker(models.Model):
     id = models.AutoField(primary_key=True, serialize=False)
     filename = models.CharField(max_length=1000, null=True)
@@ -511,3 +513,4 @@ class FileUploadTracker(models.Model):
 
     class Meta:
         db_table = 'brainscore_fileuploadtracker'
+
