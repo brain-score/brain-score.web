@@ -185,8 +185,8 @@ class LargeFileUpload(View):
         user_id = request.user.id if request.user.is_authenticated else 2  # default to Brain-Score team
         owner = request.user if request.user.is_authenticated else User.objects.get(pk=2)
         file_type = request.POST.get("file_type") or "application/octet-stream"
-        file_size = int(request.POST.get('file_size', 0))
-        domain = "vision"  # hardcoded for now
+        file_size_bytes = int(request.POST.get('file_size_bytes', 0))  # upload time file size for quota
+        domain = request.POST.get("domain")
 
         if not file_name:
             return JsonResponse({'error': 'Missing file information'}, status=400)
@@ -195,12 +195,8 @@ class LargeFileUpload(View):
         total_used = FileUploadTracker.objects.filter(owner=owner) \
                          .aggregate(total=Sum('file_size_bytes'))['total'] or 0
 
-        if request.user.is_authenticated:
-            is_exempt = (request.user.is_superuser or request.user.email in EXEMPT_EMAILS)
-        else:
-            is_exempt = False
-
-        if not is_exempt and (total_used + file_size > MAX_BYTES):
+        is_exempt = (request.user.is_superuser or request.user.email in EXEMPT_EMAILS) if request.user.is_authenticated else False
+        if not is_exempt and (total_used + file_size_bytes > MAX_BYTES):
             return JsonResponse({
                 'error': f'You have exceeded your {round(MAX_BYTES / (1024 ** 3), 3)} GB quota. Please contact the Brain-Score team.'
             }, status=400)
@@ -210,7 +206,7 @@ class LargeFileUpload(View):
                                  endpoint_url="https://s3.us-east-2.amazonaws.com")
 
         # Create a unique object key; here we simply use a folder and the original file name
-        object_key = f"brainscore-vision/{plugin_type}/user_{user_id}/{file_name}"
+        object_key = f"brainscore-{domain}/{plugin_type}/user_{user_id}/{file_name}"
 
         try:
             # Generate a presigned POST that allows a form upload directly to S3.
@@ -241,7 +237,7 @@ class LargeFileUpload(View):
             'url': presigned_post['url'],
             'fields': presigned_post['fields'],
             'key': object_key,
-            'file_size_bytes': file_size,
+            "file_size_bytes": file_size_bytes,
             'domain': domain,
         })
 
@@ -264,7 +260,6 @@ class FinalizeUpload(View):
           f"{object_key}?versionId={version_id}"
         )
 
-        size = latest['Size']
         # Record it in the DB
         FileUploadTracker.objects.create(
             filename = object_key.rsplit('/',1)[-1],

@@ -51,40 +51,13 @@
           <strong>Total storage used:</strong>
           {{ total_used_gb }} GB / {{ quota_gb }} GB
         </div>
-
         {% if files_submitted %}
-            <style>
-              .copy-cell { position: relative; }
-              .python-tooltip {
-                display: none;
-                position: absolute;
-                top: 2.5em;
-                left: 0;
-                background: white;
-                border: 1px solid #ccc;
-                padding: 1em;
-                z-index: 10;
-                width: 30em;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-              }
-              .copy-cell:hover .python-tooltip {
-                display: block;
-              }
-              .python-tooltip pre {
-                margin-left: 0;
-                margin-top: 1.0em;
-                margin-bottom: 1.0em;
-                background: #f5f5f5;
-                padding: 0.5em;
-                overflow-x: auto;
-              }
-            </style>
-
             <table class="table is-striped is-hoverable is-fullwidth">
                 <thead>
                     <tr>
                         <th>Filename</th>
                         <th>Upload Time</th>
+                        <th>Domain</th>
                         <th>Folder</th>
                         <th>File Size</th>
                         <th>Version ID</th>
@@ -93,13 +66,14 @@
                 </thead>
                 <tbody>
                     {% for f in files_submitted %}
-                        <tr>
+                        <tr class="{% if forloop.counter > 5 %}extra-row{% endif %}">
                             <td>
                               <a href="{{ f.link }}" target="_blank" class="has-text-link">
                                 {{ f.filename }}
                               </a>
                             </td>
                             <td>{{ f.upload_datetime|date:"F j, Y g:i A" }}</td>
+                            <td>{{ f.domain }}</td>
                             <td>/{{ f.plugin_type }}</td>
                             <td>{{ f.file_size_bytes|filesizeformat }}</td>
                             <td>
@@ -112,7 +86,7 @@
                             <td class="copy-cell">
                               <button type="button"
                                       class="button is-small is-link copy-btn"
-                                      data-code='file = load_file(bucket="brainscore-storage", folder_name="brainscore-vision/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                                      data-code='file = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
                 relative_path="{{f.filename}}",
                 version_id="{{f.version_id}}",
                 )'>
@@ -120,7 +94,7 @@
                               </button>
                               <div class="python-tooltip">
                                 <p>To use this file, copy and paste the code below into your Brain-Score plugin file:</p>
-                                <pre><code>file = load_file(bucket="brainscore-storage", folder_name="brainscore-vision/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                                <pre><code>file = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
                 relative_path="{{f.filename}}",
                 version_id="{{f.version_id}}",
                 )</code></pre>
@@ -130,6 +104,13 @@
                     {% endfor %}
                 </tbody>
             </table>
+        {% if files_submitted|length > 5 %}
+            <div class="has-text-centered" style="margin-top:1em;">
+                <button id="toggle-rows" class="button is-small is-light">
+                    Show all uploads ({{ files_submitted|length }} total) ▼
+                </button>
+            </div>
+        {% endif %}
         {% else %}
           <p>No files submitted yet.</p>
         {% endif %}

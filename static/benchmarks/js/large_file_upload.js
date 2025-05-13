@@ -17,8 +17,10 @@ document.getElementById('upload-form').addEventListener('submit', function(event
     formData.append('file_name', fileName);
     formData.append('file_type', fileType);
     formData.append('bucket_choice', document.getElementById('bucketChoice').value);
+    formData.append('domain', document.getElementById('bucketChoiceDomain').value);
+    console.log("Domain:",  document.getElementById('bucketChoiceDomain').value);
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-    formData.append('file_size', file.size);
+    formData.append('file_size_bytes', file.size);
     console.log("Request body string:", formData.toString());
 
     // Step 1: Request a presigned POST from the Django backend
@@ -83,6 +85,8 @@ document.getElementById('upload-form').addEventListener('submit', function(event
                     body: new URLSearchParams({
                        object_key: objectKey,
                         plugin_type: document.getElementById('bucketChoice').value,
+                        file_size_bytes: file.size,
+                        domain: document.getElementById('bucketChoiceDomain').value,
                         csrfmiddlewaretoken: csrfToken
                     }).toString()
                })
