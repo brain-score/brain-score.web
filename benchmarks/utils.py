@@ -189,6 +189,7 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     
     # Invalidate cache by incrementing version
     new_version = invalidate_domain_cache(domain)
+    cache.clear()
     
     # Optionally rebuild the cache immediately
     rebuild = request.GET.get('rebuild', 'false').lower() == 'true' # Get rebuild parameter from URL
