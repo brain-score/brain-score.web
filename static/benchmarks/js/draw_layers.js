@@ -1,4 +1,6 @@
+// add author statement here
 let currentlyHighlightedRect = null;
+
 const svg = d3.select("svg");
 console.log("draw_layers.js loaded");
 
