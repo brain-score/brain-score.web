@@ -195,7 +195,7 @@ class LargeFileUpload(View):
         total_used = FileUploadTracker.objects.filter(owner=owner) \
                          .aggregate(total=Sum('file_size_bytes'))['total'] or 0
 
-        is_exempt = (request.user.is_superuser or request.user.email in EXEMPT_EMAILS) if request.user.is_authenticated else False
+        is_exempt = (request.user.is_superuser or request.user.is_quota_exempt) if request.user.is_authenticated else False
         if not is_exempt and (total_used + file_size_bytes > MAX_BYTES):
             return JsonResponse({
                 'error': f'You have exceeded your {round(MAX_BYTES / (1024 ** 3), 3)} GB quota. Please contact the Brain-Score team.'

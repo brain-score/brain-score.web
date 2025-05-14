@@ -58,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             'Unselect this instead of deleting accounts.'
         ),
     )
+    is_quota_exempt = models.BooleanField(default=False)  # file upload quota exemption
 
     USERNAME_FIELD = 'email'
     objects = UserManager()
@@ -502,14 +503,14 @@ class BenchmarkMinMax(models.Model):
         
 class FileUploadTracker(models.Model):
     id = models.AutoField(primary_key=True, serialize=False)
-    filename = models.CharField(max_length=1000, null=True)
-    link = models.CharField(max_length=1000, null=True)
+    filename = models.CharField(max_length=1000)
+    link = models.CharField(max_length=1000)
     upload_datetime =  models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(on_delete=models.PROTECT, to='benchmarks.user')
-    plugin_type = models.CharField(max_length=100, null=True)
+    plugin_type = models.CharField(max_length=100)
     file_size_bytes = models.BigIntegerField(default=0)
     version_id = models.CharField(max_length=255, null=True)
-    domain = models.CharField(max_length=100, null=True)
+    domain = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'brainscore_fileuploadtracker'
