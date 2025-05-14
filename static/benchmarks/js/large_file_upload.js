@@ -18,17 +18,13 @@ document.getElementById('upload-form').addEventListener('submit', function(event
     formData.append('file_type', fileType);
     formData.append('bucket_choice', document.getElementById('bucketChoice').value);
     formData.append('domain', document.getElementById('bucketChoiceDomain').value);
-    console.log("Domain:",  document.getElementById('bucketChoiceDomain').value);
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
     formData.append('file_size_bytes', file.size);
-    console.log("Request body string:", formData.toString());
 
     // Step 1: Request a presigned POST from the Django backend
     fetch(window.location.href, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString()
     })
     .then(response => response.json())
@@ -37,81 +33,75 @@ document.getElementById('upload-form').addEventListener('submit', function(event
             document.getElementById('message').innerText = "Error: " + data.error;
             return;
         }
-        const s3Url = data.url;     // S3 endpoint URL for presigned POST
-        const fields = data.fields; // Form fields required by S3
+        const s3Url    = data.url;
+        const fields   = data.fields;
         const objectKey = data.key;
 
-        // Step 2: Construct a new FormData for the S3 POST upload.
+        // Step 2: Construct S3 FormData
         const s3FormData = new FormData();
-        for (const key in fields) {
-            s3FormData.append(key, fields[key]);
-        }
+        for (const key in fields) s3FormData.append(key, fields[key]);
         s3FormData.append("file", file);
 
-        // Unhide the progress container now that upload is starting.
+        // Show progress UI
         document.getElementById('upload-progress').style.display = 'block';
 
-        // Create a new XMLHttpRequest to handle the S3 upload.
         const xhr = new XMLHttpRequest();
         xhr.open('POST', s3Url);
 
-        // Update the progress bar and progress text.
-        xhr.upload.addEventListener('progress', function(event) {
+        // Progress bar
+        xhr.upload.addEventListener('progress', (event) => {
             if (event.lengthComputable) {
-                // Calculate percentage complete.
-                const percentComplete = (event.loaded / event.total) * 100;
-                document.getElementById('progress').style.width = percentComplete + '%';
+                const percent = (event.loaded / event.total) * 100;
+                document.getElementById('progress').style.width = percent + '%';
 
-                // Convert bytes to MB (1 MB = 1048576 bytes) and format the values.
                 const loadedMB = (event.loaded / 1048576).toFixed(2);
-                const totalMB = (event.total / 1048576).toFixed(2);
-
-                // Update the progress text (e.g., "1.23 MB / 10.00 MB (12.3%)").
-                document.getElementById('progress-text').innerText = `${loadedMB} MB / ${totalMB} MB (${percentComplete.toFixed(1)}%)`;
+                const totalMB  = (event.total / 1048576).toFixed(2);
+                document.getElementById('progress-text').innerText =
+                    `${loadedMB} MB / ${totalMB} MB (${percent.toFixed(1)}%)`;
             }
         });
 
-        // Monitor state changes for success or failure.
-        bucket = "test-large-file-uploads-quest"
-        const bucketUrl = "https://" + bucket + ".s3.us-east-2.amazonaws.com/" + objectKey;
-               xhr.onreadystatechange = function() {
+        // Completion
+        xhr.onreadystatechange = () => {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
+
             if (xhr.status === 204 || xhr.status === 200) {
-                // Step (3): finalize on our server to grab the VersionId
+                // Finalize to get versionId
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 fetch('/profile/large_file_upload/finalize/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
-                       object_key: objectKey,
-                        plugin_type: document.getElementById('bucketChoice').value,
-                        file_size_bytes: file.size,
-                        domain: document.getElementById('bucketChoiceDomain').value,
+                        object_key:        objectKey,
+                        plugin_type:       document.getElementById('bucketChoice').value,
+                        file_size_bytes:   file.size,
+                        domain:            document.getElementById('bucketChoiceDomain').value,
                         csrfmiddlewaretoken: csrfToken
                     }).toString()
-               })
+                })
                 .then(r => r.json())
                 .then(data => {
-                   if (data.error) {
+                    if (data.error) {
                         document.getElementById('message').innerText = data.error;
-                   } else {
-                        // show the last 5 chars of version_id
-                       const shortVer = data.version_id.slice(-5);
-                       document.getElementById('message').innerHTML =
-                           `Upload complete! 
-                            <a href="${data.public_url}" target="_blank">Download</a>`;
-                   }
+                    } else {
+                        // Success message + reset form
+                        document.getElementById('message').innerHTML =
+                            `Upload complete! <a href="${data.public_url}" target="_blank">Download</a>`;
+                        // reset the file input and selects
+                        document.getElementById('upload-form').reset();
+                        // hide progress bar
+                        document.getElementById('upload-progress').style.display = 'none';
+                    }
                 })
                 .catch(err => {
                     document.getElementById('message').innerText = "Error finalizing upload: " + err;
-               });
+                });
             } else {
                 document.getElementById('message').innerText =
                     "Upload failed. S3 responded with status: " + xhr.status;
-           }
+            }
         };
 
-        // Send the form data to S3.
         xhr.send(s3FormData);
     })
     .catch(err => {
