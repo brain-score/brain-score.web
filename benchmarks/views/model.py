@@ -10,8 +10,17 @@ from django.template.defaulttags import register
 from .index import get_context
 from ..models import BenchmarkType, Model
 
+# FOR DUMMY VISUALIZATION #
+import json
+import os
+
+
+
+
 _logger = logging.getLogger(__name__)
 
+# Load JSON file for model architecture visualization
+ARCHITECTURE_JSON_DIR = "static/model_architecture_json/"
 
 def view(request, id: int, domain: str):
     model, model_context, reference_context = determine_context(id, request, domain)
@@ -31,10 +40,30 @@ def view(request, id: int, domain: str):
     layers = get_layers(model)
     model_context['layers'] = layers
 
+    # _logger.info(f"Extracted Layers Data: {json.dumps(layers, indent=4)}")
+
+    DUMMY_LAYERS_FILE = os.path.join(ARCHITECTURE_JSON_DIR, "dummy_layers.json")
+
+    # Add Visualization-Layer-Parameters to model_context
+    if os.path.exists(DUMMY_LAYERS_FILE):
+        with open(DUMMY_LAYERS_FILE, 'r') as f:
+            dummy_layers_data = json.load(f)
+
+        model_context['visualization_metadata'] = dummy_layers_data  # Store full JSON
+
+        if "Visualization-Layer-Parameters" in dummy_layers_data:
+            # ANEESA ADDED #
+            vis_layers = dummy_layers_data["Visualization-Layer-Parameters"]
+            model_context['visualization_layers'] = vis_layers
+            # model_context['visualization_layers_json'] = json.dumps(vis_layers)
+            # model_context['visualization_layers'] = dummy_layers_data["Visualization-Layer-Parameters"]
+
+
     # only show detailed model info to superuser or owner:
     if request.user.is_superuser or model.user.id == request.user.id:
         model_context['submission_details_visible'] = True
     return render(request, 'benchmarks/model.html', model_context)
+
 
 
 def determine_context(id, request, domain: str):

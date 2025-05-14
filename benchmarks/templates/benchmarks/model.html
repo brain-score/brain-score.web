@@ -154,6 +154,19 @@
             <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
         </div>
     </div>
+
+    <div class="box" id="selected-metadata-box">
+        <div class="card-content">
+            <p id="selected-metadata-title" class="subtitle is-5" style="display: none;">
+                Selected Layers Metadata
+            </p>
+            <div id="selected-metadata-content">
+                <span class="has-text-grey">Shift-click layers to view metadata.</span>
+            </div>
+        </div>
+    </div>
+
+
 {% endblock %}
 
 
@@ -286,6 +299,10 @@
                 {% endfor %}
             </div>
         </div>
+
+        <!-- ADD VISUALIZATION HERE -->
+        {% include "benchmarks/model_visual.html" with model_architecture=model_architecture %}
+
 
         {# Usage #}
         <div class="box">

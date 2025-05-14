@@ -1,0 +1,45 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Model Visualization - {{ model.id }}</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+</head>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("D3.js is loaded:", d3);
+    });
+</script>
+
+
+<body>
+    <h1>Model Architecture Visualization (Model ID: {{ model.id }})</h1>
+
+    <div id="svg-wrapper" style="width: 100%; overflow-x: auto;">
+        <svg width="1600" height="600"></svg>
+    </div>
+
+    <!-- Floating info box for layer metadata -->
+    <div id="layer-info-box"
+        style="display:none; position:absolute; z-index:1000; background:white; border:1px solid #ccc;
+            padding:10px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.2); font-size:14px;">
+    </div>
+
+
+    {{ visualization_metadata|json_script:"layers-json" }}
+
+
+
+
+<script src="{% static 'benchmarks/js/draw_layers.js' %}"></script>
+
+
+
+</body>
+</html>
+
+
+

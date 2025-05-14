@@ -1,0 +1,60 @@
+{
+    "Region": {
+        "V1": "layer2",
+        "V2": "layer4",
+        "V4": "layer5",
+        "IT": "layer8"
+    },
+    "Visualization-Layer-Parameters": {
+        "layer1": [5, 10],
+        "layer2": [10, 15],
+        "layer3": [15, 20],
+        "layer4": [20, 25],
+        "layer5": [25, 30],
+        "layer6": [30, 35],
+        "layer7": [35, 40],
+        "layer8": [1, 100]
+    },
+    "Visualization-Connections": [
+        ["layer1", "layer2"],
+        ["layer2", "layer3"],
+        ["layer3", "layer4"],
+        ["layer4", "layer5"],
+        ["layer5", "layer6"],
+        ["layer6", "layer7"],
+        ["layer7", "layer8"],
+        ["layer3", "layer3"],
+        ["layer6", "layer2"]
+    ],
+    "Visualization-Description": {
+        "layer1": {
+            "metadata": {
+                "neurons": 2500,
+                "activation": "ReLU",
+                "inputDim": "25x100",
+                "outputDim": "25x100",
+                "description": "initial processing layer for visual features"
+            }
+        },
+        "layer2": {
+            "metadata": {
+                "neurons": 3000,
+                "activation": "ReLU",
+                "inputDim": "25x100",
+                "outputDim": "20x80",
+                "description": "V1 area"
+            }
+        },
+        "layer4": {
+            "metadata": {
+                "neurons": 4000,
+                "activation": "ReLU",
+                "inputDim": "20x80",
+                "outputDim": "15x60",
+                "description": "V2 area"
+            }
+        }
+    }
+}
+
+

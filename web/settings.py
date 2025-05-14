@@ -50,6 +50,7 @@ hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasti
 if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
+hosts_list.append("127.0.0.1")
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -115,51 +116,51 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
-    if os.getenv("DJANGO_ENV") == "development":
-        from dotenv import load_dotenv; load_dotenv()
-
-        return {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': 'dev',
-                'USER': 'postgres',
-                'PASSWORD': os.getenv('DB_PASSWORD'),
-                'HOST': os.getenv('DB_HOST'),
-                'PORT': '5432'
-            }
+    # if os.getenv("DJANGO_ENV") == "development":
+    #     from dotenv import load_dotenv; load_dotenv()
+    #
+    #     return {
+    #         'default': {
+    #             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #             'NAME': 'dev',
+    #             'USER': 'postgres',
+    #             'PASSWORD': os.getenv('DB_PASSWORD'),
+    #             'HOST': os.getenv('DB_HOST'),
+    #             'PORT': '5432'
+    #         }
+    #     }
+    # db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
+    # try:
+    #     secrets = get_secret(db_secret_name, REGION_NAME)
+    #     DATABASES = {
+    #         'default': {
+    #             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #             'NAME': secrets["dbInstanceIdentifier"],
+    #             'USER': secrets["username"],
+    #             'PASSWORD': secrets["password"],
+    #             'HOST': secrets["host"],
+    #             'PORT': secrets["port"]
+    #         }
+    #     }
+    # except NoCredentialsError:
+    #     if 'RDS_DB_NAME' in os.environ:  # when deployed to AWS, use environment settings for database
+    #         DATABASES = {
+    #             'default': {
+    #                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #                 'NAME': os.environ['RDS_DB_NAME'],
+    #                 'USER': os.environ['RDS_USERNAME'],
+    #                 'PASSWORD': os.environ['RDS_PASSWORD'],
+    #                 'HOST': os.environ['RDS_HOSTNAME'],
+    #                 'PORT': os.environ['RDS_PORT'],
+    #             }
+    #         }
+    #     else:  # for deployment, use local sqlite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'PROD_EXPORT_FINAL.sqlite'),
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
-    try:
-        secrets = get_secret(db_secret_name, REGION_NAME)
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': secrets["dbInstanceIdentifier"],
-                'USER': secrets["username"],
-                'PASSWORD': secrets["password"],
-                'HOST': secrets["host"],
-                'PORT': secrets["port"]
-            }
-        }
-    except NoCredentialsError:
-        if 'RDS_DB_NAME' in os.environ:  # when deployed to AWS, use environment settings for database
-            DATABASES = {
-                'default': {
-                    'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                    'NAME': os.environ['RDS_DB_NAME'],
-                    'USER': os.environ['RDS_USERNAME'],
-                    'PASSWORD': os.environ['RDS_PASSWORD'],
-                    'HOST': os.environ['RDS_HOSTNAME'],
-                    'PORT': os.environ['RDS_PORT'],
-                }
-            }
-        else:  # for deployment, use local sqlite
-            DATABASES = {
-                'default': {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-                }
-            }
+    }
     return DATABASES
 
 
@@ -187,9 +188,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
 # Security settings for headers and cookies
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 
 
 LANGUAGE_CODE = 'en-us'
@@ -200,7 +201,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+#USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
