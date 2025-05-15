@@ -122,7 +122,7 @@ def get_db_info():
         return {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': os.environ['RDS_DB_NAME'],
+                'NAME': 'dev',
                 'USER': 'postgres',
                 'PASSWORD': os.getenv('DB_PASSWORD'),
                 'HOST': os.getenv('DB_HOST'),
