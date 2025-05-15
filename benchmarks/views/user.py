@@ -693,12 +693,21 @@ class ProfileAccount(View):
         user = authenticate(request, username=username, password=request.POST['password'])
         if user is not None:
             login(request, user)
+
+            # quota logic duplicated for first time load
             files_submitted = FileUploadTracker.objects.filter(
-                owner_id=user.id
+                owner=request.user
             ).order_by('-upload_datetime')
+
+            total_size_used = files_submitted.aggregate(
+                total=Sum('file_size_bytes')
+            )['total'] or 0
+
             context = {
                 "domains": ["vision", "language"],
-                "files_submitted": files_submitted
+                "files_submitted": files_submitted,
+                "total_used_gb": round(total_size_used / 1024 ** 3, 3),
+                'quota_gb': 5.0,
             }
             return render(request, 'benchmarks/central_profile.html', context)
         else:
