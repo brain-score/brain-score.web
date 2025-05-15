@@ -50,6 +50,7 @@ hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasti
 if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
+hosts_list.append("127.0.0.1")
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -135,7 +136,7 @@ def get_db_info():
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': secrets["dbInstanceIdentifier"],
+                'NAME': 'dev',
                 'USER': secrets["username"],
                 'PASSWORD': secrets["password"],
                 'HOST': secrets["host"],
@@ -147,7 +148,7 @@ def get_db_info():
             DATABASES = {
                 'default': {
                     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                    'NAME': os.environ['RDS_DB_NAME'],
+                    'NAME': 'dev',
                     'USER': os.environ['RDS_USERNAME'],
                     'PASSWORD': os.environ['RDS_PASSWORD'],
                     'HOST': os.environ['RDS_HOSTNAME'],
@@ -188,9 +189,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
 # Security settings for headers and cookies
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 
 
 LANGUAGE_CODE = 'en-us'
