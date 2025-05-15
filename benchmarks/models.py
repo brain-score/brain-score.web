@@ -58,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             'Unselect this instead of deleting accounts.'
         ),
     )
+    is_quota_exempt = models.BooleanField(default=False)  # file upload quota exemption
 
     USERNAME_FIELD = 'email'
     objects = UserManager()
@@ -80,7 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 def generic_repr(obj):
     return obj.__class__.__name__ \
-           + "[" + ",".join(f"{field}={value}" for field, value in vars(obj).items()) + "]"
+        + "[" + ",".join(f"{field}={value}" for field, value in vars(obj).items()) + "]"
 
 
 class Reference(models.Model):
@@ -127,6 +128,7 @@ class BenchmarkMeta(models.Model):
     class Meta:
         db_table = 'brainscore_benchmarkmeta'
 
+
 class BenchmarkStimuliMeta(models.Model):
     num_stimuli = models.IntegerField(null=True, default=None)
     datatype = models.CharField(max_length=100, null=True, default="image")
@@ -166,6 +168,7 @@ class BenchmarkMetricMeta(models.Model):
 
     class Meta:
         db_table = 'brainscore_benchmark_metric_meta'
+
 
 class BenchmarkInstance(models.Model):
     benchmark_type = models.ForeignKey(BenchmarkType, on_delete=models.PROTECT)
@@ -258,11 +261,12 @@ class ModelMeta(models.Model):
     task_specialization = models.CharField(max_length=100, null=True, default=None)
     brainscore_link = models.CharField(max_length=256, null=True, default=None)
     hugging_face_link = models.CharField(max_length=256, null=True, default=None)
-    runnable = models.BooleanField(default=None, null=True)
+    runnable = models.BooleanField(default=True, null=True)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
 
     class Meta:
         db_table = 'brainscore_modelmeta'
+
 
 class Score(models.Model):
     benchmark = models.ForeignKey(BenchmarkInstance, on_delete=models.PROTECT)
@@ -294,6 +298,7 @@ class MailingList(models.Model):
         models.Index(fields=['email']),
     ]
 
+
 class JSONBField(models.JSONField):
     """
     Django's standard JSONField tries to decode JSON "strings" into dicts/lists.
@@ -305,6 +310,7 @@ class JSONBField(models.JSONField):
 
     JSONB is also more performant for large datasets (like FinalModelContext)
     """
+
     def from_db_value(self, value, expression, connection):
         # 1) If DB returned None, just pass it
         if value is None:
@@ -316,6 +322,7 @@ class JSONBField(models.JSONField):
 
         # 3) Otherwise assume it's a JSON string, parse with json.loads
         return json.loads(value)
+
 
 class FinalBenchmarkContext(models.Model):
     """
@@ -374,7 +381,7 @@ class FinalBenchmarkContext(models.Model):
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
 
-    # Metadata related fields that returns a JSON object of the above metadata objects. 
+    # Metadata related fields that returns a JSON object of the above metadata objects.
     # Columns become keys in the JSON object.
     benchmark_data_meta = JSONBField(null=True, blank=True)
     benchmark_metric_meta = JSONBField(null=True, blank=True)
@@ -388,6 +395,7 @@ class FinalBenchmarkContext(models.Model):
     def id(self):
         """Provide an 'id' so that templates using {{ benchmark.id}} still work. Can make chage in db too"""
         return self.benchmark_id
+
 
 class FinalModelContext(models.Model):
     """
@@ -424,7 +432,7 @@ class FinalModelContext(models.Model):
             - median
             - comment
             - benchmark (dict): JSON object of appropriate FinalBenchmarkContext
-                - id 
+                - id
                 - url
                 - meta
                 - year
@@ -462,10 +470,10 @@ class FinalModelContext(models.Model):
     domain = models.CharField(max_length=64)
     visual_degrees = models.IntegerField(null=True, blank=True)
     rank = models.IntegerField()
-    user = JSONBField(null=True, blank=True) 
+    user = JSONBField(null=True, blank=True)
     user_id = models.IntegerField(null=True, blank=True)
-    owner = JSONBField(null=True, blank=True) 
-    submitter = JSONBField(null=True, blank=True) 
+    owner = JSONBField(null=True, blank=True)
+    submitter = JSONBField(null=True, blank=True)
     submission_id = models.IntegerField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
     jenkins_id = models.IntegerField(null=True, blank=True)
@@ -489,6 +497,7 @@ class FinalModelContext(models.Model):
         """
         return self.model_id
 
+
 # Not currently used but will be needed for leaderboard views to recompute color scales
 class BenchmarkMinMax(models.Model):
     benchmark_identifier = models.CharField(max_length=255, primary_key=True)
@@ -499,3 +508,19 @@ class BenchmarkMinMax(models.Model):
     class Meta:
         managed = False
         db_table = 'mv_benchmark_minmax'
+
+
+class FileUploadTracker(models.Model):
+    id = models.AutoField(primary_key=True, serialize=False)
+    filename = models.CharField(max_length=1000)
+    link = models.CharField(max_length=1000)
+    upload_datetime = models.DateTimeField(auto_now_add=True)
+    owner = models.ForeignKey(on_delete=models.PROTECT, to='benchmarks.user')
+    plugin_type = models.CharField(max_length=100)
+    file_size_bytes = models.BigIntegerField(default=0)
+    version_id = models.CharField(max_length=255, null=True)
+    domain = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'brainscore_fileuploadtracker'
+
