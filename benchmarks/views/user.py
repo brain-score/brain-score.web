@@ -173,6 +173,8 @@ class LargeFileUpload(View):
     plugin = None
 
     def get(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseRedirect(f'../')
         return render(request, f'benchmarks/large_file_upload.html')
 
     def post(self, request):
