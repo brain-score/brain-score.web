@@ -1,27 +1,52 @@
-// add author statement here
+// draw_layers.js
+// Author: Aneesa Beckford
+// Description:
+// Renders interactive 3D-like dummy layer blocks and connections in an SVG with zoom and pan support.
+// Users can click or shift-click on  layers to view metadata and highlight different components
+
+// Keeps track of which rectangle is currently highlighted
 let currentlyHighlightedRect = null;
 
+// Create the main SVG container and a zoomable group inside it
 const svg = d3.select("svg");
-console.log("draw_layers.js loaded");
+const zoomGroup = svg.append("g").attr("class", "zoom-group")
+
+// Set up zoom & pan behavior
+const zoom = d3.zoom()
+    .scaleExtent([0.5, 5])
+    .on("zoom", (event) => {
+        zoomGroup.attr("transform", event.transform)
+    });
+
+svg.call(zoom)
 
 let selectedLayers = [];
 let currentlyShownLayer = null;
 
+// Load & parse the JSON data injected into the DOM
 const raw = document.getElementById("layers-json");
 if (!raw) {
     console.error("layers-json not found!");
 }
 
 const allData = JSON.parse(document.getElementById('layers-json').textContent);
-console.log("Full parsed JSON:", allData);
 
+// Extract different sections from the parsed JSON
 const regionData = allData["Region"] || {};
 const descriptionData = allData["Visualization-Description"] || {};
 
+// Returns true if the given layer name exists in regionData
 function regionHasLayer(layerName) {
     return Object.values(regionData).includes(layerName);
 }
 
+/**
+ * Displays a floating box with metadata for the clicked layer.
+ * Highlights the selected rectangle and positions the tooltip
+ * @param layerName
+ * @param event
+ * @param groupElement
+ */
 function showLayerMetadata(layerName, event, groupElement) {
     const box = document.getElementById("layer-info-box");
     if (!box) return;
@@ -65,6 +90,10 @@ function showLayerMetadata(layerName, event, groupElement) {
     currentlyShownLayer = layerName;
 }
 
+/**
+ * Renders the list of metadata for all shift-clicked (selected) layers
+ * in the side panel under "Selected Layers"
+ */
 function renderSelectedMetadataBox() {
     const container = document.getElementById("selected-metadata-content");
     const title = document.getElementById("selected-metadata-title");
@@ -96,25 +125,23 @@ function renderSelectedMetadataBox() {
 const layersData = allData["Visualization-Layer-Parameters"] || {};
 const connectionData = allData["Visualization-Connections"] || [];
 
+// Layout constants
 const xStart = 50;
 const yMid = 300;
 const spacing = 30;
 
-console.log("scale");
-
+//Scaling factors for converting width/height to screen pixels
 const widthScale = 5;
 const heightScale = 3;
 
-console.log("xstart");
 let x = xStart;
 
-console.log("layer index");
 let layerIndex = 0;
 
-console.log("before layer position");
 const layerPositions = {};
 const layerOrder = {};
 
+// Render each layer as a 3D-styled rectangle with depth (front, top, side)
 Object.entries(layersData).forEach(([layerName, values]) => {
     if (!Array.isArray(values)) return;
 
@@ -123,6 +150,7 @@ Object.entries(layersData).forEach(([layerName, values]) => {
     const rectHeight = Math.max(20, h * heightScale);
     const y = yMid - rectHeight / 2;
 
+    // Track layer position and dimensions for drawing arrows later
     layerPositions[layerName] = {
         centerX: x + rectWidth / 2,
         centerY: y + rectHeight / 2,
@@ -137,12 +165,13 @@ Object.entries(layersData).forEach(([layerName, values]) => {
     layerOrder[layerName] = layerIndex;
     layerIndex++;
 
-    const group = svg.append("g").attr("class", "layer-group");
+    // Create a group to hold all parts of the layer block
+    const group = zoomGroup.append("g").attr("class", "layer-group");
 
     const fillColor = regionHasLayer(layerName) ? "#F5FD66" : "rgb(7, 137, 48)";
     const depth = 12;
 
-    // Front face
+    // Add the front face of the rectangle
     const front = group.append("rect")
         .attr("x", x)
         .attr("y", y)
@@ -154,7 +183,10 @@ Object.entries(layersData).forEach(([layerName, values]) => {
         .style("cursor", "pointer")
         .style("filter", "drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.4))")
         .on("click", function (event) {
+            // Shift-click toggles selection for multi-layer metadata view
+            // Regular click selects only this layer and shows tooltip
             if (event.shiftKey) {
+                // Prevent zoom behavior when shift-clicking on layer
                 if (!selectedLayers.includes(layerName)) {
                     selectedLayers.push(layerName);
                 } else {
@@ -172,11 +204,15 @@ Object.entries(layersData).forEach(([layerName, values]) => {
 
                 showLayerMetadata(layerName, event, group);
             }
-
-            event.stopPropagation();
+            if (event.shiftKey){
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            } else {
+                event.stopPropagation();
+            }
         });
 
-    // Top face
+    // Add top face of the rectangle
     group.append("polygon")
         .attr("points", `
             ${x},${y}
@@ -187,7 +223,7 @@ Object.entries(layersData).forEach(([layerName, values]) => {
         .attr("fill", d3.color(fillColor).darker(0.5))
         .attr("stroke", "black");
 
-    // Side face
+    // Add side face of the rectangle
     group.append("polygon")
         .attr("class", "side-face")
         .attr("points", `
@@ -200,9 +236,8 @@ Object.entries(layersData).forEach(([layerName, values]) => {
         .attr("stroke", "black");
 
 
-
-
-    svg.append("text")
+    // Add a text label centered below each layer rectangle
+    zoomGroup.append("text")
         .attr("x", x + rectWidth / 2)
         .attr("y", y + rectHeight + 15)
         .attr("text-anchor", "middle")
@@ -213,7 +248,7 @@ Object.entries(layersData).forEach(([layerName, values]) => {
 });
 
 // Add a marker for arrowheads
-const defs = svg.append("defs");
+const defs = zoomGroup.append("defs");
 
 defs.append("marker")
     .attr("id", "arrow")
@@ -227,21 +262,19 @@ defs.append("marker")
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
     .attr("fill", "black");
 
-// Draw connections
+// Draw arrows representing connections between layers by iterating through all defined connections
 connectionData.forEach(([source, target]) => {
     const sourcePos = layerPositions[source];
     const targetPos = layerPositions[target];
-    console.log(`Trying to draw connection: ${source} -> ${target}`);
 
     if (!sourcePos || !targetPos) {
         console.warn(`Skipping connection from ${source} to ${target} — missing position`);
         return;
     }
 
+    // Draw a curved self-loop for recurrent layers
     const isRecurrent = source === target;
-
     if (isRecurrent) {
-        console.log("recurrent")
         const box = sourcePos;
         const loopWidth = box.width * 0.5;
         const loopHeight = box.height * 1.5;
@@ -258,13 +291,16 @@ connectionData.forEach(([source, target]) => {
           ${endX} ${endY}
     `;
 
-        svg.append("path")
+        zoomGroup.append("path")
             .attr("d", pathData)
             .attr("fill", "none")
             .attr("stroke", "black")
             .attr("stroke-width", 2)
             .attr("marker-end", "url(#arrow)");
+
     } else {
+        // Draw a straight or curved connection between different layers
+
         const dx = targetPos.leftX - sourcePos.rightX;
         const dy = targetPos.centerY - sourcePos.centerY;
 
@@ -296,7 +332,7 @@ connectionData.forEach(([source, target]) => {
             `;
         }
 
-        svg.append("path")
+        zoomGroup.append("path")
             .attr("d", pathData)
             .attr("fill", "none")
             .attr("stroke", "black")
@@ -305,6 +341,7 @@ connectionData.forEach(([source, target]) => {
     }
 });
 
+// When clicking anywhere outside a layer, hide a tooltip and reset highlights
 window.addEventListener("click", function () {
     const box = document.getElementById("layer-info-box");
     if (box) box.style.display = "none";
