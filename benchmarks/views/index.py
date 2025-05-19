@@ -108,20 +108,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
                                      benchmark_filter=benchmark_filter)
     model_rows = _collect_models(domain, benchmarks, show_public, user, score_filter=model_filter)
 
-    # add architecture here ANEESA
-    # model_architecture_data = {}
-    # for model in model_rows:
-    #     try:
-    #         json_file_path = save_model_architecture_to_json(model)
-    #
-    #         # read JSON file to include in the context
-    #         if json_file_path and os.path.exists(json_file_path):
-    #             with open(json_file_path, "r") as json_file:
-    #                 model_architecture_data[model.id] = json.load(json_file)
-    #     except Exception as e:
-    #         _logger.error(f"Failed to process model {model.id}: Error: {e}")
-
-
     # calculate lightweight, downloadable version of model scores
     csv_data = _build_scores_dataframe(benchmarks, model_rows)
 
@@ -208,8 +194,6 @@ def get_context(user=None, domain: str = "vision", benchmark_filter=None, model_
             'citation_domain_title': citation_domain_title,
             'citation_domain_bibtex': citation_domain_bibtex,
             'csv_downloadable': csv_data,
-            # add here ANEESA
-            # 'model_architecture_data': model_architecture_data,
             }
 
 
