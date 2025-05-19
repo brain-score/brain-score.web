@@ -52,11 +52,8 @@ def view(request, id: int, domain: str):
         model_context['visualization_metadata'] = dummy_layers_data  # Store full JSON
 
         if "Visualization-Layer-Parameters" in dummy_layers_data:
-            # ANEESA ADDED #
             vis_layers = dummy_layers_data["Visualization-Layer-Parameters"]
             model_context['visualization_layers'] = vis_layers
-            # model_context['visualization_layers_json'] = json.dumps(vis_layers)
-            # model_context['visualization_layers'] = dummy_layers_data["Visualization-Layer-Parameters"]
 
 
     # only show detailed model info to superuser or owner:
