@@ -2,6 +2,7 @@ import json
 import logging
 import zipfile
 import re
+import uuid
 from typing import Tuple, Union, List
 from io import TextIOWrapper
 import boto3
@@ -18,10 +19,13 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
-from benchmarks.models import Model, BenchmarkInstance, BenchmarkType
+from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.tokens import account_activation_token
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.conf import settings
+from django.db.models import Sum
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -165,6 +169,118 @@ class Tutorials(View):
             return render(request, f'benchmarks/tutorials/{self.tutorial_type}.html')
 
 
+class LargeFileUpload(View):
+    plugin = None
+
+    def get(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseRedirect(f'../')
+        return render(request, f'benchmarks/large_file_upload.html')
+
+    def post(self, request):
+
+        MAX_BYTES = 5 * (1024 ** 3)
+        EXEMPT_EMAILS = []  # list of users we want exempt (besides superusers) from 5GB limit,
+
+        # Expecting the client to send file_name and file_type, e.g. via AJAX
+        plugin_type = request.POST.get("bucket_choice")
+        file_name = request.POST.get("file_name")
+        user_id = request.user.id if request.user.is_authenticated else 2  # default to Brain-Score team
+        owner = request.user if request.user.is_authenticated else User.objects.get(pk=2)
+        file_type = request.POST.get("file_type") or "application/octet-stream"
+        file_size_bytes = int(request.POST.get('file_size_bytes', 0))  # upload time file size for quota
+        domain = request.POST.get("domain")
+
+
+        if not file_name:
+            return JsonResponse({'error': 'Missing file information'}, status=400)
+
+        # sum all prior uploads
+        total_used = FileUploadTracker.objects.filter(owner=owner) \
+                         .aggregate(total=Sum('file_size_bytes'))['total'] or 0
+
+        is_exempt = (request.user.is_superuser or request.user.is_quota_exempt) if request.user.is_authenticated else False
+        if not is_exempt and (total_used + file_size_bytes > MAX_BYTES):
+            return JsonResponse({
+                'error': f'You have exceeded your {round(MAX_BYTES / (1024 ** 3), 3)} GB quota. Please contact the Brain-Score team.'
+            }, status=400)
+
+        # Initialize the boto3 S3 client using the default credentials
+        s3_client = boto3.client('s3', region_name=settings.REGION_NAME,
+                                 endpoint_url="https://s3.us-east-2.amazonaws.com")
+
+        # Create a unique object key; here we simply use a folder and the original file name
+        object_key = f"brainscore-{domain}/{plugin_type}/user_{user_id}/{file_name}"
+
+        try:
+            # Generate a presigned POST that allows a form upload directly to S3.
+            presigned_post = s3_client.generate_presigned_post(
+                Bucket="brainscore-storage",
+                Key=object_key,
+                Fields={
+                    "Content-Type": file_type,
+                    "x-amz-acl": "public-read"  # use "x-amz-acl" instead of "acl"
+                },
+                Conditions=[
+                    {"Content-Type": file_type},
+                    {"x-amz-acl": "public-read"}
+                ],
+                ExpiresIn=3600
+            )
+        except Exception as e:
+            # In case there is any issue generating the presigned POST, return an error.
+            return JsonResponse({'error': f"Error generating presigned POST: {str(e)}"}, status=500)
+
+        public_url = (
+            f"https://brainscore-storage.s3.{settings.REGION_NAME}.amazonaws.com/"
+            f"{object_key}"
+        )
+
+        # Return the URL and the required form fields, plus the object key for reference.
+        return JsonResponse({
+            'url': presigned_post['url'],
+            'fields': presigned_post['fields'],
+            'key': object_key,
+            "file_size_bytes": file_size_bytes,
+            'domain': domain,
+        })
+
+class FinalizeUpload(View):
+    def post(self, request):
+        object_key = request.POST.get('object_key')
+        bucket = "brainscore-storage"
+        s3 = boto3.client('s3', region_name=settings.REGION_NAME)
+
+        # List versions and pick the latest
+        versions = s3.list_object_versions(Bucket=bucket, Prefix=object_key).get('Versions', [])
+        latest = next((v for v in versions
+                         if v['Key']==object_key and v['IsLatest']), None)
+        if not latest:
+            return JsonResponse({'error':'version not found'}, status=500)
+
+        version_id = latest['VersionId']
+        public_url = (
+          f"https://{bucket}.s3.{settings.REGION_NAME}.amazonaws.com/"
+          f"{object_key}?versionId={version_id}"
+        )
+
+        # Record it in the DB
+        FileUploadTracker.objects.create(
+            filename = object_key.rsplit('/',1)[-1],
+            link = public_url,
+            owner = request.user,
+            plugin_type = request.POST.get('plugin_type'),
+            version_id = version_id,
+            file_size_bytes = int(request.POST.get('file_size_bytes', 0)),
+            domain = request.POST.get('domain'),
+        )
+
+        return JsonResponse({
+            'version_id': version_id,
+            'public_url': public_url
+        })
+
+
 class Upload(View):
     domain = None
 
@@ -303,7 +419,6 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
         return False, "Your zip file size cannot be greater than 50MB. Are you trying to submit weights with your model? " \
                       "If so, please contact the Brain-Score team and we can assist you in hosting your model " \
                       "weights elsewhere."
-
     with zipfile.ZipFile(file, mode="r") as archive:
         namelist = archive.infolist()
 
@@ -525,7 +640,18 @@ class ProfileAccount(View):
         if request.user.is_anonymous:
             return render(request, 'benchmarks/login.html', {'form': LoginForm})
         else:
-            context = {"domains": ["vision", "language"]}
+            # Fetch all uploads by this user
+            files_submitted = FileUploadTracker.objects.filter(
+                owner=request.user
+            ).order_by('-upload_datetime')
+
+            total_size_used = files_submitted.aggregate(total=Sum('file_size_bytes'))['total'] or 0
+
+            context = {
+                "domains": ["vision", "language"],
+                "files_submitted": files_submitted,
+                "total_used_gb": round(total_size_used / 1024**3, 3),
+                'quota_gb': 5.0}
             return render(request, 'benchmarks/central_profile.html', context)
 
     def post(self, request):
@@ -543,7 +669,22 @@ class ProfileAccount(View):
         user = authenticate(request, username=username, password=request.POST['password'])
         if user is not None:
             login(request, user)
-            context = {"domains": ["vision", "language"]}
+
+            # quota logic duplicated for first time load
+            files_submitted = FileUploadTracker.objects.filter(
+                owner=request.user
+            ).order_by('-upload_datetime')
+
+            total_size_used = files_submitted.aggregate(
+                total=Sum('file_size_bytes')
+            )['total'] or 0
+
+            context = {
+                "domains": ["vision", "language"],
+                "files_submitted": files_submitted,
+                "total_used_gb": round(total_size_used / 1024 ** 3, 3),
+                'quota_gb': 5.0,
+            }
             return render(request, 'benchmarks/central_profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm, "domains": ["vision", "language"]}
@@ -555,7 +696,8 @@ class Profile(View):
 
     def get(self, request):
         if request.user.is_anonymous:
-            return render(request, 'benchmarks/login.html', {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
+            return render(request, 'benchmarks/login.html',
+                          {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
             context = get_context(request.user, domain=self.domain)
             context["has_user"] = True
@@ -571,7 +713,8 @@ class Profile(View):
             context["formatted"] = self.domain.capitalize()
             return render(request, 'benchmarks/profile.html', context)
         else:
-            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()}
+            context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain,
+                       'formatted': self.domain.capitalize()}
             return render(request, 'benchmarks/login.html', context)
 
 

@@ -1,6 +1,7 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+
 {% block banner %}
 <h1> Central Profile</h1>
 <p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>
@@ -42,9 +43,86 @@
         {% endfor %}
         <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial_no_top">Logout</button>
     </div>
+
+    <div class="box leaderboard-table-component">
+        <h3 class="benefits_heading is-size-3-mobile">User Uploaded Files</h3>
+        <br>
+        <div class="notification is-light">
+          <strong>Total storage used:</strong>
+          {{ total_used_gb }} GB / {{ quota_gb }} GB
+        </div>
+        {% if files_submitted %}
+            <table class="table is-striped is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Upload Time</th>
+                        <th>Domain</th>
+                        <th>Folder</th>
+                        <th>File Size</th>
+                        <th>Version ID</th>
+                        <th>To Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in files_submitted %}
+                        <tr class="{% if forloop.counter > 5 %}extra-row{% endif %}">
+                            <td>
+                              <a href="{{ f.link }}" target="_blank" class="has-text-link">
+                                {{ f.filename }}
+                              </a>
+                            </td>
+                            <td>{{ f.upload_datetime|date:"F j, Y g:i A" }}</td>
+                            <td>{{ f.domain }}</td>
+                            <td>/{{ f.plugin_type }}</td>
+                            <td>{{ f.file_size_bytes|filesizeformat }}</td>
+                            <td>
+                              {% if f.version_id %}
+                                <code style="color: #45C676">…{{ f.version_id|slice:"-5:" }}</code>
+                              {% else %}
+                                <code style="color: #45C676">None</code>
+                              {% endif %}
+                            </td>
+                            <td class="copy-cell">
+                              <button type="button"
+                                      class="button is-small is-link copy-btn"
+                                      data-code='from brainscore_vision.model_helpers.s3 import load_file
+file_path = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                      relative_path="{{f.filename}}",
+                      version_id="{{f.version_id}}",
+                      ),
+                '>
+                                Copy Code
+                              </button>
+                              <div class="python-tooltip">
+                                <p>To use this file, copy and paste the code below into your Brain-Score plugin file:</p>
+<pre><code>from brainscore_vision.model_helpers.s3 import load_file
+file_path = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
+                      relative_path="{{f.filename}}",
+                      version_id="{{f.version_id}}",
+                      )
+</code></pre>
+                              </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% if files_submitted|length > 5 %}
+            <div class="has-text-centered" style="margin-top:1em;">
+                <button id="toggle-rows" class="button is-small is-light">
+                    Show all uploads ({{ files_submitted|length }} total) ▼
+                </button>
+            </div>
+        {% endif %}
+        {% else %}
+          <p>No files submitted yet.</p>
+        {% endif %}
+
+        <button onclick="location.href='large_file_upload'" type="button" class="button button-primary tutorial_no_top">
+          Upload New Large File
+        </button>
+    </div>
 {% else %}
 {% endif %}
-
 {% endblock %}
-
-
