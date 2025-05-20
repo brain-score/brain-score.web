@@ -1,6 +1,24 @@
-// Handle the presigned POST workflow with progress updates
+/**
+ * large_file_upload.js
+ *
+ * Handles form submission:
+ *  - Validates file extension, MIME type, and magic number
+ *  - Calls presigned_post.js to upload if validation passes
+ */
+
+import {
+    hasAllowedExtension,
+    hasAllowedMimeType,
+    checkMagicNumber,
+    magicNumbers,
+    allowedExtensions,
+    allowedMimeTypes
+} from './validate_lfu.js';
+
+import { uploadFileWithPresignedPost } from './presigned_post.js';
+
 document.getElementById('upload-form').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent standard form submission
+    event.preventDefault();
 
     const fileInput = document.getElementById('fileInput');
     if (!fileInput.files.length) {
@@ -11,100 +29,35 @@ document.getElementById('upload-form').addEventListener('submit', function(event
     const file = fileInput.files[0];
     const fileName = file.name;
     const fileType = file.type || "application/octet-stream";
+    const pluginType = document.getElementById('bucketChoice').value;
+    const domain = document.getElementById('bucketChoiceDomain').value;
 
-    // Build form data to request a presigned POST from Django.
-    const formData = new URLSearchParams();
-    formData.append('file_name', fileName);
-    formData.append('file_type', fileType);
-    formData.append('bucket_choice', document.getElementById('bucketChoice').value);
-    formData.append('domain', document.getElementById('bucketChoiceDomain').value);
-    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-    formData.append('file_size_bytes', file.size);
+    console.log("File selected:", fileName, "| Type:", fileType);
 
-    // Step 1: Request a presigned POST from the Django backend
-    fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData.toString()
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            document.getElementById('message').innerText = "Error: " + data.error;
+    // Extension check
+    const extFromName = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+    if (!hasAllowedExtension(fileName)) {
+        alert(`File extension "${extFromName}" is not allowed.\nAllowed: ${allowedExtensions.join(', ')}`);
+        return;
+    }
+
+    // MIME type check
+    if (!hasAllowedMimeType(fileType)) {
+        alert(`MIME type "${fileType}" is not allowed.\nAllowed: ${allowedMimeTypes.join(', ')}`);
+        return;
+    }
+
+    // Magic number check
+    const ext = Object.keys(magicNumbers).find(e => fileName.toLowerCase().endsWith(e));
+    const expectedHex = ext ? magicNumbers[ext] : '';
+
+    checkMagicNumber(file, expectedHex, (isValid) => {
+        if (!isValid) {
+            alert(`Invalid file signature for ${ext}.`);
             return;
         }
-        const s3Url    = data.url;
-        const fields   = data.fields;
-        const objectKey = data.key;
 
-        // Step 2: Construct S3 FormData
-        const s3FormData = new FormData();
-        for (const key in fields) s3FormData.append(key, fields[key]);
-        s3FormData.append("file", file);
-
-        // Show progress UI
-        document.getElementById('upload-progress').style.display = 'block';
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', s3Url);
-
-        // Progress bar
-        xhr.upload.addEventListener('progress', (event) => {
-            if (event.lengthComputable) {
-                const percent = (event.loaded / event.total) * 100;
-                document.getElementById('progress').style.width = percent + '%';
-
-                const loadedMB = (event.loaded / 1048576).toFixed(2);
-                const totalMB  = (event.total / 1048576).toFixed(2);
-                document.getElementById('progress-text').innerText =
-                    `${loadedMB} MB / ${totalMB} MB (${percent.toFixed(1)}%)`;
-            }
-        });
-
-        // Completion
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE) return;
-
-            if (xhr.status === 204 || xhr.status === 200) {
-                // Finalize to get versionId
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                fetch('/profile/large_file_upload/finalize/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        object_key:        objectKey,
-                        plugin_type:       document.getElementById('bucketChoice').value,
-                        file_size_bytes:   file.size,
-                        domain:            document.getElementById('bucketChoiceDomain').value,
-                        csrfmiddlewaretoken: csrfToken
-                    }).toString()
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.error) {
-                        document.getElementById('message').innerText = data.error;
-                    } else {
-                        // Success message + reset form
-                        document.getElementById('message').innerHTML =
-                            `Upload complete! <a href="${data.public_url}" target="_blank">Download</a>`;
-                        // reset the file input and selects
-                        document.getElementById('upload-form').reset();
-                        // hide progress bar
-                        document.getElementById('upload-progress').style.display = 'none';
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('message').innerText = "Error finalizing upload: " + err;
-                });
-            } else {
-                document.getElementById('message').innerText =
-                    "Upload failed. S3 responded with status: " + xhr.status;
-            }
-        };
-
-        xhr.send(s3FormData);
-    })
-    .catch(err => {
-        document.getElementById('message').innerText = "Error requesting presigned POST: " + err;
+        // Passed all checks, proceed to upload
+        uploadFileWithPresignedPost(file, fileName, fileType, domain, pluginType);
     });
 });

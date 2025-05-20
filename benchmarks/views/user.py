@@ -183,7 +183,6 @@ class LargeFileUpload(View):
         EXEMPT_EMAILS = []  # list of users we want exempt (besides superusers) from 5GB limit,
 
         # Expecting the client to send file_name and file_type, e.g. via AJAX
-        uploaded_file_name = request.POST.get('file_name')
         plugin_type = request.POST.get("bucket_choice")
         file_name = request.POST.get("file_name")
         user_id = request.user.id if request.user.is_authenticated else 2  # default to Brain-Score team
@@ -192,29 +191,6 @@ class LargeFileUpload(View):
         file_size_bytes = int(request.POST.get('file_size_bytes', 0))  # upload time file size for quota
         domain = request.POST.get("domain")
 
-        ALLOWED_EXTENSIONS = {
-            '.pt', '.pth',  # PyTorch model weights
-            '.ckpt',  # PyTorch Lightning checkpoints
-            '.bin',  # HuggingFace transformers
-            '.onnx',  # Open Neural Network Exchange
-            '.h5', '.hdf5',  # Keras/TensorFlow HDF5
-            '.pb',  # TensorFlow protobuf
-            '.tflite',  # TensorFlow Lite
-            '.pkl',  # Python pickle (sometimes used for weights)
-            '.weights',  # Darknet/YOLO
-            '.npy',  # NumPy arrays (sometimes used for weights)
-            '.npz',  # Compressed NumPy arrays
-            '.safetensors'  # HuggingFace safetensors format
-            '.zip', # common zip file
-            '.csv' # common csv file
-        }
-
-        _, ext = os.path.splitext(uploaded_file_name.lower())
-        if ext not in ALLOWED_EXTENSIONS:
-            return JsonResponse({
-                'error': f"Extension '{ext}' not allowed. "
-                         f"Must be one of: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
-            }, status=400)
 
         if not file_name:
             return JsonResponse({'error': 'Missing file information'}, status=400)
