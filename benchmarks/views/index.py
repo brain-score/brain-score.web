@@ -58,7 +58,7 @@ def view(request, domain: str):
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True, benchmark_filter=benchmark_filter)
+        leaderboard_context = get_context(domain=domain, show_public=True)#, benchmark_filter=benchmark_filter)
     end_time = time()
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    
@@ -86,8 +86,12 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         # Build model query based on user permissions
         # Necessary to wrap query in function to allow caching of query results. 
         # For now, it is disabled. Provided minimal performance gains.
+        start_time = time()
         all_model_data = get_base_model_query(domain)
+        end_time = time()
+        print(f"Total time taken to get base model query: {end_time - start_time} seconds")
 
+        start_time = time()
         if user is None:
             # Public view - only show public models
             models = all_model_data.filter(public=True)
@@ -98,8 +102,14 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             # Filter for user's models (user profile view)
             models = all_model_data.filter(Q(user__id=user.id))
 
+        end_time = time()
+        print(f"Total time taken to filter models: {end_time - start_time} seconds")
+
     # Convert to list only when needed for ranking and further processing
+    start_time = time()
     models = list(models)
+    end_time = time()
+    print(f"Total time taken to convert models to list: {end_time - start_time} seconds")
 
     # Apply any additional model filters
     if model_filter:
@@ -107,7 +117,10 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
+    start_time = time()
     model_rows_reranked = filter_and_rank_models(models, domain)
+    end_time = time()
+    print(f"Total time taken to filter and rank models: {end_time - start_time} seconds")
 
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
@@ -115,6 +128,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # If model list grows, consider using the materialized views.
     # ------------------------------------------------------------------ 
     # Identify leaf benchmarks (actual runnable benchmarks and not parents)
+    start_time = time()
     benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
     # Identify parents and map children to parents
     benchmark_parents = {
@@ -131,13 +145,21 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         or (ENGINEERING_ROOT not in bench.identifier
             and ENGINEERING_ROOT in bench.root_parent)
     }
+    finish_time = time()
+    print(f"Total time taken to identify benchmarks that should not be shown: {finish_time - start_time} seconds")
     
     # Add submittable benchmarks for authenticated users
+    start_time = time()
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
+    end_time = time()
+    print(f"Total time taken to collect submittable benchmarks: {end_time - start_time} seconds")
     
     # Build CSV data and comparison data
     # Combined to a single pass through models to avoid redundant calculations.
+    start_time = time()
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
+    end_time = time()
+    print(f"Total time taken to build model data: {end_time - start_time} seconds")
     
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
@@ -221,9 +243,9 @@ def filter_and_rank_models(models, domain: str = "vision"):
     for model in models:
         if get_value(model, "scores") is not None:
             for score in get_value(model, "scores"):
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                benchmark_id = get_value(score, "benchmark", {}).get("benchmark_type_id")
                 if benchmark_id == f"average_{domain}":
-                    val = score.get("score_ceiled", score.get("score_ceiled"))
+                    val = get_value(score, "score_ceiled", get_value(score, "score_ceiled"))
                     if val is None or val == "":
                         # Exclude models with None or empty string
                         break
@@ -244,7 +266,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
         key=lambda x: (
             1 if x[2] else 0,  # is_x: False (0) comes before True (1)
             -(x[1] if x[1] is not None else 0),  # valid numbers descending, "X" as 0
-            getattr(x[0], "name", str(getattr(x[0], "model_id", "")))  # tiebreaker
+            get_value(x[0], "name", str(get_value(x[0], "model_id", "")))  # tiebreaker
         )
     )
 
@@ -268,7 +290,8 @@ def filter_and_rank_models(models, domain: str = "vision"):
         else:
             # This is a tie, use the same rank as the previous model
             tied_count += 1
-            rank_map[get_value(model, "model_id")] = rank_map[model_scores[i-1][0]["model_id"]]
+            prev_model = model_scores[i-1][0]
+            rank_map[get_value(model, "model_id")] = rank_map[get_value(prev_model, "model_id")]
             
         previous_score = score
 
