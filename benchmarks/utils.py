@@ -8,9 +8,31 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
+from benchmarks.models import FinalBenchmarkContext, BenchmarkMinMax
+from tqdm import tqdm
+import numpy as np
+from colour import Color
+import re
+from django.db import connection
+import fnmatch
 from django.http import JsonResponse, HttpRequest
 
 logger = logging.getLogger(__name__)
+
+
+'''
+Reference for previous color scheme
+Used for benchmark cards
+'''
+colors_redgreen = list(Color('red').range_to(Color('#1BA74D'), 101))
+colors_gray = list(Color('#f2f2f2').range_to(Color('#404040'), 101))
+# scale colors: highlight differences at the top-end of the spectrum more than at the lower end
+a, b = 0.2270617, 1.321928  # fit to (0, 0), (60, 50), (100, 100)
+colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(colors_redgreen))]
+colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
+color_suffix = '_color'
+color_None = '#e0e1e2'
 
 # Cache utility functions and decorators
 def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
@@ -189,6 +211,7 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     
     # Invalidate cache by incrementing version
     new_version = invalidate_domain_cache(domain)
+    cache.clear()
     
     # Optionally rebuild the cache immediately
     rebuild = request.GET.get('rebuild', 'false').lower() == 'true' # Get rebuild parameter from URL
@@ -246,3 +269,427 @@ def show_token(request: HttpRequest) -> JsonResponse:
     return JsonResponse({
         "token": settings.CACHE_REFRESH_TOKEN
     })
+
+"""
+Leaderboard Views Related Functions
+"""
+
+def get_benchmark_exclusion_list(identifiers, domain="vision"):
+    """
+    Get a list of benchmark identifiers that should be excluded from the leaderboard.
+    
+    Args:
+        identifiers: List of benchmark identifiers or patterns to exclude.
+                    Can include wildcards (e.g., "Coggan*" will match any benchmark containing "Coggan")
+                    
+        domain: The domain to filter benchmarks by (default: "vision")
+        The function supports standard Unix shell-style wildcards:
+            - * matches any sequence of characters
+            - ? matches any single character
+            - [seq] matches any character in seq
+                - "[ABC]vision" matches "Avision", "Bvision", or "Cvision"
+                - "[a-z]" matches any lowercase letter
+            - [!seq] matches any character not in seq
+                - "[!ABC]vision" matches any benchmark containing "vision" except "Avision", "Bvision", or "Cvision"
+        For example:
+            - "Coggan*" matches "Coggan2021", "Coggan2022", etc.
+            - "*vision*" matches any benchmark containing "vision"
+            - "*202?" matches any benchmark ending with 2020-2029
+    Returns:
+        List of exclusion patterns to be used with apply_exclusion_patterns()
+    """
+    # Get all benchmark identifiers and sort paths
+    benchmark_paths = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).values_list('short_name', 'sort_path').distinct())
+    
+    # Generate exclusion patterns for each identifier
+    exclusion_patterns = []
+
+    for identifier, sort_path in benchmark_paths:
+        # Check if this benchmark matches any of the exclusion patterns
+        if any(fnmatch.fnmatch(identifier, pattern) for pattern in identifiers):
+            exclusion_patterns.append({
+                'type': 'contains',
+                'field': 'sort_path',
+                'value': sort_path
+            })
+            
+    return exclusion_patterns
+
+def apply_exclusion_patterns(queryset, patterns, field_mapping=None):
+    """
+    Apply exclusion patterns to any queryset.
+    
+    Args:
+        queryset: Any Django queryset
+        patterns: List of pattern dictionaries from get_benchmark_exclusion_patterns()
+        field_mapping: Optional dictionary mapping standard field names to model-specific ones
+                      e.g., {'sort_path': 'benchmark_sort_path'} for FlattenedModelContext
+        
+    Returns:
+        Filtered queryset with exclusions applied
+    """
+
+    if not patterns:
+        return queryset
+
+    # Use default field mapping if none provided
+    if field_mapping is None:
+        field_mapping = {}
+    
+    # Initialize exclusion_conditions as an empty Q object
+    exclusion_conditions = Q()
+
+    # Build exclusion conditions
+    for pattern in patterns:
+        # Get the field name for this model (or use default)
+        field = field_mapping.get(pattern['field'], pattern['field'])
+
+        # Build the query condition based on pattern type
+        if pattern['type'] == 'exact':
+            kwargs = {field: pattern['value']}
+            exclusion_conditions |= Q(**kwargs)
+        elif pattern['type'] == 'contains':
+            kwargs = {f"{field}__contains": pattern['value']}
+            exclusion_conditions |= Q(**kwargs)
+    # Apply exclusions
+    return queryset.exclude(exclusion_conditions)
+ 
+
+def rebuild_model_tree(model_benchmark_pairs):
+    """
+    Rebuild the model structure from flattened model-benchmark pairs,
+    returning a list of dictionaries that match the FinalModelContext schema.
+    
+    Args:
+        model_benchmark_pairs: List of FlattenedModelContext objects
+        
+    Returns:
+        List of restructured model dictionaries.
+    """
+    models_dict = {}
+    all_benchmark_ids = set()
+
+    # Count unique models (by model_id) for progress display
+    unique_models = set(item.model_id for item in model_benchmark_pairs)
+    total_models = len(unique_models)
+
+    # Process each pair and group by model_id
+    for item in tqdm(model_benchmark_pairs, desc=f"Rebuilding {total_models} models", unit="pairs"):
+        model_id = item.model_id
+
+        if model_id not in models_dict:
+            models_dict[model_id] = {
+                "id": model_id,
+                "model_id": model_id,  # integer
+                "name": item.model_name,
+                "reference_identifier": item.model_reference_identifier,
+                "url": item.model_url,
+                # For JSONB fields, keep them as dictionaries (or None if not provided)
+                "user": item.submitter_info if isinstance(item.submitter_info, dict) else None,
+                "user_id": item.submitter_info.get('id') if isinstance(item.submitter_info, dict) and 'id' in item.submitter_info else None,
+                "owner": item.model_owner_info if isinstance(item.model_owner_info, dict) else None,
+                "public": bool(item.model_public),
+                "competition": item.competition if item.competition else None,
+                "domain": item.model_domain,
+                # Ensure visual_degrees is an integer or None
+                "visual_degrees": int(item.visual_degrees) if item.visual_degrees is not None else None,
+                "layers": item.layers if item.layers else None,
+                # Overall rank is stored as an integer
+                "rank": int(item.overall_rank) if item.overall_rank is not None else 0,
+                # This will be populated below
+                "scores": None,
+                "build_status": item.build_status if item.build_status else "",
+                "submitter": item.submitter_info if isinstance(item.submitter_info, dict) else None,
+                "submission_id": item.submission_id if item.submission_id is not None else None,
+                "jenkins_id": item.jenkins_id if item.jenkins_id is not None else None,
+                "timestamp": item.submission_timestamp,  # assuming this is already a datetime object
+                "primary_model_id": None,  # To be set later if needed
+                "num_secondary_models": 0,
+                "model_meta": item.model_meta if item.model_meta else None,
+                # Temporary dictionary to accumulate scores by benchmark identifier
+                "scores_temp": {}
+            }
+
+        # Add the score for this benchmark if available
+        if item.benchmark_identifier:
+            all_benchmark_ids.add(item.benchmark_identifier)
+            
+            benchmark = {
+                "url": getattr(item, 'benchmark_url', None),
+                "meta": getattr(item, 'benchmark_meta', None),
+                "year": getattr(item, 'benchmark_year', None),
+                "depth": item.depth,
+                "author": getattr(item, 'benchmark_author', None),
+                "bibtex": getattr(item, 'benchmark_bibtex', None),
+                "parent": item.benchmark_parent,
+                "ceiling": getattr(item, 'benchmark_ceiling', "X"),
+                "meta_id": getattr(item, 'benchmark_meta_id', None),
+                "version": item.benchmark_version,
+                "children": getattr(item, 'benchmark_children', None),
+                "identifier": item.benchmark_identifier,
+                "short_name": item.benchmark_short_name,
+                "root_parent": getattr(item, 'benchmark_root_parent', "average_vision"),
+                "ceiling_error": getattr(item, 'benchmark_ceiling_error', None),
+                "overall_order": getattr(item, 'benchmark_overall_order', item.depth),
+                "benchmark_type_id": item.benchmark_type_id,
+                "reference_identifier": getattr(item, 'benchmark_reference_identifier', None),
+                "number_of_all_children": getattr(item, 'benchmark_number_of_all_children', 0)
+            }
+            
+            score = {
+                "best": item.best_score,
+                "rank": item.benchmark_rank,
+                "color": item.color,
+                "error": item.error,
+                "median": getattr(item, 'median_score', None),
+                "comment": getattr(item, 'comment', None),
+                "benchmark": benchmark,
+                "score_raw": item.score_raw,
+                # Use score_ceiled_label if available; otherwise, compute a fallback
+                "score_ceiled": item.score_ceiled_label if hasattr(item, 'score_ceiled_label') else (
+                    f".{int(item.score_ceiled_raw * 1000)}" if item.score_ceiled_raw is not None else ""
+                ),
+                "visual_degrees": item.visual_degrees,
+                "score_ceiled_raw": item.score_ceiled_raw,
+                "versioned_benchmark_identifier": f"{item.benchmark_identifier}",
+                "is_complete": 1 if item.is_complete == 'True' else 0,
+            }
+            
+            models_dict[model_id]["scores_temp"][item.benchmark_identifier] = score
+
+    # Determine canonical benchmark order from the FinalBenchmarkContext model
+    canonical_benchmarks = FinalBenchmarkContext.objects.filter(
+        identifier__in=list(all_benchmark_ids)
+    ).order_by('overall_order')
+    canonical_order = [b.identifier for b in canonical_benchmarks]
+
+    # Convert temporary scores dictionary into an ordered list for each model
+    for model_id, model_data in models_dict.items():
+        scores_list = []
+        # First add scores following the canonical order
+        for bench_id in canonical_order:
+            if bench_id in model_data["scores_temp"]:
+                scores_list.append(model_data["scores_temp"][bench_id])
+        # Then add any scores not in the canonical order
+        for bench_id, score in model_data["scores_temp"].items():
+            if bench_id not in canonical_order:
+                scores_list.append(score)
+        model_data["scores"] = scores_list
+        del model_data["scores_temp"]
+
+    models = list(models_dict.values())
+    return models
+
+
+def recompute_upstream_scores(model_benchmark_pairs):
+    """
+    Recomputes upstream (parent) benchmark scores after filtering.
+    Works with flattened model-benchmark pairs and maintains score computation rules.
+    Only updates score values in existing objects, preserving all other data.
+    """
+    pairs = list(model_benchmark_pairs)
+    if not pairs:
+        return pairs
+        
+    import re
+    
+    # Get min/max values for each benchmark type
+    minmax_values = {
+        mm.benchmark_identifier: (mm.min_score, mm.max_score)
+        for mm in BenchmarkMinMax.objects.all()
+    }
+
+    # Sort by model_id and sort_path
+    pairs.sort(key=lambda x: (x.model_id, x.sort_path))
+    
+    # Get unique model IDs for progress tracking
+    unique_models = list({pair.model_id for pair in pairs})
+    
+    for model_id in tqdm(unique_models, desc="Recomputing scores", unit="model"):
+        model_pairs = [p for p in pairs if p.model_id == model_id]
+        path_to_score = {pair.sort_path: pair for pair in model_pairs}
+        
+        # Group paths by their level and parent path
+        parents_by_level = {}
+        for path in path_to_score.keys():
+            level = len(re.findall(r'-\d{5}-', path))
+            if level == 0:  # Skip root level
+                continue
+                
+            # Get parent path
+            match = list(re.finditer(r'-\d{5}-', path))
+            if match:
+                parent_path = path[:match[-1].start()]
+                if parent_path in path_to_score:  # Only process if parent exists
+                    if level not in parents_by_level:
+                        parents_by_level[level] = set()
+                    parents_by_level[level].add(parent_path)
+        
+        # Process from deepest level up
+        for level in sorted(parents_by_level.keys(), reverse=True):
+            # Process each unique parent at this level
+            for parent_path in parents_by_level[level]:
+                parent = path_to_score[parent_path]
+                
+                # Find all direct children
+                siblings = []
+                parent_prefix = parent_path + '-'
+                for child_path in path_to_score.keys():
+                    if child_path.startswith(parent_prefix):
+                        parent_segments = len(re.findall(r'-\d{5}-', parent_path))
+                        child_segments = len(re.findall(r'-\d{5}-', child_path))
+                        if child_segments == parent_segments + 1:
+                            siblings.append(path_to_score[child_path])
+                
+                if not siblings:
+                    continue
+                
+                # Extract and convert scores
+                sibling_scores = []
+                for s in siblings:
+                    try:
+                        if s.score_ceiled_raw and isinstance(s.score_ceiled_raw, str):
+                            score_str = s.score_ceiled_raw.lstrip('.')
+                            score = float(score_str)
+                            sibling_scores.append(score)
+                        elif isinstance(s.score_ceiled_raw, (int, float)):
+                            sibling_scores.append(float(s.score_ceiled_raw))
+                        else:
+                            sibling_scores.append(None)
+                    except (ValueError, TypeError):
+                        sibling_scores.append(None)
+                
+                # Apply score computation rules
+                if all(score is None for score in sibling_scores):
+                    new_score = None
+                elif any(isinstance(score, float) and np.isnan(score) for score in sibling_scores) and \
+                     all(score is None or (isinstance(score, float) and np.isnan(score)) for score in sibling_scores):
+                    new_score = float('nan')
+                else:
+                    valid_scores = [
+                        score for score in sibling_scores 
+                        if score is not None 
+                        and isinstance(score, float) 
+                        and not np.isnan(score)
+                    ]
+                    if valid_scores:
+                        new_score = sum(valid_scores) / len(siblings)
+                    else:
+                        new_score = None
+                
+                # Update score fields in parent
+                parent.score_ceiled_raw = new_score
+                score_str = (
+                    "" if new_score is None
+                    else "X" if isinstance(new_score, float) and np.isnan(new_score)
+                    else "1.0" if new_score == 1.0
+                    else f".{f'{new_score:.3f}'.replace('0.', '')}"
+                )
+                parent.score_ceiled = score_str
+                parent.score_ceiled_label = score_str
+
+                # Update color
+                if parent.benchmark_type_id in minmax_values and new_score is not None:
+                    try:
+                        min_val, max_val = minmax_values[parent.benchmark_type_id]
+                    except:
+                        min_val, max_val = 0, 1
+                    
+                    if 'engineering' in parent.sort_path:
+                        parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_gray)
+                    else:
+                        parent.color = representative_color(new_score, min_value=min_val, max_value=max_val, colors=colors_redgreen)
+                else:
+                    if 'engineering' in parent.sort_path:
+                        parent.color = representative_color(new_score, colors=colors_gray)
+                    else:
+                        parent.color = representative_color(new_score, colors=colors_redgreen)
+    
+    return pairs
+
+
+def update_benchmark_children_count(filtered_benchmarks):
+    """
+    Updates the number_of_all_children field in memory for each benchmark in the filtered set
+    based on the actual number of leaf benchmarks (those with is_leaf=True) in the filtered set.
+    
+    Args:
+        filtered_benchmarks: List of FinalBenchmarkContext objects that have been filtered
+        
+    Returns:
+        List of FinalBenchmarkContext objects with updated number_of_all_children
+    """
+    # Get all sort paths from the filtered set
+    filtered_sort_paths = set(benchmark.sort_path for benchmark in filtered_benchmarks)
+    
+    # Count leaf children for each benchmark in the filtered set
+    for benchmark in filtered_benchmarks:
+        # Count how many leaf benchmarks are descendants of this benchmark
+        count = sum(1 for other_benchmark in filtered_benchmarks 
+                   if other_benchmark.is_leaf and 
+                   other_benchmark.sort_path.startswith(benchmark.sort_path + '-'))
+        # Update the field in memory only
+        benchmark.number_of_all_children = count
+    
+    return filtered_benchmarks
+
+
+def print_structure(data, indent=0):
+    spacing = ' ' * indent
+    if isinstance(data, dict):
+        for key, value in data.items():
+            print(f"{spacing}{key}: {type(value).__name__}")
+            # If the value is a dictionary, recurse into it
+            if isinstance(value, dict):
+                print_structure(value, indent + 2)
+            # If the value is a list, check its contents
+            elif isinstance(value, list):
+                if value:  # if list is not empty
+                    # Check the type of the first element
+                    first_type = type(value[0]).__name__
+                    print(f"{spacing}  [List of {first_type}]")
+                    # If the first element is a dictionary, you can optionally inspect each one
+                    if isinstance(value[0], dict):
+                        for i, item in enumerate(value):
+                            print(f"{spacing}    - Element {i}:")
+                            print_structure(item, indent + 6)
+    elif isinstance(data, list):
+        for i, item in enumerate(data):
+            print(f"{spacing}Element {i}:")
+            print_structure(item, indent + 2)
+    else:
+        print(f"{spacing}{data} ({type(data).__name__})")
+
+
+
+def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
+    if not isinstance(value, (int, float)):    
+        return f"background-color: {color_None}"
+    if np.isnan(value):
+        return f"background-color: {color_None}"
+    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+    step = int(100 * normalized_value)
+    try:
+        color = colors[step]
+    except IndexError:
+        color = colors[-1]
+    color = tuple(c * 255 for c in color.rgb)
+    fallback_color = tuple(round(c) for c in color)
+    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
+        if min_value is not None else (100 * value)
+    color += (normalized_alpha,)
+    return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
+
+ 
+def normalize_value(value, min_value, max_value):
+    normalized_value = (value - min_value) / (max_value - min_value)
+    return .7 * normalized_value  # scale down to avoid extremely green colors
+
+def normalize_alpha(value, min_value, max_value):
+    # intercept and slope equations are from solving `y = slope * x + intercept`
+    # with points [min_value, 10] (10 instead of 0 to not make it completely transparent) and [max_value, 100].
+    slope = -.9 / (min_value - max_value)
+    intercept = .1 - slope * min_value
+    result = slope * value + intercept
+    return float(result)
+   
