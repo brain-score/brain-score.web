@@ -500,21 +500,22 @@ def display_model(model, user):
 @register.filter
 def display_submitter(model, user):
     visibility = get_visibility(model, user)
+    model_user = get_value(model, "user")
     if visibility == "private_owner":
-        if isinstance(model.user, dict):
-            return model.user.get("display_name", "")
+        if isinstance(model_user, dict):
+            return model_user.get("display_name", "")
         else:
-            return getattr(model.user, "display_name", "")
+            return getattr(model_user, "display_name", "")
     elif visibility == "private_not_owner":
-        if isinstance(model.user, dict):
-            return f"Anonymous Submitter #{model.user.get('id', '')}"
+        if isinstance(model_user, dict):
+            return f"Anonymous Submitter #{model_user.get('id', '')}"
         else:
-            return f"Anonymous Submitter #{getattr(model.user, 'id', '')}"
+            return f"Anonymous Submitter #{getattr(model_user, 'id', '')}"
     else:
-        if isinstance(model.user, dict):
-            return model.user.get("display_name", "")
+        if isinstance(model_user, dict):
+            return model_user.get("display_name", "")
         else:
-            return getattr(model.user, "display_name", "")
+            return getattr(model_user, "display_name", "")
 
 
 # controls how the benchmark roots are displayed in the comparison graphs
