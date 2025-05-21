@@ -1251,8 +1251,22 @@ LEFT JOIN mv_model_scores_json sc ON mm.id = sc.model_id
 LEFT JOIN reference_meta rm ON mm.reference_id = rm.reference_id
 LEFT JOIN final_layers fl ON mm.id = fl.model_id
 LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id;
+WHERE
+  -- Remove models with no valid scores (to be consistent with legacy implementation)
+  -- At least one score is valid (not '', not 'X', not NULL, not 'NaN')
+  EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(sc.scores) AS score
+    WHERE
+      (score->>'score_ceiled') IS NOT NULL
+      AND (score->>'score_ceiled') <> 'X'
+  );
 
 
+-- ********************************************************************************
+-- STEP I: Flatten final_model_context into a single row per model
+-- "mv_flattened_model_context" is the state used to reaggregate scores more easily
+-- ********************************************************************************
 DROP MATERIALIZED VIEW IF EXISTS mv_flattened_model_context CASCADE;
 CREATE MATERIALIZED VIEW mv_flattened_model_context AS
 WITH combined AS (
