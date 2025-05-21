@@ -1,19 +1,3 @@
-import hashlib
-import logging
-from functools import wraps
-from django.core.cache import cache
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.db.models import Q
-from benchmarks.models import FinalBenchmarkContext, BenchmarkMinMax
-from tqdm import tqdm
-import numpy as np
-from colour import Color
-import re
-from django.db import connection
-import fnmatch
 from typing import Callable, Optional, Dict, Any, List, Union
 from django.contrib.auth.models import User
 import hashlib
@@ -24,6 +8,14 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
+from benchmarks.models import FinalBenchmarkContext, BenchmarkMinMax
+from tqdm import tqdm
+import numpy as np
+from colour import Color
+import re
+from django.db import connection
+import fnmatch
 from django.http import JsonResponse, HttpRequest
 
 logger = logging.getLogger(__name__)
@@ -41,7 +33,6 @@ colors_redgreen = [colors_redgreen[int(a * np.power(i, b))] for i in range(len(c
 colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gray))]
 color_suffix = '_color'
 color_None = '#e0e1e2'
-
 
 # Cache utility functions and decorators
 def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
