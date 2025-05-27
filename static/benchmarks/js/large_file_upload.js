@@ -16,8 +16,9 @@ import {
 } from './validate_lfu.js';
 
 import { uploadFileWithPresignedPost } from './presigned_post.js';
+import { validateZipContents } from './validate_lfu.js';
 
-document.getElementById('upload-form').addEventListener('submit', function(event) {
+document.getElementById('upload-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
     const fileInput = document.getElementById('fileInput');
@@ -51,13 +52,17 @@ document.getElementById('upload-form').addEventListener('submit', function(event
     const ext = Object.keys(magicNumbers).find(e => fileName.toLowerCase().endsWith(e));
     const expectedHex = ext ? magicNumbers[ext] : '';
 
+    try {
+        await validateZipContents(file);
+    } catch (err) {
+        alert(err.message);
+        return;
+    }
     checkMagicNumber(file, expectedHex, (isValid) => {
         if (!isValid) {
             alert(`Invalid file signature for ${ext}.`);
             return;
         }
-
-        // Passed all checks, proceed to upload
         uploadFileWithPresignedPost(file, fileName, fileType, domain, pluginType);
     });
 });

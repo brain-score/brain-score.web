@@ -69,3 +69,63 @@ export function checkMagicNumber(file, expectedHex, callback) {
     reader.readAsArrayBuffer(blob);
 }
 
+// ZIP file parsing for adherence:
+export async function validateZipContents(file) {
+    if (!file.name.toLowerCase().endsWith('.zip')) return true; // skip if not zip
+
+    const zip = await JSZip.loadAsync(file);
+    const entries = Object.values(zip.files);
+
+    for (const entry of entries) {
+        if (entry.dir) continue; // skip folders
+
+        const name = entry.name;
+        const ext = Object.keys(magicNumbers).find(e => name.toLowerCase().endsWith(e));
+        const expectedHex = ext ? magicNumbers[ext] : '';
+        const mimeGuess = mimeFromExtension(ext); // helper we’ll define next
+
+        // Check extension
+        if (!hasAllowedExtension(name)) {
+            throw new Error(`File "${name}" in ZIP has disallowed extension.\n\n Allowed: ${allowedExtensions.join(', ')}`);
+        }
+
+        // Check guessed MIME
+        if (!hasAllowedMimeType(mimeGuess)) {
+            throw new Error(`File "${name}" in ZIP has disallowed MIME type "${mimeGuess}".`);
+        }
+
+        // Check magic number (only if expectedHex is defined)
+        if (expectedHex) {
+            const content = await entry.async('uint8array');
+            const actualHex = getMagicHex(content.slice(0, Math.ceil(expectedHex.length / 2)));
+            if (!actualHex.startsWith(expectedHex)) {
+                throw new Error(`File "${name}" in ZIP has invalid magic number.`);
+            }
+        }
+    }
+
+    return true;
+}
+
+// Simple helper based on extension
+function mimeFromExtension(ext) {
+    const mapping = {
+        '.csv': 'text/csv',
+        '.zip': 'application/zip',
+        '.npy': 'application/x-npy',
+        '.npz': 'application/zip',
+        '.pkl': 'application/x-pickle',
+        '.h5': 'application/x-hdf5',
+        '.hdf5': 'application/x-hdf5',
+        '.json': 'application/json',
+        '.onnx': 'application/octet-stream',
+        '.pt': 'application/octet-stream',
+        '.pth': 'application/octet-stream',
+        '.pb': 'application/octet-stream',
+        '.weights': 'application/octet-stream',
+        '.tflite': 'application/octet-stream',
+        '.bin': 'application/octet-stream',
+        '.safetensors': 'application/octet-stream',
+    };
+    return mapping[ext] || 'application/octet-stream';
+}
