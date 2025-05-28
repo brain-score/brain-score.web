@@ -1,0 +1,29 @@
+.copy-cell
+  position: relative
+
+  &:hover
+    .python-tooltip
+      display: block
+
+.python-tooltip
+  display: none
+  position: absolute
+  top: 2.5em
+  left: 0
+  background: white
+  border: 1px solid #ccc
+  padding: 1em
+  z-index: 10
+  width: 30em
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1)
+
+  pre
+    margin-left: 0
+    margin-top: 1.0em
+    margin-bottom: 1.0em
+    background: #f5f5f5
+    padding: 0.5em
+    overflow-x: auto
+
+.extra-row
+  display: none
