@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore
+    content_utils, benchmark, explore, leaderboard
 from .utils import show_token, refresh_cache
 
 
@@ -83,6 +83,8 @@ all_domain_urls = [non_domain_urls]
 for domain in supported_domains:
     domain_urls = [
         path(f'{domain}/', partial(index, domain=domain), name='index'),
+        path(f'{domain}/leaderboard/', partial(leaderboard.ag_grid_leaderboard, domain=domain),
+             name=f'{domain}-leaderboard'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),

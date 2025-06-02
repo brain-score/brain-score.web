@@ -1,0 +1,139 @@
+// _gradient-theme.sass
+
+// ============================
+// GRADIENT THEME VARIABLES
+// ============================
+
+// Base gradient colors
+$gradient-green: #52c282
+$gradient-blue: #4a9eff
+
+// Primary color palette (green-focused)
+$primary-color: $gradient-green
+$primary-hover: darken($gradient-green, 8%)
+$primary-active: darken($gradient-green, 15%)
+$primary-light: lighten($gradient-green, 10%)
+$primary-alpha: rgba($gradient-green, 0.2)
+
+// Secondary colors (blue end)
+$secondary-color: $gradient-blue
+$secondary-hover: darken($gradient-blue, 8%)
+$secondary-light: lighten($gradient-blue, 10%)
+
+// Gradient definitions
+$gradient-primary: linear-gradient(135deg, $gradient-green 0%, $gradient-blue 100%)
+$gradient-light: linear-gradient(135deg, $primary-light 0%, $secondary-light 100%)
+
+// ============================
+// MIXINS
+// ============================
+
+// Gradient button mixin
+@mixin gradient-button
+  background: $gradient-primary
+  border: none
+  color: white
+  transition: all 0.3s ease
+
+  &:hover
+    background: $gradient-light
+    transform: translateY(-1px)
+    box-shadow: 0 4px 12px rgba($gradient-green, 0.3)
+
+  &:active
+    transform: translateY(0)
+    background: $primary-active
+
+// Solid button mixin (ADDED - this was missing!)
+@mixin solid-button($color: $primary-color, $text-color: white)
+  background: $color
+  border: none
+  color: $text-color
+  transition: all 0.3s ease
+
+  &:hover
+    background: darken($color, 10%)
+    transform: translateY(-1px)
+    box-shadow: 0 2px 8px rgba($color, 0.3)
+
+  &:active
+    transform: translateY(0)
+    background: darken($color, 15%)
+
+// Input focus state mixin
+@mixin input-focus($color: $primary-color)
+  border-color: $color
+  outline: 2px solid rgba($color, 0.2)
+  outline-offset: 2px
+
+// Themed form control mixin
+@mixin themed-control
+  accent-color: $primary-color
+
+  &:focus-visible
+    @include input-focus
+
+  &:hover
+    accent-color: $primary-hover
+
+// ============================
+// FORM CONTROLS (Non-button elements only)
+// ============================
+
+// Checkboxes and radio buttons - FIXED: Move transform above nested rules
+input[type="checkbox"],
+input[type="radio"]
+  @include themed-control
+  transform: scale(1.1)
+
+  &:checked
+    background-color: $primary-color
+    border-color: $primary-color
+
+// Range sliders
+input[type="range"]
+  @include themed-control
+
+  &::-webkit-slider-thumb
+    background: $gradient-primary
+    border: 2px solid $primary-color
+    transition: all 0.2s ease
+
+    &:hover
+      background: $gradient-light
+      border-color: $primary-hover
+      transform: scale(1.1)
+
+// Text inputs
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+select
+  border: 2px solid $primary-light
+  transition: border-color 0.3s ease
+
+  &:focus
+    @include input-focus
+
+// ============================
+// UTILITY CLASSES
+// ============================
+
+.bg-gradient
+  background: $gradient-primary
+
+.text-primary
+  color: $primary-color
+
+.gradient-pill
+  background: $gradient-primary
+  color: white
+  border-radius: 999px
+  border: none
+  padding: 4px 12px
+  font-size: 0.875rem
+
+  &:hover
+    background: $gradient-light
+    transform: scale(1.05)

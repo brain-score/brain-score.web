@@ -1,0 +1,214 @@
+{% extends 'benchmarks/components/app-view.html' %}
+{% load static %}
+
+{% block table_library_dependencies %}
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
+  <link rel="stylesheet" href="{% static 'benchmarks/css/leaderboard/ag-grid-leaderboard.sass' %}">
+{% endblock %}
+
+{# Override main_content to remove column constraints #}
+{% block main_content %}
+  <div class="leaderboard-container">
+    <div class="leaderboard-header">
+      <!-- banner & icon… -->
+    </div>
+    
+    <div id="leaderboardSearchWrapper">
+      <input type="text" id="modelSearchInput" placeholder="Search for model or submitter..." />
+      <button id="advancedFilterBtn">
+        <span class="filter-icon">🔍</span>
+        <span class="text-wrapper">Advanced Filters</span>
+      </button>
+    </div>
+    
+    <div id="advancedFiltersPanel" class="advanced-filters hidden">
+{#      <h3>Advanced Filters</h3>#}
+      
+      <div class="filters-container">
+        <!-- Left column: Benchmark filters -->
+        <div class="filter-column benchmark-column">
+          <h4>Included Benchmarks</h4>
+          <div id="benchmarkFilterPanel"></div>
+        </div>
+        
+        <!-- Middle column: Model Properties -->
+        <div class="filter-column">
+          <h4>Model Properties</h4>
+          
+          <div class="filter-group">
+            <label>Architecture</label>
+            <div class="filter-dropdown" id="architectureFilter">
+              <input type="text" placeholder="Select architecture..." readonly>
+              <div class="dropdown-content hidden">
+                <!-- Options will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Training Dataset</label>
+            <div class="filter-dropdown" id="trainingDatasetFilter">
+              <input type="text" placeholder="Select training dataset..." readonly>
+              <div class="dropdown-content hidden"></div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Model Family</label>
+            <div class="filter-dropdown" id="modelFamilyFilter">
+              <input type="text" placeholder="Select model family..." readonly>
+              <div class="dropdown-content hidden"></div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Task Specialization</label>
+            <div class="filter-dropdown" id="taskSpecFilter">
+              <input type="text" placeholder="Select specialization..." readonly>
+              <div class="dropdown-content hidden"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right column: Model Parameters & Benchmark Properties -->
+        <div class="filter-column">
+          <h4>Model Parameters</h4>
+          
+          <div class="filter-group">
+            <label>Model Size (MB)</label>
+            <div class="range-filter">
+              <input type="range" id="modelSizeRange" min="0" max="1000" value="1000">
+              <div class="range-labels">
+                <span>0 MB</span>
+                <span id="modelSizeValue">1000+ MB</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Parameter Count</label>
+            <div class="range-filter">
+              <input type="range" id="paramCountRange" min="0" max="100" value="100">
+              <div class="range-labels">
+                <span>0M</span>
+                <span id="paramCountValue">100M+</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Score Range</label>
+            <div class="range-filter">
+              <input type="range" id="scoreRange" min="0" max="100" value="100">
+              <div class="range-labels">
+                <span>0</span>
+                <span id="scoreRangeValue">1.0</span>
+              </div>
+            </div>
+          </div>
+          
+{#          <h4 style="margin-top: 20px;">Benchmark Properties</h4>#}
+{#          #}
+{#          <div class="filter-group">#}
+{#            <label>Data Type</label>#}
+{#            <div class="filter-dropdown" id="dataTypeFilter">#}
+{#              <input type="text" placeholder="Select data type..." readonly>#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
+{#          #}
+{#          <div class="filter-group">#}
+{#            <label>Brain Region</label>#}
+{#            <div class="filter-dropdown" id="brainRegionFilter">#}
+{#              <input type="text" placeholder="Select brain region..." readonly>#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
+        </div>
+      </div>
+      
+      <!-- Action buttons -->
+      <div class="filter-actions">
+        <button id="applyFiltersBtn" class="btn-primary">Apply Filters</button>
+        <button id="resetAllFiltersBtn" class="btn-secondary">Reset</button>
+      </div>
+    </div>
+    
+    <div class="leaderboard-breadcrumb"></div>
+    <div id="leaderboardGrid"
+         class="ag-theme-alpine"
+         style="width:100%;height:2000px;overflow-x:auto;">
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  {# 1) Load AG-Grid UMD bundle #}
+  <script
+    src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
+  </script>
+
+  {# 2) Load your grid-wrapper JS (where you define initializeGrid) #}
+  <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
+
+  {# 3) Kick it off once the DOM is ready #}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const rowData = {{ row_data|safe }};
+      const columnDefs = {{ column_defs|safe }};
+      const benchmarkGroups = {{ benchmark_groups|safe }};
+      const benchmarkTree = {{ benchmark_tree|safe }};
+      
+      // Make benchmark tree globally available
+      window.benchmarkTree = benchmarkTree;
+      
+      if (typeof initializeGrid === 'function') {
+        initializeGrid(rowData, columnDefs, benchmarkGroups);
+      }
+      
+      const toggleBtn = document.getElementById('advancedFilterBtn');
+      const panel = document.getElementById('advancedFiltersPanel');
+      const treeContainer = document.getElementById('benchmarkFilterPanel');
+      renderBenchmarkTree(treeContainer, benchmarkTree);
+      addResetFiltersButton(); // Add this line to show the button
+        
+      // Initialize engineering as excluded AFTER tree is rendered
+      setTimeout(() => {
+        // Find and uncheck engineering checkbox
+        const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+        if (engineeringCheckbox) {
+          engineeringCheckbox.checked = false;
+          
+          // Also uncheck all engineering children
+          const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+          if (engineeringNode) {
+            const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+            childCheckboxes.forEach(cb => {
+              cb.checked = false;
+            });
+          }
+      
+      // Now properly initialize excluded set with all unchecked items
+      window.filteredOutBenchmarks = new Set();
+      const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+      allCheckboxes.forEach(cb => {
+        if (!cb.checked) {
+          window.filteredOutBenchmarks.add(cb.value);
+        }
+      });
+      
+      console.log('Initial excluded set:', [...window.filteredOutBenchmarks]);
+      }
+      }, 100);
+      
+      if (toggleBtn && panel) {
+        toggleBtn.addEventListener('click', () => {
+          panel.classList.toggle('hidden');
+        });
+      }
+    });
+  </script>
+{% endblock %}

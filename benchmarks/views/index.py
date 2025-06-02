@@ -10,8 +10,6 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
-import json
-import numpy as np
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
@@ -35,7 +33,6 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-#@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 # Explore caching entire leaderboard context without any filtering
 # which is then used downstream. Unclear if this has performance benefits.
 def get_base_model_query(domain="vision"):
@@ -46,7 +43,6 @@ def get_base_model_query(domain="vision"):
 # Cache the leaderboard HTML page for 15 minutes at a time
 # Server-side HTML caching until leaderboard views are introduced.
 # Consider using client-side caching in the future
-#@cache_page(1 * 15 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None

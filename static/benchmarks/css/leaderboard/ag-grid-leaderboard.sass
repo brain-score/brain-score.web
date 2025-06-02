@@ -1,0 +1,520 @@
+//@import "../../../node_modules/bulma/sass/utilities/mixins"
+@import 'gradient-theme'
+
+// Base button styling (all buttons get basic styling)
+button,
+.btn
+  border: none
+  color: white
+  transition: all 0.3s ease
+  padding: 8px 16px
+  border-radius: 4px
+  cursor: pointer
+  font-size: 14px
+
+// Gradient buttons (primary actions)
+#advancedFilterBtn,
+#applyFiltersBtn
+  @include gradient-button
+  // Override the specific styling that was conflicting
+  background: $gradient-primary !important
+  width: 180px
+  font-size: 15px
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+
+  &:hover
+    background: $gradient-light !important
+
+// Solid buttons (reset actions)
+#resetFiltersBtn,
+#resetAllFiltersBtn
+  @include solid-button($primary-color)
+
+// Generic button classes (for the filter actions)
+.btn-primary
+  @include gradient-button
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
+
+.btn-secondary
+  @include solid-button($primary-color)
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
+
+// Container - FIXED: Remove max-width constraint for full-screen layout
+.leaderboard-container
+  padding: 20px
+  display: block
+  overflow-x: auto
+  max-width: none
+  width: 100%
+  margin: 0
+  box-sizing: border-box
+
+// Rank cell
+.ag-cell[col-id="rank"]
+  display: flex
+  font-size: 24px
+  font-weight: 300
+  align-items: center
+  text-align: center
+  color: #333
+  height: 100%
+
+// Model cell
+.ag-cell[col-id="model"]
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: flex-start
+  padding: 0 10px
+  white-space: nowrap
+  line-height: 1.5
+  overflow: hidden
+  text-overflow: ellipsis
+  min-width: 180px
+
+  a,
+  .model-name,
+  .model-submitter
+    max-width: 100%
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .model-name
+    color: #4285f4
+    font-weight: normal
+    margin-bottom: 4px
+
+  .model-submitter
+    font-size: 12px
+    color: #666
+    font-style: italic
+
+// Score pill container
+.score-pill-container
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+// Score pill
+.score-pill
+  opacity: 0.8
+  width: 120px
+  border-radius: 30px
+  font-size: 15px
+  font-weight: 300
+  display: flex
+  justify-content: center
+  align-items: center
+  text-align: center
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
+  color: black
+
+// Header pill (benchmark group)
+.expandable-header
+  width: auto
+  min-width: 120px
+  max-width: 120px
+  height: 40px
+  border-radius: 20px
+  //transition: border 0.1s ease, background-color 0.1s ease
+  border: 2px solid transparent
+  display: flex
+  justify-content: center
+  align-items: center
+  margin: 0 auto
+  position: relative
+  font-weight: bold
+  color: white
+  white-space: nowrap
+  text-overflow: ellipsis
+  cursor: pointer
+
+  &:hover
+    //border: 3px solid #4b4b4b
+    //background-color: #f9f9f9
+    cursor: pointer
+
+  &.average
+    background-color: #9BE36D
+    color: black
+    &:hover
+      background-color: lighten(#9BE36D, 10%)
+  &.neural
+    background-color: #1F3157
+    &:hover
+      background-color: lighten(#1F3157, 10%)
+  &.behavior
+    background-color: #2E5739
+    &:hover
+      background-color: lighten(#2E5739, 10%)
+  &.engineering
+    background-color: #5C8DB8
+    &:hover
+      background-color: lighten(#5C8DB8, 10%)
+  &:not(.neural):not(.behavior):not(.engineering):not(.average)
+    background-color: #d4d4d4
+    color: black
+    &:hover
+      background-color: lighten(#d4d4d4, 5%)
+      border: 2px solid #cccccc
+  .expandable-header-label-container
+    flex: 1 1 auto
+    text-align: center
+    overflow: hidden
+    padding: 6px 0
+    display: flex
+    justify-content: center
+  .expandable-header-label
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    display: inline-block
+    max-width: 100%
+
+.leaf-header
+  display: flex
+  justify-content: center
+  align-items: center
+  padding: 6px 10px
+  background-color: #eeeeee
+  border-radius: 20px
+  height: 40px
+  min-width: 120px
+  max-width: 120px
+  cursor: pointer
+
+  .leaf-header-label
+    display: inline-block
+    max-width: 100px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    font-weight: bold
+    color: #333
+
+// Count badge inside header pill
+.benchmark-count
+  position: absolute
+  bottom: -8px
+  right: -5px
+  background: white
+  color: #333
+  font-size: 12px
+  border: 1px solid #ddd
+  border-radius: 10px
+  padding: 0 6px
+
+.expand-toggle
+  flex: 0 0 auto
+  margin-left: -4px  // visually nudge it closer
+  padding-right: 4px
+  z-index: 1
+
+// Search bar and filter button wrapper
+#leaderboardSearchWrapper
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-bottom: 10px
+  width: 100%
+  gap: 12px
+
+  #modelSearchInput
+    flex: 1
+    padding: 10px 14px
+    font-size: 14px
+    border: 1px solid #e1e1e1
+    border-radius: 6px
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05)
+    outline: none
+    background-color: #fdfdfd
+    transition: border 0.2s ease
+
+    &:focus
+      border-color: #727272
+
+.ag-header-cell-resize
+  width: 8px !important // widen the resize handle
+  background-color: transparent
+  opacity: 0
+  width: 0
+  //width: 0 !important
+
+.ag-header-cell:hover .ag-header-cell-resize
+  background-color: rgba(0, 0, 0, 0.1) // light gray on hover
+  cursor: col-resize
+
+#benchmarkFilterPanel
+  min-height: 300px
+  max-height: 300px
+  width: 500px
+  overflow-y: auto
+  padding: 0.5rem
+  border: 1px solid $primary-light
+  border-radius: 6px
+  background-color: #f9f9f9
+
+.advanced-filters.hidden
+  display: none
+
+.advanced-filters
+  padding: 20px
+  background: #f8f9fa
+  border: 1px solid $primary-light
+  margin: 1rem 0
+  border-radius: 8px
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1)
+
+  &.hidden
+    display: none
+
+  h3
+    margin-top: 0
+    margin-bottom: 20px
+    font-size: 1.25rem
+    color: #333
+    border-bottom: 2px solid #e9ecef
+    padding-bottom: 10px
+
+.benchmark-tree
+  list-style: none
+  padding-left: 1rem
+  max-height: none
+  overflow: visible
+  input[type="checkbox"]
+    @include themed-control
+
+.benchmark-node
+  margin: 0.25rem 0
+  padding-left: 1rem
+  border-left: 1px solid #ddd
+  position: relative
+
+.tree-node-header
+  display: flex
+  align-items: center
+  gap: 6px
+  cursor: default
+
+.tree-node-header label
+  display: inline-block
+  max-width: 100%
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  flex: 1
+
+.tree-toggle
+  width: 1rem
+  display: inline-block
+  font-family: monospace
+  color: #888
+  cursor: pointer
+  user-select: none
+
+.collapsed > ul
+  display: none
+
+.filter-section
+  margin-bottom: 1.5rem
+
+.filter-section h4
+  margin-top: 0
+  font-size: 1rem
+  font-weight: bold
+
+.ag-header-cell.centered-header
+  .ag-header-cell-label
+    justify-content: center
+    text-align: center
+
+.ag-header-cell.centered-header .ag-header-cell-text
+  text-align: center
+  width: 100%
+  font-size: 14px
+
+// FIXED: Updated filters container with proper grid and height management
+.filters-container
+  display: grid
+  gap: 20px
+  align-items: stretch  // Make all columns same height
+  min-height: 400px     // Set minimum height for all columns
+
+  // Desktop: 3 columns
+  @media (min-width: 1200px)
+    grid-template-columns: 1fr 1fr 1fr
+
+  // Tablet: Benchmarks full width, then 2 columns
+  @media (min-width: 768px) and (max-width: 1199px)
+    grid-template-columns: 1fr 1fr
+
+    .benchmark-column
+      grid-column: 1 / -1  // Full width
+
+  // Mobile: Single column
+  @media (max-width: 767px)
+    grid-template-columns: 1fr
+
+// FIXED: Updated filter-column with proper flex layout and height constraints
+.filter-column
+  background: white
+  border-radius: 8px
+  padding: 20px
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05)
+  border: 1px solid #e9ecef
+  display: flex
+  flex-direction: column
+  min-height: 400px     // Ensure all columns have same minimum height
+  max-height: 400px     // Cap all columns at the same maximum height
+
+  h4
+    margin-top: 0
+    margin-bottom: 16px
+    font-size: 1rem
+    font-weight: 600
+    color: #495057
+    padding-bottom: 8px
+    border-bottom: 1px solid #e9ecef
+
+  // FIXED: Special handling for benchmark column with height matching
+  &.benchmark-column
+    #benchmarkFilterPanel
+      flex: 1              // Take up remaining space
+      overflow-y: auto     // Make the panel itself scrollable
+      max-height: none     // Remove height limit on panel
+      min-height: 300px    // Ensure reasonable content area
+      height: auto         // Let it grow within constraints
+
+    .benchmark-tree
+      height: 100%
+      overflow: visible    // Remove internal scrolling
+      max-height: none     // Remove height constraint
+
+.filter-group
+  margin-bottom: 16px
+
+  label
+    display: block
+    font-weight: 500
+    margin-bottom: 6px
+    color: #495057
+    font-size: 0.9rem
+
+.filter-dropdown
+  position: relative
+
+  input
+    width: 100%
+    padding: 10px 12px
+    border: 1px solid #ced4da
+    border-radius: 6px
+    background: white
+    cursor: pointer
+    font-size: 0.9rem
+    transition: border-color 0.2s ease
+
+    &:focus
+      outline: none
+      border-color: #4285f4
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1)
+
+  .dropdown-content
+    position: absolute
+    top: 100%
+    left: 0
+    right: 0
+    background: white
+    border: 1px solid #ced4da
+    border-top: none
+    border-radius: 0 0 6px 6px
+    max-height: 200px
+    overflow-y: auto
+    z-index: 1000
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+
+    &.hidden
+      display: none
+
+    .dropdown-option
+      padding: 10px 12px
+      cursor: pointer
+      font-size: 0.9rem
+      transition: background-color 0.15s ease
+
+      &:hover
+        background-color: #f8f9fa
+
+      &.selected
+        background-color: #e3f2fd
+        color: #1976d2
+
+.range-filter
+  input[type="range"]
+    width: 100%
+    margin: 10px 0 8px 0
+    height: 6px
+    border-radius: 3px
+    background: #e9ecef
+    outline: none
+    -webkit-appearance: none
+
+    &::-webkit-slider-thumb
+      -webkit-appearance: none
+      appearance: none
+      width: 18px
+      height: 18px
+      border-radius: 50%
+      background: $gradient-primary
+      cursor: pointer
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+
+    &::-moz-range-thumb
+      width: 18px
+      height: 18px
+      border-radius: 50%
+      background: $gradient-primary
+      cursor: pointer
+      border: none
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+
+  .range-labels
+    display: flex
+    justify-content: space-between
+    font-size: 0.8rem
+    color: #6c757d
+    margin-top: 4px
+
+.filter-actions
+  margin-top: 24px
+  padding-top: 20px
+  border-top: 1px solid #e9ecef
+  display: flex
+  gap: 12px
+  justify-content: flex-end
+  background: transparent
+
+// ADDED: Ensure ag-grid takes full width
+#leaderboardGrid
+  width: 100% !important
+  max-width: none
+
+  .ag-root-wrapper
+    width: 100% !important
+
+  .ag-root
+    width: 100% !important
+
+// ADDED: Ensure search wrapper takes full width
+#leaderboardSearchWrapper
+  width: 100%
+  max-width: none
