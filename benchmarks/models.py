@@ -153,6 +153,7 @@ class BenchmarkDataMeta(models.Model):
     pre_processing = models.CharField(max_length=100, null=True, default=None)
     brainscore_link = models.CharField(max_length=200, null=True, default=None)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
+    data_publicly_available = models.BooleanField(default=True, null=False)
 
     class Meta:
         db_table = 'brainscore_benchmark_data_meta'
@@ -259,7 +260,7 @@ class ModelMeta(models.Model):
     task_specialization = models.CharField(max_length=100, null=True, default=None)
     brainscore_link = models.CharField(max_length=256, null=True, default=None)
     hugging_face_link = models.CharField(max_length=256, null=True, default=None)
-    runnable = models.BooleanField(default=None, null=True)
+    runnable = models.BooleanField(default=True, null=True)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
 
     class Meta:
