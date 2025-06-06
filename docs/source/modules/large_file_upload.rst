@@ -107,3 +107,18 @@ Security Notes
 - Magic number validation helps protect against spoofed file types.
 - Only whitelisted file types and signatures are allowed.
 - Finalization ensures only successfully uploaded files are processed.
+
+code_hover.js
+^^^^^^^^^^^^^
+Provides a utility for displaying and copying code snippets on user interaction.
+
+**Behavior:**
+
+- Binds click events to elements with class ``.copy-btn``
+- Copies the associated code (via ``data-code`` attribute) to the clipboard
+- Displays "Copied!" feedback for 2 seconds, then resets
+
+**Usage Pattern:**
+
+- Each copy button must have a ``data-code`` attribute with the string to copy
+- JavaScript listens for clicks on ``.copy-btn`` and uses `navigator.clipboard`
