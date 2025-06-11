@@ -81,6 +81,29 @@ def build_benchmark_tree(benchmarks, parent_id=None):
     return tree
 
 
+def round_up_aesthetically(value):
+    """Round a number up to an aesthetically pleasing value (for range sliders)"""
+    if value <= 0:
+        return 100  # fallback
+
+    # Convert to string to work with magnitude
+    str_val = str(int(value))
+    magnitude = len(str_val)
+
+    if magnitude == 1:  # 1-9
+        return 10
+    elif magnitude == 2:  # 10-99
+        return ((int(value) // 10) + 1) * 10
+    elif magnitude == 3:  # 100-999
+        return ((int(value) // 100) + 1) * 100
+    elif magnitude == 4:  # 1000-9999
+        return ((int(value) // 1000) + 1) * 1000
+    else:  # 10000+
+        # For very large numbers, round to nearest 10k, 100k, etc.
+        power = 10 ** (magnitude - 2)
+        return ((int(value) // power) + 1) * power
+
+
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
@@ -90,13 +113,15 @@ def ag_grid_leaderboard(request, domain: str):
     model_metadata = {
         'architectures': set(),
         'model_families': set(),
+        'training_datasets': set(),
+        'task_specializations': set(),
         'parameter_ranges': {'min': float('inf'), 'max': 0},
         'layer_ranges': {'min': float('inf'), 'max': 0},
         'size_ranges': {'min': float('inf'), 'max': 0},
         'runnable_options': set()
     }
 
-    # 2) Build `row_data` from materialized-view models
+    # 2) Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
         # base fields
@@ -109,6 +134,103 @@ def ag_grid_leaderboard(request, domain: str):
                 'submitter': model.submitter.get('display_name') if model.submitter else None
             }
         }
+
+        # Process model metadata if available
+        metadata = {}
+        if hasattr(model, 'model_meta') and model.model_meta:
+            meta = model.model_meta
+
+            # Extract metadata for this model
+            metadata = {
+                'architecture': meta.get('architecture', ''),
+                'model_family': meta.get('model_family', ''),
+                'total_parameter_count': meta.get('total_parameter_count', 0),
+                'total_layers': meta.get('total_layers', 0),
+                'model_size_mb': meta.get('model_size_mb', 0),
+                'runnable': meta.get('runnable', False),
+                'training_dataset': meta.get('training_dataset', ''),
+                'task_specialization': meta.get('task_specialization', '')
+            }
+
+            # Collect values for filter options
+            if meta.get('architecture'):
+                # Split by comma and strip whitespace
+                architectures = [arch.strip() for arch in meta['architecture'].split(',')]
+                for arch in architectures:
+                    if arch:  # Only add non-empty values
+                        model_metadata['architectures'].add(arch)
+
+            if meta.get('model_family'):
+                families = [fam.strip() for fam in meta['model_family'].split(',')]
+                for fam in families:
+                    if fam:
+                        model_metadata['model_families'].add(fam)
+
+            if meta.get('training_dataset'):
+                datasets = [ds.strip() for ds in meta['training_dataset'].split(',')]
+                for ds in datasets:
+                    if ds:
+                        model_metadata['training_datasets'].add(ds)
+
+            if meta.get('task_specialization'):
+                specs = [spec.strip() for spec in meta['task_specialization'].split(',')]
+                for spec in specs:
+                    if spec:
+                        model_metadata['task_specializations'].add(spec)
+
+            # Parameter Count (convert to millions for display)
+            if meta.get('total_parameter_count'):
+                param_count_millions = meta['total_parameter_count'] / 1_000_000
+                model_metadata['parameter_ranges']['min'] = min(
+                    model_metadata['parameter_ranges']['min'],
+                    param_count_millions
+                )
+                model_metadata['parameter_ranges']['max'] = max(
+                    model_metadata['parameter_ranges']['max'],
+                    param_count_millions
+                )
+
+            # Layer Count
+            if meta.get('total_layers'):
+                model_metadata['layer_ranges']['min'] = min(
+                    model_metadata['layer_ranges']['min'],
+                    meta['total_layers']
+                )
+                model_metadata['layer_ranges']['max'] = max(
+                    model_metadata['layer_ranges']['max'],
+                    meta['total_layers']
+                )
+
+            # Model Size (MB)
+            if meta.get('model_size_mb'):
+                model_metadata['size_ranges']['min'] = min(
+                    model_metadata['size_ranges']['min'],
+                    meta['model_size_mb']
+                )
+                model_metadata['size_ranges']['max'] = max(
+                    model_metadata['size_ranges']['max'],
+                    meta['model_size_mb']
+                )
+
+            # Runnable
+            if 'runnable' in meta and meta['runnable'] is not None:
+                model_metadata['runnable_options'].add(meta['runnable'])
+        else:
+            # Default metadata if none exists
+            metadata = {
+                'architecture': '',
+                'model_family': '',
+                'total_parameter_count': 0,
+                'total_layers': 0,
+                'model_size_mb': 0,
+                'runnable': False,
+                'training_dataset': '',
+                'task_specialization': ''
+            }
+
+        # Add metadata to row data
+        rd['metadata'] = metadata
+
         # now flatten out each score dict
         for score in model.scores or []:
             vid = score.get('versioned_benchmark_identifier')
@@ -158,7 +280,7 @@ def ag_grid_leaderboard(request, domain: str):
             'hide': False,
             'sortable': True,
             'width': 150,
-            'context': { 'parentField': None, 'benchmarkId': field }
+            'context': {'parentField': None, 'benchmarkId': field}
         })
 
     # 3b) All other groupings (version==0 & has parent) hidden initially
@@ -205,15 +327,42 @@ def ag_grid_leaderboard(request, domain: str):
             'cellRenderer': 'scoreCellRenderer',
             'hide': True,
             'sortable': True,
-            'context': { 'parentField': parent_field }
+            'context': {'parentField': parent_field}
         })
+
+    # Convert filter metadata to frontend-friendly format
+    filter_options = {
+        'architectures': sorted(list(model_metadata['architectures'])),
+        'model_families': sorted(list(model_metadata['model_families'])),
+        'training_datasets': sorted(list(model_metadata['training_datasets'])),
+        'task_specializations': sorted(list(model_metadata['task_specializations'])),
+        'parameter_ranges': {
+            'min': 0,  # Always start at 0
+            'max': round_up_aesthetically(model_metadata['parameter_ranges']['max']) if
+            model_metadata['parameter_ranges']['max'] > 0 else 100
+        },
+        'layer_ranges': {
+            'min': 0,  # Always start at 0
+            'max': round_up_aesthetically(model_metadata['layer_ranges']['max']) if model_metadata['layer_ranges'][
+                                                                                        'max'] > 0 else 500
+        },
+        'size_ranges': {
+            'min': 0,  # Always start at 0
+            'max': round_up_aesthetically(model_metadata['size_ranges']['max']) if model_metadata['size_ranges'][
+                                                                                       'max'] > 0 else 1000
+        },
+        'runnable_options': sorted(list(model_metadata['runnable_options']))
+    }
 
     # 4) Attach JSON-serialized data to template context
     context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
     context['column_defs'] = json.dumps(column_defs)
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
+    context['filter_options'] = json.dumps(filter_options)  # NEW: Add filter options
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
 
+    # debugging
+    print("🔍 Django filter_options being sent:", context.get('filter_options', 'NOT FOUND'))
     # 5) Render the AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)

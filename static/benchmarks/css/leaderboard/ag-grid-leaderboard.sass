@@ -274,9 +274,11 @@ button,
   margin: 1rem 0
   border-radius: 8px
   box-shadow: 0 2px 8px rgba(0,0,0,0.1)
+  overflow: visible !important  // Allow dropdowns to overflow
+  display: block
 
   &.hidden
-    display: none
+    display: none !important
 
   h3
     margin-top: 0
@@ -343,12 +345,12 @@ button,
   width: 100%
   font-size: 14px
 
-// FIXED: Updated filters container with proper grid and height management
 .filters-container
   display: grid
   gap: 20px
-  align-items: stretch  // Make all columns same height
-  min-height: 400px     // Set minimum height for all columns
+  align-items: stretch
+  min-height: 400px
+  overflow: visible !important  // Allow dropdowns to overflow
 
   // Desktop: 3 columns
   @media (min-width: 1200px)
@@ -365,7 +367,6 @@ button,
   @media (max-width: 767px)
     grid-template-columns: 1fr
 
-// FIXED: Updated filter-column with proper flex layout and height constraints
 .filter-column
   background: white
   border-radius: 8px
@@ -374,8 +375,11 @@ button,
   border: 1px solid #e9ecef
   display: flex
   flex-direction: column
-  min-height: 400px     // Ensure all columns have same minimum height
-  max-height: 400px     // Cap all columns at the same maximum height
+  min-height: 400px
+  // REMOVE max-height entirely to prevent clipping
+  overflow: visible !important  // Allow dropdowns to overflow the container
+  position: relative  // Establish stacking context
+  z-index: 1
 
   h4
     margin-top: 0
@@ -386,12 +390,12 @@ button,
     padding-bottom: 8px
     border-bottom: 1px solid #e9ecef
 
-  // FIXED: Special handling for benchmark column with height matching
+  // Special handling for benchmark column with height matching
   &.benchmark-column
     #benchmarkFilterPanel
       flex: 1              // Take up remaining space
       overflow-y: auto     // Make the panel itself scrollable
-      max-height: none     // Remove height limit on panel
+      max-height: 300px    // Only the benchmark panel should have max-height
       min-height: 300px    // Ensure reasonable content area
       height: auto         // Let it grow within constraints
 
@@ -400,8 +404,17 @@ button,
       overflow: visible    // Remove internal scrolling
       max-height: none     // Remove height constraint
 
+  .filter-dropdown
+    margin: 0 !important
+    padding: 0 !important
+
+    input
+      width: 100% !important
+      box-sizing: border-box !important
+
 .filter-group
   margin-bottom: 16px
+  position: relative
 
   label
     display: block
@@ -410,53 +423,220 @@ button,
     color: #495057
     font-size: 0.9rem
 
+  .filter-dropdown
+    width: 100% !important
+    position: relative
+    z-index: 10
+
 .filter-dropdown
   position: relative
+  z-index: 10
 
-  input
+  .filter-input
     width: 100%
-    padding: 10px 12px
-    border: 1px solid #ced4da
-    border-radius: 6px
+    padding: 12px 16px
+    padding-right: 40px
+    border: 2px solid #e1e5e9
+    border-radius: 8px
     background: white
     cursor: pointer
     font-size: 0.9rem
-    transition: border-color 0.2s ease
+    font-weight: 500
+    transition: all 0.2s ease
+    box-sizing: border-box
+    color: #495057
+
+    // Dropdown arrow - styled to match your theme
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10'%3E%3Cpath fill='%23666' d='M7 10L0 0h14z'/%3E%3C/svg%3E")
+    background-repeat: no-repeat
+    background-position: right 14px center
+    background-size: 12px
+
+    &::placeholder
+      color: #8e9aaf
+      font-weight: 400
 
     &:focus
       outline: none
-      border-color: #4285f4
-      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1)
+      border-color: $primary-color
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1)
+      cursor: text
+
+    &:hover:not(:focus)
+      border-color: #c5cdd6
+      background-color: #fafbfc
+
+    // When dropdown is active, rotate arrow and change border
+    .active &
+      border-color: $primary-color
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10'%3E%3Cpath fill='%23#{str-slice(#{$primary-color}, 2)}' d='M7 0L14 10H0z'/%3E%3C/svg%3E")
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1)
 
   .dropdown-content
-    position: absolute
-    top: 100%
-    left: 0
-    right: 0
-    background: white
-    border: 1px solid #ced4da
-    border-top: none
-    border-radius: 0 0 6px 6px
-    max-height: 200px
+    position: absolute !important
+    top: calc(100% + 4px) !important
+    left: 0 !important
+    width: 100% !important
+    margin: 0 !important
+    padding: 8px 0 !important
+    background: white !important
+    border: 2px solid $primary-color !important
+    border-radius: 8px
+    max-height: 220px
     overflow-y: auto
-    z-index: 1000
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+    z-index: 1000 !important
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15)
+    display: block
+    opacity: 1
+    visibility: visible
+    pointer-events: auto
+    box-sizing: border-box !important
+    transform: none !important
 
     &.hidden
-      display: none
+      display: none !important
+
+    // Custom scrollbar styling
+    &::-webkit-scrollbar
+      width: 6px
+
+    &::-webkit-scrollbar-track
+      background: #f1f3f5
+      border-radius: 3px
+
+    &::-webkit-scrollbar-thumb
+      background: #c1c8cd
+      border-radius: 3px
+
+      &:hover
+        background: #a6b1ba
 
     .dropdown-option
-      padding: 10px 12px
+      position: relative
+      padding: 12px 16px
+      padding-left: 44px  // Space for custom checkbox
       cursor: pointer
+      transition: all 0.15s ease
       font-size: 0.9rem
-      transition: background-color 0.15s ease
+      font-weight: 500
+      color: #495057
+      border-bottom: 1px solid #f1f3f5
+
+      &:last-child
+        border-bottom: none
 
       &:hover
         background-color: #f8f9fa
+        color: #343a40
+
+      // Custom checkbox using the same style as benchmark tree
+      &::before
+        content: ''
+        position: absolute
+        left: 16px
+        top: 50%
+        transform: translateY(-50%)
+        width: 18px
+        height: 18px
+        border: 2px solid #ced4da
+        border-radius: 4px
+        background: white
+        transition: all 0.2s ease
+        @include themed-control  // Use your existing themed control mixin
 
       &.selected
-        background-color: #e3f2fd
-        color: #1976d2
+        background-color: #e8f4f8
+        color: $primary-color
+        font-weight: 600
+
+        &::before
+          background-color: $primary-color
+          border-color: $primary-color
+          transform: translateY(-50%) scale(1.05)
+
+        // Checkmark
+        &::after
+          content: ''
+          position: absolute
+          left: 21px
+          top: 50%
+          transform: translateY(-65%) rotate(45deg)
+          width: 5px
+          height: 10px
+          border: solid white
+          border-width: 0 2px 2px 0
+          opacity: 1
+
+        &:hover
+          background-color: #d1ecf1
+          color: darken($primary-color, 10%)
+
+    .no-results
+      padding: 16px
+      text-align: center
+      color: #8e9aaf
+      font-style: italic
+      font-size: 0.85rem
+      background-color: #f8f9fa
+
+.filter-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-bottom: 12px
+
+  label
+    margin-bottom: 0  // Remove bottom margin since it's inline now
+    flex-shrink: 0
+
+  .range-values
+    display: flex
+    align-items: center
+    gap: 8px
+    flex-shrink: 0
+
+    .range-input-min,
+    .range-input-max
+      width: 60px  // Slightly smaller for inline display
+      padding: 4px 6px
+      border: 1px solid #ced4da
+      border-radius: 4px
+      font-size: 0.85rem
+      text-align: center
+
+      &:focus
+        outline: none
+        border-color: #4285f4
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1)
+
+      // Hide spinner arrows
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button
+        -webkit-appearance: none
+        margin: 0
+
+    .range-separator
+      color: #6c757d
+      font-weight: 500
+      font-size: 0.85rem
+
+    .range-unit
+      color: #6c757d
+      font-size: 0.8rem
+
+.filter-dropdown.active
+  z-index: 100
+
+.filter-actions
+  margin-top: 24px
+  padding-top: 20px
+  border-top: 1px solid #e9ecef
+  display: flex
+  gap: 12px
+  justify-content: flex-end
+  background: transparent
+  position: relative
+  z-index: 1
 
 .range-filter
   input[type="range"]
@@ -494,14 +674,120 @@ button,
     color: #6c757d
     margin-top: 4px
 
-.filter-actions
-  margin-top: 24px
-  padding-top: 20px
-  border-top: 1px solid #e9ecef
-  display: flex
-  gap: 12px
-  justify-content: flex-end
-  background: transparent
+.range-filter.dual-handle
+  .range-values
+    display: flex
+    align-items: center
+    gap: 8px
+    margin-bottom: 20px
+
+    .range-input-min,
+    .range-input-max
+      width: 70px
+      padding: 6px 8px
+      border: 1px solid #ced4da
+      border-radius: 4px
+      font-size: 0.9rem
+      text-align: center
+
+      &:focus
+        outline: none
+        border-color: #4285f4
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1)
+
+      // Hide spinner arrows
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button
+        -webkit-appearance: none
+        margin: 0
+
+    .range-separator
+      color: #6c757d
+      font-weight: 500
+
+    .range-unit
+      color: #6c757d
+      font-size: 0.85rem
+
+  .slider-container
+    position: relative
+    height: 40px
+    width: 100%
+    cursor: pointer
+    margin-top: 8px
+
+    .slider-track
+      position: absolute
+      width: 100%
+      height: 6px
+      background: #e9ecef
+      border-radius: 3px
+      top: 50%
+      transform: translateY(-50%)
+
+    .slider-range
+      position: absolute
+      height: 6px
+      background: $gradient-primary
+      border-radius: 3px
+      top: 50%
+      transform: translateY(-50%)
+      pointer-events: none
+
+    .slider-handle
+      position: absolute
+      width: 22px
+      height: 22px
+      border-radius: 50%
+      background: white
+      border: 2px solid $primary-color
+      top: 50%
+      transform: translate(-50%, -50%)
+      cursor: grab
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+      transition: box-shadow 0.15s ease, transform 0.15s ease
+      z-index: 2
+
+      &:hover
+        box-shadow: 0 3px 8px rgba(0,0,0,0.3)
+        transform: translate(-50%, -50%) scale(1.1)
+
+      &:active,
+      &.active
+        cursor: grabbing
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3)
+        transform: translate(-50%, -50%) scale(0.95)
+        z-index: 3  // Ensure active handle is on top
+
+      // Visual distinction between min and max handles
+      &.handle-min
+        background: white
+
+      &.handle-max
+        background: white
+
+      // Optional: Add subtle visual difference
+      &.handle-min::after
+        content: ''
+        position: absolute
+        width: 4px
+        height: 4px
+        background: $primary-color
+        border-radius: 50%
+        top: 50%
+        left: 50%
+        transform: translate(-50%, -50%)
+
+      &.handle-max::after
+        content: ''
+        position: absolute
+        width: 6px
+        height: 6px
+        background: $primary-color
+        border-radius: 50%
+        top: 50%
+        left: 50%
+        transform: translate(-50%, -50%)
 
 // ADDED: Ensure ag-grid takes full width
 #leaderboardGrid

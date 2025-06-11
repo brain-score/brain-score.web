@@ -2,6 +2,17 @@
 window.globalGridApi = null;
 window.globalColumnApi = null;
 
+// Global filter state for model properties
+window.activeFilters = {
+  architecture: [],
+  model_family: [],
+  training_dataset: [],
+  task_specialization: [],
+  max_param_count: null,
+  max_model_size: null,
+  runnable_only: false
+};
+
 // ModelCellRenderer
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
@@ -82,7 +93,7 @@ ScoreCellRenderer.prototype.init = function(params) {
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
     display = Number(cellObj.value).toFixed(2);
   }
-  const CELL_ALPHA = 0.75;
+  const CELL_ALPHA = 0.85;
   let bg = '#e0e1e2';
   if (cellObj.color) {
     const m = cellObj.color.match(/rgba?\([^)]*\)/);
@@ -323,9 +334,8 @@ function renderBenchmarkTree(container, tree) {
       // Update exclusions based on current tree state
       updateExclusions();
 
-      // Update filtered scores and refresh grid
-      updateFilteredScores(window.originalRowData);
-      toggleFilteredScoreColumn(window.globalGridApi);
+      // Apply combined filters (benchmark + model property filters)
+      applyCombinedFilters();
     });
 
     const label = document.createElement('label');
@@ -387,27 +397,690 @@ function addResetFiltersButton() {
   resetBtn.style.cursor = 'pointer';
 
   resetBtn.addEventListener('click', () => {
-    // Clear all filters
-    window.filteredOutBenchmarks = new Set();
-
-    // Check all checkboxes
-    const checkboxes = filterPanel.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => cb.checked = true);
-
-    // Update scores and grid
-    updateFilteredScores(window.originalRowData);
-    toggleFilteredScoreColumn(window.globalGridApi);
+    resetAllFilters();
   });
 
   // Insert button at the top of the filter panel
   filterPanel.insertBefore(resetBtn, filterPanel.firstChild);
 }
 
+// Filter population and handling functions
+function populateFilterDropdowns(filterOptions) {
+  console.log('Populating filters with options:', filterOptions);
+
+  // Populate Architecture dropdown
+  const architectureDropdown = document.querySelector('#architectureFilter .dropdown-content');
+  if (architectureDropdown && filterOptions.architectures) {
+    architectureDropdown.innerHTML = '';
+    filterOptions.architectures.forEach(arch => {
+      const option = document.createElement('div');
+      option.className = 'dropdown-option';
+      option.textContent = arch || 'Unknown';
+      option.addEventListener('click', () => selectFilterOption('architecture', arch, option));
+      architectureDropdown.appendChild(option);
+    });
+  }
+
+  // Populate Model Family dropdown
+  const familyDropdown = document.querySelector('#modelFamilyFilter .dropdown-content');
+  if (familyDropdown && filterOptions.model_families) {
+    familyDropdown.innerHTML = '';
+    filterOptions.model_families.forEach(family => {
+      const option = document.createElement('div');
+      option.className = 'dropdown-option';
+      option.textContent = family || 'Unknown';
+      option.addEventListener('click', () => selectFilterOption('model_family', family, option));
+      familyDropdown.appendChild(option);
+    });
+  }
+
+  // Populate Training Dataset dropdown
+  const trainingDropdown = document.querySelector('#trainingDatasetFilter .dropdown-content');
+  if (trainingDropdown && filterOptions.training_datasets) {
+    trainingDropdown.innerHTML = '';
+    filterOptions.training_datasets.forEach(dataset => {
+      const option = document.createElement('div');
+      option.className = 'dropdown-option';
+      option.textContent = dataset || 'Unknown';
+      option.addEventListener('click', () => selectFilterOption('training_dataset', dataset, option));
+      trainingDropdown.appendChild(option);
+    });
+  }
+
+  // Populate Task Specialization dropdown
+  const taskDropdown = document.querySelector('#taskSpecFilter .dropdown-content');
+  if (taskDropdown && filterOptions.task_specializations) {
+    taskDropdown.innerHTML = '';
+    filterOptions.task_specializations.forEach(spec => {
+      const option = document.createElement('div');
+      option.className = 'dropdown-option';
+      option.textContent = spec || 'Unknown';
+      option.addEventListener('click', () => selectFilterOption('task_specialization', spec, option));
+      taskDropdown.appendChild(option);
+    });
+  }
+
+  // **FIX: Set Parameter Count range based on actual data**
+  if (filterOptions.parameter_ranges) {
+    console.log('Setting parameter ranges:', filterOptions.parameter_ranges);
+
+    const paramMin = document.getElementById('paramCountMin');
+    const paramMax = document.getElementById('paramCountMax');
+    const paramContainer = document.querySelector('#paramCountMin').closest('.filter-group').querySelector('.slider-container');
+
+    if (paramMin && paramMax && paramContainer) {
+      // Set input ranges
+      paramMin.min = filterOptions.parameter_ranges.min;
+      paramMin.max = filterOptions.parameter_ranges.max;
+      paramMin.value = filterOptions.parameter_ranges.min;
+
+      paramMax.min = filterOptions.parameter_ranges.min;
+      paramMax.max = filterOptions.parameter_ranges.max;
+      paramMax.value = filterOptions.parameter_ranges.max;
+
+      // Set container data attributes
+      paramContainer.dataset.min = filterOptions.parameter_ranges.min;
+      paramContainer.dataset.max = filterOptions.parameter_ranges.max;
+
+      // Set handle values
+      const minHandle = paramContainer.querySelector('.handle-min');
+      const maxHandle = paramContainer.querySelector('.handle-max');
+      if (minHandle && maxHandle) {
+        minHandle.dataset.value = filterOptions.parameter_ranges.min;
+        maxHandle.dataset.value = filterOptions.parameter_ranges.max;
+      }
+    }
+  }
+
+  // **FIX: Set Model Size range based on actual data**
+  if (filterOptions.size_ranges) {
+    console.log('Setting size ranges:', filterOptions.size_ranges);
+
+    const sizeMin = document.getElementById('modelSizeMin');
+    const sizeMax = document.getElementById('modelSizeMax');
+    const sizeContainer = document.querySelector('#modelSizeMin').closest('.filter-group').querySelector('.slider-container');
+
+    if (sizeMin && sizeMax && sizeContainer) {
+      // Set input ranges
+      sizeMin.min = filterOptions.size_ranges.min;
+      sizeMin.max = filterOptions.size_ranges.max;
+      sizeMin.value = filterOptions.size_ranges.min;
+
+      sizeMax.min = filterOptions.size_ranges.min;
+      sizeMax.max = filterOptions.size_ranges.max;
+      sizeMax.value = filterOptions.size_ranges.max;
+
+      // Set container data attributes
+      sizeContainer.dataset.min = filterOptions.size_ranges.min;
+      sizeContainer.dataset.max = filterOptions.size_ranges.max;
+
+      // Set handle values
+      const minHandle = sizeContainer.querySelector('.handle-min');
+      const maxHandle = sizeContainer.querySelector('.handle-max');
+      if (minHandle && maxHandle) {
+        minHandle.dataset.value = filterOptions.size_ranges.min;
+        maxHandle.dataset.value = filterOptions.size_ranges.max;
+      }
+    }
+  }
+
+  // Initialize score range (0-1) - this should always be 0-1
+  const scoreMin = document.getElementById('scoreMin');
+  const scoreMax = document.getElementById('scoreMax');
+  const scoreContainer = document.querySelector('#scoreMin').closest('.filter-group').querySelector('.slider-container');
+
+  if (scoreMin && scoreMax && scoreContainer) {
+    scoreMin.value = 0;
+    scoreMax.value = 1;
+
+    // Set container data attributes
+    scoreContainer.dataset.min = 0;
+    scoreContainer.dataset.max = 1;
+
+    // Set handle values
+    const minHandle = scoreContainer.querySelector('.handle-min');
+    const maxHandle = scoreContainer.querySelector('.handle-max');
+    if (minHandle && maxHandle) {
+      minHandle.dataset.value = 0;
+      maxHandle.dataset.value = 1;
+    }
+  }
+}
+
+function initializeDualHandleSliders() {
+  document.querySelectorAll('.range-filter.dual-handle').forEach(rangeFilter => {
+    const container = rangeFilter.querySelector('.slider-container');
+
+    // FIX: Look for inputs in the parent filter-group instead of inside range-filter
+    const filterGroup = rangeFilter.closest('.filter-group');
+    const minInput = filterGroup.querySelector('.range-input-min');
+    const maxInput = filterGroup.querySelector('.range-input-max');
+
+    const minHandle = container.querySelector('.handle-min');
+    const maxHandle = container.querySelector('.handle-max');
+    const range = container.querySelector('.slider-range');
+
+    // Add null checks to prevent errors
+    if (!container || !minInput || !maxInput || !minHandle || !maxHandle || !range) {
+      console.warn('Missing slider elements, skipping initialization for:', rangeFilter);
+      return;
+    }
+
+    const min = parseFloat(container.dataset.min);
+    const max = parseFloat(container.dataset.max);
+    const step = parseFloat(container.dataset.step) || 1;
+
+    let activeHandle = null;
+
+    function updateRange() {
+      const minVal = parseFloat(minHandle.dataset.value);
+      const maxVal = parseFloat(maxHandle.dataset.value);
+
+      const minPercent = ((minVal - min) / (max - min)) * 100;
+      const maxPercent = ((maxVal - min) / (max - min)) * 100;
+
+      // Update handle positions
+      minHandle.style.left = `${minPercent}%`;
+      maxHandle.style.left = `${maxPercent}%`;
+
+      // Update the colored range
+      range.style.left = `${minPercent}%`;
+      range.style.width = `${maxPercent - minPercent}%`;
+
+      // Update inputs
+      minInput.value = step < 1 ? minVal.toFixed(2) : minVal;
+      maxInput.value = step < 1 ? maxVal.toFixed(2) : maxVal;
+    }
+
+    function setHandleValue(handle, value) {
+      value = Math.max(min, Math.min(max, value));
+
+      // Prevent handles from crossing
+      if (handle === minHandle) {
+        const maxVal = parseFloat(maxHandle.dataset.value);
+        value = Math.min(value, maxVal);
+      } else {
+        const minVal = parseFloat(minHandle.dataset.value);
+        value = Math.max(value, minVal);
+      }
+
+      // Snap to step
+      value = Math.round(value / step) * step;
+
+      handle.dataset.value = value;
+      updateRange();
+    }
+
+    function handleMouseDown(e, handle) {
+      e.preventDefault();
+      activeHandle = handle;
+      document.body.style.cursor = 'grabbing';
+      handle.classList.add('active');
+
+      const containerRect = container.getBoundingClientRect();
+
+      function handleMouseMove(e) {
+        if (!activeHandle) return;
+
+        const x = e.clientX - containerRect.left;
+        const percent = Math.max(0, Math.min(100, (x / containerRect.width) * 100));
+        const value = min + (percent / 100) * (max - min);
+
+        setHandleValue(activeHandle, value);
+        applyCombinedFilters();
+      }
+
+      function handleMouseUp() {
+        if (activeHandle) {
+          activeHandle.classList.remove('active');
+          activeHandle = null;
+          document.body.style.cursor = '';
+        }
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      }
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    // Handle click on track
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('slider-handle')) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const x = e.clientX - containerRect.left;
+      const percent = (x / containerRect.width) * 100;
+      const value = min + (percent / 100) * (max - min);
+
+      // Move the closest handle
+      const minVal = parseFloat(minHandle.dataset.value);
+      const maxVal = parseFloat(maxHandle.dataset.value);
+
+      if (Math.abs(value - minVal) < Math.abs(value - maxVal)) {
+        setHandleValue(minHandle, value);
+      } else {
+        setHandleValue(maxHandle, value);
+      }
+
+      applyCombinedFilters();
+    });
+
+    // Handle dragging
+    minHandle.addEventListener('mousedown', (e) => handleMouseDown(e, minHandle));
+    maxHandle.addEventListener('mousedown', (e) => handleMouseDown(e, maxHandle));
+
+    // Handle input changes
+    minInput.addEventListener('change', () => {
+      const value = parseFloat(minInput.value) || min;
+      setHandleValue(minHandle, value);
+      applyCombinedFilters();
+    });
+
+    maxInput.addEventListener('change', () => {
+      const value = parseFloat(maxInput.value) || max;
+      setHandleValue(maxHandle, value);
+      applyCombinedFilters();
+    });
+
+    // Initialize positions
+    updateRange();
+  });
+}
+
+// Helper function to extract unique values from the data if not provided in filterOptions
+function extractUniqueValues(field) {
+  if (!window.originalRowData) return [];
+
+  const values = new Set();
+  window.originalRowData.forEach(row => {
+    if (row.metadata && row.metadata[field]) {
+      values.add(row.metadata[field]);
+    }
+  });
+
+  return Array.from(values).sort();
+}
+
+function selectFilterOption(filterType, value, optionElement) {
+  const dropdown = optionElement.closest('.filter-dropdown');
+  const input = dropdown.querySelector('.filter-input');
+
+  // Toggle selection
+  optionElement.classList.toggle('selected');
+
+  // Update filter state
+  if (optionElement.classList.contains('selected')) {
+    // Add to array if not already present
+    if (!window.activeFilters[filterType].includes(value)) {
+      window.activeFilters[filterType].push(value);
+    }
+  } else {
+    // Remove from array
+    window.activeFilters[filterType] = window.activeFilters[filterType].filter(v => v !== value);
+  }
+
+  // Update input display to show selected values
+  if (window.activeFilters[filterType].length > 0) {
+    input.value = window.activeFilters[filterType].join(', ');
+  } else {
+    input.value = '';
+  }
+
+  // Don't hide dropdown on selection (allow multiple selections)
+  // Apply filters immediately
+  applyCombinedFilters();
+}
+
+
+function setupDropdownHandlers() {
+  console.log('🖱️ Setting up dropdown handlers...');
+
+  document.querySelectorAll('.filter-dropdown .filter-input').forEach(input => {
+    console.log('📝 Adding handlers to:', input.placeholder);
+
+    const originalPlaceholder = input.placeholder;
+
+    input.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = e.target.closest('.filter-dropdown');
+      const content = dropdown.querySelector('.dropdown-content');
+
+      // Close other dropdowns
+      document.querySelectorAll('.filter-dropdown').forEach(other => {
+        if (other !== dropdown) {
+          other.classList.remove('active');
+          other.querySelector('.dropdown-content').classList.add('hidden');
+        }
+      });
+
+      dropdown.classList.add('active');
+      content.classList.remove('hidden');
+
+      // Clear placeholder to allow typing
+      input.placeholder = '';
+
+      // Ensure proper positioning
+      content.style.transform = 'none';
+      content.style.left = '0';
+      content.style.width = '100%';
+    });
+
+    input.addEventListener('focus', (e) => {
+      if (e.target.value && e.target.value !== e.target.placeholder) {
+        e.target.select();
+      }
+    });
+
+    input.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const dropdown = e.target.closest('.filter-dropdown');
+      const content = dropdown.querySelector('.dropdown-content');
+      const options = content.querySelectorAll('.dropdown-option');
+
+      if (content.classList.contains('hidden')) {
+        dropdown.classList.add('active');
+        content.classList.remove('hidden');
+      }
+
+      // Filter options based on search
+      let visibleCount = 0;
+      options.forEach(option => {
+        const text = option.textContent.toLowerCase();
+        // Check if option matches search and isn't already in the input
+        const currentValues = window.activeFilters[dropdown.id.replace('Filter', '')
+          .replace(/([A-Z])/g, '_$1').toLowerCase().substring(1)] || [];
+        const isSelected = option.classList.contains('selected');
+
+        if (text.includes(searchTerm) || isSelected) {
+          option.style.display = 'block';
+          visibleCount++;
+        } else {
+          option.style.display = 'none';
+        }
+      });
+
+      let noResultsMsg = content.querySelector('.no-results');
+      if (visibleCount === 0) {
+        if (!noResultsMsg) {
+          noResultsMsg = document.createElement('div');
+          noResultsMsg.className = 'no-results';
+          noResultsMsg.textContent = 'No results found';
+          content.appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+      } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+      }
+    });
+
+    input.addEventListener('blur', (e) => {
+      setTimeout(() => {
+        const dropdown = e.target.closest('.filter-dropdown');
+        if (!dropdown.classList.contains('active')) {
+          if (!e.target.value) {
+            e.target.placeholder = originalPlaceholder;
+          }
+        }
+      }, 200);
+    });
+  });
+
+  // Prevent dropdown from closing when clicking inside
+  document.querySelectorAll('.dropdown-content').forEach(content => {
+    content.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.filter-dropdown')) {
+      document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+        const content = dropdown.querySelector('.dropdown-content');
+        content.classList.add('hidden');
+
+        const input = dropdown.querySelector('.filter-input');
+        // Don't clear value for multi-select
+        if (!input.value && window.activeFilters) {
+          const filterType = dropdown.id.replace('Filter', '')
+            .replace(/([A-Z])/g, '_$1').toLowerCase().substring(1);
+          if (window.activeFilters[filterType] && window.activeFilters[filterType].length > 0) {
+            input.value = window.activeFilters[filterType].join(', ');
+          }
+        }
+
+        if (!input.value) {
+          input.placeholder = input.getAttribute('placeholder') || 'Select...';
+        }
+
+        content.querySelectorAll('.dropdown-option').forEach(opt => {
+          opt.style.display = 'block';
+        });
+
+        const noResults = content.querySelector('.no-results');
+        if (noResults) {
+          noResults.style.display = 'none';
+        }
+      });
+    }
+  });
+}
+
+function applyCombinedFilters() {
+  if (!window.globalGridApi || !window.originalRowData) return;
+
+  // Get current filter values from dual-handle sliders
+  const modelSizeMin = parseInt(document.getElementById('modelSizeMin').value) || 0;
+  const modelSizeMax = parseInt(document.getElementById('modelSizeMax').value) || 1000;
+  const paramCountMin = parseInt(document.getElementById('paramCountMin').value) || 0;
+  const paramCountMax = parseInt(document.getElementById('paramCountMax').value) || 100;
+  const scoreMin = parseFloat(document.getElementById('scoreMin').value) || 0;
+  const scoreMax = parseFloat(document.getElementById('scoreMax').value) || 1;
+
+  window.activeFilters.min_model_size = modelSizeMin;
+  window.activeFilters.max_model_size = modelSizeMax;
+  window.activeFilters.min_param_count = paramCountMin * 1_000_000;
+  window.activeFilters.max_param_count = paramCountMax * 1_000_000;
+  window.activeFilters.min_score = scoreMin;
+  window.activeFilters.max_score = scoreMax;
+
+  const filteredData = window.originalRowData.filter(row => {
+    const metadata = row.metadata || {};
+
+    // Multi-select filters - check if ANY selected value matches
+    if (window.activeFilters.architecture.length > 0) {
+      // Split the model's architecture field and check if any match
+      const modelArchitectures = metadata.architecture ?
+        metadata.architecture.split(',').map(a => a.trim()) : [];
+      const hasMatch = modelArchitectures.some(arch =>
+        window.activeFilters.architecture.includes(arch)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.model_family.length > 0) {
+      const modelFamilies = metadata.model_family ?
+        metadata.model_family.split(',').map(f => f.trim()) : [];
+      const hasMatch = modelFamilies.some(fam =>
+        window.activeFilters.model_family.includes(fam)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.training_dataset.length > 0) {
+      const modelDatasets = metadata.training_dataset ?
+        metadata.training_dataset.split(',').map(d => d.trim()) : [];
+      const hasMatch = modelDatasets.some(ds =>
+        window.activeFilters.training_dataset.includes(ds)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.task_specialization.length > 0) {
+      const modelSpecs = metadata.task_specialization ?
+        metadata.task_specialization.split(',').map(s => s.trim()) : [];
+      const hasMatch = modelSpecs.some(spec =>
+        window.activeFilters.task_specialization.includes(spec)
+      );
+      if (!hasMatch) return false;
+    }
+
+    // Range filters remain the same
+    const modelSize = metadata.model_size_mb || 0;
+    if (modelSize < window.activeFilters.min_model_size ||
+        modelSize > window.activeFilters.max_model_size) {
+      return false;
+    }
+
+    const paramCount = metadata.total_parameter_count || 0;
+    if (paramCount < window.activeFilters.min_param_count ||
+        paramCount > window.activeFilters.max_param_count) {
+      return false;
+    }
+
+    const avgScore = row.average_vision_v0?.value;
+    if (typeof avgScore === 'number') {
+      if (avgScore < window.activeFilters.min_score ||
+          avgScore > window.activeFilters.max_score) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  window.globalGridApi.setGridOption('rowData', filteredData);
+  updateFilteredScores(filteredData);
+  toggleFilteredScoreColumn(window.globalGridApi);
+}
+
+function resetAllFilters() {
+  console.log('🔄 Resetting all filters...');
+
+  // Clear model property filter state
+  window.activeFilters = {
+    architecture: [],
+    model_family: [],
+    training_dataset: [],
+    task_specialization: [],
+    min_param_count: null,
+    max_param_count: null,
+    min_model_size: null,
+    max_model_size: null,
+    min_score: null,
+    max_score: null,
+    runnable_only: false
+  };
+
+  // Reset UI elements
+  document.querySelectorAll('.filter-dropdown .filter-input').forEach(input => {
+    if (input) {
+      input.value = '';
+      input.placeholder = input.getAttribute('placeholder') || 'Select...';
+    }
+  });
+
+  // Clear all selected states
+  document.querySelectorAll('.dropdown-option.selected').forEach(option => {
+    if (option) {
+      option.classList.remove('selected');
+    }
+  });
+
+  // Reset dual-handle sliders with null checks
+  document.querySelectorAll('.range-filter.dual-handle').forEach(rangeFilter => {
+    if (!rangeFilter) return;
+
+    const container = rangeFilter.querySelector('.slider-container');
+    if (!container) return;
+
+    const filterGroup = rangeFilter.closest('.filter-group');
+    if (!filterGroup) return;
+
+    const minInput = filterGroup.querySelector('.range-input-min');
+    const maxInput = filterGroup.querySelector('.range-input-max');
+    const minHandle = container.querySelector('.handle-min');
+    const maxHandle = container.querySelector('.handle-max');
+    const range = container.querySelector('.slider-range');
+
+    if (!minInput || !maxInput || !minHandle || !maxHandle || !range) {
+      console.warn('⚠️ Missing slider elements during reset, skipping');
+      return;
+    }
+
+    const min = parseFloat(container.dataset.min) || 0;
+    const max = parseFloat(container.dataset.max) || 100;
+
+    try {
+      minInput.value = min;
+      maxInput.value = max;
+      minHandle.dataset.value = min;
+      maxHandle.dataset.value = max;
+      minHandle.style.left = '0%';
+      maxHandle.style.left = '100%';
+      range.style.left = '0%';
+      range.style.width = '100%';
+    } catch (error) {
+      console.error('❌ Error resetting slider:', error);
+    }
+  });
+
+  // Reset ALL benchmark checkboxes to checked first
+  const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (cb) {
+      cb.checked = true;  // Check everything first
+    }
+  });
+
+  // Then uncheck only the engineering parent (this will trigger the event handler to uncheck children)
+  const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+  if (engineeringCheckbox) {
+    engineeringCheckbox.checked = false;
+
+    // Manually uncheck engineering children since the event might not fire during reset
+    const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+    if (engineeringNode) {
+      const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+      childCheckboxes.forEach(cb => {
+        if (cb !== engineeringCheckbox) {  // Don't double-process the parent
+          cb.checked = false;
+        }
+      });
+    }
+  }
+
+  // Set filtered benchmarks to only include engineering-related items
+  window.filteredOutBenchmarks = new Set();
+  checkboxes.forEach(cb => {
+    if (cb && !cb.checked) {
+      window.filteredOutBenchmarks.add(cb.value);
+    }
+  });
+
+  console.log('🔍 After reset, filtered out benchmarks:', [...window.filteredOutBenchmarks]);
+
+  // Reset grid to original data
+  if (window.globalGridApi && window.originalRowData) {
+    try {
+      window.globalGridApi.setGridOption('rowData', window.originalRowData);
+      updateFilteredScores(window.originalRowData);
+      toggleFilteredScoreColumn(window.globalGridApi);  // Should now show Global Score with smart logic
+      console.log('✅ Grid data reset successfully');
+    } catch (error) {
+      console.error('❌ Error resetting grid data:', error);
+    }
+  }
+
+  console.log('✅ Filter reset complete - should show Global Score');
+}
+
 function updateFilteredScores(rowData) {
   // Capture the excluded state once at the start
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  console.log('🔍 Excluded set when neural unchecked but V1 checked:', [...excludedBenchmarks]);
-
+  // console.log('🔍 Excluded set when neural unchecked but V1 checked:', [...excludedBenchmarks]);
 
   // Build hierarchy map from the benchmark tree
   function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
@@ -536,7 +1209,80 @@ function updateFilteredScores(rowData) {
 function toggleFilteredScoreColumn(gridApi) {
   if (!gridApi) return;
 
-  const hasFilters = window.filteredOutBenchmarks && window.filteredOutBenchmarks.size > 0;
+  // Check if there are meaningful filters beyond just engineering being excluded
+
+  // Check parameter filters by comparing current values to min/max ranges
+  const modelSizeMin = parseInt(document.getElementById('modelSizeMin')?.value || 0);
+  const modelSizeMax = parseInt(document.getElementById('modelSizeMax')?.value || 1000);
+  const paramCountMin = parseInt(document.getElementById('paramCountMin')?.value || 0);
+  const paramCountMax = parseInt(document.getElementById('paramCountMax')?.value || 100);
+  const scoreMin = parseFloat(document.getElementById('scoreMin')?.value || 0);
+  const scoreMax = parseFloat(document.getElementById('scoreMax')?.value || 1);
+
+  // Get the actual ranges from the slider containers
+  const sizeContainer = document.querySelector('#modelSizeMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const paramContainer = document.querySelector('#paramCountMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const scoreContainer = document.querySelector('#scoreMin')?.closest('.filter-group')?.querySelector('.slider-container');
+
+  const sizeRangeMin = parseInt(sizeContainer?.dataset?.min || 0);
+  const sizeRangeMax = parseInt(sizeContainer?.dataset?.max || 1000);
+  const paramRangeMin = parseInt(paramContainer?.dataset?.min || 0);
+  const paramRangeMax = parseInt(paramContainer?.dataset?.max || 100);
+  const scoreRangeMin = parseFloat(scoreContainer?.dataset?.min || 0);
+  const scoreRangeMax = parseFloat(scoreContainer?.dataset?.max || 1);
+
+  const hasParameterFilters = (
+    modelSizeMin > sizeRangeMin ||
+    modelSizeMax < sizeRangeMax ||
+    paramCountMin > paramRangeMin ||
+    paramCountMax < paramRangeMax ||
+    scoreMin > scoreRangeMin ||
+    scoreMax < scoreRangeMax
+  );
+
+  const hasModelPropertyFilters = (
+    window.activeFilters.architecture.length > 0 ||
+    window.activeFilters.model_family.length > 0 ||
+    window.activeFilters.training_dataset.length > 0 ||
+    window.activeFilters.task_specialization.length > 0 ||
+    hasParameterFilters
+  );
+
+  // Check if there are benchmark filters beyond just engineering
+  // We need to check if ONLY engineering-related benchmarks are filtered out
+  const filteredBenchmarks = window.filteredOutBenchmarks || new Set();
+
+  // Get all checkboxes that are currently unchecked
+  const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
+
+  // Check if any unchecked items are NOT children of engineering
+  let hasNonEngineeringBenchmarkFilters = false;
+  uncheckedCheckboxes.forEach(checkbox => {
+    const engineeringNode = document.querySelector('input[value="engineering_vision_v0"]')?.closest('.benchmark-node');
+    const isEngineeringChild = engineeringNode && engineeringNode.contains(checkbox);
+    const isEngineeringParent = checkbox.value === 'engineering_vision_v0';
+
+    if (!isEngineeringChild && !isEngineeringParent) {
+      hasNonEngineeringBenchmarkFilters = true;
+    }
+  });
+
+  const hasFilters = hasModelPropertyFilters || hasNonEngineeringBenchmarkFilters;
+
+  console.log('🔍 Toggle score column check:', {
+    hasModelPropertyFilters,
+    hasParameterFilters,
+    hasNonEngineeringBenchmarkFilters,
+    parameterValues: {
+      modelSizeMin, modelSizeMax, sizeRangeMin, sizeRangeMax,
+      paramCountMin, paramCountMax, paramRangeMin, paramRangeMax,
+      scoreMin, scoreMax, scoreRangeMin, scoreRangeMax
+    },
+    filteredBenchmarks: [...filteredBenchmarks],
+    uncheckedCount: uncheckedCheckboxes.length,
+    hasFilters,
+    willShow: hasFilters ? 'Filtered Score' : 'Global Score'
+  });
 
   if (hasFilters) {
     // Show filtered score, hide global score
@@ -546,6 +1292,7 @@ function toggleFilteredScoreColumn(gridApi) {
         { colId: 'average_vision_v0', hide: true }
       ]
     });
+    console.log('📊 Showing Filtered Score');
   } else {
     // Hide filtered score, show global score
     gridApi.applyColumnState({
@@ -554,6 +1301,7 @@ function toggleFilteredScoreColumn(gridApi) {
         { colId: 'average_vision_v0', hide: false }
       ]
     });
+    console.log('🌍 Showing Global Score');
   }
 }
 
@@ -750,3 +1498,8 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 // Make functions available globally
 window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
+window.populateFilterDropdowns = populateFilterDropdowns;
+window.setupDropdownHandlers = setupDropdownHandlers;
+window.applyCombinedFilters = applyCombinedFilters;
+window.resetAllFilters = resetAllFilters;
+window.initializeDualHandleSliders = initializeDualHandleSliders;

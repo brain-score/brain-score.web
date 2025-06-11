@@ -25,8 +25,6 @@
     </div>
     
     <div id="advancedFiltersPanel" class="advanced-filters hidden">
-{#      <h3>Advanced Filters</h3>#}
-      
       <div class="filters-container">
         <!-- Left column: Benchmark filters -->
         <div class="filter-column benchmark-column">
@@ -41,7 +39,7 @@
           <div class="filter-group">
             <label>Architecture</label>
             <div class="filter-dropdown" id="architectureFilter">
-              <input type="text" placeholder="Select architecture..." readonly>
+              <input type="text" placeholder="Select architecture..." class="filter-input">
               <div class="dropdown-content hidden">
                 <!-- Options will be populated dynamically -->
               </div>
@@ -51,7 +49,7 @@
           <div class="filter-group">
             <label>Training Dataset</label>
             <div class="filter-dropdown" id="trainingDatasetFilter">
-              <input type="text" placeholder="Select training dataset..." readonly>
+              <input type="text" placeholder="Select training dataset..." class="filter-input">
               <div class="dropdown-content hidden"></div>
             </div>
           </div>
@@ -59,7 +57,7 @@
           <div class="filter-group">
             <label>Model Family</label>
             <div class="filter-dropdown" id="modelFamilyFilter">
-              <input type="text" placeholder="Select model family..." readonly>
+              <input type="text" placeholder="Select model family..." class="filter-input">
               <div class="dropdown-content hidden"></div>
             </div>
           </div>
@@ -67,66 +65,74 @@
           <div class="filter-group">
             <label>Task Specialization</label>
             <div class="filter-dropdown" id="taskSpecFilter">
-              <input type="text" placeholder="Select specialization..." readonly>
+              <input type="text" placeholder="Select specialization..." class="filter-input">
               <div class="dropdown-content hidden"></div>
             </div>
           </div>
         </div>
         
-        <!-- Right column: Model Parameters & Benchmark Properties -->
+        <!-- Right column: Model Parameters with single-track dual-handle sliders -->
         <div class="filter-column">
           <h4>Model Parameters</h4>
-          
+                    
           <div class="filter-group">
-            <label>Model Size (MB)</label>
-            <div class="range-filter">
-              <input type="range" id="modelSizeRange" min="0" max="1000" value="1000">
-              <div class="range-labels">
-                <span>0 MB</span>
-                <span id="modelSizeValue">1000+ MB</span>
+            <div class="filter-header">
+              <label>Parameter Count (M)</label>
+              <div class="range-values">
+                <input type="number" class="range-input-min" id="paramCountMin" min="0" max="100" value="0">
+                <span class="range-separator">-</span>
+                <input type="number" class="range-input-max" id="paramCountMax" min="0" max="100" value="100">
+                <span class="range-unit">M</span>
+              </div>
+            </div>
+            <div class="range-filter dual-handle">
+              <div class="slider-container" data-min="0" data-max="100">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="100"></div>
               </div>
             </div>
           </div>
           
           <div class="filter-group">
-            <label>Parameter Count</label>
-            <div class="range-filter">
-              <input type="range" id="paramCountRange" min="0" max="100" value="100">
-              <div class="range-labels">
-                <span>0M</span>
-                <span id="paramCountValue">100M+</span>
+            <div class="filter-header">
+              <label>Model Size (MB)</label>
+              <div class="range-values">
+                <input type="number" class="range-input-min" id="modelSizeMin" min="0" max="1000" value="0">
+                <span class="range-separator">-</span>
+                <input type="number" class="range-input-max" id="modelSizeMax" min="0" max="1000" value="1000">
+                <span class="range-unit">MB</span>
+              </div>
+            </div>
+            <div class="range-filter dual-handle">
+              <div class="slider-container" data-min="0" data-max="1000">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="1000"></div>
               </div>
             </div>
           </div>
           
           <div class="filter-group">
-            <label>Score Range</label>
-            <div class="range-filter">
-              <input type="range" id="scoreRange" min="0" max="100" value="100">
-              <div class="range-labels">
-                <span>0</span>
-                <span id="scoreRangeValue">1.0</span>
+            <div class="filter-header">
+              <label>Score Range</label>
+              <div class="range-values">
+                <input type="number" class="range-input-min" id="scoreMin" min="0" max="1" step="0.01" value="0">
+                <span class="range-separator">-</span>
+                <input type="number" class="range-input-max" id="scoreMax" min="0" max="1" step="0.01" value="1">
+              </div>
+            </div>
+            <div class="range-filter dual-handle">
+              <div class="slider-container" data-min="0" data-max="1" data-step="0.01">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="1"></div>
               </div>
             </div>
           </div>
-          
-{#          <h4 style="margin-top: 20px;">Benchmark Properties</h4>#}
-{#          #}
-{#          <div class="filter-group">#}
-{#            <label>Data Type</label>#}
-{#            <div class="filter-dropdown" id="dataTypeFilter">#}
-{#              <input type="text" placeholder="Select data type..." readonly>#}
-{#              <div class="dropdown-content hidden"></div>#}
-{#            </div>#}
-{#          </div>#}
-{#          #}
-{#          <div class="filter-group">#}
-{#            <label>Brain Region</label>#}
-{#            <div class="filter-dropdown" id="brainRegionFilter">#}
-{#              <input type="text" placeholder="Select brain region..." readonly>#}
-{#              <div class="dropdown-content hidden"></div>#}
-{#            </div>#}
-{#          </div>#}
         </div>
       </div>
       
@@ -140,9 +146,8 @@
     <div class="leaderboard-breadcrumb"></div>
     <div id="leaderboardGrid"
          class="ag-theme-alpine"
-         style="width:100%;height:2000px;overflow-x:auto;">
+         style="width:100%;height:1500px;overflow-x:auto;">
     </div>
-  </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -156,59 +161,124 @@
 
   {# 3) Kick it off once the DOM is ready #}
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const rowData = {{ row_data|safe }};
-      const columnDefs = {{ column_defs|safe }};
-      const benchmarkGroups = {{ benchmark_groups|safe }};
-      const benchmarkTree = {{ benchmark_tree|safe }};
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, starting initialization...');
+    
+    try {
+      // Parse data from Django
+      let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
       
-      // Make benchmark tree globally available
+      try {
+        rowData = JSON.parse('{{ row_data|escapejs }}');
+        columnDefs = JSON.parse('{{ column_defs|escapejs }}');
+        benchmarkGroups = JSON.parse('{{ benchmark_groups|escapejs }}');
+        benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
+        filterOptions = JSON.parse('{{ filter_options|escapejs }}');
+        console.log('All data loaded successfully, filter options:', filterOptions);
+      } catch (e) {
+        console.error('Error parsing data:', e);
+        return; // Stop if data parsing fails
+      }
+      
+      // Make data globally available
       window.benchmarkTree = benchmarkTree;
+      window.originalRowData = rowData;
+      window.filterOptions = filterOptions;
       
+      // Initialize grid
       if (typeof initializeGrid === 'function') {
+        console.log('🏗️ Initializing grid...');
         initializeGrid(rowData, columnDefs, benchmarkGroups);
       }
       
+      // Setup UI elements
       const toggleBtn = document.getElementById('advancedFilterBtn');
       const panel = document.getElementById('advancedFiltersPanel');
       const treeContainer = document.getElementById('benchmarkFilterPanel');
-      renderBenchmarkTree(treeContainer, benchmarkTree);
-      addResetFiltersButton(); // Add this line to show the button
-        
-      // Initialize engineering as excluded AFTER tree is rendered
+      
+      // Render benchmark tree
+      if (typeof renderBenchmarkTree === 'function') {
+        renderBenchmarkTree(treeContainer, benchmarkTree);
+        addResetFiltersButton();
+      }
+      
+      if (typeof populateFilterDropdowns === 'function') {
+        populateFilterDropdowns(filterOptions);
+      }
+      
+      if (typeof setupDropdownHandlers === 'function') {
+        setupDropdownHandlers();
+      }
+      
       setTimeout(() => {
-        // Find and uncheck engineering checkbox
+        initializeDualHandleSliders();
+      }, 100);
+      
+      // Initialize engineering as excluded
+      setTimeout(() => {
         const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
         if (engineeringCheckbox) {
           engineeringCheckbox.checked = false;
           
-          // Also uncheck all engineering children
           const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
           if (engineeringNode) {
             const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-            childCheckboxes.forEach(cb => {
-              cb.checked = false;
-            });
+            childCheckboxes.forEach(cb => cb.checked = false);
           }
       
-      // Now properly initialize excluded set with all unchecked items
-      window.filteredOutBenchmarks = new Set();
-      const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-      allCheckboxes.forEach(cb => {
-        if (!cb.checked) {
-          window.filteredOutBenchmarks.add(cb.value);
+          window.filteredOutBenchmarks = new Set();
+          const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+          allCheckboxes.forEach(cb => {
+            if (!cb.checked) {
+              window.filteredOutBenchmarks.add(cb.value);
+            }
+          });
+          
+          console.log('Initial excluded set:', [...window.filteredOutBenchmarks]);
         }
-      });
+      }, 500);
       
-      console.log('Initial excluded set:', [...window.filteredOutBenchmarks]);
-      }
-      }, 100);
-      
+      // Setup filter panel toggle
       if (toggleBtn && panel) {
         toggleBtn.addEventListener('click', () => {
           panel.classList.toggle('hidden');
         });
       }
-    });
+      
+      // Setup filter action buttons
+      const applyBtn = document.getElementById('applyFiltersBtn');
+      const resetBtn = document.getElementById('resetAllFiltersBtn');
+      
+      if (applyBtn && typeof applyCombinedFilters === 'function') {
+        applyBtn.addEventListener('click', () => {
+          applyCombinedFilters();
+        });
+      }
+      
+      if (resetBtn && typeof resetAllFilters === 'function') {
+        resetBtn.addEventListener('click', () => {
+          resetAllFilters();
+        });
+      }
+        
+      // Test dropdown functionality after a short delay
+      setTimeout(() => {
+        const archDropdown = document.querySelector('#architectureFilter .dropdown-content');
+        const familyDropdown = document.querySelector('#modelFamilyFilter .dropdown-content');
+        console.log('🔍 Final dropdown check:');
+        console.log('  - Architecture options:', archDropdown?.children.length || 0);
+        console.log('  - Family options:', familyDropdown?.children.length || 0);
+        
+        // Test clicking on the first architecture option
+        const firstArchOption = archDropdown?.querySelector('.dropdown-option');
+        if (firstArchOption) {
+          console.log('🧪 First architecture option available:', firstArchOption.textContent);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('💥 Error during initialization:', error);
+    }
+  });
   </script>
 {% endblock %}
