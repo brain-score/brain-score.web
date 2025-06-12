@@ -121,6 +121,69 @@ def ag_grid_leaderboard(request, domain: str):
         'runnable_options': set()
     }
 
+    benchmark_metadata = {
+        'regions': set(),
+        'species': set(),
+        'tasks': set(),
+        'stimuli_ranges': {'min': float('inf'), 'max': 0},
+        'public_data_available': set()
+    }
+
+    # Process benchmarks to extract metadata
+    for benchmark in context['benchmarks']:
+        if hasattr(benchmark, 'benchmark_data_meta') and benchmark.benchmark_data_meta:
+            data = benchmark.benchmark_data_meta
+            # print(f"data: {data}")
+
+            if data.get('region'):
+                benchmark_metadata['regions'].add(data['region'])
+            if data.get('species'):
+                benchmark_metadata['species'].add(data['species'])
+            if data.get('task'):
+                benchmark_metadata['tasks'].add(data['task'])
+            if data.get('data_publicly_available') is not None:
+                benchmark_metadata['public_data_available'].add(data['data_publicly_available'])
+
+        if hasattr(benchmark, 'benchmark_stimuli_meta') and benchmark.benchmark_stimuli_meta:
+            stimuli = benchmark.benchmark_stimuli_meta
+            if stimuli.get('num_stimuli'):
+                benchmark_metadata['stimuli_ranges']['min'] = min(
+                    benchmark_metadata['stimuli_ranges']['min'],
+                    stimuli['num_stimuli']
+                )
+                benchmark_metadata['stimuli_ranges']['max'] = max(
+                    benchmark_metadata['stimuli_ranges']['max'],
+                    stimuli['num_stimuli']
+                )
+
+    benchmark_metadata_list = []
+    for benchmark in context['benchmarks']:
+        metadata_entry = {
+            'identifier': benchmark.identifier,
+            'region': None,
+            'species': None,
+            'task': None,
+            'data_publicly_available': True,  # default
+            'num_stimuli': None
+        }
+
+        # Extract data metadata
+        if hasattr(benchmark, 'benchmark_data_meta') and benchmark.benchmark_data_meta:
+            data = benchmark.benchmark_data_meta
+            metadata_entry.update({
+                'region': data.get('region'),
+                'species': data.get('species'),
+                'task': data.get('task'),
+                'data_publicly_available': data.get('data_publicly_available', True)
+            })
+
+        # Extract stimuli metadata
+        if hasattr(benchmark, 'benchmark_stimuli_meta') and benchmark.benchmark_stimuli_meta:
+            stimuli = benchmark.benchmark_stimuli_meta
+            metadata_entry['num_stimuli'] = stimuli.get('num_stimuli')
+
+        benchmark_metadata_list.append(metadata_entry)
+
     # 2) Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
@@ -351,14 +414,22 @@ def ag_grid_leaderboard(request, domain: str):
             'max': round_up_aesthetically(model_metadata['size_ranges']['max']) if model_metadata['size_ranges'][
                                                                                        'max'] > 0 else 1000
         },
-        'runnable_options': sorted(list(model_metadata['runnable_options']))
+        'runnable_options': sorted(list(model_metadata['runnable_options'])),
+        'benchmark_regions': sorted(list(benchmark_metadata['regions'])),
+        'benchmark_species': sorted(list(benchmark_metadata['species'])),
+        'benchmark_tasks': sorted(list(benchmark_metadata['tasks'])),
+        'stimuli_ranges': {
+            'min': 0,
+            'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
+        }
     }
 
     # 4) Attach JSON-serialized data to template context
     context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
     context['column_defs'] = json.dumps(column_defs)
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
-    context['filter_options'] = json.dumps(filter_options)  # NEW: Add filter options
+    context['filter_options'] = json.dumps(filter_options)
+    context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
 

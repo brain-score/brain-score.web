@@ -46,13 +46,13 @@
             </div>
           </div>
           
-          <div class="filter-group">
-            <label>Training Dataset</label>
-            <div class="filter-dropdown" id="trainingDatasetFilter">
-              <input type="text" placeholder="Select training dataset..." class="filter-input">
-              <div class="dropdown-content hidden"></div>
-            </div>
-          </div>
+{#          <div class="filter-group">#}
+{#            <label>Training Dataset</label>#}
+{#            <div class="filter-dropdown" id="trainingDatasetFilter">#}
+{#              <input type="text" placeholder="Select training dataset..." class="filter-input">#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
           
           <div class="filter-group">
             <label>Model Family</label>
@@ -62,19 +62,6 @@
             </div>
           </div>
           
-          <div class="filter-group">
-            <label>Task Specialization</label>
-            <div class="filter-dropdown" id="taskSpecFilter">
-              <input type="text" placeholder="Select specialization..." class="filter-input">
-              <div class="dropdown-content hidden"></div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Right column: Model Parameters with single-track dual-handle sliders -->
-        <div class="filter-column">
-          <h4>Model Parameters</h4>
-                    
           <div class="filter-group">
             <div class="filter-header">
               <label>Parameter Count (M)</label>
@@ -115,21 +102,91 @@
             </div>
           </div>
           
+{#          <div class="filter-group">#}
+{#            <label>Task Specialization</label>#}
+{#            <div class="filter-dropdown" id="taskSpecFilter">#}
+{#              <input type="text" placeholder="Select specialization..." class="filter-input">#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
+        </div>
+        
+        <!-- Right column: Benchmark Properties -->
+        <div class="filter-column benchmark-metadata-column">
+          <h4>Benchmark Properties</h4>
+          
+          <!-- Public Data Only -->
           <div class="filter-group">
-            <div class="filter-header">
-              <label>Score Range</label>
-              <div class="range-values">
-                <input type="number" class="range-input-min" id="scoreMin" min="0" max="1" step="0.01" value="0">
-                <span class="range-separator">-</span>
-                <input type="number" class="range-input-max" id="scoreMax" min="0" max="1" step="0.01" value="1">
+              <label class="checkbox-label">
+                <input type="checkbox" id="publicDataFilter">
+                <span>Publicly Available Data Only</span>
+              </label>
+          </div>
+          
+          <!-- Benchmark Data Section -->
+          <div class="metadata-section">
+            <div class="filter-group checkbox-group">
+              <label>Brain Region</label>
+              <div class="checkbox-container" id="regionFilter">
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V1" class="region-checkbox">
+                  <span>V1</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V2" class="region-checkbox">
+                  <span>V2</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V4" class="region-checkbox">
+                  <span>V4</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="IT" class="region-checkbox">
+                  <span>IT</span>
+                </label>
               </div>
             </div>
-            <div class="range-filter dual-handle">
-              <div class="slider-container" data-min="0" data-max="1" data-step="0.01">
-                <div class="slider-track"></div>
-                <div class="slider-range"></div>
-                <div class="slider-handle handle-min" data-value="0"></div>
-                <div class="slider-handle handle-max" data-value="1"></div>
+            
+            <div class="filter-group checkbox-group">
+              <label>Species</label>
+              <div class="checkbox-container" id="speciesFilter">
+                <label class="checkbox-label">
+                  <input type="checkbox" value="human" class="species-checkbox">
+                  <span>Human</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="primate" class="species-checkbox">
+                  <span>Primate</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="filter-group checkbox-group">
+              <label>Task</label>
+              <div class="checkbox-container" id="taskFilter">
+                <!-- Will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Benchmark Stimuli Section -->
+          <div class="metadata-section">
+            <div class="filter-group">
+              <div class="filter-header">
+                <label>Number of Stimuli</label>
+                <div class="range-values">
+                  <input type="number" class="range-input-min" id="stimuliCountMin" min="0" max="1000" value="0">
+                  <span class="range-separator">-</span>
+                  <input type="number" class="range-input-max" id="stimuliCountMax" min="0" max="1000" value="1000">
+                </div>
+              </div>
+              <div class="range-filter dual-handle">
+                <div class="slider-container" data-min="0" data-max="1000">
+                  <div class="slider-track"></div>
+                  <div class="slider-range"></div>
+                  <div class="slider-handle handle-min" data-value="0"></div>
+                  <div class="slider-handle handle-max" data-value="1000"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -141,6 +198,7 @@
         <button id="applyFiltersBtn" class="btn-primary">Apply Filters</button>
         <button id="resetAllFiltersBtn" class="btn-secondary">Reset</button>
       </div>
+
     </div>
     
     <div class="leaderboard-breadcrumb"></div>
@@ -174,6 +232,7 @@
         benchmarkGroups = JSON.parse('{{ benchmark_groups|escapejs }}');
         benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
+        benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -184,6 +243,7 @@
       window.benchmarkTree = benchmarkTree;
       window.originalRowData = rowData;
       window.filterOptions = filterOptions;
+      window.benchmarkMetadata = benchmarkMetadata;
       
       // Initialize grid
       if (typeof initializeGrid === 'function') {
@@ -208,6 +268,10 @@
       
       if (typeof setupDropdownHandlers === 'function') {
         setupDropdownHandlers();
+      }
+      
+      if (typeof setupBenchmarkCheckboxes === 'function') {
+        setupBenchmarkCheckboxes(filterOptions);
       }
       
       setTimeout(() => {
