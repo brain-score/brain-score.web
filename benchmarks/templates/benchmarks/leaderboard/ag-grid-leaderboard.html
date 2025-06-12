@@ -243,6 +243,22 @@
       window.benchmarkTree = benchmarkTree;
       window.originalRowData = rowData;
       window.filterOptions = filterOptions;
+      const ranges = filterOptions?.parameter_ranges || {};
+      if (ranges.max_param_count) {
+        document.getElementById('paramCountMin').max = ranges.max_param_count;
+        document.getElementById('paramCountMax').max = ranges.max_param_count;
+        document.getElementById('paramCountMax').value = ranges.max_param_count;
+      }
+      if (ranges.max_model_size) {
+        document.getElementById('modelSizeMin').max = ranges.max_model_size;
+        document.getElementById('modelSizeMax').max = ranges.max_model_size;
+        document.getElementById('modelSizeMax').value = ranges.max_model_size;
+      }
+      if (ranges.max_stimuli_count) {
+        document.getElementById('stimuliCountMin').max = ranges.max_stimuli_count;
+        document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
+        document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
+      }
       window.benchmarkMetadata = benchmarkMetadata;
       
       // Initialize grid
@@ -266,6 +282,10 @@
         populateFilterDropdowns(filterOptions);
       }
       
+      if (typeof parseURLFilters === 'function') {
+        parseURLFilters();
+      }
+      
       if (typeof setupDropdownHandlers === 'function') {
         setupDropdownHandlers();
       }
@@ -280,27 +300,43 @@
       
       // Initialize engineering as excluded
       setTimeout(() => {
-        const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-        if (engineeringCheckbox) {
-          engineeringCheckbox.checked = false;
-          
-          const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
-          if (engineeringNode) {
-            const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-            childCheckboxes.forEach(cb => cb.checked = false);
-          }
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
+                                       urlParams.has('benchmark_species') ||
+                                       urlParams.has('benchmark_tasks') ||
+                                       urlParams.has('public_data_only');
       
-          window.filteredOutBenchmarks = new Set();
-          const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-          allCheckboxes.forEach(cb => {
-            if (!cb.checked) {
-              window.filteredOutBenchmarks.add(cb.value);
+        // Conditionally uncheck engineering
+        if (!hasExplicitBenchmarks) {
+          const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+          if (engineeringCheckbox) {
+            engineeringCheckbox.checked = false;
+      
+            const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+            if (engineeringNode) {
+              const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+              childCheckboxes.forEach(cb => cb.checked = false);
             }
-          });
-          
-          console.log('Initial excluded set:', [...window.filteredOutBenchmarks]);
+          }
         }
-      }, 500);
+      
+        // Always rebuild exclusion set
+        window.filteredOutBenchmarks = new Set();
+        const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+        allCheckboxes.forEach(cb => {
+          if (!cb.checked) {
+            window.filteredOutBenchmarks.add(cb.value);
+          }
+        });
+      
+        console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
+      
+        // ✅ NOW parse URL filters and apply them
+        if (typeof parseURLFilters === 'function') {
+          parseURLFilters();
+        }
+      
+      }, 200);
       
       // Setup filter panel toggle
       if (toggleBtn && panel) {

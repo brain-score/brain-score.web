@@ -554,6 +554,7 @@ function populateFilterDropdowns(filterOptions) {
         // Set container data attributes
         paramContainer.dataset.min = filterOptions.parameter_ranges.min;
         paramContainer.dataset.max = filterOptions.parameter_ranges.max;
+        paramContainer.dataset.originalMax = filterOptions.parameter_ranges.max;
 
         // Set handle values
         const minHandle = paramContainer.querySelector('.handle-min');
@@ -1010,8 +1011,8 @@ function applyCombinedFilters() {
 
   window.activeFilters.min_model_size = modelSizeMin;
   window.activeFilters.max_model_size = modelSizeMax;
-  window.activeFilters.min_param_count = paramCountMin * 1_000_000;
-  window.activeFilters.max_param_count = paramCountMax * 1_000_000;
+  window.activeFilters.min_param_count = paramCountMin;
+  window.activeFilters.max_param_count = paramCountMax;
   window.activeFilters.min_score = scoreMin;
   window.activeFilters.max_score = scoreMax;
 
@@ -1065,9 +1066,9 @@ function applyCombinedFilters() {
     }
 
     if (paramCountMinEl && paramCountMaxEl) {
-      const paramCount = metadata.total_parameter_count || 0;
-      if (paramCount < window.activeFilters.min_param_count ||
-          paramCount > window.activeFilters.max_param_count) {
+      const paramCountInMillions = (metadata.total_parameter_count || 0) / 1_000_000;
+      if (paramCountInMillions < window.activeFilters.min_param_count ||
+          paramCountInMillions > window.activeFilters.max_param_count) {
         return false;
       }
     }
@@ -1094,6 +1095,9 @@ function applyCombinedFilters() {
   if (typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
   }
+
+  // update URL
+  updateURLFromFilters();
 }
 
 function resetAllFilters() {
@@ -1213,6 +1217,7 @@ function resetAllFilters() {
       console.error('Error resetting grid data:', error);
     }
   }
+  updateURLFromFilters();
 }
 
 function updateFilteredScores(rowData) {
@@ -1470,6 +1475,128 @@ function toggleFilteredScoreColumn(gridApi) {
   }
 }
 
+function parseURLFilters() {
+  const params = new URLSearchParams(window.location.search);
+
+  function setArrayFilter(filterKey, elementId) {
+    const raw = params.get(filterKey);
+    if (!raw) return;
+    const values = raw.split(',');
+    const dropdown = document.querySelector(`#${elementId} .dropdown-content`);
+    values.forEach(val => {
+      const match = [...dropdown.querySelectorAll('.dropdown-option')].find(opt => opt.textContent === val);
+      if (match) match.classList.add('selected');
+    });
+    window.activeFilters[filterKey] = values;
+    const input = document.querySelector(`#${elementId} .filter-input`);
+    if (input) input.value = values.join(', ');
+  }
+
+  setArrayFilter('architecture', 'architectureFilter');
+  setArrayFilter('model_family', 'modelFamilyFilter');
+
+  // Regions / Species / Tasks checkboxes
+  ['benchmark_regions', 'benchmark_species', 'benchmark_tasks'].forEach(key => {
+    const raw = params.get(key);
+    if (!raw) return;
+    const values = raw.split(',');
+    values.forEach(val => {
+      const checkbox = document.querySelector(`.${key.slice(10)}-checkbox[value="${val}"]`);
+      if (checkbox) checkbox.checked = true;
+    });
+    window.activeFilters[key] = values;
+  });
+
+  // Public Data
+  const publicOnly = params.get('public_data_only');
+  if (publicOnly === 'true') {
+    document.getElementById('publicDataFilter').checked = true;
+    window.activeFilters.public_data_only = true;
+  }
+
+  // --- 🔧 HELPER FUNCTION TO SYNC HANDLE POSITIONS ---
+  function syncSliderHandle(id, value) {
+    const input = document.getElementById(id);
+    const handle = input?.closest('.filter-group')?.querySelector(
+      id.includes('Min') ? '.handle-min' : '.handle-max'
+    );
+    if (handle && value !== null) {
+      handle.dataset.value = value;
+    }
+  }
+
+  // --- Slider ranges ---
+  function setRange(idMin, idMax, filterMinKey, filterMaxKey) {
+    const min = params.get(filterMinKey);
+    const max = params.get(filterMaxKey);
+    const minInput = document.getElementById(idMin);
+    const maxInput = document.getElementById(idMax);
+
+    const container = minInput?.closest('.filter-group')?.querySelector('.slider-container');
+
+    if (minInput && min !== null) {
+      minInput.value = min;
+      window.activeFilters[filterMinKey] = parseFloat(min);
+      syncSliderHandle(idMin, parseFloat(min));  // ✅ sync min handle
+    }
+
+    if (maxInput && max !== null) {
+      maxInput.value = max;
+      window.activeFilters[filterMaxKey] = parseFloat(max);
+      syncSliderHandle(idMax, parseFloat(max));  // ✅ sync max handle
+    }
+
+    // Optional: reset dataset.max back to original (only if you've stored one)
+    if (container && container.dataset.originalMax) {
+      container.dataset.max = container.dataset.originalMax;
+    }
+  }
+
+  setRange('paramCountMin', 'paramCountMax', 'min_param_count', 'max_param_count');
+  setRange('modelSizeMin', 'modelSizeMax', 'min_model_size', 'max_model_size');
+  setRange('stimuliCountMin', 'stimuliCountMax', 'min_stimuli_count', 'max_stimuli_count');
+  setRange('scoreMin', 'scoreMax', 'min_score', 'max_score');
+
+  updateBenchmarkFilters();
+  applyCombinedFilters();
+}
+
+function updateURLFromFilters() {
+  const params = new URLSearchParams();
+
+  const addList = (key) => {
+    if (window.activeFilters[key]?.length > 0) {
+      params.set(key, window.activeFilters[key].join(','));
+    }
+  };
+
+  addList('architecture');
+  addList('model_family');
+  addList('benchmark_regions');
+  addList('benchmark_species');
+  addList('benchmark_tasks');
+
+  if (window.activeFilters.public_data_only) {
+    params.set('public_data_only', 'true');
+  }
+
+  const setRange = (key) => {
+    if (window.activeFilters[key] != null) {
+      params.set(key, window.activeFilters[key]);
+    }
+  };
+
+  [
+    'min_param_count', 'max_param_count',
+    'min_model_size', 'max_model_size',
+    'min_stimuli_count', 'max_stimuli_count',
+    'min_score', 'max_score'
+  ].forEach(setRange);
+
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState({}, '', newURL);
+}
+
 function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   window.originalRowData = rowData;
 
@@ -1668,3 +1795,5 @@ window.setupDropdownHandlers = setupDropdownHandlers;
 window.applyCombinedFilters = applyCombinedFilters;
 window.resetAllFilters = resetAllFilters;
 window.initializeDualHandleSliders = initializeDualHandleSliders;
+window.parseURLFilters = parseURLFilters;
+window.updateURLFromFilters = updateURLFromFilters;
