@@ -24,17 +24,29 @@
       </button>
     </div>
     
+    <div class="leaderboard-breadcrumb"></div>
+    
+    <div id="leaderboardGrid"
+         class="ag-theme-alpine"
+         style="width:100%;height:1500px;overflow-x:auto;">
+    </div>
+    
     <div id="advancedFiltersPanel" class="advanced-filters hidden">
       <div class="filters-container">
         <!-- Left column: Benchmark filters -->
         <div class="filter-column benchmark-column">
-          <h4>Included Benchmarks</h4>
+          <div class="filter-column-header">
+            <h4>Included Benchmarks</h4>
+            <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+          </div>
           <div id="benchmarkFilterPanel"></div>
         </div>
         
         <!-- Middle column: Model Properties -->
         <div class="filter-column">
-          <h4>Model Properties</h4>
+          <div class="filter-column-header">
+            <h4>Model Properties</h4>
+          </div>
           
           <div class="filter-group">
             <label>Architecture</label>
@@ -113,7 +125,9 @@
         
         <!-- Right column: Benchmark Properties -->
         <div class="filter-column benchmark-metadata-column">
-          <h4>Benchmark Properties</h4>
+          <div class="filter-column-header">
+            <h4>Benchmark Properties</h4>
+          </div>  
           
           <!-- Public Data Only -->
           <div class="filter-group">
@@ -156,7 +170,7 @@
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" value="primate" class="species-checkbox">
-                  <span>Primate</span>
+                  <span>Simian</span>
                 </label>
               </div>
             </div>
@@ -195,17 +209,14 @@
       
       <!-- Action buttons -->
       <div class="filter-actions">
-        <button id="applyFiltersBtn" class="btn-primary">Apply Filters</button>
-        <button id="resetAllFiltersBtn" class="btn-secondary">Reset</button>
+        <button id="toggleLayoutBtn" class="btn-secondary">
+          <span class="toggle-text">Sidebar Mode</span>
+        </button>
+        <button id="resetAllFiltersBtn" class="btn-primary">Reset All Filters</button>
       </div>
 
     </div>
-    
-    <div class="leaderboard-breadcrumb"></div>
-    <div id="leaderboardGrid"
-         class="ag-theme-alpine"
-         style="width:100%;height:1500px;overflow-x:auto;">
-    </div>
+  </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -267,23 +278,21 @@
         initializeGrid(rowData, columnDefs, benchmarkGroups);
       }
       
-      // Setup UI elements
-      const toggleBtn = document.getElementById('advancedFilterBtn');
+      // Setup UI elements - DECLARE THESE ONLY ONCE
       const panel = document.getElementById('advancedFiltersPanel');
       const treeContainer = document.getElementById('benchmarkFilterPanel');
+      const container = document.querySelector('.leaderboard-container');
+      const advancedFilterBtn = document.getElementById('advancedFilterBtn');
+      const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
       
       // Render benchmark tree
       if (typeof renderBenchmarkTree === 'function') {
         renderBenchmarkTree(treeContainer, benchmarkTree);
-        addResetFiltersButton();
+        {#addResetFiltersButton();#}
       }
       
       if (typeof populateFilterDropdowns === 'function') {
         populateFilterDropdowns(filterOptions);
-      }
-      
-      if (typeof parseURLFilters === 'function') {
-        parseURLFilters();
       }
       
       if (typeof setupDropdownHandlers === 'function') {
@@ -331,35 +340,213 @@
       
         console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
       
-        // ✅ NOW parse URL filters and apply them
+        // parse URL filters and apply them
         if (typeof parseURLFilters === 'function') {
           parseURLFilters();
         }
       
       }, 200);
       
-      // Setup filter panel toggle
-      if (toggleBtn && panel) {
-        toggleBtn.addEventListener('click', () => {
-          panel.classList.toggle('hidden');
-        });
-      }
-      
       // Setup filter action buttons
       const applyBtn = document.getElementById('applyFiltersBtn');
       const resetBtn = document.getElementById('resetAllFiltersBtn');
       
-      if (applyBtn && typeof applyCombinedFilters === 'function') {
-        applyBtn.addEventListener('click', () => {
-          applyCombinedFilters();
-        });
-      }
+      // Remove apply button listener since we're removing the button
       
       if (resetBtn && typeof resetAllFilters === 'function') {
         resetBtn.addEventListener('click', () => {
           resetAllFilters();
         });
       }
+      
+      // Setup the reset benchmarks link
+      setTimeout(() => {
+        const resetLink = document.getElementById('resetBenchmarksLink');
+        if (resetLink) {
+          resetLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // First, check all checkboxes
+            const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+            allCheckboxes.forEach(cb => {
+              cb.checked = true;
+            });
+            
+            // Then, uncheck engineering and ALL its children
+            const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+            if (engineeringCheckbox) {
+              engineeringCheckbox.checked = false;
+              
+              // Find the engineering node and uncheck all children recursively
+              const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+              if (engineeringNode) {
+                const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+                childCheckboxes.forEach(cb => {
+                  cb.checked = false;
+                });
+              }
+            }
+            
+            // Rebuild the exclusion set
+            window.filteredOutBenchmarks = new Set();
+            allCheckboxes.forEach(cb => {
+              if (!cb.checked) {
+                window.filteredOutBenchmarks.add(cb.value);
+              }
+            });
+            
+            // Trigger update
+            if (typeof applyCombinedFilters === 'function') {
+              applyCombinedFilters();
+            }
+          });
+        }
+      }, 300);
+      
+      // Enhanced layout toggle functionality
+      // Track the panel visibility state separately from layout mode
+      let isPanelVisible = false;
+      
+      // Check for saved preference and set initial state
+      const savedLayout = localStorage.getItem('leaderboardLayout');
+      if (savedLayout === 'sidebar') {
+        container.classList.add('sidebar-mode');
+        panel.classList.add('hidden'); // Start hidden even in sidebar mode
+        panel.style.display = ''; // Don't force display
+        isPanelVisible = false; // Start with panel hidden
+        updateToggleButton('sidebar');
+      } else {
+        // Default state: horizontal mode with panel hidden
+        container.classList.remove('sidebar-mode');
+        panel.classList.add('hidden');
+        panel.style.display = '';
+        isPanelVisible = false;
+        updateToggleButton('horizontal');
+      }
+      
+      // Function to update toggle button text and icon
+      function updateToggleButton(mode) {
+        const toggleText = layoutToggleBtn?.querySelector('.toggle-text');
+        
+        if ( toggleText) {
+          if (mode === 'sidebar') {
+            toggleText.textContent = 'Full Width Mode';
+          } else {
+            toggleText.textContent = 'Sidebar Mode';
+          }
+        }
+      }
+      
+      // Function to position panel correctly
+      function positionPanel(mode) {
+        if (mode === 'horizontal') {
+          // In horizontal mode, move panel after breadcrumb (before grid)
+          const breadcrumb = document.querySelector('.leaderboard-breadcrumb');
+          if (breadcrumb && breadcrumb.nextSibling !== panel) {
+            breadcrumb.insertAdjacentElement('afterend', panel);
+          }
+        } else {
+          // In sidebar mode, move panel to end (for grid layout)
+          if (container.lastElementChild !== panel) {
+            container.appendChild(panel);
+          }
+        }
+      }
+      
+      // Set initial position
+      positionPanel(savedLayout === 'sidebar' ? 'sidebar' : 'horizontal');
+      
+      layoutToggleBtn?.addEventListener('click', () => {
+        const isSidebar = container.classList.toggle('sidebar-mode');
+        
+        if (isSidebar) {
+          // Switching TO sidebar mode
+          positionPanel('sidebar');
+          panel.classList.remove('hidden');
+          panel.style.display = 'block';
+          isPanelVisible = true;
+          updateToggleButton('sidebar');
+          localStorage.setItem('leaderboardLayout', 'sidebar');
+        } else {
+          // Switching TO horizontal mode
+          positionPanel('horizontal');
+          // Keep panel visible when switching modes
+          panel.classList.remove('hidden');
+          panel.style.display = 'block';
+          isPanelVisible = true;
+          updateToggleButton('horizontal');
+          localStorage.setItem('leaderboardLayout', 'horizontal');
+        }
+      });
+      
+      // Advanced filter button - setup SINGLE event listener
+      if (advancedFilterBtn) {
+        // Clone and replace to remove any existing listeners
+        const newAdvancedFilterBtn = advancedFilterBtn.cloneNode(true);
+        advancedFilterBtn.parentNode.replaceChild(newAdvancedFilterBtn, advancedFilterBtn);
+        
+        newAdvancedFilterBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation(); // Stop event bubbling
+          console.log('Advanced filter button clicked, sidebar mode:', container.classList.contains('sidebar-mode'));
+          
+          if (!container.classList.contains('sidebar-mode')) {
+            // In horizontal mode, toggle the panel
+            isPanelVisible = !isPanelVisible;
+            if (isPanelVisible) {
+              // Force show the panel
+              panel.classList.remove('hidden');
+              panel.style.display = 'block';
+              panel.style.visibility = 'visible';
+              panel.style.opacity = '1';
+              
+              // Remove the debug styling
+              panel.style.border = '';
+              panel.style.zIndex = '';
+              
+              // Double-check it's visible
+              setTimeout(() => {
+                const computedStyle = window.getComputedStyle(panel);
+                console.log('After showing - display:', computedStyle.display);
+                console.log('After showing - visibility:', computedStyle.visibility);
+                console.log('After showing - opacity:', computedStyle.opacity);
+                console.log('Panel offsetHeight:', panel.offsetHeight);
+              }, 10);
+            } else {
+              panel.classList.add('hidden');
+              panel.style.display = '';
+              panel.style.visibility = '';
+              panel.style.opacity = '';
+            }
+            console.log('Panel visibility toggled to:', isPanelVisible);
+            console.log('Panel classes after:', panel.className);
+          } else {
+            // In sidebar mode, also toggle visibility
+            isPanelVisible = !isPanelVisible;
+            if (isPanelVisible) {
+              panel.classList.remove('hidden');
+              panel.style.display = 'block';
+            } else {
+              panel.classList.add('hidden');
+              panel.style.display = '';
+            }
+          }
+        });
+      }
+      
+      // Call parseURLFilters one more time to ensure filters are applied after all setup
+      // MOVED TO A LONGER DELAY to avoid conflicts
+      setTimeout(() => {
+        if (typeof parseURLFilters === 'function') {
+          console.log('Calling parseURLFilters...');
+          parseURLFilters();
+          // After parseURLFilters, check if panel state is still correct
+          if (!container.classList.contains('sidebar-mode') && !isPanelVisible) {
+            panel.classList.add('hidden');
+            console.log('Re-hiding panel after parseURLFilters');
+          }
+        }
+      }, 500); // Increased delay
         
       // Test dropdown functionality after a short delay
       setTimeout(() => {
