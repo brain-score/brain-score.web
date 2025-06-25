@@ -1,0 +1,234 @@
+@import 'gradient-theme'
+
+// Import modular components
+@import 'components/buttons'
+@import 'components/filters'
+@import 'components/grid'
+@import 'components/search'
+@import 'layouts/sidebar'
+@import 'layouts/responsive'
+
+// ======================
+// CONTAINER & LAYOUT
+// ======================
+.leaderboard-container
+  padding: 20px
+  display: block
+  overflow-x: auto
+  width: 100%
+  margin: 0
+  box-sizing: border-box
+
+// ======================
+// AG-GRID CUSTOMIZATIONS
+// ======================
+
+// Grid container
+#leaderboardGrid
+  width: 100% !important
+  max-width: none
+
+  .ag-root-wrapper,
+  .ag-root
+    width: 100% !important
+
+// Header resize handle
+.ag-header-cell-resize
+  width: 8px !important
+  background-color: transparent
+  opacity: 0
+
+.ag-header-cell:hover .ag-header-cell-resize
+  background-color: rgba(0, 0, 0, 0.1)
+  cursor: col-resize
+
+// Centered headers
+.ag-header-cell.centered-header
+  .ag-header-cell-label
+    justify-content: center
+    text-align: center
+
+  .ag-header-cell-text
+    text-align: center
+    width: 100%
+    font-size: 14px
+
+// ======================
+// CELL STYLING
+// ======================
+
+// Rank cell
+.ag-cell[col-id="rank"]
+  display: flex
+  font-size: 24px
+  font-weight: 300
+  align-items: center
+  text-align: center
+  color: #333
+  height: 100%
+
+// Model cell
+.ag-cell[col-id="model"]
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: flex-start
+  padding: 0 10px
+  white-space: nowrap
+  line-height: 1.5
+  overflow: hidden
+  text-overflow: ellipsis
+  min-width: 180px
+
+  a,
+  .model-name,
+  .model-submitter
+    max-width: 100%
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .model-name
+    color: #4285f4
+    font-weight: normal
+    margin-bottom: 4px
+
+  .model-submitter
+    font-size: 12px
+    color: #666
+    font-style: italic
+
+// ======================
+// SCORE PILLS
+// ======================
+
+.score-pill-container
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+.score-pill
+  opacity: 0.8
+  width: 120px
+  border-radius: 30px
+  font-size: 15px
+  font-weight: 300
+  display: flex
+  justify-content: center
+  align-items: center
+  text-align: center
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
+  color: black
+
+// ======================
+// HEADER PILLS
+// ======================
+
+// Expandable header (benchmark groups)
+.expandable-header
+  width: auto
+  min-width: 120px
+  max-width: 120px
+  height: 40px
+  border-radius: 20px
+  border: 2px solid transparent
+  display: flex
+  justify-content: center
+  align-items: center
+  margin: 0 auto
+  position: relative
+  font-weight: bold
+  color: white
+  white-space: nowrap
+  text-overflow: ellipsis
+  cursor: pointer
+
+  &:hover
+    cursor: pointer
+
+  // Category colors
+  &.average
+    background-color: #9BE36D
+    color: black
+    &:hover
+      background-color: lighten(#9BE36D, 10%)
+
+  &.neural
+    background-color: #1F3157
+    &:hover
+      background-color: lighten(#1F3157, 10%)
+
+  &.behavior
+    background-color: #2E5739
+    &:hover
+      background-color: lighten(#2E5739, 10%)
+
+  &.engineering
+    background-color: #5C8DB8
+    &:hover
+      background-color: lighten(#5C8DB8, 10%)
+
+  // Default color
+  &:not(.neural):not(.behavior):not(.engineering):not(.average)
+    background-color: #d4d4d4
+    color: black
+    &:hover
+      background-color: lighten(#d4d4d4, 5%)
+      border: 2px solid #cccccc
+
+  .expandable-header-label-container
+    flex: 1 1 auto
+    text-align: center
+    overflow: hidden
+    padding: 6px 0
+    display: flex
+    justify-content: center
+
+  .expandable-header-label
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    display: inline-block
+    max-width: 100%
+
+// Leaf headers
+.leaf-header
+  display: flex
+  justify-content: center
+  align-items: center
+  padding: 6px 10px
+  background-color: #eeeeee
+  border-radius: 20px
+  height: 40px
+  min-width: 120px
+  max-width: 120px
+  cursor: pointer
+
+  .leaf-header-label
+    display: inline-block
+    max-width: 100px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    font-weight: bold
+    color: #333
+
+// Count badge
+.benchmark-count
+  position: absolute
+  bottom: -8px
+  right: -5px
+  background: white
+  color: #333
+  font-size: 12px
+  border: 1px solid #ddd
+  border-radius: 10px
+  padding: 0 6px
+
+// Expand toggle
+.expand-toggle
+  flex: 0 0 auto
+  margin-left: -4px
+  padding-right: 4px
+  z-index: 1
