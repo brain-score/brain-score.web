@@ -1383,26 +1383,6 @@ function updateBenchmarkFilters() {
 function toggleFilteredScoreColumn(gridApi) {
   if (!gridApi) return;
 
-  // Check model property filters
-  const modelSizeMin = parseInt(document.getElementById('modelSizeMin')?.value || 0);
-  const modelSizeMax = parseInt(document.getElementById('modelSizeMax')?.value || 1000);
-  const paramCountMin = parseInt(document.getElementById('paramCountMin')?.value || 0);
-  const paramCountMax = parseInt(document.getElementById('paramCountMax')?.value || 100);
-  const scoreMin = parseFloat(document.getElementById('scoreMin')?.value || 0);
-  const scoreMax = parseFloat(document.getElementById('scoreMax')?.value || 1);
-
-  // Get the actual ranges from the slider containers
-  const sizeContainer = document.querySelector('#modelSizeMin')?.closest('.filter-group')?.querySelector('.slider-container');
-  const paramContainer = document.querySelector('#paramCountMin')?.closest('.filter-group')?.querySelector('.slider-container');
-  const scoreContainer = document.querySelector('#scoreMin')?.closest('.filter-group')?.querySelector('.slider-container');
-
-  const sizeRangeMin = parseInt(sizeContainer?.dataset?.min || 0);
-  const sizeRangeMax = parseInt(sizeContainer?.dataset?.max || 1000);
-  const paramRangeMin = parseInt(paramContainer?.dataset?.min || 0);
-  const paramRangeMax = parseInt(paramContainer?.dataset?.max || 100);
-  const scoreRangeMin = parseFloat(scoreContainer?.dataset?.min || 0);
-  const scoreRangeMax = parseFloat(scoreContainer?.dataset?.max || 1);
-
   // Check for benchmark metadata filters
   const stimuliMin = parseInt(document.getElementById('stimuliCountMin')?.value || 0);
   const stimuliMax = parseInt(document.getElementById('stimuliCountMax')?.value || 1000);
@@ -1414,24 +1394,7 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const hasStimuliFiltering = (stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax);
 
-  const hasParameterFilters = (
-    modelSizeMin > sizeRangeMin ||
-    modelSizeMax < sizeRangeMax ||
-    paramCountMin > paramRangeMin ||
-    paramCountMax < paramRangeMax ||
-    scoreMin > scoreRangeMin ||
-    scoreMax < scoreRangeMax
-  );
-
-  const hasModelPropertyFilters = (
-    window.activeFilters.architecture.length > 0 ||
-    window.activeFilters.model_family.length > 0 ||
-    window.activeFilters.training_dataset.length > 0 ||
-    window.activeFilters.task_specialization.length > 0 ||
-    hasParameterFilters
-  );
-
-  // NEW: Check for benchmark metadata filters
+  // Check for benchmark metadata filters
   const hasBenchmarkMetadataFilters = (
     window.activeFilters.benchmark_regions.length > 0 ||
     window.activeFilters.benchmark_species.length > 0 ||
@@ -1453,16 +1416,24 @@ function toggleFilteredScoreColumn(gridApi) {
     }
   });
 
-  // Include benchmark metadata filters in the decision
-  const hasFilters = hasModelPropertyFilters || hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
+  // ONLY benchmark-related filters should trigger filtered score
+  const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
 
-  if (hasFilters) {
+  if (shouldShowFilteredScore) {
     // Show filtered score, hide global score
     gridApi.applyColumnState({
       state: [
         { colId: 'filtered_score', hide: false },
         { colId: 'average_vision_v0', hide: true }
       ]
+    });
+
+    // Auto-sort by filtered score when switching to it
+    gridApi.applyColumnState({
+      state: [
+        { colId: 'filtered_score', sort: 'desc' }
+      ],
+      defaultState: { sort: null }
     });
   } else {
     // Hide filtered score, show global score
@@ -1514,14 +1485,41 @@ function parseURLFilters() {
     window.activeFilters.public_data_only = true;
   }
 
-  // --- 🔧 HELPER FUNCTION TO SYNC HANDLE POSITIONS ---
+  // HELPER FUNCTION TO SYNC HANDLE POSITIONS
   function syncSliderHandle(id, value) {
     const input = document.getElementById(id);
-    const handle = input?.closest('.filter-group')?.querySelector(
+    if (!input) return;
+
+    const filterGroup = input.closest('.filter-group');
+    const container = filterGroup?.querySelector('.slider-container');
+    const handle = filterGroup?.querySelector(
       id.includes('Min') ? '.handle-min' : '.handle-max'
     );
-    if (handle && value !== null) {
+
+    if (handle && container && value !== null) {
+      // Update data attribute
       handle.dataset.value = value;
+
+      // Calculate position
+      const min = parseFloat(container.dataset.min);
+      const max = parseFloat(container.dataset.max);
+      const percent = ((value - min) / (max - min)) * 100;
+
+      // Update handle position
+      handle.style.left = `${percent}%`;
+
+      // Update range bar
+      const range = container.querySelector('.slider-range');
+      const minHandle = container.querySelector('.handle-min');
+      const maxHandle = container.querySelector('.handle-max');
+
+      if (range && minHandle && maxHandle) {
+        const minPercent = parseFloat(minHandle.style.left) || 0;
+        const maxPercent = parseFloat(maxHandle.style.left) || 100;
+
+        range.style.left = `${minPercent}%`;
+        range.style.width = `${maxPercent - minPercent}%`;
+      }
     }
   }
 
@@ -1556,6 +1554,13 @@ function parseURLFilters() {
   setRange('modelSizeMin', 'modelSizeMax', 'min_model_size', 'max_model_size');
   setRange('stimuliCountMin', 'stimuliCountMax', 'min_stimuli_count', 'max_stimuli_count');
   setRange('scoreMin', 'scoreMax', 'min_score', 'max_score');
+
+  setTimeout(() => {
+    // Trigger the dual handle slider initialization to ensure visual sync
+    if (typeof initializeDualHandleSliders === 'function') {
+      initializeDualHandleSliders();
+    }
+  }, 150);
 
   updateBenchmarkFilters();
   applyCombinedFilters();

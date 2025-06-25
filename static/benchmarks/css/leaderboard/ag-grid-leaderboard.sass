@@ -881,9 +881,13 @@ button,
 .leaderboard-container.sidebar-mode
   display: grid
   grid-template-areas: "header header" "search search" "breadcrumb breadcrumb" "grid filters"
-  grid-template-columns: 1fr 400px  // Adjust width as needed
+  grid-template-columns: 1fr 500px  // Adjust width as needed
   gap: 1rem
   align-items: start  // Align items to top
+
+  &.filters-hidden
+    grid-template-areas: "header" "search" "breadcrumb" "grid"
+    grid-template-columns: 1fr
 
   .leaderboard-header
     grid-area: header
@@ -912,6 +916,10 @@ button,
     border-left: 1px solid #ddd
     margin: 0  // Remove any margins
     border-radius: 8px 0 0 8px  // Round left corners only
+
+    // Hide the panel when filters are hidden
+    .leaderboard-container.sidebar-mode.filters-hidden &
+      display: none !important
 
     // Stack filter columns vertically in sidebar
     .filters-container
@@ -984,7 +992,7 @@ button,
     background-color: #f9f9f9
 
 // Make sure sidebar mode completely overrides these styles
-.leaderboard-container.sidebar-mode
+.leaderboard-container.sidebar-mode:not(.filters-hidden)
   #advancedFiltersPanel
     // Force full height of grid area
     min-height: 100%
