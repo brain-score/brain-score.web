@@ -43,6 +43,10 @@ non_domain_urls = [
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 
+    # Large File upload page:
+    path('profile/large_file_upload/', user.LargeFileUpload.as_view(), name=f'large_file_upload'),
+    path('profile/large_file_upload/finalize/', user.FinalizeUpload.as_view(), name='finalize_upload'),
+
     # central tutorial page, constant across all Brain-Score domains
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
     path('tutorials/troubleshooting', user.Tutorials.as_view(tutorial_type="troubleshooting"),
@@ -75,6 +79,8 @@ non_domain_urls = [
     path('release2.0/', release2_0.view, name='release2.0'),
 
     # Add the refresh_cache URL and make domain specific
+
+    # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
 ]
 

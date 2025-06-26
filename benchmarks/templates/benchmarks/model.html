@@ -44,46 +44,6 @@
 
 {# Right-hand info #}
 {% block info_section %}
-    {% if submission_details_visible %}
-        <div class="box">
-            <span class='fine_print'>The following information is only visible to you (the model owner):</span><br><br>
-            <span class='information'>Model Name:</span> {{ model.name }}<br>
-            <span class='information'>Submitted By:</span> {{ model.submitter }}<br>
-            <span class='information'>Submitted On:</span> {{ model.timestamp }}<br>
-            <span class='information'>Domain:</span> {{ model.domain }}<br>
-            <br>
-            <span class='information'>Console Log:</span>
-
-            {% if model.submission_id < 302 %}
-                <a class="log_link"
-                   href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.jenkins_id }}/consoleText">View
-                    Console Log</a> <br>
-                <span class='fine_print'>
-                    This is an older model, so a parsed (interactive) console log will not be available <br>
-                    until the model is re-run on a new submission. In the meantime, you can still
-                    view a plaintext version with the link provided. <br>
-                </span>
-            {% else %}
-                {% if model.build_status == "successful" or model.build_status == "failure" %}
-                    <a class="log_link"
-                       href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.jenkins_id }}/parsed_console/job/run_benchmarks/{{ model.submission_id }}/parsed_console/log.html">View
-                        Console Log</a> <br>
-
-                {% elif model.build_status == "running" %}
-                    <span class='fine_print'><br>
-                        This model's build status is shown as still running; thus, the console log below
-                        <br> will not be interactive until the model is done running. In the meantime, you can still
-                        view a plaintext version <br> with the link provided. <br>
-                    </span>
-                    <a class="log_link"
-                       href="http://braintree.mit.edu:8080/job/run_benchmarks/{{ model.jenkins_id }}/consoleText">View
-                        Console Log</a>
-                    <br><br>
-                {% endif %}
-            {% endif %}
-        </div>
-    {% endif %}
-
     <div class="box">
         <div class="card-content">
             <p class="subtitle is-5">

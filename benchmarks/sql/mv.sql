@@ -206,6 +206,7 @@ jsonb_build_object(
     'num_subjects', bdm.num_subjects,
     'pre_processing', bdm.pre_processing,
     'brainscore_link', bdm.brainscore_link,
+    'data_publicly_available', bdm.data_publicly_available,
     'extra_notes', bdm.extra_notes
   ) AS benchmark_data_meta,
   jsonb_build_object(
@@ -1017,7 +1018,9 @@ score_json AS (
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
-                    WHEN score_ceiled_value = 1 THEN '1.0'
+                    WHEN score_ceiled_value >= 1
+                        THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
+                                    , 'FM0.0')                               -- always “#.0”
                     -- FM0.000 determines the formatting of text
                     WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
                     ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
@@ -1235,6 +1238,7 @@ SELECT
     'task_specialization', mm2.task_specialization,
     'brainscore_link', mm2.brainscore_link,
     'hugging_face_link', mm2.hugging_face_link,
+    'runnable', mm2.runnable,
     'extra_notes', mm2.extra_notes
   ) AS model_meta
 FROM model_meta mm
@@ -1245,7 +1249,17 @@ LEFT JOIN model_ranks mr ON mm.id = mr.model_id
 LEFT JOIN mv_model_scores_json sc ON mm.id = sc.model_id
 LEFT JOIN reference_meta rm ON mm.reference_id = rm.reference_id
 LEFT JOIN final_layers fl ON mm.id = fl.model_id
-LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id;
+LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id
+WHERE
+  -- Remove models with no valid scores (to be consistent with legacy implementation)
+  -- At least one score is valid (not '', not 'X', not NULL, not 'NaN')
+  EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(sc.scores) AS score
+    WHERE
+      (score->>'score_ceiled') IS NOT NULL
+      AND (score->>'score_ceiled') <> 'X'
+  );
 
 
 

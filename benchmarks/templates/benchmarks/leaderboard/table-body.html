@@ -27,7 +27,7 @@
           </span>
         {% elif model.num_secondary_models == 0 %} {# show empty line to align with other rows #}
           <span class="competition-models-more"></span>
-          {% endif %}
+        {% endif %}
       </td>
       {% for score_row in model.scores %}
         <td title="{{ score_row.benchmark.short_name }} unceiled: {{ score_row.score_raw|format_score }}"

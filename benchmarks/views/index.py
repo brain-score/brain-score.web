@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Union
+from typing import Union, List, Dict, Any, Tuple
+from django.contrib.auth.models import User
 from django.utils.functional import wraps
 from django.db.models import Q
 from django.core.cache import cache
@@ -33,6 +34,8 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
+
+#@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 # Explore caching entire leaderboard context without any filtering
 # which is then used downstream. Unclear if this has performance benefits.
 def get_base_model_query(domain="vision"):
@@ -40,9 +43,9 @@ def get_base_model_query(domain="vision"):
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
 
-# Cache the leaderboard HTML page for 15 minutes at a time
+# Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.
-# Consider using client-side caching in the future
+@cache_page(24 * 60 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
@@ -103,7 +106,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
     model_rows_reranked = _recalculate_model_ranks(models, domain)
-    
+   
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
     # Materialized views for some of these exist, but simple list comprehension was fast enough.
@@ -290,6 +293,7 @@ def _recalculate_model_ranks(models, domain="vision"):
 
 
 def _build_model_data(benchmarks, models):
+
     """
     Build both comparison data and scores dataframe in a single pass through models.
     Returns: (csv_data, comparison_data) tuple
@@ -354,7 +358,7 @@ def _build_model_data(benchmarks, models):
     return csv_data, comparison_data
 
 # Resubmissions are currently not supported. Retaining for future use.
-def _collect_submittable_benchmarks(benchmarks, user):
+def _collect_submittable_benchmarks(benchmarks: List[FinalBenchmarkContext], user: User) -> Dict:
     """
     gather benchmarks that:
     - any of a user's models have been evaluated on, if user is not a superuser

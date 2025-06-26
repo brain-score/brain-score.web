@@ -159,9 +159,19 @@ def add_benchmark_rankings(model, reference_context):
             
         try:
             score_value = float(score_ceiled)
-            other_scores = benchmark_scores.get(versioned_benchmark_id, [])
-            better_scores = [s for s in other_scores if s > score_value]
-            score['rank'] = len(better_scores) + 1
+            all_scores = benchmark_scores.get(versioned_benchmark_id, [])
+            # Sort scores in descending order and find the rank
+            sorted_scores = sorted(all_scores, reverse=True)
+            # Find the position of the current score (1-indexed)
+            # If there are ties, all tied scores get the same rank
+            rank = 1
+            for i, s in enumerate(sorted_scores):
+                if s > score_value:
+                    rank = i + 2  # +2 because we want 1-indexed and we're looking for the next position
+                elif s == score_value:
+                    rank = i + 1  # +1 for 1-indexed
+                    break
+            score['rank'] = rank
         except (ValueError, TypeError):
             score['rank'] = 'N/A'
 
