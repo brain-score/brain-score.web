@@ -1,0 +1,85 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="reading-progress"></div>
+
+{% if featured_articles %}
+<section class="mb-6">
+    <h2 class="title is-3 mb-4">Featured Articles</h2>
+    {% for article in featured_articles %}
+    <article class="blog-article">
+        <div class="article-meta">
+            <span><i class="fas fa-user"></i>{{ article.author }}</span>
+            <span><i class="fas fa-calendar"></i>{{ article.date|date:"M d, Y" }}</span>
+            <span><i class="fas fa-folder"></i>{{ article.category }}</span>
+        </div>
+        <h3 class="title is-4">
+            <a href="{% url 'blog:article_detail' slug=article.slug %}" class="has-text-dark">
+                {{ article.title }}
+            </a>
+        </h3>
+        {% if article.excerpt %}
+        <p class="subtitle is-6">{{ article.excerpt }}</p>
+        {% endif %}
+        {% if article.tags %}
+        <div class="tags">
+            {% for tag in article.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if recent_articles %}
+<section>
+    <h2 class="title is-3 mb-4">Recent Articles</h2>
+    {% for article in recent_articles %}
+    <article class="blog-article">
+        <div class="article-meta">
+            <span><i class="fas fa-user"></i>{{ article.author }}</span>
+            <span><i class="fas fa-calendar"></i>{{ article.date|date:"M d, Y" }}</span>
+            <span><i class="fas fa-folder"></i>{{ article.category }}</span>
+        </div>
+        <h3 class="title is-4">
+            <a href="{% url 'blog:article_detail' slug=article.slug %}" class="has-text-dark">
+                {{ article.title }}
+            </a>
+        </h3>
+        {% if article.excerpt %}
+        <p class="subtitle is-6">{{ article.excerpt }}</p>
+        {% endif %}
+        {% if article.tags %}
+        <div class="tags">
+            {% for tag in article.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
+
+<div class="mt-5">
+    <a href="{% url 'blog:article_list' %}" class="button is-primary is-medium">
+        View All Articles
+    </a>
+</div>
+{% endblock %}
+
+{% block info_section %}
+<div class="box">
+    <h3 class="title is-4">About the Blog</h3>
+    <p>The Brain-Score blog features insights from researchers, updates on benchmarks, and discussions about computational neuroscience and machine learning.</p>
+    
+    <div class="mt-4">
+        <a href="{% url 'blog:article_list' %}" class="button is-outlined is-primary is-small">
+            Browse Articles
+        </a>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,193 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+{% load compress %}
+
+{% block banner %}
+<h1>Brain-Score Blog</h1>
+<p>Insights, research, and updates from the Brain-Score community</p>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Blog-specific styles that integrate with Brain-Score's existing theme */
+    .blog-article {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .blog-article h1, .blog-article h2, .blog-article h3 {
+        color: #363636;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .blog-article h1 {
+        font-size: 2rem;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0.5rem;
+    }
+    
+    .blog-article h2 {
+        font-size: 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 0.3rem;
+    }
+    
+    .blog-article h3 {
+        font-size: 1.3rem;
+    }
+    
+    .blog-article p {
+        margin-bottom: 1.5rem;
+        line-height: 1.7;
+    }
+    
+    .blog-article code {
+        background-color: #f5f5f5;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.9em;
+    }
+    
+    .blog-article pre {
+        background-color: #f8f8f8;
+        padding: 1rem;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        border-left: 4px solid #3273dc;
+    }
+    
+    .blog-article pre code {
+        background: none;
+        padding: 0;
+    }
+    
+    .blog-article blockquote {
+        border-left: 4px solid #3273dc;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        font-style: italic;
+        color: #666;
+    }
+    
+    .blog-article img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 5px;
+        margin: 1.5rem 0;
+    }
+    
+    .blog-article table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+    }
+    
+    .blog-article th,
+    .blog-article td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .blog-article th {
+        background-color: #f8f8f8;
+        font-weight: 600;
+    }
+    
+    .article-meta {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .article-meta span {
+        margin-right: 1rem;
+    }
+    
+    .article-meta i {
+        margin-right: 0.3rem;
+    }
+    
+    .tag {
+        display: inline-block;
+        background-color: #3273dc;
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin: 0.2rem;
+        text-decoration: none;
+    }
+    
+    .tag:hover {
+        background-color: #2366d1;
+        color: white;
+    }
+    
+    .interactive-element {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .interactive-element h4 {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    
+    /* Reading progress bar */
+    .reading-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background-color: #3273dc;
+        z-index: 1000;
+        transition: width 0.1s ease;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Reading progress bar
+    window.addEventListener('scroll', function() {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        
+        const progressBar = document.querySelector('.reading-progress');
+        if (progressBar) {
+            progressBar.style.width = scrolled + "%";
+        }
+    });
+    
+    // Smooth scrolling for anchor links
+    document.addEventListener('DOMContentLoaded', function() {
+        const links = document.querySelectorAll('a[href^="#"]');
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

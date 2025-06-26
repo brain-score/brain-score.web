@@ -1,0 +1,56 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="reading-progress"></div>
+
+{% if articles %}
+    {% for article in articles %}
+    <article class="blog-article">
+        <div class="article-meta">
+            <span><i class="fas fa-user"></i> {{ article.author }} </span>
+            <span><i class="fas fa-calendar"></i>{{ article.date|date:"M d, Y" }}</span>
+            <span><i class="fas fa-folder"></i>{{ article.category }}</span>
+            {% if article.has_interactive_elements %}
+            <span><i class="fas fa-mouse-pointer"></i>Interactive</span>
+            {% endif %}
+        </div>
+        
+        <h2 class="title is-3">
+            <a href="{% url 'blog:article_detail' slug=article.slug %}" class="has-text-dark">
+                {{ article.title }}
+            </a>
+        </h2>
+        
+        {% if article.excerpt %}
+        <p class="subtitle is-5">{{ article.excerpt }}</p>
+        {% endif %}
+        
+        {% if article.tags %}
+        <div class="tags">
+            {% for tag in article.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+{% else %}
+    <div class="notification is-info">
+        <p>No articles found.</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block info_section %}
+<div class="box">
+    <h3 class="title is-4">About the Blog</h3>
+    <p>The Brain-Score blog features insights from researchers, updates on benchmarks, and discussions about computational neuroscience and machine learning.</p>
+    
+    <div class="mt-4">
+        <a href="{% url 'blog:home' %}" class="button is-outlined is-primary is-small">
+            Back to Blog Home
+        </a>
+    </div>
+</div>
+{% endblock %} 

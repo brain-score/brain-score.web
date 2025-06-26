@@ -1,0 +1,210 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+{% if article.custom_css %}
+<style type="text/css">
+{{ article.custom_css|safe }}
+</style>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{% if article.custom_js %}
+<script type="text/javascript">
+{{ article.custom_js|safe }}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="reading-progress"></div>
+
+<article class="blog-article">
+    <!-- Article Header -->
+    <div class="article-meta">
+        <span><i class="fas fa-user"></i> {{ article.author }} </span>
+        <span><i class="fas fa-calendar"></i>{{ article.date|date:"M d, Y" }}</span>
+        <span><i class="fas fa-folder"></i>{{ article.category }}</span>
+        {% if article.has_interactive_elements %}
+        <span><i class="fas fa-mouse-pointer"></i>Interactive</span>
+        {% endif %}
+    </div>
+    
+    <h1 class="title is-1">{{ article.title }}</h1>
+    
+    {% if article.excerpt %}
+    <p class="subtitle is-4 has-text-grey">{{ article.excerpt }}</p>
+    {% endif %}
+    
+    {% if article.tags %}
+    <div class="tags mt-3">
+        {% for tag in article.tags %}
+        <span class="tag">{{ tag }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if article.featured_image %}
+    <figure class="image is-16by9 mt-4">
+        <img src="{{ article.featured_image }}" alt="{{ article.title }}">
+    </figure>
+    {% endif %}
+
+    <!-- Article Content -->
+    <div class="content">
+        {{ content_html|safe }}
+    </div>
+
+    <!-- Interactive Elements Container -->
+    {% if article.has_interactive_elements %}
+    <div class="interactive-elements mt-6">
+        <h3 class="title is-4 mb-4">Interactive Elements</h3>
+        <div class="interactive-element">
+            <h4>Interactive Visualization</h4>
+            <p>This article contains interactive elements. Use the controls below to explore the data.</p>
+            <div id="interactive-container">
+                <!-- Interactive elements will be loaded here -->
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</article>
+{% endblock %}
+
+{% block info_section %}
+<div class="box">
+    <h3 class="title is-4">Article Info</h3>
+    <p><strong>Author:</strong> {{ article.author }}</p>
+    <p><strong>Published:</strong> {{ article.date|date:"M d, Y" }}</p>
+    <p><strong>Category:</strong> {{ article.category }}</p>
+    
+    {% if article.tags %}
+    <p><strong>Tags:</strong></p>
+    <div class="tags">
+        {% for tag in article.tags %}
+        <span class="tag is-small">{{ tag }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{% url 'blog:article_list' %}" class="button is-outlined is-primary is-small">
+            Back to Articles
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Related Articles -->
+{% if related_articles %}
+<section class="related-articles mt-6">
+    <h3 class="title is-3 mb-4">Related Articles</h3>
+    <div class="columns">
+        {% for related_article in related_articles %}
+        <div class="column is-4">
+            <article class="article-card">
+                <div class="card">
+                    {% if related_article.featured_image %}
+                    <div class="card-image">
+                        <figure class="image is-4by3">
+                            <img src="{{ related_article.featured_image.url }}" alt="{{ related_article.title }}">
+                        </figure>
+                    </div>
+                    {% endif %}
+                    <div class="card-content">
+                        <div class="article-meta">
+                            <span><i class="fas fa-calendar"></i>{{ related_article.published_at|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-clock"></i>{{ related_article.reading_time }} min read</span>
+                        </div>
+                        <h4 class="title is-5">
+                            <a href="{{ related_article.get_absolute_url }}" class="has-text-dark">
+                                {{ related_article.title }}
+                            </a>
+                        </h4>
+                        {% if related_article.excerpt %}
+                        <p class="subtitle is-6">{{ related_article.excerpt|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Table of Contents (if article has headings) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate table of contents from headings
+    const headings = document.querySelectorAll('.article-content h1, .article-content h2, .article-content h3');
+    if (headings.length > 3) {
+        const toc = document.createElement('div');
+        toc.className = 'toc sidebar mt-6';
+        toc.innerHTML = '<h3>Table of Contents</h3><ul></ul>';
+        
+        const tocList = toc.querySelector('ul');
+        headings.forEach((heading, index) => {
+            const id = 'heading-' + index;
+            heading.id = id;
+            
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#' + id;
+            a.textContent = heading.textContent;
+            a.className = heading.tagName === 'H1' ? 'toc-h1' : heading.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
+            
+            li.appendChild(a);
+            tocList.appendChild(li);
+        });
+        
+        // Insert TOC after the article header
+        const articleHeader = document.querySelector('.article-header');
+        articleHeader.parentNode.insertBefore(toc, articleHeader.nextSibling);
+    }
+});
+</script>
+
+<style>
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.toc li {
+    margin-bottom: 0.5rem;
+}
+
+.toc a {
+    color: #3273dc;
+    text-decoration: none;
+    display: block;
+    padding: 0.2rem 0;
+}
+
+.toc a:hover {
+    text-decoration: underline;
+}
+
+.toc-h1 {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.toc-h2 {
+    font-size: 0.9rem;
+    padding-left: 1rem;
+}
+
+.toc-h3 {
+    font-size: 0.8rem;
+    padding-left: 2rem;
+}
+
+.border-top {
+    border-top: 1px solid #f0f0f0;
+}
+</style> 
