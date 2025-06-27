@@ -398,8 +398,6 @@ button,
 
   // Special handling for benchmark column with height matching
   &.benchmark-column
-    height: 100%         // Take full height of container
-    
     .filter-column-header
       flex-shrink: 0       // Don't shrink the header
     
@@ -407,14 +405,11 @@ button,
       flex: 1              // Take up all remaining space after header
       overflow-y: auto     // Make the panel itself scrollable
       height: auto         // Let flex handle the height
-      max-height: none     // Remove height constraint to fill container
-      min-height: 0        // Allow it to shrink if needed
+      max-height: 340px    // Match the container height minus header space
       width: 100%          // Take full width
 
     .benchmark-tree
-      height: 100%
       overflow: visible    // Remove internal scrolling
-      max-height: none     // Remove height constraint
 
   .filter-dropdown
     margin: 0 !important
@@ -941,9 +936,8 @@ button,
         // Special handling for benchmark column in sidebar
         &.benchmark-column
           #benchmarkFilterPanel
-            max-height: 250px  // Smaller in sidebar
+            max-height: 300px  // Fixed height for sidebar mode
             width: 100%  // Override the 500px width
-            min-height: 200px  // Reduce min-height
             border: 1px solid #e1e5e9  // Lighter border
 
             // Make the tree more compact in sidebar
