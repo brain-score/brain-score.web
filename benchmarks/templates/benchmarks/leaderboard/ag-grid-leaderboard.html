@@ -244,6 +244,7 @@
         benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
         benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
+        benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -254,6 +255,8 @@
       window.benchmarkTree = benchmarkTree;
       window.originalRowData = rowData;
       window.filterOptions = filterOptions;
+      window.benchmarkMetadata = benchmarkMetadata;
+      window.benchmarkIds = benchmarkIds;
       const ranges = filterOptions?.parameter_ranges || {};
       if (ranges.max_param_count) {
         document.getElementById('paramCountMin').max = ranges.max_param_count;
@@ -270,7 +273,6 @@
         document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
         document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
       }
-      window.benchmarkMetadata = benchmarkMetadata;
       
       // Initialize grid
       if (typeof initializeGrid === 'function') {

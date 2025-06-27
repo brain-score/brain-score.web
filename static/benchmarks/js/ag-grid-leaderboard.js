@@ -54,6 +54,7 @@ function LeafHeaderComponent() {}
 LeafHeaderComponent.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'leaf-header';
+  this.eGui.style.position = 'relative'; // Enable absolute positioning for click areas
 
   const label = document.createElement('span');
   label.className = 'leaf-header-label';
@@ -64,16 +65,95 @@ LeafHeaderComponent.prototype.init = function(params) {
 
   this.eGui.appendChild(label);
 
-  // Click on pill to sort
-  this.eGui.addEventListener('click', (event) => {
-    if (event.target.closest('.expand-toggle')) return;
+  // Add sort indicator for leaf headers
+  const sortIndicator = document.createElement('span');
+  sortIndicator.className = 'sort-indicator';
+  sortIndicator.textContent = '━';  // Thicker minus/line as default
+  sortIndicator.style.cursor = 'pointer';
+  sortIndicator.style.marginLeft = '4px';
+  sortIndicator.style.fontSize = '12px';
+  sortIndicator.style.opacity = '0.5';  // Subtle when not sorted
+  sortIndicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
+  this.eGui.appendChild(sortIndicator);
 
+  // Function to update sort indicator
+  const updateSortIndicator = () => {
+    const column = params.column;
+    const currentSort = column.getSort();
+    
+    if (currentSort === 'asc') {
+      sortIndicator.textContent = '↑';  // AG Grid style up arrow
+      sortIndicator.style.opacity = '1';
+      sortIndicator.style.color = '#333';
+      sortIndicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+    } else if (currentSort === 'desc') {
+      sortIndicator.textContent = '↓';  // AG Grid style down arrow
+      sortIndicator.style.opacity = '1';
+      sortIndicator.style.color = '#333';
+      sortIndicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+    } else {
+      sortIndicator.textContent = '━';  // Thicker line
+      sortIndicator.style.opacity = '0.6';
+      sortIndicator.style.color = '#333';
+      sortIndicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+    }
+  };
+
+  // Update indicator initially
+  updateSortIndicator();
+
+  // Listen for sort changes
+  if (params.api) {
+    params.api.addEventListener('sortChanged', updateSortIndicator);
+  }
+
+  // NAVIGATION FUNCTIONALITY: Click on left 80% to navigate to benchmark page
+  const navigationArea = document.createElement('div');
+  navigationArea.className = 'navigation-area';
+  navigationArea.style.position = 'absolute';
+  navigationArea.style.top = '0';
+  navigationArea.style.left = '0';
+  navigationArea.style.width = '80%';  // Left 80% for navigation
+  navigationArea.style.height = '100%';
+  navigationArea.style.cursor = 'pointer';
+  navigationArea.style.zIndex = '9';
+  navigationArea.style.backgroundColor = 'transparent';
+  
+  this.eGui.appendChild(navigationArea);
+
+  // Click handler for navigation
+  navigationArea.addEventListener('click', (event) => {
+    event.stopPropagation();
+    
+    // Get benchmark ID from the global mapping - use multiple fallbacks
+    const colDef = params.column?.userProvidedColDef || params.column?.colDef || params.colDef || {};
+    const benchmarkIdentifier = colDef.field || colDef.headerName || params.displayName;
+    
+    if (!benchmarkIdentifier) {
+      console.warn('Could not determine benchmark identifier from params:', params);
+      return;
+    }
+    
+    const actualBenchmarkId = window.benchmarkIds && window.benchmarkIds[benchmarkIdentifier];
+    if (actualBenchmarkId) {
+      // Navigate to benchmark detail page
+      const domain = 'vision'; // Default domain for vision benchmarks
+      window.location.href = `/benchmark/${domain}/${actualBenchmarkId}`;
+    } else {
+      console.warn('No benchmark ID found for identifier:', benchmarkIdentifier);
+      console.log('Available benchmark IDs:', window.benchmarkIds);
+    }
+  });
+
+  // Make the sort indicator itself clickable instead of the area
+  const handleSort = (event) => {
+    event.stopPropagation();
+    
     const column = params.column;
     const colId = column.getColId();
     const currentSort = column.getSort();
     const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
 
-    // AG Grid 33 approach - use applyColumnState which is available
     if (params.api && typeof params.api.applyColumnState === 'function') {
       params.api.applyColumnState({
         state: [{ colId, sort: nextSort }],
@@ -82,7 +162,13 @@ LeafHeaderComponent.prototype.init = function(params) {
     } else {
       console.warn('applyColumnState method not available');
     }
-  });
+    
+    // Update the sort indicator after sorting
+    setTimeout(updateSortIndicator, 10);
+  };
+
+  // Add click handler directly to the sort indicator
+  sortIndicator.addEventListener('click', handleSort);
 };
 LeafHeaderComponent.prototype.getGui = function() {
   return this.eGui;
@@ -144,11 +230,67 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   };
   const displayName = nameMap[benchmarkId] || params.displayName || benchmarkId;
 
+  // Calculate the depth level for color intensity
+  const calculateDepth = (currentBenchmarkId) => {
+    if (!window.benchmarkTree) return 0;
+    
+    // Build a parent mapping from the benchmark tree
+    const parentMap = new Map();
+    
+    function buildParentMap(nodes, parent = null) {
+      nodes.forEach(node => {
+        if (parent) {
+          parentMap.set(node.id, parent);
+        }
+        if (node.children) {
+          buildParentMap(node.children, node.id);
+        }
+      });
+    }
+    
+    buildParentMap(window.benchmarkTree);
+    
+    // Count depth by traversing up to root
+    let depth = 0;
+    let current = currentBenchmarkId;
+    
+    while (parentMap.has(current)) {
+      depth++;
+      current = parentMap.get(current);
+    }
+    
+    return depth;
+  };
+
+  const depth = calculateDepth(benchmarkId);
+  const maxDepth = 3; // Assume max 3 levels: root -> category -> benchmark
+  const colorIntensity = Math.max(0.3, 1 - (depth * 0.2)); // Darker for parents, lighter for children
+
   this.eGui = document.createElement('div');
   const type = benchmarkId.split('_')[0];
   this.eGui.className = `expandable-header ${type}`;
   this.eGui.style.display = 'flex';
   this.eGui.style.alignItems = 'center';
+
+  // NOTE: Color styles are now handled by CSS classes instead of inline styles
+  // The CSS classes .expandable-header.average, .expandable-header.neural, etc. handle the colors
+
+  // Helper function to adjust color intensity
+  function adjustColorIntensity(hexColor, intensity) {
+    // Convert hex to RGB
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Adjust intensity (mix with white for lighter colors)
+    const newR = Math.round(r * intensity + 255 * (1 - intensity));
+    const newG = Math.round(g * intensity + 255 * (1 - intensity));
+    const newB = Math.round(b * intensity + 255 * (1 - intensity));
+    
+    // Convert back to hex
+    return `rgb(${newR}, ${newG}, ${newB})`;
+  }
 
   const labelContainer = document.createElement('div');
   labelContainer.className = 'expandable-header-label-container';
@@ -222,44 +364,23 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   if (leafFields.length > 0) {
     const count = document.createElement('span');
     count.className = 'benchmark-count';
-    count.textContent = leafFields.length;
+    count.style.cursor = 'pointer';  // Make it clear it's clickable
+    
+    // Add expand/collapse icon and count
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
+    icon.style.marginRight = '4px';
+    icon.style.fontSize = '10px';
+    
+    const countText = document.createElement('span');
+    countText.textContent = leafFields.length;
+    
+    count.appendChild(icon);
+    count.appendChild(countText);
     this.eGui.appendChild(count);
-  }
 
-  // Click on pill to sort
-  this.eGui.addEventListener('click', (event) => {
-    if (event.target.closest('.expand-toggle')) return;
-
-    const column = params.column;
-    const colId = column.getColId();
-    const currentSort = column.getSort();
-    const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
-
-    if (params.api && typeof params.api.applyColumnState === 'function') {
-      params.api.applyColumnState({
-        state: [{ colId, sort: nextSort }],
-        defaultState: { sort: null }
-      });
-    } else {
-      console.warn('applyColumnState method not available');
-    }
-  });
-
-  // Don't show toggle for global score
-  if (benchmarkId?.startsWith('average_')) return;
-
-  // Add toggle if children exist
-  const directChildren = getDirectChildren(colDef.field);
-  if (directChildren.length > 0) {
-    const toggle = document.createElement('span');
-    toggle.className = 'expand-toggle';
-    toggle.textContent = '▾';
-    toggle.style.cursor = 'pointer';
-    toggle.style.marginLeft = '4px';
-    this.eGui.appendChild(toggle);
-
-    // Click on toggle to open up children
-    toggle.addEventListener('click', e => {
+    // EXPANSION FUNCTIONALITY: Click on count badge to expand/collapse children
+    count.addEventListener('click', e => {
       e.stopPropagation();
 
       const columnId = colDef.field;
@@ -289,6 +410,9 @@ ExpandableHeaderComponent.prototype.init = function(params) {
           window.columnExpansionState.set(childId, false);
         });
         
+        // Update icon to collapse state
+        icon.className = 'fa-solid fa-down-left-and-up-right-to-center';
+        
       } else {
         // Collapsing: hide all descendants
         const allDescendantIds = getAllDescendants(columnId).map(c => c.getColId());
@@ -301,14 +425,164 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         allDescendantIds.forEach(descendantId => {
           window.columnExpansionState.set(descendantId, false);
         });
+        
+        // Update icon to expand state
+        icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
       }
 
-      // Update toggle visual state
-      toggle.textContent = shouldExpand ? '▴' : '▾';
+      // Update toggle visual state if toggle exists
+      const toggle = this.eGui.querySelector('.expand-toggle');
+      if (toggle) {
+        toggle.textContent = shouldExpand ? '▴' : '▾';
+      }
       
       // Apply column visibility rules based on current filters
       updateColumnVisibility();
     });
+  }
+
+  // Don't show toggle for global score
+  if (benchmarkId?.startsWith('average_')) {
+    // Add sort indicator for global score (no children, just sorting)
+    const toggle = document.createElement('span');
+    toggle.className = 'sort-indicator';
+    toggle.textContent = '━';  // Thicker minus/line as default
+    toggle.style.cursor = 'pointer';
+    toggle.style.marginLeft = '4px';
+    toggle.style.fontSize = '14px';  // Slightly larger for visibility
+    toggle.style.opacity = '0.5';
+    toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
+    this.eGui.appendChild(toggle);
+
+    // Function to update sort indicator for global score
+    const updateSortIndicator = () => {
+      const column = params.column;
+      const currentSort = column.getSort();
+      
+      if (currentSort === 'asc') {
+        toggle.textContent = '↑';  // AG Grid style up arrow
+        toggle.style.opacity = '1';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+      } else if (currentSort === 'desc') {
+        toggle.textContent = '↓';  // AG Grid style down arrow
+        toggle.style.opacity = '1';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+      } else {
+        toggle.textContent = '━';  // Thicker line
+        toggle.style.opacity = '0.6';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+      }
+    };
+
+    updateSortIndicator();
+
+    if (params.api) {
+      params.api.addEventListener('sortChanged', updateSortIndicator);
+    }
+
+    // Make the sort indicator itself clickable
+    const handleSort = (event) => {
+      event.stopPropagation();
+      
+      const column = params.column;
+      const colId = column.getColId();
+      const currentSort = column.getSort();
+      const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+
+      if (params.api && typeof params.api.applyColumnState === 'function') {
+        params.api.applyColumnState({
+          state: [{ colId, sort: nextSort }],
+          defaultState: { sort: null }
+        });
+      }
+      
+      setTimeout(updateSortIndicator, 10);
+    };
+
+    // Add click handler to the sort indicator itself
+    toggle.addEventListener('click', handleSort);
+    return;
+  }
+
+  // Add toggle if children exist, but use it for sorting indication only
+  const directChildren = getDirectChildren(colDef.field);
+  if (directChildren.length > 0) {
+    const toggle = document.createElement('span');
+    toggle.className = 'sort-indicator';
+    toggle.textContent = '━';  // Thicker minus/line as default
+    toggle.style.cursor = 'pointer';
+    toggle.style.marginLeft = '4px';
+    toggle.style.fontSize = '12px';
+    toggle.style.opacity = '0.5';
+    toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
+    this.eGui.appendChild(toggle);
+
+    // Function to update sort indicator based on current sort state
+    const updateSortIndicator = () => {
+      const column = params.column;
+      const currentSort = column.getSort();
+      
+      if (currentSort === 'asc') {
+        toggle.textContent = '↑';  // AG Grid style up arrow
+        toggle.style.opacity = '1';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+      } else if (currentSort === 'desc') {
+        toggle.textContent = '↓';  // AG Grid style down arrow
+        toggle.style.opacity = '1';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+      } else {
+        toggle.textContent = '━';  // Thicker line
+        toggle.style.opacity = '0.6';
+        toggle.style.color = '#333';
+        toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+      }
+    };
+
+    // Update indicator initially
+    updateSortIndicator();
+
+    // Listen for sort changes to update the indicator
+    if (params.api) {
+      params.api.addEventListener('sortChanged', updateSortIndicator);
+    }
+
+    // SORTING FUNCTIONALITY: Entire header clickable for parent headers (except count badge)
+    this.eGui.style.position = 'relative';
+    this.eGui.style.cursor = 'pointer';
+
+    const handleSort = (event) => {
+      // Don't sort if clicking on count badge
+      if (event.target.closest('.benchmark-count')) {
+        return;
+      }
+      
+      event.stopPropagation();
+      
+      const column = params.column;
+      const colId = column.getColId();
+      const currentSort = column.getSort();
+      const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+
+      if (params.api && typeof params.api.applyColumnState === 'function') {
+        params.api.applyColumnState({
+          state: [{ colId, sort: nextSort }],
+          defaultState: { sort: null }
+        });
+      } else {
+        console.warn('applyColumnState method not available');
+      }
+      
+      // Update the sort indicator after sorting
+      setTimeout(updateSortIndicator, 10);
+    };
+
+    // Add click handler to entire header for parent benchmarks
+    this.eGui.addEventListener('click', handleSort);
   }
 };
 ExpandableHeaderComponent.prototype.getGui = function() {
