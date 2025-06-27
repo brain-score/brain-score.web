@@ -540,6 +540,8 @@ function renderBenchmarkTree(container, tree) {
       if (isChecked) {
         // When checking a box, auto-select all ancestors up to the root
         autoSelectAncestors(checkbox);
+        // Also select all descendants of this node
+        checkAllDescendants(li);
       } else {
         // When unchecking, uncheck all descendants
         uncheckAllDescendants(li);
@@ -624,6 +626,14 @@ function renderBenchmarkTree(container, tree) {
     const descendantCheckboxes = parentNode.querySelectorAll('input[type="checkbox"]');
     descendantCheckboxes.forEach(cb => {
       cb.checked = false;
+    });
+  }
+
+  // Function to check all descendants when parent is checked
+  function checkAllDescendants(parentNode) {
+    const descendantCheckboxes = parentNode.querySelectorAll('input[type="checkbox"]');
+    descendantCheckboxes.forEach(cb => {
+      cb.checked = true;
     });
   }
 
