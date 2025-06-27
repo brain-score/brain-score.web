@@ -1355,16 +1355,51 @@ function resetAllFilters() {
     }
   });
 
-  // Reset ALL benchmark checkboxes to checked (including engineering)
+  // Reset ALL benchmark checkboxes to checked first
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {
     if (cb) {
-      cb.checked = true;  // Check everything, including engineering
+      cb.checked = true;  // Check everything first
     }
   });
 
-  // Set filtered benchmarks to be empty (all benchmarks included)
+  // Then uncheck only the engineering parent (this will trigger the event handler to uncheck children)
+  const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+  if (engineeringCheckbox) {
+    engineeringCheckbox.checked = false;
+
+    // Manually uncheck engineering children since the event might not fire during reset
+    const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+    if (engineeringNode) {
+      const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+      childCheckboxes.forEach(cb => {
+        if (cb !== engineeringCheckbox) {  // Don't double-process the parent
+          cb.checked = false;
+        }
+      });
+    }
+  }
+
+  // Reset benchmark metadata checkboxes (regions, species, tasks, public data)
+  document.querySelectorAll('.region-checkbox, .species-checkbox, .task-checkbox').forEach(checkbox => {
+    if (checkbox) {
+      checkbox.checked = false;  // Uncheck all benchmark metadata filters
+    }
+  });
+
+  // Reset public data filter
+  const publicDataCheckbox = document.getElementById('publicDataFilter');
+  if (publicDataCheckbox) {
+    publicDataCheckbox.checked = false;
+  }
+
+  // Set filtered benchmarks to only include engineering-related items
   window.filteredOutBenchmarks = new Set();
+  checkboxes.forEach(cb => {
+    if (cb && !cb.checked) {
+      window.filteredOutBenchmarks.add(cb.value);
+    }
+  });
 
   // Apply combined filters to properly reset everything
   applyCombinedFilters();
@@ -1378,18 +1413,6 @@ function updateFilteredScores(rowData) {
   
   // Capture the excluded state once at the start
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-
-  // Build hierarchy map from the benchmark tree
-  function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-    tree.forEach(node => {
-      const children = node.children ? node.children.map(child => child.id) : [];
-      hierarchyMap.set(node.id, children);
-      if (node.children && node.children.length > 0) {
-        buildHierarchyFromTree(node.children, hierarchyMap);
-      }
-    });
-    return hierarchyMap;
-  }
 
   const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
   
@@ -1832,8 +1855,101 @@ function parseURLFilters() {
     }
   }, 150);
 
+  // Parse benchmark exclusions from URL
+  const excludedBenchmarksParam = params.get('excluded_benchmarks');
+  if (excludedBenchmarksParam) {
+    // Decode the hierarchical exclusions
+    const decodedExclusions = decodeBenchmarkFilters(excludedBenchmarksParam);
+    window.filteredOutBenchmarks = decodedExclusions;
+    
+    // Update UI checkboxes to reflect the exclusions
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+      cb.checked = !decodedExclusions.has(cb.value);
+    });
+  }
+
   updateBenchmarkFilters();
   applyCombinedFilters();
+}
+
+// Function to encode benchmark filters using hierarchical exclusion-based approach
+function encodeBenchmarkFilters() {
+  if (!window.filteredOutBenchmarks || window.filteredOutBenchmarks.size === 0) {
+    return null; // All benchmarks included
+  }
+  
+  const excluded = Array.from(window.filteredOutBenchmarks);
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  
+  // Helper function to get all children recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
+  
+  // Group excluded items and compress hierarchically
+  const compressed = [];
+  const processed = new Set();
+  
+  // Check each excluded item
+  excluded.forEach(excludedId => {
+    if (processed.has(excludedId)) return;
+    
+    // Check if this is a parent whose ALL children are also excluded
+    const allDescendants = getAllDescendants(excludedId);
+    const allDescendantsExcluded = allDescendants.length > 0 && 
+      allDescendants.every(descendantId => excluded.includes(descendantId));
+    
+    if (allDescendantsExcluded) {
+      // Entire subtree is excluded, just use the parent
+      compressed.push(excludedId);
+      processed.add(excludedId);
+      allDescendants.forEach(id => processed.add(id));
+    } else {
+      // Individual exclusion or partial subtree
+      compressed.push(excludedId);
+      processed.add(excludedId);
+    }
+  });
+  
+  return compressed.join(',');
+}
+
+// Function to decode benchmark filters from URL parameter
+function decodeBenchmarkFilters(excludedParam) {
+  if (!excludedParam) {
+    return new Set(); // No exclusions
+  }
+  
+  const excludedList = excludedParam.split(',');
+  const allExcluded = new Set();
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  
+  // Helper function to get all descendants recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
+  
+  excludedList.forEach(excludedId => {
+    // Add the item itself
+    allExcluded.add(excludedId);
+    
+    // Add all its descendants (for hierarchical exclusion)
+    const descendants = getAllDescendants(excludedId);
+    descendants.forEach(descendantId => allExcluded.add(descendantId));
+  });
+  
+  return allExcluded;
 }
 
 function updateURLFromFilters() {
@@ -1853,6 +1969,12 @@ function updateURLFromFilters() {
 
   if (window.activeFilters.public_data_only) {
     params.set('public_data_only', 'true');
+  }
+
+  // Add benchmark exclusions using hierarchical encoding
+  const excludedBenchmarks = encodeBenchmarkFilters();
+  if (excludedBenchmarks) {
+    params.set('excluded_benchmarks', excludedBenchmarks);
   }
 
   const setRange = (key) => {
@@ -2073,6 +2195,18 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 }
 
+// Helper function to build hierarchy map from benchmark tree
+function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
+  tree.forEach(node => {
+    const children = node.children ? node.children.map(child => child.id) : [];
+    hierarchyMap.set(node.id, children);
+    if (node.children && node.children.length > 0) {
+      buildHierarchyFromTree(node.children, hierarchyMap);
+    }
+  });
+  return hierarchyMap;
+}
+
 // Make functions available globally
 window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
@@ -2083,6 +2217,9 @@ window.resetAllFilters = resetAllFilters;
 window.initializeDualHandleSliders = initializeDualHandleSliders;
 window.parseURLFilters = parseURLFilters;
 window.updateURLFromFilters = updateURLFromFilters;
+window.encodeBenchmarkFilters = encodeBenchmarkFilters;
+window.decodeBenchmarkFilters = decodeBenchmarkFilters;
+window.buildHierarchyFromTree = buildHierarchyFromTree;
 window.updateColumnVisibility = updateColumnVisibility;
 window.setInitialColumnState = setInitialColumnState;
 
@@ -2090,18 +2227,6 @@ window.setInitialColumnState = setInitialColumnState;
 function updateColumnVisibility() {
   if (!window.globalGridApi || !window.benchmarkTree) return;
   
-  // Build hierarchy map from the benchmark tree
-  function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-    tree.forEach(node => {
-      const children = node.children ? node.children.map(child => child.id) : [];
-      hierarchyMap.set(node.id, children);
-      if (node.children && node.children.length > 0) {
-        buildHierarchyFromTree(node.children, hierarchyMap);
-      }
-    });
-    return hierarchyMap;
-  }
-
   const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
   

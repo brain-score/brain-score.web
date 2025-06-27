@@ -306,19 +306,31 @@
         initializeDualHandleSliders();
       }, 100);
       
-      // Initialize all benchmarks as included by default
+      // Initialize benchmark filters from URL or use defaults
       setTimeout(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
                                        urlParams.has('benchmark_species') ||
                                        urlParams.has('benchmark_tasks') ||
-                                       urlParams.has('public_data_only');
+                                       urlParams.has('public_data_only') ||
+                                       urlParams.has('excluded_benchmarks');
       
-        // Only apply URL filters if they exist, otherwise keep all benchmarks checked
-        if (hasExplicitBenchmarks) {
-          // Parse and apply URL filters
-          if (typeof parseURLFilters === 'function') {
-            parseURLFilters();
+        // Parse URL filters first (this will set checkbox states if URL params exist)
+        if (typeof parseURLFilters === 'function') {
+          parseURLFilters();
+        }
+        
+        // If no explicit benchmark filters in URL, apply default (exclude engineering)
+        if (!hasExplicitBenchmarks) {
+          const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+          if (engineeringCheckbox) {
+            engineeringCheckbox.checked = false;
+      
+            const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+            if (engineeringNode) {
+              const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+              childCheckboxes.forEach(cb => cb.checked = false);
+            }
           }
         }
         
@@ -353,14 +365,34 @@
           resetLink.addEventListener('click', (e) => {
             e.preventDefault();
             
-            // Check all checkboxes (including engineering)
+            // First, check all checkboxes
             const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
             allCheckboxes.forEach(cb => {
-              cb.checked = true;
+              cb.checked = true;  // Check everything first
             });
             
-            // Rebuild the exclusion set (should be empty since all are checked)
+            // Then, uncheck engineering and ALL its children
+            const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+            if (engineeringCheckbox) {
+              engineeringCheckbox.checked = false;
+              
+              // Find the engineering node and uncheck all children recursively
+              const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+              if (engineeringNode) {
+                const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+                childCheckboxes.forEach(cb => {
+                  cb.checked = false;
+                });
+              }
+            }
+            
+            // Rebuild the exclusion set
             window.filteredOutBenchmarks = new Set();
+            allCheckboxes.forEach(cb => {
+              if (!cb.checked) {
+                window.filteredOutBenchmarks.add(cb.value);
+              }
+            });
             
             // Trigger update
             if (typeof applyCombinedFilters === 'function') {
