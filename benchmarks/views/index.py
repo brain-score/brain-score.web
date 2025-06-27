@@ -34,7 +34,6 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-
 #@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
 # Explore caching entire leaderboard context without any filtering
 # which is then used downstream. Unclear if this has performance benefits.
@@ -99,14 +98,11 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Apply any additional model filters
     if model_filter:
         model_query = list(model_filter(models))
-    
-    # Order by rank initially, but we'll recalculate ranks later
-    models.sort(key=lambda m: getattr(m, 'rank', float('inf')))
-    
+       
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
-    model_rows_reranked = _recalculate_model_ranks(models, domain)
-   
+    model_rows_reranked = filter_and_rank_models(models, domain)
+
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
     # Materialized views for some of these exist, but simple list comprehension was fast enough.
@@ -207,93 +203,86 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     return context
 
 
-def _recalculate_model_ranks(models, domain="vision"):
+def filter_and_rank_models(models, domain: str = "vision"):
     """
-    Recalculate model ranks based on the average_{domain} benchmark scores.
-    Uses standard competition ranking (equal scores get equal ranks).
-    
-    Args:
-        models: QuerySet or list of FinalModelContext objects
-        domain: Domain to use for ranking (e.g., "vision", "language")
-        
-    Returns:
-        List of FinalModelContext objects with updated ranks
+    Filters out models without a valid average_{domain} score (must be a number or "X") and recalculates ranks.
+    Returns a list of models with updated ranks.
     """
-    # Convert QuerySet to list if needed
     if not isinstance(models, list):
         models = list(models)
-    
-    # Create a list to store model IDs and their average scores
+
     model_scores = []
-    models_without_scores = []
-    
-    # Extract average_{domain} scores for each model
     for model in models:
         if model.scores is not None:
-            # Find the average_{domain} score
-            average_score = None
             for score in model.scores:
                 benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
                 if benchmark_id == f"average_{domain}":
-                    # Try to get score_ceiled_raw first, then fall back to score_ceiled
-                    average_score = score.get("score_ceiled_raw", score.get("score_ceiled"))
-                    # Convert string score to float if needed
-                    if isinstance(average_score, str):
-                        try:
-                            average_score = float(average_score)
-                        except ValueError:
-                            # Handle "X" or other non-numeric values
-                            average_score = None
+                    val = score.get("score_ceiled", score.get("score_ceiled"))
+                    if val is None or val == "":
+                        # Exclude models with None or empty string
+                        break
+                    if val == "X":
+                        # "X" is valid, but always ranked at the bottom
+                        model_scores.append((model, None, True))
+                        break
+                    try:
+                        val_float = float(val)
+                        model_scores.append((model, val_float, False))
+                    except Exception:
+                        # Exclude models with non-numeric, non-"X" values
+                        break
                     break
-            
-            # If we found a valid average score, add it to our list
-            if average_score is not None and not np.isnan(average_score):
-                model_scores.append((model, average_score))
-            else:
-                # Keep track of models without valid scores separately
-                models_without_scores.append(model)
-    
-    # Sort models by score in descending order (only those with valid scores)
-    model_scores.sort(key=lambda x: x[1], reverse=True)
-    
-    # Create a dictionary mapping model IDs to ranks using standard competition ranking
-    # (equal scores get equal ranks, next rank is skipped)
+
+    # Sort: valid numbers (descending), then "X" at the bottom (tied), exclude None/null
+    model_scores.sort(
+        key=lambda x: (
+            1 if x[2] else 0,  # is_x: False (0) comes before True (1)
+            -(x[1] if x[1] is not None else 0),  # valid numbers descending, "X" as 0
+            getattr(x[0], "name", str(getattr(x[0], "model_id", "")))  # tiebreaker
+        )
+    )
+
+    # Assign ranks: valid numbers get ranks, all "X" get the same (last) rank
     rank_map = {}
     current_rank = 1
     previous_score = None
+    tied_count = 0
     
-    for i, (model, score) in enumerate(model_scores):
+    for i, (model, score, is_x) in enumerate(model_scores):
+        if is_x:
+            # All "X" get the same rank (after all valids)
+            break
+            
         if i == 0 or score != previous_score:
-            # New score, assign the current rank
+            # If we had a tie, increment rank by the number of tied models
+            if tied_count > 0:
+                current_rank += tied_count
+            tied_count = 1
             rank_map[model.model_id] = current_rank
-            # Update for next iteration
-            current_rank = i + 2  # Skip next rank if this was a tie
         else:
-            # Same score as previous, assign the same rank
+            # This is a tie, use the same rank as the previous model
+            tied_count += 1
             rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
-        
+            
         previous_score = score
-    
-    # Update ranks for each model with valid scores
-    for model, _ in model_scores:
-        model.rank = rank_map[model.model_id]
-    
-    # Assign a high rank to models without valid scores
-    next_rank = len(model_scores) + 1
-    for model in models_without_scores:
-        model.rank = next_rank
-    # Increment next rank to account for models without valid scores
-    next_rank += 1
-    
-    # Combine both lists and sort by rank
-    all_models = [model for model, _ in model_scores] + models_without_scores
-    all_models.sort(key=lambda model: model.rank)
-    
-    return all_models
+
+    # Assign the same rank to all "X" (after all valids)
+    x_rank = current_rank + tied_count
+    for model, score, is_x in model_scores:
+        if is_x:
+            model.rank = x_rank
+        else:
+            model.rank = rank_map[model.model_id]
+
+    # Return all models, sorted by rank
+    ranked_models = [model for model, _, _ in model_scores]
+    ranked_models.sort(key=lambda model: model.rank)
+    return ranked_models
 
 
-def _build_model_data(benchmarks, models):
-
+def _build_model_data(benchmarks: List[FinalBenchmarkContext], 
+                      models: List[FinalModelContext]
+                      ) -> Tuple[Union[str, pd.DataFrame], List[Dict[str, Any]]]:
     """
     Build both comparison data and scores dataframe in a single pass through models.
     Returns: (csv_data, comparison_data) tuple
