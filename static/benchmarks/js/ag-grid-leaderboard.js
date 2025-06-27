@@ -65,47 +65,8 @@ LeafHeaderComponent.prototype.init = function(params) {
 
   this.eGui.appendChild(label);
 
-  // Add sort indicator for leaf headers
-  const sortIndicator = document.createElement('span');
-  sortIndicator.className = 'sort-indicator';
-  sortIndicator.textContent = '━';  // Thicker minus/line as default
-  sortIndicator.style.cursor = 'pointer';
-  sortIndicator.style.marginLeft = '4px';
-  sortIndicator.style.fontSize = '12px';
-  sortIndicator.style.opacity = '0.5';  // Subtle when not sorted
-  sortIndicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
-  this.eGui.appendChild(sortIndicator);
-
-  // Function to update sort indicator
-  const updateSortIndicator = () => {
-    const column = params.column;
-    const currentSort = column.getSort();
-    
-    if (currentSort === 'asc') {
-      sortIndicator.textContent = '↑';  // AG Grid style up arrow
-      sortIndicator.style.opacity = '1';
-      sortIndicator.style.color = '#333';
-      sortIndicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-    } else if (currentSort === 'desc') {
-      sortIndicator.textContent = '↓';  // AG Grid style down arrow
-      sortIndicator.style.opacity = '1';
-      sortIndicator.style.color = '#333';
-      sortIndicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-    } else {
-      sortIndicator.textContent = '━';  // Thicker line
-      sortIndicator.style.opacity = '0.6';
-      sortIndicator.style.color = '#333';
-      sortIndicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
-    }
-  };
-
-  // Update indicator initially
-  updateSortIndicator();
-
-  // Listen for sort changes
-  if (params.api) {
-    params.api.addEventListener('sortChanged', updateSortIndicator);
-  }
+  // Add sort indicator using shared utility
+  createSortIndicator(params, this.eGui);
 
   // NAVIGATION FUNCTIONALITY: Click on left 80% to navigate to benchmark page
   const navigationArea = document.createElement('div');
@@ -145,30 +106,7 @@ LeafHeaderComponent.prototype.init = function(params) {
     }
   });
 
-  // Make the sort indicator itself clickable instead of the area
-  const handleSort = (event) => {
-    event.stopPropagation();
-    
-    const column = params.column;
-    const colId = column.getColId();
-    const currentSort = column.getSort();
-    const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
-
-    if (params.api && typeof params.api.applyColumnState === 'function') {
-      params.api.applyColumnState({
-        state: [{ colId, sort: nextSort }],
-        defaultState: { sort: null }
-      });
-    } else {
-      console.warn('applyColumnState method not available');
-    }
-    
-    // Update the sort indicator after sorting
-    setTimeout(updateSortIndicator, 10);
-  };
-
-  // Add click handler directly to the sort indicator
-  sortIndicator.addEventListener('click', handleSort);
+  // Sort handling is now managed by the shared createSortIndicator utility
 };
 LeafHeaderComponent.prototype.getGui = function() {
   return this.eGui;
@@ -358,18 +296,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     });
   }
 
-  // Function to calculate filtered leaf count (excluding filtered out benchmarks)
-  function getFilteredLeafCount(parentField) {
-    const allLeafFields = getLeafFields(parentField);
-    const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-    
-    // Count only non-filtered leaf benchmarks
-    const visibleLeafFields = allLeafFields.filter(field => {
-      return !excludedBenchmarks.has(field);
-    });
-    
-    return visibleLeafFields.length;
-  }
+  // Use the global getFilteredLeafCount function (defined later in the file)
 
   const leafFields = getLeafFields(colDef.field);
 
@@ -390,8 +317,8 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     countText.className = 'count-value';
     countText.style.transition = 'all 0.2s ease';  // Smooth animation
     
-    // Calculate initial filtered count
-    const initialCount = getFilteredLeafCount(colDef.field);
+    // Calculate initial filtered count using global function
+    const initialCount = window.getFilteredLeafCount ? window.getFilteredLeafCount(colDef.field) : leafFields.length;
     countText.textContent = initialCount;
     
     count.appendChild(icon);
@@ -462,121 +389,24 @@ ExpandableHeaderComponent.prototype.init = function(params) {
 
   // Don't show toggle for global score
   if (benchmarkId?.startsWith('average_')) {
-    // Add sort indicator for global score (no children, just sorting)
-    const toggle = document.createElement('span');
-    toggle.className = 'sort-indicator';
-    toggle.textContent = '━';  // Thicker minus/line as default
-    toggle.style.cursor = 'pointer';
-    toggle.style.marginLeft = '4px';
-    toggle.style.fontSize = '14px';  // Slightly larger for visibility
-    toggle.style.opacity = '0.5';
-    toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
-    this.eGui.appendChild(toggle);
-
-    // Function to update sort indicator for global score
-    const updateSortIndicator = () => {
-      const column = params.column;
-      const currentSort = column.getSort();
-      
-      if (currentSort === 'asc') {
-        toggle.textContent = '↑';  // AG Grid style up arrow
-        toggle.style.opacity = '1';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-      } else if (currentSort === 'desc') {
-        toggle.textContent = '↓';  // AG Grid style down arrow
-        toggle.style.opacity = '1';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-      } else {
-        toggle.textContent = '━';  // Thicker line
-        toggle.style.opacity = '0.6';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
-      }
-    };
-
-    updateSortIndicator();
-
-    if (params.api) {
-      params.api.addEventListener('sortChanged', updateSortIndicator);
-    }
-
-    // Make the sort indicator itself clickable
-    const handleSort = (event) => {
-      event.stopPropagation();
-      
-      const column = params.column;
-      const colId = column.getColId();
-      const currentSort = column.getSort();
-      const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
-
-      if (params.api && typeof params.api.applyColumnState === 'function') {
-        params.api.applyColumnState({
-          state: [{ colId, sort: nextSort }],
-          defaultState: { sort: null }
-        });
-      }
-      
-      setTimeout(updateSortIndicator, 10);
-    };
-
-    // Add click handler to the sort indicator itself
-    toggle.addEventListener('click', handleSort);
+    // Add sort indicator for global score using shared utility (larger font)
+    createSortIndicator(params, this.eGui, '14px');
     return;
   }
 
   // Add toggle if children exist, but use it for sorting indication only
   const directChildren = getDirectChildren(colDef.field);
   if (directChildren.length > 0) {
-    const toggle = document.createElement('span');
-    toggle.className = 'sort-indicator';
-    toggle.textContent = '━';  // Thicker minus/line as default
-    toggle.style.cursor = 'pointer';
-    toggle.style.marginLeft = '4px';
-    toggle.style.fontSize = '12px';
-    toggle.style.opacity = '0.5';
-    toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';  // White shadow for visibility
-    this.eGui.appendChild(toggle);
-
-    // Function to update sort indicator based on current sort state
-    const updateSortIndicator = () => {
-      const column = params.column;
-      const currentSort = column.getSort();
-      
-      if (currentSort === 'asc') {
-        toggle.textContent = '↑';  // AG Grid style up arrow
-        toggle.style.opacity = '1';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-      } else if (currentSort === 'desc') {
-        toggle.textContent = '↓';  // AG Grid style down arrow
-        toggle.style.opacity = '1';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
-      } else {
-        toggle.textContent = '━';  // Thicker line
-        toggle.style.opacity = '0.6';
-        toggle.style.color = '#333';
-        toggle.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
-      }
-    };
-
-    // Update indicator initially
-    updateSortIndicator();
-
-    // Listen for sort changes to update the indicator
-    if (params.api) {
-      params.api.addEventListener('sortChanged', updateSortIndicator);
-    }
+    // Add sort indicator using shared utility
+    createSortIndicator(params, this.eGui);
 
     // SORTING FUNCTIONALITY: Entire header clickable for parent headers (except count badge)
     this.eGui.style.position = 'relative';
     this.eGui.style.cursor = 'pointer';
 
     const handleSort = (event) => {
-      // Don't sort if clicking on count badge
-      if (event.target.closest('.benchmark-count')) {
+      // Don't sort if clicking on count badge or sort indicator itself
+      if (event.target.closest('.benchmark-count') || event.target.closest('.sort-indicator')) {
         return;
       }
       
@@ -592,12 +422,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
           state: [{ colId, sort: nextSort }],
           defaultState: { sort: null }
         });
-      } else {
-        console.warn('applyColumnState method not available');
       }
-      
-      // Update the sort indicator after sorting
-      setTimeout(updateSortIndicator, 10);
     };
 
     // Add click handler to entire header for parent benchmarks
@@ -1282,19 +1107,7 @@ function initializeDualHandleSliders() {
   });
 }
 
-// Helper function to extract unique values from the data if not provided in filterOptions
-function extractUniqueValues(field) {
-  if (!window.originalRowData) return [];
-
-  const values = new Set();
-  window.originalRowData.forEach(row => {
-    if (row.metadata && row.metadata[field]) {
-      values.add(row.metadata[field]);
-    }
-  });
-
-  return Array.from(values).sort();
-}
+// Removed unused extractUniqueValues function
 
 function selectFilterOption(filterType, value, optionElement) {
   const dropdown = optionElement.closest('.filter-dropdown');
@@ -2163,6 +1976,78 @@ function parseURLFilters() {
   applyCombinedFilters();
 }
 
+// Shared utility function to get all descendants recursively
+function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
+  const children = hierarchyMap.get(parentId) || [];
+  let descendants = [...children];
+  children.forEach(childId => {
+    descendants.push(...getAllDescendantsFromHierarchy(childId, hierarchyMap));
+  });
+  return descendants;
+}
+
+// Shared utility to create and manage sort indicators
+function createSortIndicator(params, element, fontSize = '12px') {
+  const indicator = document.createElement('span');
+  indicator.className = 'sort-indicator';
+  indicator.textContent = '━';
+  indicator.style.cursor = 'pointer';
+  indicator.style.marginLeft = '4px';
+  indicator.style.fontSize = fontSize;
+  indicator.style.opacity = '0.5';
+  indicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+  
+  const updateSortIndicator = () => {
+    const column = params.column;
+    const currentSort = column.getSort();
+    
+    if (currentSort === 'asc') {
+      indicator.textContent = '↑';
+      indicator.style.opacity = '1';
+      indicator.style.color = '#333';
+      indicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+    } else if (currentSort === 'desc') {
+      indicator.textContent = '↓';
+      indicator.style.opacity = '1';
+      indicator.style.color = '#333';
+      indicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
+    } else {
+      indicator.textContent = '━';
+      indicator.style.opacity = '0.6';
+      indicator.style.color = '#333';
+      indicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+    }
+  };
+
+  const handleSort = (event) => {
+    event.stopPropagation();
+    
+    const column = params.column;
+    const colId = column.getColId();
+    const currentSort = column.getSort();
+    const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
+
+    if (params.api && typeof params.api.applyColumnState === 'function') {
+      params.api.applyColumnState({
+        state: [{ colId, sort: nextSort }],
+        defaultState: { sort: null }
+      });
+    }
+    
+    setTimeout(updateSortIndicator, 10);
+  };
+
+  indicator.addEventListener('click', handleSort);
+  updateSortIndicator();
+
+  if (params.api) {
+    params.api.addEventListener('sortChanged', updateSortIndicator);
+  }
+
+  element.appendChild(indicator);
+  return { indicator, updateSortIndicator, handleSort };
+}
+
 // Function to encode benchmark filters using hierarchical exclusion-based approach
 function encodeBenchmarkFilters() {
   if (!window.filteredOutBenchmarks || window.filteredOutBenchmarks.size === 0) {
@@ -2171,16 +2056,6 @@ function encodeBenchmarkFilters() {
   
   const excluded = Array.from(window.filteredOutBenchmarks);
   const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
-  
-  // Helper function to get all children recursively
-  function getAllDescendants(parentId) {
-    const children = hierarchyMap.get(parentId) || [];
-    let descendants = [...children];
-    children.forEach(childId => {
-      descendants.push(...getAllDescendants(childId));
-    });
-    return descendants;
-  }
   
   // Group excluded items and compress hierarchically
   const compressed = [];
@@ -2191,7 +2066,7 @@ function encodeBenchmarkFilters() {
     if (processed.has(excludedId)) return;
     
     // Check if this is a parent whose ALL children are also excluded
-    const allDescendants = getAllDescendants(excludedId);
+    const allDescendants = getAllDescendantsFromHierarchy(excludedId, hierarchyMap);
     const allDescendantsExcluded = allDescendants.length > 0 && 
       allDescendants.every(descendantId => excluded.includes(descendantId));
     
@@ -2220,22 +2095,12 @@ function decodeBenchmarkFilters(excludedParam) {
   const allExcluded = new Set();
   const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
   
-  // Helper function to get all descendants recursively
-  function getAllDescendants(parentId) {
-    const children = hierarchyMap.get(parentId) || [];
-    let descendants = [...children];
-    children.forEach(childId => {
-      descendants.push(...getAllDescendants(childId));
-    });
-    return descendants;
-  }
-  
   excludedList.forEach(excludedId => {
     // Add the item itself
     allExcluded.add(excludedId);
     
     // Add all its descendants (for hierarchical exclusion)
-    const descendants = getAllDescendants(excludedId);
+    const descendants = getAllDescendantsFromHierarchy(excludedId, hierarchyMap);
     descendants.forEach(descendantId => allExcluded.add(descendantId));
   });
   
@@ -2293,13 +2158,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   columnDefs.forEach(col => {
     col.colId = col.field;
 
-    // Explicitly make benchmark columns sortable
-    if (
-      col.headerComponent === 'expandableHeaderComponent' ||
-      col.headerComponent === 'leafComponent'
-    ) {
-      col.sortable = true;
-    }
+    // Columns are sortable by default via defaultColDef
 
     // Set up model column for searching and sorting
     if (col.field === 'model') {

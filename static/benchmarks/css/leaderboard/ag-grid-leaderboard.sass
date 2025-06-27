@@ -349,15 +349,6 @@ button,
   &:hover
     background-color: rgba(255, 255, 255, 0.08) !important  // Slightly different highlight for navigation
     
-// Sorting area (invisible overlay covering right 20%)
-.sorting-area
-  &:hover
-    background-color: rgba(255, 255, 255, 0.1) !important  // Subtle highlight on hover
-    
-  &:hover + .sort-indicator
-    transform: scale(1.2)
-    color: #000
-
 // Search bar and filter button wrapper
 #leaderboardSearchWrapper
   display: flex
@@ -382,11 +373,9 @@ button,
       border-color: #727272
 
 .ag-header-cell-resize
-  width: 8px !important // widen the resize handle
+  width: 0 !important // Disable resize handles
   background-color: transparent
   opacity: 0
-  width: 0
-  //width: 0 !important
 
 .ag-header-cell:hover .ag-header-cell-resize
   background-color: rgba(0, 0, 0, 0.1) // light gray on hover
@@ -400,9 +389,6 @@ button,
   border-radius: 6px
   background-color: #f9f9f9
 
-//.advanced-filters.hidden
-//  display: none
-
 .advanced-filters
   padding: 20px
   background: #f8f9fa
@@ -413,8 +399,6 @@ button,
   overflow: visible !important  // Allow dropdowns to overflow
   display: block
 
-  //&.hidden
-  //  display: none !important
 
   h3
     margin-top: 0
