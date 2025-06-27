@@ -17,6 +17,9 @@ window.activeFilters = {
   public_data_only: false
 };
 
+// Global state for tracking column expansion
+window.columnExpansionState = new Map();
+
 // ModelCellRenderer
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
@@ -259,26 +262,52 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     toggle.addEventListener('click', e => {
       e.stopPropagation();
 
-      // Only get direct children for toggling
-      const directChildren = getDirectChildren(colDef.field);
+      const columnId = colDef.field;
+      const directChildren = getDirectChildren(columnId);
+      const isCurrentlyExpanded = window.columnExpansionState.get(columnId) === true;
+      const shouldExpand = !isCurrentlyExpanded;
 
-      const shouldShow = directChildren.some(c => !c.isVisible());
-      const colIds = shouldShow
-        ? directChildren.map(c => c.getColId())  // on expand: show only direct children
-        : getAllDescendants(colDef.field).map(c => c.getColId());  // on collapse: hide all descendants
-
-      params.api.setColumnsVisible(colIds, shouldShow);
-
-      if (shouldShow) {
+      if (shouldExpand) {
+        // Expanding: show only direct children
+        const directChildIds = directChildren.map(c => c.getColId());
+        
+        // Update expansion state
+        window.columnExpansionState.set(columnId, true);
+        
+        // Show direct children and position them
+        params.api.setColumnsVisible(directChildIds, true);
+        
         const allCols = params.api.getAllGridColumns();
-        const parentIndex = allCols.findIndex(col => col.getColId() === colDef.field);
+        const parentIndex = allCols.findIndex(col => col.getColId() === columnId);
         if (parentIndex !== -1) {
           const insertIndex = parentIndex + 1;
-          params.api.moveColumns(colIds, insertIndex);
+          params.api.moveColumns(directChildIds, insertIndex);
         }
+        
+        // Ensure direct children are marked as collapsed (so they don't show their children)
+        directChildIds.forEach(childId => {
+          window.columnExpansionState.set(childId, false);
+        });
+        
+      } else {
+        // Collapsing: hide all descendants
+        const allDescendantIds = getAllDescendants(columnId).map(c => c.getColId());
+        params.api.setColumnsVisible(allDescendantIds, false);
+        
+        // Update expansion state
+        window.columnExpansionState.set(columnId, false);
+        
+        // Mark all descendants as collapsed
+        allDescendantIds.forEach(descendantId => {
+          window.columnExpansionState.set(descendantId, false);
+        });
       }
 
-      toggle.textContent = shouldShow ? '▴' : '▾';
+      // Update toggle visual state
+      toggle.textContent = shouldExpand ? '▴' : '▾';
+      
+      // Apply column visibility rules based on current filters
+      updateColumnVisibility();
     });
   }
 };
@@ -382,7 +411,115 @@ function renderBenchmarkTree(container, tree) {
   const ul = document.createElement('ul');
   ul.classList.add('benchmark-tree');
 
-  tree.forEach(node => {
+  // First, create the overall "Vision Benchmarks" parent container
+  const visionParentLi = document.createElement('li');
+  visionParentLi.classList.add('benchmark-node', 'vision-parent');
+
+  const visionParentHeader = document.createElement('div');
+  visionParentHeader.classList.add('tree-node-header');
+
+  // Create expand/collapse toggle for vision parent
+  const visionToggle = document.createElement('span');
+  visionToggle.classList.add('tree-toggle');
+  visionToggle.textContent = '▼';  // Start expanded
+  visionParentLi.classList.add('expanded');
+
+  visionToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    visionParentLi.classList.toggle('collapsed');
+    visionToggle.textContent = visionParentLi.classList.contains('collapsed') ? '▶' : '▼';
+  });
+
+  // Create label for vision parent (no checkbox)
+  const visionLabel = document.createElement('span');
+  visionLabel.className = 'vision-parent-label';
+  visionLabel.textContent = 'Vision Benchmarks (Neural + Behavior)';
+
+  visionParentHeader.appendChild(visionToggle);
+  visionParentHeader.appendChild(visionLabel);
+  visionParentLi.appendChild(visionParentHeader);
+
+  // Create container for vision children
+  const visionChildrenUl = document.createElement('ul');
+  visionChildrenUl.classList.add('benchmark-tree');
+
+  // Handle engineering separately with its own parent container
+  let engineeringNode = null;
+  
+  tree.forEach((node, index) => {
+    // Store engineering node for later processing
+    if (node.id === 'engineering_vision_v0') {
+      engineeringNode = node;
+      return;
+    }
+
+    // Skip average_vision_v0 since it's represented by the parent container
+    if (node.id === 'average_vision_v0') {
+      return;
+    }
+
+    // Add neural and behavior to vision parent
+    if (node.id === 'neural_vision_v0' || node.id === 'behavior_vision_v0') {
+      const childLi = createBenchmarkNode(node);
+      visionChildrenUl.appendChild(childLi);
+    }
+  });
+
+  visionParentLi.appendChild(visionChildrenUl);
+  ul.appendChild(visionParentLi);
+
+  // Now create the engineering parent container
+  if (engineeringNode) {
+    // Add separator before engineering category
+    const separator = document.createElement('div');
+    separator.classList.add('benchmark-separator');
+    separator.innerHTML = '<hr><span class="separator-label"></span>';
+    ul.appendChild(separator);
+
+    // Create engineering parent container
+    const engineeringParentLi = document.createElement('li');
+    engineeringParentLi.classList.add('benchmark-node', 'engineering-parent');
+
+    const engineeringParentHeader = document.createElement('div');
+    engineeringParentHeader.classList.add('tree-node-header');
+
+    // Create expand/collapse toggle for engineering parent
+    const engineeringToggle = document.createElement('span');
+    engineeringToggle.classList.add('tree-toggle');
+    engineeringToggle.textContent = '▼';  // Start expanded
+    engineeringParentLi.classList.add('expanded');
+
+    engineeringToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      engineeringParentLi.classList.toggle('collapsed');
+      engineeringToggle.textContent = engineeringParentLi.classList.contains('collapsed') ? '▶' : '▼';
+    });
+
+    // Create label for engineering parent (no checkbox)
+    const engineeringLabel = document.createElement('span');
+    engineeringLabel.className = 'engineering-parent-label';
+    engineeringLabel.textContent = 'Engineering Benchmarks (Excluded from Global Score)';
+
+    engineeringParentHeader.appendChild(engineeringToggle);
+    engineeringParentHeader.appendChild(engineeringLabel);
+    engineeringParentLi.appendChild(engineeringParentHeader);
+
+    // Create container for engineering children
+    const engineeringChildrenUl = document.createElement('ul');
+    engineeringChildrenUl.classList.add('benchmark-tree');
+
+    // Add the engineering node as a child
+    const engineeringChildLi = createBenchmarkNode(engineeringNode);
+    engineeringChildrenUl.appendChild(engineeringChildLi);
+
+    engineeringParentLi.appendChild(engineeringChildrenUl);
+    ul.appendChild(engineeringParentLi);
+  }
+
+  container.appendChild(ul);
+
+  // Helper function to create a benchmark node
+  function createBenchmarkNode(node) {
     const li = document.createElement('li');
     li.classList.add('benchmark-node');
 
@@ -393,43 +530,22 @@ function renderBenchmarkTree(container, tree) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = node.id;
-    checkbox.checked = true;
-    checkbox.checked = node.id !== 'engineering_vision_v0';  // doesn't factor into global so start unchecked
+    checkbox.checked = true; // All benchmarks start checked by default
 
     checkbox.addEventListener('change', (e) => {
       const isChecked = e.target.checked;
 
       if (!window.filteredOutBenchmarks) window.filteredOutBenchmarks = new Set();
 
-      // Function to update exclusions based on tree state
-      function updateExclusions() {
-        // Clear current exclusions
-        window.filteredOutBenchmarks.clear();
-
-        // Find all unchecked checkboxes
-        const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-        allCheckboxes.forEach(cb => {
-          if (!cb.checked) {
-            window.filteredOutBenchmarks.add(cb.value);
-          }
-        });
-        // Then, add benchmarks that don't match metadata filters
-        if (window.benchmarkMetadata) {
-          addBenchmarksFilteredByMetadata();
-        }
+      if (isChecked) {
+        // When checking a box, auto-select all ancestors up to the root
+        autoSelectAncestors(checkbox);
+        // Also select all descendants of this node
+        checkAllDescendants(li);
+      } else {
+        // When unchecking, uncheck all descendants
+        uncheckAllDescendants(li);
       }
-
-      // Toggle this checkbox and its children
-      function toggleChildrenSilently(element, checked) {
-        const childCheckboxes = element.querySelectorAll('input[type="checkbox"]');
-        childCheckboxes.forEach(childCb => {
-          if (childCb !== checkbox) {
-            childCb.checked = checked;
-          }
-        });
-      }
-
-      toggleChildrenSilently(li, isChecked);
 
       // Update exclusions based on current tree state
       updateExclusions();
@@ -469,13 +585,76 @@ function renderBenchmarkTree(container, tree) {
 
     // Recurse if needed
     if (node.children?.length) {
-      renderBenchmarkTree(li, node.children);
+      const childUl = document.createElement('ul');
+      childUl.classList.add('benchmark-tree');
+      
+      node.children.forEach(childNode => {
+        const childLi = createBenchmarkNode(childNode);
+        childUl.appendChild(childLi);
+      });
+      
+      li.appendChild(childUl);
     }
 
-    ul.appendChild(li);
-  });
+    return li;
+  }
 
-  container.appendChild(ul);
+  // Function to auto-select ancestors when a descendant is selected
+  function autoSelectAncestors(checkbox) {
+    let currentElement = checkbox.closest('.benchmark-node');
+    
+    while (currentElement) {
+      // Find the parent benchmark node
+      const parentUl = currentElement.parentElement;
+      const parentLi = parentUl?.closest('.benchmark-node');
+      
+      if (parentLi && !parentLi.classList.contains('vision-parent') && !parentLi.classList.contains('engineering-parent')) {
+        // Find checkbox in parent and check it
+        const parentCheckbox = parentLi.querySelector(':scope > .tree-node-header input[type="checkbox"]');
+        if (parentCheckbox && !parentCheckbox.checked) {
+          parentCheckbox.checked = true;
+        }
+        currentElement = parentLi;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Function to uncheck all descendants when parent is unchecked
+  function uncheckAllDescendants(parentNode) {
+    const descendantCheckboxes = parentNode.querySelectorAll('input[type="checkbox"]');
+    descendantCheckboxes.forEach(cb => {
+      cb.checked = false;
+    });
+  }
+
+  // Function to check all descendants when parent is checked
+  function checkAllDescendants(parentNode) {
+    const descendantCheckboxes = parentNode.querySelectorAll('input[type="checkbox"]');
+    descendantCheckboxes.forEach(cb => {
+      cb.checked = true;
+    });
+  }
+
+  // Function to update exclusions based on tree state
+  function updateExclusions() {
+    // Clear current exclusions
+    window.filteredOutBenchmarks.clear();
+
+    // Find all unchecked checkboxes
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+      if (!cb.checked) {
+        window.filteredOutBenchmarks.add(cb.value);
+      }
+    });
+    
+    // Then, add benchmarks that don't match metadata filters
+    if (window.benchmarkMetadata) {
+      addBenchmarksFilteredByMetadata();
+    }
+  }
 }
 
 function addResetFiltersButton() {
@@ -1095,6 +1274,9 @@ function applyCombinedFilters() {
   if (typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
   }
+  
+  // Update column visibility based on current filters and expansion state
+  updateColumnVisibility();
 
   // update URL
   updateURLFromFilters();
@@ -1198,6 +1380,19 @@ function resetAllFilters() {
     }
   }
 
+  // Reset benchmark metadata checkboxes (regions, species, tasks, public data)
+  document.querySelectorAll('.region-checkbox, .species-checkbox, .task-checkbox').forEach(checkbox => {
+    if (checkbox) {
+      checkbox.checked = false;  // Uncheck all benchmark metadata filters
+    }
+  });
+
+  // Reset public data filter
+  const publicDataCheckbox = document.getElementById('publicDataFilter');
+  if (publicDataCheckbox) {
+    publicDataCheckbox.checked = false;
+  }
+
   // Set filtered benchmarks to only include engineering-related items
   window.filteredOutBenchmarks = new Set();
   checkboxes.forEach(cb => {
@@ -1206,127 +1401,226 @@ function resetAllFilters() {
     }
   });
 
-  // Reset grid to original data
-  if (window.globalGridApi && window.originalRowData) {
-    try {
-      window.globalGridApi.setGridOption('rowData', window.originalRowData);
-      updateFilteredScores(window.originalRowData);
-      toggleFilteredScoreColumn(window.globalGridApi);  // Should now show Global Score with smart logic
-      console.log('Grid data reset successfully');
-    } catch (error) {
-      console.error('Error resetting grid data:', error);
-    }
-  }
+  // Apply combined filters to properly reset everything
+  applyCombinedFilters();
+  
   updateURLFromFilters();
 }
 
 function updateFilteredScores(rowData) {
+  // Use original data as source of truth, never modify it
+  if (!window.originalRowData || !window.benchmarkTree) return;
+  
   // Capture the excluded state once at the start
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  // console.log('🔍 Excluded set when neural unchecked but V1 checked:', [...excludedBenchmarks]);
 
-  // Build hierarchy map from the benchmark tree
-  function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-    tree.forEach(node => {
-      const children = node.children ? node.children.map(child => child.id) : [];
-      hierarchyMap.set(node.id, children);
-      if (node.children && node.children.length > 0) {
-        buildHierarchyFromTree(node.children, hierarchyMap);
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  
+  // Step 1: Create working copy of data (never modify original)
+  const workingRowData = rowData.map(row => ({ ...row }));
+  
+  // Step 2: For each row, calculate all benchmark scores from scratch
+  workingRowData.forEach((row, rowIndex) => {
+    const originalRow = window.originalRowData[rowIndex];
+    if (!originalRow) return;
+    
+    // Copy ALL original benchmark scores to working row
+    Object.keys(originalRow).forEach(key => {
+      if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
+        row[key] = { ...originalRow[key] }; // Deep copy the score object
       }
     });
-    return hierarchyMap;
-  }
-
-  const hierarchyMap = window.benchmarkTree
-    ? buildHierarchyFromTree(window.benchmarkTree)
-    : new Map();
-
-  const filteredScores = [];
-  rowData.forEach((row, rowIndex) => {
-    // Use the captured excluded set, not the global one
-
-    function calculateHierarchicalAverage(parentField) {
-      const children = hierarchyMap.get(parentField) || [];
-
+    
+    // Step 3: Calculate scores bottom-up using topological sort
+    function getDepthLevel(benchmarkId, visited = new Set()) {
+      if (visited.has(benchmarkId)) return 0; // Avoid cycles
+      visited.add(benchmarkId);
+      
+      const children = hierarchyMap.get(benchmarkId) || [];
+      if (children.length === 0) return 0; // Leaf node
+      
+      const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
+      return maxChildDepth + 1;
+    }
+    
+    // Get all benchmark IDs and sort by depth (deepest first for bottom-up)
+    const allBenchmarkIds = Array.from(hierarchyMap.keys());
+    const benchmarksByDepth = allBenchmarkIds
+      .map(id => ({ id, depth: getDepthLevel(id) }))
+      .sort((a, b) => a.depth - b.depth); // Process leaves first (depth 0), then parents
+    
+    // Step 4: Calculate each benchmark score in bottom-up order
+    benchmarksByDepth.forEach(({ id: benchmarkId }) => {
+      const children = hierarchyMap.get(benchmarkId) || [];
+      
       if (children.length === 0) {
-        // LEAF NODE: Check exclusion here
-        if (excludedBenchmarks.has(parentField)) {
-          return null;
+        // LEAF NODE: Use original score, but check if excluded
+        if (excludedBenchmarks.has(benchmarkId)) {
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: 'X',
+            color: '#e0e1e2'
+          };
         }
-
-        const obj = row[parentField];
-        if (obj && typeof obj === 'object' && 'value' in obj) {
-          const val = obj.value;
-          if (val === 'X' || val === '' || val === null || val === undefined) {
-            return 0; // Treat X as 0
-          }
-          const numVal = typeof val === 'string' ? parseFloat(val) : val;
-          return !isNaN(numVal) ? numVal : 0;
-        }
-        return 0;
+        // else: keep original score from originalRowData (already copied above)
       } else {
-        // PARENT NODE: Don't check exclusion, always process children
-        const childValues = children
-          .map(child => calculateHierarchicalAverage(child))
-          .filter(val => val !== null);
-
-        if (childValues.length === 0) {
-          return null;
-        } else if (childValues.length === children.length) {
-          // ALL children included - use pre-calculated value
-          const obj = row[parentField];
-          if (obj && typeof obj === 'object' && 'value' in obj) {
-            const val = obj.value;
-            if (val !== null && val !== undefined && val !== '' && val !== 'X') {
-              const numVal = typeof val === 'string' ? parseFloat(val) : val;
-              return !isNaN(numVal) ? numVal : null;
+        // PARENT NODE: Calculate from direct children only
+        const childScores = [];
+        
+        children.forEach(childId => {
+          if (!excludedBenchmarks.has(childId) && row[childId]) {
+            const childScore = row[childId].value;
+            if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
+              const numVal = typeof childScore === 'string' ? parseFloat(childScore) : childScore;
+              if (!isNaN(numVal)) {
+                childScores.push(numVal);
+              } else {
+                childScores.push(0); // Treat invalid as 0
+              }
+            } else {
+              childScores.push(0); // Treat X/null as 0
             }
           }
-          // Fall back to calculating from children
-          return childValues.reduce((a, b) => a + b, 0) / childValues.length;
+        });
+        
+        if (childScores.length > 0) {
+          // Calculate average of included children
+          const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: parseFloat(average.toFixed(3))
+          };
         } else {
-          // PARTIAL inclusion - calculate from included children
-          return childValues.reduce((a, b) => a + b, 0) / childValues.length;
+          // No valid children - mark as unavailable
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: 'X',
+            color: '#e0e1e2'
+          };
         }
       }
+    });
+    
+         // Step 5: Calculate global filtered score from vision categories only (exclude engineering)
+     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
+     const categoryScores = [];
+     
+     visionCategories.forEach(category => {
+       if (row[category] && !excludedBenchmarks.has(category)) {
+         const score = row[category].value;
+         if (score !== null && score !== undefined && score !== '' && score !== 'X') {
+           const numVal = typeof score === 'string' ? parseFloat(score) : score;
+           if (!isNaN(numVal)) {
+             categoryScores.push(numVal);
+           }
+         }
+       }
+     });
+    
+    if (categoryScores.length > 0) {
+      const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
+      row._tempFilteredScore = globalAverage;
+    } else {
+      row._tempFilteredScore = null;
     }
-
-    // Calculate filtered score
-    const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
-    const categoryAverages = topLevelCategories
-      .map(category => calculateHierarchicalAverage(category))
-      .filter(val => val !== null);
-
-    const mean = categoryAverages.length > 0
-      ? categoryAverages.reduce((a, b) => a + b, 0) / categoryAverages.length
-      : null;
-
-    // Store scores for color calculation
-    if (mean !== null) {
-      filteredScores.push(mean);
-    }
-    row._tempFilteredScore = mean;
   });
 
-  // Calculate min and max for color scaling
-  const minScore = filteredScores.length > 0 ? Math.min(...filteredScores) : 0;
-  const maxScore = filteredScores.length > 0 ? Math.max(...filteredScores) : 1;
-  const scoreRange = maxScore - minScore;
+  // Step 6: Calculate colors - preserve original colors for unaffected benchmarks, use blue for recalculated ones
+  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  const recalculatedBenchmarks = new Set(); // Track which benchmarks were recalculated
+  
+  // First, identify which benchmarks were recalculated due to filtering
+  allBenchmarkIds.forEach(benchmarkId => {
+    const children = hierarchyMap.get(benchmarkId) || [];
+    
+    if (children.length > 0) {
+      // This is a parent - check if any children were excluded
+      const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
+      if (hasExcludedChildren) {
+        recalculatedBenchmarks.add(benchmarkId);
+        
+        // Also mark all ancestors as recalculated
+        function markAncestorsRecalculated(targetId) {
+          allBenchmarkIds.forEach(parentId => {
+            const parentChildren = hierarchyMap.get(parentId) || [];
+            if (parentChildren.includes(targetId)) {
+              recalculatedBenchmarks.add(parentId);
+              markAncestorsRecalculated(parentId); // Recursively mark ancestors
+            }
+          });
+        }
+        markAncestorsRecalculated(benchmarkId);
+      }
+    }
+  });
+  
+  // Apply colors based on whether benchmark was recalculated
+  allBenchmarkIds.forEach(benchmarkId => {
+    if (recalculatedBenchmarks.has(benchmarkId)) {
+      // Use blue coloring for recalculated benchmarks
+      const scores = [];
+      workingRowData.forEach(row => {
+        if (row[benchmarkId] && row[benchmarkId].value !== 'X' && row[benchmarkId].value !== null) {
+          const val = row[benchmarkId].value;
+          const numVal = typeof val === 'string' ? parseFloat(val) : val;
+          if (!isNaN(numVal)) {
+            scores.push(numVal);
+          }
+        }
+      });
+      
+      if (scores.length > 0) {
+        const minScore = Math.min(...scores);
+        const maxScore = Math.max(...scores);
+        const scoreRange = maxScore - minScore;
+        
+        workingRowData.forEach(row => {
+          if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
+            const val = row[benchmarkId].value;
+            const numVal = typeof val === 'string' ? parseFloat(val) : val;
+            if (!isNaN(numVal)) {
+              const intensity = scoreRange > 0 ? (numVal - minScore) / scoreRange : 0.5;
+              const baseBlue = 255;
+              const green = Math.round(173 + (105 * (1 - intensity)));
+              const red = Math.round(216 * (1 - intensity));
+              const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
+              
+              row[benchmarkId].color = color;
+            }
+          }
+        });
+      }
+    } else {
+      // Preserve original colors for unaffected benchmarks
+      workingRowData.forEach((row, rowIndex) => {
+        const originalRow = window.originalRowData[rowIndex];
+        if (originalRow && originalRow[benchmarkId] && originalRow[benchmarkId].color) {
+          if (row[benchmarkId]) {
+            row[benchmarkId].color = originalRow[benchmarkId].color;
+          }
+        }
+      });
+    }
+  });
 
-  // Second pass: assign colors based on min/max
-  rowData.forEach((row) => {
+  // Step 7: Handle global filtered score colors
+  const globalFilteredScores = workingRowData
+    .map(row => row._tempFilteredScore)
+    .filter(score => score !== null);
+    
+  const globalMinScore = globalFilteredScores.length > 0 ? Math.min(...globalFilteredScores) : 0;
+  const globalMaxScore = globalFilteredScores.length > 0 ? Math.max(...globalFilteredScores) : 1;
+  const globalScoreRange = globalMaxScore - globalMinScore;
+
+  workingRowData.forEach((row) => {
     const mean = row._tempFilteredScore;
-    delete row._tempFilteredScore; // Clean up temp property
+    delete row._tempFilteredScore;
 
     if (mean !== null) {
-      // Calculate intensity (0 to 1, where 1 is highest score)
-      const intensity = scoreRange > 0 ? (mean - minScore) / scoreRange : 0.5;
-
-      // Create blue color with varying intensity
+      const intensity = globalScoreRange > 0 ? (mean - globalMinScore) / globalScoreRange : 0.5;
       const baseBlue = 255;
-      const green = Math.round(173 + (105 * (1 - intensity))); // 150-255
-      const red = Math.round(216 * (1 - intensity)); // 0-100
-
+      const green = Math.round(173 + (105 * (1 - intensity)));
+      const red = Math.round(216 * (1 - intensity));
       const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
 
       row.filtered_score = {
@@ -1341,11 +1635,10 @@ function updateFilteredScores(rowData) {
     }
   });
 
+  // Step 8: Update the grid with calculated data (original data remains untouched)
   if (window.globalGridApi) {
-    window.globalGridApi.refreshCells({
-      columns: ['filtered_score'],
-      force: true
-    });
+    window.globalGridApi.setGridOption('rowData', workingRowData);
+    window.globalGridApi.refreshCells();
   }
 }
 
@@ -1403,7 +1696,7 @@ function toggleFilteredScoreColumn(gridApi) {
     hasStimuliFiltering
   );
 
-  // Check if there are benchmark filters beyond just engineering
+  // Check if there are benchmark filters beyond just engineering (since engineering doesn't affect global score)
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
   let hasNonEngineeringBenchmarkFilters = false;
   uncheckedCheckboxes.forEach(checkbox => {
@@ -1416,7 +1709,7 @@ function toggleFilteredScoreColumn(gridApi) {
     }
   });
 
-  // ONLY benchmark-related filters should trigger filtered score
+  // ONLY benchmark-related filters should trigger filtered score (engineering filters don't count)
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
 
   if (shouldShowFilteredScore) {
@@ -1562,8 +1855,101 @@ function parseURLFilters() {
     }
   }, 150);
 
+  // Parse benchmark exclusions from URL
+  const excludedBenchmarksParam = params.get('excluded_benchmarks');
+  if (excludedBenchmarksParam) {
+    // Decode the hierarchical exclusions
+    const decodedExclusions = decodeBenchmarkFilters(excludedBenchmarksParam);
+    window.filteredOutBenchmarks = decodedExclusions;
+    
+    // Update UI checkboxes to reflect the exclusions
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+      cb.checked = !decodedExclusions.has(cb.value);
+    });
+  }
+
   updateBenchmarkFilters();
   applyCombinedFilters();
+}
+
+// Function to encode benchmark filters using hierarchical exclusion-based approach
+function encodeBenchmarkFilters() {
+  if (!window.filteredOutBenchmarks || window.filteredOutBenchmarks.size === 0) {
+    return null; // All benchmarks included
+  }
+  
+  const excluded = Array.from(window.filteredOutBenchmarks);
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  
+  // Helper function to get all children recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
+  
+  // Group excluded items and compress hierarchically
+  const compressed = [];
+  const processed = new Set();
+  
+  // Check each excluded item
+  excluded.forEach(excludedId => {
+    if (processed.has(excludedId)) return;
+    
+    // Check if this is a parent whose ALL children are also excluded
+    const allDescendants = getAllDescendants(excludedId);
+    const allDescendantsExcluded = allDescendants.length > 0 && 
+      allDescendants.every(descendantId => excluded.includes(descendantId));
+    
+    if (allDescendantsExcluded) {
+      // Entire subtree is excluded, just use the parent
+      compressed.push(excludedId);
+      processed.add(excludedId);
+      allDescendants.forEach(id => processed.add(id));
+    } else {
+      // Individual exclusion or partial subtree
+      compressed.push(excludedId);
+      processed.add(excludedId);
+    }
+  });
+  
+  return compressed.join(',');
+}
+
+// Function to decode benchmark filters from URL parameter
+function decodeBenchmarkFilters(excludedParam) {
+  if (!excludedParam) {
+    return new Set(); // No exclusions
+  }
+  
+  const excludedList = excludedParam.split(',');
+  const allExcluded = new Set();
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  
+  // Helper function to get all descendants recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
+  
+  excludedList.forEach(excludedId => {
+    // Add the item itself
+    allExcluded.add(excludedId);
+    
+    // Add all its descendants (for hierarchical exclusion)
+    const descendants = getAllDescendants(excludedId);
+    descendants.forEach(descendantId => allExcluded.add(descendantId));
+  });
+  
+  return allExcluded;
 }
 
 function updateURLFromFilters() {
@@ -1583,6 +1969,12 @@ function updateURLFromFilters() {
 
   if (window.activeFilters.public_data_only) {
     params.set('public_data_only', 'true');
+  }
+
+  // Add benchmark exclusions using hierarchical encoding
+  const excludedBenchmarks = encodeBenchmarkFilters();
+  if (excludedBenchmarks) {
+    params.set('excluded_benchmarks', excludedBenchmarks);
   }
 
   const setRange = (key) => {
@@ -1743,6 +2135,17 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
+      
+      // Set initial column visibility state
+      setInitialColumnState();
+      
+      // Ensure filtered score column starts hidden (clean initial state)
+      params.api.applyColumnState({
+        state: [
+          { colId: 'filtered_score', hide: true },
+          { colId: 'average_vision_v0', hide: false }
+        ]
+      });
     }
   };
 
@@ -1792,6 +2195,18 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 }
 
+// Helper function to build hierarchy map from benchmark tree
+function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
+  tree.forEach(node => {
+    const children = node.children ? node.children.map(child => child.id) : [];
+    hierarchyMap.set(node.id, children);
+    if (node.children && node.children.length > 0) {
+      buildHierarchyFromTree(node.children, hierarchyMap);
+    }
+  });
+  return hierarchyMap;
+}
+
 // Make functions available globally
 window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
@@ -1802,3 +2217,117 @@ window.resetAllFilters = resetAllFilters;
 window.initializeDualHandleSliders = initializeDualHandleSliders;
 window.parseURLFilters = parseURLFilters;
 window.updateURLFromFilters = updateURLFromFilters;
+window.encodeBenchmarkFilters = encodeBenchmarkFilters;
+window.decodeBenchmarkFilters = decodeBenchmarkFilters;
+window.buildHierarchyFromTree = buildHierarchyFromTree;
+window.updateColumnVisibility = updateColumnVisibility;
+window.setInitialColumnState = setInitialColumnState;
+
+// Update column visibility based on filtering state
+function updateColumnVisibility() {
+  if (!window.globalGridApi || !window.benchmarkTree) return;
+  
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+  
+  // Get all columns
+  const allColumns = window.globalGridApi.getAllGridColumns();
+  const columnsToUpdate = [];
+  
+  // Determine which columns should be visible based on:
+  // 1. Current filter state (excluded benchmarks)
+  // 2. Current expansion state (what the user has expanded)
+  function shouldColumnBeVisible(benchmarkId) {
+    // If this benchmark is explicitly excluded, hide it
+    if (excludedBenchmarks.has(benchmarkId)) {
+      return false;
+    }
+    
+         // Check if this is a top-level category (always show if not excluded)
+     const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+     if (topLevelCategories.includes(benchmarkId)) {
+       return true;
+     }
+    
+    // For non-top-level benchmarks, check expansion state
+    // Find the parent of this benchmark
+    let parentId = null;
+    for (const [parent, children] of hierarchyMap.entries()) {
+      if (children.includes(benchmarkId)) {
+        parentId = parent;
+        break;
+      }
+    }
+    
+    if (!parentId) {
+      // No parent found, treat as top-level
+      return true;
+    }
+    
+    // Parent must be expanded and visible for this to be visible
+    const isParentExpanded = window.columnExpansionState.get(parentId) === true;
+    const isParentVisible = shouldColumnBeVisible(parentId);
+    
+    return isParentExpanded && isParentVisible;
+  }
+  
+  allColumns.forEach(column => {
+    const colId = column.getColId();
+    
+    // Skip non-benchmark columns
+    if (['model', 'rank', 'filtered_score', 'average_vision_v0'].includes(colId)) {
+      return;
+    }
+    
+    const shouldShow = shouldColumnBeVisible(colId);
+    const isCurrentlyVisible = column.isVisible();
+    
+    if (shouldShow !== isCurrentlyVisible) {
+      columnsToUpdate.push({ colId, hide: !shouldShow });
+    }
+  });
+  
+  // Apply column visibility changes
+  if (columnsToUpdate.length > 0) {
+    window.globalGridApi.applyColumnState({
+      state: columnsToUpdate
+    });
+  }
+}
+
+// Function to set initial column visibility state
+function setInitialColumnState() {
+  if (!window.globalGridApi) return;
+  
+  const allColumns = window.globalGridApi.getAllGridColumns();
+  const initialColumnState = [];
+  
+  // Initialize expansion state - all columns start collapsed
+  window.columnExpansionState.clear();
+  
+  allColumns.forEach(column => {
+    const colId = column.getColId();
+    
+    // Always show these columns
+    if (['model', 'rank', 'filtered_score'].includes(colId)) {
+      initialColumnState.push({ colId: colId, hide: false });
+      return;
+    }
+    
+    // Show top-level benchmark categories initially (including engineering)
+    const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    const shouldShow = topLevelCategories.includes(colId);
+    
+    initialColumnState.push({ colId: colId, hide: !shouldShow });
+    
+    // Initialize expansion state (all start collapsed)
+    if (topLevelCategories.includes(colId)) {
+      window.columnExpansionState.set(colId, false);
+    }
+  });
+  
+  // Apply initial column state
+  window.globalGridApi.applyColumnState({
+    state: initialColumnState
+  });
+}

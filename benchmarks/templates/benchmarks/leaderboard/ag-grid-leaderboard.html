@@ -288,7 +288,6 @@
       // Render benchmark tree
       if (typeof renderBenchmarkTree === 'function') {
         renderBenchmarkTree(treeContainer, benchmarkTree);
-        {#addResetFiltersButton();#}
       }
       
       if (typeof populateFilterDropdowns === 'function') {
@@ -307,15 +306,21 @@
         initializeDualHandleSliders();
       }, 100);
       
-      // Initialize engineering as excluded
+      // Initialize benchmark filters from URL or use defaults
       setTimeout(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
                                        urlParams.has('benchmark_species') ||
                                        urlParams.has('benchmark_tasks') ||
-                                       urlParams.has('public_data_only');
+                                       urlParams.has('public_data_only') ||
+                                       urlParams.has('excluded_benchmarks');
       
-        // Conditionally uncheck engineering
+        // Parse URL filters first (this will set checkbox states if URL params exist)
+        if (typeof parseURLFilters === 'function') {
+          parseURLFilters();
+        }
+        
+        // If no explicit benchmark filters in URL, apply default (exclude engineering)
         if (!hasExplicitBenchmarks) {
           const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
           if (engineeringCheckbox) {
@@ -328,8 +333,8 @@
             }
           }
         }
-      
-        // Always rebuild exclusion set
+        
+        // Always rebuild exclusion set based on current checkbox states
         window.filteredOutBenchmarks = new Set();
         const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
         allCheckboxes.forEach(cb => {
@@ -339,12 +344,6 @@
         });
       
         console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
-      
-        // parse URL filters and apply them
-        if (typeof parseURLFilters === 'function') {
-          parseURLFilters();
-        }
-      
       }, 200);
       
       // Setup filter action buttons
@@ -369,7 +368,7 @@
             // First, check all checkboxes
             const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
             allCheckboxes.forEach(cb => {
-              cb.checked = true;
+              cb.checked = true;  // Check everything first
             });
             
             // Then, uncheck engineering and ALL its children
