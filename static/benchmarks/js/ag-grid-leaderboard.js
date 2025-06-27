@@ -430,8 +430,7 @@ function renderBenchmarkTree(container, tree) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = node.id;
-    checkbox.checked = true;
-    checkbox.checked = node.id !== 'engineering_vision_v0';  // doesn't factor into global so start unchecked
+    checkbox.checked = true; // All benchmarks start checked by default
 
     checkbox.addEventListener('change', (e) => {
       const isChecked = e.target.checked;
@@ -1213,50 +1212,19 @@ function resetAllFilters() {
     }
   });
 
-  // Reset ALL benchmark checkboxes to checked first
+  // Reset ALL benchmark checkboxes to checked (including engineering)
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {
     if (cb) {
-      cb.checked = true;  // Check everything first
+      cb.checked = true;  // Check everything, including engineering
     }
   });
 
-  // Then uncheck only the engineering parent and its children
-  const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-  if (engineeringCheckbox) {
-    engineeringCheckbox.checked = false;
-
-    // Manually uncheck engineering children since the event might not fire during reset
-    const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
-    if (engineeringNode) {
-      const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-      childCheckboxes.forEach(cb => {
-        if (cb !== engineeringCheckbox) {  // Don't double-process the parent
-          cb.checked = false;
-        }
-      });
-    }
-  }
-
-  // Set filtered benchmarks to only include engineering-related items
+  // Set filtered benchmarks to be empty (all benchmarks included)
   window.filteredOutBenchmarks = new Set();
-  checkboxes.forEach(cb => {
-    if (cb && !cb.checked) {
-      window.filteredOutBenchmarks.add(cb.value);
-    }
-  });
 
-  // Reset grid to original data
-  if (window.globalGridApi && window.originalRowData) {
-    try {
-      window.globalGridApi.setGridOption('rowData', window.originalRowData);
-      updateFilteredScores(window.originalRowData);
-      toggleFilteredScoreColumn(window.globalGridApi);  // Should now show Global Score with smart logic
-      console.log('Grid data reset successfully');
-    } catch (error) {
-      console.error('Error resetting grid data:', error);
-    }
-  }
+  // Apply combined filters to properly reset everything
+  applyCombinedFilters();
   
   updateURLFromFilters();
 }
