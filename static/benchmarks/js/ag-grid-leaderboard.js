@@ -1391,38 +1391,78 @@ function updateFilteredScores(rowData) {
     }
   });
 
-  // Step 6: Calculate colors for all benchmarks
+  // Step 6: Calculate colors - preserve original colors for unaffected benchmarks, use blue for recalculated ones
   const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  const recalculatedBenchmarks = new Set(); // Track which benchmarks were recalculated
   
+  // First, identify which benchmarks were recalculated due to filtering
   allBenchmarkIds.forEach(benchmarkId => {
-    const scores = [];
-    workingRowData.forEach(row => {
-      if (row[benchmarkId] && row[benchmarkId].value !== 'X' && row[benchmarkId].value !== null) {
-        const val = row[benchmarkId].value;
-        const numVal = typeof val === 'string' ? parseFloat(val) : val;
-        if (!isNaN(numVal)) {
-          scores.push(numVal);
-        }
-      }
-    });
+    const children = hierarchyMap.get(benchmarkId) || [];
     
-    if (scores.length > 0) {
-      const minScore = Math.min(...scores);
-      const maxScore = Math.max(...scores);
-      const scoreRange = maxScore - minScore;
-      
+    if (children.length > 0) {
+      // This is a parent - check if any children were excluded
+      const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
+      if (hasExcludedChildren) {
+        recalculatedBenchmarks.add(benchmarkId);
+        
+        // Also mark all ancestors as recalculated
+        function markAncestorsRecalculated(targetId) {
+          allBenchmarkIds.forEach(parentId => {
+            const parentChildren = hierarchyMap.get(parentId) || [];
+            if (parentChildren.includes(targetId)) {
+              recalculatedBenchmarks.add(parentId);
+              markAncestorsRecalculated(parentId); // Recursively mark ancestors
+            }
+          });
+        }
+        markAncestorsRecalculated(benchmarkId);
+      }
+    }
+  });
+  
+  // Apply colors based on whether benchmark was recalculated
+  allBenchmarkIds.forEach(benchmarkId => {
+    if (recalculatedBenchmarks.has(benchmarkId)) {
+      // Use blue coloring for recalculated benchmarks
+      const scores = [];
       workingRowData.forEach(row => {
-        if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
+        if (row[benchmarkId] && row[benchmarkId].value !== 'X' && row[benchmarkId].value !== null) {
           const val = row[benchmarkId].value;
           const numVal = typeof val === 'string' ? parseFloat(val) : val;
           if (!isNaN(numVal)) {
-            const intensity = scoreRange > 0 ? (numVal - minScore) / scoreRange : 0.5;
-            const baseBlue = 255;
-            const green = Math.round(173 + (105 * (1 - intensity)));
-            const red = Math.round(216 * (1 - intensity));
-            const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
-            
-            row[benchmarkId].color = color;
+            scores.push(numVal);
+          }
+        }
+      });
+      
+      if (scores.length > 0) {
+        const minScore = Math.min(...scores);
+        const maxScore = Math.max(...scores);
+        const scoreRange = maxScore - minScore;
+        
+        workingRowData.forEach(row => {
+          if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
+            const val = row[benchmarkId].value;
+            const numVal = typeof val === 'string' ? parseFloat(val) : val;
+            if (!isNaN(numVal)) {
+              const intensity = scoreRange > 0 ? (numVal - minScore) / scoreRange : 0.5;
+              const baseBlue = 255;
+              const green = Math.round(173 + (105 * (1 - intensity)));
+              const red = Math.round(216 * (1 - intensity));
+              const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
+              
+              row[benchmarkId].color = color;
+            }
+          }
+        });
+      }
+    } else {
+      // Preserve original colors for unaffected benchmarks
+      workingRowData.forEach((row, rowIndex) => {
+        const originalRow = window.originalRowData[rowIndex];
+        if (originalRow && originalRow[benchmarkId] && originalRow[benchmarkId].color) {
+          if (row[benchmarkId]) {
+            row[benchmarkId].color = originalRow[benchmarkId].color;
           }
         }
       });
