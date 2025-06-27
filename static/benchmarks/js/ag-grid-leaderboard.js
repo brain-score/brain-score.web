@@ -1253,6 +1253,9 @@ function resetAllFilters() {
 }
 
 function updateFilteredScores(rowData) {
+  // Use original data as source of truth, never modify it
+  if (!window.originalRowData || !window.benchmarkTree) return;
+  
   // Capture the excluded state once at the start
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
 
@@ -1268,136 +1271,157 @@ function updateFilteredScores(rowData) {
     return hierarchyMap;
   }
 
-  const hierarchyMap = window.benchmarkTree
-    ? buildHierarchyFromTree(window.benchmarkTree)
-    : new Map();
-
-  // Calculate updated scores for ALL benchmarks (not just global)
-  const allUpdatedScores = new Map(); // benchmarkId -> array of scores for color calculation
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
   
-  rowData.forEach((row, rowIndex) => {
-    function calculateHierarchicalAverage(parentField) {
-      const children = hierarchyMap.get(parentField) || [];
-
+  // Step 1: Create working copy of data (never modify original)
+  const workingRowData = rowData.map(row => ({ ...row }));
+  
+  // Step 2: For each row, calculate all benchmark scores from scratch
+  workingRowData.forEach((row, rowIndex) => {
+    const originalRow = window.originalRowData[rowIndex];
+    if (!originalRow) return;
+    
+    // Copy ALL original benchmark scores to working row
+    Object.keys(originalRow).forEach(key => {
+      if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
+        row[key] = { ...originalRow[key] }; // Deep copy the score object
+      }
+    });
+    
+    // Step 3: Calculate scores bottom-up using topological sort
+    function getDepthLevel(benchmarkId, visited = new Set()) {
+      if (visited.has(benchmarkId)) return 0; // Avoid cycles
+      visited.add(benchmarkId);
+      
+      const children = hierarchyMap.get(benchmarkId) || [];
+      if (children.length === 0) return 0; // Leaf node
+      
+      const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
+      return maxChildDepth + 1;
+    }
+    
+    // Get all benchmark IDs and sort by depth (deepest first for bottom-up)
+    const allBenchmarkIds = Array.from(hierarchyMap.keys());
+    const benchmarksByDepth = allBenchmarkIds
+      .map(id => ({ id, depth: getDepthLevel(id) }))
+      .sort((a, b) => a.depth - b.depth); // Process leaves first (depth 0), then parents
+    
+    // Step 4: Calculate each benchmark score in bottom-up order
+    benchmarksByDepth.forEach(({ id: benchmarkId }) => {
+      const children = hierarchyMap.get(benchmarkId) || [];
+      
       if (children.length === 0) {
-        // LEAF NODE: Check exclusion here
-        if (excludedBenchmarks.has(parentField)) {
-          return null;
+        // LEAF NODE: Use original score, but check if excluded
+        if (excludedBenchmarks.has(benchmarkId)) {
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: 'X',
+            color: '#e0e1e2'
+          };
         }
-
-        const obj = row[parentField];
-        if (obj && typeof obj === 'object' && 'value' in obj) {
-          const val = obj.value;
-          if (val === 'X' || val === '' || val === null || val === undefined) {
-            return 0; // Treat X as 0
-          }
-          const numVal = typeof val === 'string' ? parseFloat(val) : val;
-          return !isNaN(numVal) ? numVal : 0;
-        }
-        return 0;
+        // else: keep original score from originalRowData (already copied above)
       } else {
-        // PARENT NODE: Don't check exclusion, always process children
-        const childValues = children
-          .map(child => calculateHierarchicalAverage(child))
-          .filter(val => val !== null);
-
-        if (childValues.length === 0) {
-          return null;
-        } else if (childValues.length === children.length) {
-          // ALL children included - use pre-calculated value if available
-          const obj = row[parentField];
-          if (obj && typeof obj === 'object' && 'value' in obj) {
-            const val = obj.value;
-            if (val !== null && val !== undefined && val !== '' && val !== 'X') {
-              const numVal = typeof val === 'string' ? parseFloat(val) : val;
-              return !isNaN(numVal) ? numVal : null;
+        // PARENT NODE: Calculate from direct children only
+        const childScores = [];
+        
+        children.forEach(childId => {
+          if (!excludedBenchmarks.has(childId) && row[childId]) {
+            const childScore = row[childId].value;
+            if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
+              const numVal = typeof childScore === 'string' ? parseFloat(childScore) : childScore;
+              if (!isNaN(numVal)) {
+                childScores.push(numVal);
+              } else {
+                childScores.push(0); // Treat invalid as 0
+              }
+            } else {
+              childScores.push(0); // Treat X/null as 0
             }
           }
-          // Fall back to calculating from children
-          return childValues.reduce((a, b) => a + b, 0) / childValues.length;
-        } else {
-          // PARTIAL inclusion - calculate from included children
-          return childValues.reduce((a, b) => a + b, 0) / childValues.length;
-        }
-      }
-    }
-
-    // Update scores for ALL benchmarks in the hierarchy
-    function updateBenchmarkScore(benchmarkId) {
-      const newScore = calculateHierarchicalAverage(benchmarkId);
-      
-      if (newScore !== null) {
-        // Store for color calculation
-        if (!allUpdatedScores.has(benchmarkId)) {
-          allUpdatedScores.set(benchmarkId, []);
-        }
-        allUpdatedScores.get(benchmarkId).push(newScore);
+        });
         
-        // Update the row data
-        row[benchmarkId] = {
-          ...row[benchmarkId],
-          value: parseFloat(newScore.toFixed(3))
-        };
-      } else {
-        // No valid children - mark as unavailable
-        row[benchmarkId] = {
-          ...row[benchmarkId],
-          value: 'X'
-        };
+        if (childScores.length > 0) {
+          // Calculate average of included children
+          const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: parseFloat(average.toFixed(3))
+          };
+        } else {
+          // No valid children - mark as unavailable
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: 'X',
+            color: '#e0e1e2'
+          };
+        }
       }
+    });
+    
+    // Step 5: Calculate global filtered score from top-level categories
+    const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    const categoryScores = [];
+    
+    topLevelCategories.forEach(category => {
+      if (row[category] && !excludedBenchmarks.has(category)) {
+        const score = row[category].value;
+        if (score !== null && score !== undefined && score !== '' && score !== 'X') {
+          const numVal = typeof score === 'string' ? parseFloat(score) : score;
+          if (!isNaN(numVal)) {
+            categoryScores.push(numVal);
+          }
+        }
+      }
+    });
+    
+    if (categoryScores.length > 0) {
+      const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
+      row._tempFilteredScore = globalAverage;
+    } else {
+      row._tempFilteredScore = null;
     }
+  });
 
-    // Update all benchmarks in the tree
-    function updateAllBenchmarks(tree) {
-      tree.forEach(node => {
-        updateBenchmarkScore(node.id);
-        if (node.children && node.children.length > 0) {
-          updateAllBenchmarks(node.children);
+  // Step 6: Calculate colors for all benchmarks
+  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  
+  allBenchmarkIds.forEach(benchmarkId => {
+    const scores = [];
+    workingRowData.forEach(row => {
+      if (row[benchmarkId] && row[benchmarkId].value !== 'X' && row[benchmarkId].value !== null) {
+        const val = row[benchmarkId].value;
+        const numVal = typeof val === 'string' ? parseFloat(val) : val;
+        if (!isNaN(numVal)) {
+          scores.push(numVal);
+        }
+      }
+    });
+    
+    if (scores.length > 0) {
+      const minScore = Math.min(...scores);
+      const maxScore = Math.max(...scores);
+      const scoreRange = maxScore - minScore;
+      
+      workingRowData.forEach(row => {
+        if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
+          const val = row[benchmarkId].value;
+          const numVal = typeof val === 'string' ? parseFloat(val) : val;
+          if (!isNaN(numVal)) {
+            const intensity = scoreRange > 0 ? (numVal - minScore) / scoreRange : 0.5;
+            const baseBlue = 255;
+            const green = Math.round(173 + (105 * (1 - intensity)));
+            const red = Math.round(216 * (1 - intensity));
+            const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
+            
+            row[benchmarkId].color = color;
+          }
         }
       });
     }
-
-    if (window.benchmarkTree) {
-      updateAllBenchmarks(window.benchmarkTree);
-    }
-
-    // Calculate filtered score for top-level categories
-    const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
-    const categoryAverages = topLevelCategories
-      .map(category => calculateHierarchicalAverage(category))
-      .filter(val => val !== null);
-
-    const globalFilteredScore = categoryAverages.length > 0
-      ? categoryAverages.reduce((a, b) => a + b, 0) / categoryAverages.length
-      : null;
-
-    row._tempFilteredScore = globalFilteredScore;
   });
 
-  // Calculate colors for all updated benchmarks
-  allUpdatedScores.forEach((scores, benchmarkId) => {
-    if (scores.length === 0) return;
-    
-    const minScore = Math.min(...scores);
-    const maxScore = Math.max(...scores);
-    const scoreRange = maxScore - minScore;
-
-    scores.forEach((score, index) => {
-      const intensity = scoreRange > 0 ? (score - minScore) / scoreRange : 0.5;
-      const baseBlue = 255;
-      const green = Math.round(173 + (105 * (1 - intensity)));
-      const red = Math.round(216 * (1 - intensity));
-      const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
-
-      // Find the row and update color
-      if (rowData[index] && rowData[index][benchmarkId]) {
-        rowData[index][benchmarkId].color = color;
-      }
-    });
-  });
-
-  // Handle global filtered score with separate color calculation
-  const globalFilteredScores = rowData
+  // Step 7: Handle global filtered score colors
+  const globalFilteredScores = workingRowData
     .map(row => row._tempFilteredScore)
     .filter(score => score !== null);
     
@@ -1405,7 +1429,7 @@ function updateFilteredScores(rowData) {
   const globalMaxScore = globalFilteredScores.length > 0 ? Math.max(...globalFilteredScores) : 1;
   const globalScoreRange = globalMaxScore - globalMinScore;
 
-  rowData.forEach((row) => {
+  workingRowData.forEach((row) => {
     const mean = row._tempFilteredScore;
     delete row._tempFilteredScore;
 
@@ -1428,8 +1452,9 @@ function updateFilteredScores(rowData) {
     }
   });
 
-  // Refresh all cells to show updated scores
+  // Step 8: Update the grid with calculated data (original data remains untouched)
   if (window.globalGridApi) {
+    window.globalGridApi.setGridOption('rowData', workingRowData);
     window.globalGridApi.refreshCells();
   }
 }
