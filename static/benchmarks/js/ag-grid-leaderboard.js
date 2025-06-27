@@ -411,7 +411,15 @@ function renderBenchmarkTree(container, tree) {
   const ul = document.createElement('ul');
   ul.classList.add('benchmark-tree');
 
-  tree.forEach(node => {
+  tree.forEach((node, index) => {
+    // Add separator before engineering category
+    if (node.id === 'engineering_vision_v0') {
+      const separator = document.createElement('div');
+      separator.classList.add('benchmark-separator');
+      separator.innerHTML = '<hr><span class="separator-label">Engineering (Not included in Global Score)</span>';
+      ul.appendChild(separator);
+    }
+
     const li = document.createElement('li');
     li.classList.add('benchmark-node');
 
@@ -1213,7 +1221,7 @@ function resetAllFilters() {
     }
   });
 
-  // Then uncheck only the engineering parent (this will trigger the event handler to uncheck children)
+  // Then uncheck only the engineering parent and its children
   const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
   if (engineeringCheckbox) {
     engineeringCheckbox.checked = false;
@@ -1249,6 +1257,7 @@ function resetAllFilters() {
       console.error('Error resetting grid data:', error);
     }
   }
+  
   updateURLFromFilters();
 }
 
@@ -1358,21 +1367,21 @@ function updateFilteredScores(rowData) {
       }
     });
     
-    // Step 5: Calculate global filtered score from top-level categories
-    const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
-    const categoryScores = [];
-    
-    topLevelCategories.forEach(category => {
-      if (row[category] && !excludedBenchmarks.has(category)) {
-        const score = row[category].value;
-        if (score !== null && score !== undefined && score !== '' && score !== 'X') {
-          const numVal = typeof score === 'string' ? parseFloat(score) : score;
-          if (!isNaN(numVal)) {
-            categoryScores.push(numVal);
-          }
-        }
-      }
-    });
+         // Step 5: Calculate global filtered score from vision categories only (exclude engineering)
+     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
+     const categoryScores = [];
+     
+     visionCategories.forEach(category => {
+       if (row[category] && !excludedBenchmarks.has(category)) {
+         const score = row[category].value;
+         if (score !== null && score !== undefined && score !== '' && score !== 'X') {
+           const numVal = typeof score === 'string' ? parseFloat(score) : score;
+           if (!isNaN(numVal)) {
+             categoryScores.push(numVal);
+           }
+         }
+       }
+     });
     
     if (categoryScores.length > 0) {
       const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
@@ -1513,7 +1522,7 @@ function toggleFilteredScoreColumn(gridApi) {
     hasStimuliFiltering
   );
 
-  // Check if there are benchmark filters beyond just engineering
+  // Check if there are benchmark filters beyond just engineering (since engineering doesn't affect global score)
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
   let hasNonEngineeringBenchmarkFilters = false;
   uncheckedCheckboxes.forEach(checkbox => {
@@ -1526,7 +1535,7 @@ function toggleFilteredScoreColumn(gridApi) {
     }
   });
 
-  // ONLY benchmark-related filters should trigger filtered score
+  // ONLY benchmark-related filters should trigger filtered score (engineering filters don't count)
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
 
   if (shouldShowFilteredScore) {
@@ -1950,11 +1959,11 @@ function updateColumnVisibility() {
       return false;
     }
     
-    // Check if this is a top-level category (always show if not excluded)
-    const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
-    if (topLevelCategories.includes(benchmarkId)) {
-      return true;
-    }
+         // Check if this is a top-level category (always show if not excluded)
+     const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+     if (topLevelCategories.includes(benchmarkId)) {
+       return true;
+     }
     
     // For non-top-level benchmarks, check expansion state
     // Find the parent of this benchmark
@@ -2021,7 +2030,7 @@ function setInitialColumnState() {
       return;
     }
     
-    // Show only top-level benchmark categories initially
+    // Show top-level benchmark categories initially (including engineering)
     const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
     const shouldShow = topLevelCategories.includes(colId);
     
