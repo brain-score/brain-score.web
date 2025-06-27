@@ -168,67 +168,11 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   };
   const displayName = nameMap[benchmarkId] || params.displayName || benchmarkId;
 
-  // Calculate the depth level for color intensity
-  const calculateDepth = (currentBenchmarkId) => {
-    if (!window.benchmarkTree) return 0;
-    
-    // Build a parent mapping from the benchmark tree
-    const parentMap = new Map();
-    
-    function buildParentMap(nodes, parent = null) {
-      nodes.forEach(node => {
-        if (parent) {
-          parentMap.set(node.id, parent);
-        }
-        if (node.children) {
-          buildParentMap(node.children, node.id);
-        }
-      });
-    }
-    
-    buildParentMap(window.benchmarkTree);
-    
-    // Count depth by traversing up to root
-    let depth = 0;
-    let current = currentBenchmarkId;
-    
-    while (parentMap.has(current)) {
-      depth++;
-      current = parentMap.get(current);
-    }
-    
-    return depth;
-  };
-
-  const depth = calculateDepth(benchmarkId);
-  const maxDepth = 3; // Assume max 3 levels: root -> category -> benchmark
-  const colorIntensity = Math.max(0.3, 1 - (depth * 0.2)); // Darker for parents, lighter for children
-
   this.eGui = document.createElement('div');
   const type = benchmarkId.split('_')[0];
   this.eGui.className = `expandable-header ${type}`;
   this.eGui.style.display = 'flex';
   this.eGui.style.alignItems = 'center';
-
-  // NOTE: Color styles are now handled by CSS classes instead of inline styles
-  // The CSS classes .expandable-header.average, .expandable-header.neural, etc. handle the colors
-
-  // Helper function to adjust color intensity
-  function adjustColorIntensity(hexColor, intensity) {
-    // Convert hex to RGB
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    
-    // Adjust intensity (mix with white for lighter colors)
-    const newR = Math.round(r * intensity + 255 * (1 - intensity));
-    const newG = Math.round(g * intensity + 255 * (1 - intensity));
-    const newB = Math.round(b * intensity + 255 * (1 - intensity));
-    
-    // Convert back to hex
-    return `rgb(${newR}, ${newG}, ${newB})`;
-  }
 
   const labelContainer = document.createElement('div');
   labelContainer.className = 'expandable-header-label-container';
@@ -260,45 +204,10 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     });
   }
 
-  function getAllDescendants(parentField) {
-    const directChildren = getDirectChildren(parentField);
-    let descendants = [...directChildren];
-    for (const child of directChildren) {
-      const childField = child.getColDef()?.field;
-      if (childField) {
-        descendants.push(...getAllDescendants(childField));
-      }
-    }
-    return descendants;
-  }
 
-  const childCols = getAllDescendants(colDef.field);
 
-  // 2. Only leaf-level descendants for the badge
-  function getLeafFields(parentField) {
-    const parentBase = parentField.split('_v')[0];
-
-    const directChildren = allCols.filter(col => {
-      const ctx = col.getColDef()?.context || {};
-      const childParent = ctx.parentField;
-      const childBase = childParent?.split('_v')[0];
-      const isDirect = childBase === parentBase;
-      return isDirect;
-    });
-
-    if (directChildren.length === 0) {
-      return [parentField];
-    }
-
-    return directChildren.flatMap(child => {
-      const field = child.getColDef()?.field;
-      return field ? getLeafFields(field) : [];
-    });
-  }
-
-  // Use the global getFilteredLeafCount function (defined later in the file)
-
-  const leafFields = getLeafFields(colDef.field);
+  // Use the global getFilteredLeafCount function for initial count
+  const leafFields = window.getFilteredLeafCount ? [colDef.field] : [];
 
   // Show count badge for number of leaf benchmarks
   if (leafFields.length > 0) {
@@ -361,7 +270,10 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         
       } else {
         // Collapsing: hide all descendants
-        const allDescendantIds = getAllDescendants(columnId).map(c => c.getColId());
+        const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
+        const allDescendantIds = getAllDescendantsFromHierarchy(columnId, hierarchyMap)
+          .map(descendantId => allCols.find(col => col.getColId() === descendantId)?.getColId())
+          .filter(Boolean);
         params.api.setColumnsVisible(allDescendantIds, false);
         
         // Update expansion state
@@ -447,9 +359,6 @@ function setupBenchmarkCheckboxes(filterOptions) {
       `;
       taskContainer.appendChild(label);
     });
-    console.log(`Added ${filterOptions.benchmark_tasks.length} task checkboxes`);
-  } else {
-    console.log('Task container or benchmark_tasks not found');
   }
 
   // Add event listeners for ALL benchmark checkboxes
@@ -467,11 +376,7 @@ function setupBenchmarkCheckboxes(filterOptions) {
       updateBenchmarkFilters();
       applyCombinedFilters();
     });
-  } else {
-    console.log('Public data checkbox not found');
   }
-
-  console.log('Benchmark checkbox setup complete');
 }
 
 function addBenchmarksFilteredByMetadata() {
@@ -775,31 +680,7 @@ function renderBenchmarkTree(container, tree) {
   }
 }
 
-function addResetFiltersButton() {
-  const filterPanel = document.getElementById('benchmarkFilterPanel');
-  if (!filterPanel) return;
 
-  // Check if button already exists
-  if (document.getElementById('resetFiltersBtn')) return;
-
-  const resetBtn = document.createElement('button');
-  resetBtn.id = 'resetFiltersBtn';
-  resetBtn.textContent = 'Reset All Filters';
-  resetBtn.style.marginBottom = '10px';
-  resetBtn.style.padding = '8px 16px';
-  resetBtn.style.backgroundColor = '#007bff';
-  resetBtn.style.color = 'white';
-  resetBtn.style.border = 'none';
-  resetBtn.style.borderRadius = '4px';
-  resetBtn.style.cursor = 'pointer';
-
-  resetBtn.addEventListener('click', () => {
-    resetAllFilters();
-  });
-
-  // Insert button at the top of the filter panel
-  filterPanel.insertBefore(resetBtn, filterPanel.firstChild);
-}
 
 // Filter population and handling functions
 function populateFilterDropdowns(filterOptions) {
@@ -2433,7 +2314,6 @@ function getFilteredLeafCount(parentField) {
 }
 
 // Make functions available globally
-window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
 window.populateFilterDropdowns = populateFilterDropdowns;
 window.setupDropdownHandlers = setupDropdownHandlers;
