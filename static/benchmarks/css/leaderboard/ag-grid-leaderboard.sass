@@ -255,11 +255,9 @@ button,
   cursor: col-resize
 
 #benchmarkFilterPanel
-  min-height: 300px
-  max-height: 300px
-  width: 500px
+  width: 100%
   overflow-y: auto
-  padding: 0.5rem
+  padding: 0.4rem
   border: 1px solid $primary-light
   border-radius: 6px
   background-color: #f9f9f9
@@ -296,23 +294,24 @@ button,
 
 .benchmark-tree
   list-style: none
-  padding-left: 1rem
+  padding-left: 0.8rem
   max-height: none
   overflow: visible
   input[type="checkbox"]
     @include themed-control
 
 .benchmark-node
-  margin: 0.25rem 0
-  padding-left: 1rem
+  margin: 0.15rem 0
+  padding-left: 0.8rem
   border-left: 1px solid #ddd
   position: relative
 
 .tree-node-header
   display: flex
   align-items: center
-  gap: 6px
+  gap: 4px
   cursor: default
+  padding: 0.1rem 0
 
 .tree-node-header label
   display: inline-block
@@ -321,6 +320,7 @@ button,
   text-overflow: ellipsis
   white-space: nowrap
   flex: 1
+  font-size: 0.9rem
 
 .tree-toggle
   width: 1rem
@@ -398,12 +398,18 @@ button,
 
   // Special handling for benchmark column with height matching
   &.benchmark-column
+    height: 100%         // Take full height of container
+    
+    .filter-column-header
+      flex-shrink: 0       // Don't shrink the header
+    
     #benchmarkFilterPanel
-      flex: 1              // Take up remaining space
+      flex: 1              // Take up all remaining space after header
       overflow-y: auto     // Make the panel itself scrollable
-      max-height: 300px    // Only the benchmark panel should have max-height
-      min-height: 300px    // Ensure reasonable content area
-      height: auto         // Let it grow within constraints
+      height: auto         // Let flex handle the height
+      max-height: none     // Remove height constraint to fill container
+      min-height: 0        // Allow it to shrink if needed
+      width: 100%          // Take full width
 
     .benchmark-tree
       height: 100%
@@ -982,11 +988,9 @@ button,
 
 .leaderboard-container:not(.sidebar-mode)
   #benchmarkFilterPanel
-    min-height: 300px
-    max-height: 300px
-    width: 500px  // Keep original width in normal mode
+    width: 100%  // Take full width in normal mode too
     overflow-y: auto
-    padding: 0.5rem
+    padding: 0.4rem
     border: 1px solid $primary-light
     border-radius: 6px
     background-color: #f9f9f9
@@ -1028,19 +1032,74 @@ button,
 
 // Benchmark separator styling
 .benchmark-separator
-  margin: 1rem 0 0.5rem 0
-  padding: 0.5rem 0
+  margin: 0.5rem 0 0.3rem 0
+  padding: 0.3rem 0
   
   hr
     border: none
-    border-top: 2px solid #ddd
-    margin: 0.5rem 0
+    border-top: 1px solid #ddd
+    margin: 0.3rem 0
     
   .separator-label
     display: block
-    font-size: 0.85rem
+    font-size: 0.8rem
     color: #666
     font-weight: 500
     text-align: center
-    margin-top: 0.5rem
+    margin-top: 0.3rem
     font-style: italic
+
+// Vision parent container styling
+.benchmark-node.vision-parent
+  margin-bottom: 0.3rem
+  
+  .tree-node-header
+    padding: 0.3rem 0
+    background-color: #f8f9fa
+    border-radius: 4px
+    margin-bottom: 0.15rem
+    
+  .vision-parent-label
+    font-weight: 600
+    color: #495057
+    font-size: 0.9rem
+    
+  // Remove the left border and padding for the vision parent
+  border-left: none
+  padding-left: 0
+  
+  // Style the nested children differently
+  > ul
+    margin-left: 0.8rem
+    
+    .benchmark-node
+      border-left: 1px solid #ddd
+      padding-left: 0.8rem
+
+// Engineering parent container styling
+.benchmark-node.engineering-parent
+  margin-bottom: 0.3rem
+  margin-top: 0.5rem
+  
+  .tree-node-header
+    padding: 0.3rem 0
+    background-color: #f0f4f8
+    border-radius: 4px
+    margin-bottom: 0.15rem
+    
+  .engineering-parent-label
+    font-weight: 600
+    color: #5C8DB8
+    font-size: 0.9rem
+    
+  // Remove the left border and padding for the engineering parent
+  border-left: none
+  padding-left: 0
+  
+  // Style the nested children differently
+  > ul
+    margin-left: 0.8rem
+    
+    .benchmark-node
+      border-left: 1px solid #ddd
+      padding-left: 0.8rem

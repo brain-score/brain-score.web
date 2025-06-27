@@ -411,15 +411,115 @@ function renderBenchmarkTree(container, tree) {
   const ul = document.createElement('ul');
   ul.classList.add('benchmark-tree');
 
+  // First, create the overall "Vision Benchmarks" parent container
+  const visionParentLi = document.createElement('li');
+  visionParentLi.classList.add('benchmark-node', 'vision-parent');
+
+  const visionParentHeader = document.createElement('div');
+  visionParentHeader.classList.add('tree-node-header');
+
+  // Create expand/collapse toggle for vision parent
+  const visionToggle = document.createElement('span');
+  visionToggle.classList.add('tree-toggle');
+  visionToggle.textContent = '▼';  // Start expanded
+  visionParentLi.classList.add('expanded');
+
+  visionToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    visionParentLi.classList.toggle('collapsed');
+    visionToggle.textContent = visionParentLi.classList.contains('collapsed') ? '▶' : '▼';
+  });
+
+  // Create label for vision parent (no checkbox)
+  const visionLabel = document.createElement('span');
+  visionLabel.className = 'vision-parent-label';
+  visionLabel.textContent = 'Vision Benchmarks (Neural + Behavior)';
+
+  visionParentHeader.appendChild(visionToggle);
+  visionParentHeader.appendChild(visionLabel);
+  visionParentLi.appendChild(visionParentHeader);
+
+  // Create container for vision children
+  const visionChildrenUl = document.createElement('ul');
+  visionChildrenUl.classList.add('benchmark-tree');
+
+  // Handle engineering separately with its own parent container
+  let engineeringNode = null;
+  
   tree.forEach((node, index) => {
-    // Add separator before engineering category
+    // Store engineering node for later processing
     if (node.id === 'engineering_vision_v0') {
-      const separator = document.createElement('div');
-      separator.classList.add('benchmark-separator');
-      separator.innerHTML = '<hr><span class="separator-label"></span>';
-      ul.appendChild(separator);
+      engineeringNode = node;
+      return;
     }
 
+    // Skip average_vision_v0 since it's represented by the parent container
+    if (node.id === 'average_vision_v0') {
+      return;
+    }
+
+    // Add neural and behavior to vision parent
+    if (node.id === 'neural_vision_v0' || node.id === 'behavior_vision_v0') {
+      const childLi = createBenchmarkNode(node);
+      visionChildrenUl.appendChild(childLi);
+    }
+  });
+
+  visionParentLi.appendChild(visionChildrenUl);
+  ul.appendChild(visionParentLi);
+
+  // Now create the engineering parent container
+  if (engineeringNode) {
+    // Add separator before engineering category
+    const separator = document.createElement('div');
+    separator.classList.add('benchmark-separator');
+    separator.innerHTML = '<hr><span class="separator-label"></span>';
+    ul.appendChild(separator);
+
+    // Create engineering parent container
+    const engineeringParentLi = document.createElement('li');
+    engineeringParentLi.classList.add('benchmark-node', 'engineering-parent');
+
+    const engineeringParentHeader = document.createElement('div');
+    engineeringParentHeader.classList.add('tree-node-header');
+
+    // Create expand/collapse toggle for engineering parent
+    const engineeringToggle = document.createElement('span');
+    engineeringToggle.classList.add('tree-toggle');
+    engineeringToggle.textContent = '▼';  // Start expanded
+    engineeringParentLi.classList.add('expanded');
+
+    engineeringToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      engineeringParentLi.classList.toggle('collapsed');
+      engineeringToggle.textContent = engineeringParentLi.classList.contains('collapsed') ? '▶' : '▼';
+    });
+
+    // Create label for engineering parent (no checkbox)
+    const engineeringLabel = document.createElement('span');
+    engineeringLabel.className = 'engineering-parent-label';
+    engineeringLabel.textContent = 'Engineering Benchmarks (Not included in Global Score)';
+
+    engineeringParentHeader.appendChild(engineeringToggle);
+    engineeringParentHeader.appendChild(engineeringLabel);
+    engineeringParentLi.appendChild(engineeringParentHeader);
+
+    // Create container for engineering children
+    const engineeringChildrenUl = document.createElement('ul');
+    engineeringChildrenUl.classList.add('benchmark-tree');
+
+    // Add the engineering node as a child
+    const engineeringChildLi = createBenchmarkNode(engineeringNode);
+    engineeringChildrenUl.appendChild(engineeringChildLi);
+
+    engineeringParentLi.appendChild(engineeringChildrenUl);
+    ul.appendChild(engineeringParentLi);
+  }
+
+  container.appendChild(ul);
+
+  // Helper function to create a benchmark node
+  function createBenchmarkNode(node) {
     const li = document.createElement('li');
     li.classList.add('benchmark-node');
 
@@ -437,35 +537,13 @@ function renderBenchmarkTree(container, tree) {
 
       if (!window.filteredOutBenchmarks) window.filteredOutBenchmarks = new Set();
 
-      // Function to update exclusions based on tree state
-      function updateExclusions() {
-        // Clear current exclusions
-        window.filteredOutBenchmarks.clear();
-
-        // Find all unchecked checkboxes
-        const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-        allCheckboxes.forEach(cb => {
-          if (!cb.checked) {
-            window.filteredOutBenchmarks.add(cb.value);
-          }
-        });
-        // Then, add benchmarks that don't match metadata filters
-        if (window.benchmarkMetadata) {
-          addBenchmarksFilteredByMetadata();
-        }
+      if (isChecked) {
+        // When checking a box, auto-select all ancestors up to the root
+        autoSelectAncestors(checkbox);
+      } else {
+        // When unchecking, uncheck all descendants
+        uncheckAllDescendants(li);
       }
-
-      // Toggle this checkbox and its children
-      function toggleChildrenSilently(element, checked) {
-        const childCheckboxes = element.querySelectorAll('input[type="checkbox"]');
-        childCheckboxes.forEach(childCb => {
-          if (childCb !== checkbox) {
-            childCb.checked = checked;
-          }
-        });
-      }
-
-      toggleChildrenSilently(li, isChecked);
 
       // Update exclusions based on current tree state
       updateExclusions();
@@ -505,13 +583,68 @@ function renderBenchmarkTree(container, tree) {
 
     // Recurse if needed
     if (node.children?.length) {
-      renderBenchmarkTree(li, node.children);
+      const childUl = document.createElement('ul');
+      childUl.classList.add('benchmark-tree');
+      
+      node.children.forEach(childNode => {
+        const childLi = createBenchmarkNode(childNode);
+        childUl.appendChild(childLi);
+      });
+      
+      li.appendChild(childUl);
     }
 
-    ul.appendChild(li);
-  });
+    return li;
+  }
 
-  container.appendChild(ul);
+  // Function to auto-select ancestors when a descendant is selected
+  function autoSelectAncestors(checkbox) {
+    let currentElement = checkbox.closest('.benchmark-node');
+    
+    while (currentElement) {
+      // Find the parent benchmark node
+      const parentUl = currentElement.parentElement;
+      const parentLi = parentUl?.closest('.benchmark-node');
+      
+      if (parentLi && !parentLi.classList.contains('vision-parent') && !parentLi.classList.contains('engineering-parent')) {
+        // Find checkbox in parent and check it
+        const parentCheckbox = parentLi.querySelector(':scope > .tree-node-header input[type="checkbox"]');
+        if (parentCheckbox && !parentCheckbox.checked) {
+          parentCheckbox.checked = true;
+        }
+        currentElement = parentLi;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Function to uncheck all descendants when parent is unchecked
+  function uncheckAllDescendants(parentNode) {
+    const descendantCheckboxes = parentNode.querySelectorAll('input[type="checkbox"]');
+    descendantCheckboxes.forEach(cb => {
+      cb.checked = false;
+    });
+  }
+
+  // Function to update exclusions based on tree state
+  function updateExclusions() {
+    // Clear current exclusions
+    window.filteredOutBenchmarks.clear();
+
+    // Find all unchecked checkboxes
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+      if (!cb.checked) {
+        window.filteredOutBenchmarks.add(cb.value);
+      }
+    });
+    
+    // Then, add benchmarks that don't match metadata filters
+    if (window.benchmarkMetadata) {
+      addBenchmarksFilteredByMetadata();
+    }
+  }
 }
 
 function addResetFiltersButton() {
@@ -1873,6 +2006,14 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       
       // Set initial column visibility state
       setInitialColumnState();
+      
+      // Ensure filtered score column starts hidden (clean initial state)
+      params.api.applyColumnState({
+        state: [
+          { colId: 'filtered_score', hide: true },
+          { colId: 'average_vision_v0', hide: false }
+        ]
+      });
     }
   };
 
