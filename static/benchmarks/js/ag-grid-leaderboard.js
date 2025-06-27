@@ -17,6 +17,9 @@ window.activeFilters = {
   public_data_only: false
 };
 
+// Global state for tracking column expansion
+window.columnExpansionState = new Map();
+
 // ModelCellRenderer
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
@@ -259,26 +262,52 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     toggle.addEventListener('click', e => {
       e.stopPropagation();
 
-      // Only get direct children for toggling
-      const directChildren = getDirectChildren(colDef.field);
+      const columnId = colDef.field;
+      const directChildren = getDirectChildren(columnId);
+      const isCurrentlyExpanded = window.columnExpansionState.get(columnId) === true;
+      const shouldExpand = !isCurrentlyExpanded;
 
-      const shouldShow = directChildren.some(c => !c.isVisible());
-      const colIds = shouldShow
-        ? directChildren.map(c => c.getColId())  // on expand: show only direct children
-        : getAllDescendants(colDef.field).map(c => c.getColId());  // on collapse: hide all descendants
-
-      params.api.setColumnsVisible(colIds, shouldShow);
-
-      if (shouldShow) {
+      if (shouldExpand) {
+        // Expanding: show only direct children
+        const directChildIds = directChildren.map(c => c.getColId());
+        
+        // Update expansion state
+        window.columnExpansionState.set(columnId, true);
+        
+        // Show direct children and position them
+        params.api.setColumnsVisible(directChildIds, true);
+        
         const allCols = params.api.getAllGridColumns();
-        const parentIndex = allCols.findIndex(col => col.getColId() === colDef.field);
+        const parentIndex = allCols.findIndex(col => col.getColId() === columnId);
         if (parentIndex !== -1) {
           const insertIndex = parentIndex + 1;
-          params.api.moveColumns(colIds, insertIndex);
+          params.api.moveColumns(directChildIds, insertIndex);
         }
+        
+        // Ensure direct children are marked as collapsed (so they don't show their children)
+        directChildIds.forEach(childId => {
+          window.columnExpansionState.set(childId, false);
+        });
+        
+      } else {
+        // Collapsing: hide all descendants
+        const allDescendantIds = getAllDescendants(columnId).map(c => c.getColId());
+        params.api.setColumnsVisible(allDescendantIds, false);
+        
+        // Update expansion state
+        window.columnExpansionState.set(columnId, false);
+        
+        // Mark all descendants as collapsed
+        allDescendantIds.forEach(descendantId => {
+          window.columnExpansionState.set(descendantId, false);
+        });
       }
 
-      toggle.textContent = shouldShow ? '▴' : '▾';
+      // Update toggle visual state
+      toggle.textContent = shouldExpand ? '▴' : '▾';
+      
+      // Apply column visibility rules based on current filters
+      updateColumnVisibility();
     });
   }
 };
@@ -1095,6 +1124,9 @@ function applyCombinedFilters() {
   if (typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
   }
+  
+  // Update column visibility based on current filters and expansion state
+  updateColumnVisibility();
 
   // update URL
   updateURLFromFilters();
@@ -1223,7 +1255,6 @@ function resetAllFilters() {
 function updateFilteredScores(rowData) {
   // Capture the excluded state once at the start
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  // console.log('🔍 Excluded set when neural unchecked but V1 checked:', [...excludedBenchmarks]);
 
   // Build hierarchy map from the benchmark tree
   function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
@@ -1241,10 +1272,10 @@ function updateFilteredScores(rowData) {
     ? buildHierarchyFromTree(window.benchmarkTree)
     : new Map();
 
-  const filteredScores = [];
+  // Calculate updated scores for ALL benchmarks (not just global)
+  const allUpdatedScores = new Map(); // benchmarkId -> array of scores for color calculation
+  
   rowData.forEach((row, rowIndex) => {
-    // Use the captured excluded set, not the global one
-
     function calculateHierarchicalAverage(parentField) {
       const children = hierarchyMap.get(parentField) || [];
 
@@ -1273,7 +1304,7 @@ function updateFilteredScores(rowData) {
         if (childValues.length === 0) {
           return null;
         } else if (childValues.length === children.length) {
-          // ALL children included - use pre-calculated value
+          // ALL children included - use pre-calculated value if available
           const obj = row[parentField];
           if (obj && typeof obj === 'object' && 'value' in obj) {
             const val = obj.value;
@@ -1291,42 +1322,98 @@ function updateFilteredScores(rowData) {
       }
     }
 
-    // Calculate filtered score
+    // Update scores for ALL benchmarks in the hierarchy
+    function updateBenchmarkScore(benchmarkId) {
+      const newScore = calculateHierarchicalAverage(benchmarkId);
+      
+      if (newScore !== null) {
+        // Store for color calculation
+        if (!allUpdatedScores.has(benchmarkId)) {
+          allUpdatedScores.set(benchmarkId, []);
+        }
+        allUpdatedScores.get(benchmarkId).push(newScore);
+        
+        // Update the row data
+        row[benchmarkId] = {
+          ...row[benchmarkId],
+          value: parseFloat(newScore.toFixed(3))
+        };
+      } else {
+        // No valid children - mark as unavailable
+        row[benchmarkId] = {
+          ...row[benchmarkId],
+          value: 'X'
+        };
+      }
+    }
+
+    // Update all benchmarks in the tree
+    function updateAllBenchmarks(tree) {
+      tree.forEach(node => {
+        updateBenchmarkScore(node.id);
+        if (node.children && node.children.length > 0) {
+          updateAllBenchmarks(node.children);
+        }
+      });
+    }
+
+    if (window.benchmarkTree) {
+      updateAllBenchmarks(window.benchmarkTree);
+    }
+
+    // Calculate filtered score for top-level categories
     const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
     const categoryAverages = topLevelCategories
       .map(category => calculateHierarchicalAverage(category))
       .filter(val => val !== null);
 
-    const mean = categoryAverages.length > 0
+    const globalFilteredScore = categoryAverages.length > 0
       ? categoryAverages.reduce((a, b) => a + b, 0) / categoryAverages.length
       : null;
 
-    // Store scores for color calculation
-    if (mean !== null) {
-      filteredScores.push(mean);
-    }
-    row._tempFilteredScore = mean;
+    row._tempFilteredScore = globalFilteredScore;
   });
 
-  // Calculate min and max for color scaling
-  const minScore = filteredScores.length > 0 ? Math.min(...filteredScores) : 0;
-  const maxScore = filteredScores.length > 0 ? Math.max(...filteredScores) : 1;
-  const scoreRange = maxScore - minScore;
+  // Calculate colors for all updated benchmarks
+  allUpdatedScores.forEach((scores, benchmarkId) => {
+    if (scores.length === 0) return;
+    
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const scoreRange = maxScore - minScore;
 
-  // Second pass: assign colors based on min/max
+    scores.forEach((score, index) => {
+      const intensity = scoreRange > 0 ? (score - minScore) / scoreRange : 0.5;
+      const baseBlue = 255;
+      const green = Math.round(173 + (105 * (1 - intensity)));
+      const red = Math.round(216 * (1 - intensity));
+      const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
+
+      // Find the row and update color
+      if (rowData[index] && rowData[index][benchmarkId]) {
+        rowData[index][benchmarkId].color = color;
+      }
+    });
+  });
+
+  // Handle global filtered score with separate color calculation
+  const globalFilteredScores = rowData
+    .map(row => row._tempFilteredScore)
+    .filter(score => score !== null);
+    
+  const globalMinScore = globalFilteredScores.length > 0 ? Math.min(...globalFilteredScores) : 0;
+  const globalMaxScore = globalFilteredScores.length > 0 ? Math.max(...globalFilteredScores) : 1;
+  const globalScoreRange = globalMaxScore - globalMinScore;
+
   rowData.forEach((row) => {
     const mean = row._tempFilteredScore;
-    delete row._tempFilteredScore; // Clean up temp property
+    delete row._tempFilteredScore;
 
     if (mean !== null) {
-      // Calculate intensity (0 to 1, where 1 is highest score)
-      const intensity = scoreRange > 0 ? (mean - minScore) / scoreRange : 0.5;
-
-      // Create blue color with varying intensity
+      const intensity = globalScoreRange > 0 ? (mean - globalMinScore) / globalScoreRange : 0.5;
       const baseBlue = 255;
-      const green = Math.round(173 + (105 * (1 - intensity))); // 150-255
-      const red = Math.round(216 * (1 - intensity)); // 0-100
-
+      const green = Math.round(173 + (105 * (1 - intensity)));
+      const red = Math.round(216 * (1 - intensity));
       const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
 
       row.filtered_score = {
@@ -1341,11 +1428,9 @@ function updateFilteredScores(rowData) {
     }
   });
 
+  // Refresh all cells to show updated scores
   if (window.globalGridApi) {
-    window.globalGridApi.refreshCells({
-      columns: ['filtered_score'],
-      force: true
-    });
+    window.globalGridApi.refreshCells();
   }
 }
 
@@ -1743,6 +1828,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
+      
+      // Set initial column visibility state
+      setInitialColumnState();
     }
   };
 
@@ -1802,3 +1890,126 @@ window.resetAllFilters = resetAllFilters;
 window.initializeDualHandleSliders = initializeDualHandleSliders;
 window.parseURLFilters = parseURLFilters;
 window.updateURLFromFilters = updateURLFromFilters;
+window.updateColumnVisibility = updateColumnVisibility;
+window.setInitialColumnState = setInitialColumnState;
+
+// Update column visibility based on filtering state
+function updateColumnVisibility() {
+  if (!window.globalGridApi || !window.benchmarkTree) return;
+  
+  // Build hierarchy map from the benchmark tree
+  function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
+    tree.forEach(node => {
+      const children = node.children ? node.children.map(child => child.id) : [];
+      hierarchyMap.set(node.id, children);
+      if (node.children && node.children.length > 0) {
+        buildHierarchyFromTree(node.children, hierarchyMap);
+      }
+    });
+    return hierarchyMap;
+  }
+
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+  
+  // Get all columns
+  const allColumns = window.globalGridApi.getAllGridColumns();
+  const columnsToUpdate = [];
+  
+  // Determine which columns should be visible based on:
+  // 1. Current filter state (excluded benchmarks)
+  // 2. Current expansion state (what the user has expanded)
+  function shouldColumnBeVisible(benchmarkId) {
+    // If this benchmark is explicitly excluded, hide it
+    if (excludedBenchmarks.has(benchmarkId)) {
+      return false;
+    }
+    
+    // Check if this is a top-level category (always show if not excluded)
+    const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    if (topLevelCategories.includes(benchmarkId)) {
+      return true;
+    }
+    
+    // For non-top-level benchmarks, check expansion state
+    // Find the parent of this benchmark
+    let parentId = null;
+    for (const [parent, children] of hierarchyMap.entries()) {
+      if (children.includes(benchmarkId)) {
+        parentId = parent;
+        break;
+      }
+    }
+    
+    if (!parentId) {
+      // No parent found, treat as top-level
+      return true;
+    }
+    
+    // Parent must be expanded and visible for this to be visible
+    const isParentExpanded = window.columnExpansionState.get(parentId) === true;
+    const isParentVisible = shouldColumnBeVisible(parentId);
+    
+    return isParentExpanded && isParentVisible;
+  }
+  
+  allColumns.forEach(column => {
+    const colId = column.getColId();
+    
+    // Skip non-benchmark columns
+    if (['model', 'rank', 'filtered_score', 'average_vision_v0'].includes(colId)) {
+      return;
+    }
+    
+    const shouldShow = shouldColumnBeVisible(colId);
+    const isCurrentlyVisible = column.isVisible();
+    
+    if (shouldShow !== isCurrentlyVisible) {
+      columnsToUpdate.push({ colId, hide: !shouldShow });
+    }
+  });
+  
+  // Apply column visibility changes
+  if (columnsToUpdate.length > 0) {
+    window.globalGridApi.applyColumnState({
+      state: columnsToUpdate
+    });
+  }
+}
+
+// Function to set initial column visibility state
+function setInitialColumnState() {
+  if (!window.globalGridApi) return;
+  
+  const allColumns = window.globalGridApi.getAllGridColumns();
+  const initialColumnState = [];
+  
+  // Initialize expansion state - all columns start collapsed
+  window.columnExpansionState.clear();
+  
+  allColumns.forEach(column => {
+    const colId = column.getColId();
+    
+    // Always show these columns
+    if (['model', 'rank', 'filtered_score'].includes(colId)) {
+      initialColumnState.push({ colId: colId, hide: false });
+      return;
+    }
+    
+    // Show only top-level benchmark categories initially
+    const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    const shouldShow = topLevelCategories.includes(colId);
+    
+    initialColumnState.push({ colId: colId, hide: !shouldShow });
+    
+    // Initialize expansion state (all start collapsed)
+    if (topLevelCategories.includes(colId)) {
+      window.columnExpansionState.set(colId, false);
+    }
+  });
+  
+  // Apply initial column state
+  window.globalGridApi.applyColumnState({
+    state: initialColumnState
+  });
+}
