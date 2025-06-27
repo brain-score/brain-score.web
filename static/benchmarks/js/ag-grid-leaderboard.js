@@ -498,7 +498,7 @@ function renderBenchmarkTree(container, tree) {
     // Create label for engineering parent (no checkbox)
     const engineeringLabel = document.createElement('span');
     engineeringLabel.className = 'engineering-parent-label';
-    engineeringLabel.textContent = 'Engineering Benchmarks (Not included in Global Score)';
+    engineeringLabel.textContent = 'Engineering Benchmarks (Excluded from Global Score)';
 
     engineeringParentHeader.appendChild(engineeringToggle);
     engineeringParentHeader.appendChild(engineeringLabel);
