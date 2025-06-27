@@ -37,7 +37,12 @@
         <div class="filter-column benchmark-column">
           <div class="filter-column-header">
             <h4>Included Benchmarks</h4>
-            <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            <div class="header-actions">
+              <button id="copyBibtexBtn" class="btn-icon" title="Copy BibTeX citations for selected benchmarks">
+                📖
+              </button>
+              <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            </div>
           </div>
           <div id="benchmarkFilterPanel"></div>
         </div>
@@ -397,6 +402,17 @@
             // Trigger update
             if (typeof applyCombinedFilters === 'function') {
               applyCombinedFilters();
+            }
+          });
+        }
+        
+        // Setup the copy bibtex button
+        const copyBibtexBtn = document.getElementById('copyBibtexBtn');
+        if (copyBibtexBtn) {
+          copyBibtexBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof copyBibtexToClipboard === 'function') {
+              copyBibtexToClipboard();
             }
           });
         }
