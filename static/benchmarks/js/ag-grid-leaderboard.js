@@ -152,7 +152,7 @@ LeafHeaderComponent.prototype.init = function(params) {
     const column = params.column;
     const colId = column.getColId();
     const currentSort = column.getSort();
-    const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+    const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
 
     if (params.api && typeof params.api.applyColumnState === 'function') {
       params.api.applyColumnState({
@@ -509,7 +509,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       const column = params.column;
       const colId = column.getColId();
       const currentSort = column.getSort();
-      const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+      const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
 
       if (params.api && typeof params.api.applyColumnState === 'function') {
         params.api.applyColumnState({
@@ -585,7 +585,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       const column = params.column;
       const colId = column.getColId();
       const currentSort = column.getSort();
-      const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+      const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
 
       if (params.api && typeof params.api.applyColumnState === 'function') {
         params.api.applyColumnState({
@@ -2412,9 +2412,11 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       leafComponent: LeafHeaderComponent,
     },
     suppressFieldDotNotation: true,
+    sortingOrder: ['desc', 'asc', null],  // Sort cycle: desc -> asc -> none
     defaultColDef: {
       sortable: true,
       resizable: false,
+      unSortIcon: true,  // Show unsort icon for 3-state sorting
       valueFormatter: params => {
         const v = params.value;
         return (v != null && typeof v === 'object' && 'value' in v)
