@@ -1,0 +1,76 @@
+// components/_buttons.sass
+// Button styling module
+
+// ======================
+// BASE BUTTON STYLES
+// ======================
+button,
+.btn
+  border: none
+  color: white
+  transition: all 0.3s ease
+  padding: 8px 16px
+  border-radius: 4px
+  cursor: pointer
+  font-size: 14px
+
+// ======================
+// GRADIENT BUTTONS
+// ======================
+#advancedFilterBtn,
+#applyFiltersBtn,
+#resetAllFiltersBtn
+  @include gradient-button
+  background: $gradient-primary !important
+  width: 180px
+  font-size: 15px
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+
+  &:hover
+    background: $gradient-light !important
+
+// Reset all filters button in filter actions
+.filter-actions #resetAllFiltersBtn
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
+  flex: 0 0 auto
+  width: auto  // Override the 180px width
+
+// ======================
+// SOLID BUTTONS
+// ======================
+#resetFiltersBtn,
+#toggleLayoutBtn
+  @include solid-button($primary-color)
+
+#toggleLayoutBtn
+  display: flex
+  align-items: center
+  gap: 6px
+  padding: 12px 24px
+  font-size: 0.9rem
+  flex: 0 0 auto
+
+  .toggle-icon
+    font-size: 1.1em
+    line-height: 1
+
+// ======================
+// BUTTON CLASSES
+// ======================
+.btn-primary
+  @include gradient-button
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
+
+.btn-secondary
+  @include solid-button($primary-color)
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
