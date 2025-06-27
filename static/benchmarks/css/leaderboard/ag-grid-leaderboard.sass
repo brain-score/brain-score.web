@@ -285,8 +285,21 @@ button,
     font-size: 9px
     color: #666
     
-  span
+  span, .count-value
     font-weight: 600
+    
+  // Smooth transition for count changes
+  .count-value
+    transition: all 0.2s ease
+    
+  // Visual feedback for filtered out benchmarks (count = 0)
+  &[style*="opacity: 0.5"]
+    background: #f5f5f5
+    color: #999
+    border-color: #ccc
+    
+    i, .count-value
+      color: #999
 
 .sort-indicator
   flex: 0 0 auto

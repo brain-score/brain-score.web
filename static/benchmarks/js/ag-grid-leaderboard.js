@@ -358,6 +358,19 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     });
   }
 
+  // Function to calculate filtered leaf count (excluding filtered out benchmarks)
+  function getFilteredLeafCount(parentField) {
+    const allLeafFields = getLeafFields(parentField);
+    const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+    
+    // Count only non-filtered leaf benchmarks
+    const visibleLeafFields = allLeafFields.filter(field => {
+      return !excludedBenchmarks.has(field);
+    });
+    
+    return visibleLeafFields.length;
+  }
+
   const leafFields = getLeafFields(colDef.field);
 
   // Show count badge for number of leaf benchmarks
@@ -365,6 +378,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     const count = document.createElement('span');
     count.className = 'benchmark-count';
     count.style.cursor = 'pointer';  // Make it clear it's clickable
+    count.dataset.parentField = colDef.field;  // Store field for dynamic updates
     
     // Add expand/collapse icon and count
     const icon = document.createElement('i');
@@ -373,7 +387,12 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     icon.style.fontSize = '10px';
     
     const countText = document.createElement('span');
-    countText.textContent = leafFields.length;
+    countText.className = 'count-value';
+    countText.style.transition = 'all 0.2s ease';  // Smooth animation
+    
+    // Calculate initial filtered count
+    const initialCount = getFilteredLeafCount(colDef.field);
+    countText.textContent = initialCount;
     
     count.appendChild(icon);
     count.appendChild(countText);
@@ -772,7 +791,7 @@ function renderBenchmarkTree(container, tree) {
     // Create label for engineering parent (no checkbox)
     const engineeringLabel = document.createElement('span');
     engineeringLabel.className = 'engineering-parent-label';
-    engineeringLabel.textContent = 'Engineering Benchmarks (Excluded from Global Score)';
+    engineeringLabel.textContent = 'Engineering Benchmarks (Not included in Global Score)';
 
     engineeringParentHeader.appendChild(engineeringToggle);
     engineeringParentHeader.appendChild(engineeringLabel);
@@ -1204,6 +1223,15 @@ function initializeDualHandleSliders() {
         }
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        
+        // Update count badges when stimuli range changes
+        if (container.closest('.filter-group').querySelector('#stimuliCountMin, #stimuliCountMax')) {
+          setTimeout(() => {
+            if (typeof updateAllCountBadges === 'function') {
+              updateAllCountBadges();
+            }
+          }, 100);
+        }
       }
 
       document.addEventListener('mousemove', handleMouseMove);
@@ -1552,6 +1580,11 @@ function applyCombinedFilters() {
   // Update column visibility based on current filters and expansion state
   updateColumnVisibility();
 
+  // Update count badges to reflect filtered benchmarks
+  setTimeout(() => {
+    updateAllCountBadges();
+  }, 50); // Small delay to ensure DOM is updated
+
   // update URL
   updateURLFromFilters();
 }
@@ -1629,30 +1662,13 @@ function resetAllFilters() {
     }
   });
 
-  // Reset ALL benchmark checkboxes to checked first
+  // Reset ALL benchmark checkboxes to checked (include everything by default)
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {
     if (cb) {
-      cb.checked = true;  // Check everything first
+      cb.checked = true;  // Check everything including engineering
     }
   });
-
-  // Then uncheck only the engineering parent (this will trigger the event handler to uncheck children)
-  const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-  if (engineeringCheckbox) {
-    engineeringCheckbox.checked = false;
-
-    // Manually uncheck engineering children since the event might not fire during reset
-    const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
-    if (engineeringNode) {
-      const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-      childCheckboxes.forEach(cb => {
-        if (cb !== engineeringCheckbox) {  // Don't double-process the parent
-          cb.checked = false;
-        }
-      });
-    }
-  }
 
   // Reset benchmark metadata checkboxes (regions, species, tasks, public data)
   document.querySelectorAll('.region-checkbox, .species-checkbox, .task-checkbox').forEach(checkbox => {
@@ -2481,6 +2497,85 @@ function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   return hierarchyMap;
 }
 
+// Function to update all count badges with filtered counts
+function updateAllCountBadges() {
+  // Find all count badges and update them
+  document.querySelectorAll('.benchmark-count').forEach(badge => {
+    const parentField = badge.dataset.parentField;
+    if (!parentField) return;
+    
+    const countText = badge.querySelector('.count-value');
+    if (!countText) return;
+    
+    // Calculate new filtered count
+    const newCount = getFilteredLeafCount(parentField);
+    const currentCount = parseInt(countText.textContent) || 0;
+    
+    // Only update if count changed
+    if (newCount !== currentCount) {
+      // Smooth animation when count changes
+      countText.style.transform = 'scale(1.1)';
+      countText.style.fontWeight = 'bold';
+      
+      setTimeout(() => {
+        countText.textContent = newCount;
+        
+        // Visual feedback for empty counts
+        if (newCount === 0) {
+          badge.style.opacity = '0.5';
+          badge.style.filter = 'grayscale(50%)';
+        } else {
+          badge.style.opacity = '1';
+          badge.style.filter = 'none';
+        }
+        
+        setTimeout(() => {
+          countText.style.transform = 'scale(1)';
+          countText.style.fontWeight = '600';
+        }, 100);
+      }, 100);
+    }
+  });
+}
+
+// Function to get filtered leaf count (needs to be global for count badges)
+function getFilteredLeafCount(parentField) {
+  if (!window.globalGridApi) return 0;
+  
+  const allCols = window.globalGridApi.getAllGridColumns();
+  
+  function getLeafFieldsGlobal(parentField) {
+    const parentBase = parentField.split('_v')[0];
+
+    const directChildren = allCols.filter(col => {
+      const ctx = col.getColDef()?.context || {};
+      const childParent = ctx.parentField;
+      const childBase = childParent?.split('_v')[0];
+      const isDirect = childBase === parentBase;
+      return isDirect;
+    });
+
+    if (directChildren.length === 0) {
+      return [parentField];
+    }
+
+    return directChildren.flatMap(child => {
+      const field = child.getColDef()?.field;
+      return field ? getLeafFieldsGlobal(field) : [];
+    });
+  }
+  
+  const allLeafFields = getLeafFieldsGlobal(parentField);
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+  
+  // Count only non-filtered leaf benchmarks
+  const visibleLeafFields = allLeafFields.filter(field => {
+    return !excludedBenchmarks.has(field);
+  });
+  
+  return visibleLeafFields.length;
+}
+
 // Make functions available globally
 window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
@@ -2496,6 +2591,8 @@ window.decodeBenchmarkFilters = decodeBenchmarkFilters;
 window.buildHierarchyFromTree = buildHierarchyFromTree;
 window.updateColumnVisibility = updateColumnVisibility;
 window.setInitialColumnState = setInitialColumnState;
+window.updateAllCountBadges = updateAllCountBadges;
+window.getFilteredLeafCount = getFilteredLeafCount;
 
 // Update column visibility based on filtering state
 function updateColumnVisibility() {
