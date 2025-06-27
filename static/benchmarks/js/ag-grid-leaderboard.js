@@ -416,7 +416,7 @@ function renderBenchmarkTree(container, tree) {
     if (node.id === 'engineering_vision_v0') {
       const separator = document.createElement('div');
       separator.classList.add('benchmark-separator');
-      separator.innerHTML = '<hr><span class="separator-label">Engineering (Not included in Global Score)</span>';
+      separator.innerHTML = '<hr><span class="separator-label"></span>';
       ul.appendChild(separator);
     }
 
