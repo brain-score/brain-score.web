@@ -307,39 +307,21 @@ button,
   padding-right: 4px
   z-index: 11  // Higher than sorting area but lower than count badge
   transition: all 0.2s ease
-  color: #666
-  font-weight: bold
-  font-size: 16px !important  // Global 16px size for all sort indicators
+  font-size: 16px !important  // Match AG Grid default icon size
   
-  // Default state (neutral sort icon)
-  &[style*="opacity: 0.5"], &[style*="opacity: 0.6"]
-    color: #999
-    font-weight: normal
-  
-  // Active state (sorted)
-  &[style*="opacity: 1"]
-    color: #333
-    font-weight: bold
-
+  // Use AG Grid's built-in icon styling - inherit color from grid theme
+  &.ag-icon
+    color: inherit
+    display: inline-block
+    
   &:hover
     transform: scale(1.1)
-    color: #000
 
-// White sort indicators for neural and behavior headers (dark backgrounds)
+// White sort icons for neural and behavior headers (dark backgrounds)
 .expandable-header.neural .sort-indicator,
 .expandable-header.behavior .sort-indicator
   color: white !important
   
-  // Default state for dark backgrounds
-  &[style*="opacity: 0.5"], &[style*="opacity: 0.6"]
-    color: rgba(255, 255, 255, 0.6) !important
-    font-weight: normal
-  
-  // Active state for dark backgrounds
-  &[style*="opacity: 1"]
-    color: white !important
-    font-weight: bold
-
   &:hover
     transform: scale(1.1)
     color: white !important
@@ -380,6 +362,8 @@ button,
 .ag-header-cell:hover .ag-header-cell-resize
   background-color: rgba(0, 0, 0, 0.1) // light gray on hover
   cursor: col-resize
+
+
 
 #benchmarkFilterPanel
   width: 100%

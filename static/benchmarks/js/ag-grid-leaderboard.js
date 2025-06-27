@@ -1989,33 +1989,28 @@ function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
 // Shared utility to create and manage sort indicators
 function createSortIndicator(params, element, fontSize = '12px') {
   const indicator = document.createElement('span');
-  indicator.className = 'sort-indicator';
-  indicator.textContent = '━';
+  indicator.className = 'sort-indicator ag-icon';  // Use AG Grid icon classes
   indicator.style.cursor = 'pointer';
   indicator.style.marginLeft = '4px';
-  indicator.style.fontSize = fontSize;
-  indicator.style.opacity = '0.5';
-  indicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+  indicator.style.fontSize = '16px';  // AG Grid default icon size
+  indicator.style.opacity = '0.87';  // AG Grid's default icon opacity
   
   const updateSortIndicator = () => {
     const column = params.column;
     const currentSort = column.getSort();
     
+    // Remove all AG Grid sort icon classes
+    indicator.classList.remove('ag-icon-asc', 'ag-icon-desc', 'ag-icon-none');
+    
     if (currentSort === 'asc') {
-      indicator.textContent = '↑';
+      indicator.classList.add('ag-icon-asc');
       indicator.style.opacity = '1';
-      indicator.style.color = '#333';
-      indicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
     } else if (currentSort === 'desc') {
-      indicator.textContent = '↓';
+      indicator.classList.add('ag-icon-desc');
       indicator.style.opacity = '1';
-      indicator.style.color = '#333';
-      indicator.style.textShadow = '0 0 3px rgba(255,255,255,0.9)';
     } else {
-      indicator.textContent = '━';
-      indicator.style.opacity = '0.6';
-      indicator.style.color = '#333';
-      indicator.style.textShadow = '0 0 2px rgba(255,255,255,0.8)';
+      indicator.classList.add('ag-icon-none');
+      indicator.style.opacity = '0.54';  // AG Grid's opacity for inactive icons
     }
   };
 
