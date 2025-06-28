@@ -315,6 +315,87 @@ ExpandableHeaderComponent.prototype.getGui = function() {
   return this.eGui;
 };
 
+// =====================================
+// SEARCH FUNCTIONALITY
+// =====================================
+// Enhanced search with logical operators (OR, AND, NOT) for model names and submitters.
+// Easily expandable to include model metadata fields.
+
+// Get searchable text from a row - centralized for easy expansion
+function getSearchableText(rowData) {
+  const model = rowData.model || {};
+  const searchFields = [
+    model.name || '',
+    model.submitter || ''
+    // Future: Add metadata fields here when needed
+    // rowData.metadata?.architecture || '', // Example: architecture: transformer
+    // rowData.metadata?.model_family || ''
+  ];
+  
+  return searchFields.join(' ').toLowerCase();
+}
+
+// Parse search query with logical operators (simple implementation)
+function parseSearchQuery(query) {
+  if (!query.trim()) return null;
+  
+  // Split by OR first (lowest precedence)
+  const orParts = query.toLowerCase().split(/\s+or\s+/);
+  
+  return {
+    type: 'OR',
+    parts: orParts.map(orPart => {
+      // Split by AND (higher precedence than OR)
+      const andParts = orPart.split(/\s+and\s+/);
+      
+      if (andParts.length === 1) {
+        // Handle NOT for single terms
+        const term = andParts[0].trim();
+        if (term.startsWith('not ')) {
+          return { type: 'NOT', term: term.substring(4).trim() };
+        }
+        return { type: 'TERM', term };
+      }
+      
+      return {
+        type: 'AND',
+        parts: andParts.map(andPart => {
+          const term = andPart.trim();
+          if (term.startsWith('not ')) {
+            return { type: 'NOT', term: term.substring(4).trim() };
+          }
+          return { type: 'TERM', term };
+        })
+      };
+    })
+  };
+}
+
+// Execute parsed search query against searchable text
+function executeSearchQuery(parsedQuery, searchableText) {
+  if (!parsedQuery) return true;
+  
+  function evaluateNode(node) {
+    switch (node.type) {
+      case 'TERM':
+        return searchableText.includes(node.term);
+      case 'NOT':
+        return !searchableText.includes(node.term);
+      case 'AND':
+        return node.parts.every(evaluateNode);
+      case 'OR':
+        return node.parts.some(evaluateNode);
+      default:
+        return false;
+    }
+  }
+  
+  return evaluateNode(parsedQuery);
+}
+
+// Global search state
+let currentSearchQuery = null;
+
 function setupBenchmarkCheckboxes(filterOptions) {
   // Populate task checkboxes dynamically (since tasks are variable)
   const taskContainer = document.getElementById('taskFilter');
@@ -2011,21 +2092,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       col.sortable = true;
     }
 
-    // Set up model column for searching and sorting
+    // Set up model column for sorting (search handled by external filter)
     if (col.field === 'model') {
-      col.getQuickFilterText = params => {
-        const model = params.data.model;
-        if (!model || typeof model !== 'object') {
-          console.warn('⚠️ model object missing or malformed:', model);
-          return '';
-        }
-        const name = model.name || '';
-        const submitter = model.submitter || '';
-        return `${name} ${submitter}`.toLowerCase();
-      };
       col.comparator = modelComparator;
-    } else {
-      col.getQuickFilterText = () => '';
     }
 
     // Set up score columns
@@ -2122,6 +2191,15 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       leafComponent: LeafHeaderComponent,
     },
     suppressFieldDotNotation: true,
+    // External filter for logical search
+    isExternalFilterPresent: () => {
+      return currentSearchQuery !== null;
+    },
+    doesExternalFilterPass: (node) => {
+      if (!currentSearchQuery) return true;
+      const searchableText = getSearchableText(node.data);
+      return executeSearchQuery(currentSearchQuery, searchableText);
+    },
     defaultColDef: {
       sortable: true,
       resizable: false,
@@ -2171,7 +2249,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 
   if (gridApi) {
-    // Connect the search input
+    // Connect the enhanced search input with logical operators
     const searchInput = document.getElementById('modelSearchInput');
     if (searchInput) {
       // Remove any existing listeners
@@ -2180,11 +2258,13 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       newInput.addEventListener('input', function () {
         const searchText = this.value;
-        if (typeof gridApi.setGridOption === 'function') {
-          gridApi.setGridOption('quickFilterText', searchText);
-          gridApi.refreshClientSideRowModel('filter');
+        currentSearchQuery = parseSearchQuery(searchText);
+        
+        // Use external filter for logical search
+        if (typeof gridApi.onFilterChanged === 'function') {
+          gridApi.onFilterChanged();
         } else {
-          console.warn('setGridOption not available on gridApi');
+          console.warn('onFilterChanged not available on gridApi');
         }
       });
     } else {
