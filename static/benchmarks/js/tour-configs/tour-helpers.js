@@ -44,6 +44,65 @@ function expandBenchmarkHeaders(columnIds) {
   });
 }
 
+// Scroll element into view within the benchmark filter panel
+function scrollElementIntoView(element, container = null) {
+  if (!element) return;
+  
+  // Find the scrollable container (benchmark filter panel)
+  const scrollContainer = container || 
+                         document.querySelector('#benchmarkFilterPanel') || 
+                         document.querySelector('.benchmark-filter-container') ||
+                         document.querySelector('#advancedFiltersPanel') ||
+                         element.closest('.panel-body') ||
+                         element.closest('.scrollable') ||
+                         element.closest('[style*="overflow"]');
+  
+  if (!scrollContainer) {
+    // Fallback to default browser scrolling
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  
+  // Get element position relative to container
+  const elementRect = element.getBoundingClientRect();
+  const containerRect = scrollContainer.getBoundingClientRect();
+  
+  // Check if element is already visible with some padding
+  const padding = 50; // pixels of padding for better visibility
+  const isVisible = (
+    elementRect.top >= (containerRect.top + padding) &&
+    elementRect.bottom <= (containerRect.bottom - padding)
+  );
+  
+  if (!isVisible) {
+    // Calculate relative position within the container
+    let elementTop = 0;
+    let current = element;
+    
+    // Calculate cumulative offset within the scroll container
+    while (current && current !== scrollContainer) {
+      elementTop += current.offsetTop;
+      current = current.offsetParent;
+      
+      // Break if we've gone outside the container
+      if (current && !scrollContainer.contains(current)) {
+        break;
+      }
+    }
+    
+    // Calculate scroll position to center the element
+    const containerHeight = scrollContainer.clientHeight;
+    const elementHeight = element.offsetHeight;
+    const scrollPosition = elementTop - (containerHeight / 2) + (elementHeight / 2);
+    
+    // Smooth scroll to position
+    scrollContainer.scrollTo({
+      top: Math.max(0, scrollPosition),
+      behavior: 'smooth'
+    });
+  }
+}
+
 // Enhanced state management for tour step navigation and cleanup
 window.tourStepState = {
   currentStep: 0,
@@ -377,8 +436,17 @@ window.tourConfigs.stepHandlers = {
         ]
       });
     }
+  },
+
+  // Auto-scroll highlighted elements into view for better tour experience
+  ensureElementVisible: (elementSelector) => {
+    const element = document.querySelector(elementSelector);
+    if (element && window.scrollElementIntoView) {
+      window.scrollElementIntoView(element);
+    }
   }
 };
 
 // Export for global usage
-window.expandBenchmarkHeaders = expandBenchmarkHeaders; 
+window.expandBenchmarkHeaders = expandBenchmarkHeaders;
+window.scrollElementIntoView = scrollElementIntoView; 

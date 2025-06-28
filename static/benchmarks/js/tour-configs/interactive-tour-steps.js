@@ -326,12 +326,20 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Expand engineering parent if collapsed
+        // Scroll to engineering section first
         const engineeringParent = document.querySelector('.engineering-parent');
-        if (engineeringParent && engineeringParent.classList.contains('collapsed')) {
-          const toggle = engineeringParent.querySelector('.tree-toggle');
-          if (toggle) toggle.click();
+        if (engineeringParent && window.scrollElementIntoView) {
+          window.scrollElementIntoView(engineeringParent);
         }
+        
+        // Small delay before expanding to ensure scroll completes
+        setTimeout(() => {
+          // Expand engineering parent if collapsed
+          if (engineeringParent && engineeringParent.classList.contains('collapsed')) {
+            const toggle = engineeringParent.querySelector('.tree-toggle');
+            if (toggle) toggle.click();
+          }
+        }, 300);
       }
     },
     {
@@ -347,26 +355,34 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Check engineering benchmarks
+        // Scroll to engineering checkbox to ensure it's visible
         const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-        if (engineeringCheckbox && !engineeringCheckbox.checked) {
-          // Set checkbox state
-          engineeringCheckbox.checked = true;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          engineeringCheckbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
+        if (engineeringCheckbox && window.scrollElementIntoView) {
+          window.scrollElementIntoView(engineeringCheckbox);
         }
+        
+        // Small delay before checking to ensure scroll completes
+        setTimeout(() => {
+          // Check engineering benchmarks
+          if (engineeringCheckbox && !engineeringCheckbox.checked) {
+            // Set checkbox state
+            engineeringCheckbox.checked = true;
+            
+            // Trigger change event manually
+            const changeEvent = new Event('change', { bubbles: true });
+            engineeringCheckbox.dispatchEvent(changeEvent);
+            
+            // Call update functions with a small delay to ensure DOM is updated
+            setTimeout(() => {
+              if (window.updateExclusions) {
+                window.updateExclusions();
+              }
+              if (window.applyCombinedFilters) {
+                window.applyCombinedFilters();
+              }
+            }, 100);
+          }
+        }, 300);
       }
     },
     {
@@ -424,8 +440,42 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#resetAllFiltersBtn',
       popover: {
         title: 'Reset When Needed',
-        description: 'Use this Reset button to restore all filters to their default state anytime. The tour is complete - now you know how to use benchmark filtering to customize your analysis!',
+        description: 'Use this Reset button to restore all filters to their default state anytime. I\'ll click it now to clean up after our demo!',
         position: 'top'
+      },
+      beforeShow: (element, step, options) => {
+        // Scroll to reset button to ensure it's visible
+        const resetButton = document.querySelector('#resetAllFiltersBtn');
+        if (resetButton && window.scrollElementIntoView) {
+          window.scrollElementIntoView(resetButton);
+        }
+      }
+    },
+    {
+      element: '#advancedFilterBtn',
+      popover: {
+        title: 'Demo Complete! 🎉',
+        description: 'Perfect! All filters have been reset and I\'m closing the advanced panel to return you to the default view. You now know how to use benchmark filtering to customize your analysis and explore model capabilities!',
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        // Reset all filters first
+        setTimeout(() => {
+          const resetButton = document.querySelector('#resetAllFiltersBtn');
+          if (resetButton) {
+            resetButton.click();
+          }
+        }, 100);
+        
+        // Close the advanced filters panel after a delay
+        setTimeout(() => {
+          const panel = document.getElementById('advancedFiltersPanel');
+          const advancedBtn = document.getElementById('advancedFilterBtn');
+          
+          if (panel && !panel.classList.contains('hidden') && advancedBtn) {
+            advancedBtn.click();
+          }
+        }, 800); // Delay to let reset complete first
       }
     }
   ],
