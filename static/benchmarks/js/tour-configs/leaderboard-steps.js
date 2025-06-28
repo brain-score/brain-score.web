@@ -309,11 +309,11 @@ window.tourConfigs.interactiveBenchmarkTour = {
       }
     },
     {
-      element: '.expandable-header.neural',
+      element: '.ag-row[row-index="0"] .ag-cell[col-id="neural_vision_v0"]',
       popover: {
         title: 'Watch the Neural Scores Change!',
-        description: 'Notice how the Neural column scores have recalculated! By removing the FreemanZiemba2013.V1-pls benchmark, we\'ve changed how V1 performance is measured, affecting each model\'s neural score.',
-        position: 'top'
+        description: 'Notice how the Neural column scores have recalculated! By removing the FreemanZiemba2013.V1-pls benchmark, we\'ve changed how V1 performance is measured, affecting each model\'s neural score. Look at the changed values in this entire column!',
+        position: 'left'
       }
     },
     {
