@@ -97,15 +97,15 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Expand leaderboard columns like the basic tour does
+        // Expand leaderboard columns like the basic tour does - this will expand the neural column in the grid
         expandBenchmarkHeaders(['neural_vision_v0']);
         
-        // Expand the filter tree to show the hierarchy
+        // Expand the filter tree to show the hierarchy - this is separate from the grid expansion
         setTimeout(() => {
-          // Find neural category in filter tree and expand it
+          // Find neural category in filter tree and expand it (filter tree uses .tree-toggle)
           const neuralNode = document.querySelector('input[value="neural_vision_v0"]')?.closest('.benchmark-node');
           if (neuralNode && neuralNode.classList.contains('collapsed')) {
-            const neuralToggle = neuralNode.querySelector('.tree-toggle, .expand-toggle, [data-toggle]');
+            const neuralToggle = neuralNode.querySelector('.tree-toggle');
             if (neuralToggle) {
               neuralToggle.click();
             }
@@ -113,15 +113,52 @@ window.tourConfigs.interactiveBenchmarkTour = {
           
           // Small delay before expanding V1 to show the progression
           setTimeout(() => {
-            // Find and expand V1 subcategory
+            // Find and expand V1 subcategory in the filter tree
             const v1Node = document.querySelector('input[value="V1_v0"]')?.closest('.benchmark-node');
             if (v1Node && v1Node.classList.contains('collapsed')) {
-              const v1Toggle = v1Node.querySelector('.tree-toggle, .expand-toggle, [data-toggle]');
+              const v1Toggle = v1Node.querySelector('.tree-toggle');
               if (v1Toggle) {
                 v1Toggle.click();
               }
             }
+            
+            // Also expand the V1 column in the leaderboard grid if it exists
+            setTimeout(() => {
+              const v1HeaderCell = document.querySelector('.ag-header-cell[col-id="V1_v0"]');
+              if (v1HeaderCell) {
+                const v1CountBadge = v1HeaderCell.querySelector('.benchmark-count');
+                if (v1CountBadge) {
+                  // Check if V1 column should be expanded to show individual benchmarks
+                  const isV1Expanded = window.columnExpansionState && window.columnExpansionState.get('V1_v0') === true;
+                  if (!isV1Expanded) {
+                    v1CountBadge.click();
+                  }
+                }
+              }
+            }, 200);
           }, 300);
+        }, 100);
+      }
+    },
+    {
+      element: '.expandable-header.neural .benchmark-count',
+      popover: {
+        title: 'Neural Column Expanded! 🧠',
+        description: 'Perfect! I\'ve expanded the Neural column in the leaderboard using the count badge (shows "4" for 4 brain areas). This badge is both an indicator of how many benchmarks are included AND the button to expand/collapse them. The leaderboard now shows individual V1, V2, V4, and IT columns!',
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        // Ensure neural column is expanded for this step
+        setTimeout(() => {
+          if (window.columnExpansionState && window.columnExpansionState.get('neural_vision_v0') !== true) {
+            const neuralHeaderCell = document.querySelector('.ag-header-cell[col-id="neural_vision_v0"]');
+            if (neuralHeaderCell) {
+              const neuralCountBadge = neuralHeaderCell.querySelector('.benchmark-count');
+              if (neuralCountBadge) {
+                neuralCountBadge.click();
+              }
+            }
+          }
         }, 100);
       }
     },
@@ -475,9 +512,9 @@ window.tourConfigs.interactiveBenchmarkTour = {
           if (panel && !panel.classList.contains('hidden') && advancedBtn) {
             advancedBtn.click();
           }
-        }, 800); // Delay to let reset complete first
+                  }, 800); // Delay to let reset complete first
+        }
       }
-    }
   ],
   
   options: {
