@@ -68,8 +68,32 @@
     span
       transition: opacity 0.3s ease
 
+  // Auto-collapse sidebar on narrow screens instead of hiding completely
   @media (max-width: 1024px)
-    display: none
+    right: calc(100% - 80px)
+    
+    .sidebar-toggle .toggle-icon
+      transform: rotate(180deg)
+    
+    a span
+      display: none
+    
+    a
+      padding-left: 22px
+      justify-content: center
+      
+      &.brainscore-logo
+        img
+          width: 50px
+          
+      img.menu-icon
+        margin-right: 0
+        
+    .dropdown
+      width: 80px
+      
+      .dropdown-content
+        transform: translateX(80px)
 
 // Sidebar toggle button
 .sidebar-toggle
