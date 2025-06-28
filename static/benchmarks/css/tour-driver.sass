@@ -1,0 +1,242 @@
+// Tour Driver Styles
+// Driver.js tour styling that can be reused across different pages
+// Based on Driver.js v0.9.8 HTML structure
+
+// Dark overlay that covers the entire page
+#driver-page-overlay
+  background: rgba(0, 0, 0, 0.5) !important
+  z-index: 999998 !important
+
+// Highlighted element stage - transparent with colored border
+#driver-highlighted-element-stage
+  background-color: transparent !important
+  background: none !important
+  border: 3px solid #667eea !important
+  border-radius: 6px !important
+  box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2) !important
+
+// Highlighted elements - just outline
+.driver-highlighted-element
+  z-index: 1000000 !important
+  position: relative !important
+  outline: 3px solid #667eea !important
+  outline-offset: 2px !important
+  border-radius: 6px !important
+  box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2) !important
+
+// Main popover container
+#driver-popover-item
+  z-index: 999999 !important
+  position: absolute !important
+  background: white !important
+  border: 1px solid #ddd !important
+  border-radius: 8px !important
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important
+  max-width: 350px !important
+  padding: 20px !important
+  font-family: system-ui, -apple-system, sans-serif !important
+  
+  // Ensure proper positioning
+  position: relative !important
+
+// Popover title
+.driver-popover-title
+  font-size: 18px !important
+  font-weight: 600 !important
+  margin-bottom: 10px !important
+  color: #333 !important
+  padding-right: 35px !important // Space for close button
+
+// Popover description
+.driver-popover-description
+  font-size: 14px !important
+  line-height: 1.5 !important
+  color: #666 !important
+  margin-bottom: 20px !important
+  padding-right: 35px !important
+  position: relative !important
+
+// Button container
+.driver-popover-footer
+  display: flex !important
+  justify-content: flex-end !important
+  align-items: center !important
+  gap: 10px !important
+  margin-top: 15px !important
+
+  // Close button positioned at title level
+  .driver-close-btn
+    position: absolute !important
+    top: 20px !important
+    right: 12px !important
+    background: #f5f5f5 !important
+    border: 1px solid #e0e0e0 !important
+    border-radius: 4px !important
+    width: 26px !important
+    height: 26px !important
+    cursor: pointer !important
+    font-size: 14px !important
+    display: flex !important
+    align-items: center !important
+    justify-content: center !important
+    color: #666 !important
+    transition: all 0.2s ease !important
+    z-index: 10 !important
+    align-self: auto !important
+    margin: 0 !important
+
+    &:hover
+      background: #e8e8e8 !important
+      color: #333 !important
+
+// Navigation buttons container
+.driver-btn-group
+  display: flex !important
+  gap: 8px !important
+
+// Individual navigation buttons
+.driver-prev-btn,
+.driver-next-btn
+  padding: 8px 16px !important
+  border-radius: 4px !important
+  font-size: 14px !important
+  cursor: pointer !important
+  border: none !important
+
+.driver-next-btn
+  background: #667eea !important
+  color: white !important
+
+.driver-prev-btn
+  background: #f5f5f5 !important
+  color: #333 !important
+  border: 1px solid #ddd !important
+
+  &.driver-disabled
+    opacity: 0.5 !important
+    cursor: not-allowed !important
+
+// Prevent layout shifts
+.driver-fix-stacking
+  z-index: auto !important
+
+// Ensure proper positioning is maintained
+#driver-popover-item[style*="left"][style*="top"]
+  position: absolute !important
+  z-index: 999999 !important
+  // Don't override left/top - let Driver.js handle positioning
+
+// Popover tip/arrow styling
+.driver-popover-tip
+  position: absolute !important
+  width: 0 !important
+  height: 0 !important
+  border: 8px solid transparent !important
+
+  &.top
+    top: -16px !important
+    left: 50% !important
+    transform: translateX(-50%) !important
+    border-bottom-color: white !important
+    border-top: none !important
+
+  &.left
+    left: -16px !important
+    top: 50% !important
+    transform: translateY(-50%) !important
+    border-right-color: white !important
+    border-left: none !important
+
+  &.right
+    right: -16px !important
+    top: 50% !important
+    transform: translateY(-50%) !important
+    border-left-color: white !important
+    border-right: none !important
+
+  &.bottom
+    bottom: -16px !important
+    left: 50% !important
+    transform: translateX(-50%) !important
+    border-top-color: white !important
+    border-bottom: none !important
+
+// Tour button styling (reusable)
+.tour-button
+  padding: 8px 16px
+  font-size: 14px
+  border: 1px solid #e1e1e1
+  border-radius: 6px
+  background-color: #fdfdfd
+  color: #333
+  cursor: pointer
+  transition: all 0.2s ease
+  display: inline-flex
+  align-items: center
+  gap: 6px
+
+  &:hover
+    border-color: #727272
+    background-color: #f5f5f5
+
+  &:active
+    transform: translateY(1px)
+
+  // Icon styling
+  .tour-icon
+    font-size: 16px
+    
+  // Disabled state
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    
+    &:hover
+      border-color: #e1e1e1
+      background-color: #fdfdfd
+
+// Responsive adjustments
+@media (max-width: 768px)
+  #driver-popover-item
+    max-width: 300px !important
+    padding: 16px !important
+    
+  .driver-popover-title
+    font-size: 16px !important
+    
+  .driver-popover-description
+    font-size: 13px !important
+    
+  .driver-prev-btn,
+  .driver-next-btn
+    padding: 6px 12px !important
+    font-size: 13px !important
+
+// Dark theme support (optional)
+@media (prefers-color-scheme: dark)
+  #driver-page-overlay
+    background: rgba(0, 0, 0, 0.7) !important
+    
+  #driver-popover-item
+    background: #2d2d2d !important
+    border-color: #555 !important
+    
+  .driver-popover-title
+    color: #fff !important
+    
+  .driver-popover-description
+    color: #ccc !important
+    
+  .driver-popover-footer .driver-close-btn
+    background: #444 !important
+    border-color: #666 !important
+    color: #ccc !important
+    
+    &:hover
+      background: #555 !important
+      color: #fff !important
+      
+  .driver-prev-btn
+    background: #444 !important
+    border-color: #666 !important
+    color: #ccc !important 

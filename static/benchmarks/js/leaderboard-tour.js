@@ -26,11 +26,11 @@ class LeaderboardTour {
     try {
       console.log('Preparing grid for tour...');
       
-      // Store current column state
+      // Store current column state (for potential future use)
       this.originalColumnState = window.globalGridApi.getColumnState();
       
-      // Set optimal layout for tour
-      this.setOptimalLayout();
+      // Skip layout changes - keep the grid as-is
+      // this.setOptimalLayout(); // Commented out to preserve current layout
       
       // Scroll to top
       window.globalGridApi.ensureIndexVisible(0, 'top');
@@ -38,7 +38,7 @@ class LeaderboardTour {
       // Clear any existing selections
       window.globalGridApi.deselectAll();
       
-      console.log('Grid prepared successfully');
+      console.log('Grid prepared successfully (no layout changes)');
       return true;
       
     } catch (error) {
