@@ -24,8 +24,6 @@ class LeaderboardTour {
     }
 
     try {
-      console.log('Preparing grid for tour...');
-      
       // Store current column state (for potential future use)
       this.originalColumnState = window.globalGridApi.getColumnState();
       
@@ -38,7 +36,6 @@ class LeaderboardTour {
       // Clear any existing selections
       window.globalGridApi.deselectAll();
       
-      console.log('Grid prepared successfully (no layout changes)');
       return true;
       
     } catch (error) {
@@ -81,7 +78,6 @@ class LeaderboardTour {
     if (!window.globalGridApi || !this.originalColumnState) return;
 
     try {
-      console.log('Restoring original grid state...');
       window.globalGridApi.applyColumnState({ state: this.originalColumnState });
       this.originalColumnState = null;
     } catch (error) {
@@ -93,28 +89,84 @@ class LeaderboardTour {
    * Handle tour completion
    */
   onTourComplete(completed = true) {
-    console.log('Tour completed:', completed);
-    
     // Mark tour as completed in state
     if (completed) {
       this.stateManager.markTourCompleted();
     }
+    
+    // Restore interactive tour state if needed
+    this.restoreInteractiveTourState();
     
     // Restore grid state
     this.restoreGridState();
     
     // Clean up
     this.tourDriver.stop();
+  }
+
+  /**
+   * Restore any changes made during interactive tours
+   */
+  restoreInteractiveTourState() {
+    // Restore behavioral benchmarks if they were disabled during tour
+    if (window._tourOriginalBehaviorState !== undefined) {
+      const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
+      if (behaviorCheckbox && behaviorCheckbox.checked !== window._tourOriginalBehaviorState) {
+        // Set checkbox state
+        behaviorCheckbox.checked = window._tourOriginalBehaviorState;
+        
+        // Trigger change event manually
+        const changeEvent = new Event('change', { bubbles: true });
+        behaviorCheckbox.dispatchEvent(changeEvent);
+        
+        // Call update functions with a small delay to ensure DOM is updated
+        setTimeout(() => {
+          if (window.updateExclusions) {
+            window.updateExclusions();
+          }
+          if (window.applyCombinedFilters) {
+            window.applyCombinedFilters();
+          }
+        }, 100);
+      }
+      delete window._tourOriginalBehaviorState;
+    }
     
-    console.log('Tour cleanup completed');
+    // Restore Freeman benchmark if it was modified during tour
+    if (window._tourOriginalFreemanState !== undefined) {
+      const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
+      if (freemanCheckbox && freemanCheckbox.checked !== window._tourOriginalFreemanState) {
+        // Set checkbox state
+        freemanCheckbox.checked = window._tourOriginalFreemanState;
+        
+        // Trigger change event manually
+        const changeEvent = new Event('change', { bubbles: true });
+        freemanCheckbox.dispatchEvent(changeEvent);
+        
+        // Call update functions with a small delay to ensure DOM is updated
+        setTimeout(() => {
+          if (window.updateExclusions) {
+            window.updateExclusions();
+          }
+          if (window.applyCombinedFilters) {
+            window.applyCombinedFilters();
+          }
+        }, 100);
+      }
+      delete window._tourOriginalFreemanState;
+    }
+    
+    // Close advanced filters panel if it was opened during tour
+    const panel = document.getElementById('advancedFiltersPanel');
+    if (panel && !panel.classList.contains('hidden')) {
+      document.getElementById('advancedFilterBtn').click();
+    }
   }
 
   /**
    * Start the tour with specified configuration
    */
   startTour(configName = 'default') {
-    console.log('Starting leaderboard tour with config:', configName);
-    
     // Load configuration
     this.currentConfig = this.configLoader.loadTourConfig(configName);
     if (!this.currentConfig) {
@@ -134,8 +186,6 @@ class LeaderboardTour {
    * Continue tour start after grid is ready
    */
   continueStartTour() {
-    console.log('Continuing tour start...');
-    
     // Prepare grid for tour
     if (!this.prepareGridForTour()) {
       console.error('Failed to prepare grid for tour');
@@ -145,12 +195,10 @@ class LeaderboardTour {
     // Set up tour callbacks
     const callbacks = {
       onNext: () => {
-        console.log('Tour: Next button clicked');
         this.stateManager.updateCurrentStep(this.stateManager.getCurrentStep() + 1);
       },
       
       onPrevious: () => {
-        console.log('Tour: Previous button clicked');
         const currentStep = Math.max(0, this.stateManager.getCurrentStep() - 1);
         this.stateManager.updateCurrentStep(currentStep);
       },
@@ -184,7 +232,7 @@ class LeaderboardTour {
     // Start the tour
     setTimeout(() => {
       if (this.tourDriver.start(steps)) {
-        console.log('Tour started successfully');
+        // Tour started successfully
       } else {
         console.error('Failed to start tour');
         this.onTourComplete(false);
@@ -198,18 +246,7 @@ class LeaderboardTour {
    * Handle step highlighting with leaderboard-specific logic
    */
   handleStepHighlight(element) {
-    // Debug: Check for popover elements and current styling
-    setTimeout(() => {
-      const popover = document.getElementById('driver-popover-item');
-      if (popover) {
-        console.log('Popover element:', popover);
-        console.log('Popover position:', {
-          left: popover.style.left,
-          top: popover.style.top,
-          display: popover.style.display
-        });
-      }
-    }, 100);
+
 
     // Handle leaderboard-specific step logic
     if (element && element.classList) {
@@ -263,7 +300,6 @@ class LeaderboardTour {
             const firstCell = document.querySelector('.ag-cell');
             
             if (firstRow && firstCell) {
-              console.log('Grid is ready with data and rendered cells');
               resolve();
             } else {
               setTimeout(checkReady, 100);
@@ -321,12 +357,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.globalGridApi && document.getElementById('tutorialBtn')) {
       const tour = new LeaderboardTour();
       
-      // Add event listener to tutorial button
-      document.getElementById('tutorialBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Tutorial button clicked, starting tour...');
-        tour.startTour();
-      });
+      // Create tutorial dropdown menu
+      createTutorialDropdown(tour);
       
       // Show tour automatically for new users (optional)
       // if (tour.shouldShowTour()) {
@@ -335,8 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Make tour available globally for debugging
       window.leaderboardTour = tour;
-      
-      console.log('Leaderboard tour initialized successfully');
     } else {
       // Retry until grid is ready
       setTimeout(initTour, 100);
@@ -345,6 +375,110 @@ document.addEventListener('DOMContentLoaded', function() {
   
   initTour();
 });
+
+/**
+ * Create tutorial dropdown menu with multiple tour options
+ */
+function createTutorialDropdown(tour) {
+  const tutorialBtn = document.getElementById('tutorialBtn');
+  const wrapper = tutorialBtn.parentNode;
+  
+  // Create dropdown container
+  const dropdownContainer = document.createElement('div');
+  dropdownContainer.className = 'tutorial-dropdown-container';
+  dropdownContainer.style.position = 'relative';
+  dropdownContainer.style.display = 'inline-block';
+  
+  // Create dropdown menu
+  const dropdownMenu = document.createElement('div');
+  dropdownMenu.className = 'tutorial-dropdown-menu';
+  dropdownMenu.style.cssText = `
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 220px;
+    display: none;
+    padding: 8px 0;
+    margin-top: 4px;
+  `;
+  
+  // Create menu items
+  const menuItems = [
+    {
+      title: 'Basic Tour',
+      description: 'Quick overview of key features',
+      action: () => tour.startTour('default')
+    },
+    {
+      title: 'Interactive Filter Demo',
+      description: 'See filtering in action with live examples',
+      action: () => tour.startTour('interactiveBenchmarkTour')
+    }
+  ];
+  
+  menuItems.forEach(item => {
+    const menuItem = document.createElement('div');
+    menuItem.style.cssText = `
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s;
+    `;
+    menuItem.innerHTML = `
+      <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${item.title}</div>
+      <div style="font-size: 12px; color: #666; line-height: 1.3;">${item.description}</div>
+    `;
+    
+    menuItem.addEventListener('mouseenter', () => {
+      menuItem.style.backgroundColor = '#f8f9fa';
+    });
+    menuItem.addEventListener('mouseleave', () => {
+      menuItem.style.backgroundColor = 'transparent';
+    });
+    menuItem.addEventListener('click', (e) => {
+      e.preventDefault();
+      dropdownMenu.style.display = 'none';
+      item.action();
+    });
+    
+    dropdownMenu.appendChild(menuItem);
+  });
+  
+  // Remove border from last item
+  const lastItem = dropdownMenu.lastElementChild;
+  if (lastItem) {
+    lastItem.style.borderBottom = 'none';
+  }
+  
+  // Replace button with dropdown container
+  wrapper.replaceChild(dropdownContainer, tutorialBtn);
+  dropdownContainer.appendChild(tutorialBtn);
+  dropdownContainer.appendChild(dropdownMenu);
+  
+  // Add dropdown toggle functionality
+  tutorialBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isVisible = dropdownMenu.style.display === 'block';
+    dropdownMenu.style.display = isVisible ? 'none' : 'block';
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownContainer.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
+  
+  // Add dropdown arrow to button
+  const originalText = tutorialBtn.querySelector('.text-wrapper').textContent;
+  tutorialBtn.querySelector('.text-wrapper').innerHTML = `${originalText} <span style="font-size: 10px; margin-left: 4px;">▼</span>`;
+}
 
 // Export for potential use in other modules
 window.LeaderboardTour = LeaderboardTour; 

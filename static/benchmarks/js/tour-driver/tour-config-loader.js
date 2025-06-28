@@ -18,8 +18,7 @@ class TourConfigLoader {
    */
   loadTourConfig(configName = 'default', tourType = 'defaultTour') {
     try {
-      console.log('Loading tour config for:', configName, 'type:', tourType);
-      console.log('Available tour configs:', window[this.configNamespace]);
+      
       
       // Check if tour configurations are loaded
       if (!window[this.configNamespace]) {
@@ -32,11 +31,8 @@ class TourConfigLoader {
       const config = window[this.configNamespace][configKey];
       
       if (!config) {
-        console.warn(`Config ${configKey} not found, using fallback`);
         return this.getFallbackConfig(configName);
       }
-      
-      console.log('Returning config:', configKey, config);
       
       // Validate configuration
       if (!this.validateConfig(config)) {
@@ -67,7 +63,8 @@ class TourConfigLoader {
       'default': 'defaultTour',
       'basic': 'defaultTour',
       'advanced': 'advancedFeaturesTour',
-      'features': 'advancedFeaturesTour'
+      'features': 'advancedFeaturesTour',
+      'interactiveBenchmarkTour': 'interactiveBenchmarkTour'
     };
     
     return keyMap[configName] || tourType;

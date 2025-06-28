@@ -162,6 +162,370 @@ window.tourConfigs.advancedFeaturesTour = {
   }
 };
 
+// Interactive benchmark filter demonstration tour
+window.tourConfigs.interactiveBenchmarkTour = {
+  steps: [
+    {
+      element: '#advancedFilterBtn',
+      popover: {
+        title: 'Interactive Filter Demo',
+        description: 'Let\'s explore how benchmark filtering works! I\'ll show you the advanced filters and demonstrate how they change the leaderboard in real-time.',
+        position: 'bottom'
+      },
+      beforeShow: () => {
+        // Ensure advanced filters are closed initially
+        const panel = document.getElementById('advancedFiltersPanel');
+        if (panel && !panel.classList.contains('hidden')) {
+          document.getElementById('advancedFilterBtn').click();
+        }
+      }
+    },
+    {
+      element: '#advancedFilterBtn',
+      popover: {
+        title: 'Opening Advanced Filters',
+        description: 'I\'m now opening the advanced filter panel for you. Watch as it reveals powerful filtering options.',
+        position: 'bottom'
+      },
+      beforeShow: () => {
+        // Open the advanced filters panel
+        const panel = document.getElementById('advancedFiltersPanel');
+        if (panel && panel.classList.contains('hidden')) {
+          document.getElementById('advancedFilterBtn').click();
+        }
+      }
+    },
+    {
+      element: '#benchmarkFilterPanel',
+      popover: {
+        title: 'Benchmark Selection Tree',
+        description: 'Here\'s the benchmark filter tree. Each checkbox controls whether that benchmark is included in the leaderboard. Currently, all benchmarks except Engineering are selected (notice Engineering is unchecked by default).',
+        position: 'left'
+      }
+    },
+    {
+      element: '.vision-parent',
+      popover: {
+        title: 'Vision Benchmarks Category',
+        description: 'Vision Benchmarks include Neural and Behavioral tests. These contribute to the global Brain-Score. Let me expand this category to show you the individual benchmarks.',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Expand the vision parent if collapsed
+        const visionParent = document.querySelector('.vision-parent');
+        if (visionParent && visionParent.classList.contains('collapsed')) {
+          const toggle = visionParent.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+      }
+    },
+    {
+      element: '.vision-parent input[value="neural_vision_v0"]',
+      popover: {
+        title: 'Neural Benchmarks',
+        description: 'Neural benchmarks measure how well models predict brain responses. I\'ll expand this category to show you specific neural benchmarks like V1, V2, V4, and IT cortex predictions.',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Expand neural benchmarks
+        const neuralNode = document.querySelector('input[value="neural_vision_v0"]').closest('.benchmark-node');
+        if (neuralNode && neuralNode.classList.contains('collapsed')) {
+          const toggle = neuralNode.querySelector('.tree-toggle');
+          if (toggle) {
+            toggle.click();
+          }
+        }
+      }
+    },
+    {
+      element: 'input[value="V1_v0"]',
+      popover: {
+        title: 'V1 Neural Benchmarks',
+        description: 'V1 benchmarks test predictions of primary visual cortex responses. Let me expand this category to show specific V1 tests, then deselect one to demonstrate real-time changes.',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Expand V1 benchmarks
+        const v1Node = document.querySelector('input[value="V1_v0"]').closest('.benchmark-node');
+        if (v1Node && v1Node.classList.contains('collapsed')) {
+          const toggle = v1Node.querySelector('.tree-toggle');
+          if (toggle) {
+            toggle.click();
+          }
+        }
+      }
+    },
+    {
+      element: 'input[value="FreemanZiemba2013.V1-pls_v2"]',
+      popover: {
+        title: 'Specific V1 Benchmark',
+        description: 'This is the FreemanZiemba2013.V1-pls benchmark - a specific test of V1 texture processing. I\'ll deselect it now to show you how the leaderboard updates in real-time!',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Ensure neural_vision is expanded (backup safety check)
+        const neuralNode = document.querySelector('input[value="neural_vision_v0"]').closest('.benchmark-node');
+        if (neuralNode && neuralNode.classList.contains('collapsed')) {
+          const toggle = neuralNode.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+        
+        // Ensure V1 is expanded (backup safety check)
+        const v1Node = document.querySelector('input[value="V1_v0"]').closest('.benchmark-node');
+        if (v1Node && v1Node.classList.contains('collapsed')) {
+          const toggle = v1Node.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+        
+        // Small delay to ensure expansions complete
+        setTimeout(() => {
+          // Store original state for restoration
+          const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
+          if (freemanCheckbox) {
+            window._tourOriginalFreemanState = freemanCheckbox.checked;
+          }
+          
+          // Uncheck the Freeman-Ziemba benchmark properly
+          if (freemanCheckbox && freemanCheckbox.checked) {
+            
+            // Set checkbox state
+            freemanCheckbox.checked = false;
+            
+            // Trigger change event manually
+            const changeEvent = new Event('change', { bubbles: true });
+            freemanCheckbox.dispatchEvent(changeEvent);
+            
+            // Call update functions with a small delay to ensure DOM is updated
+            setTimeout(() => {
+              if (window.updateExclusions) {
+                window.updateExclusions();
+              }
+              if (window.applyCombinedFilters) {
+                window.applyCombinedFilters();
+              }
+            }, 100);
+          }
+        }, 200); // Give time for expansions to complete
+      }
+    },
+    {
+      element: '.expandable-header.neural',
+      popover: {
+        title: 'Watch the Neural Scores Change!',
+        description: 'Notice how the Neural column scores have recalculated! By removing the FreemanZiemba2013.V1-pls benchmark, we\'ve changed how V1 performance is measured, affecting each model\'s neural score.',
+        position: 'top'
+      }
+    },
+    {
+      element: '.expandable-header.average', 
+      popover: {
+        title: 'Global Brain-Score Updated',
+        description: 'The global Brain-Score (Average column) has also recalculated! Since we removed a neural benchmark, the overall brain-relevance scores have changed. Some models may have moved up or down in ranking.',
+        position: 'bottom'
+      }
+    },
+    {
+      element: '.vision-parent input[value="behavior_vision_v0"]',
+      popover: {
+        title: 'Now Let\'s Try Behavioral Benchmarks',
+        description: 'Behavioral benchmarks are already expanded. Let me show you what happens when we deselect all behavioral benchmarks to isolate neural performance.',
+        position: 'left'  
+      },
+      beforeShow: () => {
+        // Restore the Freeman benchmark first
+        const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
+        if (freemanCheckbox && !freemanCheckbox.checked && window._tourOriginalFreemanState) {
+          // Set checkbox state
+          freemanCheckbox.checked = true;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          freemanCheckbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
+        }
+        
+        // Expand behavioral benchmarks if needed
+        const behaviorNode = document.querySelector('input[value="behavior_vision_v0"]').closest('.benchmark-node');
+        if (behaviorNode && behaviorNode.classList.contains('collapsed')) {
+          const toggle = behaviorNode.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+      }
+    },
+    {
+      element: '.expandable-header.behavior',
+      popover: {
+        title: 'Notice the Changes!',
+        description: 'Look! The Behavioral column is now dimmed/hidden because we unchecked it. The global scores (Average column) have also recalculated to only include Neural benchmarks. Rankings may have changed too!',
+        position: 'top'
+      }
+    },
+    {
+      element: '.expandable-header.average',
+      popover: {
+        title: 'Recalculated Global Scores',
+        description: 'The global Brain-Score (Average column) now only includes Neural benchmarks since we disabled Behavioral ones. Notice how some models\' scores and rankings have changed. This is the power of benchmark filtering!',
+        position: 'bottom'
+      }
+    },
+    {
+      element: '.engineering-parent',
+      popover: {
+        title: 'Engineering Benchmarks',
+        description: 'Engineering benchmarks (like ImageNet) are excluded by default because they don\'t measure brain-like processing. Let me show you what happens when we include them.',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Expand engineering parent if collapsed
+        const engineeringParent = document.querySelector('.engineering-parent');
+        if (engineeringParent && engineeringParent.classList.contains('collapsed')) {
+          const toggle = engineeringParent.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+      }
+    },
+    {
+      element: 'input[value="engineering_vision_v0"]',
+      popover: {
+        title: 'Including Engineering Benchmarks',
+        description: 'I\'m now checking Engineering benchmarks. Watch as new columns appear in the leaderboard, but note they don\'t affect the global Brain-Score!',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Check engineering benchmarks
+        const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+        if (engineeringCheckbox && !engineeringCheckbox.checked) {
+          // Set checkbox state
+          engineeringCheckbox.checked = true;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          engineeringCheckbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
+        }
+      }
+    },
+    {
+      element: '.expandable-header.engineering',
+      popover: {
+        title: 'Engineering Columns Appeared!',
+        description: 'New Engineering benchmark columns are now visible! These show computer vision performance (like ImageNet accuracy) but don\'t contribute to the Brain-Score ranking.',
+        position: 'top'
+      }
+    },
+    {
+      element: '.expandable-header.average',
+      popover: {
+        title: 'Global Score Unchanged',
+        description: 'Notice that the global Brain-Score (Average column) didn\'t change when we added Engineering benchmarks. Only Neural and Behavioral benchmarks contribute to brain-relevance scoring.',
+        position: 'bottom'
+      },
+      beforeShow: () => {
+        // Restore behavioral benchmarks for final demonstration
+        const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
+        if (behaviorCheckbox && !behaviorCheckbox.checked) {
+          // Set checkbox state
+          behaviorCheckbox.checked = true;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          behaviorCheckbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
+        }
+      }
+    },
+    {
+      element: '#benchmarkFilterPanel',
+      popover: {
+        title: 'Powerful Filtering Complete!',
+        description: 'You\'ve seen how benchmark filtering works! You can select/deselect any combination of benchmarks to customize your analysis. Try experimenting with different combinations to explore model capabilities.',
+        position: 'left'
+      }
+    },
+    {
+      element: '#resetAllFiltersBtn',
+      popover: {
+        title: 'Reset When Needed',
+        description: 'Use this Reset button to restore all filters to their default state anytime. The tour is complete - now you know how to use benchmark filtering to customize your analysis!',
+        position: 'top'
+      }
+    },
+    {
+      element: 'input[value="behavior_vision_v0"]',
+      popover: {
+        title: 'Deselecting Behavioral Benchmarks',
+        description: 'Now I\'ll uncheck Behavioral benchmarks to show you how this affects the leaderboard. Watch the columns and scores change in real-time!',
+        position: 'left'
+      },
+      beforeShow: () => {
+        // Store original state for restoration later
+        window._tourOriginalBehaviorState = true;
+        
+        // Uncheck behavioral benchmarks properly
+        const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
+        if (behaviorCheckbox && behaviorCheckbox.checked) {
+          // Set checkbox state
+          behaviorCheckbox.checked = false;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          behaviorCheckbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
+        }
+      }
+    }
+  ],
+  
+  options: {
+    animate: true,
+    allowClose: true,
+    overlayClickNext: false,
+    stagePadding: 8,
+    showProgress: true,
+    showButtons: ['next', 'previous', 'close'],
+    nextBtnText: 'Next →',
+    prevBtnText: '← Previous', 
+    doneBtnText: 'Finish Demo',
+    closeBtnText: '✕'
+  }
+};
+
 // Step handlers for complex interactions
 window.tourConfigs.stepHandlers = {
   // Show advanced filters panel
