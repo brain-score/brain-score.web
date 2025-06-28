@@ -40,6 +40,11 @@ class TourDriver {
       
       // Event handlers for v1.x API
       onNextClick: (element, step, options) => {
+        // Clean up any custom highlights when moving to next step
+        if (window.cleanupNeuralHighlight) {
+          window.cleanupNeuralHighlight();
+        }
+        
         if (callbacks.onNext) {
           callbacks.onNext();
         }
@@ -47,6 +52,11 @@ class TourDriver {
         this.driver.moveNext();
       },
       onPrevClick: (element, step, options) => {
+        // Clean up any custom highlights when moving to previous step
+        if (window.cleanupNeuralHighlight) {
+          window.cleanupNeuralHighlight();
+        }
+        
         if (callbacks.onPrevious) {
           callbacks.onPrevious();
         }
@@ -64,6 +74,11 @@ class TourDriver {
         this.driver.movePrevious();
       },
       onCloseClick: (element) => {
+        // Clean up any custom highlights when closing tour
+        if (window.cleanupNeuralHighlight) {
+          window.cleanupNeuralHighlight();
+        }
+        
         if (!this.isStopping && this.onResetCallback) {
           this.onResetCallback();
         }
@@ -194,6 +209,11 @@ class TourDriver {
       // Clear tour state tracking if available
       if (window.tourStepState) {
         window.tourStepState.clear();
+      }
+      
+      // Clean up any custom highlights
+      if (window.cleanupNeuralHighlight) {
+        window.cleanupNeuralHighlight();
       }
       
       // Destroy the driver (v1.x API)

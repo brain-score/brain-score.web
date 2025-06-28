@@ -94,6 +94,11 @@ class LeaderboardTour {
       this.stateManager.markTourCompleted();
     }
     
+    // Clean up any custom highlights
+    if (window.cleanupNeuralHighlight) {
+      window.cleanupNeuralHighlight();
+    }
+    
     // Restore interactive tour state if needed
     this.restoreInteractiveTourState();
     

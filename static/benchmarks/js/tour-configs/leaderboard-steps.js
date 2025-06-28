@@ -3,6 +3,22 @@
 
 window.tourConfigs = window.tourConfigs || {};
 
+// Helper Functions for Tour
+// Expand header columns to show child benchmarks
+function expandBenchmarkHeaders(columnIds) {
+  columnIds.forEach(columnId => {
+    // Find the header cell by column ID
+    const headerCell = document.querySelector(`.ag-header-cell[col-id="${columnId}"]`);
+    if (headerCell) {
+      const expandToggle = headerCell.querySelector('.expand-toggle');
+      if (expandToggle && expandToggle.textContent === '▾') {
+        // Only click if it's currently collapsed (showing downward arrow)
+        expandToggle.click();
+      }
+    }
+  });
+}
+
 // Step State Management for Interactive Tour
 // Tracks DOM changes to restore state when navigating backward
 window.tourStepState = {
@@ -49,12 +65,44 @@ window.tourStepState = {
         if (window.applyCombinedFilters) window.applyCombinedFilters();
       }, 100);
     }
+    
+    // Restore AG-Grid column visibility states
+    if (state.columnStates && window.globalGridApi) {
+      const columnStateArray = [];
+      state.columnStates.forEach((visible, colId) => {
+        columnStateArray.push({ colId, hide: !visible });
+      });
+      
+      if (columnStateArray.length > 0) {
+        window.globalGridApi.applyColumnState({ state: columnStateArray });
+      }
+    }
+    
+    // Restore column expansion states
+    if (state.expandedColumns && window.columnExpansionState) {
+      // First, collapse all columns that should be collapsed
+      const keyColumns = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0', 'V1_v0', 'V2_v0', 'V4_v0', 'IT_v0'];
+      keyColumns.forEach(colId => {
+        if (!state.expandedColumns.has(colId) && window.columnExpansionState.get(colId) === true) {
+          // Column should be collapsed but is currently expanded
+          const headerCell = document.querySelector(`.ag-header-cell[col-id="${colId}"]`);
+          if (headerCell) {
+            const expandToggle = headerCell.querySelector('.expand-toggle');
+            if (expandToggle && expandToggle.textContent === '▴') {
+              expandToggle.click();
+            }
+          }
+        }
+      });
+    }
   },
   
   // Get current DOM state for recording
   getCurrentState() {
     const collapsedNodes = [];
     const checkboxStates = new Map();
+    const columnStates = new Map();
+    const expandedColumns = new Set();
     
     // Record expanded/collapsed benchmark nodes
     document.querySelectorAll('.benchmark-node.collapsed').forEach(node => {
@@ -80,7 +128,27 @@ window.tourStepState = {
       }
     });
     
-    return { collapsedNodes, checkboxStates };
+    // Record AG-Grid column visibility states for key columns
+    if (window.globalGridApi) {
+      const keyColumns = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0', 'V1_v0', 'V2_v0', 'V4_v0', 'IT_v0'];
+      keyColumns.forEach(colId => {
+        const column = window.globalGridApi.getColumn(colId);
+        if (column) {
+          columnStates.set(colId, column.isVisible());
+        }
+      });
+      
+      // Record expanded column states
+      if (window.columnExpansionState) {
+        keyColumns.forEach(colId => {
+          if (window.columnExpansionState.get(colId) === true) {
+            expandedColumns.add(colId);
+          }
+        });
+      }
+    }
+    
+    return { collapsedNodes, checkboxStates, columnStates, expandedColumns };
   },
   
   // Clear all tracked state
@@ -90,6 +158,9 @@ window.tourStepState = {
   }
 };
 
+// ------------------------------------------------------------
+// Basic Tour
+// ------------------------------------------------------------
 window.tourConfigs.defaultTour = {
   steps: [
     {
@@ -120,16 +191,59 @@ window.tourConfigs.defaultTour = {
       element: '.expandable-header.neural',
       popover: {
         title: 'Neural Benchmarks',
-        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex. Click to expand and see individual neural benchmarks.',
-        position: 'bottom',
-        beforeShow: () => {
-          // Ensure neural column is visible
-          if (window.globalGridApi) {
-            window.globalGridApi.applyColumnState({
-              state: [{ colId: 'neural_vision_v0', hide: false }]
-            });
-          }
+        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex. Notice the expand toggle (▾) on the right - this lets you see individual neural benchmarks.',
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
         }
+        
+        // Ensure neural column is visible
+        if (window.globalGridApi) {
+          window.globalGridApi.applyColumnState({
+            state: [{ colId: 'neural_vision_v0', hide: false }]
+          });
+        }
+      }
+    },
+    {
+      element: '.expandable-header.neural .expand-toggle',
+      popover: {
+        title: 'Expansion Toggle',
+        description: 'This toggle button (▾) expands the Neural column to show individual brain area benchmarks like V1, V2, V4, and IT. I\'ll click it now to demonstrate!',
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+      }
+    },
+    {
+      element: '.ag-header-cell[col-id="V1_v0"]',
+      popover: {
+        title: 'Neural Brain Areas Revealed',
+        description: 'Perfect! I just expanded the Neural column and now you can see all four major neural benchmark categories: V1 (primary visual cortex), V2 (secondary visual cortex), V4 (color and shape processing), and IT (inferotemporal cortex for object recognition). Each tests how well models predict responses from different brain regions.',
+        position: 'top'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
+        // Expand neural benchmarks to show V1, V2, V4, IT columns
+        expandBenchmarkHeaders(['neural_vision_v0']);
+        
       }
     },
     {
@@ -137,14 +251,21 @@ window.tourConfigs.defaultTour = {
       popover: {
         title: 'Behavioral Benchmarks',
         description: 'These benchmarks test how well models predict human behavioral responses on tasks like object recognition and visual reasoning. Click to expand for detailed behavioral benchmarks.',
-        position: 'bottom',
-        beforeShow: () => {
-          // Ensure behavior column is visible
-          if (window.globalGridApi) {
-            window.globalGridApi.applyColumnState({
-              state: [{ colId: 'behavior_vision_v0', hide: false }]
-            });
-          }
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
+        // Ensure behavior column is visible
+        if (window.globalGridApi) {
+          window.globalGridApi.applyColumnState({
+            state: [{ colId: 'behavior_vision_v0', hide: false }]
+          });
         }
       }
     },
@@ -153,14 +274,21 @@ window.tourConfigs.defaultTour = {
       popover: {
         title: 'Engineering Benchmarks',
         description: 'Engineering benchmarks test practical computer vision capabilities like ImageNet classification. These are excluded from the global Brain-Score but help understand model capabilities.',
-        position: 'bottom',
-        beforeShow: () => {
-          // Ensure engineering column is visible
-          if (window.globalGridApi) {
-            window.globalGridApi.applyColumnState({
-              state: [{ colId: 'engineering_vision_v0', hide: false }]
-            });
-          }
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
+        // Ensure engineering column is visible
+        if (window.globalGridApi) {
+          window.globalGridApi.applyColumnState({
+            state: [{ colId: 'engineering_vision_v0', hide: false }]
+          });
         }
       }
     },
@@ -206,50 +334,9 @@ window.tourConfigs.defaultTour = {
   }
 };
 
-// Advanced features tour (for future expansion)
-window.tourConfigs.advancedFeaturesTour = {
-  steps: [
-    {
-      element: '#benchmarkFilterPanel',
-      popover: {
-        title: 'Benchmark Selection',
-        description: 'Select which benchmarks to include in your analysis. Uncheck benchmarks to exclude them from score calculations and see how rankings change.',
-        position: 'left'
-      }
-    },
-    {
-      element: '.filter-dropdown',
-      popover: {
-        title: 'Model Property Filters',
-        description: 'Filter models by their properties like architecture (ResNet, Vision Transformer), parameter count, model size, and more.',
-        position: 'top'
-      }
-    },
-    {
-      element: '.range-filter',
-      popover: {
-        title: 'Range Filters',
-        description: 'Use these sliders to filter models by numerical properties like parameter count or model size. Drag the handles to set your desired range.',
-        position: 'top'
-      }
-    },
-    {
-      element: '#toggleLayoutBtn',
-      popover: {
-        title: 'Layout Modes',
-        description: 'Switch between horizontal (filters above) and sidebar (filters on right) layouts for optimal viewing on different screen sizes.',
-        position: 'top'
-      }
-    }
-  ],
-  options: {
-    animate: true,
-    allowClose: true,
-    showProgress: true
-  }
-};
-
-// Interactive benchmark filter demonstration tour
+// ------------------------------------------------------------
+// Advanced Filters Tour
+// ------------------------------------------------------------
 window.tourConfigs.interactiveBenchmarkTour = {
   steps: [
     {
@@ -424,14 +511,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         position: 'left'
       }
     },
-    {
-      element: '.expandable-header.average', 
-      popover: {
-        title: 'Global Brain-Score Updated',
-        description: 'The global Brain-Score (Average column) has also recalculated! Since we removed a neural benchmark, the overall brain-relevance scores have changed. Some models may have moved up or down in ranking.',
-        position: 'bottom'
-      }
-    },
+          {
+        element: '.ag-header-cell[col-id="filtered_score"] .ag-header-cell-text', 
+        popover: {
+          title: 'Global Brain-Score Updated',
+          description: 'The global Brain-Score (Average column) has also recalculated! Since we removed a neural benchmark, the overall brain-relevance scores have changed. Some models may have moved up or down in ranking.',
+          position: 'bottom'
+        }
+      },
     {
       element: '.vision-parent input[value="behavior_vision_v0"]',
       popover: {
@@ -485,10 +572,10 @@ window.tourConfigs.interactiveBenchmarkTour = {
       }
     },
     {
-      element: '.expandable-header.average',
+      element: '.ag-header-cell[col-id="filtered_score"] .ag-header-cell-text',
       popover: {
         title: 'Recalculated Global Scores',
-        description: 'The global Brain-Score (Average column) now only includes Neural benchmarks since we disabled Behavioral ones. Notice how some models\' scores and rankings have changed. This is the power of benchmark filtering!',
+        description: 'The global Brain-Score (Filtered Score column) now only includes Neural benchmarks since we disabled Behavioral ones. Notice how some models\' scores and rankings have changed. This is the power of benchmark filtering!',
         position: 'bottom'
       }
     },
