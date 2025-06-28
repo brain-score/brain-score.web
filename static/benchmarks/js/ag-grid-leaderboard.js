@@ -2438,3 +2438,121 @@ function setInitialColumnState() {
     state: initialColumnState
   });
 }
+
+// Function to copy bibtex to clipboard with user feedback
+function copyBibtexToClipboard() {
+  const bibtexList = collectBenchmarkBibtex();
+  
+  if (bibtexList.length === 0) {
+    showTooltip('copyBibtexBtn', 'No citations found for selected benchmarks', 'warning');
+    return;
+  }
+  
+  // Format as a single string with double line breaks between entries
+  const formattedBibtex = bibtexList.join('\n\n');
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(formattedBibtex).then(() => {
+    const count = bibtexList.length;
+    const message = `Copied ${count} citation${count === 1 ? '' : 's'} to clipboard`;
+    showTooltip('copyBibtexBtn', message, 'success');
+  }).catch(err => {
+    console.error('Failed to copy to clipboard:', err);
+    showTooltip('copyBibtexBtn', 'Failed to copy to clipboard', 'error');
+  });
+}
+
+// Function to collect unique bibtex citations from currently selected benchmarks
+function collectBenchmarkBibtex() {
+  if (!window.originalRowData || window.originalRowData.length === 0) {
+    return [];
+  }
+
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  const bibtexSet = new Set();
+  
+  // Helper function to determine if a benchmark is a leaf (has no children)
+  function isLeafBenchmark(benchmarkId) {
+    const children = hierarchyMap.get(benchmarkId) || [];
+    return children.length === 0;
+  }
+  
+  // Use first model as reference for benchmark structure
+  const firstModel = window.originalRowData[0];
+  
+  // Go through each field in the model data
+  Object.keys(firstModel).forEach(fieldName => {
+    // Skip non-benchmark fields
+    if (fieldName === 'model' || fieldName === 'rank' || fieldName === 'metadata') {
+      return;
+    }
+    
+    const scoreData = firstModel[fieldName];
+    
+    // Check if this is a leaf benchmark with bibtex data
+    if (scoreData && 
+        typeof scoreData === 'object' && 
+        scoreData.benchmark && 
+        scoreData.benchmark.bibtex &&
+        isLeafBenchmark(fieldName)) {
+      
+      // Check if this benchmark is excluded using multiple patterns
+      const baseFieldName = fieldName.replace(/_v\d+$/, '');
+      const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
+      
+      const isExcluded = excludedBenchmarks.has(fieldName) ||
+                        excludedBenchmarks.has(baseFieldName) ||
+                        excludedBenchmarks.has(benchmarkTypeId);
+      
+      if (!isExcluded) {
+        const bibtex = scoreData.benchmark.bibtex.trim();
+        
+        // Add to set if valid (Set automatically handles duplicates)
+        if (bibtex && bibtex !== 'null') {
+          bibtexSet.add(bibtex);
+        }
+      }
+    }
+  });
+  
+  return Array.from(bibtexSet);
+}
+
+// Function to show tooltip feedback
+function showTooltip(elementId, message, type = 'info') {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  // Remove any existing tooltip
+  const existingTooltip = document.querySelector('.bibtex-tooltip');
+  if (existingTooltip) {
+    existingTooltip.remove();
+  }
+  
+  // Create tooltip element
+  const tooltip = document.createElement('div');
+  tooltip.className = `bibtex-tooltip bibtex-tooltip-${type}`;
+  tooltip.textContent = message;
+  
+  // Position tooltip above the button
+  const rect = element.getBoundingClientRect();
+  tooltip.style.position = 'fixed';
+  tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+  tooltip.style.top = `${rect.top - 10}px`;
+  tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+  tooltip.style.zIndex = '10000';
+  
+  document.body.appendChild(tooltip);
+  
+  // Auto-remove after 2.5 seconds
+  setTimeout(() => {
+    if (tooltip.parentNode) {
+      tooltip.parentNode.removeChild(tooltip);
+    }
+  }, 2500);
+}
+
+window.updateAllCountBadges = updateAllCountBadges;
+window.getFilteredLeafCount = getFilteredLeafCount;
+window.copyBibtexToClipboard = copyBibtexToClipboard;
