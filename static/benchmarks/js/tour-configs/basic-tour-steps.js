@@ -64,6 +64,18 @@ window.tourConfigs.defaultTour = {
         
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Actually click the count badge to demonstrate expansion
+        setTimeout(() => {
+          const neuralCountBadge = document.querySelector('.expandable-header.neural .benchmark-count');
+          if (neuralCountBadge) {
+            // Check if neural column is currently collapsed
+            const isExpanded = window.columnExpansionState && window.columnExpansionState.get('neural_vision_v0') === true;
+            if (!isExpanded) {
+              neuralCountBadge.click();
+            }
+          }
+        }, 500); // Small delay to let the step highlight show first
       }
     },
     {
