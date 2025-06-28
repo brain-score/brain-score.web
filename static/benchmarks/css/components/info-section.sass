@@ -14,19 +14,18 @@
   @media (max-width: 1024px)
     display: none
 
-// expand table to full width on mobile
+// Position content next to collapsed sidebar (80px) instead of full width
 .column.is-three-quarters.main-cell
    @media (max-width: 1024px)
-    width: 100%
+    width: calc(100% - 80px)
     position: absolute
-    left: 0
+    left: 80px
 
 .banner.box.gradient
   @media (max-width: 1024px)
-    width: 146%
-    margin-left: -45%
-    //position: absolute
-    //left: 0
+    // Size banner to fit available space without overflowing behind sidebar
+    width: calc(100% - 80px - 40px)
+    margin-left: 0
 
 
 

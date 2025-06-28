@@ -1,5 +1,12 @@
 {% load static %}
 
+<!-- Collapse button -->
+<div class="sidebar-toggle">
+    <button id="sidebarToggle" class="toggle-btn" aria-label="Toggle sidebar">
+        <span class="toggle-icon">☰</span>
+    </button>
+</div>
+
 <a class="brainscore-logo" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}">
     <img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo">
 </a>
@@ -79,3 +86,6 @@ document.addEventListener("DOMContentLoaded", function() {
     dropdownContent.style.display = ""; // Revert to original state
 });
 </script>
+
+<!-- Include sidebar toggle functionality -->
+<script src="{% static 'benchmarks/js/sidebar-toggle.js' %}"></script>
