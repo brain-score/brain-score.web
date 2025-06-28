@@ -20,14 +20,66 @@ function expandBenchmarkHeaders(columnIds) {
 }
 
 // Step State Management for Interactive Tour
-// Tracks DOM changes to restore state when navigating backward
+// Enhanced state management for tour step navigation and cleanup
 window.tourStepState = {
   currentStep: 0,
   states: new Map(),
+  initialState: null,
+  originalValues: new Map(),
+  
+  // Initialize and capture the starting state
+  initialize() {
+    this.clear();
+    this.captureOriginalValues();
+    this.initialState = this.getCurrentState();
+    console.log('🔄 Tour state initialized - captured initial state');
+  },
+  
+  // Capture original values for complete reset
+  captureOriginalValues() {
+    this.originalValues.clear();
+    
+    // Capture all benchmark checkbox states
+    document.querySelectorAll('input[type="checkbox"][value]').forEach(checkbox => {
+      this.originalValues.set(`checkbox_${checkbox.value}`, checkbox.checked);
+    });
+    
+    // Capture all tree node expansion states
+    document.querySelectorAll('.benchmark-node').forEach((node, index) => {
+      const input = node.querySelector('input[value]');
+      const identifier = input ? `node_${input.value}` : `node_${index}`;
+      this.originalValues.set(identifier, !node.classList.contains('collapsed'));
+    });
+    
+    // Capture AG-Grid column states if available
+    if (window.globalGridApi) {
+      const allColumns = window.globalGridApi.getColumns();
+      if (allColumns) {
+        allColumns.forEach(column => {
+          this.originalValues.set(`column_${column.getColId()}`, column.isVisible());
+        });
+      }
+    }
+    
+    // Capture column expansion states
+    if (window.columnExpansionState) {
+      window.columnExpansionState.forEach((expanded, colId) => {
+        this.originalValues.set(`expansion_${colId}`, expanded);
+      });
+    }
+  },
   
   // Record the state before making changes
   recordState(stepIndex, stateData) {
     this.states.set(stepIndex, stateData);
+    console.log(`📝 Recorded state for step ${stepIndex}`);
+  },
+  
+  // Helper function to record state before making changes in a beforeShow callback
+  recordCurrentStateForStep(stepIndex) {
+    if (!this.states.has(stepIndex)) {
+      this.recordState(stepIndex, this.getCurrentState());
+    }
   },
   
   // Restore state when going backward
@@ -151,10 +203,97 @@ window.tourStepState = {
     return { collapsedNodes, checkboxStates, columnStates, expandedColumns };
   },
   
+  // Restore to original state (complete reset)
+  resetToOriginal() {
+    console.log('🔄 Resetting to original state...');
+    
+    // Reset all checkboxes to original state
+    this.originalValues.forEach((originalValue, key) => {
+      if (key.startsWith('checkbox_')) {
+        const value = key.replace('checkbox_', '');
+        const checkbox = document.querySelector(`input[type="checkbox"][value="${value}"]`);
+        if (checkbox && checkbox.checked !== originalValue) {
+          checkbox.checked = originalValue;
+          
+          // Trigger change event
+          const changeEvent = new Event('change', { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
+        }
+      }
+    });
+    
+    // Reset tree node expansion states
+    this.originalValues.forEach((originalExpanded, key) => {
+      if (key.startsWith('node_')) {
+        const value = key.replace('node_', '');
+        const node = document.querySelector(`input[value="${value}"]`)?.closest('.benchmark-node');
+        if (node) {
+          const isCurrentlyExpanded = !node.classList.contains('collapsed');
+          if (isCurrentlyExpanded !== originalExpanded) {
+            const toggle = node.querySelector('.tree-toggle');
+            if (toggle) toggle.click();
+          }
+        }
+      }
+    });
+    
+    // Reset AG-Grid column visibility
+    if (window.globalGridApi) {
+      const columnStateArray = [];
+      this.originalValues.forEach((originalVisible, key) => {
+        if (key.startsWith('column_')) {
+          const colId = key.replace('column_', '');
+          columnStateArray.push({ colId, hide: !originalVisible });
+        }
+      });
+      
+      if (columnStateArray.length > 0) {
+        window.globalGridApi.applyColumnState({ state: columnStateArray });
+      }
+    }
+    
+    // Reset column expansion states
+    if (window.columnExpansionState) {
+      this.originalValues.forEach((originalExpanded, key) => {
+        if (key.startsWith('expansion_')) {
+          const colId = key.replace('expansion_', '');
+          const currentExpanded = window.columnExpansionState.get(colId) === true;
+          
+          if (currentExpanded !== originalExpanded) {
+            const headerCell = document.querySelector(`.ag-header-cell[col-id="${colId}"]`);
+            if (headerCell) {
+              const expandToggle = headerCell.querySelector('.expand-toggle');
+              if (expandToggle) {
+                expandToggle.click();
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Close advanced filters if they were opened during tour
+    const advancedFilters = document.getElementById('advanced-filters');
+    if (advancedFilters && !advancedFilters.classList.contains('hidden')) {
+      const toggleButton = document.querySelector('button[onclick="toggleAdvancedFilters()"]');
+      if (toggleButton) toggleButton.click();
+    }
+    
+    // Update grid after all changes
+    setTimeout(() => {
+      if (window.updateExclusions) window.updateExclusions();
+      if (window.applyCombinedFilters) window.applyCombinedFilters();
+    }, 200);
+    
+    console.log('✅ Reset to original state complete');
+  },
+  
   // Clear all tracked state
   clear() {
     this.states.clear();
     this.currentStep = 0;
+    this.initialState = null;
+    this.originalValues.clear();
   }
 };
 
@@ -198,9 +337,7 @@ window.tourConfigs.defaultTour = {
         const stepIndex = options.state.activeIndex;
         
         // Record current state before making changes
-        if (!window.tourStepState.states.has(stepIndex)) {
-          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
-        }
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
         
         // Ensure neural column is visible
         if (window.globalGridApi) {
@@ -221,9 +358,7 @@ window.tourConfigs.defaultTour = {
         const stepIndex = options.state.activeIndex;
         
         // Record current state before making changes
-        if (!window.tourStepState.states.has(stepIndex)) {
-          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
-        }
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
       }
     },
     {
@@ -421,25 +556,76 @@ window.tourConfigs.interactiveBenchmarkTour = {
     {
       element: 'input[value="V1_v0"]',
       popover: {
-        title: 'V1 Neural Benchmarks',
-        description: 'V1 benchmarks test predictions of primary visual cortex responses. Let me expand this category to show specific V1 tests, then deselect one to demonstrate real-time changes.',
+        title: 'Category-Level Filtering Demo',
+        description: 'I\'ll expand both Neural and V1 categories to show the tree structure. Notice how the V1 category contains individual benchmarks like FreemanZiemba2013. This hierarchy lets you filter at different levels of granularity.',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
         const stepIndex = options.state.activeIndex;
         
         // Record current state before making changes
-        if (!window.tourStepState.states.has(stepIndex)) {
-          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
-        }
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Expand V1 benchmarks
-        const v1Node = document.querySelector('input[value="V1_v0"]').closest('.benchmark-node');
-        if (v1Node && v1Node.classList.contains('collapsed')) {
-          const toggle = v1Node.querySelector('.tree-toggle');
-          if (toggle) {
-            toggle.click();
+        // Expand leaderboard columns like the basic tour does
+        expandBenchmarkHeaders(['neural_vision_v0']);
+        
+        // Expand the filter tree to show the hierarchy
+        setTimeout(() => {
+          // Find neural category in filter tree and expand it
+          const neuralNode = document.querySelector('input[value="neural_vision_v0"]')?.closest('.benchmark-node');
+          if (neuralNode && neuralNode.classList.contains('collapsed')) {
+            const neuralToggle = neuralNode.querySelector('.tree-toggle, .expand-toggle, [data-toggle]');
+            if (neuralToggle) {
+              neuralToggle.click();
+            }
           }
+          
+          // Small delay before expanding V1 to show the progression
+          setTimeout(() => {
+            // Find and expand V1 subcategory
+            const v1Node = document.querySelector('input[value="V1_v0"]')?.closest('.benchmark-node');
+            if (v1Node && v1Node.classList.contains('collapsed')) {
+              const v1Toggle = v1Node.querySelector('.tree-toggle, .expand-toggle, [data-toggle]');
+              if (v1Toggle) {
+                v1Toggle.click();
+              }
+            }
+          }, 300);
+        }, 100);
+      }
+    },
+    {
+      element: 'input[value="V1_v0"]',
+      popover: {
+        title: 'Deselecting V1 Category',
+        description: 'Now I\'ll deselect the V1 category to demonstrate category-level filtering. Watch as all V1 benchmarks get excluded and the V1 columns disappear from the leaderboard, but the tree stays expanded so you can see what was filtered out!',
+        position: 'left'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Deselect V1 checkbox to show category filtering
+        const v1Checkbox = document.querySelector('input[value="V1_v0"]');
+        if (v1Checkbox && v1Checkbox.checked) {
+          // Set checkbox state
+          v1Checkbox.checked = false;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          v1Checkbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
         }
       }
     },
@@ -458,49 +644,32 @@ window.tourConfigs.interactiveBenchmarkTour = {
           window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
         }
         
-        // Ensure neural_vision is expanded (backup safety check)
-        const neuralNode = document.querySelector('input[value="neural_vision_v0"]').closest('.benchmark-node');
-        if (neuralNode && neuralNode.classList.contains('collapsed')) {
-          const toggle = neuralNode.querySelector('.tree-toggle');
-          if (toggle) toggle.click();
+        // Store original state for restoration
+        const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
+        if (freemanCheckbox) {
+          window._tourOriginalFreemanState = freemanCheckbox.checked;
         }
         
-        // Ensure V1 is expanded (backup safety check)
-        const v1Node = document.querySelector('input[value="V1_v0"]').closest('.benchmark-node');
-        if (v1Node && v1Node.classList.contains('collapsed')) {
-          const toggle = v1Node.querySelector('.tree-toggle');
-          if (toggle) toggle.click();
-        }
-        
-        // Small delay to ensure expansions complete
-        setTimeout(() => {
-          // Store original state for restoration
-          const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
-          if (freemanCheckbox) {
-            window._tourOriginalFreemanState = freemanCheckbox.checked;
-          }
+        // Uncheck the Freeman-Ziemba benchmark properly
+        if (freemanCheckbox && freemanCheckbox.checked) {
           
-          // Uncheck the Freeman-Ziemba benchmark properly
-          if (freemanCheckbox && freemanCheckbox.checked) {
-            
-            // Set checkbox state
-            freemanCheckbox.checked = false;
-            
-            // Trigger change event manually
-            const changeEvent = new Event('change', { bubbles: true });
-            freemanCheckbox.dispatchEvent(changeEvent);
-            
-            // Call update functions with a small delay to ensure DOM is updated
-            setTimeout(() => {
-              if (window.updateExclusions) {
-                window.updateExclusions();
-              }
-              if (window.applyCombinedFilters) {
-                window.applyCombinedFilters();
-              }
-            }, 100);
-          }
-        }, 200); // Give time for expansions to complete
+          // Set checkbox state
+          freemanCheckbox.checked = false;
+          
+          // Trigger change event manually
+          const changeEvent = new Event('change', { bubbles: true });
+          freemanCheckbox.dispatchEvent(changeEvent);
+          
+          // Call update functions with a small delay to ensure DOM is updated
+          setTimeout(() => {
+            if (window.updateExclusions) {
+              window.updateExclusions();
+            }
+            if (window.applyCombinedFilters) {
+              window.applyCombinedFilters();
+            }
+          }, 100);
+        }
       }
     },
     {

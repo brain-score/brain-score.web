@@ -99,8 +99,13 @@ class LeaderboardTour {
       window.cleanupNeuralHighlight();
     }
     
-    // Restore interactive tour state if needed
-    this.restoreInteractiveTourState();
+    // Reset to original state using enhanced state management
+    if (window.tourStepState && window.tourStepState.resetToOriginal) {
+      window.tourStepState.resetToOriginal();
+    } else {
+      // Fallback to old restoration method
+      this.restoreInteractiveTourState();
+    }
     
     // Restore grid state
     this.restoreGridState();
@@ -172,9 +177,28 @@ class LeaderboardTour {
    * Start the tour with specified configuration
    */
   startTour(configName = 'default') {
-    // Clear any previous tour state
+    // Reset all filters to ensure clean starting state
+    if (window.resetAllFilters) {
+      window.resetAllFilters();
+      
+      // Brief delay to ensure filter reset completes before state initialization
+      setTimeout(() => {
+        this.initializeAndStartTour(configName);
+      }, 200);
+      return;
+    } else {
+      // Fallback if resetAllFilters is not available
+      this.initializeAndStartTour(configName);
+    }
+  }
+
+  /**
+   * Initialize state management and start tour (split from startTour for async reset)
+   */
+  initializeAndStartTour(configName) {
+    // Initialize state management system
     if (window.tourStepState) {
-      window.tourStepState.clear();
+      window.tourStepState.initialize();
     }
     
     // Load configuration
@@ -214,17 +238,15 @@ class LeaderboardTour {
       },
       
       onReset: () => {
-        console.log('Tour: Reset/Close triggered');
         this.onTourComplete(false);
       },
       
       onHighlighted: (element) => {
-        console.log('Tour: Element highlighted:', element);
         this.handleStepHighlight(element);
       },
       
       onDeselected: (element) => {
-        console.log('Tour: Element deselected:', element);
+        // Element deselected
       }
     };
 
