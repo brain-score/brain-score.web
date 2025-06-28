@@ -35,7 +35,7 @@ window.tourConfigs.defaultTour = {
       element: '.expandable-header.neural',
       popover: {
         title: 'Neural Benchmarks',
-        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex. Notice the expand toggle (▾) on the right - this lets you see individual neural benchmarks.',
+        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex. Notice the count badge on the bottom right - this shows how many benchmarks are included and lets you expand to see individual neural benchmarks.',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
@@ -53,10 +53,10 @@ window.tourConfigs.defaultTour = {
       }
     },
     {
-      element: '.expandable-header.neural .expand-toggle',
+      element: '.expandable-header.neural .benchmark-count',
       popover: {
-        title: 'Expansion Toggle',
-        description: 'This toggle button (▾) expands the Neural column to show individual brain area benchmarks like V1, V2, V4, and IT. I\'ll click it now to demonstrate!',
+        title: 'Expansion Count Badge',
+        description: 'This count badge shows how many neural benchmarks are included (like "4") and doubles as an expand button! Click on it to reveal individual brain area benchmarks like V1, V2, V4, and IT. I\'ll click it now to demonstrate!',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {

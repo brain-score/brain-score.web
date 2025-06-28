@@ -31,10 +31,14 @@ function expandBenchmarkHeaders(columnIds) {
     // Find the header cell by column ID
     const headerCell = document.querySelector(`.ag-header-cell[col-id="${columnId}"]`);
     if (headerCell) {
-      const expandToggle = headerCell.querySelector('.expand-toggle');
-      if (expandToggle && expandToggle.textContent === '▾') {
-        // Only click if it's currently collapsed (showing downward arrow)
-        expandToggle.click();
+      const expandButton = headerCell.querySelector('.benchmark-count');
+      if (expandButton) {
+        // Check if column is currently collapsed (expansion state false or undefined)
+        const isExpanded = window.columnExpansionState && window.columnExpansionState.get(columnId) === true;
+        if (!isExpanded) {
+          // Only click if it's currently collapsed
+          expandButton.click();
+        }
       }
     }
   });
@@ -214,13 +218,18 @@ window.tourStepState = {
       keyColumns.forEach(colId => {
         if (!state.expandedColumns.has(colId) && window.columnExpansionState.get(colId) === true) {
           // Column should be collapsed but is currently expanded
-          const headerCell = document.querySelector(`.ag-header-cell[col-id="${colId}"]`);
-          if (headerCell) {
-            const expandToggle = headerCell.querySelector('.expand-toggle');
-            if (expandToggle && expandToggle.textContent === '▴') {
-              expandToggle.click();
+                  const headerCell = document.querySelector(`.ag-header-cell[col-id="${colId}"]`);
+        if (headerCell) {
+          const expandButton = headerCell.querySelector('.benchmark-count');
+          if (expandButton) {
+            // Check if column is currently expanded
+            const isExpanded = window.columnExpansionState && window.columnExpansionState.get(colId) === true;
+            if (isExpanded) {
+              // Only click to collapse if it's currently expanded
+              expandButton.click();
             }
           }
+        }
         }
       });
     }
@@ -337,10 +346,10 @@ window.tourStepState = {
           if (currentExpanded !== originalExpanded) {
             const headerCell = document.querySelector(`.ag-header-cell[col-id="${colId}"]`);
             if (headerCell) {
-              const expandToggle = headerCell.querySelector('.expand-toggle');
-              if (expandToggle) {
-                expandToggle.click();
-              }
+                    const expandButton = headerCell.querySelector('.benchmark-count');
+      if (expandButton) {
+        expandButton.click();
+      }
             }
           }
         }
@@ -385,10 +394,10 @@ window.tourConfigs.stepHandlers = {
   expandBenchmark: (benchmarkId) => {
     if (window.globalGridApi) {
       const allCols = window.globalGridApi.getAllGridColumns();
-      const targetCol = allCols.find(col => col.getColId() === benchmarkId);
+      const targetCol = allCols.find(col => col.getColDef().field === benchmarkId);
       if (targetCol) {
         const colDef = targetCol.getColDef();
-        const toggle = document.querySelector(`[data-benchmark="${benchmarkId}"] .expand-toggle`);
+        const toggle = document.querySelector(`[data-benchmark="${benchmarkId}"] .tree-toggle`);
         if (toggle && colDef.context?.parentField) {
           toggle.click();
         }
