@@ -3,6 +3,93 @@
 
 window.tourConfigs = window.tourConfigs || {};
 
+// Step State Management for Interactive Tour
+// Tracks DOM changes to restore state when navigating backward
+window.tourStepState = {
+  currentStep: 0,
+  states: new Map(),
+  
+  // Record the state before making changes
+  recordState(stepIndex, stateData) {
+    this.states.set(stepIndex, stateData);
+  },
+  
+  // Restore state when going backward
+  restoreState(stepIndex) {
+    const state = this.states.get(stepIndex);
+    if (!state) return;
+    
+    // Restore collapsed/expanded states
+    if (state.collapsedNodes) {
+      state.collapsedNodes.forEach(nodeSelector => {
+        const node = document.querySelector(nodeSelector);
+        if (node && !node.classList.contains('collapsed')) {
+          const toggle = node.querySelector('.tree-toggle');
+          if (toggle) toggle.click();
+        }
+      });
+    }
+    
+    // Restore checkbox states
+    if (state.checkboxStates) {
+      state.checkboxStates.forEach((checked, selector) => {
+        const checkbox = document.querySelector(selector);
+        if (checkbox && checkbox.checked !== checked) {
+          checkbox.checked = checked;
+          
+          // Trigger change event
+          const changeEvent = new Event('change', { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
+        }
+      });
+      
+      // Update grid after checkbox changes
+      setTimeout(() => {
+        if (window.updateExclusions) window.updateExclusions();
+        if (window.applyCombinedFilters) window.applyCombinedFilters();
+      }, 100);
+    }
+  },
+  
+  // Get current DOM state for recording
+  getCurrentState() {
+    const collapsedNodes = [];
+    const checkboxStates = new Map();
+    
+    // Record expanded/collapsed benchmark nodes
+    document.querySelectorAll('.benchmark-node.collapsed').forEach(node => {
+      const input = node.querySelector('input[value]');
+      if (input) {
+        collapsedNodes.push(`input[value="${input.value}"]`);
+      }
+    });
+    
+    // Record checkbox states for key benchmarks
+    const keyCheckboxes = [
+      'input[value="neural_vision_v0"]',
+      'input[value="V1_v0"]', 
+      'input[value="FreemanZiemba2013.V1-pls_v2"]',
+      'input[value="behavior_vision_v0"]',
+      'input[value="engineering_vision_v0"]'
+    ];
+    
+    keyCheckboxes.forEach(selector => {
+      const checkbox = document.querySelector(selector);
+      if (checkbox) {
+        checkboxStates.set(selector, checkbox.checked);
+      }
+    });
+    
+    return { collapsedNodes, checkboxStates };
+  },
+  
+  // Clear all tracked state
+  clear() {
+    this.states.clear();
+    this.currentStep = 0;
+  }
+};
+
 window.tourConfigs.defaultTour = {
   steps: [
     {
@@ -226,7 +313,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'Neural benchmarks measure how well models predict brain responses. I\'ll expand this category to show you specific neural benchmarks like V1, V2, V4, and IT cortex predictions.',
         position: 'left'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Expand neural benchmarks
         const neuralNode = document.querySelector('input[value="neural_vision_v0"]').closest('.benchmark-node');
         if (neuralNode && neuralNode.classList.contains('collapsed')) {
@@ -244,7 +338,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'V1 benchmarks test predictions of primary visual cortex responses. Let me expand this category to show specific V1 tests, then deselect one to demonstrate real-time changes.',
         position: 'left'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Expand V1 benchmarks
         const v1Node = document.querySelector('input[value="V1_v0"]').closest('.benchmark-node');
         if (v1Node && v1Node.classList.contains('collapsed')) {
@@ -262,7 +363,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'This is the FreemanZiemba2013.V1-pls benchmark - a specific test of V1 texture processing. I\'ll deselect it now to show you how the leaderboard updates in real-time!',
         position: 'left'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Ensure neural_vision is expanded (backup safety check)
         const neuralNode = document.querySelector('input[value="neural_vision_v0"]').closest('.benchmark-node');
         if (neuralNode && neuralNode.classList.contains('collapsed')) {
@@ -331,7 +439,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'Behavioral benchmarks are already expanded. Let me show you what happens when we deselect all behavioral benchmarks to isolate neural performance.',
         position: 'left'  
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Restore the Freeman benchmark first
         const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
         if (freemanCheckbox && !freemanCheckbox.checked && window._tourOriginalFreemanState) {
@@ -384,7 +499,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'Engineering benchmarks (like ImageNet) are excluded by default because they don\'t measure brain-like processing. Let me show you what happens when we include them.',
         position: 'left'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Expand engineering parent if collapsed
         const engineeringParent = document.querySelector('.engineering-parent');
         if (engineeringParent && engineeringParent.classList.contains('collapsed')) {
@@ -400,7 +522,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'I\'m now checking Engineering benchmarks. Watch as new columns appear in the leaderboard, but note they don\'t affect the global Brain-Score!',
         position: 'left'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Check engineering benchmarks
         const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
         if (engineeringCheckbox && !engineeringCheckbox.checked) {
@@ -438,7 +567,14 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'Notice that the global Brain-Score (Average column) didn\'t change when we added Engineering benchmarks. Only Neural and Behavioral benchmarks contribute to brain-relevance scoring.',
         position: 'bottom'
       },
-      beforeShow: () => {
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        if (!window.tourStepState.states.has(stepIndex)) {
+          window.tourStepState.recordState(stepIndex, window.tourStepState.getCurrentState());
+        }
+        
         // Restore behavioral benchmarks for final demonstration
         const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
         if (behaviorCheckbox && !behaviorCheckbox.checked) {

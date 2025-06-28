@@ -50,6 +50,16 @@ class TourDriver {
         if (callbacks.onPrevious) {
           callbacks.onPrevious();
         }
+        
+        // Handle state restoration for interactive tours
+        const currentStepIndex = options.state.activeIndex;
+        const prevStepIndex = currentStepIndex - 1;
+        
+        // Restore state for the previous step if state tracking is available
+        if (window.tourStepState && prevStepIndex >= 0) {
+          window.tourStepState.restoreState(currentStepIndex);
+        }
+        
         // Move to previous step (required in v1.x when overriding onPrevClick)
         this.driver.movePrevious();
       },
@@ -180,6 +190,11 @@ class TourDriver {
     if (this.driver && !this.isStopping) {
       // Set flag to prevent recursive calls
       this.isStopping = true;
+      
+      // Clear tour state tracking if available
+      if (window.tourStepState) {
+        window.tourStepState.clear();
+      }
       
       // Destroy the driver (v1.x API)
       this.driver.destroy();

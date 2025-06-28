@@ -167,6 +167,11 @@ class LeaderboardTour {
    * Start the tour with specified configuration
    */
   startTour(configName = 'default') {
+    // Clear any previous tour state
+    if (window.tourStepState) {
+      window.tourStepState.clear();
+    }
+    
     // Load configuration
     this.currentConfig = this.configLoader.loadTourConfig(configName);
     if (!this.currentConfig) {
