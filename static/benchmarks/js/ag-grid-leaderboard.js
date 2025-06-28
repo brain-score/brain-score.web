@@ -20,6 +20,10 @@ window.activeFilters = {
 // Global state for tracking column expansion
 window.columnExpansionState = new Map();
 
+// =====================================
+// CELL RENDERERS
+// =====================================
+
 // ModelCellRenderer
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
@@ -41,6 +45,66 @@ ModelCellRenderer.prototype.init = function(params) {
 ModelCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
+
+// =====================================
+// RUNNABLE STATUS FUNCTIONALITY
+// =====================================
+// This section handles the display of model code runnable status as colored
+// circles in a dedicated Status column with tooltips explaining the status.
+// Green = functional, Red = issues, Grey = unknown
+
+// RunnableStatusCellRenderer - displays colored status circles with tooltips
+function RunnableStatusCellRenderer() {}
+RunnableStatusCellRenderer.prototype.init = function(params) {
+  this.eGui = document.createElement('div');
+  this.eGui.className = 'runnable-status-cell';
+  
+  const runnable = params.data?.metadata?.runnable;
+  const statusIcon = document.createElement('div');
+  statusIcon.className = 'runnable-status-icon';
+  
+  if (runnable === true) {
+    statusIcon.classList.add('runnable-green');
+  } else if (runnable === false) {
+    statusIcon.classList.add('runnable-red');
+  } else {
+    statusIcon.classList.add('runnable-grey');
+  }
+  
+  this.eGui.appendChild(statusIcon);
+};
+RunnableStatusCellRenderer.prototype.getGui = function() {
+  return this.eGui;
+};
+
+// Helper function to create runnable status column definition
+function createRunnableStatusColumn() {
+  return {
+    headerName: 'Status',
+    field: 'runnable_status',
+    colId: 'runnable_status',
+    pinned: 'left',
+    width: 80,
+    cellRenderer: 'runnableStatusCellRenderer',
+    sortable: true,
+    filter: false,
+    headerClass: 'centered-header',
+    valueGetter: params => {
+      const runnable = params.data?.metadata?.runnable;
+      return runnable === true ? 2 : runnable === false ? 1 : 0; // For sorting: green > red > grey
+    },
+    tooltipValueGetter: params => {
+      const runnable = params.data?.metadata?.runnable;
+      if (runnable === true) {
+        return 'Model code is functional and runnable';
+      } else if (runnable === false) {
+        return 'Model code has known issues or is non-functional';
+      } else {
+        return 'Model code status unknown';
+      }
+    }
+  };
+}
 
 // Model Comparator for sorting models by name
 function modelComparator(a, b) {
@@ -2138,6 +2202,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   });
 
+  // Add the runnable status column
+  const runnableStatusColumn = createRunnableStatusColumn();
+
   // Add the filtered score column
   const filteredScoreColumn = {
     headerName: 'Filtered Score',
@@ -2171,12 +2238,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   };
 
-  // Insert filtered score column after the model column
+  // Insert columns after the model column
   const modelColumnIndex = columnDefs.findIndex(col => col.field === 'model');
   if (modelColumnIndex !== -1) {
-    columnDefs.splice(modelColumnIndex + 1, 0, filteredScoreColumn);
+    columnDefs.splice(modelColumnIndex + 1, 0, runnableStatusColumn, filteredScoreColumn);
   } else {
-    columnDefs.push(filteredScoreColumn);
+    columnDefs.push(runnableStatusColumn, filteredScoreColumn);
   }
 
   const gridOptions = {
@@ -2184,9 +2251,16 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     columnDefs,
     headerHeight: 60,
     rowHeight: 60,
+    tooltipShowDelay: 500, // Show tooltip after 0.5 seconds
     components: {
+      // Core cell renderers
       modelCellRenderer: ModelCellRenderer,
       scoreCellRenderer: ScoreCellRenderer,
+      
+      // Runnable status functionality
+      runnableStatusCellRenderer: RunnableStatusCellRenderer,
+      
+      // Header components
       expandableHeaderComponent: ExpandableHeaderComponent,
       leafComponent: LeafHeaderComponent,
     },
@@ -2220,6 +2294,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
+          { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
           { colId: 'average_vision_v0', hide: false }
         ]
@@ -2355,8 +2430,8 @@ function updateColumnVisibility() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Skip non-benchmark columns
-    if (['model', 'rank', 'filtered_score', 'average_vision_v0'].includes(colId)) {
+    // Skip non-benchmark columns (including runnable status)
+    if (['model', 'rank', 'runnable_status', 'filtered_score', 'average_vision_v0'].includes(colId)) {
       return;
     }
     
@@ -2389,8 +2464,8 @@ function setInitialColumnState() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Always show these columns
-    if (['model', 'rank', 'filtered_score'].includes(colId)) {
+    // Always show these columns (including runnable status)
+    if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
     }
