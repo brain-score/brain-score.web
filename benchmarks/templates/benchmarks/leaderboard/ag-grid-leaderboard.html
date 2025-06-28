@@ -18,6 +18,10 @@
     
     <div id="leaderboardSearchWrapper">
       <input type="text" id="modelSearchInput" placeholder="Search for model or submitter..." />
+      <button id="tutorialBtn" class="btn-secondary">
+        <span class="tutorial-icon">📚</span>
+        <span class="text-wrapper">Tutorial</span>
+      </button>
       <button id="advancedFilterBtn">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
@@ -228,7 +232,15 @@
   {# 2) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 3) Kick it off once the DOM is ready #}
+  {# 3) Load Driver.js for tutorial functionality #}
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@0.9.8/dist/driver.min.js"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/leaderboard-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  {# 4) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');
