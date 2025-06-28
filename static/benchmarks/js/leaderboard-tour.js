@@ -513,4 +513,4 @@ function createTutorialDropdown(tour) {
 }
 
 // Export for potential use in other modules
-window.LeaderboardTour = LeaderboardTour; 
+window.LeaderboardTour = LeaderboardTour;

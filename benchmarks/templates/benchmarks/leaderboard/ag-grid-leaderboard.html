@@ -238,7 +238,10 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
   <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
   <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
   <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/leaderboard-steps.js' %}"></script>
+  {# Load tour configurations in dependency order #}
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
 
   {# 4) Kick it off once the DOM is ready #}
