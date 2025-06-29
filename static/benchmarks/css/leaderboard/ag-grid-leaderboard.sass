@@ -98,6 +98,41 @@ button,
     color: #666
     font-style: italic
 
+// Runnable status cell
+.ag-cell[col-id="runnable_status"]
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+.runnable-status-cell
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+.runnable-status-icon
+  width: 12px
+  height: 12px
+  border-radius: 50%
+  cursor: help
+  position: relative
+  z-index: 1
+  
+  &.runnable-green
+    background-color: #28a745
+  
+  &.runnable-red
+    background-color: #dc3545
+  
+  &.runnable-grey
+    background-color: #6c757d
+
+// Ensure tooltips work properly
+.runnable-status-cell,
+.runnable-status-icon
+  pointer-events: auto
+
 // Score pill container
 .score-pill-container
   display: flex
