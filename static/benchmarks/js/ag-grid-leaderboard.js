@@ -2333,8 +2333,6 @@ function setInitialColumnState() {
   });
 }
 
-
-
 // Function to copy bibtex to clipboard with user feedback
 function copyBibtexToClipboard() {
   const bibtexList = collectBenchmarkBibtex();
@@ -2358,7 +2356,7 @@ function copyBibtexToClipboard() {
   });
 }
 
-// Function to collect unique bibtex citations from currently selected benchmarks
+// Function to collect unique bibtex citations for benchmarks that are not excluded
 function collectBenchmarkBibtex() {
   if (!window.originalRowData || window.originalRowData.length === 0) {
     return [];
@@ -2375,12 +2373,14 @@ function collectBenchmarkBibtex() {
   }
   
   // Use first model as reference for benchmark structure
+  // Assumes first model has no missing scores. leaderboard.py only creates fields for benchmarks where the model has scores.
+  // leaderboard.py serializes (i.e., flattens) the scores object, so the benchmark data is available at the top level.
   const firstModel = window.originalRowData[0];
   
   // Go through each field in the model data
   Object.keys(firstModel).forEach(fieldName => {
     // Skip non-benchmark fields
-    if (fieldName === 'model' || fieldName === 'rank' || fieldName === 'metadata') {
+    if (fieldName === 'id' || fieldName === 'rank' || fieldName === 'model' || fieldName === 'metadata') {
       return;
     }
     
@@ -2394,9 +2394,11 @@ function collectBenchmarkBibtex() {
         isLeafBenchmark(fieldName)) {
       
       // Check if this benchmark is excluded using multiple patterns
+      // Assumes string format is benchmarkName_v{version_number}
       const baseFieldName = fieldName.replace(/_v\d+$/, '');
       const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
       
+      // Makes sure that we do not include benchmarks that we have excluded.
       const isExcluded = excludedBenchmarks.has(fieldName) ||
                         excludedBenchmarks.has(baseFieldName) ||
                         excludedBenchmarks.has(benchmarkTypeId);
