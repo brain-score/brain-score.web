@@ -230,10 +230,13 @@
     src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
   </script>
 
-  {# 2) Load your grid-wrapper JS (where you define initializeGrid) #}
+  {# 2) Load tooltip component JS #}
+  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+
+  {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 3) Kick it off once the DOM is ready #}
+  {# 4) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');

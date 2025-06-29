@@ -2417,36 +2417,3 @@ function collectBenchmarkBibtex() {
   return Array.from(bibtexSet);
 }
 
-// Function to show tooltip feedback
-function showTooltip(elementId, message, type = 'info') {
-  const element = document.getElementById(elementId);
-  if (!element) return;
-  
-  // Remove any existing tooltip
-  const existingTooltip = document.querySelector('.bibtex-tooltip');
-  if (existingTooltip) {
-    existingTooltip.remove();
-  }
-  
-  // Create tooltip element
-  const tooltip = document.createElement('div');
-  tooltip.className = `bibtex-tooltip bibtex-tooltip-${type}`;
-  tooltip.textContent = message;
-  
-  // Position tooltip above the button
-  const rect = element.getBoundingClientRect();
-  tooltip.style.position = 'fixed';
-  tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
-  tooltip.style.top = `${rect.top - 10}px`;
-  tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
-  tooltip.style.zIndex = '10000';
-  
-  document.body.appendChild(tooltip);
-  
-  // Auto-remove after 2.5 seconds
-  setTimeout(() => {
-    if (tooltip.parentNode) {
-      tooltip.parentNode.removeChild(tooltip);
-    }
-  }, 2500);
-}
