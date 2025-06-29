@@ -19,10 +19,6 @@
  * 4. CLEANUP:
  *    - Tour completion/cancellation: resetToOriginal() restores complete initial state
  *    - All filters, expansions, and selections returned to starting configuration
- * 
- * 5. FALLBACK SUPPORT:
- *    - Enhanced system preferred, legacy restoration methods as fallback
- *    - Comprehensive error handling and validation throughout
  */
 
 // Initialize tour configurations namespace
