@@ -85,11 +85,18 @@ class TourConfigLoader {
     
     // Validate each step
     for (const step of config.steps) {
-      if (!step.element || !step.popover) {
+      // Step must have popover
+      if (!step.popover) {
         return false;
       }
       
+      // Popover must have title and description
       if (!step.popover.title || !step.popover.description) {
+        return false;
+      }
+      
+      // Element is optional for center-positioned popovers
+      if (!step.element && step.popover.position !== 'center') {
         return false;
       }
     }

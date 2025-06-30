@@ -31,14 +31,19 @@ function expandBenchmarkHeaders(columnIds) {
     // Find the header cell by column ID
     const headerCell = document.querySelector(`.ag-header-cell[col-id="${columnId}"]`);
     if (headerCell) {
-      const expandToggle = headerCell.querySelector('.expand-toggle');
-      if (expandToggle && expandToggle.textContent === '▾') {
-        // Only click if it's currently collapsed (showing downward arrow)
-        expandToggle.click();
+      const countBadge = headerCell.querySelector('.benchmark-count');
+      if (countBadge) {
+        // Check if currently collapsed by looking at the icon class
+        const icon = countBadge.querySelector('i');
+        if (icon && icon.className.includes('fa-up-right-and-down-left-from-center')) {
+          // Only click if it's currently collapsed (showing expand icon)
+          countBadge.click();
+        }
       }
     }
   });
 }
+
 
 // Scroll element into view within the benchmark filter panel
 function scrollElementIntoView(element, container = null) {
@@ -437,8 +442,8 @@ window.tourConfigs.stepHandlers = {
   // Auto-scroll highlighted elements into view for better tour experience
   ensureElementVisible: (elementSelector) => {
     const element = document.querySelector(elementSelector);
-    if (element && window.scrollElementIntoView) {
-      window.scrollElementIntoView(element);
+    if (element) {
+      scrollElementIntoView(element);
     }
   }
 };
