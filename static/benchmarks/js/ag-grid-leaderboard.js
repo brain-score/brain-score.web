@@ -2252,7 +2252,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 
   if (gridApi) {
-    // Connect the enhanced search input with logical operators
+    // Connect the search input with logical operators
     const searchInput = document.getElementById('modelSearchInput');
     if (searchInput) {
       // Remove any existing listeners
