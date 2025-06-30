@@ -1,6 +1,7 @@
 
 @import '../variables'
 @import 'gradient-theme'
+@import '../components/tooltip'
 
 // Base button styling (all buttons get basic styling)
 button,
@@ -1181,6 +1182,35 @@ button,
     text-align: center
     margin-top: 0.3rem
     font-style: italic
+
+.header-actions
+    display: flex
+    align-items: center
+    gap: 8px
+
+.btn-icon
+    background: $primary-color
+    color: white
+    border: none
+    border-radius: 4px
+    padding: 6px 8px
+    font-size: 16px
+    cursor: pointer
+    transition: all 0.2s ease
+    min-width: 32px
+    height: 32px
+    display: flex
+    align-items: center
+    justify-content: center
+
+    &:hover
+      background: darken($primary-color, 10%)
+      transform: translateY(-1px)
+
+    &:active
+      transform: translateY(0)
+
+
 
 // Vision parent container styling
 .benchmark-node.vision-parent

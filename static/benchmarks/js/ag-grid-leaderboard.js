@@ -2402,8 +2402,10 @@ window.decodeBenchmarkFilters = decodeBenchmarkFilters;
 window.buildHierarchyFromTree = buildHierarchyFromTree;
 window.updateColumnVisibility = updateColumnVisibility;
 window.setInitialColumnState = setInitialColumnState;
+window.copyBibtexToClipboard = copyBibtexToClipboard;
 window.updateAllCountBadges = updateAllCountBadges;
 window.getFilteredLeafCount = getFilteredLeafCount;
+
 
 // Update column visibility based on filtering state
 function updateColumnVisibility() {
@@ -2513,3 +2515,88 @@ function setInitialColumnState() {
     state: initialColumnState
   });
 }
+
+// Function to copy bibtex to clipboard with user feedback
+function copyBibtexToClipboard() {
+  const bibtexList = collectBenchmarkBibtex();
+  
+  if (bibtexList.length === 0) {
+    showTooltip('copyBibtexBtn', 'No citations found for selected benchmarks', 'warning');
+    return;
+  }
+  
+  // Format as a single string with double line breaks between entries
+  const formattedBibtex = bibtexList.join('\n\n');
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(formattedBibtex).then(() => {
+    const count = bibtexList.length;
+    const message = `Copied ${count} citation${count === 1 ? '' : 's'} to clipboard`;
+    showTooltip('copyBibtexBtn', message, 'success');
+  }).catch(err => {
+    console.error('Failed to copy to clipboard:', err);
+    showTooltip('copyBibtexBtn', 'Failed to copy to clipboard', 'error');
+  });
+}
+
+// Function to collect unique bibtex citations for benchmarks that are not excluded
+function collectBenchmarkBibtex() {
+  if (!window.originalRowData || window.originalRowData.length === 0) {
+    return [];
+  }
+
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  const bibtexSet = new Set();
+  
+  // Helper function to determine if a benchmark is a leaf (has no children)
+  function isLeafBenchmark(benchmarkId) {
+    const children = hierarchyMap.get(benchmarkId) || [];
+    return children.length === 0;
+  }
+  
+  // Use first model as reference for benchmark structure
+  // Assumes first model has no missing scores. leaderboard.py only creates fields for benchmarks where the model has scores.
+  // leaderboard.py serializes (i.e., flattens) the scores object, so the benchmark data is available at the top level.
+  const firstModel = window.originalRowData[0];
+  
+  // Go through each field in the model data
+  Object.keys(firstModel).forEach(fieldName => {
+    // Skip non-benchmark fields
+    if (fieldName === 'id' || fieldName === 'rank' || fieldName === 'model' || fieldName === 'metadata') {
+      return;
+    }
+    
+    const scoreData = firstModel[fieldName];
+    
+    // Check if this is a leaf benchmark with bibtex data
+    if (scoreData && 
+        typeof scoreData === 'object' && 
+        scoreData.benchmark && 
+        scoreData.benchmark.bibtex &&
+        isLeafBenchmark(fieldName)) {
+      
+      // Check if this benchmark is excluded using multiple patterns
+      // Assumes string format is benchmarkName_v{version_number}
+      const baseFieldName = fieldName.replace(/_v\d+$/, '');
+      const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
+      
+      // Makes sure that we do not include benchmarks that we have excluded.
+      const isExcluded = excludedBenchmarks.has(fieldName) ||
+                        excludedBenchmarks.has(baseFieldName) ||
+                        excludedBenchmarks.has(benchmarkTypeId);
+      
+      if (!isExcluded) {
+        const bibtex = scoreData.benchmark.bibtex.trim();
+        
+        // Add to set if valid (Set automatically handles duplicates)
+        if (bibtex && bibtex !== 'null') {
+          bibtexSet.add(bibtex);
+        }
+      }
+    }
+  });
+  
+  return Array.from(bibtexSet);
+}
+
