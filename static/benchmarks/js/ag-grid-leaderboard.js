@@ -2513,3 +2513,77 @@ function setInitialColumnState() {
     state: initialColumnState
   });
 }
+
+// export CSV logic:
+document.getElementById('exportCsvButton')?.addEventListener('click', function () {
+  if (!window.globalGridApi || !window.benchmarkTree) {
+    console.warn('Grid or benchmark tree not ready');
+    return;
+  }
+
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
+  const allColumns = window.globalGridApi.getColumnDefs();
+  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
+
+  // Fixed columns
+  const fixedOrder = ['rank', 'model', 'filtered_score', 'average_vision_v0'];
+  const fixedColumns = fixedOrder.filter(id =>
+    allColumns.some(col => col.colId === id)
+  );
+
+  // Collect benchmark columns in BFS order, excluding filtered-out ones
+  const benchmarkColumns = [];
+  const visited = new Set();
+  const queue = [...hierarchyMap.keys()];
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (visited.has(current) || excludedBenchmarks.has(current)) continue;
+
+    visited.add(current);
+    const col = allColumns.find(c => c.colId === current || c.field === current);
+    if (col) benchmarkColumns.push(current);
+
+    const children = hierarchyMap.get(current) || [];
+    queue.push(...children);
+  }
+
+  const columnKeys = [...fixedColumns, ...benchmarkColumns].filter(id => id !== 'runnable_status');
+
+  // Local time string for filename
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const year = now.getFullYear();
+  const month = pad(now.getMonth() + 1);
+  const day = pad(now.getDate());
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  // Get local timezone abbreviation
+  const tz = Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+    .formatToParts(now)
+    .find(part => part.type === 'timeZoneName')?.value || 'local';
+
+  const fileName = `leaderboard_export_${year}-${month}-${day}_${hours}-${minutes}-${seconds}_${tz}.csv`;
+
+  window.globalGridApi.exportDataAsCsv({
+    fileName,
+    columnKeys,
+    processCellCallback: params => {
+      const colId = params.column.getColId();
+      const val = params.value;
+
+      if (colId === 'model') return val?.name || '';
+      if (colId === 'submitter') return val?.submitter || '';
+      if (typeof val === 'object' && val !== null && 'value' in val)
+        return val.value === 'X' ? '' : val.value;
+
+      return val;
+    },
+    processHeaderCallback: params => {
+      const id = params.column.getColId();
+      return params.column.getColDef().headerName || id;
+    }
+  });
+});
