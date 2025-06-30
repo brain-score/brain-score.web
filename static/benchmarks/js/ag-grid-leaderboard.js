@@ -319,9 +319,10 @@ ExpandableHeaderComponent.prototype.getGui = function() {
 // SEARCH FUNCTIONALITY
 // =====================================
 // Enhanced search with logical operators (OR, AND, NOT) for model names and submitters.
-// Easily expandable to include model metadata fields.
+// Can be made to include model metadata fields.
+// Does not support parentheses yet (e.g., "alexnet AND (imagenet OR ecoset)")
 
-// Get searchable text from a row - centralized for easy expansion
+// Get searchable text from a row
 function getSearchableText(rowData) {
   const model = rowData.model || {};
   const searchFields = [
@@ -335,7 +336,8 @@ function getSearchableText(rowData) {
   return searchFields.join(' ').toLowerCase();
 }
 
-// Parse search query with logical operators (simple implementation)
+// Parse search query with logical operators (OR, AND, NOT)
+// Called in initializeGrid()
 function parseSearchQuery(query) {
   if (!query.trim()) return null;
   
@@ -349,7 +351,7 @@ function parseSearchQuery(query) {
       const andParts = orPart.split(/\s+and\s+/);
       
       if (andParts.length === 1) {
-        // Handle NOT for single terms
+        // Handle NOT for single terms (e.g., "NOT alexnet")
         const term = andParts[0].trim();
         if (term.startsWith('not ')) {
           return { type: 'NOT', term: term.substring(4).trim() };
@@ -2195,6 +2197,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     isExternalFilterPresent: () => {
       return currentSearchQuery !== null;
     },
+    // If search query is present, filter the grid based on the search query
     doesExternalFilterPass: (node) => {
       if (!currentSearchQuery) return true;
       const searchableText = getSearchableText(node.data);
@@ -2258,6 +2261,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       newInput.addEventListener('input', function () {
         const searchText = this.value;
+        // Parse search query with logical operators (OR, AND, NOT)
         currentSearchQuery = parseSearchQuery(searchText);
         
         // Use external filter for logical search
