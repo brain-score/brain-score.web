@@ -433,6 +433,13 @@ def ag_grid_leaderboard(request, domain: str):
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
+    
+    # Create simple benchmark ID mapping for frontend navigation links
+    benchmark_ids = {}
+    for benchmark in context['benchmarks']:
+        if benchmark.id:  # Only include benchmarks with valid IDs
+            benchmark_ids[benchmark.identifier] = benchmark.id
+    context['benchmark_ids'] = json.dumps(benchmark_ids)
 
     # 5) Render the AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
