@@ -2515,7 +2515,7 @@ function setInitialColumnState() {
 }
 
 // export CSV logic:
-document.getElementById('exportCsvButton')?.addEventListener('click', function () {
+document.getElementById('exportCsvButton')?.addEventListener('click', async function () {
   if (!window.globalGridApi || !window.benchmarkTree) {
     console.warn('Grid or benchmark tree not ready');
     return;
@@ -2535,55 +2535,91 @@ document.getElementById('exportCsvButton')?.addEventListener('click', function (
   const benchmarkColumns = [];
   const visited = new Set();
   const queue = [...hierarchyMap.keys()];
-
   while (queue.length) {
     const current = queue.shift();
     if (visited.has(current) || excludedBenchmarks.has(current)) continue;
-
     visited.add(current);
     const col = allColumns.find(c => c.colId === current || c.field === current);
     if (col) benchmarkColumns.push(current);
-
     const children = hierarchyMap.get(current) || [];
     queue.push(...children);
   }
 
   const columnKeys = [...fixedColumns, ...benchmarkColumns].filter(id => id !== 'runnable_status');
 
-  // Local time string for filename
+  // Build leaderboard CSV manually
+  const rows = [];
+  const headerRow = columnKeys.map(id => {
+    const col = allColumns.find(c => c.colId === id);
+    return `"${col?.headerName || id}"`;
+  }).join(',');
+  rows.push(headerRow);
+
+  window.globalGridApi.forEachNodeAfterFilter(node => {
+    const row = columnKeys.map(colId => {
+      const val = node.data?.[colId];
+      if (colId === 'model') return `"${val?.name || ''}"`;
+      if (colId === 'submitter') return `"${val?.submitter || ''}"`;
+      if (typeof val === 'object' && val !== null && 'value' in val)
+        return val.value === 'X' ? '' : `"${val.value}"`;
+      return `"${val ?? ''}"`;
+    }).join(',');
+    rows.push(row);
+  });
+
+  const leaderboardCsv = rows.join('\n');
+
+  // Create plugins CSV
+  const pluginRows = [['plugin_name', 'plugin_type', 'metadata']];
+
+  // Add model rows
+  window.globalGridApi.forEachNodeAfterFilter(node => {
+    const modelName = node.data?.model?.name;
+    if (modelName) pluginRows.push([modelName, 'model', '']);
+  });
+
+  // Add benchmark leaf nodes that are *not excluded*
+  const benchmarkLeafIds = [];
+  const queue2 = [...window.benchmarkTree];
+  while (queue2.length) {
+    const node = queue2.shift();
+    if (node.children && node.children.length) {
+      queue2.push(...node.children);
+    } else {
+      if (!excludedBenchmarks.has(node.id)) {
+        benchmarkLeafIds.push(node.id);
+      }
+    }
+  }
+
+benchmarkLeafIds.forEach(id => {
+  pluginRows.push([id, 'benchmark', '']);
+});
+  benchmarkLeafIds.forEach(id => {
+    pluginRows.push([id, 'benchmark', '']);
+  });
+
+  const pluginCsv = pluginRows.map(row => row.map(val => `"${val}"`).join(',')).join('\n');
+
+  // Get local timestamp
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
-  const year = now.getFullYear();
-  const month = pad(now.getMonth() + 1);
-  const day = pad(now.getDate());
-  const hours = pad(now.getHours());
-  const minutes = pad(now.getMinutes());
-  const seconds = pad(now.getSeconds());
-
-  // Get local timezone abbreviation
   const tz = Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
-    .formatToParts(now)
-    .find(part => part.type === 'timeZoneName')?.value || 'local';
+    .formatToParts(now).find(part => part.type === 'timeZoneName')?.value || 'local';
+  const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}_${tz}`;
 
-  const fileName = `leaderboard_export_${year}-${month}-${day}_${hours}-${minutes}-${seconds}_${tz}.csv`;
+  // Create ZIP
+  const zip = new JSZip();
+  zip.file('leaderboard.csv', leaderboardCsv);
+  zip.file('plugin-info.csv', pluginCsv);
 
-  window.globalGridApi.exportDataAsCsv({
-    fileName,
-    columnKeys,
-    processCellCallback: params => {
-      const colId = params.column.getColId();
-      const val = params.value;
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(zipBlob);
+  link.download = `leaderboard_export_${timestamp}.zip`;
+  link.click();
 
-      if (colId === 'model') return val?.name || '';
-      if (colId === 'submitter') return val?.submitter || '';
-      if (typeof val === 'object' && val !== null && 'value' in val)
-        return val.value === 'X' ? '' : val.value;
 
-      return val;
-    },
-    processHeaderCallback: params => {
-      const id = params.column.getColId();
-      return params.column.getColDef().headerName || id;
-    }
-  });
+
+
 });
