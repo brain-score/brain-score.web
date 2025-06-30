@@ -20,10 +20,6 @@ window.activeFilters = {
 // Global state for tracking column expansion
 window.columnExpansionState = new Map();
 
-// =====================================
-// CELL RENDERERS
-// =====================================
-
 // ModelCellRenderer
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
@@ -46,66 +42,6 @@ ModelCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
 
-// =====================================
-// RUNNABLE STATUS FUNCTIONALITY
-// =====================================
-// This section handles the display of model code runnable status as colored
-// circles in a dedicated Status column with tooltips explaining the status.
-// Green = functional, Red = issues, Grey = unknown
-
-// RunnableStatusCellRenderer - displays colored status circles with tooltips
-function RunnableStatusCellRenderer() {}
-RunnableStatusCellRenderer.prototype.init = function(params) {
-  this.eGui = document.createElement('div');
-  this.eGui.className = 'runnable-status-cell';
-  
-  const runnable = params.data?.metadata?.runnable;
-  const statusIcon = document.createElement('div');
-  statusIcon.className = 'runnable-status-icon';
-  
-  if (runnable === true) {
-    statusIcon.classList.add('runnable-green');
-  } else if (runnable === false) {
-    statusIcon.classList.add('runnable-red');
-  } else {
-    statusIcon.classList.add('runnable-grey');
-  }
-  
-  this.eGui.appendChild(statusIcon);
-};
-RunnableStatusCellRenderer.prototype.getGui = function() {
-  return this.eGui;
-};
-
-// Helper function to create runnable status column definition
-function createRunnableStatusColumn() {
-  return {
-    headerName: 'Status',
-    field: 'runnable_status',
-    colId: 'runnable_status',
-    pinned: 'left',
-    width: 80,
-    cellRenderer: 'runnableStatusCellRenderer',
-    sortable: true,
-    filter: false,
-    headerClass: 'centered-header',
-    valueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      return runnable === true ? 2 : runnable === false ? 1 : 0; // For sorting: green > red > grey
-    },
-    tooltipValueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      if (runnable === true) {
-        return 'Model code is functional and runnable';
-      } else if (runnable === false) {
-        return 'Model code has known issues or is non-functional';
-      } else {
-        return 'Model code status unknown';
-      }
-    }
-  };
-}
-
 // Model Comparator for sorting models by name
 function modelComparator(a, b) {
   // Both are objects like: { id, name, submitter }
@@ -118,7 +54,6 @@ function LeafHeaderComponent() {}
 LeafHeaderComponent.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'leaf-header';
-  this.eGui.style.position = 'relative'; // Enable absolute positioning for click areas
 
   const label = document.createElement('span');
   label.className = 'leaf-header-label';
@@ -129,48 +64,25 @@ LeafHeaderComponent.prototype.init = function(params) {
 
   this.eGui.appendChild(label);
 
-  // Add sort indicator using shared utility
-  createSortIndicator(params, this.eGui);
+  // Click on pill to sort
+  this.eGui.addEventListener('click', (event) => {
+    if (event.target.closest('.expand-toggle')) return;
 
-  // NAVIGATION FUNCTIONALITY: Click on left 80% to navigate to benchmark page
-  const navigationArea = document.createElement('div');
-  navigationArea.className = 'navigation-area';
-  navigationArea.style.position = 'absolute';
-  navigationArea.style.top = '0';
-  navigationArea.style.left = '0';
-  navigationArea.style.width = '80%';  // Left 80% for navigation
-  navigationArea.style.height = '100%';
-  navigationArea.style.cursor = 'pointer';
-  navigationArea.style.zIndex = '9';
-  navigationArea.style.backgroundColor = 'transparent';
-  
-  this.eGui.appendChild(navigationArea);
+    const column = params.column;
+    const colId = column.getColId();
+    const currentSort = column.getSort();
+    const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
 
-  // Click handler for navigation
-  navigationArea.addEventListener('click', (event) => {
-    event.stopPropagation();
-    
-    // Get benchmark ID from the global mapping - use multiple fallbacks
-    const colDef = params.column?.userProvidedColDef || params.column?.colDef || params.colDef || {};
-    const benchmarkIdentifier = colDef.field || colDef.headerName || params.displayName;
-    
-    if (!benchmarkIdentifier) {
-      console.warn('Could not determine benchmark identifier from params:', params);
-      return;
-    }
-    
-    const actualBenchmarkId = window.benchmarkIds && window.benchmarkIds[benchmarkIdentifier];
-    if (actualBenchmarkId) {
-      // Navigate to benchmark detail page
-      const domain = 'vision'; // Default domain for vision benchmarks
-      window.location.href = `/benchmark/${domain}/${actualBenchmarkId}`;
+    // AG Grid 33 approach - use applyColumnState which is available
+    if (params.api && typeof params.api.applyColumnState === 'function') {
+      params.api.applyColumnState({
+        state: [{ colId, sort: nextSort }],
+        defaultState: { sort: null }
+      });
     } else {
-      console.warn('No benchmark ID found for identifier:', benchmarkIdentifier);
-      console.log('Available benchmark IDs:', window.benchmarkIds);
+      console.warn('applyColumnState method not available');
     }
   });
-
-  // Sort handling is now managed by the shared createSortIndicator utility
 };
 LeafHeaderComponent.prototype.getGui = function() {
   return this.eGui;
@@ -268,38 +180,86 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     });
   }
 
+  function getAllDescendants(parentField) {
+    const directChildren = getDirectChildren(parentField);
+    let descendants = [...directChildren];
+    for (const child of directChildren) {
+      const childField = child.getColDef()?.field;
+      if (childField) {
+        descendants.push(...getAllDescendants(childField));
+      }
+    }
+    return descendants;
+  }
 
+  const childCols = getAllDescendants(colDef.field);
 
-  // Use the global getFilteredLeafCount function for initial count
-  const leafFields = window.getFilteredLeafCount ? [colDef.field] : [];
+  // 2. Only leaf-level descendants for the badge
+  function getLeafFields(parentField) {
+    const parentBase = parentField.split('_v')[0];
+
+    const directChildren = allCols.filter(col => {
+      const ctx = col.getColDef()?.context || {};
+      const childParent = ctx.parentField;
+      const childBase = childParent?.split('_v')[0];
+      const isDirect = childBase === parentBase;
+      return isDirect;
+    });
+
+    if (directChildren.length === 0) {
+      return [parentField];
+    }
+
+    return directChildren.flatMap(child => {
+      const field = child.getColDef()?.field;
+      return field ? getLeafFields(field) : [];
+    });
+  }
+
+  const leafFields = getLeafFields(colDef.field);
 
   // Show count badge for number of leaf benchmarks
   if (leafFields.length > 0) {
     const count = document.createElement('span');
     count.className = 'benchmark-count';
-    count.style.cursor = 'pointer';  // Make it clear it's clickable
-    count.dataset.parentField = colDef.field;  // Store field for dynamic updates
-    
-    // Add expand/collapse icon and count
-    const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
-    icon.style.marginRight = '4px';
-    icon.style.fontSize = '10px';
-    
-    const countText = document.createElement('span');
-    countText.className = 'count-value';
-    countText.style.transition = 'all 0.2s ease';  // Smooth animation
-    
-    // Calculate initial filtered count using global function
-    const initialCount = window.getFilteredLeafCount ? window.getFilteredLeafCount(colDef.field) : leafFields.length;
-    countText.textContent = initialCount;
-    
-    count.appendChild(icon);
-    count.appendChild(countText);
+    count.textContent = leafFields.length;
     this.eGui.appendChild(count);
+  }
 
-    // EXPANSION FUNCTIONALITY: Click on count badge to expand/collapse children
-    count.addEventListener('click', e => {
+  // Click on pill to sort
+  this.eGui.addEventListener('click', (event) => {
+    if (event.target.closest('.expand-toggle')) return;
+
+    const column = params.column;
+    const colId = column.getColId();
+    const currentSort = column.getSort();
+    const nextSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? null : 'asc');
+
+    if (params.api && typeof params.api.applyColumnState === 'function') {
+      params.api.applyColumnState({
+        state: [{ colId, sort: nextSort }],
+        defaultState: { sort: null }
+      });
+    } else {
+      console.warn('applyColumnState method not available');
+    }
+  });
+
+  // Don't show toggle for global score
+  if (benchmarkId?.startsWith('average_')) return;
+
+  // Add toggle if children exist
+  const directChildren = getDirectChildren(colDef.field);
+  if (directChildren.length > 0) {
+    const toggle = document.createElement('span');
+    toggle.className = 'expand-toggle';
+    toggle.textContent = '▾';
+    toggle.style.cursor = 'pointer';
+    toggle.style.marginLeft = '4px';
+    this.eGui.appendChild(toggle);
+
+    // Click on toggle to open up children
+    toggle.addEventListener('click', e => {
       e.stopPropagation();
 
       const columnId = colDef.field;
@@ -329,15 +289,9 @@ ExpandableHeaderComponent.prototype.init = function(params) {
           window.columnExpansionState.set(childId, false);
         });
         
-        // Update icon to collapse state
-        icon.className = 'fa-solid fa-down-left-and-up-right-to-center';
-        
       } else {
         // Collapsing: hide all descendants
-        const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
-        const allDescendantIds = getAllDescendantsFromHierarchy(columnId, hierarchyMap)
-          .map(descendantId => allCols.find(col => col.getColId() === descendantId)?.getColId())
-          .filter(Boolean);
+        const allDescendantIds = getAllDescendants(columnId).map(c => c.getColId());
         params.api.setColumnsVisible(allDescendantIds, false);
         
         // Update expansion state
@@ -347,150 +301,19 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         allDescendantIds.forEach(descendantId => {
           window.columnExpansionState.set(descendantId, false);
         });
-        
-        // Update icon to expand state
-        icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
       }
 
-      // Update toggle visual state if toggle exists
-      const toggle = this.eGui.querySelector('.expand-toggle');
-      if (toggle) {
-        toggle.textContent = shouldExpand ? '▴' : '▾';
-      }
+      // Update toggle visual state
+      toggle.textContent = shouldExpand ? '▴' : '▾';
       
       // Apply column visibility rules based on current filters
       updateColumnVisibility();
     });
   }
-
-  // Don't show toggle for global score
-  if (benchmarkId?.startsWith('average_')) {
-    // Add sort indicator for global score using shared utility (larger font)
-    createSortIndicator(params, this.eGui, '14px');
-    return;
-  }
-
-  // Add toggle if children exist, but use it for sorting indication only
-  const directChildren = getDirectChildren(colDef.field);
-  if (directChildren.length > 0) {
-    // Add sort indicator using shared utility
-    createSortIndicator(params, this.eGui);
-
-    // SORTING FUNCTIONALITY: Entire header clickable for parent headers (except count badge)
-    this.eGui.style.position = 'relative';
-    this.eGui.style.cursor = 'pointer';
-
-    const handleSort = (event) => {
-      // Don't sort if clicking on count badge or sort indicator itself
-      if (event.target.closest('.benchmark-count') || event.target.closest('.sort-indicator')) {
-        return;
-      }
-      
-      event.stopPropagation();
-      
-      const column = params.column;
-      const colId = column.getColId();
-      const currentSort = column.getSort();
-      const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
-
-      if (params.api && typeof params.api.applyColumnState === 'function') {
-        params.api.applyColumnState({
-          state: [{ colId, sort: nextSort }],
-          defaultState: { sort: null }
-        });
-      }
-    };
-
-    // Add click handler to entire header for parent benchmarks
-    this.eGui.addEventListener('click', handleSort);
-  }
 };
 ExpandableHeaderComponent.prototype.getGui = function() {
   return this.eGui;
 };
-
-// =====================================
-// SEARCH FUNCTIONALITY
-// =====================================
-// Enhanced search with logical operators (OR, AND, NOT) for model names and submitters.
-// Can be made to include model metadata fields.
-// Does not support parentheses yet (e.g., "alexnet AND (imagenet OR ecoset)")
-
-// Get searchable text from a row
-function getSearchableText(rowData) {
-  const model = rowData.model || {};
-  const searchFields = [
-    model.name || '',
-    model.submitter || ''
-    // Future: Add metadata fields here when needed
-    // rowData.metadata?.architecture || '', // Example: architecture: transformer
-    // rowData.metadata?.model_family || ''
-  ];
-  
-  return searchFields.join(' ').toLowerCase();
-}
-
-// Parse search query with logical operators (OR, AND, NOT)
-// Called in initializeGrid()
-function parseSearchQuery(query) {
-  if (!query.trim()) return null;
-  
-  // Split by OR first (lowest precedence)
-  const orParts = query.toLowerCase().split(/\s+or\s+/);
-  
-  return {
-    type: 'OR',
-    parts: orParts.map(orPart => {
-      // Split by AND (higher precedence than OR)
-      const andParts = orPart.split(/\s+and\s+/);
-      
-      if (andParts.length === 1) {
-        // Handle NOT for single terms (e.g., "NOT alexnet")
-        const term = andParts[0].trim();
-        if (term.startsWith('not ')) {
-          return { type: 'NOT', term: term.substring(4).trim() };
-        }
-        return { type: 'TERM', term };
-      }
-      
-      return {
-        type: 'AND',
-        parts: andParts.map(andPart => {
-          const term = andPart.trim();
-          if (term.startsWith('not ')) {
-            return { type: 'NOT', term: term.substring(4).trim() };
-          }
-          return { type: 'TERM', term };
-        })
-      };
-    })
-  };
-}
-
-// Execute parsed search query against searchable text
-function executeSearchQuery(parsedQuery, searchableText) {
-  if (!parsedQuery) return true;
-  
-  function evaluateNode(node) {
-    switch (node.type) {
-      case 'TERM':
-        return searchableText.includes(node.term);
-      case 'NOT':
-        return !searchableText.includes(node.term);
-      case 'AND':
-        return node.parts.every(evaluateNode);
-      case 'OR':
-        return node.parts.some(evaluateNode);
-      default:
-        return false;
-    }
-  }
-  
-  return evaluateNode(parsedQuery);
-}
-
-// Global search state
-let currentSearchQuery = null;
 
 function setupBenchmarkCheckboxes(filterOptions) {
   // Populate task checkboxes dynamically (since tasks are variable)
@@ -506,6 +329,9 @@ function setupBenchmarkCheckboxes(filterOptions) {
       `;
       taskContainer.appendChild(label);
     });
+    console.log(`Added ${filterOptions.benchmark_tasks.length} task checkboxes`);
+  } else {
+    console.log('Task container or benchmark_tasks not found');
   }
 
   // Add event listeners for ALL benchmark checkboxes
@@ -523,7 +349,11 @@ function setupBenchmarkCheckboxes(filterOptions) {
       updateBenchmarkFilters();
       applyCombinedFilters();
     });
+  } else {
+    console.log('Public data checkbox not found');
   }
+
+  console.log('Benchmark checkbox setup complete');
 }
 
 function addBenchmarksFilteredByMetadata() {
@@ -668,7 +498,7 @@ function renderBenchmarkTree(container, tree) {
     // Create label for engineering parent (no checkbox)
     const engineeringLabel = document.createElement('span');
     engineeringLabel.className = 'engineering-parent-label';
-    engineeringLabel.textContent = 'Engineering Benchmarks (Not included in Global Score)';
+    engineeringLabel.textContent = 'Engineering Benchmarks (Excluded from Global Score)';
 
     engineeringParentHeader.appendChild(engineeringToggle);
     engineeringParentHeader.appendChild(engineeringLabel);
@@ -827,7 +657,31 @@ function renderBenchmarkTree(container, tree) {
   }
 }
 
+function addResetFiltersButton() {
+  const filterPanel = document.getElementById('benchmarkFilterPanel');
+  if (!filterPanel) return;
 
+  // Check if button already exists
+  if (document.getElementById('resetFiltersBtn')) return;
+
+  const resetBtn = document.createElement('button');
+  resetBtn.id = 'resetFiltersBtn';
+  resetBtn.textContent = 'Reset All Filters';
+  resetBtn.style.marginBottom = '10px';
+  resetBtn.style.padding = '8px 16px';
+  resetBtn.style.backgroundColor = '#007bff';
+  resetBtn.style.color = 'white';
+  resetBtn.style.border = 'none';
+  resetBtn.style.borderRadius = '4px';
+  resetBtn.style.cursor = 'pointer';
+
+  resetBtn.addEventListener('click', () => {
+    resetAllFilters();
+  });
+
+  // Insert button at the top of the filter panel
+  filterPanel.insertBefore(resetBtn, filterPanel.firstChild);
+}
 
 // Filter population and handling functions
 function populateFilterDropdowns(filterOptions) {
@@ -1076,15 +930,6 @@ function initializeDualHandleSliders() {
         }
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-        
-        // Update count badges when stimuli range changes
-        if (container.closest('.filter-group').querySelector('#stimuliCountMin, #stimuliCountMax')) {
-          setTimeout(() => {
-            if (typeof updateAllCountBadges === 'function') {
-              updateAllCountBadges();
-            }
-          }, 100);
-        }
       }
 
       document.addEventListener('mousemove', handleMouseMove);
@@ -1135,7 +980,19 @@ function initializeDualHandleSliders() {
   });
 }
 
-// Removed unused extractUniqueValues function
+// Helper function to extract unique values from the data if not provided in filterOptions
+function extractUniqueValues(field) {
+  if (!window.originalRowData) return [];
+
+  const values = new Set();
+  window.originalRowData.forEach(row => {
+    if (row.metadata && row.metadata[field]) {
+      values.add(row.metadata[field]);
+    }
+  });
+
+  return Array.from(values).sort();
+}
 
 function selectFilterOption(filterType, value, optionElement) {
   const dropdown = optionElement.closest('.filter-dropdown');
@@ -1421,11 +1278,6 @@ function applyCombinedFilters() {
   // Update column visibility based on current filters and expansion state
   updateColumnVisibility();
 
-  // Update count badges to reflect filtered benchmarks
-  setTimeout(() => {
-    updateAllCountBadges();
-  }, 50); // Small delay to ensure DOM is updated
-
   // update URL
   updateURLFromFilters();
 }
@@ -1503,13 +1355,30 @@ function resetAllFilters() {
     }
   });
 
-  // Reset ALL benchmark checkboxes to checked (include everything by default)
+  // Reset ALL benchmark checkboxes to checked first
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {
     if (cb) {
-      cb.checked = true;  // Check everything including engineering
+      cb.checked = true;  // Check everything first
     }
   });
+
+  // Then uncheck only the engineering parent (this will trigger the event handler to uncheck children)
+  const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
+  if (engineeringCheckbox) {
+    engineeringCheckbox.checked = false;
+
+    // Manually uncheck engineering children since the event might not fire during reset
+    const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
+    if (engineeringNode) {
+      const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
+      childCheckboxes.forEach(cb => {
+        if (cb !== engineeringCheckbox) {  // Don't double-process the parent
+          cb.checked = false;
+        }
+      });
+    }
+  }
 
   // Reset benchmark metadata checkboxes (regions, species, tasks, public data)
   document.querySelectorAll('.region-checkbox, .species-checkbox, .task-checkbox').forEach(checkbox => {
@@ -2004,73 +1873,6 @@ function parseURLFilters() {
   applyCombinedFilters();
 }
 
-// Shared utility function to get all descendants recursively
-function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
-  const children = hierarchyMap.get(parentId) || [];
-  let descendants = [...children];
-  children.forEach(childId => {
-    descendants.push(...getAllDescendantsFromHierarchy(childId, hierarchyMap));
-  });
-  return descendants;
-}
-
-// Shared utility to create and manage sort indicators
-function createSortIndicator(params, element, fontSize = '12px') {
-  const indicator = document.createElement('span');
-  indicator.className = 'sort-indicator ag-icon';  // Use AG Grid icon classes
-  indicator.style.cursor = 'pointer';
-  indicator.style.marginLeft = '4px';
-  indicator.style.fontSize = '16px';  // AG Grid default icon size
-  indicator.style.opacity = '0.87';  // AG Grid's default icon opacity
-  
-  const updateSortIndicator = () => {
-    const column = params.column;
-    const currentSort = column.getSort();
-    
-    // Remove all AG Grid sort icon classes
-    indicator.classList.remove('ag-icon-asc', 'ag-icon-desc', 'ag-icon-none');
-    
-    if (currentSort === 'asc') {
-      indicator.classList.add('ag-icon-asc');
-      indicator.style.opacity = '1';
-    } else if (currentSort === 'desc') {
-      indicator.classList.add('ag-icon-desc');
-      indicator.style.opacity = '1';
-    } else {
-      indicator.classList.add('ag-icon-none');
-      indicator.style.opacity = '0.54';  // AG Grid's opacity for inactive icons
-    }
-  };
-
-  const handleSort = (event) => {
-    event.stopPropagation();
-    
-    const column = params.column;
-    const colId = column.getColId();
-    const currentSort = column.getSort();
-    const nextSort = currentSort === 'desc' ? 'asc' : (currentSort === 'asc' ? null : 'desc');
-
-    if (params.api && typeof params.api.applyColumnState === 'function') {
-      params.api.applyColumnState({
-        state: [{ colId, sort: nextSort }],
-        defaultState: { sort: null }
-      });
-    }
-    
-    setTimeout(updateSortIndicator, 10);
-  };
-
-  indicator.addEventListener('click', handleSort);
-  updateSortIndicator();
-
-  if (params.api) {
-    params.api.addEventListener('sortChanged', updateSortIndicator);
-  }
-
-  element.appendChild(indicator);
-  return { indicator, updateSortIndicator, handleSort };
-}
-
 // Function to encode benchmark filters using hierarchical exclusion-based approach
 function encodeBenchmarkFilters() {
   if (!window.filteredOutBenchmarks || window.filteredOutBenchmarks.size === 0) {
@@ -2079,6 +1881,16 @@ function encodeBenchmarkFilters() {
   
   const excluded = Array.from(window.filteredOutBenchmarks);
   const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
+  
+  // Helper function to get all children recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
   
   // Group excluded items and compress hierarchically
   const compressed = [];
@@ -2089,7 +1901,7 @@ function encodeBenchmarkFilters() {
     if (processed.has(excludedId)) return;
     
     // Check if this is a parent whose ALL children are also excluded
-    const allDescendants = getAllDescendantsFromHierarchy(excludedId, hierarchyMap);
+    const allDescendants = getAllDescendants(excludedId);
     const allDescendantsExcluded = allDescendants.length > 0 && 
       allDescendants.every(descendantId => excluded.includes(descendantId));
     
@@ -2118,12 +1930,22 @@ function decodeBenchmarkFilters(excludedParam) {
   const allExcluded = new Set();
   const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
   
+  // Helper function to get all descendants recursively
+  function getAllDescendants(parentId) {
+    const children = hierarchyMap.get(parentId) || [];
+    let descendants = [...children];
+    children.forEach(childId => {
+      descendants.push(...getAllDescendants(childId));
+    });
+    return descendants;
+  }
+  
   excludedList.forEach(excludedId => {
     // Add the item itself
     allExcluded.add(excludedId);
     
     // Add all its descendants (for hierarchical exclusion)
-    const descendants = getAllDescendantsFromHierarchy(excludedId, hierarchyMap);
+    const descendants = getAllDescendants(excludedId);
     descendants.forEach(descendantId => allExcluded.add(descendantId));
   });
   
@@ -2181,11 +2003,29 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   columnDefs.forEach(col => {
     col.colId = col.field;
 
-    // Columns are sortable by default via defaultColDef
+    // Explicitly make benchmark columns sortable
+    if (
+      col.headerComponent === 'expandableHeaderComponent' ||
+      col.headerComponent === 'leafComponent'
+    ) {
+      col.sortable = true;
+    }
 
-    // Set up model column for sorting (search handled by external filter)
+    // Set up model column for searching and sorting
     if (col.field === 'model') {
+      col.getQuickFilterText = params => {
+        const model = params.data.model;
+        if (!model || typeof model !== 'object') {
+          console.warn('⚠️ model object missing or malformed:', model);
+          return '';
+        }
+        const name = model.name || '';
+        const submitter = model.submitter || '';
+        return `${name} ${submitter}`.toLowerCase();
+      };
       col.comparator = modelComparator;
+    } else {
+      col.getQuickFilterText = () => '';
     }
 
     // Set up score columns
@@ -2229,9 +2069,6 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   });
 
-  // Add the runnable status column
-  const runnableStatusColumn = createRunnableStatusColumn();
-
   // Add the filtered score column
   const filteredScoreColumn = {
     headerName: 'Filtered Score',
@@ -2265,12 +2102,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   };
 
-  // Insert columns after the model column
+  // Insert filtered score column after the model column
   const modelColumnIndex = columnDefs.findIndex(col => col.field === 'model');
   if (modelColumnIndex !== -1) {
-    columnDefs.splice(modelColumnIndex + 1, 0, runnableStatusColumn, filteredScoreColumn);
+    columnDefs.splice(modelColumnIndex + 1, 0, filteredScoreColumn);
   } else {
-    columnDefs.push(runnableStatusColumn, filteredScoreColumn);
+    columnDefs.push(filteredScoreColumn);
   }
 
   const gridOptions = {
@@ -2278,37 +2115,16 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     columnDefs,
     headerHeight: 60,
     rowHeight: 60,
-    tooltipShowDelay: 500, // Show tooltip after 0.5 seconds
     components: {
-      // Core cell renderers
       modelCellRenderer: ModelCellRenderer,
       scoreCellRenderer: ScoreCellRenderer,
-      
-      // Runnable status functionality
-      runnableStatusCellRenderer: RunnableStatusCellRenderer,
-      
-      // Header components
       expandableHeaderComponent: ExpandableHeaderComponent,
       leafComponent: LeafHeaderComponent,
     },
     suppressFieldDotNotation: true,
-
-    // External filter for logical search
-    isExternalFilterPresent: () => {
-      return currentSearchQuery !== null;
-    },
-    // If search query is present, filter the grid based on the search query
-    doesExternalFilterPass: (node) => {
-      if (!currentSearchQuery) return true;
-      const searchableText = getSearchableText(node.data);
-      return executeSearchQuery(currentSearchQuery, searchableText);
-    },
-
-    sortingOrder: ['desc', 'asc', null],  // Sort cycle: desc -> asc -> none
     defaultColDef: {
       sortable: true,
       resizable: false,
-      unSortIcon: true,  // Show unsort icon for 3-state sorting
       valueFormatter: params => {
         const v = params.value;
         return (v != null && typeof v === 'object' && 'value' in v)
@@ -2326,7 +2142,6 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
-          { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
           { colId: 'average_vision_v0', hide: false }
         ]
@@ -2356,7 +2171,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 
   if (gridApi) {
-    // Connect the search input with logical operators
+    // Connect the search input
     const searchInput = document.getElementById('modelSearchInput');
     if (searchInput) {
       // Remove any existing listeners
@@ -2365,14 +2180,11 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       newInput.addEventListener('input', function () {
         const searchText = this.value;
-        // Parse search query with logical operators (OR, AND, NOT)
-        currentSearchQuery = parseSearchQuery(searchText);
-        
-        // Use external filter for logical search
-        if (typeof gridApi.onFilterChanged === 'function') {
-          gridApi.onFilterChanged();
+        if (typeof gridApi.setGridOption === 'function') {
+          gridApi.setGridOption('quickFilterText', searchText);
+          gridApi.refreshClientSideRowModel('filter');
         } else {
-          console.warn('onFilterChanged not available on gridApi');
+          console.warn('setGridOption not available on gridApi');
         }
       });
     } else {
@@ -2395,86 +2207,8 @@ function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   return hierarchyMap;
 }
 
-// Function to update all count badges with filtered counts
-function updateAllCountBadges() {
-  // Find all count badges and update them
-  document.querySelectorAll('.benchmark-count').forEach(badge => {
-    const parentField = badge.dataset.parentField;
-    if (!parentField) return;
-    
-    const countText = badge.querySelector('.count-value');
-    if (!countText) return;
-    
-    // Calculate new filtered count
-    const newCount = getFilteredLeafCount(parentField);
-    const currentCount = parseInt(countText.textContent) || 0;
-    
-    // Only update if count changed
-    if (newCount !== currentCount) {
-      // Smooth animation when count changes
-      countText.style.transform = 'scale(1.1)';
-      countText.style.fontWeight = 'bold';
-      
-      setTimeout(() => {
-        countText.textContent = newCount;
-        
-        // Visual feedback for empty counts
-        if (newCount === 0) {
-          badge.style.opacity = '0.5';
-          badge.style.filter = 'grayscale(50%)';
-        } else {
-          badge.style.opacity = '1';
-          badge.style.filter = 'none';
-        }
-        
-        setTimeout(() => {
-          countText.style.transform = 'scale(1)';
-          countText.style.fontWeight = '600';
-        }, 100);
-      }, 100);
-    }
-  });
-}
-
-// Function to get filtered leaf count (needs to be global for count badges)
-function getFilteredLeafCount(parentField) {
-  if (!window.globalGridApi) return 0;
-  
-  const allCols = window.globalGridApi.getAllGridColumns();
-  
-  function getLeafFieldsGlobal(parentField) {
-    const parentBase = parentField.split('_v')[0];
-
-    const directChildren = allCols.filter(col => {
-      const ctx = col.getColDef()?.context || {};
-      const childParent = ctx.parentField;
-      const childBase = childParent?.split('_v')[0];
-      const isDirect = childBase === parentBase;
-      return isDirect;
-    });
-
-    if (directChildren.length === 0) {
-      return [parentField];
-    }
-
-    return directChildren.flatMap(child => {
-      const field = child.getColDef()?.field;
-      return field ? getLeafFieldsGlobal(field) : [];
-    });
-  }
-  
-  const allLeafFields = getLeafFieldsGlobal(parentField);
-  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  
-  // Count only non-filtered leaf benchmarks
-  const visibleLeafFields = allLeafFields.filter(field => {
-    return !excludedBenchmarks.has(field);
-  });
-  
-  return visibleLeafFields.length;
-}
-
 // Make functions available globally
+window.addResetFiltersButton = addResetFiltersButton;
 window.initializeGrid = initializeGrid;
 window.populateFilterDropdowns = populateFilterDropdowns;
 window.setupDropdownHandlers = setupDropdownHandlers;
@@ -2488,10 +2222,6 @@ window.decodeBenchmarkFilters = decodeBenchmarkFilters;
 window.buildHierarchyFromTree = buildHierarchyFromTree;
 window.updateColumnVisibility = updateColumnVisibility;
 window.setInitialColumnState = setInitialColumnState;
-window.copyBibtexToClipboard = copyBibtexToClipboard;
-window.updateAllCountBadges = updateAllCountBadges;
-window.getFilteredLeafCount = getFilteredLeafCount;
-
 
 // Update column visibility based on filtering state
 function updateColumnVisibility() {
@@ -2544,8 +2274,8 @@ function updateColumnVisibility() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Skip non-benchmark columns (including runnable status)
-    if (['model', 'rank', 'runnable_status', 'filtered_score', 'average_vision_v0'].includes(colId)) {
+    // Skip non-benchmark columns
+    if (['model', 'rank', 'filtered_score', 'average_vision_v0'].includes(colId)) {
       return;
     }
     
@@ -2578,8 +2308,8 @@ function setInitialColumnState() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Always show these columns (including runnable status)
-    if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
+    // Always show these columns
+    if (['model', 'rank', 'filtered_score'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
     }
@@ -2601,88 +2331,3 @@ function setInitialColumnState() {
     state: initialColumnState
   });
 }
-
-// Function to copy bibtex to clipboard with user feedback
-function copyBibtexToClipboard() {
-  const bibtexList = collectBenchmarkBibtex();
-  
-  if (bibtexList.length === 0) {
-    showTooltip('copyBibtexBtn', 'No citations found for selected benchmarks', 'warning');
-    return;
-  }
-  
-  // Format as a single string with double line breaks between entries
-  const formattedBibtex = bibtexList.join('\n\n');
-  
-  // Copy to clipboard
-  navigator.clipboard.writeText(formattedBibtex).then(() => {
-    const count = bibtexList.length;
-    const message = `Copied ${count} citation${count === 1 ? '' : 's'} to clipboard`;
-    showTooltip('copyBibtexBtn', message, 'success');
-  }).catch(err => {
-    console.error('Failed to copy to clipboard:', err);
-    showTooltip('copyBibtexBtn', 'Failed to copy to clipboard', 'error');
-  });
-}
-
-// Function to collect unique bibtex citations for benchmarks that are not excluded
-function collectBenchmarkBibtex() {
-  if (!window.originalRowData || window.originalRowData.length === 0) {
-    return [];
-  }
-
-  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  const hierarchyMap = window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map();
-  const bibtexSet = new Set();
-  
-  // Helper function to determine if a benchmark is a leaf (has no children)
-  function isLeafBenchmark(benchmarkId) {
-    const children = hierarchyMap.get(benchmarkId) || [];
-    return children.length === 0;
-  }
-  
-  // Use first model as reference for benchmark structure
-  // Assumes first model has no missing scores. leaderboard.py only creates fields for benchmarks where the model has scores.
-  // leaderboard.py serializes (i.e., flattens) the scores object, so the benchmark data is available at the top level.
-  const firstModel = window.originalRowData[0];
-  
-  // Go through each field in the model data
-  Object.keys(firstModel).forEach(fieldName => {
-    // Skip non-benchmark fields
-    if (fieldName === 'id' || fieldName === 'rank' || fieldName === 'model' || fieldName === 'metadata') {
-      return;
-    }
-    
-    const scoreData = firstModel[fieldName];
-    
-    // Check if this is a leaf benchmark with bibtex data
-    if (scoreData && 
-        typeof scoreData === 'object' && 
-        scoreData.benchmark && 
-        scoreData.benchmark.bibtex &&
-        isLeafBenchmark(fieldName)) {
-      
-      // Check if this benchmark is excluded using multiple patterns
-      // Assumes string format is benchmarkName_v{version_number}
-      const baseFieldName = fieldName.replace(/_v\d+$/, '');
-      const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
-      
-      // Makes sure that we do not include benchmarks that we have excluded.
-      const isExcluded = excludedBenchmarks.has(fieldName) ||
-                        excludedBenchmarks.has(baseFieldName) ||
-                        excludedBenchmarks.has(benchmarkTypeId);
-      
-      if (!isExcluded) {
-        const bibtex = scoreData.benchmark.bibtex.trim();
-        
-        // Add to set if valid (Set automatically handles duplicates)
-        if (bibtex && bibtex !== 'null') {
-          bibtexSet.add(bibtex);
-        }
-      }
-    }
-  });
-  
-  return Array.from(bibtexSet);
-}
-
