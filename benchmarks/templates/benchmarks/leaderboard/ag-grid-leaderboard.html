@@ -17,7 +17,7 @@
     </div>
     
     <div id="leaderboardSearchWrapper">
-      <input type="text" id="modelSearchInput" placeholder="Search for model or submitter..." />
+      <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
       <button id="tutorialBtn" class="btn-secondary">
         <span class="tutorial-icon">📚</span>
         <span class="text-wrapper">Tutorial</span>
@@ -41,7 +41,12 @@
         <div class="filter-column benchmark-column">
           <div class="filter-column-header">
             <h4>Included Benchmarks</h4>
-            <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            <div class="header-actions">
+              <button id="copyBibtexBtn" class="btn-icon" title="Copy BibTeX citations for selected benchmarks">
+                📖
+              </button>
+              <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            </div>
           </div>
           <div id="benchmarkFilterPanel"></div>
         </div>
@@ -229,10 +234,13 @@
     src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
   </script>
 
-  {# 2) Load your grid-wrapper JS (where you define initializeGrid) #}
+  {# 2) Load tooltip component JS #}
+  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+
+  {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 3) Load Driver.js for tutorial functionality #}
+  {# 4) Load Driver.js for tutorial functionality #}
 R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
   <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
@@ -244,7 +252,7 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
   <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
 
-  {# 4) Kick it off once the DOM is ready #}
+  {# 5) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');
@@ -260,6 +268,7 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
         benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
         benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
+        benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -270,6 +279,8 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
       window.benchmarkTree = benchmarkTree;
       window.originalRowData = rowData;
       window.filterOptions = filterOptions;
+      window.benchmarkMetadata = benchmarkMetadata;
+      window.benchmarkIds = benchmarkIds;
       const ranges = filterOptions?.parameter_ranges || {};
       if (ranges.max_param_count) {
         document.getElementById('paramCountMin').max = ranges.max_param_count;
@@ -286,7 +297,6 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
         document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
         document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
       }
-      window.benchmarkMetadata = benchmarkMetadata;
       
       // Initialize grid
       if (typeof initializeGrid === 'function') {
@@ -336,19 +346,8 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
           parseURLFilters();
         }
         
-        // If no explicit benchmark filters in URL, apply default (exclude engineering)
-        if (!hasExplicitBenchmarks) {
-          const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-          if (engineeringCheckbox) {
-            engineeringCheckbox.checked = false;
-      
-            const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
-            if (engineeringNode) {
-              const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-              childCheckboxes.forEach(cb => cb.checked = false);
-            }
-          }
-        }
+        // If no explicit benchmark filters in URL, use default (include all benchmarks)
+        // No special exclusions - all benchmarks are selected by default
         
         // Always rebuild exclusion set based on current checkbox states
         window.filteredOutBenchmarks = new Set();
@@ -381,26 +380,11 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
           resetLink.addEventListener('click', (e) => {
             e.preventDefault();
             
-            // First, check all checkboxes
+            // Check all checkboxes (include all benchmarks by default)
             const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
             allCheckboxes.forEach(cb => {
-              cb.checked = true;  // Check everything first
+              cb.checked = true;  // Check everything including engineering
             });
-            
-            // Then, uncheck engineering and ALL its children
-            const engineeringCheckbox = document.querySelector('input[value="engineering_vision_v0"]');
-            if (engineeringCheckbox) {
-              engineeringCheckbox.checked = false;
-              
-              // Find the engineering node and uncheck all children recursively
-              const engineeringNode = engineeringCheckbox.closest('.benchmark-node');
-              if (engineeringNode) {
-                const childCheckboxes = engineeringNode.querySelectorAll('input[type="checkbox"]');
-                childCheckboxes.forEach(cb => {
-                  cb.checked = false;
-                });
-              }
-            }
             
             // Rebuild the exclusion set
             window.filteredOutBenchmarks = new Set();
@@ -413,6 +397,17 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
             // Trigger update
             if (typeof applyCombinedFilters === 'function') {
               applyCombinedFilters();
+            }
+          });
+        }
+        
+        // Setup the copy bibtex button
+        const copyBibtexBtn = document.getElementById('copyBibtexBtn');
+        if (copyBibtexBtn) {
+          copyBibtexBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof copyBibtexToClipboard === 'function') {
+              copyBibtexToClipboard();
             }
           });
         }
