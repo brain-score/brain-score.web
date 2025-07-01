@@ -3,10 +3,8 @@ import logging
 import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
-
 from .index import get_context
-from benchmarks.models import FinalBenchmarkContext, FinalModelContext
-from ..utils import cache_ag_grid_leaderboard
+from ..utils import cache_get_context
 
 logger = logging.getLogger(__name__)
 
@@ -105,12 +103,15 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
-@cache_ag_grid_leaderboard(timeout=24 * 60 * 60)
-def ag_grid_leaderboard(request, domain: str):
-    # 1) Determine user and fetch context
-    user = request.user if request.user.is_authenticated else None
-    context = get_context(user=user, domain=domain, show_public=(user is None))
-
+@cache_get_context(timeout=24 * 60 * 60)
+def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+    """
+    Get processed context data for AG Grid leaderboard.
+    This function handles all the expensive data processing and is cached.
+    """
+    # Get the base context (this is already cached)
+    context = get_context(user=user, domain=domain, show_public=show_public)
+    
     # Extract model metadata for filters
     model_metadata = {
         'architectures': set(),
@@ -135,7 +136,6 @@ def ag_grid_leaderboard(request, domain: str):
     for benchmark in context['benchmarks']:
         if hasattr(benchmark, 'benchmark_data_meta') and benchmark.benchmark_data_meta:
             data = benchmark.benchmark_data_meta
-            # print(f"data: {data}")
 
             if data.get('region'):
                 benchmark_metadata['regions'].add(data['region'])
@@ -186,7 +186,7 @@ def ag_grid_leaderboard(request, domain: str):
 
         benchmark_metadata_list.append(metadata_entry)
 
-    # 2) Build `row_data` from materialized-view models WITH metadata
+    # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
         # base fields
@@ -312,8 +312,8 @@ def ag_grid_leaderboard(request, domain: str):
             }
         row_data.append(rd)
 
-    # 3) Build `column_defs` to show only root-level parents first,
-    #    then grouping rows and leaves hidden by default.
+    # Build `column_defs` to show only root-level parents first,
+    # then grouping rows and leaves hidden by default.
     # Rank & Model pinned columns
     column_defs = [
         {'field': 'rank',
@@ -334,7 +334,7 @@ def ag_grid_leaderboard(request, domain: str):
          }
     ]
 
-    # 3a) Root parents (no parent ⇒ visible)
+    # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
     for b in root_parents:
         field = b.identifier
@@ -349,7 +349,7 @@ def ag_grid_leaderboard(request, domain: str):
             'context': {'parentField': None, 'benchmarkId': field}
         })
 
-    # 3b) All other groupings (version==0 & has parent) hidden initially
+    # All other groupings (version==0 & has parent) hidden initially
     groupings = [b for b in context['benchmarks'] if b.parent and b.version == 0]
     for b in groupings:
         field = b.identifier
@@ -380,7 +380,7 @@ def ag_grid_leaderboard(request, domain: str):
 
     column_defs.sort(key=lambda col: get_priority(col.get('field')))
 
-    # 3c) Leaf benchmarks hidden initially
+    # Leaf benchmarks hidden initially
     leaves = [b for b in context['benchmarks'] if b.number_of_all_children == 0]
     for b in leaves:
         field = b.identifier
@@ -427,21 +427,32 @@ def ag_grid_leaderboard(request, domain: str):
         }
     }
 
-    # 4) Attach JSON-serialized data to template context
-    context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
-    context['column_defs'] = json.dumps(column_defs)
-    context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
-    context['filter_options'] = json.dumps(filter_options)
-    context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
-    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
-    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
-    
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
-    context['benchmark_ids'] = json.dumps(benchmark_ids)
 
-    # 5) Render the AG-Grid template
+    # Return processed AG Grid context
+    ag_context = {
+        'row_data': json.dumps([json_serializable(r) for r in row_data]),
+        'column_defs': json.dumps(column_defs),
+        'benchmark_groups': json.dumps(make_benchmark_groups(context['benchmarks'])),
+        'filter_options': json.dumps(filter_options),
+        'benchmark_metadata': json.dumps(benchmark_metadata_list),
+        'benchmark_tree': json.dumps(build_benchmark_tree([b for b in context['benchmarks'] if b.identifier != 'average_vision_v0'])),
+        'benchmark_ids': json.dumps(benchmark_ids)
+    }
+    
+    # Merge with original context
+    context.update(ag_context)
+    return context
+
+
+def ag_grid_leaderboard(request, domain: str):
+    # 1) Determine user and fetch context
+    user = request.user if request.user.is_authenticated else None
+    context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
+
+    # Render the AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)

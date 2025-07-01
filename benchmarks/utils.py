@@ -197,20 +197,10 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     if rebuild:
         # Import here to avoid circular imports
         from benchmarks.views.index import get_context
-        from benchmarks.views.leaderboard import ag_grid_leaderboard
-        from django.test import RequestFactory
         
         # Force regeneration of main caches
         logger.info(f"Rebuilding cache for domain '{domain}'")
         public_context = get_context(domain=domain, show_public=True) # @cache_get_context decorator saves public context to cache
-        
-        # Also rebuild AG Grid leaderboard cache
-        logger.info(f"Rebuilding AG Grid leaderboard cache for domain '{domain}'")
-        factory = RequestFactory()
-        fake_request = factory.get(f'/benchmarks/leaderboard/{domain}/')
-        fake_request.user = None  # Anonymous user for public cache
-        ag_grid_leaderboard(fake_request, domain)  # This will populate the cache
-        
         logger.info(f"Cache rebuild completed for domain '{domain}'")
     
     return JsonResponse({
@@ -259,59 +249,3 @@ def show_token(request: HttpRequest) -> JsonResponse:
     })
 
 
-def cache_ag_grid_leaderboard(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
-    """
-    Decorator that caches results of ag_grid_leaderboard function for faster loading.
-    Handles Django request objects and caches the complete processed context.
-    
-    Args:
-        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request: HttpRequest, domain: str):
-            """
-            Wrapper function that implements the caching logic for AG Grid leaderboard.
-            
-            Args:
-                request (HttpRequest): Django request object
-                domain (str): The domain to get leaderboard for (e.g. "vision", "language")
-            
-            Returns:
-                HttpResponse: Rendered template response
-            """
-            # Extract user from request
-            user = request.user if request.user.is_authenticated else None
-            
-            # Get cache version from cache or set to 1 if not exists
-            cache_version_key = f'cache_version_{domain}'
-            cache_version = cache.get(cache_version_key, 1)
-            
-            # Generate cache key based on user authentication and domain
-            if not user:
-                # Public data cache
-                key_parts = ['ag_grid_leaderboard', domain, 'public', f'v{cache_version}']
-            else:
-                # User-specific cache (though AG Grid leaderboard shows public data for all users)
-                key_parts = ['ag_grid_leaderboard', domain, str(user.id), f'v{cache_version}']
-            
-            # Generate SHA256 hash for cache key
-            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
-            
-            # Try to get cached result
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                logger.debug(f"AG Grid leaderboard cache hit for key: {cache_key}")
-                return cached_result
-            
-            # If no cache found, calculate result
-            logger.debug(f"AG Grid leaderboard cache miss for key: {cache_key}")
-            result = func(request, domain)
-            
-            # Store result in cache
-            cache.set(cache_key, result, timeout)
-            logger.debug(f"Cached AG Grid leaderboard result for key: {cache_key}")
-            return result
-        
-        return wrapper
-    return decorator
