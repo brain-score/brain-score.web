@@ -177,6 +177,113 @@ window.tourConfigs.interactiveBenchmarkTour = {
       }
     },
     {
+      element: '#copyBibtexBtn',
+      popover: {
+        title: 'Copy Research Citations',
+        description: 'This button copies BibTeX citations for all currently selected benchmarks to your clipboard. Perfect for citing the research papers in your own work! Let me click it to show you the citations that would be copied.',
+        position: 'left'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Scroll to the copy button to ensure it's visible
+        const copyBtn = document.querySelector('#copyBibtexBtn');
+        if (copyBtn && window.scrollElementIntoView) {
+          window.scrollElementIntoView(copyBtn);
+        }
+        
+        // Click the copy button to demonstrate the functionality
+        setTimeout(() => {
+          if (copyBtn) {
+            // Create and show fake bibtex popup instead of actual copy
+            const fakePopup = document.createElement('div');
+            fakePopup.id = 'tour-bibtex-popup';
+            fakePopup.style.cssText = `
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              background: white;
+              border: 2px solid #4285f4;
+              border-radius: 8px;
+              padding: 20px;
+              max-width: 600px;
+              max-height: 400px;
+              overflow-y: auto;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+              z-index: 10000;
+              font-family: monospace;
+              font-size: 12px;
+            `;
+            
+            fakePopup.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #4285f4;">📋 Copied to Clipboard!</h3>
+                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;">16 Citations</span>
+              </div>
+              <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 0; white-space: pre-wrap; line-height: 1.4;">
+@article {Majaj13402,
+  author = {Majaj, Najib J. and Hong, Ha and Solomon, Ethan A. and DiCarlo, James J.},
+  title = {Simple Learned Weighted Sums of Inferior Temporal Neuronal Firing Rates Accurately Predict Human Core Object Recognition Performance},
+  volume = {35},
+  number = {39},
+  pages = {13402--13418},
+  year = {2015},
+  doi = {10.1523/JNEUROSCI.5181-14.2015},
+  publisher = {Society for Neuroscience},
+  issn = {0270-6474},
+  URL = {https://www.jneurosci.org/content/35/39/13402},
+  eprint = {https://www.jneurosci.org/content/35/39/13402.full.pdf},
+  journal = {Journal of Neuroscience}}
+
+@misc{Sanghavi_DiCarlo_2021,
+  title={Sanghavi2020},
+  url={osf.io/chwdk},
+  DOI={10.17605/OSF.IO/CHWDK},
+  publisher={OSF},
+  author={Sanghavi, Sachi and DiCarlo, James J},
+  year={2021},
+  month={Nov}
+}
+              </pre>
+            `;
+            
+            document.body.appendChild(fakePopup);
+            
+            // Store reference for cleanup
+            window.tourBibtexPopup = fakePopup;
+          }
+                 }, 500);
+       }
+     },
+    {
+      popover: {
+        title: 'Citations Ready for Your Research! 📚',
+        description: 'Perfect! The BibTeX citations for all selected benchmarks are now copied to your clipboard. You can paste them directly into your research papers to properly cite the benchmark datasets. I\'ll close this preview now and continue the tour.',
+        position: 'center'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes  
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Close the fake bibtex popup
+        const popup = document.querySelector('#tour-bibtex-popup');
+        if (popup) {
+          popup.remove();
+        }
+        
+        // Clean up reference
+        if (window.tourBibtexPopup) {
+          delete window.tourBibtexPopup;
+        }
+      }
+    },
+    {
       element: '.vision-parent input[value="behavior_vision_v0"]',
       popover: {
         title: 'Now Let\'s Try Behavioral Benchmarks',
@@ -304,8 +411,8 @@ window.tourConfigs.interactiveBenchmarkTour = {
     {
       element: 'input[value="engineering_vision_v0"]',
       popover: {
-        title: 'Including Engineering Benchmarks',
-        description: 'I\'m now checking Engineering benchmarks. Watch as new columns appear in the leaderboard, but note they don\'t affect the global Brain-Score!',
+        title: 'Excluding Engineering Benchmarks',
+        description: 'I\'m now deselecting Engineering benchmarks. Watch as the column disappear in the leaderboard, but note they don\'t affect the global Brain-Score!',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -345,18 +452,10 @@ window.tourConfigs.interactiveBenchmarkTour = {
       }
     },
     {
-      element: '.expandable-header.engineering',
-      popover: {
-        title: 'Engineering Columns Appeared!',
-        description: 'New Engineering benchmark columns are now visible! These show computer vision performance (like ImageNet accuracy) but don\'t contribute to the Brain-Score ranking.',
-        position: 'top'
-      }
-    },
-    {
       element: '.expandable-header.average',
       popover: {
         title: 'Global Score Unchanged',
-        description: 'Notice that the global Brain-Score (Average column) didn\'t change when we added Engineering benchmarks. Only Neural and Behavioral benchmarks contribute to brain-relevance scoring.',
+        description: 'Notice that the global Brain-Score (Average column) didn\'t change when we removed Engineering benchmarks. Only Neural and Behavioral benchmarks contribute to the Brain-Score.',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
