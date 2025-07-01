@@ -558,9 +558,9 @@ function addBenchmarksFilteredByMetadata() {
       }
     }
 
-    // Check public data filter
+    // Check public data filter - only exclude explicitly false values, not null
     if (window.activeFilters.public_data_only) {
-      if (!benchmark.data_publicly_available) {
+      if (benchmark.data_publicly_available === false) {
         shouldExclude = true;
       }
     }
