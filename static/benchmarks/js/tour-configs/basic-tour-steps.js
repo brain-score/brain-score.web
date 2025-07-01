@@ -19,15 +19,23 @@ window.tourConfigs.defaultTour = {
       element: '.ag-cell[col-id="model"]',
       popover: {
         title: 'Model Information',
-        description: 'Click on any model name to view detailed information, including the research paper, code repository, and submission details. The submitter information shows who contributed the model.',
+        description: 'Click on any model name to view detailed information, including the research paper, code repository, and submission details.',
+        position: 'right'
+      }
+    },
+    {
+      element: '.ag-cell[col-id="runnable_status"]',
+      popover: {
+        title: 'Model Status',
+        description: 'Models become deprecated over time. Green status indicates the model has been recently tested and is runnable. Red status indicates the model has confirmed to be not longer runnable. Grey status indicates the model has not been tested in a while.',
         position: 'right'
       }
     },
     {
       element: '.expandable-header.average',
       popover: {
-        title: 'Global Score',
-        description: 'This shows the overall Brain-Score - an average across neural and behavioral benchmarks. This is the primary metric for ranking models. Engineering benchmarks are excluded from this global score.',
+        title: 'Unfiltered Score',
+        description: 'This shows the overall Brain-Score - an average across all neural and behavioral benchmarks. This is the primary metric for ranking models. Engineering benchmarks are excluded from this global score.',
         position: 'bottom'
       }
     },
@@ -35,7 +43,7 @@ window.tourConfigs.defaultTour = {
       element: '.expandable-header.neural',
       popover: {
         title: 'Neural Benchmarks',
-        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex. Notice the expand toggle (▾) on the right - this lets you see individual neural benchmarks.',
+        description: 'These benchmarks measure how well models predict neural responses recorded from brain areas like V1, V2, V4, and IT cortex.',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
@@ -86,7 +94,7 @@ window.tourConfigs.defaultTour = {
       element: '.expandable-header.behavior',
       popover: {
         title: 'Behavioral Benchmarks',
-        description: 'These benchmarks test how well models predict human behavioral responses on tasks like object recognition and visual reasoning. Click to expand for detailed behavioral benchmarks.',
+        description: 'These benchmarks test how well models predict human behavioral responses on tasks like object recognition. Click to expand for detailed behavioral benchmarks.',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
@@ -128,7 +136,7 @@ window.tourConfigs.defaultTour = {
       element: '.score-pill',
       popover: {
         title: 'Performance Scores',
-        description: 'Each colored pill shows a model\'s performance on a benchmark (0-1 scale, higher is better). Colors indicate relative performance - darker colors mean better scores. "X" means the benchmark wasn\'t run for that model.',
+        description: 'Each colored pill shows a model\'s performance on a benchmark (0-1 scale, higher is better). Colors indicate relative performance - darker colors mean better scores. "X" means the model failed to run the benchmark.',
         position: 'top'
       },
       beforeShow: (element, step, options) => {
@@ -142,7 +150,7 @@ window.tourConfigs.defaultTour = {
       element: '#modelSearchInput',
       popover: {
         title: 'Search Models',
-        description: 'Search for specific models by name or research group. This helps you quickly find models you\'re interested in comparing.',
+        description: 'Search for specific models by name or research group. You can use logical operators like AND, OR, and NOT to combine search terms. This helps you quickly find models you\'re interested in comparing.',
         position: 'bottom'
       }
     },
@@ -150,7 +158,7 @@ window.tourConfigs.defaultTour = {
       element: '#advancedFilterBtn',
       popover: {
         title: 'Advanced Filtering',
-        description: 'Click here to access powerful filtering options. You can filter by model properties (architecture, parameter count), benchmark characteristics (brain region, species), and more.',
+        description: 'Click here to access additional filtering options. You can filter by model properties (architecture, parameter count), benchmark characteristics (brain region, species), and more.',
         position: 'bottom'
       }
     }
