@@ -41,7 +41,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#benchmarkFilterPanel',
       popover: {
         title: 'Benchmark Selection Tree',
-        description: 'Here\'s the benchmark filter tree. Each checkbox controls whether that benchmark is included in the leaderboard. Currently, all benchmarks except Engineering are selected (notice Engineering is unchecked by default).',
+        description: 'Here\'s the benchmark filter tree. Each checkbox controls whether that benchmark is displayed in the leaderboard and if it contributes to the Brain-Score. Engineering benchmarks are excluded from the calculation by default.',
         position: 'left'
       }
     },
@@ -87,7 +87,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
     {
       element: 'input[value="V1_v0"]',
       popover: {
-        title: 'Category-Level Filtering Demo',
+        title: 'Benchmark Filtering Demo',
         description: 'I\'ll expand both Neural and V1 categories to show the tree structure. Notice how the V1 category contains individual benchmarks like FreemanZiemba2013. This hierarchy lets you filter at different levels of granularity.',
         position: 'left'
       },
@@ -129,7 +129,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: 'input[value="V1_v0"]',
       popover: {
         title: 'Deselecting V1 Category',
-        description: 'Now I\'ll deselect the V1 category to demonstrate category-level filtering. Watch as all V1 benchmarks get excluded and the V1 columns disappear from the leaderboard, but the tree stays expanded so you can see what was filtered out!',
+        description: 'Now I\'ll deselect the V1 category to demonstrate benchmark filtering. Watch as all V1 benchmarks get excluded and the V1 columns disappear from the leaderboard, but the tree stays expanded so you can see what was filtered out!',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -161,51 +161,10 @@ window.tourConfigs.interactiveBenchmarkTour = {
       }
     },
     {
-      element: 'input[value="FreemanZiemba2013.V1-pls_v2"]',
-      popover: {
-        title: 'Specific V1 Benchmark',
-        description: 'This is the FreemanZiemba2013.V1-pls benchmark - a specific test of V1 texture processing. I\'ll deselect it now to show you how the leaderboard updates in real-time!',
-        position: 'left'
-      },
-      beforeShow: (element, step, options) => {
-        const stepIndex = options.state.activeIndex;
-        
-        // Record current state before making changes
-        window.tourStepState.recordCurrentStateForStep(stepIndex);
-        
-        // Store original state for restoration
-        const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
-        if (freemanCheckbox) {
-          window._tourOriginalFreemanState = freemanCheckbox.checked;
-        }
-        
-        // Uncheck the Freeman-Ziemba benchmark properly
-        if (freemanCheckbox && freemanCheckbox.checked) {
-          
-          // Set checkbox state
-          freemanCheckbox.checked = false;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          freemanCheckbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
-        }
-      }
-    },
-    {
       element: '.ag-row[row-index="0"] .ag-cell[col-id="neural_vision_v0"]',
       popover: {
         title: 'Watch the Neural Scores Change!',
-        description: 'Notice how the Neural column scores have recalculated! By removing the FreemanZiemba2013.V1-pls benchmark, we\'ve changed how V1 performance is measured, affecting each model\'s neural score. Look at the changed values in this entire column!',
+        description: 'Notice how the Neural column scores have been recalculated! By removing V1 benchmarks, we\'ve changed how neural vision performance is calculated, affecting each model\'s Brain-Score. Notice how neural column has become blue. Any benchmark that is affected by filtering will change it\'s color scale to reflect divergence from thestandard Brain-Score leaderboard.',
         position: 'left'
       }
     },
@@ -213,7 +172,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '.ag-header-cell[col-id="filtered_score"] .ag-header-cell-text', 
       popover: {
         title: 'Global Brain-Score Updated',
-        description: 'The global Brain-Score (Average column) has also recalculated! Since we removed a neural benchmark, the overall brain-relevance scores have changed. Some models may have moved up or down in ranking.',
+        description: 'The global Brain-Score (filtered score column) has also recalculated! Since we removed a neural benchmark, the overall Brain-Scores have changed. Some models may have moved up or down in ranking.',
         position: 'bottom'
       }
     },
