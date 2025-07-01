@@ -296,26 +296,8 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Restore the Freeman benchmark first
-        const freemanCheckbox = document.querySelector('input[value="FreemanZiemba2013.V1-pls_v2"]');
-        if (freemanCheckbox && !freemanCheckbox.checked && window._tourOriginalFreemanState) {
-          // Set checkbox state
-          freemanCheckbox.checked = true;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          freemanCheckbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
-        }
+        // Don't restore any benchmarks - keep the current filtered state
+        // This maintains the demonstration that V1 is still excluded
         
         // Expand behavioral benchmarks if needed
         const behaviorNode = document.querySelector('input[value="behavior_vision_v0"]').closest('.benchmark-node');
@@ -427,12 +409,12 @@ window.tourConfigs.interactiveBenchmarkTour = {
           window.scrollElementIntoView(engineeringCheckbox);
         }
         
-        // Small delay before checking to ensure scroll completes
+        // Small delay before unchecking to ensure scroll completes
         setTimeout(() => {
-          // Check engineering benchmarks
-          if (engineeringCheckbox && !engineeringCheckbox.checked) {
+          // Uncheck engineering benchmarks (they start checked by default)
+          if (engineeringCheckbox && engineeringCheckbox.checked) {
             // Set checkbox state
-            engineeringCheckbox.checked = true;
+            engineeringCheckbox.checked = false;
             
             // Trigger change event manually
             const changeEvent = new Event('change', { bubbles: true });
@@ -458,33 +440,6 @@ window.tourConfigs.interactiveBenchmarkTour = {
         description: 'Notice that the global Brain-Score (Average column) didn\'t change when we removed Engineering benchmarks. Only Neural and Behavioral benchmarks contribute to the Brain-Score.',
         position: 'bottom'
       },
-      beforeShow: (element, step, options) => {
-        const stepIndex = options.state.activeIndex;
-        
-        // Record current state before making changes
-        window.tourStepState.recordCurrentStateForStep(stepIndex);
-        
-        // Restore behavioral benchmarks for final demonstration
-        const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
-        if (behaviorCheckbox && !behaviorCheckbox.checked) {
-          // Set checkbox state
-          behaviorCheckbox.checked = true;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          behaviorCheckbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
-        }
-      }
     },
     {
       element: '#benchmarkFilterPanel',
