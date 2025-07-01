@@ -1,0 +1,94 @@
+// Tooltip component styling
+//
+// Usage:
+// .tooltip                  - Base tooltip class
+// .tooltip-success         - Green tooltip for success messages
+// .tooltip-error           - Red tooltip for error messages  
+// .tooltip-warning         - Blue tooltip for warning messages
+// .tooltip-info            - Default gray tooltip for info messages
+// .tooltip-bottom          - Position arrow on bottom (tooltip appears below element)
+// .tooltip-left            - Position arrow on left (tooltip appears to left of element)
+// .tooltip-right           - Position arrow on right (tooltip appears to right of element)
+//
+// JavaScript usage (requires /js/components/tooltip.js):
+// createTooltip(element, message, { type: 'success', position: 'bottom' })
+// showTooltip('elementId', message, 'error') // backward compatibility
+// addHoverTooltip(element, message, options) // hover tooltips
+// <div data-tooltip="Message" data-tooltip-type="info"> // HTML attribute tooltips
+
+.tooltip
+  background: #333
+  color: white
+  padding: 8px 12px
+  border-radius: 4px
+  font-size: 0.875rem
+  font-weight: 500
+  white-space: nowrap
+  opacity: 0
+  animation: tooltipFadeIn 0.2s ease-out forwards
+  position: fixed
+  z-index: 10000
+  
+  // Tooltip arrow
+  &::after
+    content: ''
+    position: absolute
+    top: 100%
+    left: 50%
+    transform: translateX(-50%)
+    border: 5px solid transparent
+    border-top-color: #333
+  
+  // Tooltip variants
+  &.tooltip-success
+    background: #22c55e
+    
+    &::after
+      border-top-color: #22c55e
+  
+  &.tooltip-error
+    background: #ef4444
+    
+    &::after
+      border-top-color: #ef4444
+  
+  &.tooltip-warning
+    background: #5C8DB8
+    
+    &::after
+      border-top-color: #5C8DB8
+  
+  &.tooltip-info
+    background: #333
+    
+    &::after
+      border-top-color: #333
+
+// Tooltip fade-in animation
+@keyframes tooltipFadeIn
+  from
+    opacity: 0
+    transform: translateX(-50%) translateY(-100%) translateY(-5px)
+  to
+    opacity: 1
+    transform: translateX(-50%) translateY(-100%)
+
+// Alternative positioning classes
+.tooltip-bottom
+  &::after
+    top: auto
+    bottom: 100%
+    transform: translateX(-50%) rotate(180deg)
+
+.tooltip-left
+  &::after
+    top: 50%
+    left: 100%
+    transform: translateY(-50%) rotate(-90deg)
+
+.tooltip-right
+  &::after
+    top: 50%
+    left: auto
+    right: 100%
+    transform: translateY(-50%) rotate(90deg) 
