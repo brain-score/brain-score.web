@@ -6,6 +6,7 @@ from django.shortcuts import render
 
 from .index import get_context
 from benchmarks.models import FinalBenchmarkContext, FinalModelContext
+from ..utils import cache_ag_grid_leaderboard
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
+@cache_ag_grid_leaderboard(timeout=24 * 60 * 60)
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
