@@ -441,11 +441,25 @@ def ag_grid_leaderboard(request, domain: str):
     context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
 
     context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
-    context['model_metadata_map'] = json.dumps({
-        model.name: model.model_meta
-        for model in context['models']
-        if hasattr(model, 'model_meta') and model.model_meta
-    })
+    layer_map = context.get('layer_mapping', {})
+
+    # now rebuild your model_metadata_map, merging in layer_mapping
+    model_meta_map = {}
+    for m in context['models']:
+        if not (hasattr(m, 'model_meta') and m.model_meta):
+            continue
+
+        # start from the existing metadata dict
+        meta = dict(m.model_meta)
+
+        # if this model has a .layers attribute, add it under "layer_mapping"
+        if hasattr(m, 'layers'):
+            meta['layer_mapping'] = m.layers
+
+        model_meta_map[m.name] = meta
+
+    # serialize out to JSON (and make sure all numpy types etc. are native Python)
+    context['model_metadata_map'] = json.dumps(json_serializable(model_meta_map))
     context['column_defs'] = json.dumps(column_defs)
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
     context['filter_options'] = json.dumps(filter_options)
