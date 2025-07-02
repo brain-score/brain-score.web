@@ -19,7 +19,7 @@ window.tourConfigs.defaultTour = {
       element: '.ag-cell[col-id="model"]',
       popover: {
         title: 'Model Information',
-        description: 'Click on any model name to view detailed information, including the research paper, code repository, and submission details.',
+        description: 'Click on any model name to view detailed information, including the research paper, how-to-use instructions, and per-benchmark scores.',
         position: 'right'
       }
     },
@@ -77,7 +77,7 @@ window.tourConfigs.defaultTour = {
     {
       popover: {
         title: 'Neural Brain Areas Revealed',
-        description: 'Perfect! I just expanded the Neural column and now you can see all four major neural benchmark categories: V1 (primary visual cortex), V2 (secondary visual cortex), V4 (color and shape processing), and IT (inferotemporal cortex for object recognition). Each tests how well models predict responses from different brain regions.',
+        description: 'Perfect! I just expanded the Neural column and now you can see all four major neural benchmark categories. Each tests how well models predict responses from different brain regions. You can further expand categories to see individual benchmarks.',
         position: 'center'
       },
       beforeShow: (element, step, options) => {
