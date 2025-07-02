@@ -91,6 +91,46 @@ window.tourConfigs.defaultTour = {
       }
     },
     {
+      popover: {
+        title: 'Expanding V1 Benchmarks',
+        description: 'Let me expand the V1 column to show you individual benchmarks like Marques2020, Freeman, and Coggan. Each represents a specific experimental dataset.',
+        position: 'center'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Expand V1 to show individual benchmarks
+        expandBenchmarkHeaders(['V1_v0']);
+      }
+    },
+    {
+      element: '.leaf-header-label [title*="FreemanZiemba2013"]',
+      popover: {
+        title: 'Individual Benchmark Details',
+        description: 'You can click on leaf benchmarks to view detailed information, including the research paper, how-to-use instructions, and all model scores. Each benchmark represents a specific experimental dataset.',
+        position: 'bottom'
+      },
+      beforeShow: (element, step, options) => {
+        const stepIndex = options.state.activeIndex;
+        
+        // Record current state before making changes
+        window.tourStepState.recordCurrentStateForStep(stepIndex);
+        
+        // Ensure V1 is still expanded (in case user manually collapsed it)
+        expandBenchmarkHeaders(['V1_v0']);
+        
+        // Give a moment for any animations to complete
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, 500);
+        });
+      }
+    },
+    {
       element: '.expandable-header.behavior',
       popover: {
         title: 'Behavioral Benchmarks',
