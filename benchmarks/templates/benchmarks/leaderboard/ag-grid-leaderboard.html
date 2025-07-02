@@ -16,9 +16,9 @@
       <!-- banner & icon… -->
     </div>
     
-    <div id="leaderboardSearchWrapper" style="display: flex; gap: 10px; align-items: center;">
-      <input type="text" id="modelSearchInput" placeholder="Search for model or submitter..." />
 
+    <div id="leaderboardSearchWrapper">
+      <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
       <button id="advancedFilterBtn">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
@@ -42,7 +42,12 @@
         <div class="filter-column benchmark-column">
           <div class="filter-column-header">
             <h4>Included Benchmarks</h4>
-            <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            <div class="header-actions">
+              <button id="copyBibtexBtn" class="btn-icon" title="Copy BibTeX citations for selected benchmarks">
+                📖
+              </button>
+              <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            </div>
           </div>
           <div id="benchmarkFilterPanel"></div>
         </div>
@@ -230,10 +235,13 @@
     src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
   </script>
 
-  {# 2) Load your grid-wrapper JS (where you define initializeGrid) #}
+  {# 2) Load tooltip component JS #}
+  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+
+  {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 3) Kick it off once the DOM is ready #}
+  {# 4) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');
@@ -397,6 +405,17 @@
             // Trigger update
             if (typeof applyCombinedFilters === 'function') {
               applyCombinedFilters();
+            }
+          });
+        }
+        
+        // Setup the copy bibtex button
+        const copyBibtexBtn = document.getElementById('copyBibtexBtn');
+        if (copyBibtexBtn) {
+          copyBibtexBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof copyBibtexToClipboard === 'function') {
+              copyBibtexToClipboard();
             }
           });
         }
