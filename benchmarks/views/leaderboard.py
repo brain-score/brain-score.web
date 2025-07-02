@@ -425,7 +425,26 @@ def ag_grid_leaderboard(request, domain: str):
     }
 
     # 4) Attach JSON-serialized data to template context
+    stimuli_map = {}
+    data_map = {}
+    metric_map = {}
+
+    for b in context['benchmarks']:
+        stimuli_map[b.identifier] = getattr(b, 'benchmark_stimuli_meta', {}) or {}
+        data_map[b.identifier] = getattr(b, 'benchmark_data_meta', {}) or {}
+        metric_map[b.identifier] = getattr(b, 'benchmark_metric_meta', {}) or {}
+
+    # dump benchmark metadata (all three tables)
+    context['benchmarkStimuliMetaMap'] = json.dumps(stimuli_map)
+    context['benchmarkDataMetaMap'] = json.dumps(data_map)
+    context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
+
     context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
+    context['model_metadata_map'] = json.dumps({
+        model.name: model.model_meta
+        for model in context['models']
+        if hasattr(model, 'model_meta') and model.model_meta
+    })
     context['column_defs'] = json.dumps(column_defs)
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
     context['filter_options'] = json.dumps(filter_options)

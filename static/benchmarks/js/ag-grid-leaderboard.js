@@ -2575,7 +2575,16 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   // Add model rows
   window.globalGridApi.forEachNodeAfterFilter(node => {
     const modelName = node.data?.model?.name;
-    if (modelName) pluginRows.push([modelName, 'model', '']);
+    if (!modelName) return;
+    // grab per‐model metadata from the map we created
+    const meta = window.modelMetadataMap[modelName] || node.data.metadata || {};
+    const modelJson = JSON.stringify(meta).replace(/"/g, '""');
+    const modelCell = `"${modelJson}"`;
+    pluginRows.push([
+      modelName,
+      'model',
+      modelCell
+    ]);
   });
 
   // Add benchmark leaf nodes that are *not excluded*
@@ -2592,14 +2601,19 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     }
   }
 
-benchmarkLeafIds.forEach(id => {
-  pluginRows.push([id, 'benchmark', '']);
-});
   benchmarkLeafIds.forEach(id => {
-    pluginRows.push([id, 'benchmark', '']);
+    // look up the metadata entry for this benchmark
+    const stimuliMeta = (window.benchmarkStimuliMetaMap || {})[id] || {};
+    const dataMeta    = (window.benchmarkDataMetaMap    || {})[id] || {};
+    const metricMeta  = (window.benchmarkMetricMetaMap  || {})[id] || {};
+    const combined    = { Stimuli: stimuliMeta, Data: dataMeta, Metric: metricMeta };
+    const jsonStr     = JSON.stringify(combined).replace(/"/g,'""');
+    pluginRows.push([ id, 'benchmark', `"${jsonStr}"` ]);
   });
 
-  const pluginCsv = pluginRows.map(row => row.map(val => `"${val}"`).join(',')).join('\n');
+  const pluginCsv = pluginRows
+    .map(row => row.join(','))
+    .join('\n');
 
   // Get local timestamp
   const now = new Date();
@@ -2618,8 +2632,4 @@ benchmarkLeafIds.forEach(id => {
   link.href = URL.createObjectURL(zipBlob);
   link.download = `leaderboard_export_${timestamp}.zip`;
   link.click();
-
-
-
-
 });

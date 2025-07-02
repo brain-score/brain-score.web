@@ -250,6 +250,21 @@
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
         benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
         benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
+
+        let modelMetadataMap, benchmarkMetadataMap;
+      try {
+        modelMetadataMap = JSON.parse('{{ model_metadata_map|escapejs }}');
+      } catch (e) {
+        console.warn('No model_metadata_map provided:', e);
+        modelMetadataMap = {};
+      }
+      benchmarkMetadataMap = {};
+      benchmarkMetadata.forEach(entry => {
+        benchmarkMetadataMap[entry.identifier] = entry;
+      });
+      window.modelMetadataMap     = modelMetadataMap;
+      window.benchmarkMetadataMap = benchmarkMetadataMap;
+
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -262,6 +277,10 @@
       window.filterOptions = filterOptions;
       window.benchmarkMetadata = benchmarkMetadata;
       window.benchmarkIds = benchmarkIds;
+      window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
+      window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
+      window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
+
       const ranges = filterOptions?.parameter_ranges || {};
       if (ranges.max_param_count) {
         document.getElementById('paramCountMin').max = ranges.max_param_count;
