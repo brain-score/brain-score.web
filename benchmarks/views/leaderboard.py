@@ -111,7 +111,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     """
     # Get the base context (this is already cached)
     context = get_context(user=user, domain=domain, show_public=show_public)
-    
+
     # Extract model metadata for filters
     model_metadata = {
         'architectures': set(),
