@@ -8,7 +8,7 @@
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
   <link rel="stylesheet" href="{% static 'benchmarks/css/leaderboard/leaderboard.sass' %}">
 {% endblock %}
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 {# Override main_content to remove column constraints #}
 {% block main_content %}
   <div class="leaderboard-container">
@@ -16,15 +16,20 @@
       <!-- banner & icon… -->
     </div>
     
+
     <div id="leaderboardSearchWrapper">
       <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
-      <button id="tutorialBtn" class="btn-secondary">
+      <button id="tutorialBtn" class="btn-secondary" style="width:200px; white-space: nowrap">
         <span class="tutorial-icon">📚</span>
         <span class="text-wrapper">Tutorial</span>
       </button>
-      <button id="advancedFilterBtn">
+      <button id="advancedFilterBtn" style="width:200px; white-space: nowrap">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
+      </button>
+
+      <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; width:200px; white-space: nowrap">
+        <i class="fa-solid fa-download"></i> Export Leaderboard
       </button>
     </div>
     
@@ -269,6 +274,21 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
         benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
         benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
+
+        let modelMetadataMap, benchmarkMetadataMap;
+      try {
+        modelMetadataMap = JSON.parse('{{ model_metadata_map|escapejs }}');
+      } catch (e) {
+        console.warn('No model_metadata_map provided:', e);
+        modelMetadataMap = {};
+      }
+      benchmarkMetadataMap = {};
+      benchmarkMetadata.forEach(entry => {
+        benchmarkMetadataMap[entry.identifier] = entry;
+      });
+      window.modelMetadataMap     = modelMetadataMap;
+      window.benchmarkMetadataMap = benchmarkMetadataMap;
+
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -281,6 +301,10 @@ R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iif
       window.filterOptions = filterOptions;
       window.benchmarkMetadata = benchmarkMetadata;
       window.benchmarkIds = benchmarkIds;
+      window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
+      window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
+      window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
+
       const ranges = filterOptions?.parameter_ranges || {};
       if (ranges.max_param_count) {
         document.getElementById('paramCountMin').max = ranges.max_param_count;
