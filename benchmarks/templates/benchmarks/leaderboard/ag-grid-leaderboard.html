@@ -19,6 +19,10 @@
 
     <div id="leaderboardSearchWrapper">
       <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
+      <button id="tutorialBtn" class="btn-secondary" style="width:200px; white-space: nowrap">
+        <span class="tutorial-icon">📚</span>
+        <span class="text-wrapper">Tutorial</span>
+      </button>
       <button id="advancedFilterBtn" style="width:200px; white-space: nowrap">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
@@ -241,7 +245,19 @@
   {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 4) Kick it off once the DOM is ready #}
+  {# 4) Load Driver.js for tutorial functionality #}
+R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  {# Load tour configurations in dependency order #}
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  {# 5) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');
