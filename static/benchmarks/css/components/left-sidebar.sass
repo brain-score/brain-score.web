@@ -6,6 +6,34 @@
   left: 0
   padding-right: 0
   background: $brainscore_gray4
+  transition: right 0.3s ease
+  z-index: 1000
+
+  &.collapsed
+    right: calc(100% - 80px)
+    
+    .sidebar-toggle .toggle-icon
+      transform: rotate(180deg)
+    
+    a span
+      display: none
+    
+    a
+      padding-left: 22px
+      justify-content: center
+      
+      &.brainscore-logo
+        img
+          width: 50px
+          
+      img.menu-icon
+        margin-right: 0
+        
+    .dropdown
+      width: 80px
+      
+      .dropdown-content
+        transform: translateX(80px)
 
   a
     display: block
@@ -23,20 +51,73 @@
 
       img
         width: 90px
+        transition: width 0.3s ease
 
     img
       display: inline-block
       vertical-align: middle
       margin-right: 10px
+      transition: all 0.3s ease
 
       &.menu-icon
         width: 35px
 
     &.selected
       border-right: 8px solid $brainscore_green
+      
+    span
+      transition: opacity 0.3s ease
 
+  // Auto-collapse sidebar on narrow screens instead of hiding completely
   @media (max-width: 1024px)
-    display: none
+    right: calc(100% - 80px)
+    
+    .sidebar-toggle .toggle-icon
+      transform: rotate(180deg)
+    
+    a span
+      display: none
+    
+    a
+      padding-left: 22px
+      justify-content: center
+      
+      &.brainscore-logo
+        img
+          width: 50px
+          
+      img.menu-icon
+        margin-right: 0
+        
+    .dropdown
+      width: 80px
+      
+      .dropdown-content
+        transform: translateX(80px)
+
+// Sidebar toggle button
+.sidebar-toggle
+  position: relative
+  padding: 10px 0
+  text-align: center
+  border-bottom: 1px solid $brainscore_gray3
+
+  .toggle-btn
+    background: none
+    border: none
+    color: white
+    font-size: 18px
+    cursor: pointer
+    padding: 8px 12px
+    border-radius: 4px
+    transition: background-color 0.3s ease
+
+    &:hover
+      background-color: rgba(255, 255, 255, 0.1)
+
+    .toggle-icon
+      display: inline-block
+      transition: transform 0.3s ease
 
 // Dropdown container
 .dropdown
