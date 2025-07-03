@@ -1,0 +1,594 @@
+{% extends 'benchmarks/components/app-view.html' %}
+{% load static %}
+
+{% block table_library_dependencies %}
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
+  <link rel="stylesheet" href="{% static 'benchmarks/css/leaderboard/leaderboard.sass' %}">
+{% endblock %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+{# Override main_content to remove column constraints #}
+{% block main_content %}
+  <div class="leaderboard-container">
+    <div class="leaderboard-header">
+      <!-- banner & icon… -->
+    </div>
+    
+
+    <div id="leaderboardSearchWrapper">
+      <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
+      <button id="tutorialBtn" class="btn-secondary" style="width:200px; white-space: nowrap">
+        <span class="tutorial-icon">📚</span>
+        <span class="text-wrapper">Tutorial</span>
+      </button>
+      <button id="advancedFilterBtn" style="width:200px; white-space: nowrap">
+        <span class="filter-icon">🔍</span>
+        <span class="text-wrapper">Advanced Filters</span>
+      </button>
+
+      <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; width:200px; white-space: nowrap">
+        <i class="fa-solid fa-download"></i> Export Leaderboard
+      </button>
+    </div>
+    
+    <div class="leaderboard-breadcrumb"></div>
+    
+    <div id="leaderboardGrid"
+         class="ag-theme-alpine"
+         style="width:100%;height:1500px;overflow-x:auto;">
+    </div>
+    
+    <div id="advancedFiltersPanel" class="advanced-filters hidden">
+      <div class="filters-container">
+        <!-- Left column: Benchmark filters -->
+        <div class="filter-column benchmark-column">
+          <div class="filter-column-header">
+            <h4>Included Benchmarks</h4>
+            <div class="header-actions">
+              <button id="copyBibtexBtn" class="btn-icon" title="Copy BibTeX citations for selected benchmarks">
+                📖
+              </button>
+              <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
+            </div>
+          </div>
+          <div id="benchmarkFilterPanel"></div>
+        </div>
+        
+        <!-- Middle column: Model Properties -->
+        <div class="filter-column">
+          <div class="filter-column-header">
+            <h4>Model Properties</h4>
+          </div>
+          
+          <div class="filter-group">
+            <label>Architecture</label>
+            <div class="filter-dropdown" id="architectureFilter">
+              <input type="text" placeholder="Select architecture..." class="filter-input">
+              <div class="dropdown-content hidden">
+                <!-- Options will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+          
+{#          <div class="filter-group">#}
+{#            <label>Training Dataset</label>#}
+{#            <div class="filter-dropdown" id="trainingDatasetFilter">#}
+{#              <input type="text" placeholder="Select training dataset..." class="filter-input">#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
+          
+          <div class="filter-group">
+            <label>Model Family</label>
+            <div class="filter-dropdown" id="modelFamilyFilter">
+              <input type="text" placeholder="Select model family..." class="filter-input">
+              <div class="dropdown-content hidden"></div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <div class="filter-header">
+              <label>Parameter Count (M)</label>
+              <div class="range-values">
+                <input type="number" class="range-input-min" id="paramCountMin" min="0" max="100" value="0">
+                <span class="range-separator">-</span>
+                <input type="number" class="range-input-max" id="paramCountMax" min="0" max="100" value="100">
+                <span class="range-unit">M</span>
+              </div>
+            </div>
+            <div class="range-filter dual-handle">
+              <div class="slider-container" data-min="0" data-max="100">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="100"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <div class="filter-header">
+              <label>Model Size (MB)</label>
+              <div class="range-values">
+                <input type="number" class="range-input-min" id="modelSizeMin" min="0" max="1000" value="0">
+                <span class="range-separator">-</span>
+                <input type="number" class="range-input-max" id="modelSizeMax" min="0" max="1000" value="1000">
+                <span class="range-unit">MB</span>
+              </div>
+            </div>
+            <div class="range-filter dual-handle">
+              <div class="slider-container" data-min="0" data-max="1000">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="1000"></div>
+              </div>
+            </div>
+          </div>
+          
+{#          <div class="filter-group">#}
+{#            <label>Task Specialization</label>#}
+{#            <div class="filter-dropdown" id="taskSpecFilter">#}
+{#              <input type="text" placeholder="Select specialization..." class="filter-input">#}
+{#              <div class="dropdown-content hidden"></div>#}
+{#            </div>#}
+{#          </div>#}
+        </div>
+        
+        <!-- Right column: Benchmark Properties -->
+        <div class="filter-column benchmark-metadata-column">
+          <div class="filter-column-header">
+            <h4>Benchmark Properties</h4>
+          </div>  
+          
+          <!-- Public Data Only -->
+          <div class="filter-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="publicDataFilter">
+                <span>Publicly Available Data Only</span>
+              </label>
+          </div>
+          
+          <!-- Benchmark Data Section -->
+          <div class="metadata-section">
+            <div class="filter-group checkbox-group">
+              <label>Brain Region</label>
+              <div class="checkbox-container" id="regionFilter">
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V1" class="region-checkbox">
+                  <span>V1</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V2" class="region-checkbox">
+                  <span>V2</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="V4" class="region-checkbox">
+                  <span>V4</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="IT" class="region-checkbox">
+                  <span>IT</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="filter-group checkbox-group">
+              <label>Species</label>
+              <div class="checkbox-container" id="speciesFilter">
+                <label class="checkbox-label">
+                  <input type="checkbox" value="human" class="species-checkbox">
+                  <span>Human</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" value="primate" class="species-checkbox">
+                  <span>Simian</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="filter-group checkbox-group">
+              <label>Task</label>
+              <div class="checkbox-container" id="taskFilter">
+                <!-- Will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Benchmark Stimuli Section -->
+          <div class="metadata-section">
+            <div class="filter-group">
+              <div class="filter-header">
+                <label>Number of Stimuli</label>
+                <div class="range-values">
+                  <input type="number" class="range-input-min" id="stimuliCountMin" min="0" max="1000" value="0">
+                  <span class="range-separator">-</span>
+                  <input type="number" class="range-input-max" id="stimuliCountMax" min="0" max="1000" value="1000">
+                </div>
+              </div>
+              <div class="range-filter dual-handle">
+                <div class="slider-container" data-min="0" data-max="1000">
+                  <div class="slider-track"></div>
+                  <div class="slider-range"></div>
+                  <div class="slider-handle handle-min" data-value="0"></div>
+                  <div class="slider-handle handle-max" data-value="1000"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Action buttons -->
+      <div class="filter-actions">
+        <button id="toggleLayoutBtn" class="btn-secondary">
+          <span class="toggle-text">Sidebar Mode</span>
+        </button>
+        <button id="resetAllFiltersBtn" class="btn-primary">Reset All Filters</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  {# 1) Load AG-Grid UMD bundle #}
+  <script
+    src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
+  </script>
+
+  {# 2) Load tooltip component JS #}
+  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+
+  {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
+  <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
+
+  {# 4) Load Driver.js for tutorial functionality #}
+R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  {# Load tour configurations in dependency order #}
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  {# 5) Kick it off once the DOM is ready #}
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, starting initialization...');
+    
+    try {
+      // Parse data from Django
+      let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
+      
+      try {
+        rowData = JSON.parse('{{ row_data|escapejs }}');
+        columnDefs = JSON.parse('{{ column_defs|escapejs }}');
+        benchmarkGroups = JSON.parse('{{ benchmark_groups|escapejs }}');
+        benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
+        filterOptions = JSON.parse('{{ filter_options|escapejs }}');
+        benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
+        benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
+
+        let modelMetadataMap, benchmarkMetadataMap;
+      try {
+        modelMetadataMap = JSON.parse('{{ model_metadata_map|escapejs }}');
+      } catch (e) {
+        console.warn('No model_metadata_map provided:', e);
+        modelMetadataMap = {};
+      }
+      benchmarkMetadataMap = {};
+      benchmarkMetadata.forEach(entry => {
+        benchmarkMetadataMap[entry.identifier] = entry;
+      });
+      window.modelMetadataMap     = modelMetadataMap;
+      window.benchmarkMetadataMap = benchmarkMetadataMap;
+
+        console.log('All data loaded successfully, filter options:', filterOptions);
+      } catch (e) {
+        console.error('Error parsing data:', e);
+        return; // Stop if data parsing fails
+      }
+      
+      // Make data globally available
+      window.benchmarkTree = benchmarkTree;
+      window.originalRowData = rowData;
+      window.filterOptions = filterOptions;
+      window.benchmarkMetadata = benchmarkMetadata;
+      window.benchmarkIds = benchmarkIds;
+      window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
+      window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
+      window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
+
+      const ranges = filterOptions?.parameter_ranges || {};
+      if (ranges.max_param_count) {
+        document.getElementById('paramCountMin').max = ranges.max_param_count;
+        document.getElementById('paramCountMax').max = ranges.max_param_count;
+        document.getElementById('paramCountMax').value = ranges.max_param_count;
+      }
+      if (ranges.max_model_size) {
+        document.getElementById('modelSizeMin').max = ranges.max_model_size;
+        document.getElementById('modelSizeMax').max = ranges.max_model_size;
+        document.getElementById('modelSizeMax').value = ranges.max_model_size;
+      }
+      if (ranges.max_stimuli_count) {
+        document.getElementById('stimuliCountMin').max = ranges.max_stimuli_count;
+        document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
+        document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
+      }
+      
+      // Initialize grid
+      if (typeof initializeGrid === 'function') {
+        console.log('🏗️ Initializing grid...');
+        initializeGrid(rowData, columnDefs, benchmarkGroups);
+      }
+      
+      // Setup UI elements - DECLARE THESE ONLY ONCE
+      const panel = document.getElementById('advancedFiltersPanel');
+      const treeContainer = document.getElementById('benchmarkFilterPanel');
+      const container = document.querySelector('.leaderboard-container');
+      const advancedFilterBtn = document.getElementById('advancedFilterBtn');
+      const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
+      
+      // Render benchmark tree
+      if (typeof renderBenchmarkTree === 'function') {
+        renderBenchmarkTree(treeContainer, benchmarkTree);
+      }
+      
+      if (typeof populateFilterDropdowns === 'function') {
+        populateFilterDropdowns(filterOptions);
+      }
+      
+      if (typeof setupDropdownHandlers === 'function') {
+        setupDropdownHandlers();
+      }
+      
+      if (typeof setupBenchmarkCheckboxes === 'function') {
+        setupBenchmarkCheckboxes(filterOptions);
+      }
+      
+      setTimeout(() => {
+        initializeDualHandleSliders();
+      }, 100);
+      
+      // Initialize benchmark filters from URL or use defaults
+      setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
+                                       urlParams.has('benchmark_species') ||
+                                       urlParams.has('benchmark_tasks') ||
+                                       urlParams.has('public_data_only') ||
+                                       urlParams.has('excluded_benchmarks');
+      
+        // Parse URL filters first (this will set checkbox states if URL params exist)
+        if (typeof parseURLFilters === 'function') {
+          parseURLFilters();
+        }
+        
+        // If no explicit benchmark filters in URL, use default (include all benchmarks)
+        // No special exclusions - all benchmarks are selected by default
+        
+        // Always rebuild exclusion set based on current checkbox states
+        window.filteredOutBenchmarks = new Set();
+        const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+        allCheckboxes.forEach(cb => {
+          if (!cb.checked) {
+            window.filteredOutBenchmarks.add(cb.value);
+          }
+        });
+      
+        console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
+      }, 200);
+      
+      // Setup filter action buttons
+      const applyBtn = document.getElementById('applyFiltersBtn');
+      const resetBtn = document.getElementById('resetAllFiltersBtn');
+      
+      // Remove apply button listener since we're removing the button
+      
+      if (resetBtn && typeof resetAllFilters === 'function') {
+        resetBtn.addEventListener('click', () => {
+          resetAllFilters();
+        });
+      }
+      
+      // Setup the reset benchmarks link
+      setTimeout(() => {
+        const resetLink = document.getElementById('resetBenchmarksLink');
+        if (resetLink) {
+          resetLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Check all checkboxes (include all benchmarks by default)
+            const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+            allCheckboxes.forEach(cb => {
+              cb.checked = true;  // Check everything including engineering
+            });
+            
+            // Rebuild the exclusion set
+            window.filteredOutBenchmarks = new Set();
+            allCheckboxes.forEach(cb => {
+              if (!cb.checked) {
+                window.filteredOutBenchmarks.add(cb.value);
+              }
+            });
+            
+            // Trigger update
+            if (typeof applyCombinedFilters === 'function') {
+              applyCombinedFilters();
+            }
+          });
+        }
+        
+        // Setup the copy bibtex button
+        const copyBibtexBtn = document.getElementById('copyBibtexBtn');
+        if (copyBibtexBtn) {
+          copyBibtexBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof copyBibtexToClipboard === 'function') {
+              copyBibtexToClipboard();
+            }
+          });
+        }
+      }, 300);
+      
+      // Enhanced layout toggle functionality
+      // Track the panel visibility state separately from layout mode
+      let isPanelVisible = false;
+      
+      // Check for saved preference and set initial state
+      const savedLayout = localStorage.getItem('leaderboardLayout');
+      if (savedLayout === 'sidebar') {
+        container.classList.add('sidebar-mode');
+        panel.classList.add('hidden'); // Start hidden even in sidebar mode
+        panel.style.display = ''; // Don't force display
+        isPanelVisible = false; // Start with panel hidden
+        updateToggleButton('sidebar');
+      } else {
+        // Default state: horizontal mode with panel hidden
+        container.classList.remove('sidebar-mode');
+        panel.classList.add('hidden');
+        panel.style.display = '';
+        isPanelVisible = false;
+        updateToggleButton('horizontal');
+      }
+      
+      // Function to update toggle button text and icon
+      function updateToggleButton(mode) {
+        const toggleText = layoutToggleBtn?.querySelector('.toggle-text');
+        
+        if ( toggleText) {
+          if (mode === 'sidebar') {
+            toggleText.textContent = 'Full Width Mode';
+          } else {
+            toggleText.textContent = 'Sidebar Mode';
+          }
+        }
+      }
+      
+      // Function to position panel correctly
+      function positionPanel(mode) {
+        if (mode === 'horizontal') {
+          // In horizontal mode, move panel after breadcrumb (before grid)
+          const breadcrumb = document.querySelector('.leaderboard-breadcrumb');
+          if (breadcrumb && breadcrumb.nextSibling !== panel) {
+            breadcrumb.insertAdjacentElement('afterend', panel);
+          }
+        } else {
+          // In sidebar mode, move panel to end (for grid layout)
+          if (container.lastElementChild !== panel) {
+            container.appendChild(panel);
+          }
+        }
+      }
+      
+      // Set initial position
+      positionPanel(savedLayout === 'sidebar' ? 'sidebar' : 'horizontal');
+      
+      layoutToggleBtn?.addEventListener('click', () => {
+        const isSidebar = container.classList.toggle('sidebar-mode');
+        
+        if (isSidebar) {
+          // Switching TO sidebar mode
+          positionPanel('sidebar');
+          panel.classList.remove('hidden');
+          panel.style.display = 'block';
+          isPanelVisible = true;
+          updateToggleButton('sidebar');
+          localStorage.setItem('leaderboardLayout', 'sidebar');
+          container.classList.remove('filters-hidden');
+        } else {
+          // Switching TO horizontal mode
+          positionPanel('horizontal');
+          // Keep panel visible when switching modes
+          panel.classList.remove('hidden');
+          panel.style.display = 'block';
+          isPanelVisible = true;
+          updateToggleButton('horizontal');
+          localStorage.setItem('leaderboardLayout', 'horizontal');
+          container.classList.remove('filters-hidden');
+        }
+      });
+      
+      // Advanced filter button - setup SINGLE event listener
+      if (advancedFilterBtn) {
+        // Clone and replace to remove any existing listeners
+        const newAdvancedFilterBtn = advancedFilterBtn.cloneNode(true);
+        advancedFilterBtn.parentNode.replaceChild(newAdvancedFilterBtn, advancedFilterBtn);
+        
+        newAdvancedFilterBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation(); // Stop event bubbling
+          console.log('Advanced filter button clicked, sidebar mode:', container.classList.contains('sidebar-mode'));
+          
+          if (!container.classList.contains('sidebar-mode')) {
+            // In horizontal mode, toggle the panel
+            isPanelVisible = !isPanelVisible;
+            if (isPanelVisible) {
+              // Force show the panel
+              panel.classList.remove('hidden');
+              panel.style.display = 'block';
+              panel.style.visibility = 'visible';
+              panel.style.opacity = '1';
+              
+              // Remove the debug styling
+              panel.style.border = '';
+              panel.style.zIndex = '';
+              
+              // Double-check it's visible
+              setTimeout(() => {
+                const computedStyle = window.getComputedStyle(panel);
+                console.log('After showing - display:', computedStyle.display);
+                console.log('After showing - visibility:', computedStyle.visibility);
+                console.log('After showing - opacity:', computedStyle.opacity);
+                console.log('Panel offsetHeight:', panel.offsetHeight);
+              }, 10);
+            } else {
+              panel.classList.add('hidden');
+              panel.style.display = '';
+              panel.style.visibility = '';
+              panel.style.opacity = '';
+            }
+            console.log('Panel visibility toggled to:', isPanelVisible);
+            console.log('Panel classes after:', panel.className);
+          } else {
+            // In sidebar mode, also toggle visibility
+            isPanelVisible = !isPanelVisible;
+            if (isPanelVisible) {
+              panel.classList.remove('hidden');
+              panel.style.display = 'block';
+              container.classList.remove('filters-hidden');
+            } else {
+              panel.classList.add('hidden');
+              panel.style.display = '';
+              container.classList.add('filters-hidden');
+            }
+          }
+        });
+      }
+      
+      // Call parseURLFilters one more time to ensure filters are applied after all setup
+      // MOVED TO A LONGER DELAY to avoid conflicts
+      setTimeout(() => {
+        if (typeof parseURLFilters === 'function') {
+          console.log('Calling parseURLFilters...');
+          parseURLFilters();
+          // After parseURLFilters, check if panel state is still correct
+          if (!container.classList.contains('sidebar-mode') && !isPanelVisible) {
+            panel.classList.add('hidden');
+            console.log('Re-hiding panel after parseURLFilters');
+          }
+        }
+      }, 500); // Increased delay
+      
+    } catch (error) {
+      console.error('💥 Error during initialization:', error);
+    }
+  });
+  </script>
+{% endblock %}
