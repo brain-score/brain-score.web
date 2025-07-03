@@ -64,7 +64,7 @@ window.tourConfigs.defaultTour = {
       element: '.expandable-header.neural .benchmark-count .count-value',
       popover: {
         title: 'Expansion Toggle',
-        description: 'This count badge shows how many neural benchmarks are in this category and acts as an expand/collapse toggle. Notice the icon - I\'ll click it in the next step to show individual brain area benchmarks like V1, V2, V4, and IT.',
+        description: 'This count badge shows how many neural benchmarks are in this category and acts as an expand/collapse toggle. Notice the icon - We\'ll click it in the next step to show individual brain area benchmarks in V1, V2, V4, and IT.',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
@@ -77,7 +77,7 @@ window.tourConfigs.defaultTour = {
     {
       popover: {
         title: 'Neural Brain Areas Revealed',
-        description: 'Perfect! I just expanded the Neural column and now you can see all four major neural benchmark categories. Each tests how well models predict responses from different brain regions. You can further expand categories to see individual benchmarks.',
+        description: 'We just expanded the Neural column. We can now see all four major neural benchmark categories. Each tests how well models predict responses from different brain regions. We can further expand categories to see individual benchmarks.',
         position: 'center'
       },
       beforeShow: (element, step, options) => {
@@ -93,7 +93,7 @@ window.tourConfigs.defaultTour = {
     {
       popover: {
         title: 'Expanding V1 Benchmarks',
-        description: 'Let me expand the V1 column to show you individual benchmarks like Marques2020, Freeman, and Coggan. Each represents a specific experimental dataset.',
+        description: 'Let\'s expand the V1 column to show individual benchmarks, such as Marques2020, Freeman, and Coggan. Each represents a specific experimental dataset.',
         position: 'center'
       },
       beforeShow: (element, step, options) => {

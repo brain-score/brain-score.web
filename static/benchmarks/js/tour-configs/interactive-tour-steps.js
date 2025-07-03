@@ -11,7 +11,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#advancedFilterBtn',
       popover: {
         title: 'Interactive Filter Demo',
-        description: 'Let\'s explore how benchmark filtering works! I\'ll show you the advanced filters and demonstrate how they change the leaderboard in real-time.',
+        description: 'Let\'s explore how benchmark filtering works! We\'ll cover the advanced filters and demonstrate how they change the leaderboard in real-time.',
         position: 'bottom'
       },
       beforeShow: () => {
@@ -26,7 +26,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#advancedFilterBtn',
       popover: {
         title: 'Opening Advanced Filters',
-        description: 'I\'m now opening the advanced filter panel for you. Watch as it reveals powerful filtering options.',
+        description: '"Let\'s now open the advanced filter panel. Watch as it reveals powerful filtering options.',
         position: 'bottom'
       },
       beforeShow: () => {
@@ -49,7 +49,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '.vision-parent',
       popover: {
         title: 'Vision Benchmarks Category',
-        description: 'Vision Benchmarks include Neural and Behavioral tests. These contribute to the global Brain-Score. Let me expand this category to show you the individual benchmarks.',
+        description: 'Vision Benchmarks include Neural and Behavioral tests. These contribute to the global Brain-Score. Let\'s expand this category to show you the individual benchmarks.',
         position: 'left'
       },
       beforeShow: () => {
@@ -65,7 +65,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '.vision-parent input[value="neural_vision_v0"]',
       popover: {
         title: 'Neural Benchmarks',
-        description: 'Neural benchmarks measure how well models predict brain responses. I\'ll expand this category to show you specific neural benchmarks like V1, V2, V4, and IT cortex predictions.',
+        description: 'Neural benchmarks measure how well models predict brain responses. Let\'s expand this category again to show specific neural benchmarks like V1, V2, V4, and IT cortex predictions.',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -88,7 +88,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: 'input[value="V1_v0"]',
       popover: {
         title: 'Benchmark Filtering Demo',
-        description: 'I\'ll expand both Neural and V1 categories to show the tree structure. Notice how the V1 category contains individual benchmarks like FreemanZiemba2013. This hierarchy lets you filter at different levels of granularity.',
+        description: 'Let\'s now expand both Neural and V1 categories to show the tree structure. Notice how the V1 category contains individual benchmarks like FreemanZiemba2013. This hierarchy lets you filter at different levels of granularity.',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -129,7 +129,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: 'input[value="V1_v0"]',
       popover: {
         title: 'Deselecting V1 Category',
-        description: 'Now I\'ll deselect the V1 category to demonstrate benchmark filtering. Watch as all V1 benchmarks get excluded and the V1 columns disappear from the leaderboard, but the tree stays expanded so you can see what was filtered out!',
+        description: 'Now we\'ll deselect the V1 category to demonstrate benchmark filtering. Watch as all V1 benchmarks get excluded and the V1 columns disappear from the leaderboard, but the tree stays expanded so you can see what was filtered out!',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -164,7 +164,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '.ag-row[row-index="0"] .ag-cell[col-id="neural_vision_v0"]',
       popover: {
         title: 'Watch the Neural Scores Change!',
-        description: 'Notice how the Neural column scores have been recalculated! By removing V1 benchmarks, we\'ve changed how neural vision performance is calculated, affecting each model\'s Brain-Score. Notice how neural column has become blue. Any benchmark that is affected by filtering will change it\'s color scale to reflect divergence from thestandard Brain-Score leaderboard.',
+        description: 'Notice how the Neural column scores have been recalculated! By removing V1 benchmarks, we\'ve changed how neural vision performance is calculated, affecting each model\'s Brain-Score. Notice how neural column has become blue. Any benchmark that is affected by filtering will change it\'s color scale to reflect divergence from the standard Brain-Score leaderboard.',
         position: 'left'
       }
     },
@@ -180,7 +180,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#copyBibtexBtn',
       popover: {
         title: 'Copy Research Citations',
-        description: 'This button copies BibTeX citations for all currently selected benchmarks to your clipboard. Perfect for citing the research papers in your own work! Let me click it to show you the citations that would be copied.',
+        description: 'This button copies BibTeX citations for all currently selected benchmarks to your clipboard - Perfect for citing the research papers in your own work! Let\'s  click it to show you the citations that would be copied.',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -262,7 +262,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
     {
       popover: {
         title: 'Citations Ready for Your Research! 📚',
-        description: 'Perfect! The BibTeX citations for all selected benchmarks are now copied to your clipboard. You can paste them directly into your research papers to properly cite the benchmark datasets. I\'ll close this preview now and continue the tour.',
+        description: 'Perfect! The BibTeX citations for all selected benchmarks are now copied to your clipboard. You can paste them directly into your research papers to properly cite the benchmark datasets. Let\'s close this preview now and continue the tour.',
         position: 'center'
       },
       beforeShow: (element, step, options) => {
@@ -287,7 +287,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '.vision-parent input[value="behavior_vision_v0"]',
       popover: {
         title: 'Now Let\'s Try Behavioral Benchmarks',
-        description: 'Behavioral benchmarks are already expanded. Let me show you what happens when we deselect all behavioral benchmarks to isolate neural performance.',
+        description: 'Behavioral benchmarks are already expanded. Let\'s see what happens when we deselect all behavioral benchmarks to isolate neural performance.',
         position: 'left'  
       },
       beforeShow: (element, step, options) => {
@@ -311,7 +311,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: 'input[value="behavior_vision_v0"]',
       popover: {
         title: 'Deselecting Behavioral Benchmarks',
-        description: 'Now I\'ll uncheck Behavioral benchmarks to show you how this affects the leaderboard. Watch the columns and scores change in real-time!',
+        description: 'Now we\'ll uncheck Behavioral benchmarks to show you how this affects the leaderboard. Watch the columns and scores change in real-time!',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -394,7 +394,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: 'input[value="engineering_vision_v0"]',
       popover: {
         title: 'Excluding Engineering Benchmarks',
-        description: 'I\'m now deselecting Engineering benchmarks. Watch as the column disappear in the leaderboard, but note they don\'t affect the global Brain-Score!',
+        description: 'Let\'s now deselect Engineering benchmarks. Watch as the column disappear in the leaderboard, but note they don\'t affect the global Brain-Score!',
         position: 'left'
       },
       beforeShow: (element, step, options) => {
@@ -453,7 +453,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#resetAllFiltersBtn',
       popover: {
         title: 'Reset When Needed',
-        description: 'Use this Reset button to restore all filters to their default state anytime. I\'ll click it now to clean up after our demo!',
+        description: 'Use this Reset button to restore all filters to their default state anytime. Let\'s click it now to clean up after our demo!',
         position: 'top'
       },
       beforeShow: (element, step, options) => {
@@ -468,7 +468,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
       element: '#advancedFilterBtn',
       popover: {
         title: 'Demo Complete! 🎉',
-        description: 'Perfect! All filters have been reset and I\'m closing the advanced panel to return you to the default view. You now know how to use benchmark filtering to customize your analysis and explore model capabilities!',
+        description: 'Perfect! All filters have been reset. Let\'s close the advanced panel to return you to the default view. You now know how to use benchmark filtering to customize your analysis and explore model capabilities!',
         position: 'bottom'
       },
       beforeShow: (element, step, options) => {
