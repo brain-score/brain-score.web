@@ -214,24 +214,25 @@ def filter_and_rank_models(models, domain: str = "vision"):
     model_scores = []
     for model in models:
         if model.scores is not None:
-            for score in model.scores:
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
-                if benchmark_id == f"average_{domain}":
-                    val = score.get("score_ceiled", score.get("score_ceiled"))
-                    if val is None or val == "":
-                        # Exclude models with None or empty string
+            if model.rank <= 10:
+                for score in model.scores:
+                    benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                    if benchmark_id == f"average_{domain}":
+                        val = score.get("score_ceiled", score.get("score_ceiled"))
+                        if val is None or val == "":
+                            # Exclude models with None or empty string
+                            break
+                        if val == "X":
+                            # "X" is valid, but always ranked at the bottom
+                            model_scores.append((model, None, True))
+                            break
+                        try:
+                            val_float = float(val)
+                            model_scores.append((model, val_float, False))
+                        except Exception:
+                            # Exclude models with non-numeric, non-"X" values
+                            break
                         break
-                    if val == "X":
-                        # "X" is valid, but always ranked at the bottom
-                        model_scores.append((model, None, True))
-                        break
-                    try:
-                        val_float = float(val)
-                        model_scores.append((model, val_float, False))
-                    except Exception:
-                        # Exclude models with non-numeric, non-"X" values
-                        break
-                    break
 
     # Sort: valid numbers (descending), then "X" at the bottom (tied), exclude None/null
     model_scores.sort(
