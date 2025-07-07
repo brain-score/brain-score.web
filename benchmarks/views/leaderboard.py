@@ -427,6 +427,49 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
+
+    # 4) Attach JSON-serialized data to template context
+    stimuli_map = {}
+    data_map = {}
+    metric_map = {}
+
+    for b in context['benchmarks']:
+        stimuli_map[b.identifier] = getattr(b, 'benchmark_stimuli_meta', {}) or {}
+        data_map[b.identifier] = getattr(b, 'benchmark_data_meta', {}) or {}
+        metric_map[b.identifier] = getattr(b, 'benchmark_metric_meta', {}) or {}
+
+    # dump benchmark metadata (all three tables)
+    context['benchmarkStimuliMetaMap'] = json.dumps(stimuli_map)
+    context['benchmarkDataMetaMap'] = json.dumps(data_map)
+    context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
+
+    context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
+    layer_map = context.get('layer_mapping', {})
+
+    # now rebuild your model_metadata_map, merging in layer_mapping
+    model_meta_map = {}
+    for m in context['models']:
+        if not (hasattr(m, 'model_meta') and m.model_meta):
+            continue
+
+        # start from the existing metadata dict
+        meta = dict(m.model_meta)
+
+        # if this model has a .layers attribute, add it under "layer_mapping"
+        if hasattr(m, 'layers'):
+            meta['layer_mapping'] = m.layers
+
+        model_meta_map[m.name] = meta
+
+    # serialize out to JSON (and make sure all numpy types etc. are native Python)
+    context['model_metadata_map'] = json.dumps(json_serializable(model_meta_map))
+    context['column_defs'] = json.dumps(column_defs)
+    context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
+    context['filter_options'] = json.dumps(filter_options)
+    context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
+    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
+    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
+    
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:

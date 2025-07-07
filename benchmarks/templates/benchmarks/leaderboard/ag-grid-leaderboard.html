@@ -8,7 +8,7 @@
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
   <link rel="stylesheet" href="{% static 'benchmarks/css/leaderboard/leaderboard.sass' %}">
 {% endblock %}
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 {# Override main_content to remove column constraints #}
 {% block main_content %}
   <div class="leaderboard-container">
@@ -16,11 +16,20 @@
       <!-- banner & icon… -->
     </div>
     
+
     <div id="leaderboardSearchWrapper">
       <input type="text" id="modelSearchInput" placeholder="Search models... (try: 'resnet OR vit', 'NOT alexnet')" />
-      <button id="advancedFilterBtn">
+      <button id="tutorialBtn" class="btn-secondary" style="width:200px; white-space: nowrap">
+        <span class="tutorial-icon">📚</span>
+        <span class="text-wrapper">Tutorial</span>
+      </button>
+      <button id="advancedFilterBtn" style="width:200px; white-space: nowrap">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
+      </button>
+
+      <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; width:200px; white-space: nowrap">
+        <i class="fa-solid fa-download"></i> Export Leaderboard
       </button>
     </div>
     
@@ -236,7 +245,19 @@
   {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 4) Kick it off once the DOM is ready #}
+  {# 4) Load Driver.js for tutorial functionality #}
+R  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  {# Load tour configurations in dependency order #}
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  {# 5) Kick it off once the DOM is ready #}
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, starting initialization...');
@@ -253,6 +274,21 @@
         filterOptions = JSON.parse('{{ filter_options|escapejs }}');
         benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
         benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
+
+        let modelMetadataMap, benchmarkMetadataMap;
+      try {
+        modelMetadataMap = JSON.parse('{{ model_metadata_map|escapejs }}');
+      } catch (e) {
+        console.warn('No model_metadata_map provided:', e);
+        modelMetadataMap = {};
+      }
+      benchmarkMetadataMap = {};
+      benchmarkMetadata.forEach(entry => {
+        benchmarkMetadataMap[entry.identifier] = entry;
+      });
+      window.modelMetadataMap     = modelMetadataMap;
+      window.benchmarkMetadataMap = benchmarkMetadataMap;
+
         console.log('All data loaded successfully, filter options:', filterOptions);
       } catch (e) {
         console.error('Error parsing data:', e);
@@ -266,6 +302,10 @@
       window.benchmarkMetadata = benchmarkMetadata;
       
       window.benchmarkIds = benchmarkIds;
+      window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
+      window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
+      window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
+
       const ranges = filterOptions?.parameter_ranges || {};
       if (ranges.max_param_count) {
         document.getElementById('paramCountMin').max = ranges.max_param_count;

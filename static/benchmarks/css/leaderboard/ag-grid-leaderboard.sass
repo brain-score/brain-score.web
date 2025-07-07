@@ -49,6 +49,21 @@ button,
   font-weight: 500
   font-size: 0.9rem
 
+// Tutorial button specific styling
+#tutorialBtn
+  @include solid-button($primary-color)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+
+  .tutorial-icon
+    font-size: 1.1em
+    line-height: 1
+
 // Container - FIXED: Remove max-width constraint for full-screen layout
 .leaderboard-container
   padding: 20px
@@ -195,10 +210,10 @@ button,
     &:hover
       background-color: lighten($brainscore_gray4, 10%)
   &.engineering
-    background-color: $brainscore_sky
+    background-color: #47B7DE
     color: $brainscore_gray4
     &:hover
-      background-color: lighten($brainscore_sky, 10%)
+      background-color: lighten(#47B7DE, 10%)
   &:not(.neural):not(.behavior):not(.engineering):not(.average)
     background-color: #d4d4d4
     color: black
