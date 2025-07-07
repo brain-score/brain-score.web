@@ -262,7 +262,7 @@ window.tourConfigs.interactiveBenchmarkTour = {
     {
       popover: {
         title: 'Citations Ready for Your Research! 📚',
-        description: 'Perfect! The BibTeX citations for all selected benchmarks are now copied to your clipboard. You can paste them directly into your research papers to properly cite the benchmark datasets. Let\'s close this preview now and continue the tour.',
+        description: 'Perfect! The BibTeX citations for all selected benchmarks are now copied to your clipboard. You can paste them directly into your reference manager of choice to properly cite the benchmark datasets. Let\'s close this preview now and continue the tour.',
         position: 'center'
       },
       beforeShow: (element, step, options) => {
