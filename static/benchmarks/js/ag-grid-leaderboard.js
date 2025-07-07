@@ -537,30 +537,30 @@ function addBenchmarksFilteredByMetadata() {
   window.benchmarkMetadata.forEach(benchmark => {
     let shouldExclude = false;
 
-    // Check region filter
+    // Check region filter - only exclude benchmarks with explicit region values not in filter
     if (window.activeFilters.benchmark_regions.length > 0) {
-      if (!benchmark.region || !window.activeFilters.benchmark_regions.includes(benchmark.region)) {
+      if (benchmark.region !== null && !window.activeFilters.benchmark_regions.includes(benchmark.region)) {
         shouldExclude = true;
       }
     }
 
-    // Check species filter
+    // Check species filter - only exclude benchmarks with explicit species values not in filter
     if (window.activeFilters.benchmark_species.length > 0) {
-      if (!benchmark.species || !window.activeFilters.benchmark_species.includes(benchmark.species)) {
+      if (benchmark.species !== null && !window.activeFilters.benchmark_species.includes(benchmark.species)) {
         shouldExclude = true;
       }
     }
 
-    // Check task filter
+    // Check task filter - only exclude benchmarks with explicit task values not in filter
     if (window.activeFilters.benchmark_tasks.length > 0) {
-      if (!benchmark.task || !window.activeFilters.benchmark_tasks.includes(benchmark.task)) {
+      if (benchmark.task !== null && !window.activeFilters.benchmark_tasks.includes(benchmark.task)) {
         shouldExclude = true;
       }
     }
 
-    // Check public data filter
+    // Check public data filter - only exclude explicitly false values, not null
     if (window.activeFilters.public_data_only) {
-      if (!benchmark.data_publicly_available) {
+      if (benchmark.data_publicly_available === false) {
         shouldExclude = true;
       }
     }

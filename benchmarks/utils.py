@@ -247,3 +247,5 @@ def show_token(request: HttpRequest) -> JsonResponse:
     return JsonResponse({
         "token": settings.CACHE_REFRESH_TOKEN
     })
+
+
