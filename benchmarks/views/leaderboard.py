@@ -5,7 +5,7 @@ from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
 from ..utils import cache_get_context
-
+from django.views.decorators.cache import cache_page
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -109,6 +109,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     Get processed context data for AG Grid leaderboard.
     This function handles all the expensive data processing and is cached.
     """
+    import time
+    start_time = time.time()
+    logger.info(f"Generating AG Grid context for domain={domain}, user={user.id if user else 'anonymous'}")
+    
     # Get the base context (this is already cached)
     context = get_context(user=user, domain=domain, show_public=show_public)
     
@@ -444,11 +448,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_ids': json.dumps(benchmark_ids)
     }
     
+    # Log performance metrics
+    processing_time = time.time() - start_time
+    data_size_mb = sum(len(str(v).encode('utf-8')) for v in ag_context.values()) / (1024 * 1024)
+    print(f"AG Grid context generation took {processing_time:.2f}s, data size: {data_size_mb:.1f}MB")
+    
     # Merge with original context
     context.update(ag_context)
     return context
 
-
+@cache_page(timeout=60 * 60 * 24)
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
