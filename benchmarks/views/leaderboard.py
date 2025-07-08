@@ -443,7 +443,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmarkDataMetaMap'] = json.dumps(data_map)
     context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
 
-    context['row_data'] = json.dumps([json_serializable(r) for r in row_data])
     layer_map = context.get('layer_mapping', {})
 
     # now rebuild your model_metadata_map, merging in layer_mapping
