@@ -80,7 +80,7 @@ RunnableStatusCellRenderer.prototype.getGui = function() {
 // Helper function to create runnable status column definition
 function createRunnableStatusColumn() {
   return {
-    headerName: 'Status',
+    headerName: '',
     field: 'runnable_status',
     colId: 'runnable_status',
     pinned: 'left',
@@ -2721,10 +2721,19 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     .formatToParts(now).find(part => part.type === 'timeZoneName')?.value || 'local';
   const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}_${tz}`;
 
+  // Create datetime comment for CSV files
+  const datetimeComment = `# Generated on ${now.toISOString()} (${tz})`;
+  
+  // Add datetime comment to leaderboard CSV
+  const leaderboardCsvWithComment = `${datetimeComment}\n${leaderboardCsv}`;
+  
+  // Add datetime comment to plugin CSV
+  const pluginCsvWithComment = `${datetimeComment}\n${pluginCsv}`;
+
   // Create ZIP
   const zip = new JSZip();
-  zip.file('leaderboard.csv', leaderboardCsv);
-  zip.file('plugin-info.csv', pluginCsv);
+  zip.file('leaderboard.csv', leaderboardCsvWithComment);
+  zip.file('plugin-info.csv', pluginCsvWithComment);
 
   const zipBlob = await zip.generateAsync({ type: 'blob' });
   const link = document.createElement('a');
