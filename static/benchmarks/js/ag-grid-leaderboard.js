@@ -527,8 +527,11 @@ function setupBenchmarkCheckboxes(filterOptions) {
 }
 
 function addBenchmarksFilteredByMetadata() {
-  if (!window.benchmarkMetadata) return;
+  if (!window.benchmarkMetadata || !window.benchmarkTree) return;
 
+  // Build hierarchy map to identify parent vs child benchmarks
+  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  
   // Get stimuli range values
   const stimuliMin = parseInt(document.getElementById('stimuliCountMin')?.value || 0);
   const stimuliMax = parseInt(document.getElementById('stimuliCountMax')?.value || 1000);
@@ -537,37 +540,45 @@ function addBenchmarksFilteredByMetadata() {
   window.benchmarkMetadata.forEach(benchmark => {
     let shouldExclude = false;
 
-    // Check region filter - only exclude benchmarks with explicit region values not in filter
-    if (window.activeFilters.benchmark_regions.length > 0) {
-      if (benchmark.region !== null && !window.activeFilters.benchmark_regions.includes(benchmark.region)) {
-        shouldExclude = true;
-      }
-    }
+    // Check if this is a parent benchmark (has children)
+    const children = hierarchyMap.get(benchmark.identifier) || [];
+    const isParentBenchmark = children.length > 0;
 
-    // Check species filter - only exclude benchmarks with explicit species values not in filter
-    if (window.activeFilters.benchmark_species.length > 0) {
-      if (benchmark.species !== null && !window.activeFilters.benchmark_species.includes(benchmark.species)) {
-        shouldExclude = true;
+    // For parent benchmarks, always include them regardless of metadata
+    // For child benchmarks, apply the filtering logic
+    if (!isParentBenchmark) {
+      // Check region filter - only exclude child benchmarks with explicit region values not in filter
+      if (window.activeFilters.benchmark_regions.length > 0) {
+        if (!window.activeFilters.benchmark_regions.includes(benchmark.region)) {
+          shouldExclude = true;
+        }
       }
-    }
 
-    // Check task filter - only exclude benchmarks with explicit task values not in filter
-    if (window.activeFilters.benchmark_tasks.length > 0) {
-      if (benchmark.task !== null && !window.activeFilters.benchmark_tasks.includes(benchmark.task)) {
-        shouldExclude = true;
+      // Check species filter - only exclude child benchmarks with explicit species values not in filter
+      if (window.activeFilters.benchmark_species.length > 0) {
+        if (!window.activeFilters.benchmark_species.includes(benchmark.species)) {
+          shouldExclude = true;
+        }
       }
-    }
 
-    // Check public data filter - only exclude explicitly false values, not null
-    if (window.activeFilters.public_data_only) {
-      if (benchmark.data_publicly_available === false) {
-        shouldExclude = true;
+      // Check task filter - only exclude child benchmarks with explicit task values not in filter
+      if (window.activeFilters.benchmark_tasks.length > 0) {
+        if (!window.activeFilters.benchmark_tasks.includes(benchmark.task)) {
+          shouldExclude = true;
+        }
       }
-    }
 
-    if (benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
-      if (benchmark.num_stimuli < stimuliMin || benchmark.num_stimuli > stimuliMax) {
-        shouldExclude = true;
+      // Check public data filter - only exclude child benchmarks with explicitly false values, not null
+      if (window.activeFilters.public_data_only) {
+        if (benchmark.data_publicly_available === false) {
+          shouldExclude = true;
+        }
+      }
+
+      if (benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
+        if (benchmark.num_stimuli < stimuliMin || benchmark.num_stimuli > stimuliMax) {
+          shouldExclude = true;
+        }
       }
     }
 
