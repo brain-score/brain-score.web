@@ -1,0 +1,103 @@
+// components/_cells.sass
+// Grid cell styling
+
+// ======================
+// RANK CELL
+// ======================
+.ag-cell[col-id="rank"]
+  display: flex
+  font-size: 24px
+  font-weight: 300
+  align-items: center
+  text-align: center
+  color: #333
+  height: 100%
+
+// ======================
+// MODEL CELL
+// ======================
+.ag-cell[col-id="model"]
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: flex-start
+  padding: 0 10px
+  white-space: nowrap
+  line-height: 1.5
+  overflow: hidden
+  text-overflow: ellipsis
+  min-width: 180px
+
+  a,
+  .model-name,
+  .model-submitter
+    max-width: 100%
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .model-name
+    color: #4285f4
+    font-weight: normal
+    margin-bottom: 4px
+
+  .model-submitter
+    font-size: 12px
+    color: #666
+    font-style: italic
+
+// ======================
+// RUNNABLE STATUS CELL
+// ======================
+.ag-cell[col-id="runnable_status"]
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+.runnable-status-cell
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+  pointer-events: auto
+
+.runnable-status-icon
+  width: 12px
+  height: 12px
+  border-radius: 50%
+  cursor: help
+  position: relative
+  z-index: 1
+  pointer-events: auto
+
+  &.runnable-green
+    background-color: #28a745
+
+  &.runnable-red
+    background-color: #dc3545
+
+  &.runnable-grey
+    background-color: #6c757d
+
+// ======================
+// SCORE PILLS
+// ======================
+.score-pill-container
+  display: flex
+  justify-content: center
+  align-items: center
+  height: 100%
+
+.score-pill
+  opacity: 0.8
+  width: 120px
+  border-radius: 30px
+  font-size: 15px
+  font-weight: 300
+  display: flex
+  justify-content: center
+  align-items: center
+  text-align: center
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
+  color: black

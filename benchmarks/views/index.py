@@ -226,7 +226,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
                         model_scores.append((model, None, True))
                         break
                     try:
-                        val_float = float(val)
+                        val_float = round(float(val), 2)
                         model_scores.append((model, val_float, False))
                     except Exception:
                         # Exclude models with non-numeric, non-"X" values
