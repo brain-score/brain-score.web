@@ -222,6 +222,13 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-sass', 'sass {infile} {outfile}'),
 )
 
+# Additional Django Compressor settings for better reliability
+COMPRESS_ENABLED = True
+# Force recompilation in development for immediate changes
+COMPRESS_REBUILD_TIMEOUT = 10 if os.getenv("DJANGO_ENV") == "development" else 2592000  # 10 seconds in dev, 30 days in prod
+# Cache compressed files
+COMPRESS_CACHE_BACKEND = 'default'
+
 AUTH_USER_MODEL = 'benchmarks.User'
 
 # Logging

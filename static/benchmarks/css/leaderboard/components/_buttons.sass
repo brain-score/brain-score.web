@@ -18,8 +18,7 @@ button,
 // GRADIENT BUTTONS
 // ======================
 #advancedFilterBtn,
-#applyFiltersBtn,
-#resetAllFiltersBtn
+#applyFiltersBtn
   @include gradient-button
   background: $gradient-primary !important
   width: 180px
@@ -33,22 +32,43 @@ button,
   &:hover
     background: $gradient-light !important
 
-// Reset all filters button in filter actions
-.filter-actions #resetAllFiltersBtn
-  padding: 12px 24px
-  font-weight: 500
-  font-size: 0.9rem
-  flex: 0 0 auto
-  width: auto  // Override the 180px width
+// Reset all filters button (special case - can be both gradient and in filter actions)
+#resetAllFiltersBtn
+  @include solid-button($primary-color)
+
+  // When inside filter actions, use gradient style
+  .filter-actions &
+    @include gradient-button
+    padding: 12px 24px
+    font-weight: 500
+    font-size: 0.9rem
+    flex: 0 0 auto
+
+    &:hover
+      background: $gradient-light !important
 
 // ======================
 // SOLID BUTTONS
 // ======================
-#resetFiltersBtn,
-#toggleLayoutBtn
+#resetFiltersBtn
   @include solid-button($primary-color)
 
+#tutorialBtn
+  @include solid-button($primary-color)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+
+  .tutorial-icon
+    font-size: 1.1em
+    line-height: 1
+
 #toggleLayoutBtn
+  @include solid-button($primary-color)
   display: flex
   align-items: center
   gap: 6px

@@ -1269,7 +1269,7 @@ function setupDropdownHandlers() {
   });
 
   // Prevent dropdown from closing when clicking inside
-  document.querySelectorAll('.dropdown-content').forEach(content => {
+  document.querySelectorAll('.leaderboard-container .dropdown-content').forEach(content => {
     content.addEventListener('click', (e) => {
       e.stopPropagation();
     });
@@ -1277,10 +1277,10 @@ function setupDropdownHandlers() {
 
   // Close dropdowns when clicking outside
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.filter-dropdown')) {
-      document.querySelectorAll('.filter-dropdown').forEach(dropdown => {
+    if (!e.target.closest('.leaderboard-container .filter-dropdown')) {
+      document.querySelectorAll('.leaderboard-container .filter-dropdown').forEach(dropdown => {
         dropdown.classList.remove('active');
-        const content = dropdown.querySelector('.dropdown-content');
+        const content = dropdown.querySelector('.leaderboard-container .dropdown-content');
         content.classList.add('hidden');
 
         const input = dropdown.querySelector('.filter-input');

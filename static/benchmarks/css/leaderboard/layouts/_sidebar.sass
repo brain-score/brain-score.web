@@ -60,9 +60,8 @@
         // Benchmark column in sidebar
         &.benchmark-column
           #benchmarkFilterPanel
-            max-height: 250px
+            max-height: 300px
             width: 100% !important
-            min-height: 200px
             border: 1px solid #e1e5e9
 
             .benchmark-tree
@@ -94,11 +93,9 @@
     margin-bottom: 1rem
 
   #benchmarkFilterPanel
-    min-height: 300px
-    max-height: 300px
-    width: 500px
+    width: 100%
     overflow-y: auto
-    padding: 0.5rem
+    padding: 0.4rem
     border: 1px solid $primary-light
     border-radius: 6px
     background-color: #f9f9f9
@@ -111,22 +108,3 @@
     #benchmarkFilterPanel
       width: 100% !important
       max-width: none !important
-
-// ======================
-// RESPONSIVE ADJUSTMENTS
-// ======================
-@media (max-width: 1400px)
-  .leaderboard-container.sidebar-mode
-    grid-template-columns: 1fr 350px
-
-@media (max-width: 1200px)
-  .leaderboard-container.sidebar-mode
-    grid-template-areas: "header" "search" "filters" "breadcrumb" "grid"
-    grid-template-columns: 1fr
-
-    #advancedFiltersPanel
-      position: static
-      max-height: none
-      margin-bottom: 1rem
-      border-left: none
-      border-top: 1px solid #ddd
