@@ -303,8 +303,9 @@ button,
   &:hover::after
     background: linear-gradient(270deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%)
 
-// Count badge inside header pill
-.benchmark-count
+// Count badge inside header pill (AG Grid specific)
+.expandable-header .benchmark-count,
+.leaf-header .benchmark-count
   position: absolute
   bottom: -12px  // Moved lower for more space
   right: -5px

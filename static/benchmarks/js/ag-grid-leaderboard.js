@@ -382,7 +382,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
 
     const handleSort = (event) => {
       // Don't sort if clicking on count badge or sort indicator itself
-      if (event.target.closest('.benchmark-count') || event.target.closest('.sort-indicator')) {
+      if (event.target.closest('.expandable-header .benchmark-count') || event.target.closest('.sort-indicator')) {
         return;
       }
       
@@ -2408,8 +2408,8 @@ function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
 
 // Function to update all count badges with filtered counts
 function updateAllCountBadges() {
-  // Find all count badges and update them
-  document.querySelectorAll('.benchmark-count').forEach(badge => {
+  // Find all count badges and update them (only AG Grid headers)
+  document.querySelectorAll('.expandable-header .benchmark-count, .leaf-header .benchmark-count').forEach(badge => {
     const parentField = badge.dataset.parentField;
     if (!parentField) return;
     
