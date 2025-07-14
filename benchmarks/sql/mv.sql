@@ -309,6 +309,8 @@ SELECT
   s.score_ceiled,
   s.error,
   s.comment,
+  s.start_timestamp,
+  s.end_timestamp,
   CASE WHEN s.score_raw IS NOT NULL THEN TRUE ELSE FALSE END AS is_complete
 FROM
   -- All models
@@ -358,6 +360,8 @@ SELECT
   END AS score_ceiled,
   bs.error,
   bs.comment,
+  bs.start_timestamp,
+  bs.end_timestamp,
   bs.is_complete
 FROM mv_base_scores bs
 JOIN mv_final_benchmark_context fbt
@@ -384,6 +388,8 @@ CREATE TABLE final_agg_scores (
   sort_path         text,
   root_parent       text,
   error             numeric,
+  start_timestamp   timestamp,
+  end_timestamp     timestamp,
   comment           text,
   is_leaf           boolean
 );
@@ -406,7 +412,7 @@ BEGIN
   -- Only proceed if we have data (should always be true)
   IF max_depth > 0 THEN
     -- Insert leaf scores.
-    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
+    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, start_timestamp, end_timestamp, comment, is_leaf)
     SELECT
       bs.id,
       t.identifier,
@@ -418,6 +424,8 @@ BEGIN
       t.sort_path,
       t.root_parent,
       bs.error,
+      bs.start_timestamp,
+      bs.end_timestamp,
       bs.comment,
       TRUE    -- sets is_leaf= true
     FROM mv_benchmark_tree t
@@ -598,6 +606,8 @@ SELECT
   fa.is_leaf,
   fa.error,
   fa.comment,
+  fa.start_timestamp,
+  fa.end_timestamp,
   m.visual_degrees,
   m.id           AS model_pk,
   m.name         AS model_name,
@@ -898,6 +908,8 @@ SELECT
   b.is_leaf,
   b.error,
   b.comment,
+  b.start_timestamp,
+  b.end_timestamp,
   b.visual_degrees,
   b.model_pk,
   b.model_name,
@@ -1027,6 +1039,8 @@ score_json AS (
                   END,
                 'error', error,
                 'comment', comment,
+                'start_timestamp', start_timestamp,
+                'end_timestamp', end_timestamp,
                 'visual_degrees', visual_degrees,
                 'color', color,
                 'median', median_score,
