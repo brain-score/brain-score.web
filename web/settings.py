@@ -119,13 +119,14 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 def get_db_info():
     if os.getenv("DJANGO_ENV") == "test": # web test db
+        secrets = get_secret(db_secret_name, REGION_NAME)
         return {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
                 'NAME': 'web_tests',
                 'USER': 'postgres',
-                'PASSWORD': os.getenv('DB_PASSWORD'),
-                'HOST': os.getenv('DB_HOST'),
+                'PASSWORD': secrets["password"],
+                'HOST': secrets["host"],
                 'PORT': '5432',
                 'TEST': {
                     'NAME': 'web_tests',  # This tells Django to use this exact name for tests
