@@ -116,6 +116,7 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
 
 def get_db_info():
     if os.getenv("DJANGO_ENV") == "test": # web test db
@@ -146,7 +147,6 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
