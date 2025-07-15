@@ -118,7 +118,21 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 def get_db_info():
-    if os.getenv("DJANGO_ENV") == "development":
+    if os.getenv("DJANGO_ENV") == "test": # web test db
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'web_tests',
+                'USER': 'postgres',
+                'PASSWORD': os.getenv('DB_PASSWORD'),
+                'HOST': os.getenv('DB_HOST'),
+                'PORT': '5432',
+                'TEST': {
+                    'NAME': 'web_tests',  # This tells Django to use this exact name for tests
+                }
+            }
+        }
+    elif os.getenv("DJANGO_ENV") == "development":
         from dotenv import load_dotenv; load_dotenv()
 
         return {
