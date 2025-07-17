@@ -168,6 +168,89 @@ def get_db_info():
 
 DATABASES = get_db_info()
 
+# Cache Configuration
+# https://docs.djangoproject.com/en/4.0/topics/cache/
+
+def get_cache_config():
+    """
+    Configure cache backend based on environment.
+    Local development uses locmem, staging/production use Valkey via ElastiCache.
+    """
+    if os.getenv("DJANGO_ENV") == "development":
+        # Local development - use in-memory cache
+        return {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'brain-score-local-cache',
+                'TIMEOUT': 300,  # 5 minutes for development
+                'OPTIONS': {
+                    'MAX_ENTRIES': 1000,
+                    'CULL_FREQUENCY': 3,
+                }
+            }
+        }
+    
+    # Staging and Production - use Valkey via ElastiCache
+    try:
+        # Determine environment and secret name
+        if DEBUG:
+            # Staging environment (DEBUG=True)
+            secret_name = "brainscore-valkey-staging"
+            key_prefix = "brainscore:staging"
+            timeout = 604800  # 7 days for staging
+        else:
+            # Production environment (DEBUG=False)
+            secret_name = "brainscore-valkey-production"
+            key_prefix = "brainscore:prod"
+            timeout = 2592000  # 30 days for production
+        
+        # Get Valkey connection details from AWS Secrets Manager
+        valkey_secrets = get_secret(secret_name, REGION_NAME)
+        valkey_host = valkey_secrets["host"]
+        valkey_port = valkey_secrets.get("port", 6379)
+        
+        return {
+            'default': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': f"{valkey_host}:{valkey_port}",
+                'TIMEOUT': timeout,
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'connection_class': 'redis.connection.Connection',
+                        'socket_timeout': 5,
+                        'socket_connect_timeout': 5,
+                        'retry_on_timeout': True,
+                        'health_check_interval': 30,
+                    },
+                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    'IGNORE_EXCEPTIONS': True,  # Graceful fallback on Redis errors
+                },
+                'KEY_PREFIX': key_prefix,
+                'VERSION': 1,
+            }
+        }
+        
+    except Exception as e:
+        # Fallback to local memory cache if Valkey unavailable
+        print(f"Warning: Could not connect to Valkey, falling back to local cache: {e}")
+        return {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'brain-score-fallback-cache',
+                'TIMEOUT': 300,
+                'OPTIONS': {
+                    'MAX_ENTRIES': 100,  # Smaller cache for fallback
+                    'CULL_FREQUENCY': 3,
+                }
+            }
+        }
+
+
+CACHES = get_cache_config()
+
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
