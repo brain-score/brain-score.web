@@ -176,6 +176,7 @@ def get_cache_config():
     Configure cache backend based on environment.
     Local development uses locmem, staging/production use Valkey via ElastiCache.
     """
+    # Force local cache for testing (even with AWS database)
     if os.getenv("DJANGO_ENV") == "development":
         # Local development - use in-memory cache
         return {
@@ -192,17 +193,32 @@ def get_cache_config():
     
     # Staging and Production - use Valkey via ElastiCache
     try:
-        # Determine environment and secret name
-        if DEBUG:
-            # Staging environment (DEBUG=True)
+        # Determine environment and secret name based on CACHE_ENV
+        cache_env = os.getenv("CACHE_ENV", "local")
+        
+        if cache_env == "staging":
+            # Staging environment
             secret_name = "brainscore-valkey-staging"
             key_prefix = "brainscore:staging"
             timeout = 604800  # 7 days for staging
-        else:
-            # Production environment (DEBUG=False)
+        elif cache_env == "production":
+            # Production environment
             secret_name = "brainscore-valkey-production"
             key_prefix = "brainscore:prod"
             timeout = 2592000  # 30 days for production
+        else:
+            # Default to local cache if CACHE_ENV not set
+            return {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'LOCATION': 'brain-score-fallback-cache',
+                    'TIMEOUT': 300,
+                    'OPTIONS': {
+                        'MAX_ENTRIES': 100,
+                        'CULL_FREQUENCY': 3,
+                    }
+                }
+            }
         
         # Get Valkey connection details from AWS Secrets Manager
         valkey_secrets = get_secret(secret_name, REGION_NAME)
@@ -212,13 +228,12 @@ def get_cache_config():
         return {
             'default': {
                 'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': f"{valkey_host}:{valkey_port}",
+                'LOCATION': f"redis://{valkey_host}:{valkey_port}",
                 'TIMEOUT': timeout,
                 'OPTIONS': {
                     'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                     'CONNECTION_POOL_KWARGS': {
                         'max_connections': 50,
-                        'connection_class': 'redis.connection.Connection',
                         'socket_timeout': 5,
                         'socket_connect_timeout': 5,
                         'retry_on_timeout': True,
