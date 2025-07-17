@@ -116,9 +116,25 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
 
 def get_db_info():
-    if os.getenv("DJANGO_ENV") == "development":
+    if os.getenv("DJANGO_ENV") == "test": # web test db
+        secrets = get_secret(db_secret_name, REGION_NAME)
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'web_tests',
+                'USER': 'postgres',
+                'PASSWORD': secrets["password"],
+                'HOST': secrets["host"],
+                'PORT': '5432',
+                'TEST': {
+                    'NAME': 'web_tests',  # This tells Django to use this exact name for tests
+                }
+            }
+        }
+    elif os.getenv("DJANGO_ENV") == "development":
         from dotenv import load_dotenv; load_dotenv()
 
         return {
@@ -131,7 +147,6 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {

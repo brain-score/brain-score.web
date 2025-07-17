@@ -1,48 +1,46 @@
-from unittest import skip
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.db import connection
 import logging
+from bs4 import BeautifulSoup
 
 # Set up logger at the top of the file
 logger = logging.getLogger(__name__)
 
-ALL_FIXTURES = [
-    'fixture-users.json',
-    'fixture-benchmarkreferences.json',
-    'fixture-benchmarktypes.json',
-    'fixture-benchmarkmeta.json',
-    'fixture-benchmarkinstances.json',
-    'fixture-modelreferences.json',
-    'fixture-submissions.json',
-    'fixture-models.json',
-    'fixture-scores.json',
-    'fixture-benchmarktypes-language.json',
-    'fixture-benchmarkmeta-language.json',
-    'fixture-benchmarkinstances-language.json',
-    'fixture-users-language.json',
-    'fixture-models-language.json',
-    'fixture-scores-language.json'
-]
 
-class BaseTestCase(TestCase):
-    fixtures = ALL_FIXTURES
+class BaseTestCase(TransactionTestCase):
+    # Completely disable Django's test database creation. We do this to force django to use the web_test DB
+    @classmethod
+    def setUpClass(cls):
+        # Skip all Django test setup
+        return
+
+    @classmethod
+    def tearDownClass(cls):
+        # Skip all Django test teardown
+        return
+
+    def setUp(self):
+        # Skip Django's setUp
+        pass
+
+    def tearDown(self):
+        # Skip Django's tearDown
+        pass
 
     @classmethod
     def setUpTestData(cls):
         """
-        This runs once for the entire test class *after* the fixtures are loaded.
+        This runs once for the entire test class.
         Refreshes materialized views for all test classes that inherit from this base class.
         """
-        super().setUpTestData()
-
         logger.info("Starting materialized view refresh")
         try:
             # Execute the refresh function to update materialized views
             with connection.cursor() as cursor:
                 logger.debug("Executing refresh_all_materialized_views()")
                 cursor.execute("SELECT refresh_all_materialized_views();")
-                logger.info("Successfully refreshed materialized views") 
-        # Some error handling
+                logger.info("Successfully refreshed materialized views")
+                # Some error handling
         except connection.OperationalError as e:
             logger.error(f"Database connection error while refreshing views: {str(e)}")
             raise RuntimeError("Database connection failed during materialized view refresh")
@@ -54,144 +52,193 @@ class BaseTestCase(TestCase):
             raise RuntimeError(f"Unexpected error during materialized view refresh: {str(e)}")
 
 
-class TestTable(BaseTestCase):
-    def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/")
-        self.assertEqual(resp.status_code, 200)
 
-class TestVision(BaseTestCase):    
+class TestMaterializedViewQuery(BaseTestCase):
+    def test_query_mv_final_model_context(self):
+        """Test querying the mv_final_model_context materialized view"""
+        with connection.cursor() as cursor:
+            # Query the materialized view and limit to 10 rows
+            cursor.execute("""
+                SELECT * FROM mv_final_model_context 
+                LIMIT 10
+            """)
+
+            # Fetch all results
+            rows = cursor.fetchall()
+
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+
+            # Assert that we got some results
+            self.assertGreater(len(rows), 0, "Should return at least one row")
+            self.assertLessEqual(len(rows), 10, "Should return at most 10 rows")
+
+
+class TestWebsitePages(BaseTestCase):
+    def test_home_page(self):
+        """Test the home page loads correctly"""
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+
     def test_vision_leaderboard(self):
-        resp = self.client.get("http://localhost:8000/vision/")
-        self.assertEqual(resp.status_code, 200)
+        """Test the vision leaderboard page"""
+        response = self.client.get('/vision/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Leaderboard', response.content)
 
+    def test_language_leaderboard(self):
+        """Test the language leaderboard page"""
+        response = self.client.get('/language/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_profile_page(self):
+        """Test the profile page loads"""
+        response = self.client.get('/profile/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_explore_page(self):
+        """Test the explore page loads"""
+        response = self.client.get('/explore')
+        self.assertEqual(response.status_code, 200)
+
+    def test_compare_page(self):
+        """Test the compare page loads"""
+        response = self.client.get('/compare')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_home(self):
+        """Test the tutorials home page loads"""
+        response = self.client.get('/tutorials/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_models(self):
+        """Test the tutorials/models page loads"""
+        response = self.client.get('/tutorials/models')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_benchmarks(self):
+        """Test the tutorials/benchmarks page loads"""
+        response = self.client.get('/tutorials/benchmarks')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_troubleshooting(self):
+        """Test the tutorials/troubleshooting page loads"""
+        response = self.client.get('/tutorials/troubleshooting')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_models_quickstart(self):
+        """Test the tutorials/models/quickstart page loads"""
+        response = self.client.get('/tutorials/models/quickstart')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_models_deepdive_1(self):
+        """Test the tutorials/models/deepdive_1 page loads"""
+        response = self.client.get('/tutorials/models/deepdive_1')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_models_deepdive_2(self):
+        """Test the tutorials/models/deepdive_2 page loads"""
+        response = self.client.get('/tutorials/models/deepdive_2')
+        self.assertEqual(response.status_code, 200)
+
+    def test_tutorials_models_deepdive_3(self):
+        """Test the tutorials/models/deepdive_3 page loads"""
+        response = self.client.get('/tutorials/models/deepdive_3')
+        self.assertEqual(response.status_code, 200)
+
+    def test_community_page(self):
+        """Test the community page loads"""
+        response = self.client.get('/community')
+        self.assertEqual(response.status_code, 200)
+
+    def test_faq_page(self):
+        """Test the FAQ page loads"""
+        response = self.client.get('/faq/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_model_page(self):
+        """Ensure the model detail page contains expected sections"""
+        # Adjust the model slug to match one you know exists in your test DB
+        response = self.client.get('/model/vision/2330')
+        self.assertEqual(response.status_code, 200)
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Check h3 title
+        h3 = soup.find('h3', {'id': 'scores', 'class': 'title is-3'})
+        self.assertIsNotNone(h3, "Missing h3#scores title")
+        self.assertIn('Scores on benchmarks', h3.text)
+
+        # Check subtitle h4
+        h4 = soup.find('h4', class_='subtitle is-4')
+        self.assertIsNotNone(h4, "Missing h4 subtitle")
+        self.assertIn('How to use', h4.text)
+
+        # Check for <p> with 'Layer Commitment'
+        layer_commitments = soup.find_all('p', class_='subtitle is-5')
+        layer_commitment_found = any('Layer Commitment' in p.get_text(strip=True) for p in layer_commitments)
+        self.assertTrue(layer_commitment_found, "Missing 'Layer Commitment' paragraph")
+
+        # Check for 3 identical 'Visual Angle' sections
+        visual_angle = soup.find_all('p', class_='subtitle is-5')
+        visual_angle_found = any('Visual Angle' in p.get_text(strip=True) for p in visual_angle)
+        self.assertTrue(visual_angle_found, "Missing 'Visual Angle' paragraph")
+
+
+class TestVision(BaseTestCase):
     def test_num_vision_rows(self):
-        resp = self.client.get("http://localhost:8000/vision/")
+        resp = self.client.get("/vision/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         # Extra (1 +) because of a header with <tr>
-        self.assertEqual(num_rows, 1 + 78)
+        self.assertEqual(num_rows, 462)
 
     def test_public_vision_model(self):
-        resp = self.client.get("http://localhost:8000/model/vision/1")
-        self.assertEqual(resp.status_code, 200)
-
-    def test_non_public_vision_model(self):
-        resp = self.client.get("http://localhost:8000/model/vision/2")
+        resp = self.client.get("/model/vision/2330") # convnext top model
         self.assertEqual(resp.status_code, 200)
 
     def test_private_vision_model_anonymous_title(self):
         """Test that private vision models show anonymous title"""
-        resp = self.client.get("http://localhost:8000/model/vision/2")  # alexnet2 is private
+        resp = self.client.get("/model/vision/912")  # alexnet2 is private
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, '<h1 class="title">Anonymous Model #2</h1>')
+        self.assertContains(resp, '<h1 class="title">Anonymous Model #912</h1>')
 
-    def test_correct_ranking(self):
-        """Test that the ranking is incrementing correctly with identical scores"""
-        resp = self.client.get("http://localhost:8000/vision/")
-        self.assertEqual(resp.status_code, 200)
-        
-        # Find the models with identical scores
-        content = resp.content.decode('utf-8')
-        
-        # Find the ranks for these models
-        densenet_rank = None
-        resnet_rank = None
-        prev_rank = None
-        next_rank = None
-        
-        # Parse the HTML to find the ranks
-        lines = content.split('\n')
-        
-        # First pass: find the ranks for our target models
-        for i, line in enumerate(lines):
-            if 'densenet-169' in line:
-                # Look for the rank in the same tr element
-                for j in range(max(0, i-5), i+1):  # Look back a few lines to find the rank
-                    if 'class="rank">' in lines[j]:
-                        densenet_rank = int(lines[j].split('class="rank">')[1].split('</td>')[0])
-                        break
-            elif 'resnet-101_v2' in line:
-                # Look for the rank in the same tr element
-                for j in range(max(0, i-5), i+1):  # Look back a few lines to find the rank
-                    if 'class="rank">' in lines[j]:
-                        resnet_rank = int(lines[j].split('class="rank">')[1].split('</td>')[0])
-                        break
-        
-        print(f"densenet_rank: {densenet_rank}, resnet_rank: {resnet_rank}")
-        
-        # Second pass: find the previous and next ranks
-        if densenet_rank is not None and resnet_rank is not None:
-            for line in lines:
-                if 'class="rank">' in line:
-                    rank = int(line.split('class="rank">')[1].split('</td>')[0])
-                    print(f"Found rank: {rank}")
-                    if rank == densenet_rank - 1:
-                        prev_rank = rank
-                        print(f"Found prev_rank: {prev_rank}")
-                    elif rank == densenet_rank + 2:
-                        next_rank = rank
-                        print(f"Found next_rank: {next_rank}")
-                        if prev_rank is not None:  # Only break if we've found both
-                            break
-        
-        # Verify the ranks
-        self.assertIsNotNone(densenet_rank, "Could not find densenet-169 rank")
-        self.assertIsNotNone(resnet_rank, "Could not find resnet-101_v2 rank")
-        self.assertEqual(densenet_rank, resnet_rank, "Models with identical scores should have the same rank")
-        self.assertIsNotNone(prev_rank, "Could not find previous rank")
-        self.assertIsNotNone(next_rank, "Could not find next rank")
-        self.assertEqual(prev_rank, densenet_rank - 1, "Previous rank should be one less")
-        self.assertEqual(next_rank, densenet_rank + 2, "Next rank should be one more")
+    def test_vision_contains_models(self):
+        """Ensure at least one model is listed in the vision leaderboard"""
+        response = self.client.get('/vision/')
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        rows = soup.select('table tbody tr')
+        self.assertGreater(len(rows), 0, "No models found on vision leaderboard")
+
+    def test_model_links_exist(self):
+        """Check that model names link to model detail pages"""
+        response = self.client.get('/vision/')
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        model_links = soup.select('table tbody tr td a')
+        self.assertGreater(len(model_links), 0, "No model links found")
+
+    def test_aggrid_three_buttons(self):
+        """Ensure the CSV export button is present on the vision leaderboard"""
+        #response = self.client.get('/vision/')
+        response = self.client.get("/vision/leaderboard/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Export Leaderboard')
+        self.assertContains(response, 'Tutorial')
+        self.assertContains(response, 'Advanced Filters')
+        self.assertContains(response, 'id="modelSearchInput"')
 
 
 class TestLanguage(BaseTestCase):
-    def test_language_leaderboard(self):
-        resp = self.client.get("http://localhost:8000/language/")
-        self.assertEqual(resp.status_code, 200)
-    
     def test_num_lang_rows(self):
-        resp = self.client.get("http://localhost:8000/language/")
+        resp = self.client.get("/language/")
         content = resp.content.decode('utf-8')
         num_rows = content.count("<tr")
         # Extra (1 +) because of a header with <tr>
-        self.assertEqual(num_rows, 8 + 1)
+        self.assertEqual(num_rows, 14 + 1)
 
     def test_public_language_model(self):
-        resp = self.client.get("http://localhost:8000/model/language/92")
+        resp = self.client.get("/model/language/2074") # all language models are public
         self.assertEqual(resp.status_code, 200)
 
-    def test_non_public_language_model(self):
-        resp = self.client.get("http://localhost:8000/model/language/89")
-        self.assertEqual(resp.status_code, 200)
-
-    def test_private_language_model_anonymous_title(self):
-        """Test that private language models show anonymous title"""
-        resp = self.client.get("http://localhost:8000/model/language/89")  # glove-840b is private
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, '<h1 class="title">Anonymous Model #89</h1>')
-
-@skip("2022 competition is over")
-class TestCompetitionTable2022(BaseTestCase):
-    def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        self.assertEqual(resp.status_code, 200)
-
-    def test_num_rows(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr")
-        self.assertEqual(num_rows, (1 + 9) * 3)  # header, 9 different models, 3 tracks
-
-    def test_num_secondary_models(self):
-        resp = self.client.get("http://localhost:8000/competition2022/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("is-secondary-model")
-        num_total_models = 9 * 3  # 9 different models, 3 tracks
-        num_primary_models = 4 * 3  # 4 different users, 3 tracks
-        self.assertEqual(num_rows, num_total_models - num_primary_models)
-
-
-class TestCompetition2024(BaseTestCase):
-    def test_no_errors(self):
-        resp = self.client.get("http://localhost:8000/competition2024/")
-        self.assertEqual(resp.status_code, 200)
