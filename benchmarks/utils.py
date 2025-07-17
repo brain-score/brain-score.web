@@ -189,18 +189,19 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     
     # Invalidate cache by incrementing version
     new_version = invalidate_domain_cache(domain)
-    cache.clear()
     
-    # Optionally rebuild the cache immediately
-    rebuild = request.GET.get('rebuild', 'false').lower() == 'true' # Get rebuild parameter from URL
-    # If rebuild is true, rebuild the leaderboard cache immediately
+    # Always rebuild the cache immediately when invalidation is triggered
+    # This ensures users never experience slow cache misses
+    rebuild = True  # Force rebuild since invalidation is event-driven
+    
+    # Rebuild the leaderboard cache immediately
     if rebuild:
         # Import here to avoid circular imports
-        from benchmarks.views.index import get_context
+        from benchmarks.views.leaderboard import get_ag_grid_context
         
         # Force regeneration of main caches
         logger.info(f"Rebuilding cache for domain '{domain}'")
-        public_context = get_context(domain=domain, show_public=True) # @cache_get_context decorator saves public context to cache
+        public_context = get_ag_grid_context(domain=domain, show_public=True) # @cache_get_context decorator saves public context to cache
         logger.info(f"Cache rebuild completed for domain '{domain}'")
     
     return JsonResponse({
