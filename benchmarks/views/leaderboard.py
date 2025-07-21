@@ -4,6 +4,7 @@ import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
+from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 logger = logging.getLogger(__name__)
 
@@ -489,6 +490,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context.update(ag_context)
     return context
 
+@cache_page(24 * 60 * 60)
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
