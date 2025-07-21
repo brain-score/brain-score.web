@@ -190,6 +190,7 @@ ScoreCellRenderer.prototype.init = function(params) {
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
     display = Number(cellObj.value).toFixed(2);
   }
+  
   const CELL_ALPHA = 0.85;
   let bg = '#e0e1e2';
   if (cellObj.color) {
@@ -213,6 +214,18 @@ ScoreCellRenderer.prototype.init = function(params) {
   pill.className = 'score-pill';
   pill.textContent = display;
   pill.style.backgroundColor = bg;
+  
+  // Add filtered view indicator if applicable
+  if (cellObj.is_filtered_view && cellObj.filtered_rank && cellObj.filtered_total) {
+    pill.title = `Score: ${display} | Rank ${cellObj.filtered_rank}/${cellObj.filtered_total} in filtered view`;
+    
+    // Add a subtle visual indicator for filtered views
+    pill.style.border = '1px solid rgba(0, 123, 255, 0.3)';
+    pill.style.boxShadow = '0 0 3px rgba(0, 123, 255, 0.2)';
+  } else {
+    pill.title = `Score: ${display}`;
+  }
+  
   this.eGui.appendChild(pill);
 };
 ScoreCellRenderer.prototype.getGui = function() {
@@ -1382,8 +1395,11 @@ function applyCombinedFilters() {
   let scoreDateMin = null;
   let scoreDateMax = null;
   if (scoreDateMinEl && scoreDateMaxEl) {
-    scoreDateMin = scoreDateMinEl.value ? new Date(scoreDateMinEl.value).getTime() : null;
-    scoreDateMax = scoreDateMaxEl.value ? new Date(scoreDateMaxEl.value + 'T23:59:59.999Z').getTime() : null;
+    // Only apply datetime filter if both inputs have values
+    if (scoreDateMinEl.value && scoreDateMaxEl.value) {
+      scoreDateMin = new Date(scoreDateMinEl.value).getTime();
+      scoreDateMax = new Date(scoreDateMaxEl.value + 'T23:59:59.999Z').getTime();
+    }
   }
 
   window.activeFilters.min_model_size = modelSizeMin;
@@ -1491,27 +1507,54 @@ function applyCombinedFilters() {
     }
 
     return true;
+  }).map(row => {
+    // Create a deep copy of each row to prevent score object corruption
+    const newRow = { ...row };
+    
+    // Deep copy all score objects to prevent reference sharing
+    Object.keys(row).forEach(key => {
+      if (key !== 'id' && key !== 'rank' && key !== 'model' && key !== 'metadata' && 
+          typeof row[key] === 'object' && row[key] !== null) {
+        newRow[key] = { ...row[key] }; // Create a copy of each score object
+      }
+    });
+    
+    return newRow;
   });
+
+  console.log(`Original data: ${window.originalRowData.length} models, Filtered data: ${filteredData.length} models`);
+  console.log('Active filters:', window.activeFilters);
+  console.log('Date range values:', { scoreDateMin, scoreDateMax });
+  
+  // Debug: Check model-score mapping integrity
+  if (filteredData.length > 0 && filteredData.length < 5) {
+    console.log('Model-score mapping check:');
+    filteredData.forEach((model, index) => {
+      const modelName = model.model?.name || 'Unknown';
+      const avgScore = model.average_vision_v0?.value || 'X';
+      console.log(`  Row ${index}: ${modelName} -> Average Score: ${avgScore}`);
+    });
+  }
 
   window.globalGridApi.setGridOption('rowData', filteredData);
 
+  // Update benchmark score context for filtered models
+  updateBenchmarkScoreContext(filteredData);
+
   // Only call these if the functions exist
-  if (typeof updateFilteredScores === 'function') {
-    updateFilteredScores(filteredData);
+  if (typeof updateRankColIndex === 'function') {
+    updateRankColIndex();
   }
-  if (typeof toggleFilteredScoreColumn === 'function') {
-    toggleFilteredScoreColumn(window.globalGridApi);
+  if (typeof updateModelColIndex === 'function') {
+    updateModelColIndex();
   }
   
-  // Update column visibility based on current filters and expansion state
-  updateColumnVisibility();
-
-  // Force refresh of all cells to update colors and display based on new data
-  if (window.globalGridApi && typeof window.globalGridApi.refreshCells === 'function') {
-    window.globalGridApi.refreshCells({
-      force: true // Force refresh even if data hasn't changed
-    });
-  }
+  console.log('Forcing complete re-render of all cells...');
+  // Use redrawRows to force complete re-render instead of just refreshCells
+  window.globalGridApi.redrawRows();
+  
+  // Also try refreshCells as a backup
+  window.globalGridApi.refreshCells({ force: true, suppressFlash: true });
 
   // Update count badges to reflect filtered benchmarks
   setTimeout(() => {
@@ -1520,6 +1563,65 @@ function applyCombinedFilters() {
 
   // update URL
   updateURLFromFilters();
+}
+
+// Function to update benchmark score context when models are filtered
+function updateBenchmarkScoreContext(filteredData) {
+  if (!filteredData || filteredData.length === 0) return;
+  
+  console.log(`updateBenchmarkScoreContext: Processing ${filteredData.length} models`);
+  
+  const firstModel = filteredData[0];
+  const benchmarkIds = Object.keys(firstModel).filter(key =>
+    key !== 'id' && key !== 'rank' && key !== 'model' && key !== 'metadata' &&
+    key !== 'filtered_score' && typeof firstModel[key] === 'object' && firstModel[key] !== null
+  );
+  
+  console.log(`Found ${benchmarkIds.length} benchmark columns to update`);
+  
+  benchmarkIds.forEach(benchmarkId => {
+    const scores = [];
+    filteredData.forEach((model, index) => {
+      const scoreObj = model[benchmarkId];
+      if (scoreObj && scoreObj.value !== null && scoreObj.value !== 'X' && scoreObj.value !== '') {
+        const numValue = typeof scoreObj.value === 'string' ? parseFloat(scoreObj.value) : scoreObj.value;
+        if (!isNaN(numValue)) {
+          scores.push({ value: numValue, modelIndex: index, originalScore: scoreObj });
+        }
+      }
+    });
+    
+    if (scores.length === 0) return;
+
+    // Calculate new min/max for filtered dataset
+    const minScore = Math.min(...scores.map(s => s.value));
+    const maxScore = Math.max(...scores.map(s => s.value));
+    const scoreRange = maxScore - minScore;
+    
+    console.log(`Benchmark ${benchmarkId}: ${scores.length} scores, range ${minScore.toFixed(3)} - ${maxScore.toFixed(3)}`);
+
+    scores.sort((a, b) => b.value - a.value); // Descending order
+    scores.forEach((scoreData, rank) => {
+      const scoreObj = scoreData.originalScore;
+      scoreObj.filtered_rank = rank + 1;
+      scoreObj.filtered_total = scores.length;
+      scoreObj.filtered_percentile = (scores.length - rank) / scores.length;
+
+      // Recalculate color using the original representative_color logic
+      if (filteredData.length < window.originalRowData.length && scoreRange > 0) {
+        const newColor = calculateFilteredColor(scoreData.value, minScore, maxScore);
+        scoreObj.color = newColor;
+        scoreObj.is_filtered_view = true;
+        
+        // Debug: Show color calculations for first few scores
+        if (rank < 3) {
+          console.log(`  ${benchmarkId} rank ${rank + 1}: value=${scoreData.value.toFixed(3)}, color=${scoreObj.color}`);
+        }
+      } else {
+        scoreObj.is_filtered_view = false;
+      }
+    });
+  });
 }
 
 function resetAllFilters() {
@@ -2952,4 +3054,23 @@ function collectBenchmarkBibtex() {
   });
   
   return Array.from(bibtexSet);
+}
+
+
+
+// Function to calculate blue color for filtered views
+function calculateFilteredColor(value, minValue, maxValue) {
+  if (value == null || value === 'X' || value === '' || isNaN(parseFloat(value))) {
+    return '#e0e1e2';
+  }
+  
+  const numValue = parseFloat(value);
+  const intensity = maxValue > minValue ? (numValue - minValue) / (maxValue - minValue) : 0.5;
+  
+  // Use the same blue color scheme as other filtered benchmarks
+  const baseBlue = 255;
+  const green = Math.round(173 + (105 * (1 - intensity)));
+  const red = Math.round(216 * (1 - intensity));
+  
+  return `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
 }
