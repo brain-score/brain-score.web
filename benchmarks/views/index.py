@@ -63,7 +63,7 @@ def view(request, domain: str):
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
-@cache_get_context(timeout=24 * 60 * 60)
+#@cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
