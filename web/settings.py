@@ -266,11 +266,21 @@ def get_cache_config():
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"❌ Failed to retrieve Valkey secret '{secret_name}': {e}")
-            # Fall back to LocMem if secret retrieval fails
+            # Fall back to LocMem for both default and redis caches if secret retrieval fails
             return {
                 'default': {
                     'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
                     'LOCATION': 'brain-score-secret-fallback',
+                    'TIMEOUT': 300,
+                    'OPTIONS': {
+                        'MAX_ENTRIES': 1000,
+                        'CULL_FREQUENCY': 3,
+                    }
+                },
+                'redis': {
+                    # Use LocMem as fallback for redis cache
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'LOCATION': 'brain-score-redis-fallback',
                     'TIMEOUT': 300,
                     'OPTIONS': {
                         'MAX_ENTRIES': 1000,
