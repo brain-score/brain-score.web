@@ -14,7 +14,9 @@ window.activeFilters = {
   benchmark_regions: [],
   benchmark_species: [],
   benchmark_tasks: [],
-  public_data_only: false
+  public_data_only: false,
+  min_score_date: null,
+  max_score_date: null
 };
 
 // Global state for tracking column expansion
@@ -1018,6 +1020,7 @@ function initializeDualHandleSliders() {
     const min = parseFloat(container.dataset.min);
     const max = parseFloat(container.dataset.max);
     const step = parseFloat(container.dataset.step) || 1;
+    const isDatetimeFilter = rangeFilter.classList.contains('datetime-filter');
 
     let activeHandle = null;
 
@@ -1037,8 +1040,17 @@ function initializeDualHandleSliders() {
       range.style.width = `${maxPercent - minPercent}%`;
 
       // Update inputs
-      minInput.value = step < 1 ? minVal.toFixed(2) : minVal;
-      maxInput.value = step < 1 ? maxVal.toFixed(2) : maxVal;
+      if (isDatetimeFilter) {
+        // Convert milliseconds to date strings for datetime filters
+        const minDate = new Date(minVal).toISOString().split('T')[0];
+        const maxDate = new Date(maxVal).toISOString().split('T')[0];
+        minInput.value = minDate;
+        maxInput.value = maxDate;
+      } else {
+        // Regular numeric formatting for other filters
+        minInput.value = step < 1 ? minVal.toFixed(2) : minVal;
+        maxInput.value = step < 1 ? maxVal.toFixed(2) : maxVal;
+      }
     }
 
     function setHandleValue(handle, value) {
@@ -1054,7 +1066,13 @@ function initializeDualHandleSliders() {
       }
 
       // Snap to step
-      value = Math.round(value / step) * step;
+      if (!isDatetimeFilter) {
+        value = Math.round(value / step) * step;
+      } else {
+        // For datetime, snap to day boundaries (24 hours = 86400000 ms)
+        const dayStep = 86400000;
+        value = Math.round(value / dayStep) * dayStep;
+      }
 
       handle.dataset.value = value;
       updateRange();
@@ -1130,14 +1148,30 @@ function initializeDualHandleSliders() {
 
     // Handle input changes
     minInput.addEventListener('change', () => {
-      const value = parseFloat(minInput.value) || min;
-      setHandleValue(minHandle, value);
+      if (isDatetimeFilter) {
+        // Convert date string to milliseconds
+        const dateValue = new Date(minInput.value).getTime();
+        if (!isNaN(dateValue)) {
+          setHandleValue(minHandle, dateValue);
+        }
+      } else {
+        const value = parseFloat(minInput.value) || min;
+        setHandleValue(minHandle, value);
+      }
       applyCombinedFilters();
     });
 
     maxInput.addEventListener('change', () => {
-      const value = parseFloat(maxInput.value) || max;
-      setHandleValue(maxHandle, value);
+      if (isDatetimeFilter) {
+        // Convert date string to milliseconds
+        const dateValue = new Date(maxInput.value).getTime();
+        if (!isNaN(dateValue)) {
+          setHandleValue(maxHandle, dateValue);
+        }
+      } else {
+        const value = parseFloat(maxInput.value) || max;
+        setHandleValue(maxHandle, value);
+      }
       applyCombinedFilters();
     });
 
@@ -1334,6 +1368,8 @@ function applyCombinedFilters() {
   const paramCountMaxEl = document.getElementById('paramCountMax');
   const scoreMinEl = document.getElementById('scoreMin');
   const scoreMaxEl = document.getElementById('scoreMax');
+  const scoreDateMinEl = document.getElementById('scoreDateMin');
+  const scoreDateMaxEl = document.getElementById('scoreDateMax');
 
   const modelSizeMin = modelSizeMinEl ? parseInt(modelSizeMinEl.value) || 0 : 0;
   const modelSizeMax = modelSizeMaxEl ? parseInt(modelSizeMaxEl.value) || 1000 : 1000;
@@ -1342,12 +1378,22 @@ function applyCombinedFilters() {
   const scoreMin = scoreMinEl ? parseFloat(scoreMinEl.value) || 0 : 0;
   const scoreMax = scoreMaxEl ? parseFloat(scoreMaxEl.value) || 1 : 1;
 
+  // Get datetime range values
+  let scoreDateMin = null;
+  let scoreDateMax = null;
+  if (scoreDateMinEl && scoreDateMaxEl) {
+    scoreDateMin = scoreDateMinEl.value ? new Date(scoreDateMinEl.value).getTime() : null;
+    scoreDateMax = scoreDateMaxEl.value ? new Date(scoreDateMaxEl.value + 'T23:59:59.999Z').getTime() : null;
+  }
+
   window.activeFilters.min_model_size = modelSizeMin;
   window.activeFilters.max_model_size = modelSizeMax;
   window.activeFilters.min_param_count = paramCountMin;
   window.activeFilters.max_param_count = paramCountMax;
   window.activeFilters.min_score = scoreMin;
   window.activeFilters.max_score = scoreMax;
+  window.activeFilters.min_score_date = scoreDateMin;
+  window.activeFilters.max_score_date = scoreDateMax;
 
   const filteredData = window.originalRowData.filter(row => {
     const metadata = row.metadata || {};
@@ -1416,6 +1462,34 @@ function applyCombinedFilters() {
       }
     }
 
+    // Datetime filter - check if model has any scores within the date range
+    if (scoreDateMin !== null && scoreDateMax !== null) {
+      let hasScoreInRange = false;
+      
+      // Check all scores for this model to see if any fall within the date range
+      Object.keys(row).forEach(key => {
+        // Skip non-score fields
+        if (key === 'id' || key === 'rank' || key === 'model' || key === 'metadata') return;
+        
+        const score = row[key];
+        if (score && typeof score === 'object') {
+          // Check both start_timestamp and end_timestamp
+          const startTime = score.start_timestamp ? new Date(score.start_timestamp).getTime() : null;
+          const endTime = score.end_timestamp ? new Date(score.end_timestamp).getTime() : null;
+          
+          // If either timestamp falls within the range, include this model
+          if ((startTime && startTime >= scoreDateMin && startTime <= scoreDateMax) ||
+              (endTime && endTime >= scoreDateMin && endTime <= scoreDateMax)) {
+            hasScoreInRange = true;
+          }
+        }
+      });
+      
+      if (!hasScoreInRange) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -1431,6 +1505,13 @@ function applyCombinedFilters() {
   
   // Update column visibility based on current filters and expansion state
   updateColumnVisibility();
+
+  // Force refresh of all cells to update colors and display based on new data
+  if (window.globalGridApi && typeof window.globalGridApi.refreshCells === 'function') {
+    window.globalGridApi.refreshCells({
+      force: true // Force refresh even if data hasn't changed
+    });
+  }
 
   // Update count badges to reflect filtered benchmarks
   setTimeout(() => {
@@ -1458,7 +1539,9 @@ function resetAllFilters() {
     benchmark_regions: [],
     benchmark_species: [],
     benchmark_tasks: [],
-    public_data_only: false
+    public_data_only: false,
+    min_score_date: null,
+    max_score_date: null
   };
 
   // Reset UI elements
@@ -1499,10 +1582,21 @@ function resetAllFilters() {
 
     const min = parseFloat(container.dataset.min) || 0;
     const max = parseFloat(container.dataset.max) || 100;
+    const isDatetimeFilter = rangeFilter.classList.contains('datetime-filter');
 
     try {
-      minInput.value = min;
-      maxInput.value = max;
+      if (isDatetimeFilter) {
+        // For datetime filters, convert timestamps back to date strings
+        const minDate = new Date(min).toISOString().split('T')[0];
+        const maxDate = new Date(max).toISOString().split('T')[0];
+        minInput.value = minDate;
+        maxInput.value = maxDate;
+      } else {
+        // For numeric filters
+        minInput.value = min;
+        maxInput.value = max;
+      }
+      
       minHandle.dataset.value = min;
       maxHandle.dataset.value = max;
       minHandle.style.left = '0%';
@@ -1990,6 +2084,27 @@ function parseURLFilters() {
   setRange('stimuliCountMin', 'stimuliCountMax', 'min_stimuli_count', 'max_stimuli_count');
   setRange('scoreMin', 'scoreMax', 'min_score', 'max_score');
 
+  // Handle datetime range parameters
+  const minScoreDate = params.get('min_score_date');
+  const maxScoreDate = params.get('max_score_date');
+  
+  if (minScoreDate || maxScoreDate) {
+    const scoreDateMinInput = document.getElementById('scoreDateMin');
+    const scoreDateMaxInput = document.getElementById('scoreDateMax');
+    
+    if (scoreDateMinInput && minScoreDate) {
+      scoreDateMinInput.value = minScoreDate;
+      window.activeFilters.min_score_date = new Date(minScoreDate).getTime();
+      syncSliderHandle('scoreDateMin', new Date(minScoreDate).getTime());
+    }
+    
+    if (scoreDateMaxInput && maxScoreDate) {
+      scoreDateMaxInput.value = maxScoreDate;
+      window.activeFilters.max_score_date = new Date(maxScoreDate + 'T23:59:59.999Z').getTime();
+      syncSliderHandle('scoreDateMax', new Date(maxScoreDate + 'T23:59:59.999Z').getTime());
+    }
+  }
+
   setTimeout(() => {
     // Trigger the dual handle slider initialization to ensure visual sync
     if (typeof initializeDualHandleSliders === 'function') {
@@ -2178,6 +2293,19 @@ function updateURLFromFilters() {
     'min_stimuli_count', 'max_stimuli_count',
     'min_score', 'max_score'
   ].forEach(setRange);
+
+  // Add datetime range parameters
+  if (window.activeFilters.min_score_date != null) {
+    // Convert milliseconds to ISO date string for URL
+    const minDate = new Date(window.activeFilters.min_score_date).toISOString().split('T')[0];
+    params.set('min_score_date', minDate);
+  }
+  
+  if (window.activeFilters.max_score_date != null) {
+    // Convert milliseconds to ISO date string for URL
+    const maxDate = new Date(window.activeFilters.max_score_date).toISOString().split('T')[0];
+    params.set('max_score_date', maxDate);
+  }
 
   const newURL = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, '', newURL);
@@ -2825,4 +2953,3 @@ function collectBenchmarkBibtex() {
   
   return Array.from(bibtexSet);
 }
-

@@ -6,6 +6,8 @@ from django.shortcuts import render
 from .index import get_context
 from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
+from datetime import datetime
+import pytz
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -24,6 +26,8 @@ def json_serializable(obj):
         return obj.tolist()
     elif isinstance(obj, np.bool_):
         return bool(obj)
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
     elif obj is None or obj == "X" or obj == "":
         return obj
     elif hasattr(obj, '__dict__'):
@@ -132,6 +136,12 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'public_data_available': set()
     }
 
+    # Add datetime metadata tracking
+    score_timestamp_ranges = {
+        'min_timestamp': None,
+        'max_timestamp': None
+    }
+
     # Process benchmarks to extract metadata
     for benchmark in context['benchmarks']:
         if hasattr(benchmark, 'benchmark_data_meta') and benchmark.benchmark_data_meta:
@@ -188,6 +198,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
+    debug_count = 0  # Add debug counter
     for model in context['models']:
         # base fields
         rd = {
@@ -296,13 +307,23 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         # Add metadata to row data
         rd['metadata'] = metadata
 
-        # now flatten out each score dict
+        # Debug: Log the structure of the first few models' score data
+        if debug_count < 3 and model.scores:
+            debug_count += 1
+            logger.info(f"Model {model.name} has {len(model.scores)} scores")
+            if model.scores:
+                first_score = model.scores[0]
+                logger.info(f"First score keys: {list(first_score.keys()) if isinstance(first_score, dict) else 'Not a dict'}")
+                logger.info(f"First score sample: {dict(list(first_score.items())[:5]) if isinstance(first_score, dict) else first_score}")
+
+        # now flatten out each score dict and extract timestamp information
         for score in model.scores or []:
             vid = score.get('versioned_benchmark_identifier')
             # fallback for missing IDs
             if not vid:
                 continue
-            rd[vid] = {
+                
+            score_obj = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
@@ -310,6 +331,66 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'complete': score.get('is_complete', True),
                 'benchmark': score.get('benchmark', {})  # Include benchmark metadata for bibtex collection
             }
+            
+            # Debug: Let's see what's actually in the score data
+            if 'start_timestamp' in score or 'end_timestamp' in score:
+                logger.info(f"Found timestamps in score for {vid}: start={score.get('start_timestamp')}, end={score.get('end_timestamp')}")
+            
+            # Extract timestamp information if available 
+            # Note: This assumes the materialized views have been updated to include timestamps
+            if score.get('start_timestamp'):
+                try:
+                    timestamp_value = score['start_timestamp']
+                    logger.info(f"Processing start_timestamp for {vid}: {timestamp_value} (type: {type(timestamp_value)})")
+                    
+                    if isinstance(timestamp_value, str):
+                        timestamp = datetime.fromisoformat(timestamp_value.replace('Z', '+00:00'))
+                    else:
+                        timestamp = timestamp_value
+                    
+                    # Ensure timezone awareness
+                    if timestamp.tzinfo is None:
+                        timestamp = pytz.UTC.localize(timestamp)
+                    
+                    score_obj['start_timestamp'] = timestamp
+                    
+                    # Track min/max for slider range
+                    if score_timestamp_ranges['min_timestamp'] is None or timestamp < score_timestamp_ranges['min_timestamp']:
+                        score_timestamp_ranges['min_timestamp'] = timestamp
+                    if score_timestamp_ranges['max_timestamp'] is None or timestamp > score_timestamp_ranges['max_timestamp']:
+                        score_timestamp_ranges['max_timestamp'] = timestamp
+                except (ValueError, TypeError) as e:
+                    # Handle parsing errors gracefully
+                    logger.warning(f"Failed to parse start_timestamp for score {vid}: {e}")
+                    pass
+            
+            if score.get('end_timestamp'):
+                try:
+                    timestamp_value = score['end_timestamp']
+                    logger.info(f"Processing end_timestamp for {vid}: {timestamp_value} (type: {type(timestamp_value)})")
+                    
+                    if isinstance(timestamp_value, str):
+                        timestamp = datetime.fromisoformat(timestamp_value.replace('Z', '+00:00'))
+                    else:
+                        timestamp = timestamp_value
+                    
+                    # Ensure timezone awareness
+                    if timestamp.tzinfo is None:
+                        timestamp = pytz.UTC.localize(timestamp)
+                        
+                    score_obj['end_timestamp'] = timestamp
+                    
+                    # Track min/max for slider range
+                    if score_timestamp_ranges['min_timestamp'] is None or timestamp < score_timestamp_ranges['min_timestamp']:
+                        score_timestamp_ranges['min_timestamp'] = timestamp
+                    if score_timestamp_ranges['max_timestamp'] is None or timestamp > score_timestamp_ranges['max_timestamp']:
+                        score_timestamp_ranges['max_timestamp'] = timestamp
+                except (ValueError, TypeError) as e:
+                    # Handle parsing errors gracefully
+                    logger.warning(f"Failed to parse end_timestamp for score {vid}: {e}")
+                    pass
+                    
+            rd[vid] = score_obj
         row_data.append(rd)
 
     # Build `column_defs` to show only root-level parents first,
@@ -427,6 +508,34 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
+    # Add datetime ranges to filter options
+    if score_timestamp_ranges['min_timestamp'] and score_timestamp_ranges['max_timestamp']:
+        # Convert to milliseconds since epoch for JavaScript Date compatibility
+        min_timestamp_ms = int(score_timestamp_ranges['min_timestamp'].timestamp() * 1000)
+        max_timestamp_ms = int(score_timestamp_ranges['max_timestamp'].timestamp() * 1000)
+        
+        logger.info(f"Found timestamp range: {score_timestamp_ranges['min_timestamp']} to {score_timestamp_ranges['max_timestamp']}")
+        logger.info(f"Converted to milliseconds: {min_timestamp_ms} to {max_timestamp_ms}")
+        
+        filter_options['datetime_ranges'] = {
+            'min': min_timestamp_ms,
+            'max': max_timestamp_ms,
+            'min_date': score_timestamp_ranges['min_timestamp'].isoformat(),
+            'max_date': score_timestamp_ranges['max_timestamp'].isoformat()
+        }
+    else:
+        # Default range if no timestamps found (fallback)
+        logger.warning("No timestamp data found in scores, using default range")
+        default_min = datetime(2018, 1, 1, tzinfo=pytz.UTC)
+        default_max = datetime.now(pytz.UTC)
+        filter_options['datetime_ranges'] = {
+            'min': int(default_min.timestamp() * 1000),
+            'max': int(default_max.timestamp() * 1000),
+            'min_date': default_min.isoformat(),
+            'max_date': default_max.isoformat()
+        }
+    
+    logger.info(f"Final datetime_ranges in filter_options: {filter_options.get('datetime_ranges', 'Not found')}")
 
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}

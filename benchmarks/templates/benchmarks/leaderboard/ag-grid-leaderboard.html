@@ -128,6 +128,25 @@
             </div>
           </div>
           
+          <div class="filter-group">
+            <div class="filter-header">
+              <label>Score Date Range</label>
+              <div class="range-values">
+                <input type="date" class="range-input-min" id="scoreDateMin" value="2018-01-01">
+                <span class="range-separator">-</span>
+                <input type="date" class="range-input-max" id="scoreDateMax" value="">
+              </div>
+            </div>
+            <div class="range-filter dual-handle datetime-filter">
+              <div class="slider-container" data-min="0" data-max="1000" data-step="86400000">
+                <div class="slider-track"></div>
+                <div class="slider-range"></div>
+                <div class="slider-handle handle-min" data-value="0"></div>
+                <div class="slider-handle handle-max" data-value="1000"></div>
+              </div>
+            </div>
+          </div>
+          
 {#          <div class="filter-group">#}
 {#            <label>Task Specialization</label>#}
 {#            <div class="filter-dropdown" id="taskSpecFilter">#}
@@ -321,6 +340,38 @@
         document.getElementById('stimuliCountMin').max = ranges.max_stimuli_count;
         document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
         document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
+      }
+      
+      // Initialize datetime range
+      if (filterOptions?.datetime_ranges) {
+        const dateRanges = filterOptions.datetime_ranges;
+        const scoreDateMin = document.getElementById('scoreDateMin');
+        const scoreDateMax = document.getElementById('scoreDateMax');
+        
+        if (scoreDateMin && scoreDateMax) {
+          // Convert milliseconds to date strings for input[type="date"]
+          const minDate = new Date(dateRanges.min).toISOString().split('T')[0];
+          const maxDate = new Date(dateRanges.max).toISOString().split('T')[0];
+          
+          scoreDateMin.value = minDate;
+          scoreDateMax.value = maxDate;
+          
+          // Update the slider container with datetime range
+          const dateSliderContainer = document.querySelector('.datetime-filter .slider-container');
+          if (dateSliderContainer) {
+            dateSliderContainer.dataset.min = dateRanges.min;
+            dateSliderContainer.dataset.max = dateRanges.max;
+            dateSliderContainer.dataset.step = '86400000'; // 1 day in milliseconds
+            
+            // Update handle values
+            const minHandle = dateSliderContainer.querySelector('.handle-min');
+            const maxHandle = dateSliderContainer.querySelector('.handle-max');
+            if (minHandle && maxHandle) {
+              minHandle.dataset.value = dateRanges.min;
+              maxHandle.dataset.value = dateRanges.max;
+            }
+          }
+        }
       }
       
       // Initialize grid
