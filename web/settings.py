@@ -255,9 +255,28 @@ def get_cache_config():
             }
         
         # Get Valkey connection details from AWS Secrets Manager
-        valkey_secrets = get_secret(secret_name, REGION_NAME)
-        valkey_host = valkey_secrets["host"]
-        valkey_port = valkey_secrets.get("port", 6379)
+        try:
+            valkey_secrets = get_secret(secret_name, REGION_NAME)
+            valkey_host = valkey_secrets["host"]
+            valkey_port = valkey_secrets.get("port", 6379)
+            print(f"✅ Successfully retrieved Valkey secret: {valkey_host}:{valkey_port}")
+        except Exception as e:
+            print(f"❌ Failed to retrieve Valkey secret '{secret_name}': {e}")
+            # Fall back to LocMem if secret retrieval fails
+            return {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'LOCATION': 'brain-score-secret-fallback',
+                    'TIMEOUT': 300,
+                    'OPTIONS': {
+                        'MAX_ENTRIES': 1000,
+                        'CULL_FREQUENCY': 3,
+                    }
+                }
+            }
+        
+        redis_url = f"redis://{valkey_host}:{valkey_port}"
+        print(f"🔧 Configuring Redis cache with URL: {redis_url}")
         
         return {
             'default': {
