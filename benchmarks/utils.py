@@ -52,12 +52,12 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             try:
                 redis_cache = caches['redis']
                 cache_version = redis_cache.get(cache_version_key, 1)
-                logger.info(f"Using Redis cache for domain {domain}")
+                logger.error(f"✅ Using Redis cache for domain {domain}")
             except Exception as e:
                 # Redis cache not available, use default cache
                 redis_cache = cache
                 cache_version = cache.get(cache_version_key, 1)
-                logger.info(f"Redis cache not available for domain {domain}, using default cache: {e}")
+                logger.error(f"❌ Redis cache not available for domain {domain}, using default cache: {e}")
             
             # Generate a more specific cache key that includes model_filter and benchmark_filter info
             if show_public and not user:
@@ -291,7 +291,7 @@ def show_token(request: HttpRequest) -> JsonResponse:
 
     response_data = {
         "environment": "localhost" if is_localhost else "staging",
-        "token": settings.CACHE_REFRESH_TOKEN if is_localhost else "***hidden***"
+        "token": settings.CACHE_REFRESH_TOKEN if is_localhost else "***hidden token***"
     }
     
     # Test Redis if requested
