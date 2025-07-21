@@ -206,4 +206,3 @@ class TestMaterializedViews(BaseTestCase):
             legacy_score.benchmark.identifier,
             "Benchmark identifier mismatch between new and legacy implementation"
         )
-

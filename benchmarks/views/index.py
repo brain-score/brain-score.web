@@ -63,7 +63,7 @@ def view(request, domain: str):
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
-@cache_get_context(timeout=24 * 60 * 60)
+#@cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
@@ -226,7 +226,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
                         model_scores.append((model, None, True))
                         break
                     try:
-                        val_float = float(val)
+                        val_float = round(float(val), 2)
                         model_scores.append((model, val_float, False))
                     except Exception:
                         # Exclude models with non-numeric, non-"X" values

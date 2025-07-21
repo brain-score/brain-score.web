@@ -243,7 +243,9 @@ def show_token(request: HttpRequest) -> JsonResponse:
 
     if not settings.DEBUG or hostname not in ['localhost', '127.0.0.1']:
         return JsonResponse({"error": "Only available in DEBUG mode on localhost"}, status=403)
-    
+
     return JsonResponse({
         "token": settings.CACHE_REFRESH_TOKEN
     })
+
+

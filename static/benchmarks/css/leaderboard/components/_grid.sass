@@ -1,0 +1,36 @@
+// components/_grid.sass
+// AG-Grid customizations
+
+// ======================
+// GRID CONTAINER
+// ======================
+#leaderboardGrid
+  width: 100% !important
+  max-width: none
+
+  .ag-root-wrapper,
+  .ag-root
+    width: 100% !important
+
+// ======================
+// HEADER CUSTOMIZATIONS
+// ======================
+.ag-header-cell-resize
+  width: 0 !important
+  background-color: transparent
+  opacity: 0
+
+.ag-header-cell:hover .ag-header-cell-resize
+  background-color: rgba(0, 0, 0, 0.1)
+  cursor: col-resize
+
+// Centered headers
+.ag-header-cell.centered-header
+  .ag-header-cell-label
+    justify-content: center
+    text-align: center
+
+  .ag-header-cell-text
+    text-align: center
+    width: 100%
+    font-size: 14px

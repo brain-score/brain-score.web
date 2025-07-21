@@ -1,0 +1,226 @@
+// components/_headers.sass
+// Header pill styling
+
+// ======================
+// EXPANDABLE HEADERS (Benchmark Groups)
+// ======================
+.expandable-header
+  width: auto
+  min-width: 120px
+  max-width: 120px
+  height: 40px
+  border-radius: 20px
+  border: 2px solid transparent
+  display: flex
+  justify-content: center
+  align-items: center
+  margin: 0 auto
+  position: relative
+  font-weight: bold
+  color: white
+  white-space: nowrap
+  text-overflow: ellipsis
+  cursor: pointer
+
+  &:hover
+    cursor: pointer
+
+  // Category colors
+  &.average
+    background-color: $brainscore_green
+    color: $brainscore_gray4
+    &:hover
+      background-color: lighten($brainscore_green, 10%)
+
+  &.neural
+    background-color: $brainscore_gray4
+    color: $brainscore_green
+    &:hover
+      background-color: lighten($brainscore_gray4, 10%)
+
+  &.behavior
+    background-color: $brainscore_gray4
+    color: $brainscore_green
+    &:hover
+      background-color: lighten($brainscore_gray4, 10%)
+
+  &.engineering
+    background-color: #47B7DE
+    color: $brainscore_gray4
+    &:hover
+      background-color: lighten(#47B7DE, 10%)
+
+  // Default color
+  &:not(.neural):not(.behavior):not(.engineering):not(.average)
+    background-color: #d4d4d4
+    color: black
+    &:hover
+      background-color: lighten(#d4d4d4, 5%)
+      border: 2px solid #cccccc
+
+  .expandable-header-label-container
+    flex: 1 1 auto
+    text-align: center
+    overflow: hidden
+    padding: 6px 0
+    display: flex
+    justify-content: center
+
+  .expandable-header-label
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    display: inline-block
+    max-width: 100%
+
+  // Gradient overlay
+  &::after
+    content: ''
+    position: absolute
+    top: 0
+    right: 0
+    width: 20%
+    height: 100%
+    background: linear-gradient(270deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%)
+    pointer-events: none
+    z-index: 1
+
+  &:hover::after
+    background: linear-gradient(270deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)
+
+// ======================
+// LEAF HEADERS
+// ======================
+.leaf-header
+  display: flex
+  justify-content: center
+  align-items: center
+  padding: 6px 10px
+  background-color: #eeeeee
+  border-radius: 20px
+  height: 40px
+  min-width: 120px
+  max-width: 120px
+  cursor: pointer
+  position: relative
+
+  .leaf-header-label
+    display: inline-block
+    max-width: 100px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+    font-weight: bold
+    color: #333
+    pointer-events: none
+
+  // Navigation hint gradient on left 80%
+  &::before
+    content: ''
+    position: absolute
+    top: 0
+    left: 0
+    width: 80%
+    height: 100%
+    background: linear-gradient(90deg, rgba(66, 133, 244, 0.03) 0%, rgba(66, 133, 244, 0) 100%)
+    pointer-events: none
+    z-index: 1
+    border-radius: 20px 0 0 20px
+
+  &:hover::before
+    background: linear-gradient(90deg, rgba(66, 133, 244, 0.08) 0%, rgba(66, 133, 244, 0) 100%)
+
+  // Sorting hint gradient on right 20%
+  &::after
+    content: ''
+    position: absolute
+    top: 0
+    right: 0
+    width: 20%
+    height: 100%
+    background: linear-gradient(270deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%)
+    pointer-events: none
+    z-index: 1
+    border-radius: 0 20px 20px 0
+
+  &:hover::after
+    background: linear-gradient(270deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%)
+
+// ======================
+// HEADER BADGES & INDICATORS
+// ======================
+
+// Count badge
+.expandable-header .benchmark-count,
+.leaf-header .benchmark-count
+  position: absolute
+  bottom: -12px
+  right: -5px
+  background: white
+  color: #333
+  font-size: 11px
+  border: 1px solid #ddd
+  border-radius: 12px
+  padding: 2px 8px
+  cursor: pointer
+  transition: all 0.2s ease
+  z-index: 12
+  display: flex
+  align-items: center
+  gap: 3px
+  min-width: 20px
+  white-space: nowrap
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1)
+
+  &:hover
+    background: #f0f0f0
+    border-color: #bbb
+    transform: scale(1.05)
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15)
+
+  i
+    font-size: 9px
+    color: #666
+
+  span, .count-value
+    font-weight: 600
+    transition: all 0.2s ease
+
+  // Visual feedback for filtered out benchmarks
+  &[style*="opacity: 0.5"]
+    background: #f5f5f5
+    color: #999
+    border-color: #ccc
+
+    i, .count-value
+      color: #999
+
+// Sort indicator
+.sort-indicator
+  flex: 0 0 auto
+  margin-left: 4px
+  padding-right: 4px
+  z-index: 11
+  transition: all 0.2s ease
+  font-size: 16px !important
+
+  &.ag-icon
+    color: inherit
+    display: inline-block
+
+  &:hover
+    transform: scale(1.1)
+
+// White sort icons for dark backgrounds
+.expandable-header.neural .sort-indicator,
+.expandable-header.behavior .sort-indicator
+  color: white !important
+
+  &:hover
+    transform: scale(1.1)
+    color: white !important
+
+// Navigation area
+.navigation-area
+  &:hover
+    background-color: rgba(255, 255, 255, 0.08) !important
