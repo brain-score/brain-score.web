@@ -399,6 +399,283 @@ class TestFilter:
         assert actual_scores == expected_scores, \
             f"Expected top scores {expected_scores}, got {actual_scores}"
 
+    def test_architecture_filter(self, page):
+        """
+        Verifies that filtering by a single model architecture:
+
+        1) Opens the Architecture dropdown.
+        2) Selects SKIP_CONNECTIONS
+        3) Closes the dropdown.
+        4) Waits for the leaderboard to update.
+        5) Asserts that the top-5 model names all contain the selected architecture substring.
+        """
+        # 1) Open the Architecture dropdown
+        page.click('#advancedFilterBtn')
+        page.click('#architectureFilter .filter-input')
+        page.wait_for_selector('#architectureFilter .dropdown-option', timeout=5000)
+
+        # 2) Click the "Transformer" option
+        skip_con_opt = page.locator(
+            '#architectureFilter .dropdown-option:has-text("SKIP_CONNECTIONS")'
+        )
+        assert skip_con_opt.count() > 0, "Skip Connections option not found in architecture dropdown"
+        skip_con_opt.click()
+
+        # 3) Close the dropdown by clicking outside
+        page.click('body')
+
+        # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
+        page.wait_for_timeout(500)
+
+        expected_ranks = [103, 120, 120, 120, 120]
+        expected_models = [
+            "ReAlnet10_cornet",
+            "ReAlnet01_cornet",
+            "ReAlnet02_cornet",
+            "ReAlnet03_cornet",
+            "ReAlnet04_cornet"
+        ]
+        expected_scores = ["0.47", "0.45", "0.45", "0.45", "0.44"]  #TODO: Update
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # compare against the parameters
+        assert actual_ranks == [str(r) for r in expected_ranks], \
+            f"Expected top ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, \
+            f"Expected top models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, \
+            f"Expected top scores {expected_scores}, got {actual_scores}"
+
+    def test_model_family_filter(self, page):
+        """
+        Verifies that filtering by a single model architecture:
+
+        1) Opens the Model Family dropdown.
+        2) Selects resnet family option
+        3) Closes the dropdown.
+        4) Waits for the leaderboard to update.
+        5) Asserts that the top-5 model names all contain the selected architecture substring.
+        """
+        # 1) Open the Architecture dropdown
+        page.click('#advancedFilterBtn')
+        page.click('#modelFamilyFilter .filter-input')
+        page.wait_for_selector('#modelFamilyFilter .dropdown-option', timeout=5000)
+
+        # 2) Click the "Transformer" option
+        resnet_opt = page.locator(
+            '#modelFamilyFilter .dropdown-option:has-text("resnet")'
+        )
+        assert resnet_opt.count() > 0, "resnet option not found in Model Family dropdown"
+        resnet_opt.click()
+
+        # 3) Close the dropdown by clicking outside
+        page.click('body')
+
+        # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
+        page.wait_for_timeout(500)
+
+        expected_ranks = [20, 25, 36, 39, 39]
+        expected_models = [
+            "resnet50-VITO-8deg-cc",
+            "resnet152_imagenet_full",
+            "resnet50_robust_l2_eps1",
+            "resnet50_tutorial",
+            "resnet_50_v2"
+        ]
+        expected_scores = ["0.47", "0.45", "0.45", "0.45", "0.44"]  #TODO: Update
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # compare against the parameters
+        assert actual_ranks == [str(r) for r in expected_ranks], \
+            f"Expected top ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, \
+            f"Expected top models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, \
+            f"Expected top scores {expected_scores}, got {actual_scores}"
+
+    def test_parameter_count_filter(self, page):
+        """
+        Verifies parameter‐count filtering by directly driving the filter logic:
+
+        1) Opens the Advanced Filtering panel.
+        2) Sets the minimum parameter count to 25 and maximum to 50 by updating the inputs in JS.
+        3) Calls applyCombinedFilters() to re‐apply the filter pipeline.
+        4) Waits for the grid to repaint.
+        5) Asserts that:
+           a) the slider inputs read "25" and "50",
+           b) window.activeFilters.min_param_count == 25 and
+              window.activeFilters.max_param_count == 50.
+        6) Extracts and verifies the top-5 rows (ranks, model names, scores) match expectations.
+        """
+        page.click('#advancedFilterBtn')
+        page.wait_for_selector('#paramCountMin', state='visible')
+        page.wait_for_selector('#paramCountMax', state='visible')
+
+        # 1) Set both inputs, then rerun the filter pipeline
+        page.evaluate("""
+        () => {
+          const minInput = document.getElementById('paramCountMin');
+          const maxInput = document.getElementById('paramCountMax');
+          minInput.value = 25;
+          maxInput.value = 50;
+          applyCombinedFilters();
+        }
+        """)
+
+        # 2) wait for the grid to repaint
+        page.wait_for_timeout(500)
+
+        # 3) assert both the UI and the JS state
+        assert page.locator('#paramCountMin').input_value() == "25"
+        assert page.locator('#paramCountMax').input_value() == "50"
+        assert page.evaluate('() => window.activeFilters.min_param_count') == 25
+        assert page.evaluate('() => window.activeFilters.max_param_count') == 50
+
+        expected_ranks = [8, 13, 20, 25, 36]
+        expected_models = [
+            "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
+            "convnext_tiny_imagenet_full_seed-0",
+            "resnet50-VITO-8deg-cc",
+            "convnext_tiny:in12k_ft_in1k",
+            "resnet50_robust_l2_eps1"
+        ]
+        expected_scores = ["0.47", "0.45", "0.45", "0.45", "0.44"]  # TODO: Update
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # compare against the parameters
+        assert actual_ranks == [str(r) for r in expected_ranks], \
+            f"Expected top ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, \
+            f"Expected top models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, \
+            f"Expected top scores {expected_scores}, got {actual_scores}"
+
+    def test_model_size_filter(self, page):
+        """
+        Verifies model size filtering by directly driving the filter logic:
+
+        1) Opens the Advanced Filtering panel.
+        2) Sets the minimum model size to 100MB and maximum to 1000MB by updating the inputs in JS.
+        3) Calls applyCombinedFilters() to re‐apply the filter pipeline.
+        4) Waits for the grid to repaint.
+        5) Asserts that:
+           a) the slider inputs read "100" and "1000",
+           b) window.activeFilters.min_param_count == 100 and
+              window.activeFilters.max_param_count == 1000.
+        6) Extracts and verifies the top-5 rows (ranks, model names, scores) match expectations.
+        """
+        page.click('#advancedFilterBtn')
+        page.wait_for_selector('#modelSizeMin', state='visible')
+        page.wait_for_selector('#modelSizeMax', state='visible')
+
+        # 1) Set both inputs, then rerun the filter pipeline
+        page.evaluate("""
+        () => {
+          const minInput = document.getElementById('modelSizeMin');
+          const maxInput = document.getElementById('modelSizeMax');
+          minInput.value = 100;
+          maxInput.value = 1000;
+          applyCombinedFilters();
+        }
+        """)
+
+        # 2) wait for the grid to repaint
+        page.wait_for_timeout(500)
+
+        # 3) assert both the UI and the JS state
+        assert page.locator('#modelSizeMin').input_value() == "100"
+        assert page.locator('#modelSizeMax').input_value() == "1000"
+        assert page.evaluate('() => window.activeFilters.min_model_size') == 100
+        assert page.evaluate('() => window.activeFilters.max_model_size') == 1000
+
+        expected_ranks = [1, 2, 5, 5, 8]
+        expected_models = [
+            "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+            "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
+            "vit_base_patch16_clip_224:openai_ft_in1k",
+            "vit_relpos_base_patch16_clsgap_224:sw_in1k",
+            "convnext_large:fb_in22k_ft_in1k"
+        ]
+        expected_scores = ["0.47", "0.45", "0.45", "0.45", "0.44"]  # TODO: Update
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # compare against the parameters
+        assert actual_ranks == [str(r) for r in expected_ranks], \
+            f"Expected top ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, \
+            f"Expected top models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, \
+            f"Expected top scores {expected_scores}, got {actual_scores}"
+
+    def test_public_data_filter(self, page):
+        """
+        Verifies that filtering to only publicly available benchmarks:
+
+        1) Opens the Advanced Filtering panel.
+        2) Waits for the “Public Data Only” checkbox to appear.
+        3) Checks that checkbox.
+        4) Scrolls back to the top of the grid.
+        5) Waits for the grid to repaint.
+        6) Extracts the top-5 rows and asserts on:
+           a) Global ranks,
+           b) Model names,
+           c) (Optional) Scores or other columns as desired.
+        """
+        # 1) Open the filter panel
+        page.click('#advancedFilterBtn')
+
+        # 2) Wait for the Public Data Only checkbox
+        public_cb = page.wait_for_selector(
+            '#publicDataFilter',
+            state='visible',
+            timeout=5000
+        )
+        # 3) Enable it
+        if not public_cb.is_checked():
+            public_cb.check()
+
+        # 4) Scroll grid to top
+        page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
+        page.wait_for_timeout(500)
+
+        # 5) (Optional) Verify “Filtered Score” appears if applicable
+        filtered = page.locator('.ag-header-cell-text:has-text("Filtered Score")')
+        assert filtered.count() == 1, "Filtered Score not visible after Public Data filter"
+
+        # 6) Grab the top-5 rows
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="filtered_score"]').all_text_contents()[:5]
+
+        # Replace these with the expected values for your public-data-only run:
+        expected_ranks = [1,5, 2, 5, 2]
+        expected_models = [
+           "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+            "vit_relpos_base_patch16_clsgap_224:sw_in1k",
+            "convnext_xlarge:fb_in22k_ft_in1k",
+            "vit_base_patch16_clip_224:openai_ft_in1k",
+            "vit_base_patch16_clip_224:openai_ft_in12k_in1k"
+        ]
+        expected_scores = ["0.45", "0.42", "0.42", "0.42", "0.42"]
+
+        assert actual_ranks == [str(r) for r in expected_ranks], \
+            f"Expected public-only ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, \
+            f"Expected public-only models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, \
+            f"Expected public-only scores {expected_scores}, got {actual_scores}"
 
 
 
