@@ -52,6 +52,18 @@ hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbea
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append('127.0.0.1')
+
+# Add specific AWS internal IP addresses for ELB health checks
+hosts_list.extend([
+    '172.31.23.82',  # New internal IP from logs
+    '18.117.205.29',  # Another internal IP from logs
+    '172.31.11.183',  # Internal IP from nginx logs
+])
+
+# For staging, allow all hosts to avoid IP issues
+if os.getenv("CACHE_ENV") == "staging":
+    hosts_list.append('*')
+
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -181,13 +193,35 @@ def get_cache_config():
         # Local development - use in-memory cache
         return {
             'default': {
+                # Use LocMem for general Django operations (sessions, middleware, etc.)
                 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'brain-score-local-cache',
-                'TIMEOUT': 300,  # 5 minutes for development
+                'LOCATION': 'brain-score-default-cache',
+                'TIMEOUT': 300,
                 'OPTIONS': {
                     'MAX_ENTRIES': 1000,
                     'CULL_FREQUENCY': 3,
                 }
+            },
+            'redis': {
+                # Use Redis only for our specific leaderboard caching
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': f"redis://{valkey_host}:{valkey_port}",
+                'TIMEOUT': timeout,
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'socket_timeout': 5,
+                        'socket_connect_timeout': 5,
+                        'retry_on_timeout': True,
+                        'health_check_interval': 30,
+                    },
+                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    'IGNORE_EXCEPTIONS': True,
+                },
+                'KEY_PREFIX': key_prefix,
+                'VERSION': 1,
             }
         }
     
@@ -198,9 +232,24 @@ def get_cache_config():
         
         if cache_env == "staging":
             # Staging environment
-            secret_name = "brainscore-valkey-staging"
-            key_prefix = "brainscore:staging"
-            timeout = 604800  # 7 days for staging
+            # TEMPORARY: Disable Redis for staging due to connection issues
+            # Uncomment the Redis config below once connectivity is resolved
+            return {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'LOCATION': 'brain-score-staging-fallback',
+                    'TIMEOUT': 300,
+                    'OPTIONS': {
+                        'MAX_ENTRIES': 1000,
+                        'CULL_FREQUENCY': 3,
+                    }
+                }
+            }
+            
+            # TODO: Re-enable this Redis config once connectivity is fixed:
+            # secret_name = "brainscore-valkey-staging"
+            # key_prefix = "brainscore:staging"
+            # timeout = 604800  # 7 days for staging
         elif cache_env == "production":
             # Production environment
             secret_name = "brainscore-valkey-production"
@@ -227,6 +276,17 @@ def get_cache_config():
         
         return {
             'default': {
+                # Use LocMem for general Django operations (sessions, middleware, etc.)
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'brain-score-default-cache',
+                'TIMEOUT': 300,
+                'OPTIONS': {
+                    'MAX_ENTRIES': 1000,
+                    'CULL_FREQUENCY': 3,
+                }
+            },
+            'redis': {
+                # Use Redis only for our specific leaderboard caching
                 'BACKEND': 'django_redis.cache.RedisCache',
                 'LOCATION': f"redis://{valkey_host}:{valkey_port}",
                 'TIMEOUT': timeout,
@@ -241,7 +301,7 @@ def get_cache_config():
                     },
                     'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
                     'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                    'IGNORE_EXCEPTIONS': True,  # Graceful fallback on Redis errors
+                    'IGNORE_EXCEPTIONS': True,
                 },
                 'KEY_PREFIX': key_prefix,
                 'VERSION': 1,

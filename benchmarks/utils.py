@@ -46,7 +46,18 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             """            
             # Get cache version from cache or set to 1 if not exists
             cache_version_key = f'cache_version_{domain}'
-            cache_version = cache.get(cache_version_key, 1) # Get cache version from cache or set to 1 if not exists
+            from django.core.cache import caches, cache
+            
+            # Try to use Redis cache if available, otherwise fall back to default cache
+            try:
+                redis_cache = caches['redis']
+                cache_version = redis_cache.get(cache_version_key, 1)
+                logger.info(f"Using Redis cache for domain {domain}")
+            except Exception as e:
+                # Redis cache not available, use default cache
+                redis_cache = cache
+                cache_version = cache.get(cache_version_key, 1)
+                logger.info(f"Redis cache not available for domain {domain}, using default cache: {e}")
             
             # Generate a more specific cache key that includes model_filter and benchmark_filter info
             if show_public and not user:
@@ -72,23 +83,40 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
             
             # Try to get cached result
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                logger.debug(f"Cache hit for key: {cache_key}")
-                return cached_result
+            try:
+                import time
+                cache_start = time.time()
+                cached_result = redis_cache.get(cache_key)
+                cache_end = time.time()
+                logger.info(f"Cache GET took {cache_end - cache_start:.3f}s for key {cache_key[:50]}...")
+                
+                if cached_result is not None:
+                    logger.debug(f"Cache hit for key: {cache_key}")
+                    return cached_result
+            except Exception as e:
+                logger.warning(f"Cache get failed for key {cache_key}: {e}, falling back to direct execution")
 
             # If no cache found, calculate result
             logger.debug(f"Cache miss for key: {cache_key}")
+            func_start = time.time()
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                         model_filter=model_filter, show_public=show_public)
+            func_end = time.time()
+            logger.info(f"Function execution took {func_end - func_start:.3f}s")
             
             # For user contexts, also cache the public data within the user context
             if user and not show_public:
                 result['public_models'] = [m for m in result['models'] if getattr(m, 'public', True)]
             
             # Store result in cache
-            cache.set(cache_key, result, timeout)
-            logger.debug(f"Cached result for key: {cache_key}")
+            try:
+                set_start = time.time()
+                redis_cache.set(cache_key, result, timeout)
+                set_end = time.time()
+                logger.info(f"Cache SET took {set_end - set_start:.3f}s, size ~{len(str(result))} chars")
+                logger.debug(f"Cached result for key: {cache_key}")
+            except Exception as e:
+                logger.warning(f"Cache set failed for key {cache_key}: {e}, continuing without caching")
             return result
 
         return wrapper
@@ -144,10 +172,22 @@ def invalidate_domain_cache(domain: str = "vision") -> int:
     Invalidates all caches for a specific domain by incrementing the version number.
     This is more efficient than deleting individual cache keys.
     """
+    from django.core.cache import caches, cache
+    
     cache_version_key = f'cache_version_{domain}'
-    current_version = cache.get(cache_version_key, 1)
-    new_version = current_version + 1
-    cache.set(cache_version_key, new_version)
+    
+    # Try to use Redis cache if available, otherwise fall back to default cache
+    try:
+        redis_cache = caches['redis']
+        current_version = redis_cache.get(cache_version_key, 1)
+        new_version = current_version + 1
+        redis_cache.set(cache_version_key, new_version)
+    except Exception:
+        # Redis cache not available, use default cache
+        current_version = cache.get(cache_version_key, 1)
+        new_version = current_version + 1
+        cache.set(cache_version_key, new_version)
+    
     logger.info(f"Invalidated cache for domain '{domain}' (new version: {new_version})")
     return new_version
 
@@ -237,16 +277,54 @@ def trigger_recache(domain: str = "vision", rebuild: bool = True, base_url: str 
 @require_http_methods(["GET"])
 def show_token(request: HttpRequest) -> JsonResponse:
     """
-    Debug view to show the current token.
-    Only available in localhost DEBUG mode.
+    Debug view to show the current token and optionally test Redis.
+    Available in DEBUG mode on localhost, or on staging with proper authentication.
     """
     hostname = request.get_host().split(':')[0]
 
-    if not settings.DEBUG or hostname not in ['localhost', '127.0.0.1']:
-        return JsonResponse({"error": "Only available in DEBUG mode on localhost"}, status=403)
+    # Allow on localhost in DEBUG mode, or on staging with token authentication
+    is_localhost = hostname in ['localhost', '127.0.0.1'] and settings.DEBUG
+    is_staging_with_token = 'staging' in hostname.lower() and request.GET.get('token') == settings.CACHE_REFRESH_TOKEN
+    
+    if not (is_localhost or is_staging_with_token):
+        return JsonResponse({"error": "Only available in DEBUG mode on localhost, or on staging with valid token"}, status=403)
 
-    return JsonResponse({
-        "token": settings.CACHE_REFRESH_TOKEN
-    })
+    response_data = {
+        "environment": "localhost" if is_localhost else "staging",
+        "token": settings.CACHE_REFRESH_TOKEN if is_localhost else "***hidden***"
+    }
+    
+    # Test Redis if requested
+    if request.GET.get('test_redis') == 'true':
+        try:
+            from django.core.cache import caches
+            import time
+            
+            redis_cache = caches['redis']
+            
+            # Test SET
+            start = time.time()
+            redis_cache.set('debug_test_key', 'debug_test_value', 30)
+            set_time = time.time() - start
+            
+            # Test GET
+            start = time.time()
+            result = redis_cache.get('debug_test_key')
+            get_time = time.time() - start
+            
+            response_data.update({
+                "redis_status": "success" if result == 'debug_test_value' else "failed",
+                "redis_set_time": f"{set_time:.3f}s",
+                "redis_get_time": f"{get_time:.3f}s",
+                "redis_result": result,
+                "redis_backend": str(redis_cache.__class__)
+            })
+        except Exception as e:
+            response_data.update({
+                "redis_status": "error",
+                "redis_error": str(e)
+            })
+
+    return JsonResponse(response_data)
 
 

@@ -5,6 +5,7 @@ from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
 from ..utils import cache_get_context
+from django.db.models import Model
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -187,7 +188,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
-    for model in context['models']:
+    for i, model in enumerate(context['models']):
         # base fields
         rd = {
             'id': model.model_id,
@@ -426,7 +427,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
-
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
     data_map = {}
@@ -474,20 +474,39 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
-    # Return processed AG Grid context
-    ag_context = {
+    # Instead of merging with the huge original context, create a minimal cache payload
+    # Only include what the frontend actually needs
+    minimal_context = {
+        # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
         'row_data': json.dumps([json_serializable(r) for r in row_data]),
-        'column_defs': json.dumps(column_defs),
-        'benchmark_groups': json.dumps(make_benchmark_groups(context['benchmarks'])),
-        'filter_options': json.dumps(filter_options),
-        'benchmark_metadata': json.dumps(benchmark_metadata_list),
-        'benchmark_tree': json.dumps(build_benchmark_tree([b for b in context['benchmarks'] if b.identifier != 'average_vision_v0'])),
-        'benchmark_ids': json.dumps(benchmark_ids)
+        'column_defs': context['column_defs'],  # Already JSON string
+        'benchmark_groups': context['benchmark_groups'],  # Already JSON string  
+        'filter_options': context['filter_options'],  # Already JSON string
+        'benchmark_metadata': context['benchmark_metadata'],  # Already JSON string
+        'benchmark_tree': context['benchmark_tree'],  # Already JSON string
+        'benchmark_ids': json.dumps(benchmark_ids),
+        'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],  # Already JSON string
+        'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],  # Already JSON string
+        'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],  # Already JSON string
+        'model_metadata_map': context['model_metadata_map'],  # Already JSON string
+        
+        # Essential metadata (small)
+        'domain': context['domain'],
+        'has_user': context.get('has_user', False),
+        
+        # Citation info (small strings)
+        'citation_general_url': context.get('citation_general_url', ''),
+        'citation_general_title': context.get('citation_general_title', ''),
+        'citation_general_bibtex': context.get('citation_general_bibtex', ''),
+        'citation_domain_url': context.get('citation_domain_url', ''),
+        'citation_domain_title': context.get('citation_domain_title', ''),
+        'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
+        
+        # Small comparison data 
+        'comparison_data': context.get('comparison_data', '[]'),
     }
-    
-    # Merge with original context
-    context.update(ag_context)
-    return context
+
+    return minimal_context
 
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
@@ -495,4 +514,6 @@ def ag_grid_leaderboard(request, domain: str):
     context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
 
     # Render the AG-Grid template
-    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
+    response = render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
+    
+    return response

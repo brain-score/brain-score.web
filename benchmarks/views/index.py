@@ -11,7 +11,7 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
-from time import time
+
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
 
@@ -50,20 +50,17 @@ def view(request, domain: str):
     user = request.user if request.user.is_authenticated else None
     
     # Get the appropriate context based on user authentication
-    start_time = time()
     if user:
         # User is authenticated - get personalized context (used for profile views)
         leaderboard_context = get_context(user=user, domain=domain, show_public=False)
     else:
         # No user - get public context
         leaderboard_context = get_context(domain=domain, show_public=True)
-    end_time = time()
-    print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
-@cache_get_context(timeout=24 * 60 * 60)
+#@cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
