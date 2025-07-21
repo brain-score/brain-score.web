@@ -231,25 +231,10 @@ def get_cache_config():
         cache_env = os.getenv("CACHE_ENV", "local")
         
         if cache_env == "staging":
-            # Staging environment
-            # TEMPORARY: Disable Redis for staging due to connection issues
-            # Uncomment the Redis config below once connectivity is resolved
-            return {
-                'default': {
-                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                    'LOCATION': 'brain-score-staging-fallback',
-                    'TIMEOUT': 300,
-                    'OPTIONS': {
-                        'MAX_ENTRIES': 1000,
-                        'CULL_FREQUENCY': 3,
-                    }
-                }
-            }
-            
-            # TODO: Re-enable this Redis config once connectivity is fixed:
-            # secret_name = "brainscore-valkey-staging"
-            # key_prefix = "brainscore:staging"
-            # timeout = 604800  # 7 days for staging
+            # Staging environment - Re-enable Redis to test connectivity
+            secret_name = "brainscore-valkey-staging"
+            key_prefix = "brainscore:staging"
+            timeout = 604800  # 7 days for staging
         elif cache_env == "production":
             # Production environment
             secret_name = "brainscore-valkey-production"
