@@ -677,5 +677,306 @@ class TestFilter:
         assert actual_scores == expected_scores, \
             f"Expected public-only scores {expected_scores}, got {actual_scores}"
 
+    @pytest.mark.parametrize(
+        "selected_regions, absent_regions, expected_ranks, expected_models, expected_scores",
+        [
+            (
+                ["V1"], ["V2", "V4", "IT"],
+                [144, 150, 150, 162, 162],
+                [
+                    "alexnet_training_seed_01",
+                    "alexnet_training_seed_07",
+                    "alexnet_training_seed_10",
+                    "alexnet_training_seed_09",
+                    "alexnet_training_seed_02"
+                ],
+                ["0.08", "0.07", "0.07", "0.07", "0.07"]
+            ),
+            (
+                ["IT"], ["V1", "V2", "V4"],
+                [13, 1, 5, 8, 58],
+                [
+                    "convnext_tiny_imagenet_full_seed-0",
+                    "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+                    "vit_relpos_base_patch16_clsgap_224:sw_in1k",
+                    "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
+                    "resnet50-SIN"
+                ],
+                ["0.07", "0.07", "0.07", "0.07", "0.07"]
+            ),
+            # (
+            #     ["V1", "V4"], ["V2", "IT"],
+            #     [144, 162, 150, 150, 174],
+            #     [
+            #         "alexnet_training_seed_01",
+            #         "alexnet_training_seed_09",
+            #         "alexnet_training_seed_07",
+            #         "alexnet_training_seed_10",
+            #         "resnet50_primary_visual_cortex"
+            #     ],
+            #     ["0.12", "0.12", "0.11", "0.11", "0.11"]
+            # ),
+            # (
+            #     ["V1", "V2", "IT"], ["V4"],
+            #     [150, 144, 150, 13, 162],
+            #     [
+            #         "alexnet_training_seed_10",
+            #         "alexnet_training_seed_01",
+            #         "alexnet_training_seed_07",
+            #         "convnext_tiny_imagenet_full_seed-0",
+            #         "alexnet_training_seed_04"
+            #     ],
+            #     ["0.17", "0.17", "0.16", "0.16", "0.15"]
+            # ),
+        ]
+    )
+    def test_region_filtering_shows_only_selected_regions(self, page, selected_regions, absent_regions, expected_ranks,
+                                                          expected_models, expected_scores):
+        """
+        Verifies that when filtering by brain-region checkboxes:
+
+        1) Opens the Advanced Filtering panel.
+        2) Unchecks all regions, then checks only `selected_regions`.
+        3) Scrolls back to the top of the grid.
+        4) Asserts that the “Filtered Score” column appears.
+        5) Extracts the top-5 rows for rank, model, and score, and
+           compares them to the expected lists.
+        """
+        # 1) open the filter panel
+        page.click('#advancedFilterBtn')
+
+        # 2) uncheck all then check only our selections
+        for cb in page.locator('.region-checkbox').all():
+            if cb.is_checked():
+                cb.uncheck()
+        for region in selected_regions:
+            cb = page.wait_for_selector(
+                f'.region-checkbox[value="{region}_v0"], .region-checkbox[value="{region}"]',
+                state='visible',
+                timeout=30000)
+            if not cb.is_checked():
+                cb.check()
+
+        # 3) scroll grid to top
+        page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
+        page.wait_for_timeout(1000)
+
+        # 4) verify “Filtered Score” appears
+        assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        print(actual_ranks)
+        print(expected_ranks)
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="filtered_score"]').all_text_contents()[:5]
+
+        assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
+        assert actual_models == expected_models, f"Models: {actual_models}"
+        assert actual_scores == expected_scores, f"Scores: {actual_scores}"
+
+    @pytest.mark.parametrize(
+        "selected_species, absent_species, expected_ranks, expected_models, expected_scores",
+        [
+            (
+                    ["human"], ["primate"],
+                    [13, 1, 5, 8, 5],
+                    [
+                        "convnext_xxlarge:clip_laion2b_soup_ft_in1k",
+                        "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+                        "vit_large_patch14_clip_224:openai_ft_in1k",
+                        "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
+                        "vit_relpos_base_patch16_clsgap_224:sw_in1k"
+                    ],
+                    ["0.35", "0.34", "0.32", "0.32", "0.30"]
+            ),
+            (
+                    ["primate"], ["human"],
+                    [1, 2, 2, 2, 5],
+                    [
+                        "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+                        "convnext_xlarge:fb_in22k_ft_in1k",
+                        "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
+                        "vit_large_patch14_clip_224:laion2b_ft_in1k",
+                        "vit_base_patch16_clip_224:openai_ft_in1k"
+                    ],
+                    ["0.00", "0.00", "0.00", "0.00", "0.00"]
+            ),
+            #(
+            #         ["human", "simian"], [],
+            #         [1, 2, 2, 2, 5],
+            #         [
+            #             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+            #             "convnext_xlarge:fb_in22k_ft_in1k",
+            #             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
+            #             "vit_large_patch14_clip_224:laion2b_ft_in1k",
+            #             "vit_base_patch16_clip_224:openai_ft_in1k"
+            #         ],
+            #         ["0.47", "0.45", "0.45", "0.45", "0.44"]
+            # )
+        ]
+    )
+    def test_species_filtering(self, page, selected_species, absent_species, expected_ranks,
+                            expected_models, expected_scores):
+        """
+        Verifies that when filtering by task checkboxes:
+
+        1) Opens the Advanced Filtering panel.
+        2) Unchecks all species, then checks only `selected_species`.
+        3) Scrolls back to the top of the grid.
+        4) Asserts that the “Filtered Score” column appears.
+        5) Extracts the top-5 rows for rank, model, and score, and
+           compares them to the expected lists.
+        """
+        # 1) open the filter panel
+        page.click('#advancedFilterBtn')
+
+        # 2) uncheck all then check only our selections
+        for cb in page.locator('.species-checkbox').all():
+            if cb.is_checked():
+                cb.uncheck()
+        for species in selected_species:
+            cb = page.wait_for_selector(
+                f'.species-checkbox[value="{species}"], .species-checkbox[value="{species}"]',
+                state='visible',
+                timeout=30000)
+            if not cb.is_checked():
+                cb.check()
+
+        # 3) scroll grid to top
+        page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
+        page.wait_for_timeout(1000)
+
+        # 4) verify “Filtered Score” appears
+        assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        print(actual_ranks)
+        print(expected_ranks)
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="filtered_score"]').all_text_contents()[:5]
+
+        assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
+        assert actual_models == expected_models, f"Models: {actual_models}"
+        assert actual_scores == expected_scores, f"Scores: {actual_scores}"
+
+    @pytest.mark.parametrize(
+        "selected_tasks, absent_tasks, expected_ranks, expected_models, expected_scores",
+        [
+            (
+                    ["2_way_afc"], [],
+                    [8, 25, 2, 2, 5],
+                    [
+                        "cvt_cvt-w24-384-in22k_finetuned-in1k_4",
+                        "resnext101_32x32d_wsl",
+                        "convnext_xlarge:fb_in22k_ft_in1k",
+                        "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
+                        "vit_base_patch16_clip_224:openai_ft_in1k"
+                    ],
+                    ["0.07", "0.07", "0.07", "0.07", "0.07"]
+            )
+        ]
+    )
+    def test_task_filtering(self, page, selected_tasks, absent_tasks, expected_ranks,
+                                                          expected_models, expected_scores):
+        """
+        Verifies that when filtering by task checkboxes:
+
+        1) Opens the Advanced Filtering panel.
+        2) Unchecks all tasks, then checks only `selected_tasks`.
+        3) Scrolls back to the top of the grid.
+        4) Asserts that the “Filtered Score” column appears.
+        5) Extracts the top-5 rows for rank, model, and score, and
+           compares them to the expected lists.
+        """
+        # 1) open the filter panel
+        page.click('#advancedFilterBtn')
+
+        # 2) uncheck all then check only our selections
+        for cb in page.locator('.task-checkbox').all():
+            if cb.is_checked():
+                cb.uncheck()
+        for task in selected_tasks:
+            cb = page.wait_for_selector(
+                f'.task-checkbox[value="{task}"], .task-checkbox[value="{task}"]',
+                state='visible',
+                timeout=30000)
+            if not cb.is_checked():
+                cb.check()
+
+        # 3) scroll grid to top
+        page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
+        page.wait_for_timeout(1000)
+
+        # 4) verify “Filtered Score” appears
+        assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
+
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        print(actual_ranks)
+        print(expected_ranks)
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="filtered_score"]').all_text_contents()[:5]
+
+        assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
+        assert actual_models == expected_models, f"Models: {actual_models}"
+        assert actual_scores == expected_scores, f"Scores: {actual_scores}"
+
+    def test_stimuli_count_filter(self, page):
+        """
+        Verifies stimuli‐count filtering by directly driving the filter logic:
+
+        1) Opens the Advanced Filtering panel.
+        2) Sets the minimum stimuli count to 100 and maximum to 5000 by updating the inputs in JS.
+        3) Calls applyCombinedFilters() to re‐apply the filter pipeline.
+        4) Waits for the grid to repaint.
+        5) Asserts that:
+           a) the slider inputs read "100" and "5000",
+           b) window.activeFilters.min_stimuli_count == 100 and
+              window.activeFilters.max_stimuli_count == 5000.
+        6) Extracts and verifies the top-5 rows (ranks, model names, global scores) match expectations.
+        """
+        # 1) open the panel
+        page.click('#advancedFilterBtn')
+        page.wait_for_selector('#stimuliCountMin', state='visible')
+        page.wait_for_selector('#stimuliCountMax', state='visible')
+
+        # 2) set both inputs, then rerun the filter pipeline in JS
+        page.evaluate("""
+        () => {
+          const minInput = document.getElementById('stimuliCountMin');
+          const maxInput = document.getElementById('stimuliCountMax');
+          minInput.value = 100;
+          maxInput.value = 5000;
+          applyCombinedFilters();
+        }
+        """)
+
+        # 3) give the grid a moment to re-filter
+        page.wait_for_timeout(500)
+
+        # 4) assert both the UI and the JS state
+        assert page.locator('#stimuliCountMin').input_value() == "100"
+        assert page.locator('#stimuliCountMax').input_value() == "5000"
+        assert page.evaluate('() => window.activeFilters.min_stimuli_count') == 100
+        assert page.evaluate('() => window.activeFilters.max_stimuli_count') == 5000
+
+        # 5) now verify top‐5 rows
+        expected_ranks = [1, 8, 5, 25, 2]
+        expected_models = [
+            "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+            "vit_large_patch14_clip_224:laion2b_ft_in12k_in1k",
+            "vit_large_patch14_clip_224:openai_ft_in1k",
+            "vit_large_patch14_clip_336:openai_ft_in12k_in1k",
+            "vit_large_patch14_clip_224:laion2b_ft_in1k"
+        ]
+        expected_scores = ["0.39", "0.39", "0.39", "0.39", "0.39"]
+
+        actual_ranks  = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="filtered_score"]').all_text_contents()[:5]
+
+        assert actual_ranks  == [str(r) for r in expected_ranks], f"Expected ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
+
 
 
