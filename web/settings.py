@@ -14,6 +14,8 @@ import boto3
 import json
 import os
 from botocore.exceptions import NoCredentialsError
+import logging
+logger = logging.getLogger(__name__)
 
 
 def get_secret(secret_name, region_name):
@@ -182,133 +184,53 @@ DATABASES = get_db_info()
 
 # Cache Configuration
 # https://docs.djangoproject.com/en/4.0/topics/cache/
-
 def get_cache_config():
-    """
-    Configure cache backend based on environment.
-    Local development uses locmem, staging/production use Valkey via ElastiCache.
-    """
-    # Force local cache for testing (even with AWS database)
-    if os.getenv("DJANGO_ENV") == "development":
-        # Local development - use in-memory cache
-        return {
+    env = os.getenv("CACHE_ENV", os.getenv("DJANGO_ENV", "development"))
+
+    # 1) Local dev → in-memory
+    if env == "development":
+        cfg = {
             'default': {
-                # Use LocMem for general Django operations (sessions, middleware, etc.)
                 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
                 'LOCATION': 'brain-score-default-cache',
                 'TIMEOUT': 300,
-                'OPTIONS': {
-                    'MAX_ENTRIES': 1000,
-                    'CULL_FREQUENCY': 3,
-                }
-            },
-            'redis': {
-                # Use Redis only for our specific leaderboard caching
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': f"redis://{valkey_host}:{valkey_port}",
-                'TIMEOUT': timeout,
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'CONNECTION_POOL_KWARGS': {
-                        'max_connections': 50,
-                        'socket_timeout': 5,
-                        'socket_connect_timeout': 5,
-                        'retry_on_timeout': True,
-                        'health_check_interval': 30,
-                    },
-                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
-                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                    'IGNORE_EXCEPTIONS': True,
-                },
-                'KEY_PREFIX': key_prefix,
-                'VERSION': 1,
             }
         }
-    
-    # Staging and Production - use Valkey via ElastiCache
-    try:
-        # Determine environment and secret name based on CACHE_ENV
-        cache_env = os.getenv("CACHE_ENV", "local")
-        
-        if cache_env == "staging":
-            # Staging environment - Re-enable Redis to test connectivity
-            secret_name = "brainscore-valkey-staging"
-            key_prefix = "brainscore:staging"
-            timeout = 604800  # 7 days for staging
-        elif cache_env == "production":
-            # Production environment
-            secret_name = "brainscore-valkey-production"
-            key_prefix = "brainscore:prod"
-            timeout = 2592000  # 30 days for production
-        else:
-            # Default to local cache if CACHE_ENV not set
+        print(f"[CACHE] environment={env} → using {cfg['default']['BACKEND']} @ {cfg['default']['LOCATION']}")
+        return cfg
+
+    # 2) Staging / Production → Redis
+    if env in ("staging", "production"):
+        secret_name = {
+            "staging": "brainscore-valkey-staging",
+            "production": "brainscore-valkey-production",
+        }[env]
+        try:
+            secrets = get_secret(secret_name, REGION_NAME)
+            host = secrets["host"]
+            port = secrets.get("port", 6379)
+        except Exception as e:
+            # couldn’t load secrets → fall back
+            print(f"Cache secret load failed ({e}), using locmem fallback")
             return {
                 'default': {
                     'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
                     'LOCATION': 'brain-score-fallback-cache',
                     'TIMEOUT': 300,
-                    'OPTIONS': {
-                        'MAX_ENTRIES': 100,
-                        'CULL_FREQUENCY': 3,
-                    }
                 }
             }
-        
-        # Get Valkey connection details from AWS Secrets Manager
-        try:
-            valkey_secrets = get_secret(secret_name, REGION_NAME)
-            valkey_host = valkey_secrets["host"]
-            valkey_port = valkey_secrets.get("port", 6379)
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"✅ Successfully retrieved Valkey secret: {valkey_host}:{valkey_port}")
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"❌ Failed to retrieve Valkey secret '{secret_name}': {e}")
-            # Fall back to LocMem for both default and redis caches if secret retrieval fails
-            return {
-                'default': {
-                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                    'LOCATION': 'brain-score-secret-fallback',
-                    'TIMEOUT': 300,
-                    'OPTIONS': {
-                        'MAX_ENTRIES': 1000,
-                        'CULL_FREQUENCY': 3,
-                    }
-                },
-                'redis': {
-                    # Use LocMem as fallback for redis cache
-                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                    'LOCATION': 'brain-score-redis-fallback',
-                    'TIMEOUT': 300,
-                    'OPTIONS': {
-                        'MAX_ENTRIES': 1000,
-                        'CULL_FREQUENCY': 3,
-                    }
-                }
-            }
-        
-        redis_url = f"redis://{valkey_host}:{valkey_port}"
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"🔧 Configuring Redis cache with URL: {redis_url}")
-        
-        return {
-            'default': {
-                # Use LocMem for general Django operations (sessions, middleware, etc.)
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'brain-score-default-cache',
-                'TIMEOUT': 300,
-                'OPTIONS': {
-                    'MAX_ENTRIES': 1000,
-                    'CULL_FREQUENCY': 3,
-                }
-            },
-            'redis': {
-                # Use Redis only for our specific leaderboard caching
+        USE_REDIS_TUNNEL = os.getenv("USE_REDIS_TUNNEL") == "true"
+        if USE_REDIS_TUNNEL:
+            host = "127.0.0.1"
+            scheme = "rediss"
+        else:
+            scheme = "rediss"
+
+        timeout = 7*24*3600 if env == "staging" else 30*24*3600
+        prefix = f"brainscore:{env}"
+        redis_cfg = {
                 'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': f"redis://{valkey_host}:{valkey_port}",
+                'LOCATION': f"rediss://{host}:{port}/0",
                 'TIMEOUT': timeout,
                 'OPTIONS': {
                     'CLIENT_CLASS': 'django_redis.client.DefaultClient',
@@ -319,30 +241,27 @@ def get_cache_config():
                         'retry_on_timeout': True,
                         'health_check_interval': 30,
                     },
-                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                    "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
                     'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
                     'IGNORE_EXCEPTIONS': True,
                 },
-                'KEY_PREFIX': key_prefix,
-                'VERSION': 1,
+                'KEY_PREFIX': prefix,
+                'VERSION': 2,
             }
-        }
-        
-    except Exception as e:
-        # Fallback to local memory cache if Valkey unavailable
-        print(f"Warning: Could not connect to Valkey, falling back to local cache: {e}")
-        return {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'brain-score-fallback-cache',
-                'TIMEOUT': 300,
-                'OPTIONS': {
-                    'MAX_ENTRIES': 100,  # Smaller cache for fallback
-                    'CULL_FREQUENCY': 3,
-                }
-            }
-        }
+    
+        print(f"[CACHE] environment={env} → using {redis_cfg['BACKEND']} @ {redis_cfg['LOCATION']}")
+        return {'default': redis_cfg, 'redis': redis_cfg}
 
+    # 3) Fallback
+    cfg = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'brain-score-fallback-cache',
+            'TIMEOUT': 300,
+        }
+    }
+    print(f"[CACHE] environment={env} → fallback {cfg['default']['BACKEND']}")
+    return cfg
 
 CACHES = get_cache_config()
 

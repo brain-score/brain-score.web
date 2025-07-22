@@ -44,7 +44,7 @@ def get_base_model_query(domain="vision"):
 
 # Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.
-@cache_page(24 * 60 * 60)
+#@cache_page(24 * 60 * 60)
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
