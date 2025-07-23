@@ -1,5 +1,7 @@
 import pytest
 from playwright.sync_api import sync_playwright
+import zipfile
+import io
 
 @pytest.fixture(scope="session")
 def browser():
@@ -23,48 +25,73 @@ def page(browser):
 
 class TestSort:
     def test_sort_rank_descending(self, page):
+        """
+        Verify that the rank column is sorted in descending order by default.
+        """
         scores_actual = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [1, 2, 2, 2, 5]]
         assert scores_actual == scores_expected
 
     def test_model_descending(self, page):
+        """
+        Verify that the model column is sorted in descending order after clicking the header.
+        """
         header = page.locator('.ag-header-cell[col-id="model"]')
         header.click()
         page.wait_for_timeout(1000)
+
         scores_actual = page.locator('.ag-cell[col-id="model"]').all_text_contents()[0:2]
-        scores_actual = [i[:-8] for i in scores_actual]  # get rid of name suffix on model column entires
-        scores_expected = ["yudixie_resnet50_translation_rotation_0_240908", "yudixie_resnet50_translation_reg_0_240908"]
+        scores_actual = [i[:-8] for i in scores_actual]  # Strip suffix (e.g., timestamp) from model names
+
+        scores_expected = [
+            "yudixie_resnet50_translation_rotation_0_240908",
+            "yudixie_resnet50_translation_reg_0_240908"
+        ]
         assert scores_actual == scores_expected
 
     def test_sort_average_descending(self, page):
+        """
+        Verify that the average_vision_v0 column is sorted in descending order by default.
+        """
         scores_actual = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.47, 0.45, 0.45, 0.45, 0.44]]
         assert scores_actual == scores_expected
 
     def test_sort_neural_descending(self, page):
+        """
+        Verify that the neural_vision_v0 column is sorted in descending order after clicking the header.
+        """
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
         header.click()
         page.wait_for_timeout(1000)
+
         scores_actual = page.locator('.ag-cell[col-id="neural_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.39, 0.39, 0.39, 0.38, 0.38]]
         assert scores_actual == scores_expected
 
     def test_sort_behavioral_descending(self, page):
+        """
+        Verify that the behavior_vision_v0 column is sorted in descending order after clicking the header.
+        """
         header = page.locator('.ag-header-cell[col-id="behavior_vision_v0"]')
         header.click()
         page.wait_for_timeout(1000)
+
         scores_actual = page.locator('.ag-cell[col-id="behavior_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.56, 0.56, 0.56, 0.55, 0.55]]
         assert scores_actual == scores_expected
 
     def test_sort_engineering_descending(self, page):
+        """
+        Verify that the engineering_vision_v0 column is sorted in descending order after clicking the header.
+        """
         header = page.locator('.ag-header-cell[col-id="engineering_vision_v0"]')
         header.click()
         page.wait_for_timeout(1000)
+
         scores_actual = page.locator('.ag-cell[col-id="engineering_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.63, 0.59, 0.59, 0.59, 0.58]]
         assert scores_actual == scores_expected
-
 
 # ----------------- FILTERING -----------------
 class TestFilter:
@@ -1019,3 +1046,68 @@ class TestFilter:
         assert copied is not None and copied.strip(), " No text was copied to clipboard."
         entries = copied.strip().split('\n\n')
         assert len(entries) == 9, f" Expected 9 BibTeX entries, got {len(entries)}."
+
+class TestExtraFunctionality:
+
+    def test_csv_export_contains_expected_files(self, page, tmp_path):
+        """
+        Verifies that clicking the CSV export button:
+        1) Triggers a ZIP download.
+        2) The ZIP contains both `leaderboard.csv` and `plugin-info.csv`.
+        """
+
+        # Wait for the button to appear and click it
+        assert page.locator('#exportCsvButton').is_visible(), "Export CSV button not visible"
+
+        with page.expect_download() as download_info:
+            page.click('#exportCsvButton')
+
+        download = download_info.value
+        zip_path = tmp_path / download.suggested_filename
+        download.save_as(zip_path)
+
+        # Read and inspect ZIP contents
+        with zipfile.ZipFile(zip_path, 'r') as zip_file:
+            file_list = zip_file.namelist()
+            assert 'leaderboard.csv' in file_list, "leaderboard.csv not found in ZIP"
+            assert 'plugin-info.csv' in file_list, "plugin-info.csv not found in ZIP"
+
+    def test_search_bar_filters_models_by_name(self, page):
+        """
+        Verifies that typing 'Ferguson' into the search bar filters the leaderboard,
+        and that the top 5 visible rows match expected rank, model name, and score.
+        """
+
+        # Reset filters to default
+        page.click('#advancedFilterBtn')
+        page.evaluate("resetAllFilters()")
+        page.wait_for_timeout(1000)
+
+        # Type "Ferguson" into the search input
+        search_input = page.locator('#modelSearchInput')
+        assert search_input.is_visible(), "❌ Search bar not found"
+        search_input.fill("Ferguson")
+        page.wait_for_timeout(1000)
+
+        # Capture top 5 visible rows
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # Replace these with actual expected values
+        expected_ranks = [269, 346, 412, 441, 445]
+        expected_models = [
+            "alexnet",
+            "yudixie_resnet50_imagenet1kpret_0_240312",
+            "bp_resnet50_julios",
+            "unet_entire",
+            "ConvLSTM"
+        ]
+        expected_scores = ["0.17", "0.14", "0.07", "0.04", "0.01"]
+        print(actual_models)
+        print(expected_models)
+
+        # Compare results
+        assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
+        assert actual_models == expected_models, f"Models: {actual_models}"
+        assert actual_scores == expected_scores, f"Scores: {actual_scores}"
