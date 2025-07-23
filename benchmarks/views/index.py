@@ -41,7 +41,7 @@ def get_base_model_query(domain="vision"):
 
 # Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.
-#@cache_page(24 * 60 * 60)
+@cache_page(24 * 60 * 60, key_prefix="cache_page")
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
@@ -57,7 +57,7 @@ def view(request, domain: str):
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
-#@cache_get_context(timeout=24 * 60 * 60)
+@cache_get_context(timeout=24 * 60 * 60, key_prefix="index")
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
@@ -141,7 +141,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         'not_shown_set': not_shown_set,
         'BASE_DEPTH': BASE_DEPTH,
         'has_user': user is not None,
-        'comparison_data': json.dumps(comparison_data),
+        'comparison_data': [],#json.dumps(comparison_data),
         'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
         'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
         'citation_general_bibtex': (

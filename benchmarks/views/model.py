@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
+from .leaderboard import get_ag_grid_context
 from ..models import FinalModelContext
 from time import time
 _logger = logging.getLogger(__name__)

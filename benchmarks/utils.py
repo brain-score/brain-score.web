@@ -13,13 +13,16 @@ import time
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
-def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
+def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) -> Callable:  # 24 hour cache by default
     """
     Decorator that caches get_context-like functions in Redis under a versioned key prefix.
     Any time invalidate_domain_cache() is called, the version bumps, and old keys get deleted.
 
     Args:
         timeout (int): Cache timeout in seconds. Defaults to 24 hours.
+        key_prefix (Optional[str]): Additional prefix to namespace cache keys for different pages/views.
+                                   Useful when multiple pages in the same domain need separate caches.
+                                   Example: "leaderboard", "models", "compare"
     """
     def decorator(func):  # Take function to be decorated (i.e., get_context)
         @wraps(func)  # Preserving original function's metadata attributes
@@ -58,13 +61,17 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             version_key = f"cache_version_{domain}"
             cache_version = cache_backend.get(version_key, 1)
             
-            # Generate key prefix
+            # Generate key prefix - include custom key_prefix if provided
+            base_parts = []
+            if key_prefix:
+                base_parts.append(key_prefix)
+            
             if show_public and not user:
                 # (CASE 1: Public data) Create unique key for public data cache
-                key_parts = ['global', domain, 'public', f'v{cache_version}']
+                key_parts = base_parts + ['global', domain, 'public', f'v{cache_version}']
             elif user:
                 # (CASE 2: User data) Create unique key for user-specific cache that includes public data
-                key_parts = ['user', domain, str(user.id), str(show_public), f'v{cache_version}']
+                key_parts = base_parts + ['user', domain, str(user.id), str(show_public), f'v{cache_version}']
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
@@ -78,7 +85,12 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
 
             # Generate SHA256 hash for key prefix
             fingerprint = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
-            cache_key = f"{domain}:v{cache_version}:{fingerprint}"
+            
+            # Include key_prefix in visible cache key structure if provided
+            if key_prefix:
+                cache_key = f"{domain}:{key_prefix}:v{cache_version}:{fingerprint}"
+            else:
+                cache_key = f"{domain}:v{cache_version}:{fingerprint}"
             
             # Try to get cached result
             try:
@@ -142,13 +154,15 @@ def invalidate_domain_cache(domain: str = "vision") -> int:
         for old in range(1, new_version - 1):
             if old in keep:
                 continue
-            pattern = f"*:{domain}:v{old}:*"
+            #pattern = f"*:{domain}:v{old}:*"
+            pattern = f"*"
             for key in client.scan_iter(match=pattern, count=100):
+                print(f"Deleting old key: {key}")
                 try:
                     client.delete(key)
                 except Exception as e:
                     logger.warning(f"Error deleting old key {key}: {e}")
-        pattern = f"*:cache_page*"
+        pattern = f"*cache_page*"
         client.delete(pattern)
     else:
         logger.warning("Redis client unavailable, old keys will not be purged")
