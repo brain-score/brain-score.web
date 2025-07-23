@@ -5,7 +5,7 @@
 window.globalGridApi = null;
 window.globalColumnApi = null;
 
-// Global filter state for model properties - EXACTLY like original monolithic file
+// Global filter state for model properties
 window.activeFilters = {
   architecture: [],
   model_family: [],
@@ -26,7 +26,7 @@ window.columnExpansionState = new Map();
 // Track filtered out benchmarks - start with empty set (all benchmarks included)
 window.filteredOutBenchmarks = new Set();
 
-// Global search state - EXACTLY like original monolithic file
+// Global search state
 window.currentSearchQuery = null;
 
 // Initialize state from window data
@@ -69,6 +69,3 @@ window.LeaderboardState = {
   initializeGlobalState,
   resetGlobalState
 };
-
-// Log successful module load
-console.log('📦 LeaderboardState module loaded successfully');

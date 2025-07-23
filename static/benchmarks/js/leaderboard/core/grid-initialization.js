@@ -1,7 +1,5 @@
 // Grid initialization and configuration
 
-// Global search state is now defined in state-management.js
-
 // Set initial column visibility state
 function setInitialColumnState() {
   if (!window.globalGridApi) return;
@@ -15,7 +13,7 @@ function setInitialColumnState() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Always show these columns (model, rank, runnable_status)
+    // Always show model, rank, runnable_status
     if (['model', 'rank', 'runnable_status'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
@@ -45,15 +43,9 @@ function setInitialColumnState() {
 
 // Main grid initialization function
 function initializeGrid(rowData, columnDefs, benchmarkGroups) {
-  console.log('🏗️ Starting grid initialization with data:', {
-    rowData: rowData.length,
-    columnDefs: columnDefs.length,
-    benchmarkGroups: Object.keys(benchmarkGroups || {}).length
-  });
-  
   window.originalRowData = rowData || [];
 
-  // Initialize filtered scores - EXACTLY like original monolithic file
+  // Initialize filtered scores
   if (typeof window.LeaderboardFilterCoordinator?.updateFilteredScores === 'function') {
     window.LeaderboardFilterCoordinator.updateFilteredScores(rowData || []);
   } else if (typeof updateFilteredScores === 'function') {
@@ -62,12 +54,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   
   // Handle empty data gracefully
   if (!rowData || rowData.length === 0) {
-    console.warn('⚠️ No row data provided - creating empty grid');
+    console.warn('No row data provided - creating empty grid');
     rowData = [];
   }
   
   if (!columnDefs || columnDefs.length === 0) {
-    console.warn('⚠️ No column definitions provided - creating basic columns');
+    console.warn('No column definitions provided - creating basic columns');
     columnDefs = [
       { headerName: 'Model', field: 'model', width: 200 },
       { headerName: 'No Data', field: 'no_data', width: 200 }
@@ -182,7 +174,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     },
     suppressFieldDotNotation: true,
 
-    // External filter for logical search - EXACTLY like original monolithic file
+    // External filter for logical search
     isExternalFilterPresent: () => {
       return window.currentSearchQuery !== null;
     },
@@ -234,12 +226,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   if (window.agGrid && typeof agGrid.createGrid === 'function') {
     gridApi = agGrid.createGrid(eGridDiv, gridOptions);
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (createGrid):', !!gridApi);
   } else if (window.agGrid && typeof agGrid.Grid === 'function') {
     const grid = new agGrid.Grid(eGridDiv, gridOptions);
     gridApi = gridOptions.api;
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (Grid constructor):', !!gridApi);
   } else {
     console.error('AG Grid not found on window.agGrid');
   }
@@ -252,7 +242,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       newInput.addEventListener('input', function () {
         const searchText = this.value;
-        // Parse search query with logical operators (OR, AND, NOT) - EXACTLY like original
+        // Parse search query with logical operators (OR, AND, NOT)
         if (window.LeaderboardSearch?.parseSearchQuery) {
           window.currentSearchQuery = window.LeaderboardSearch.parseSearchQuery(searchText);
         } else {
@@ -281,6 +271,3 @@ window.LeaderboardGridInitialization = {
 
 // Make main function globally available
 window.initializeGrid = initializeGrid;
-
-// Log successful module load
-console.log('📦 LeaderboardGridInitialization module loaded successfully');

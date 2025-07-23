@@ -1,8 +1,7 @@
-// Template initialization - extracted from HTML template
-// This handles Django data parsing and initial setup that was previously in the HTML file
+// Template initialization
+// This handles Django data parsing and initial setup
 
 function initializeLeaderboardFromTemplate() {
-  console.log('DOM loaded, starting initialization...');
   
   try {
     // Parse data from Django
@@ -31,7 +30,6 @@ function initializeLeaderboardFromTemplate() {
       window.modelMetadataMap = modelMetadataMap;
       window.benchmarkMetadataMap = benchmarkMetadataMap;
 
-      console.log('All data loaded successfully, filter options:', filterOptions);
     } catch (e) {
       console.error('Error parsing data:', e);
       return; // Stop if data parsing fails
@@ -55,7 +53,7 @@ function initializeLeaderboardFromTemplate() {
       document.getElementById('paramCountMax').max = ranges.parameter_ranges.max;
       document.getElementById('paramCountMax').value = ranges.parameter_ranges.max;
       
-      // Update slider container data attributes - EXACTLY like old file
+      // Update slider container data attributes
       const paramSliderContainer = document.querySelector('#paramCountMin').closest('.filter-group')?.querySelector('.slider-container');
       if (paramSliderContainer) {
         paramSliderContainer.dataset.max = ranges.parameter_ranges.max;
@@ -98,7 +96,6 @@ function initializeLeaderboardFromTemplate() {
     
     // Initialize grid
     if (typeof initializeGrid === 'function') {
-      console.log('🏗️ Initializing grid...');
       initializeGrid(rowData, columnDefs, benchmarkGroups);
     }
     
@@ -107,7 +104,7 @@ function initializeLeaderboardFromTemplate() {
     setupEventHandlers();
     
   } catch (error) {
-    console.error('💥 Error during initialization:', error);
+    console.error('Error during grid initialization:', error);
   }
 }
 
@@ -228,8 +225,6 @@ function setupEventHandlers() {
         }
       });
     }
-    
-    // Copy bibtex button is now handled by LeaderboardCitationExport.setupCitationExport()
   }, 300);
   
   setupLayoutToggleHandlers();
@@ -354,11 +349,9 @@ function setupLayoutToggleHandlers() {
   // Final URL parsing with delay to avoid conflicts
   setTimeout(() => {
     if (typeof parseURLFilters === 'function') {
-      console.log('Calling parseURLFilters...');
       parseURLFilters();
       if (!container.classList.contains('sidebar-mode') && !isPanelVisible) {
         panel.classList.add('hidden');
-        console.log('Re-hiding panel after parseURLFilters');
       }
     }
   }, 500);

@@ -70,6 +70,3 @@ window.LeaderboardConstants = {
   SLIDER_UPDATE_DELAY,
   URL_PARAMS
 };
-
-// Log successful module load
-console.log('📦 LeaderboardConstants module loaded successfully');
