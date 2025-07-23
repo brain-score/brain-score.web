@@ -9,7 +9,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpRequest
-from time import time
+import time
 logger = logging.getLogger(__name__)
 
 # Cache utility functions and decorators
