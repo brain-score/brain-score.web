@@ -55,17 +55,6 @@ hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbe
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append('127.0.0.1')
 
-# Add specific AWS internal IP addresses for ELB health checks
-hosts_list.extend([
-    '172.31.23.82',  # New internal IP from logs
-    '18.117.205.29',  # Another internal IP from logs
-    '172.31.11.183',  # Internal IP from nginx logs
-])
-
-# For staging, allow all hosts to avoid IP issues
-if os.getenv("CACHE_ENV") == "staging":
-    hosts_list.append('*')
-
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
