@@ -30,7 +30,7 @@ function handleCitationExport() {
   }
 }
 
-// Copy BibTeX to clipboard - original approach
+// Copy BibTeX to clipboard
 function copyBibtexToClipboard() {
   const bibtexList = collectBenchmarkBibtex();
   
@@ -53,7 +53,7 @@ function copyBibtexToClipboard() {
   });
 }
 
-// Collect BibTeX citations for selected benchmarks - using original approach
+// Collect BibTeX citations for selected benchmarks
 function collectBenchmarkBibtex() {
   if (!window.originalRowData || window.originalRowData.length === 0) {
     console.warn('Original row data not available');
@@ -96,7 +96,7 @@ function collectBenchmarkBibtex() {
       const baseFieldName = fieldName.replace(/_v\d+$/, '');
       const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
       
-      // Makes sure that we do not include benchmarks that we have excluded.
+      // Makes sure that we do not include benchmarks that we have excluded
       const isExcluded = excludedBenchmarks.has(fieldName) ||
                         excludedBenchmarks.has(baseFieldName) ||
                         excludedBenchmarks.has(benchmarkTypeId);
@@ -160,7 +160,7 @@ function copyToClipboard(text) {
 
 // Show copy feedback
 function showCopyFeedback() {
-  // Simple feedback - could be enhanced with tooltip
+  // Simple feedback
   console.log('Citations copied to clipboard');
 }
 
@@ -202,5 +202,4 @@ window.LeaderboardCitationExport = {
   exportBenchmarkReferences
 };
 
-// Make main function globally available for compatibility
 window.copyBibtexToClipboard = copyBibtexToClipboard;
