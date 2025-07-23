@@ -4,6 +4,7 @@ import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
+from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
 from django.db.models import Model
