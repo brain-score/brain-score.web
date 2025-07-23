@@ -154,18 +154,38 @@ def invalidate_domain_cache(domain: str = "vision") -> int:
         for old in range(1, new_version - 1):
             if old in keep:
                 continue
-            #pattern = f"*:{domain}:v{old}:*"
-            pattern = f"*"
-            for key in client.scan_iter(match=pattern, count=100):
-                print(f"Deleting old key: {key}")
-                try:
-                    client.delete(key)
-                except Exception as e:
-                    logger.warning(f"Error deleting old key {key}: {e}")
-        pattern = f"*cache_page*"
-        client.delete(pattern)
+            
+            # Define all patterns to check for old cache keys
+            patterns_to_delete = [
+                f"*:{domain}:v{old}:*",          # Old format without key_prefix
+                f"*:{domain}:index:v{old}:*",  # Leaderboard pages
+                f"*:{domain}:leaderboard:v{old}:*",  # Leaderboard pages
+                f"*:{domain}:*:v{old}:*"         # Any other key_prefix format
+            ]
+            
+            # Scan for keys matching any of the patterns
+            for pattern in patterns_to_delete:
+                for key in client.scan_iter(match=pattern, count=100):
+                    print(f"Deleting old key: {key}")
+                    try:
+                        client.delete(key)
+                    except Exception as e:
+                        logger.warning(f"Error deleting old key {key}: {e}")
+        
+        # Delete cache_page keys (Django's @cache_page decorator)
+        for key in client.scan_iter(match="*cache_page*", count=100):
+            try:
+                client.delete(key)
+            except Exception as e:
+                logger.warning(f"Error deleting cache_page key {key}: {e}")
     else:
         logger.warning("Redis client unavailable, old keys will not be purged")
+    
+    # Debug: Print all remaining keys (remove this in production)
+    if client:
+        for key in client.keys():
+            print(f"Remaining key: {key}")
+    
     return new_version
 
 
