@@ -34,13 +34,10 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-#@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
-# Explore caching entire leaderboard context without any filtering
-# which is then used downstream. Unclear if this has performance benefits.
+
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
-
 
 # Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.

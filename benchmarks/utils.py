@@ -54,7 +54,7 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
                 cache_backend = default_cache
                 logger.error(f"❌ Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
 
-            # grab or initialize version
+            # Grab or initialize version
             version_key = f"cache_version_{domain}"
             cache_version = cache_backend.get(version_key, 1)
             
@@ -111,53 +111,6 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             return result
         return wrapper
     return decorator
-
-
-def cache_base_model_query(timeout: int = 24 * 60 * 60) -> Callable:
-    """
-    Decorator that caches results of base model query function for faster loading.
-    
-    WARNING: This is outdated and needs to be updated.
-    
-    Args:
-        timeout (int): Cache timeout in seconds. Defaults to 24 hours.
-    
-    Returns:
-        Callable: Decorated function that implements caching logic
-    """
-    def decorator(func: Callable[[str], Dict[str, Any]]) -> Callable[[str], Dict[str, Any]]:
-        @wraps(func)
-        def wrapper(domain: str = "vision") -> Dict[str, Any]:
-            """
-            Wrapper function that implements the caching logic for base model queries.
-            
-            Args:
-                domain (str): The domain to get base models for (e.g. "vision", "language")
-            
-            Returns:
-                Dict[str, Any]: The base model query results
-            """
-            # Create unique key for domain
-            key_parts = ['base_model_query', domain]
-            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
-            
-            # Try to get cached result
-            cached_result = default_cache.get(cache_key)
-            if cached_result is not None:
-                logger.debug(f"Cache hit for base model query: {cache_key}")
-                return cached_result
-            
-            # If no cache found, calculate result
-            logger.debug(f"Cache miss for base model query: {cache_key}")
-            result = func(domain)
-            
-            # Store result in cache
-            default_cache.set(cache_key, result, timeout)
-            logger.debug(f"❌Cached base model query result for key: {cache_key}")
-            return result
-        return wrapper
-    return decorator
-
 
 def invalidate_domain_cache(domain: str = "vision") -> int:
     """

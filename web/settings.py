@@ -54,7 +54,6 @@ hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbea
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append('127.0.0.1')
-
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -174,6 +173,10 @@ DATABASES = get_db_info()
 # Cache Configuration
 # https://docs.djangoproject.com/en/4.0/topics/cache/
 def get_cache_config():
+    '''
+    Use CACHE_ENV=staging for staging, CACHE_ENV=production for production, CACHE_ENV=development for development.
+    '''
+    
     env = os.getenv("CACHE_ENV", os.getenv("DJANGO_ENV", "development"))
 
     # 1) Local dev → in-memory
