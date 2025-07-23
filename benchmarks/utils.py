@@ -4,7 +4,7 @@ import hashlib
 import logging
 import requests
 from functools import wraps
-from django.core.cache import cache
+from django.core.cache import caches, cache as default_cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -15,10 +15,9 @@ logger = logging.getLogger(__name__)
 # Cache utility functions and decorators
 def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by default
     """
-    Decorator that caches results of get_context function for faster loading of leaderboard view and model card view.
-    Two-level caching:
-        - Global cache for public data
-        - User-specific cache for non-public data
+    Decorator that caches get_context-like functions in Redis under a versioned key prefix.
+    Any time invalidate_domain_cache() is called, the version bumps, so all old keys become unreachable.
+
     Args:
         timeout (int): Cache timeout in seconds. Defaults to 24 hours.
     """
@@ -46,63 +45,61 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             """            
             # Get cache version from cache or set to 1 if not exists
             cache_version_key = f'cache_version_{domain}'
-            from django.core.cache import caches, cache
             
             # Try to use Redis cache if available, otherwise fall back to default cache
             try:
-                redis_cache = caches['redis']
-                cache_version = redis_cache.get(cache_version_key, 1)
+                cache_backend = caches["redis"]
                 logger.error(f"✅ Using Redis cache for domain {domain}")
             except Exception as e:
-                # Redis cache not available, use default cache
-                redis_cache = cache
-                cache_version = cache.get(cache_version_key, 1)
+                cache_backend = default_cache
                 logger.error(f"❌ Redis cache not available for domain {domain}, using default cache: {e}")
+
+            # grab or initialize version
+            version_key = f"cache_version_{domain}"
+            cache_version = cache_backend.get(version_key, 1)
             
             # Generate a more specific cache key that includes model_filter and benchmark_filter info
             if show_public and not user:
                 # (CASE 1: Public data) Create unique key for public data cache
-                key_parts = ['global_context', domain, 'public', f'v{cache_version}']
-                if benchmark_filter:
-                    key_parts.append('benchmark_filtered')
-                if model_filter:
-                    key_parts.append('model_filtered')
+                key_parts = ['global', domain, 'public', f'v{cache_version}']
             elif user:
                 # (CASE 2: User data) Create unique key for user-specific cache that includes public data
-                key_parts = ['user_context', domain, str(user.id), str(show_public), f'v{cache_version}']
-                if benchmark_filter:
-                    key_parts.append('benchmark_filtered')
-                if model_filter:
-                    key_parts.append('model_filtered')
+                key_parts = ['user', domain, str(user.id), str(show_public), f'v{cache_version}']
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                           model_filter=model_filter, show_public=show_public)
             
+
+            if benchmark_filter:
+                key_parts.append("bench_filtered")
+            if model_filter:
+                key_parts.append("model_filtered")
+
             # Generate SHA256 hash
-            cache_key = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
+            fingerprint = hashlib.sha256('_'.join(key_parts).encode()).hexdigest()
+            cache_key = f"{domain}:v{cache_version}:{fingerprint}"
             
             # Try to get cached result
             try:
                 import time
                 cache_start = time.time()
-                cached_result = redis_cache.get(cache_key)
+                cached_result = cache_backend.get(cache_key)
                 cache_end = time.time()
-                logger.info(f"Cache GET took {cache_end - cache_start:.3f}s for key {cache_key[:50]}...")
-                
+                logger.error(f"[CACHE GET] {cache_key} in {cache_end - cache_start:.3f}s")
                 if cached_result is not None:
-                    logger.debug(f"Cache hit for key: {cache_key}")
+                    logger.error(f"Cache hit for key: {cache_key}")
                     return cached_result
             except Exception as e:
-                logger.warning(f"Cache get failed for key {cache_key}: {e}, falling back to direct execution")
+                logger.error(f"Cache GET error {cache_backend}: {e}")
 
             # If no cache found, calculate result
-            logger.debug(f"Cache miss for key: {cache_key}")
+            logger.error(f"Cache miss for key: {cache_key}")
             func_start = time.time()
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                         model_filter=model_filter, show_public=show_public)
             func_end = time.time()
-            logger.info(f"Function execution took {func_end - func_start:.3f}s")
+            logger.error(f"Function execution took {func_end - func_start:.3f}s")
             
             # For user contexts, also cache the public data within the user context
             if user and not show_public:
@@ -111,12 +108,11 @@ def cache_get_context(timeout=24 * 60 * 60) -> Callable:  # 24 hour cache by def
             # Store result in cache
             try:
                 set_start = time.time()
-                redis_cache.set(cache_key, result, timeout)
+                cache_backend.set(cache_key, result, timeout)
                 set_end = time.time()
-                logger.info(f"Cache SET took {set_end - set_start:.3f}s, size ~{len(str(result))} chars")
-                logger.debug(f"Cached result for key: {cache_key}")
+                logger.debug(f"[CACHE SET] {cache_key} in {set_end - set_start:.3f}s")
             except Exception as e:
-                logger.warning(f"Cache set failed for key {cache_key}: {e}, continuing without caching")
+                logger.warning(f"Cache SET error ({cache_backend}): {e}")
             return result
 
         return wrapper
@@ -169,26 +165,46 @@ def cache_base_model_query(timeout: int = 24 * 60 * 60) -> Callable:
 
 def invalidate_domain_cache(domain: str = "vision") -> int:
     """
-    Invalidates all caches for a specific domain by incrementing the version number.
-    This is more efficient than deleting individual cache keys.
-    """
-    from django.core.cache import caches, cache
-    
-    cache_version_key = f'cache_version_{domain}'
+    Invalidates all cache keys for a specific domain and increments the version from
+    Redis if available; otherwise only bump
+    """ 
+    version_key = f"cache_version_{domain}"
     
     # Try to use Redis cache if available, otherwise fall back to default cache
     try:
-        redis_cache = caches['redis']
-        current_version = redis_cache.get(cache_version_key, 1)
-        new_version = current_version + 1
-        redis_cache.set(cache_version_key, new_version)
+        cache_backend = caches["redis"]
+        client        = cache_backend.client.get_client(write=True)
     except Exception:
-        # Redis cache not available, use default cache
-        current_version = cache.get(cache_version_key, 1)
-        new_version = current_version + 1
-        cache.set(cache_version_key, new_version)
-    
-    logger.info(f"Invalidated cache for domain '{domain}' (new version: {new_version})")
+        cache_backend = default_cache
+        client        = None
+        logger.warning("Redis cache unavailable, version will bump but old keys will not be purged")
+
+    # Get current version
+    current_version = cache_backend.get(version_key, 1)
+    new_version = current_version + 1
+    # Store new version
+    cache_backend.set(version_key, new_version)
+    logger.warning(f"Cache version for domain {domain} bumped to {new_version}")
+
+    # If we can connect to Redis, scan and delete all keys with version < new_version - 1
+    if client:
+        keep = {new_version, new_version - 1}
+        for old in range(1, new_version - 1):
+            if old in keep:
+                continue
+            pattern = f"*:{domain}:v{old}:*"
+            logger.warning(f"Scanning for old keys: {pattern}")
+            for key in client.scan_iter(match=pattern, count=100):
+                try:
+                    client.delete(key)
+                    logger.warning(f"Deleted stale cache key: {key}")
+                except Exception as e:
+                    logger.warning(f"Error deleting old key {key}: {e}")
+        pattern = f"*:page_cache*"
+        client.delete(pattern)
+        logger.warning(f"Deleted page cache")
+    else:
+        logger.warning("Redis client unavailable, old keys will not be purged")
     return new_version
 
 
@@ -201,12 +217,11 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     
     Usage:
     - POST /benchmarks/refresh_cache/vision/?token=your_secret_token
-    - GET /benchmarks/refresh_cache/vision/?token=your_secret_token&rebuild=true
+    - GET /benchmarks/refresh_cache/vision/?token=your_secret_token
 
     Request Args:
         domain: The domain to refresh cache for (e.g., "vision", "language")
         token: Token to authenticate request
-        rebuild: Boolean whether to rebuild the cache immediately
     """
     # Extract hostname from request without port
     hostname = request.get_host().split(':')[0]
@@ -246,6 +261,8 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     
     return JsonResponse({
         "status": "success", 
+        "version": new_version,
+        "rebuilt": rebuild,
         "message": f"Cache for {domain} domain has been invalidated (new version: {new_version})" + 
                  (" and rebuilt" if rebuild else "")
     })
