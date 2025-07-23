@@ -509,7 +509,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     return minimal_context
 
-@cache_page(7 * 24 * 60 * 60, key_prefix="page_cache")
+@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
