@@ -123,5 +123,3 @@ window.LeaderboardSearch = {
   clearSearch
 };
 
-// Log successful module load
-console.log('📦 LeaderboardSearch module loaded successfully');

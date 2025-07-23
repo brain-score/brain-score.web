@@ -23,19 +23,19 @@ function parseURLFilters() {
   window.activeFilters.runnable_only = urlParams.get('runnable_only') === 'true';
   
   // Parse range filters
-  const parseFloat = (param) => {
+  const parseFloatParam = (param) => {
     const value = urlParams.get(param);
     return value ? parseFloat(value) : null;
   };
   
-  window.activeFilters.min_param_count = parseFloat('min_param_count');
-  window.activeFilters.max_param_count = parseFloat('max_param_count');
-  window.activeFilters.min_model_size = parseFloat('min_model_size');
-  window.activeFilters.max_model_size = parseFloat('max_model_size');
-  window.activeFilters.min_score = parseFloat('min_score');
-  window.activeFilters.max_score = parseFloat('max_score');
-  window.activeFilters.min_stimuli_count = parseFloat('min_stimuli_count');
-  window.activeFilters.max_stimuli_count = parseFloat('max_stimuli_count');
+  window.activeFilters.min_param_count = parseFloatParam('min_param_count');
+  window.activeFilters.max_param_count = parseFloatParam('max_param_count');
+  window.activeFilters.min_model_size = parseFloatParam('min_model_size');
+  window.activeFilters.max_model_size = parseFloatParam('max_model_size');
+  window.activeFilters.min_score = parseFloatParam('min_score');
+  window.activeFilters.max_score = parseFloatParam('max_score');
+  window.activeFilters.min_stimuli_count = parseFloatParam('min_stimuli_count');
+  window.activeFilters.max_stimuli_count = parseFloatParam('max_stimuli_count');
   
   // Apply filters to UI
   applyFiltersToUI();

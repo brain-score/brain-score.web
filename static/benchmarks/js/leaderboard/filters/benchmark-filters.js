@@ -70,6 +70,14 @@ function addBenchmarksFilteredByMetadata() {
   
   const stimuliMin = parseInt(document.getElementById('stimuliCountMin')?.value || 0);
   const stimuliMax = parseInt(document.getElementById('stimuliCountMax')?.value || 1000);
+  
+  // Get the actual range limits to detect if stimuli filter is at full range
+  const stimuliContainer = document.querySelector('#stimuliCountMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const stimuliRangeMin = parseInt(stimuliContainer?.dataset?.min || 0);
+  const stimuliRangeMax = parseInt(stimuliContainer?.dataset?.max || 1000);
+  
+  // Check if stimuli filter is effectively disabled (at full range)
+  const isStimuliFilterActive = stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax;
 
   window.benchmarkMetadata.forEach(benchmark => {
     let shouldExclude = false;
@@ -102,7 +110,8 @@ function addBenchmarksFilteredByMetadata() {
         }
       }
 
-      if (benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
+      // Only apply stimuli count filter if it's actually constrained (not at full range)
+      if (isStimuliFilterActive && benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
         if (benchmark.num_stimuli < stimuliMin || benchmark.num_stimuli > stimuliMax) {
           shouldExclude = true;
         }

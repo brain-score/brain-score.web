@@ -29,6 +29,9 @@ window.filteredOutBenchmarks = new Set();
 // Global search state
 window.currentSearchQuery = null;
 
+// Global filtered data state for model property filters
+window.currentFilteredData = null;
+
 // Initialize state from window data
 function initializeGlobalState() {
   // These are set by the HTML template
@@ -61,6 +64,8 @@ function resetGlobalState() {
   };
   
   window.columnExpansionState.clear();
+  window.currentSearchQuery = null;
+  window.currentFilteredData = null;
   window.filteredOutBenchmarks.clear();
 }
 

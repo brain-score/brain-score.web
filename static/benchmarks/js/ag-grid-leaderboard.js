@@ -587,8 +587,13 @@ function getFilteredLeafCount(parentField) {
 
 function updateFilteredScores(rowData) {
   if (typeof window.LeaderboardFilterCoordinator?.updateFilteredScores === 'function') {
-    window.LeaderboardFilterCoordinator.updateFilteredScores(rowData);
+    const updatedData = window.LeaderboardFilterCoordinator.updateFilteredScores(rowData);
+    if (updatedData && window.globalGridApi) {
+      window.globalGridApi.setGridOption('rowData', updatedData);
+    }
+    return updatedData;
   }
+  return rowData;
 }
 
 function toggleFilteredScoreColumn(gridApi) {

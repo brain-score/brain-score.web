@@ -108,7 +108,6 @@ function updateColumnVisibility() {
       // Hide global score when filtered score is visible
       const filteredScoreColumn = window.globalGridApi?.getAllGridColumns()?.find(col => col.getColId() === 'filtered_score');
       if (filteredScoreColumn && filteredScoreColumn.isVisible()) {
-        console.log('Hiding Global Score - Filtered Score is active');
         return false;
       }
       return true; // Show global score when filtered score is not active
@@ -120,15 +119,17 @@ function updateColumnVisibility() {
       return true;
     }
     
-    // Determine if this is a leaf column or parent column
-    const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
+    // Determine if this is a leaf column or parent column (use cached hierarchy)
+    if (!window.cachedHierarchyMap) {
+      window.cachedHierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
+    }
+    const hierarchyMap = window.cachedHierarchyMap;
     const children = hierarchyMap.get(benchmarkId) || [];
     const isLeafColumn = children.length === 0;
     
     if (isLeafColumn) {
       // For leaf columns: hide if all values are X's or 0's
       if (shouldHideColumnWithAllXsOrZeros(benchmarkId)) {
-        console.log(`Hiding leaf column ${benchmarkId} - all X's or 0's`);
         return false;
       }
     } else {
@@ -136,7 +137,6 @@ function updateColumnVisibility() {
       if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
         const leafCount = window.getFilteredLeafCount(benchmarkId);
         if (leafCount === 0) {
-          console.log(`Hiding parent column ${benchmarkId} - 0 leaf descendants`);
           return false;
         }
       }
@@ -192,9 +192,6 @@ function updateColumnVisibility() {
     // Check if all values are 'X' or 0
     const allXsOrZeros = values.every(val => val === 'X' || val === 0);
     
-    if (allXsOrZeros && values.length > 0) {
-      console.log(`Column ${benchmarkId} has all X's or 0's:`, values.slice(0, 5));
-    }
     
     return allXsOrZeros;
   }
@@ -429,12 +426,15 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         toggle.textContent = shouldExpand ? '▴' : '▾';
       }
       
-      // Update column visibility after expand/collapse
-      setTimeout(() => {
+      // Debounced column visibility update after expand/collapse
+      if (window.expandCollapseUpdateTimeout) {
+        clearTimeout(window.expandCollapseUpdateTimeout);
+      }
+      window.expandCollapseUpdateTimeout = setTimeout(() => {
         if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
           window.LeaderboardHeaderComponents.updateColumnVisibility();
         }
-      }, 50);
+      }, 100);
     });
   }
 

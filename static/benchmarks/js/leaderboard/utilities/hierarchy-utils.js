@@ -11,7 +11,11 @@ function getFilteredLeafCount(parentField) {
     return 0;
   }
   
-  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  // Use cached hierarchy map to improve performance
+  if (!window.cachedHierarchyMap) {
+    window.cachedHierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  }
+  const hierarchyMap = window.cachedHierarchyMap;
   const excludedBenchmarks = window.filteredOutBenchmarks;
   
   // For top-level categories like 'average_vision_v0', we want to count all included benchmarks across all categories
@@ -215,12 +219,15 @@ function updateAllCountBadges() {
     }
   });
   
-  // Update column visibility after badge counts are calculated
-  setTimeout(() => {
+  // Debounced column visibility update to improve performance
+  if (window.columnVisibilityUpdateTimeout) {
+    clearTimeout(window.columnVisibilityUpdateTimeout);
+  }
+  window.columnVisibilityUpdateTimeout = setTimeout(() => {
     if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
       window.LeaderboardHeaderComponents.updateColumnVisibility();
     }
-  }, 100);
+  }, 150);
 }
 
 // Check if benchmark should be visible based on expansion state

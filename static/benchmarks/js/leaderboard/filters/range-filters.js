@@ -28,17 +28,6 @@ function initializeDualHandleSlider(container) {
                      sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' : 
                      sliderGroup?.querySelector('#stimuliCountMin') ? 'stimuliCount' : 'unknown';
   
-  // Debug logging
-  console.log(`🎚️ Initializing ${sliderType} slider:`, {
-    containerDataMin: container.dataset.min,
-    containerDataMax: container.dataset.max,
-    minHandleDataValue: minHandle.dataset.value,
-    maxHandleDataValue: maxHandle.dataset.value,
-    calculatedMin: min,
-    calculatedMax: max,
-    initialMinValue: minValue,
-    initialMaxValue: maxValue
-  });
   const minInput = sliderGroup?.querySelector('.range-input-min');
   const maxInput = sliderGroup?.querySelector('.range-input-max');
   

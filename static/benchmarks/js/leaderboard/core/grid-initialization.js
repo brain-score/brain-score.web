@@ -174,17 +174,23 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     },
     suppressFieldDotNotation: true,
 
-    // External filter for logical search
+    // External filter for search only
     isExternalFilterPresent: () => {
       return window.currentSearchQuery !== null;
     },
     doesExternalFilterPass: (node) => {
-      if (!window.currentSearchQuery) return true;
-      if (!window.LeaderboardSearch?.getSearchableText || !window.LeaderboardSearch?.executeSearchQuery) {
-        return true; // No search functionality available
+      // Check search filter only
+      if (window.currentSearchQuery) {
+        if (!window.LeaderboardSearch?.getSearchableText || !window.LeaderboardSearch?.executeSearchQuery) {
+          return false;
+        }
+        const searchableText = window.LeaderboardSearch.getSearchableText(node.data);
+        if (!window.LeaderboardSearch.executeSearchQuery(searchableText, window.currentSearchQuery)) {
+          return false;
+        }
       }
-      const searchableText = window.LeaderboardSearch.getSearchableText(node.data);
-      return window.LeaderboardSearch.executeSearchQuery(searchableText, window.currentSearchQuery);
+      
+      return true;
     },
 
     sortingOrder: ['desc', 'asc', null],

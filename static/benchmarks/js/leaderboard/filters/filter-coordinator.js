@@ -4,10 +4,6 @@
 function applyCombinedFilters(skipColumnToggle = false) {
   if (!window.globalGridApi || !window.originalRowData) return;
   
-  console.log('🔄 applyCombinedFilters called:', {
-    skipColumnToggle,
-    stackTrace: new Error().stack.split('\n').slice(0, 4)
-  });
 
   if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
     window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
@@ -117,10 +113,19 @@ function applyCombinedFilters(skipColumnToggle = false) {
     return true;
   });
 
-  window.globalGridApi.setGridOption('rowData', filteredData);
-
+  // Update filtered scores on the filtered data BEFORE setting it on the grid
+  let finalData = filteredData;
   if (typeof updateFilteredScores === 'function') {
-    updateFilteredScores(filteredData);
+    const updatedData = updateFilteredScores(filteredData);
+    if (updatedData) {
+      finalData = updatedData;
+    }
+  }
+
+  // Update grid with filtered data - preserving original data structure
+  if (window.globalGridApi) {
+    window.globalGridApi.setGridOption('rowData', finalData);
+    window.globalGridApi.refreshCells({ force: true });
   }
   if (!skipColumnToggle && typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
@@ -293,8 +298,9 @@ function updateFilteredScores(rowData) {
   
   const workingRowData = rowData.map(row => ({ ...row }));
   
-  workingRowData.forEach((row, rowIndex) => {
-    const originalRow = window.originalRowData[rowIndex];
+  workingRowData.forEach((row) => {
+    // Find the original row by model ID instead of by index
+    const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
     
     Object.keys(originalRow).forEach(key => {
@@ -370,7 +376,10 @@ function updateFilteredScores(rowData) {
     const categoryScores = [];
     
     visionCategories.forEach(category => {
-      if (row[category] && !excludedBenchmarks.has(category)) {
+      const isExcluded = excludedBenchmarks.has(category);
+      const hasScore = row[category] && row[category].value !== null && row[category].value !== undefined && row[category].value !== '' && row[category].value !== 'X';
+      
+      if (row[category] && !isExcluded) {
         const score = row[category].value;
         if (score !== null && score !== undefined && score !== '' && score !== 'X') {
           const numVal = typeof score === 'string' ? parseFloat(score) : score;
@@ -380,6 +389,7 @@ function updateFilteredScores(rowData) {
         }
       }
     });
+    
    
     if (categoryScores.length > 0) {
       const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
@@ -451,8 +461,9 @@ function updateFilteredScores(rowData) {
         });
       }
     } else {
-      workingRowData.forEach((row, rowIndex) => {
-        const originalRow = window.originalRowData[rowIndex];
+      workingRowData.forEach((row) => {
+        // Find the original row by model ID instead of by index
+        const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
         if (originalRow && originalRow[benchmarkId] && originalRow[benchmarkId].color) {
           if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
             // Only restore original colors if the value is not 'X'
@@ -495,10 +506,9 @@ function updateFilteredScores(rowData) {
     }
   });
 
-  if (window.globalGridApi) {
-    window.globalGridApi.setGridOption('rowData', workingRowData);
-    window.globalGridApi.refreshCells();
-  }
+  // Return the modified data instead of setting it on the grid
+  // The caller will handle setting the grid data
+  return workingRowData;
 }
 
 // Toggle filtered score column visibility
@@ -541,13 +551,6 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
   
-  console.log('toggleFilteredScoreColumn debug:', {
-    uncheckedCount: uncheckedCheckboxes.length,
-    hasNonEngineeringBenchmarkFilters,
-    hasBenchmarkMetadataFilters,
-    shouldShowFilteredScore,
-    benchmarkPanelReady: benchmarkPanel && benchmarkPanel.children.length > 0
-  });
 
   if (shouldShowFilteredScore) {
     gridApi.applyColumnState({
