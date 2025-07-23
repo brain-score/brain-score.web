@@ -10,7 +10,7 @@ def browser():
 
 @pytest.fixture(scope="function")
 def page(browser):
-    context = browser.new_context(ignore_https_errors=True)
+    context = browser.new_context(ignore_https_errors=True, permissions=["clipboard-read"])
     page = context.new_page()
     page.set_default_navigation_timeout(60000)
     page.goto("https://brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com/vision/leaderboard")
@@ -704,33 +704,9 @@ class TestFilter:
                 ],
                 ["0.07", "0.07", "0.07", "0.07", "0.07"]
             ),
-            # (
-            #     ["V1", "V4"], ["V2", "IT"],
-            #     [144, 162, 150, 150, 174],
-            #     [
-            #         "alexnet_training_seed_01",
-            #         "alexnet_training_seed_09",
-            #         "alexnet_training_seed_07",
-            #         "alexnet_training_seed_10",
-            #         "resnet50_primary_visual_cortex"
-            #     ],
-            #     ["0.12", "0.12", "0.11", "0.11", "0.11"]
-            # ),
-            # (
-            #     ["V1", "V2", "IT"], ["V4"],
-            #     [150, 144, 150, 13, 162],
-            #     [
-            #         "alexnet_training_seed_10",
-            #         "alexnet_training_seed_01",
-            #         "alexnet_training_seed_07",
-            #         "convnext_tiny_imagenet_full_seed-0",
-            #         "alexnet_training_seed_04"
-            #     ],
-            #     ["0.17", "0.17", "0.16", "0.16", "0.15"]
-            # ),
         ]
     )
-    def test_region_filtering_shows_only_selected_regions(self, page, selected_regions, absent_regions, expected_ranks,
+    def test_region_filtering(self, page, selected_regions, absent_regions, expected_ranks,
                                                           expected_models, expected_scores):
         """
         Verifies that when filtering by brain-region checkboxes:
@@ -801,18 +777,6 @@ class TestFilter:
                     ],
                     ["0.00", "0.00", "0.00", "0.00", "0.00"]
             ),
-            #(
-            #         ["human", "simian"], [],
-            #         [1, 2, 2, 2, 5],
-            #         [
-            #             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
-            #             "convnext_xlarge:fb_in22k_ft_in1k",
-            #             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
-            #             "vit_large_patch14_clip_224:laion2b_ft_in1k",
-            #             "vit_base_patch16_clip_224:openai_ft_in1k"
-            #         ],
-            #         ["0.47", "0.45", "0.45", "0.45", "0.44"]
-            # )
         ]
     )
     def test_species_filtering(self, page, selected_species, absent_species, expected_ranks,
@@ -978,5 +942,80 @@ class TestFilter:
         assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
         assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
+    def test_copy_bibtex_button_all(self, page):
+        """
+        Validates the BibTeX copy functionality.
 
+        Steps:
+        1) Opens the Advanced Filter panel and resets all filters to ensure default benchmark visibility.
+        2) Clicks the "Copy BibTeX" button.
+        3) Retrieves BibTeX entries directly via the browser's collectBenchmarkBibtex() function.
+        4) Asserts that exactly 19 BibTeX entries were collected, each separated by two newlines.
+        """
 
+        # Ensure advanced filter is open (if needed)
+        page.click('#advancedFilterBtn')
+        page.evaluate("resetAllFilters()")
+        page.wait_for_timeout(1000)
+        assert page.locator('#copyBibtexBtn').is_visible(), "❌ BibTeX button is not visible"
+
+        # Click the BibTeX copy button
+        page.click('#copyBibtexBtn')
+
+        # Wait briefly to allow clipboard population
+        page.wait_for_timeout(500)
+
+        # Read from the clipboard
+        copied = page.evaluate("""
+            () => {
+                const bibs = window.collectBenchmarkBibtex();
+                return bibs.join('\\n\\n');
+            }
+        """)
+
+        # Validate
+        assert copied is not None and copied.strip(), "❌ No text was copied to clipboard."
+        entries = copied.strip().split('\n\n')
+        assert len(entries) == 19, f"❌ Expected 19 BibTeX entries, got {len(entries)}."
+
+    def test_copy_bibtex_button_subset(self, page):
+        """
+        Validates the BibTeX copy functionality.
+
+        Steps:
+        1) Opens the Advanced Filter panel and resets all filters to ensure default benchmark visibility.
+        2) Deselects Neural benchmarks
+        2) Clicks the "Copy BibTeX" button.
+        3) Retrieves BibTeX entries directly via the browser's collectBenchmarkBibtex() function.
+        4) Asserts that exactly 9 BibTeX entries were collected, each separated by two newlines.
+        """
+
+        # Ensure advanced filter is open (if needed)
+        page.click('#advancedFilterBtn')
+        cb = page.wait_for_selector(
+            '#benchmarkFilterPanel input[type="checkbox"][value="neural_vision_v0"]',
+            state='visible',
+            timeout=30000
+        )
+        assert cb.is_checked(), "Expected neural_vision_v0 to start checked"
+        cb.uncheck()
+        assert page.locator('#copyBibtexBtn').is_visible(), " BibTeX button is not visible"
+
+        # Click the BibTeX copy button
+        page.click('#copyBibtexBtn')
+
+        # Wait briefly to allow clipboard population
+        page.wait_for_timeout(500)
+
+        # Read from the clipboard
+        copied = page.evaluate("""
+            () => {
+                const bibs = window.collectBenchmarkBibtex();
+                return bibs.join('\\n\\n');
+            }
+        """)
+
+        # Validate
+        assert copied is not None and copied.strip(), " No text was copied to clipboard."
+        entries = copied.strip().split('\n\n')
+        assert len(entries) == 9, f" Expected 9 BibTeX entries, got {len(entries)}."
