@@ -47,12 +47,7 @@ def view(request, domain: str):
     user = request.user if request.user.is_authenticated else None
     
     # Get the appropriate context based on user authentication
-    if user:
-        # User is authenticated - get personalized context (used for profile views)
-        leaderboard_context = get_context(user=user, domain=domain, show_public=False)
-    else:
-        # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True)
+    leaderboard_context = get_context(user=user, domain=domain, show_public=True)
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
@@ -141,7 +136,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         'not_shown_set': not_shown_set,
         'BASE_DEPTH': BASE_DEPTH,
         'has_user': user is not None,
-        'comparison_data': [],#json.dumps(comparison_data),
+        'comparison_data': json.dumps(comparison_data),
         'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
         'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
         'citation_general_bibtex': (

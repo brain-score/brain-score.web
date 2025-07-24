@@ -514,9 +514,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
+    context = get_ag_grid_context(user=user, domain=domain, show_public=True)
 
     # Render the AG-Grid template
-    response = render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
-    
-    return response
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)

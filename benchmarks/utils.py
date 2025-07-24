@@ -45,10 +45,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
             
             Returns:
                 Dict[str, Any]: The context dictionary containing models, benchmarks, and other data
-            """            
-            # Get cache version from cache or set to 1 if not exists
-            cache_version_key = f'cache_version_{domain}'
-            
+            """                       
             # Try to use Redis cache if available, otherwise fall back to default cache
             try:
                 cache_backend = caches["redis"]
@@ -66,11 +63,12 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
             if key_prefix:
                 base_parts.append(key_prefix)
             
-            if show_public and not user:
+            # Use global public cache when show_public=True, regardless of user
+            if show_public:
                 # (CASE 1: Public data) Create unique key for public data cache
                 key_parts = base_parts + ['global', domain, 'public', f'v{cache_version}']
             elif user:
-                # (CASE 2: User data) Create unique key for user-specific cache that includes public data
+                # (CASE 2: User data) Create unique key for user-specific cache
                 key_parts = base_parts + ['user', domain, str(user.id), str(show_public), f'v{cache_version}']
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
@@ -109,11 +107,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
                         model_filter=model_filter, show_public=show_public)
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
-            
-            # For user contexts, also cache the public data within the user context
-            if user and not show_public:
-                result['public_models'] = [m for m in result['models'] if getattr(m, 'public', True)]
-            
+                       
             # Store result in cache
             try:
                 cache_backend.set(cache_key, result, timeout)
@@ -124,7 +118,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
         return wrapper
     return decorator
 
-def invalidate_domain_cache(domain: str = "vision") -> int:
+def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = True) -> dict:
     """
     Invalidates all cache keys for a specific domain and increments the version from
     Redis if available; otherwise only bump
@@ -140,53 +134,66 @@ def invalidate_domain_cache(domain: str = "vision") -> int:
         client        = None
         logger.warning("Redis cache unavailable, version will bump but old keys will not be purged")
 
-    # Get current version. In theory, because we are invalidating all cache with prefix pattern, we do not need to bump version.
-    # We do this so there is no mixing of old and new cache key.
+    # Always bump the domain version (for cache key versioning)
     current_version = cache_backend.get(version_key, 1)
     new_version = current_version + 1
-    # Store new version
     cache_backend.set(version_key, new_version)
 
-    # If we can connect to Redis, scan and delete all keys with version < new_version - 1
-    # Also delete any @cache_page keys
-    if client:
-        keep = {new_version, new_version - 1}
-        for old in range(1, new_version - 1):
-            if old in keep:
+    # If Redis client is unavailable, return warning but still bump version
+    if not client:
+        return {
+            "status": "warning",
+            "message": "Redis client unavailable, version bumped but keys not purged",
+            "version": new_version
+        }
+
+    cache_patterns = [
+        f"*:{domain}:*",           # All keys containing this domain
+        f"*cache_page*{domain}*",  # Page caches for this domain
+        "*cache_page*",         # Django page caches
+        "*compressor*",         # Django compressor caches
+        "*django_compressor*",  # Django compressor alternative pattern
+        "cache_version_*",      # Cache version keys
+        "*leaderboard*",        # Leaderboard-specific caches
+        "*index*",              # Index/profile caches
+        "*models*",             # Model-related caches
+        "*compare*",            # Comparison caches
+    ] 
+
+    # Clear cache keys
+    deleted_count = 0
+    preserved_sessions = 0
+    total_keys = len(list(client.scan_iter(match="*", count=1000)))
+
+    for pattern in cache_patterns:
+        for key in client.scan_iter(match=pattern, count=100):
+            key_str = key.decode('utf-8') if isinstance(key, bytes) else str(key)
+
+            # Preserve sessions if requested
+            if preserve_sessions and ('session' in key_str.lower() or key_str.startswith('django.contrib.sessions')):
+                preserved_sessions += 1
                 continue
-            
-            # Define all patterns to check for old cache keys
-            patterns_to_delete = [
-                f"*:{domain}:v{old}:*",          # Old format without key_prefix
-                f"*:{domain}:index:v{old}:*",  # Leaderboard pages
-                f"*:{domain}:leaderboard:v{old}:*",  # Leaderboard pages
-                f"*:{domain}:*:v{old}:*"         # Any other key_prefix format
-            ]
-            
-            # Scan for keys matching any of the patterns
-            for pattern in patterns_to_delete:
-                for key in client.scan_iter(match=pattern, count=100):
-                    print(f"Deleting old key: {key}")
-                    try:
-                        client.delete(key)
-                    except Exception as e:
-                        logger.warning(f"Error deleting old key {key}: {e}")
-        
-        # Delete cache_page keys (Django's @cache_page decorator)
-        for key in client.scan_iter(match="*cache_page*", count=100):
+
             try:
                 client.delete(key)
+                deleted_count += 1
             except Exception as e:
-                logger.warning(f"Error deleting cache_page key {key}: {e}")
-    else:
-        logger.warning("Redis client unavailable, old keys will not be purged")
+                logger.warning(f"Error deleting cache key {key}: {e}")
+
+    logger.info(f"Deleted {deleted_count} cache keys for domain '{domain}'")
     
-    # Debug: Print all remaining keys (remove this in production)
-    if client:
-        for key in client.keys():
-            print(f"Remaining key: {key}")
-    
-    return new_version
+    return {
+        "status": "success",
+        "domain": domain,
+        "version": new_version,
+        "keys_deleted": deleted_count,
+        "total_keys": total_keys,
+        "preserved_keys": total_keys - deleted_count,
+        "preserved_sessions": preserved_sessions if preserve_sessions else None,
+        "message": f"Cleared {deleted_count} cache keys" + 
+                  (f", preserved {preserved_sessions} sessions" if preserve_sessions and preserved_sessions > 0 else "")
+    }
+
 
 
 @csrf_exempt
@@ -194,15 +201,10 @@ def invalidate_domain_cache(domain: str = "vision") -> int:
 def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     """
     Endpoint to manually trigger cache refresh for leaderboard data.
-    Can be called via Jenkins job with proper authentication token or URL visit
     
     Usage:
     - POST /benchmarks/refresh_cache/vision/?token=your_secret_token
-    - GET /benchmarks/refresh_cache/vision/?token=your_secret_token
-
-    Request Args:
-        domain: The domain to refresh cache for (e.g., "vision", "language")
-        token: Token to authenticate request
+    - GET /benchmarks/refresh_cache/vision/?token=your_secret_token&preserve_sessions=false
     """
     # Extract hostname from request without port
     hostname = request.get_host().split(':')[0]
@@ -211,41 +213,49 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     if settings.DEBUG and request.GET.get('show_token') == 'true' and hostname in ['localhost', '127.0.0.1']:
         return JsonResponse({
             "token": settings.CACHE_REFRESH_TOKEN,
-            "note": "Use this token in the 'token' parameter to refresh the cache"
+            "note": "Use this token in the 'token' parameter to refresh the cache",
+            "preserve_sessions": "Add &preserve_sessions=false to allow session deletion (default: true)"
         })
     
     # Check for valid token
-    token = request.GET.get('token') # Get token from URL
-    if token != settings.CACHE_REFRESH_TOKEN: # Check if token provided matches token in settings
+    token = request.GET.get('token')
+    if token != settings.CACHE_REFRESH_TOKEN:
         logger.warning(f"Invalid token attempt for cache refresh: {domain}")
         return JsonResponse({
             "status": "error", 
             "message": "Invalid authentication token"
         }, status=403)
     
-    # Invalidate cache by incrementing version
-    new_version = invalidate_domain_cache(domain)
+    # Check if preserve_sessions parameter is provided (default to True for safety)
+    preserve_sessions = request.GET.get('preserve_sessions', 'true').lower() == 'true'
     
-    # Always rebuild the cache immediately when invalidation is triggered
-    # This ensures users never experience slow cache misses
-    rebuild = True  # Force rebuild since invalidation is event-driven
+    # Clear cache
+    result = invalidate_domain_cache(domain=domain, preserve_sessions=preserve_sessions)
+    
+    if result["status"] != "success":
+        return JsonResponse(result, status=500 if result["status"] == "error" else 200)
     
     # Rebuild the leaderboard cache immediately
-    if rebuild:
-        # Import here to avoid circular imports
+    try:
         from benchmarks.views.leaderboard import get_ag_grid_context
-        
-        # Force regeneration of main caches
-        logger.info(f"Rebuilding cache for domain '{domain}'")
-        public_context = get_ag_grid_context(domain=domain, show_public=True) # @cache_get_context decorator saves public context to cache
+        logger.info(f"Rebuilding public leaderboard cache for domain '{domain}' after cache clear")
+        public_context = get_ag_grid_context(domain=domain, show_public=True)
         logger.info(f"Cache rebuild completed for domain '{domain}'")
+        rebuild_success = True
+    except Exception as e:
+        logger.error(f"Error rebuilding cache: {e}")
+        rebuild_success = False
     
     return JsonResponse({
         "status": "success", 
-        "version": new_version,
-        "rebuilt": rebuild,
-        "message": f"Cache for {domain} domain has been invalidated (new version: {new_version})" + 
-                 (" and rebuilt" if rebuild else "")
+        "domain": result["domain"],
+        "version": result["version"],
+        "keys_deleted": result["keys_deleted"],
+        "preserved_keys": result["preserved_keys"],
+        "preserved_sessions": result.get("preserved_sessions"),
+        "rebuilt": rebuild_success,
+        "message": f"{result['message']}. " + 
+                  ("Rebuilt public leaderboard cache." if rebuild_success else "Cache rebuild failed.")
     })
 
 
