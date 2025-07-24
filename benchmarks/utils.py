@@ -141,19 +141,15 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
             
-            # Debug compression setting
-            logger.error(f"🔍 COMPRESSION DEBUG: use_compression = {use_compression}")
             
             # Estimate and log the original size if compression is enabled
             if use_compression:
                 original_size = estimate_size(result)
-                logger.error(f"🔍 COMPRESSION DEBUG: Original context size: {original_size / (1024 * 1024):.2f} MB")
-                       
+                      
             # Store result in cache
             try:
                 if use_compression:
                     # Compress the data before storing
-                    logger.error(f"🔍 COMPRESSION DEBUG: Starting compression...")
                     compress_start = time.time()
                     compressed_result = compress_data(result)
                     compress_end = time.time()
@@ -162,12 +158,12 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                     original_size = estimate_size(result)
                     compression_ratio = compressed_size / original_size if original_size > 0 else 1.0
                     
-                    logger.error(f"🔍 COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
+                    logger.error(f"COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
                               f"(ratio: {compression_ratio:.2f}, time: {compress_end - compress_start:.3f}s)")
                     
                     cache_backend.set(cache_key, compressed_result, timeout)
                 else:
-                    logger.error(f"🔍 COMPRESSION DEBUG: No compression, storing raw result")
+                    logger.error(f"COMPRESSION DEBUG: No compression, storing raw result")
                     cache_backend.set(cache_key, result, timeout)
                     
                 logger.debug(f"[CACHE SET] {cache_key}")
@@ -361,7 +357,7 @@ def show_token(request: HttpRequest) -> JsonResponse:
         "token": settings.CACHE_REFRESH_TOKEN if is_localhost else "***hidden token***"
     }
     
-    # Test Redis if requested
+    # Use /debug/show_token/?test_redis=true to test Redis
     if request.GET.get('test_redis') == 'true':
         try:
             import time

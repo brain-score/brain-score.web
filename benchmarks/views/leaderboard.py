@@ -190,7 +190,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
-    for i, model in enumerate(context['models']):
+    for model in context['models']:
         # base fields
         rd = {
             'id': model.model_id,
@@ -476,27 +476,27 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
-    # Instead of merging with the huge original context, create a minimal cache payload
-    # Only include what the frontend actually needs
+    # Minimal cache payload including only include what the frontend actually needs
+    # This can be substantially reduced because there is a lot of duplication in the original context
     minimal_context = {
         # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
         'row_data': json.dumps([json_serializable(r) for r in row_data]),
-        'column_defs': context['column_defs'],  # Already JSON string
-        'benchmark_groups': context['benchmark_groups'],  # Already JSON string  
-        'filter_options': context['filter_options'],  # Already JSON string
-        'benchmark_metadata': context['benchmark_metadata'],  # Already JSON string
-        'benchmark_tree': context['benchmark_tree'],  # Already JSON string
+        'column_defs': context['column_defs'],
+        'benchmark_groups': context['benchmark_groups'],
+        'filter_options': context['filter_options'],
+        'benchmark_metadata': context['benchmark_metadata'],
+        'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
-        'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],  # Already JSON string
-        'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],  # Already JSON string
-        'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],  # Already JSON string
-        'model_metadata_map': context['model_metadata_map'],  # Already JSON string
+        'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
+        'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
+        'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
+        'model_metadata_map': context['model_metadata_map'],
         
-        # Essential metadata (small)
+        # Essential metadata
         'domain': context['domain'],
         'has_user': context.get('has_user', False),
         
-        # Citation info (small strings)
+        # Citation info
         'citation_general_url': context.get('citation_general_url', ''),
         'citation_general_title': context.get('citation_general_title', ''),
         'citation_general_bibtex': context.get('citation_general_bibtex', ''),
@@ -504,7 +504,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
         
-        # Small comparison data 
+        # Compare tab data
         'comparison_data': context.get('comparison_data', '[]'),
     }
 
