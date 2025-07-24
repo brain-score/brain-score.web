@@ -1,10 +1,9 @@
-import functools
 from functools import partial
 from django.conf import settings
 from django.urls import path
-
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
     content_utils, benchmark, explore
+from .utils import show_token, refresh_cache
 
 
 # all currently supported Brain-Score domains:
@@ -44,6 +43,10 @@ non_domain_urls = [
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
 
+    # Large File upload page:
+    path('profile/large_file_upload/', user.LargeFileUpload.as_view(), name=f'large_file_upload'),
+    path('profile/large_file_upload/finalize/', user.FinalizeUpload.as_view(), name='finalize_upload'),
+
     # central tutorial page, constant across all Brain-Score domains
     path('tutorials/', user.Tutorials.as_view(tutorial_type="tutorial"), name='tutorial'),
     path('tutorials/troubleshooting', user.Tutorials.as_view(tutorial_type="troubleshooting"),
@@ -74,6 +77,10 @@ non_domain_urls = [
     path('competition2024/', competition2024.view, name='competition2024'),
     path('competition2022/', competition2022.view, name='competition2022'),
     path('release2.0/', release2_0.view, name='release2.0'),
+
+    # Add the refresh_cache URL and make domain specific
+    # Triggers the refresh_cache function in utils.py when URL is visited
+    path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
 ]
 
 all_domain_urls = [non_domain_urls]
@@ -96,6 +103,7 @@ for domain in supported_domains:
 if settings.DEBUG:
     all_domain_urls.append([
         path('content_utils/sample_benchmark_images/', content_utils.sample_benchmark_images, name='sample_benchmark_images'),
+        path('debug/show_token/', show_token, name='show_token'),  # Show token required to trigger cache refresh
     ])
 
 # collapse all domains into 1D list (from 2D)
