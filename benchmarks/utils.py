@@ -158,12 +158,12 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                     original_size = estimate_size(result)
                     compression_ratio = compressed_size / original_size if original_size > 0 else 1.0
                     
-                    logger.error(f"COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
+                    logger.debug(f"COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
                               f"(ratio: {compression_ratio:.2f}, time: {compress_end - compress_start:.3f}s)")
                     
                     cache_backend.set(cache_key, compressed_result, timeout)
                 else:
-                    logger.error(f"COMPRESSION DEBUG: No compression, storing raw result")
+                    logger.debug(f"COMPRESSION DEBUG: No compression, storing raw result")
                     cache_backend.set(cache_key, result, timeout)
                     
                 logger.debug(f"[CACHE SET] {cache_key}")
@@ -256,10 +256,17 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
 def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     """
     Endpoint to manually trigger cache refresh for leaderboard data.
+    Can be called via Jenkins job with proper authentication token or URL visit
+
     
     Usage:
     - POST /benchmarks/refresh_cache/vision/?token=your_secret_token
     - GET /benchmarks/refresh_cache/vision/?token=your_secret_token&preserve_sessions=false
+
+    Request Args:
+        domain: The domain to refresh cache for (e.g., "vision", "language")
+        token: Token to authenticate request
+        preserve_sessions: oolean whether to preserve sessions (default: true)
     """
     # Extract hostname from request without port
     hostname = request.get_host().split(':')[0]
