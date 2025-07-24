@@ -242,7 +242,20 @@
   {# 2) Load tooltip component JS #}
   <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
 
-  {# 3) Load your grid-wrapper JS (where you define initializeGrid) #}
+  {# 3) Load essential modular components that the main file delegates to #}
+  <script src="{% static 'benchmarks/js/leaderboard/core/constants.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/renderers/header-components.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/search-filters.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/benchmark-filters.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
+
+  {# 4) Load your main grid-wrapper JS (where you define initializeGrid) #}
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
   {# 4) Load Driver.js for tutorial functionality #}
@@ -306,30 +319,71 @@
       window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
       window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
 
-      const ranges = filterOptions?.parameter_ranges || {};
-      if (ranges.max_param_count) {
-        document.getElementById('paramCountMin').max = ranges.max_param_count;
-        document.getElementById('paramCountMax').max = ranges.max_param_count;
-        document.getElementById('paramCountMax').value = ranges.max_param_count;
+      const ranges = filterOptions || {};
+      console.log('🔍 Range debugging:', {
+        filterOptions: !!filterOptions,
+        parameterRanges: !!filterOptions?.parameter_ranges,
+        sizeRanges: !!filterOptions?.size_ranges,
+        stimuliRanges: !!filterOptions?.stimuli_ranges,
+        ranges: ranges,
+        parameterRangesMax: ranges.parameter_ranges?.max,
+        sizeRangesMax: ranges.size_ranges?.max,
+        stimuliRangesMax: ranges.stimuli_ranges?.max
+      });
+      
+      if (ranges.parameter_ranges?.max) {
+        document.getElementById('paramCountMin').max = ranges.parameter_ranges.max;
+        document.getElementById('paramCountMax').max = ranges.parameter_ranges.max;
+        document.getElementById('paramCountMax').value = ranges.parameter_ranges.max;
+        
+        // Update slider container data attributes - EXACTLY like old file
+        const paramSliderContainer = document.querySelector('#paramCountMin').closest('.filter-group')?.querySelector('.slider-container');
+        if (paramSliderContainer) {
+          paramSliderContainer.dataset.max = ranges.parameter_ranges.max;
+          const maxHandle = paramSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.parameter_ranges.max;
+          }
+        }
       }
-      if (ranges.max_model_size) {
-        document.getElementById('modelSizeMin').max = ranges.max_model_size;
-        document.getElementById('modelSizeMax').max = ranges.max_model_size;
-        document.getElementById('modelSizeMax').value = ranges.max_model_size;
+      if (ranges.size_ranges?.max) {
+        document.getElementById('modelSizeMin').max = ranges.size_ranges.max;
+        document.getElementById('modelSizeMax').max = ranges.size_ranges.max;
+        document.getElementById('modelSizeMax').value = ranges.size_ranges.max;
+        
+        // Update slider container data attributes
+        const modelSizeSliderContainer = document.querySelector('#modelSizeMin').closest('.filter-group')?.querySelector('.slider-container');
+        if (modelSizeSliderContainer) {
+          modelSizeSliderContainer.dataset.max = ranges.size_ranges.max;
+          const maxHandle = modelSizeSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.size_ranges.max;
+          }
+        }
       }
-      if (ranges.max_stimuli_count) {
-        document.getElementById('stimuliCountMin').max = ranges.max_stimuli_count;
-        document.getElementById('stimuliCountMax').max = ranges.max_stimuli_count;
-        document.getElementById('stimuliCountMax').value = ranges.max_stimuli_count;
+      if (ranges.stimuli_ranges?.max) {
+        document.getElementById('stimuliCountMin').max = ranges.stimuli_ranges.max;
+        document.getElementById('stimuliCountMax').max = ranges.stimuli_ranges.max;
+        document.getElementById('stimuliCountMax').value = ranges.stimuli_ranges.max;
+        
+        // Update slider container data attributes
+        const stimuliSliderContainer = document.querySelector('#stimuliCountMin').closest('.filter-group')?.querySelector('.slider-container');
+        if (stimuliSliderContainer) {
+          stimuliSliderContainer.dataset.max = ranges.stimuli_ranges.max;
+          const maxHandle = stimuliSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.stimuli_ranges.max;
+          }
+        }
       }
       
-      // Initialize grid
+      // Initialize grid - EXACTLY like old file
       if (typeof initializeGrid === 'function') {
         console.log('🏗️ Initializing grid...');
         initializeGrid(rowData, columnDefs, benchmarkGroups);
       }
       
-      // Setup UI elements - DECLARE THESE ONLY ONCE
+      // Setup UI elements - EXACTLY like old file
       const panel = document.getElementById('advancedFiltersPanel');
       const treeContainer = document.getElementById('benchmarkFilterPanel');
       const container = document.querySelector('.leaderboard-container');
@@ -357,7 +411,7 @@
         initializeDualHandleSliders();
       }, 100);
       
-      // Initialize benchmark filters from URL or use defaults
+      // Initialize benchmark filters from URL or use defaults - EXACTLY like old file
       setTimeout(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
@@ -371,9 +425,6 @@
           parseURLFilters();
         }
         
-        // If no explicit benchmark filters in URL, use default (include all benchmarks)
-        // No special exclusions - all benchmarks are selected by default
-        
         // Always rebuild exclusion set based on current checkbox states
         window.filteredOutBenchmarks = new Set();
         const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
@@ -386,11 +437,8 @@
         console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
       }, 200);
       
-      // Setup filter action buttons
-      const applyBtn = document.getElementById('applyFiltersBtn');
+      // Setup filter action buttons - EXACTLY like old file
       const resetBtn = document.getElementById('resetAllFiltersBtn');
-      
-      // Remove apply button listener since we're removing the button
       
       if (resetBtn && typeof resetAllFilters === 'function') {
         resetBtn.addEventListener('click', () => {
@@ -398,7 +446,7 @@
         });
       }
       
-      // Setup the reset benchmarks link
+      // Setup the reset benchmarks link - EXACTLY like old file
       setTimeout(() => {
         const resetLink = document.getElementById('resetBenchmarksLink');
         if (resetLink) {
@@ -438,7 +486,7 @@
         }
       }, 300);
       
-      // Enhanced layout toggle functionality
+      // Enhanced layout toggle functionality - EXACTLY like old file
       // Track the panel visibility state separately from layout mode
       let isPanelVisible = false;
       
