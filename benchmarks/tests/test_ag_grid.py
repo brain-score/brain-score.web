@@ -1,7 +1,6 @@
 import pytest
 from playwright.sync_api import sync_playwright
 import zipfile
-import io
 
 @pytest.fixture(scope="session")
 def browser():
@@ -15,7 +14,7 @@ def page(browser):
     context = browser.new_context(ignore_https_errors=True, permissions=["clipboard-read"])
     page = context.new_page()
     page.set_default_navigation_timeout(60000)
-    page.goto("https://brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com/vision/leaderboard")
+    page.goto("http://127.0.0.1:8000/vision/leaderboard")
     page.wait_for_selector('.ag-root', timeout=60000)
     yield page
     context.close()
