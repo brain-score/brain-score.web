@@ -239,7 +239,7 @@ def get_cache_config():
                     'IGNORE_EXCEPTIONS': True,
                 },
                 'KEY_PREFIX': prefix,
-                'VERSION': 2,
+                'VERSION': 1,
             }
     
         print(f"[CACHE] environment={env} → using {redis_cfg['BACKEND']} @ {redis_cfg['LOCATION']}")
