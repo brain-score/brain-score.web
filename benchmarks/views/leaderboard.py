@@ -105,7 +105,7 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
-@cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard")
+@cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
 def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     """
     Get processed context data for AG Grid leaderboard.

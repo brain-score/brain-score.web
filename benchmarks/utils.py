@@ -10,19 +10,37 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpRequest
 import time
+import pickle
+import gzip
 logger = logging.getLogger(__name__)
 
+# Compression utilities for cache
+def compress_data(data: Any) -> bytes:
+    """Compress data using pickle + gzip for cache storage"""
+    pickled_data = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
+    return gzip.compress(pickled_data, compresslevel=6)
+
+def decompress_data(compressed_data: bytes) -> Any:
+    """Decompress cached data"""
+    pickled_data = gzip.decompress(compressed_data)
+    return pickle.loads(pickled_data)
+
+def estimate_size(obj: Any) -> int:
+    """Estimate object size in bytes for logging"""
+    try:
+        return len(pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL))
+    except Exception:
+        return 0
+
 # Cache utility functions and decorators
-def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) -> Callable:  # 24 hour cache by default
+def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, use_compression: bool = False) -> Callable:
     """
     Decorator that caches get_context-like functions in Redis under a versioned key prefix.
-    Any time invalidate_domain_cache() is called, the version bumps, and old keys get deleted.
-
+    
     Args:
         timeout (int): Cache timeout in seconds. Defaults to 24 hours.
         key_prefix (Optional[str]): Additional prefix to namespace cache keys for different pages/views.
-                                   Useful when multiple pages in the same domain need separate caches.
-                                   Example: "leaderboard", "models", "compare"
+        use_compression (bool): Whether to compress cached data. Defaults to False for backward compatibility.
     """
     def decorator(func):  # Take function to be decorated (i.e., get_context)
         @wraps(func)  # Preserving original function's metadata attributes
@@ -45,7 +63,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
             
             Returns:
                 Dict[str, Any]: The context dictionary containing models, benchmarks, and other data
-            """                       
+            """
             # Try to use Redis cache if available, otherwise fall back to default cache
             try:
                 cache_backend = caches["redis"]
@@ -90,13 +108,28 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
             else:
                 cache_key = f"{domain}:v{cache_version}:{fingerprint}"
             
+            # Add compression suffix to cache key if using compression
+            if use_compression:
+                cache_key += ":gzip"
+            
             # Try to get cached result
             try:
                 cached_result = cache_backend.get(cache_key)
                 logger.info(f"[CACHE GET] {cache_key}")
                 if cached_result is not None:
                     logger.info(f"Cache hit for {cache_key}")
-                    return cached_result
+                    
+                    # Decompress if needed
+                    if use_compression and isinstance(cached_result, bytes):
+                        try:
+                            decompressed_result = decompress_data(cached_result)
+                            logger.info(f"Decompressed cache data for {cache_key}")
+                            return decompressed_result
+                        except Exception as e:
+                            logger.warning(f"Failed to decompress cache data: {e}, falling back to function call")
+                            # Fall through to recalculate
+                    else:
+                        return cached_result
             except Exception as e:
                 logger.error(f"Cache GET error {cache_backend}: {e}")
 
@@ -107,10 +140,36 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None) ->
                         model_filter=model_filter, show_public=show_public)
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
+            
+            # Debug compression setting
+            logger.error(f"🔍 COMPRESSION DEBUG: use_compression = {use_compression}")
+            
+            # Estimate and log the original size if compression is enabled
+            if use_compression:
+                original_size = estimate_size(result)
+                logger.error(f"🔍 COMPRESSION DEBUG: Original context size: {original_size / (1024 * 1024):.2f} MB")
                        
             # Store result in cache
             try:
-                cache_backend.set(cache_key, result, timeout)
+                if use_compression:
+                    # Compress the data before storing
+                    logger.error(f"🔍 COMPRESSION DEBUG: Starting compression...")
+                    compress_start = time.time()
+                    compressed_result = compress_data(result)
+                    compress_end = time.time()
+                    
+                    compressed_size = len(compressed_result)
+                    original_size = estimate_size(result)
+                    compression_ratio = compressed_size / original_size if original_size > 0 else 1.0
+                    
+                    logger.error(f"🔍 COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
+                              f"(ratio: {compression_ratio:.2f}, time: {compress_end - compress_start:.3f}s)")
+                    
+                    cache_backend.set(cache_key, compressed_result, timeout)
+                else:
+                    logger.error(f"🔍 COMPRESSION DEBUG: No compression, storing raw result")
+                    cache_backend.set(cache_key, result, timeout)
+                    
                 logger.debug(f"[CACHE SET] {cache_key}")
             except Exception as e:
                 logger.warning(f"Cache SET error ({cache_backend}): {e}")
