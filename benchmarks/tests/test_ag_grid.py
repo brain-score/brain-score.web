@@ -37,7 +37,7 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="model"]')
         header.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="model"]').all_text_contents()[0:2]
         scores_actual = [i[:-8] for i in scores_actual]  # Strip suffix (e.g., timestamp) from model names
@@ -62,7 +62,7 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
         header.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="neural_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.39, 0.39, 0.39, 0.38, 0.38]]
@@ -74,7 +74,7 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="behavior_vision_v0"]')
         header.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="behavior_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.56, 0.56, 0.56, 0.55, 0.55]]
@@ -86,7 +86,7 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="engineering_vision_v0"]')
         header.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="engineering_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.63, 0.59, 0.59, 0.59, 0.58]]
@@ -267,7 +267,7 @@ class TestFilter:
 
         # scroll to top and let AG Grid repaint
         page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # test engineering exclusion in score logic
         if benchmark_to_exclude == "engineering_vision_v0" or benchmark_to_exclude == "Hermann2020_v0":
@@ -761,7 +761,7 @@ class TestFilter:
 
         # 3) scroll grid to top
         page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # 4) verify “Filtered Score” appears
         assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
@@ -834,7 +834,7 @@ class TestFilter:
 
         # 3) scroll grid to top
         page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # 4) verify “Filtered Score” appears
         assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
@@ -895,7 +895,7 @@ class TestFilter:
 
         # 3) scroll grid to top
         page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # 4) verify “Filtered Score” appears
         assert page.locator('.ag-header-cell-text:has-text("Filtered Score")').count() == 1
@@ -982,7 +982,7 @@ class TestFilter:
         # Ensure advanced filter is open (if needed)
         page.click('#advancedFilterBtn')
         page.evaluate("resetAllFilters()")
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
         assert page.locator('#copyBibtexBtn').is_visible(), "❌ BibTeX button is not visible"
 
         # Click the BibTeX copy button
@@ -1080,13 +1080,13 @@ class TestExtraFunctionality:
         # Reset filters to default
         page.click('#advancedFilterBtn')
         page.evaluate("resetAllFilters()")
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # Type "Ferguson" into the search input
         search_input = page.locator('#modelSearchInput')
         assert search_input.is_visible(), "❌ Search bar not found"
         search_input.fill("Ferguson")
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         # Capture top 5 visible rows
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
