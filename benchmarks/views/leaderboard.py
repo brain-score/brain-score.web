@@ -1,11 +1,13 @@
 import json
 import logging
+import time
 import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
 from ..utils import cache_get_context
 logger = logging.getLogger(__name__)
+import pytz
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
@@ -185,6 +187,28 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
         benchmark_metadata_list.append(metadata_entry)
 
+    timestamps = []
+
+    for model in context['models']:  # looping through models
+        ts = model.score.end_timestamp if model.score and model.score.end_timestamp else None
+        if ts:
+            timestamps.append(ts.astimezone(pytz.UTC))
+
+    if timestamps:
+        min_timestamp = min(timestamps).isoformat()
+        max_timestamp = max(timestamps).isoformat()
+
+        filter_options['datetime_range'] = {
+            'min_timestamp': min_timestamp,
+            'max_timestamp': max_timestamp
+        }
+    else:
+        # Optionally include an empty range or skip adding the datetime_range
+        filter_options['datetime_range'] = {
+            'min_timestamp': None,
+            'max_timestamp': None
+        }
+
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
@@ -195,8 +219,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'model': {
                 'id': model.model_id,
                 'name': model.name,
-                'submitter': model.submitter.get('display_name') if model.submitter else None
-            }
+                'submitter': model.submitter.get('display_name') if model.submitter else None,
+                'timestamp': model.score.end_timestamp.isoformat(pytz.UTC) if model.score.end_timestamp else None
+            },
+            # 'timestamp': model.score.end_timestamp.isoformat() if model.score.end_timestamp else None,
         }
 
         # Process model metadata if available
@@ -401,6 +427,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'model_families': sorted(list(model_metadata['model_families'])),
         'training_datasets': sorted(list(model_metadata['training_datasets'])),
         'task_specializations': sorted(list(model_metadata['task_specializations'])),
+        'min_timestamp': min_timestamp,
+        'max_timestamp': max_timestamp,
         'parameter_ranges': {
             'min': 0,  # Always start at 0
             'max': round_up_aesthetically(model_metadata['parameter_ranges']['max']) if
@@ -467,7 +495,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
-    
+
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:
@@ -484,7 +512,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_tree': json.dumps(build_benchmark_tree([b for b in context['benchmarks'] if b.identifier != 'average_vision_v0'])),
         'benchmark_ids': json.dumps(benchmark_ids)
     }
-    
+
     # Merge with original context
     context.update(ag_context)
     return context
