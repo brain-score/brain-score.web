@@ -3,7 +3,7 @@
 // Main function that applies all filters
 function applyCombinedFilters(skipColumnToggle = false) {
   if (!window.globalGridApi || !window.originalRowData) return;
-  
+
 
   if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
     window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
@@ -110,6 +110,24 @@ function applyCombinedFilters(skipColumnToggle = false) {
       }
     }
 
+    // Wayback Timestamp filter
+    if (window.activeFilters.wayback_min_date || window.activeFilters.wayback_max_date) {
+      const scores = Object.values(row).filter(v => v && typeof v === 'object' && v.timestamp);
+      const minDate = window.activeFilters.wayback_min_date ? new Date(window.activeFilters.wayback_min_date) : null;
+      const maxDate = window.activeFilters.wayback_max_date ? new Date(window.activeFilters.wayback_max_date) : null;
+
+      let withinRange = false;
+      for (const score of scores) {
+        const ts = score.timestamp ? new Date(score.timestamp) : null;
+        if (ts && (!minDate || ts >= minDate) && (!maxDate || ts <= maxDate)) {
+          withinRange = true;
+          break;
+        }
+      }
+
+      if (!withinRange) return false;
+    }
+
     return true;
   });
 
@@ -130,7 +148,7 @@ function applyCombinedFilters(skipColumnToggle = false) {
   if (!skipColumnToggle && typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
   }
-  
+
   // Only update column visibility if we're not in the initial setup phase
   // During initial setup, setInitialColumnState() handles the column visibility
   if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
@@ -283,7 +301,7 @@ function resetAllFilters() {
   }
 
   applyCombinedFilters();
-  
+
   if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
     window.LeaderboardURLState.updateURLFromFilters();
   }
@@ -291,43 +309,41 @@ function resetAllFilters() {
 
 // Update filtered scores based on current filters
 function updateFilteredScores(rowData) {
-  if (!window.originalRowData || !window.benchmarkTree) return;
-  
-  const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
-  
-  const workingRowData = rowData.map(row => ({ ...row }));
-  
-  workingRowData.forEach((row) => {
+  const workingRowData = rowData
+  .map(row => ({ ...row }))  // clone each row
+  .filter(row => {
+    const ts = new Date(row.end_timestamp || row.model?.end_timestamp);
+    return (!minDate || ts >= minDate) && (!maxDate || ts <= maxDate);
+  });
     // Find the original row by model ID instead of by index
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
-    
+
     Object.keys(originalRow).forEach(key => {
       if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
         row[key] = { ...originalRow[key] };
       }
     });
-    
+
     function getDepthLevel(benchmarkId, visited = new Set()) {
       if (visited.has(benchmarkId)) return 0;
       visited.add(benchmarkId);
-      
+
       const children = hierarchyMap.get(benchmarkId) || [];
       if (children.length === 0) return 0;
-      
+
       const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
       return maxChildDepth + 1;
     }
-    
+
     const allBenchmarkIds = Array.from(hierarchyMap.keys());
     const benchmarksByDepth = allBenchmarkIds
       .map(id => ({ id, depth: getDepthLevel(id) }))
       .sort((a, b) => a.depth - b.depth);
-    
+
     benchmarksByDepth.forEach(({ id: benchmarkId }) => {
       const children = hierarchyMap.get(benchmarkId) || [];
-      
+
       if (children.length === 0) {
         if (excludedBenchmarks.has(benchmarkId)) {
           row[benchmarkId] = {
@@ -338,7 +354,7 @@ function updateFilteredScores(rowData) {
         }
       } else {
         const childScores = [];
-        
+
         children.forEach(childId => {
           if (!excludedBenchmarks.has(childId) && row[childId]) {
             const childScore = row[childId].value;
@@ -354,7 +370,7 @@ function updateFilteredScores(rowData) {
             }
           }
         });
-        
+
         if (childScores.length > 0) {
           const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
           row[benchmarkId] = {
@@ -370,15 +386,15 @@ function updateFilteredScores(rowData) {
         }
       }
     });
-    
+
     // Calculate global filtered score
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
-    
+
     visionCategories.forEach(category => {
       const isExcluded = excludedBenchmarks.has(category);
       const hasScore = row[category] && row[category].value !== null && row[category].value !== undefined && row[category].value !== '' && row[category].value !== 'X';
-      
+
       if (row[category] && !isExcluded) {
         const score = row[category].value;
         if (score !== null && score !== undefined && score !== '' && score !== 'X') {
@@ -389,8 +405,8 @@ function updateFilteredScores(rowData) {
         }
       }
     });
-    
-   
+
+
     if (categoryScores.length > 0) {
       const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
       row._tempFilteredScore = globalAverage;
@@ -402,15 +418,15 @@ function updateFilteredScores(rowData) {
   // Apply colors for recalculated benchmarks
   const allBenchmarkIds = Array.from(hierarchyMap.keys());
   const recalculatedBenchmarks = new Set();
-  
+
   allBenchmarkIds.forEach(benchmarkId => {
     const children = hierarchyMap.get(benchmarkId) || [];
-    
+
     if (children.length > 0) {
       const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
       if (hasExcludedChildren) {
         recalculatedBenchmarks.add(benchmarkId);
-        
+
         function markAncestorsRecalculated(targetId) {
           allBenchmarkIds.forEach(parentId => {
             const parentChildren = hierarchyMap.get(parentId) || [];
@@ -424,7 +440,7 @@ function updateFilteredScores(rowData) {
       }
     }
   });
-  
+
   // Apply blue coloring for recalculated benchmarks
   allBenchmarkIds.forEach(benchmarkId => {
     if (recalculatedBenchmarks.has(benchmarkId)) {
@@ -438,12 +454,12 @@ function updateFilteredScores(rowData) {
           }
         }
       });
-      
+
       if (scores.length > 0) {
         const minScore = Math.min(...scores);
         const maxScore = Math.max(...scores);
         const scoreRange = maxScore - minScore;
-        
+
         workingRowData.forEach(row => {
           if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
             const val = row[benchmarkId].value;
@@ -454,7 +470,7 @@ function updateFilteredScores(rowData) {
               const green = Math.round(173 + (105 * (1 - intensity)));
               const red = Math.round(216 * (1 - intensity));
               const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
-              
+
               row[benchmarkId].color = color;
             }
           }
@@ -478,7 +494,7 @@ function updateFilteredScores(rowData) {
   const globalFilteredScores = workingRowData
     .map(row => row._tempFilteredScore)
     .filter(score => score !== null);
-    
+
   const globalMinScore = globalFilteredScores.length > 0 ? Math.min(...globalFilteredScores) : 0;
   const globalMaxScore = globalFilteredScores.length > 0 ? Math.max(...globalFilteredScores) : 1;
   const globalScoreRange = globalMaxScore - globalMinScore;
@@ -534,7 +550,7 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
   let hasNonEngineeringBenchmarkFilters = false;
-  
+
   // Only check for non-engineering benchmark filters if the benchmark panel is ready
   const benchmarkPanel = document.getElementById('benchmarkFilterPanel');
   if (benchmarkPanel && benchmarkPanel.children.length > 0) {
@@ -550,7 +566,7 @@ function toggleFilteredScoreColumn(gridApi) {
   }
 
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
-  
+
 
   if (shouldShowFilteredScore) {
     gridApi.applyColumnState({
@@ -567,7 +583,7 @@ function toggleFilteredScoreColumn(gridApi) {
       ]
     });
   }
-  
+
   // Ensure column visibility is updated after changing filtered score visibility
   setTimeout(() => {
     if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {

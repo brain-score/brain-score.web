@@ -48,7 +48,7 @@ def get_base_model_query(domain="vision"):
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
-    
+
     # Get the appropriate context based on user authentication
     start_time = time()
     if user:
@@ -59,7 +59,7 @@ def view(request, domain: str):
         leaderboard_context = get_context(domain=domain, show_public=True)
     end_time = time()
     print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
-   
+
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
@@ -67,7 +67,7 @@ def view(request, domain: str):
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     if benchmark_filter:
         benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
     else:
@@ -76,9 +76,9 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain).order_by('overall_order'))
         else:
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
-    
+
     # Build model query based on user permissions
-    # Necessary to wrap query in function to allow caching of query results. 
+    # Necessary to wrap query in function to allow caching of query results.
     # For now, it is disabled. Provided minimal performance gains.
     all_model_data = get_base_model_query(domain)
 
@@ -98,7 +98,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Apply any additional model filters
     if model_filter:
         model_query = list(model_filter(models))
-       
+
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
     model_rows_reranked = filter_and_rank_models(models, domain)
@@ -107,14 +107,14 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
     # Materialized views for some of these exist, but simple list comprehension was fast enough.
     # If model list grows, consider using the materialized views.
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     # Identify leaf benchmarks (actual runnable benchmarks and not parents)
     benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
     # Identify parents and map children to parents
     benchmark_parents = {
         bench.identifier: (f"{bench.parent['identifier']}_v0" if bench.parent and 'identifier' in bench.parent else None)
         for bench in benchmarks
-    }   
+    }
     # Identify uniform parents (parents that are the same for all children)
     uniform_parents = set(benchmark_parents.values())
     # Identify benchmarks that should not be shown (depth > BASE_DEPTH or engineering root in root_parent)
@@ -125,17 +125,17 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         or (ENGINEERING_ROOT not in bench.identifier
             and ENGINEERING_ROOT in bench.root_parent)
     }
-    
+
     # Add submittable benchmarks for authenticated users
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
-    
+
     # Build CSV data and comparison data
     # Combined to a single pass through models to avoid redundant calculations.
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
-    
+
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     context = {
         'domain': domain,
         'models': model_rows_reranked,
@@ -161,7 +161,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             '}'
         ),
     }
-    
+
     # Add domain-specific citation information
     if domain == "vision":
         context.update({
@@ -198,7 +198,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             'citation_domain_title': '',
             'citation_domain_bibtex': ''
         })
-    
+
     context['csv_downloadable'] = csv_data
     return context
 
@@ -247,12 +247,12 @@ def filter_and_rank_models(models, domain: str = "vision"):
     current_rank = 1
     previous_score = None
     tied_count = 0
-    
+
     for i, (model, score, is_x) in enumerate(model_scores):
         if is_x:
             # All "X" get the same rank (after all valids)
             break
-            
+
         if i == 0 or score != previous_score:
             # If we had a tie, increment rank by the number of tied models
             if tied_count > 0:
@@ -263,7 +263,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
             # This is a tie, use the same rank as the previous model
             tied_count += 1
             rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
-            
+
         previous_score = score
 
     # Assign the same rank to all "X" (after all valids)
@@ -280,7 +280,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
     return ranked_models
 
 
-def _build_model_data(benchmarks: List[FinalBenchmarkContext], 
+def _build_model_data(benchmarks: List[FinalBenchmarkContext],
                       models: List[FinalModelContext]
                       ) -> Tuple[Union[str, pd.DataFrame], List[Dict[str, Any]]]:
     """
@@ -302,11 +302,11 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
     """
     # Pre-compute benchmark names set
     benchmark_names = {benchmark.benchmark_type_id for benchmark in benchmarks}
-    
+
     # Initialize lists of dictionaries to store data
     records = []  # For CSV download
     comparison_data = []  # For comparison page
-    
+
     # Single pass through models
     for model in models:
         # Initialize both data structures for this model
@@ -317,7 +317,7 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
         model_data = {
             "model": model.name
         }
-        
+
         # Process all scores for this model
         if model.scores is not None:
             for score in model.scores:
@@ -326,24 +326,24 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
                 # Add to scores dataframe if it's a relevant benchmark
                 if benchmark_id in benchmark_names:
                     record[benchmark_id] = score["score_ceiled"]
-            
+
                 model_data.update({
                     f"{versioned_benchmark_id}-score": score['score_ceiled'],
                     f"{versioned_benchmark_id}-error": score['error'],
                     f"{versioned_benchmark_id}-is_complete": score['is_complete']
                 })
-        
+
             # Add to both result sets
             records.append(record)
             comparison_data.append(model_data)
-    
+
     # Create DataFrame and convert to CSV
     csv_data = "No models submitted yet."
     if records:
         df = pd.DataFrame.from_records(records)
         df.set_index('model_name', inplace=True)
         csv_data = df.to_csv(index=True)
-    
+
     return csv_data, comparison_data
 
 # Resubmissions are currently not supported. Retaining for future use.
@@ -380,7 +380,7 @@ def represent(value):
         return ""
     elif value == "NaN":
         return "X"
-    
+
 def normalize_value(value, min_value, max_value):
     normalized_value = (value - min_value) / (max_value - min_value)
     return .7 * normalized_value  # scale down to avoid extremely green colors
@@ -394,7 +394,7 @@ def normalize_alpha(value, min_value, max_value):
     return float(result)
 
 def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    if not isinstance(value, (int, float)):    
+    if not isinstance(value, (int, float)):
         return f"background-color: {color_None}"
     if np.isnan(value):
         return f"background-color: {color_None}"
@@ -420,7 +420,7 @@ def get_visibility(model, user):
     # Handles private competition models:
     if (not model.public) and (model.competition is not None):
         # Model is a private competition model, and user is logged in (or superuser)
-        if (user is not None) and (user.is_superuser or 
+        if (user is not None) and (user.is_superuser or
                                   (isinstance(model.user, dict) and model.user.get('id') == user.id) or
                                   (hasattr(model.user, 'id') and model.user.id == user.id)):
             return "private_owner"

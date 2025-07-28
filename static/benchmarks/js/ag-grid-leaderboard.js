@@ -14,7 +14,9 @@ window.activeFilters = {
   benchmark_regions: [],
   benchmark_species: [],
   benchmark_tasks: [],
-  public_data_only: false
+  public_data_only: false,
+  wayback_min_date: null,
+  wayback_max_date: null
 };
 
 // Global state for tracking column expansion
@@ -58,11 +60,11 @@ function RunnableStatusCellRenderer() {}
 RunnableStatusCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'runnable-status-cell';
-  
+
   const runnable = params.data?.metadata?.runnable;
   const statusIcon = document.createElement('div');
   statusIcon.className = 'runnable-status-icon';
-  
+
   if (runnable === true) {
     statusIcon.classList.add('runnable-green');
   } else if (runnable === false) {
@@ -70,7 +72,7 @@ RunnableStatusCellRenderer.prototype.init = function(params) {
   } else {
     statusIcon.classList.add('runnable-grey');
   }
-  
+
   this.eGui.appendChild(statusIcon);
 };
 RunnableStatusCellRenderer.prototype.getGui = function() {
@@ -173,23 +175,23 @@ function getSearchableText(rowData) {
     // rowData.metadata?.architecture || '', // Example: architecture: transformer
     // rowData.metadata?.model_family || ''
   ];
-  
+
   return searchFields.join(' ').toLowerCase();
 }
 
 // Parse search query with logical operators (OR, AND, NOT) - EXACTLY like original
 function parseSearchQuery(query) {
   if (!query.trim()) return null;
-  
+
   // Split by OR first (lowest precedence)
   const orParts = query.toLowerCase().split(/\s+or\s+/);
-  
+
   return {
     type: 'OR',
     parts: orParts.map(orPart => {
       // Split by AND (higher precedence than OR)
       const andParts = orPart.split(/\s+and\s+/);
-      
+
       if (andParts.length === 1) {
         // Handle NOT for single terms (e.g., "NOT alexnet")
         const term = andParts[0].trim();
@@ -198,7 +200,7 @@ function parseSearchQuery(query) {
         }
         return { type: 'TERM', term };
       }
-      
+
       return {
         type: 'AND',
         parts: andParts.map(andPart => {
@@ -216,7 +218,7 @@ function parseSearchQuery(query) {
 // Execute parsed search query against searchable text - EXACTLY like original
 function executeSearchQuery(parsedQuery, searchableText) {
   if (!parsedQuery) return true;
-  
+
   function evaluateNode(node) {
     switch (node.type) {
       case 'TERM':
@@ -231,7 +233,7 @@ function executeSearchQuery(parsedQuery, searchableText) {
         return false;
     }
   }
-  
+
   return evaluateNode(parsedQuery);
 }
 
@@ -350,10 +352,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Core cell renderers
       modelCellRenderer: ModelCellRenderer,
       scoreCellRenderer: ScoreCellRenderer,
-      
+
       // Runnable status functionality
       runnableStatusCellRenderer: RunnableStatusCellRenderer,
-      
+
       // Header components will be loaded from modular files
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
       leafComponent: window.LeaderboardHeaderComponents?.LeafHeaderComponent,
@@ -386,10 +388,13 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
-      
+
       // Set initial column visibility state
       setInitialColumnState();
-      
+
+      initializeWaybackDateFilter();
+      syncSliderToDateInputs();
+
       // Ensure filtered score column starts hidden (clean initial state) - EXACTLY like old file
       params.api.applyColumnState({
         state: [
@@ -432,10 +437,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       newInput.addEventListener('input', function () {
         const searchText = this.value;
-        
+
         // Parse search query with logical operators (OR, AND, NOT)
         window.currentSearchQuery = parseSearchQuery(searchText);
-        
+
         // Use external filter for logical search
         if (typeof gridApi.onFilterChanged === 'function') {
           gridApi.onFilterChanged();
@@ -454,34 +459,34 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 // Function to set initial column visibility state
 function setInitialColumnState() {
   if (!window.globalGridApi) return;
-  
+
   const allColumns = window.globalGridApi.getAllGridColumns();
   const initialColumnState = [];
-  
+
   // Initialize expansion state - all columns start collapsed
   window.columnExpansionState.clear();
-  
+
   allColumns.forEach(column => {
     const colId = column.getColId();
-    
+
     // Always show these columns (including runnable status)
     if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
     }
-    
+
     // Show top-level benchmark categories initially (including engineering)
     const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
     const shouldShow = topLevelCategories.includes(colId);
-    
+
     initialColumnState.push({ colId: colId, hide: !shouldShow });
-    
+
     // Initialize expansion state (all start collapsed)
     if (topLevelCategories.includes(colId)) {
       window.columnExpansionState.set(colId, false);
     }
   });
-  
+
   // Apply initial column state
   window.globalGridApi.applyColumnState({
     state: initialColumnState
@@ -517,6 +522,88 @@ function initializeDualHandleSliders() {
   if (typeof window.LeaderboardRangeFilters?.initializeDualHandleSliders === 'function') {
     window.LeaderboardRangeFilters.initializeDualHandleSliders();
   }
+}
+function initializeWaybackDateFilter() {
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+
+  const handleDateChange = () => {
+    const minDate = dateMinInput?.value ? new Date(dateMinInput.value) : null;
+    const maxDate = dateMaxInput?.value ? new Date(dateMaxInput.value) : null;
+
+    window.activeFilters.wayback_min_date = minDate;
+    window.activeFilters.wayback_max_date = maxDate;
+
+    applyCombinedFilters(); // triggers updateFilteredScores and re-renders
+  };
+
+  if (dateMinInput && dateMaxInput) {
+    dateMinInput.addEventListener('change', handleDateChange);
+    dateMaxInput.addEventListener('change', handleDateChange);
+  }
+
+  // Optional: initialize date inputs from min/max range
+  if (window.filterOptions?.datetime_range) {
+    dateMinInput.value = window.filterOptions.datetime_range.min;
+    dateMaxInput.value = window.filterOptions.datetime_range.max;
+    window.activeFilters.wayback_min_date = new Date(dateMinInput.value);
+    window.activeFilters.wayback_max_date = new Date(dateMaxInput.value);
+  }
+}
+
+function formatDateInput(date) {
+  return date.toISOString().split("T")[0];
+}
+
+function syncSliderWithDateInputs() {
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+
+  if (!sliderMinHandle || !sliderMaxHandle || !dateMinInput || !dateMaxInput) return;
+
+  const updateDatesFromSlider = () => {
+    const minUnix = parseInt(sliderMinHandle.getAttribute('data-value'), 10);
+    const maxUnix = parseInt(sliderMaxHandle.getAttribute('data-value'), 10);
+
+    if (!isNaN(minUnix)) {
+      const minDate = new Date(minUnix * 1000);  // JS timestamps in ms
+      dateMinInput.value = minDate.toISOString().slice(0, 10);
+    }
+
+    if (!isNaN(maxUnix)) {
+      const maxDate = new Date(maxUnix * 1000);
+      dateMaxInput.value = maxDate.toISOString().slice(0, 10);
+    }
+
+    // Also update filters
+    window.activeFilters.wayback_min_date = new Date(dateMinInput.value);
+    window.activeFilters.wayback_max_date = new Date(dateMaxInput.value);
+    applyCombinedFilters();
+  };
+
+  sliderMinHandle.addEventListener('mouseup', updateDatesFromSlider);
+  sliderMaxHandle.addEventListener('mouseup', updateDatesFromSlider);
+}
+
+function onSliderChange() {
+  const handleMin = document.querySelector('.slider-handle.handle-min');
+  const handleMax = document.querySelector('.slider-handle.handle-max');
+
+  const minUnix = parseInt(handleMin.dataset.value);
+  const maxUnix = parseInt(handleMax.dataset.value);
+
+  const minDate = new Date(minUnix * 1000);
+  const maxDate = new Date(maxUnix * 1000);
+
+  document.getElementById('waybackDateMin').value = formatDateInput(minDate);
+  document.getElementById('waybackDateMax').value = formatDateInput(maxDate);
+
+  window.activeFilters.wayback_min_date = minDate;
+  window.activeFilters.wayback_max_date = maxDate;
+
+  applyCombinedFilters();
 }
 
 function parseURLFilters() {
@@ -643,6 +730,8 @@ window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
 window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
 window.renderBenchmarkTree = renderBenchmarkTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
+window.initializeWaybackDateFilter = initializeWaybackDateFilter;
+
 
 // Log successful module load
 console.log('📦 Monolithic leaderboard file loaded successfully');
