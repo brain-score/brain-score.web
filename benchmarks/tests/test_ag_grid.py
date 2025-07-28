@@ -14,7 +14,7 @@ def page(browser):
     context = browser.new_context(ignore_https_errors=True, permissions=["clipboard-read"])
     page = context.new_page()
     page.set_default_navigation_timeout(60000)
-    page.goto("http://127.0.0.1:8000/vision/leaderboard")
+    page.goto("https://brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com/vision/leaderboard")
     page.wait_for_selector('.ag-root', timeout=60000)
     yield page
     context.close()
@@ -60,18 +60,9 @@ class TestSort:
         """
         Verify that the neural_vision_v0 column is sorted in descending order after clicking the header.
         """
-
-        page.wait_for_selector('.ag-root', timeout=10000)
-        page.wait_for_function("""
-          () => {
-            const cell = document.querySelector('.ag-cell[col-id="neural_vision_v0"]');
-            return cell && !isNaN(parseFloat(cell.textContent));
-          }
-        """, timeout=10000)
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
-
         header.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="neural_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.39, 0.39, 0.39, 0.38, 0.38]]
