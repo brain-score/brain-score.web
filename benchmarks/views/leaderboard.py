@@ -1,13 +1,14 @@
 import json
 import logging
-# import time
+import time
 import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
 from ..utils import cache_get_context
 logger = logging.getLogger(__name__)
-# import pytz
+import pytz
+from datetime import datetime
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
@@ -187,6 +188,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
         benchmark_metadata_list.append(metadata_entry)
 
+    all_timestamps = []
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
@@ -305,15 +307,32 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
+
+            ts = score.get('end_timestamp')
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                except ValueError:
+                    ts = None
+
+            if ts:
+                ts = ts.astimezone(pytz.UTC)
+                iso_ts = ts.isoformat()
+                all_timestamps.append(ts)
+            else:
+                iso_ts = None
+
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'benchmark': score.get('benchmark', {})  # Include benchmark metadata for bibtex collection
+                'benchmark': score.get('benchmark', {}),  # Include benchmark metadata for bibtex collection
+                'timestamp': iso_ts
             }
         row_data.append(rd)
+
 
     # Build `column_defs` to show only root-level parents first,
     # then grouping rows and leaves hidden by default.
@@ -430,6 +449,12 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
+    if all_timestamps:
+                filter_options['datetime_range'] = {
+                    'min_timestamp': min(all_timestamps).isoformat(),
+                    'max_timestamp': max(all_timestamps).isoformat()
+                }
+
 
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
@@ -468,6 +493,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['column_defs'] = json.dumps(column_defs)
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
     context['filter_options'] = json.dumps(filter_options)
+    # context['filter_options'] = filter_options
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))

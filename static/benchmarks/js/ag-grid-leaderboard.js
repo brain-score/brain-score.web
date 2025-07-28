@@ -14,7 +14,9 @@ window.activeFilters = {
   benchmark_regions: [],
   benchmark_species: [],
   benchmark_tasks: [],
-  public_data_only: false
+  public_data_only: false,
+  wayback_min_date: null,
+  wayback_max_date: null
 };
 
 // Global state for tracking column expansion
@@ -390,6 +392,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
+      initializeWaybackDateFilter();
+      syncSliderToDateInputs();
+
       // Ensure filtered score column starts hidden (clean initial state) - EXACTLY like old file
       params.api.applyColumnState({
         state: [
@@ -518,6 +523,88 @@ function initializeDualHandleSliders() {
     window.LeaderboardRangeFilters.initializeDualHandleSliders();
   }
 }
+function initializeWaybackDateFilter() {
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+
+  const handleDateChange = () => {
+    const minDate = dateMinInput?.value ? new Date(dateMinInput.value) : null;
+    const maxDate = dateMaxInput?.value ? new Date(dateMaxInput.value) : null;
+
+    window.activeFilters.wayback_min_date = minDate;
+    window.activeFilters.wayback_max_date = maxDate;
+
+    applyCombinedFilters(); // triggers updateFilteredScores and re-renders
+  };
+
+  if (dateMinInput && dateMaxInput) {
+    dateMinInput.addEventListener('change', handleDateChange);
+    dateMaxInput.addEventListener('change', handleDateChange);
+  }
+
+  // Optional: initialize date inputs from min/max range
+  if (window.filterOptions?.datetime_range) {
+    dateMinInput.value = window.filterOptions.datetime_range.min;
+    dateMaxInput.value = window.filterOptions.datetime_range.max;
+    window.activeFilters.wayback_min_date = new Date(dateMinInput.value);
+    window.activeFilters.wayback_max_date = new Date(dateMaxInput.value);
+  }
+}
+
+function formatDateInput(date) {
+  return date.toISOString().split("T")[0];
+}
+
+function syncSliderWithDateInputs() {
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+
+  if (!sliderMinHandle || !sliderMaxHandle || !dateMinInput || !dateMaxInput) return;
+
+  const updateDatesFromSlider = () => {
+    const minUnix = parseInt(sliderMinHandle.getAttribute('data-value'), 10);
+    const maxUnix = parseInt(sliderMaxHandle.getAttribute('data-value'), 10);
+
+    if (!isNaN(minUnix)) {
+      const minDate = new Date(minUnix * 1000);  // JS timestamps in ms
+      dateMinInput.value = minDate.toISOString().slice(0, 10);
+    }
+
+    if (!isNaN(maxUnix)) {
+      const maxDate = new Date(maxUnix * 1000);
+      dateMaxInput.value = maxDate.toISOString().slice(0, 10);
+    }
+
+    // Also update filters
+    window.activeFilters.wayback_min_date = new Date(dateMinInput.value);
+    window.activeFilters.wayback_max_date = new Date(dateMaxInput.value);
+    applyCombinedFilters();
+  };
+
+  sliderMinHandle.addEventListener('mouseup', updateDatesFromSlider);
+  sliderMaxHandle.addEventListener('mouseup', updateDatesFromSlider);
+}
+
+function onSliderChange() {
+  const handleMin = document.querySelector('.slider-handle.handle-min');
+  const handleMax = document.querySelector('.slider-handle.handle-max');
+
+  const minUnix = parseInt(handleMin.dataset.value);
+  const maxUnix = parseInt(handleMax.dataset.value);
+
+  const minDate = new Date(minUnix * 1000);
+  const maxDate = new Date(maxUnix * 1000);
+
+  document.getElementById('waybackDateMin').value = formatDateInput(minDate);
+  document.getElementById('waybackDateMax').value = formatDateInput(maxDate);
+
+  window.activeFilters.wayback_min_date = minDate;
+  window.activeFilters.wayback_max_date = maxDate;
+
+  applyCombinedFilters();
+}
 
 function parseURLFilters() {
   if (typeof window.LeaderboardURLState?.parseURLFilters === 'function') {
@@ -643,6 +730,8 @@ window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
 window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
 window.renderBenchmarkTree = renderBenchmarkTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
+window.initializeWaybackDateFilter = initializeWaybackDateFilter;
+
 
 // Log successful module load
 console.log('📦 Monolithic leaderboard file loaded successfully');
