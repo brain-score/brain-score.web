@@ -62,21 +62,14 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
         header.click()
-        page.wait_for_function("""
-          () => {
-            const values = Array.from(document.querySelectorAll('.ag-cell[col-id="neural_vision_v0"]'))
-              .map(cell => parseFloat(cell.textContent))
-              .filter(v => !isNaN(v));
-            return values.length > 1 && values[0] >= values[1];
-          }
-        """, timeout=10000)
+        page.evaluate('window.globalGridApi.ensureIndexVisible(0)')
+        page.wait_for_timeout(5000)
 
         scores_actual = page.locator('.ag-cell[col-id="neural_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.39, 0.39, 0.39, 0.38, 0.38]]
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
-        assert actual_ranks == []
-        assert actual_models == []
+        assert actual_ranks == ["13", "144", "150", "5", "1"]
         assert scores_actual == scores_expected
 #
 #     def test_sort_behavioral_descending(self, page):
