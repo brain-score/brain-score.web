@@ -60,7 +60,16 @@ class TestSort:
         """
         Verify that the neural_vision_v0 column is sorted in descending order after clicking the header.
         """
+
+        page.wait_for_selector('.ag-root', timeout=10000)
+        page.wait_for_function("""
+          () => {
+            const cell = document.querySelector('.ag-cell[col-id="neural_vision_v0"]');
+            return cell && !isNaN(parseFloat(cell.textContent));
+          }
+        """, timeout=10000)
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
+
         header.click()
         page.wait_for_timeout(1000)
 
