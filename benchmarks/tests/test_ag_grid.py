@@ -14,7 +14,7 @@ def page(browser):
     context = browser.new_context(ignore_https_errors=True, permissions=["clipboard-read"])
     page = context.new_page()
     page.set_default_navigation_timeout(60000)
-    page.goto("https://brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com/vision/leaderboard")
+    page.goto("http://127.0.0.1:8000/vision/leaderboard")
     page.wait_for_selector('.ag-root', timeout=60000)
     yield page
     context.close()
@@ -62,10 +62,21 @@ class TestSort:
         """
         header = page.locator('.ag-header-cell[col-id="neural_vision_v0"]')
         header.click()
-        page.wait_for_timeout(5000)
+        page.wait_for_function("""
+          () => {
+            const values = Array.from(document.querySelectorAll('.ag-cell[col-id="neural_vision_v0"]'))
+              .map(cell => parseFloat(cell.textContent))
+              .filter(v => !isNaN(v));
+            return values.length > 1 && values[0] >= values[1];
+          }
+        """, timeout=10000)
 
         scores_actual = page.locator('.ag-cell[col-id="neural_vision_v0"]').all_text_contents()[0:5]
         scores_expected = [str(x) for x in [0.39, 0.39, 0.39, 0.38, 0.38]]
+        actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        assert actual_ranks == []
+        assert actual_models == []
         assert scores_actual == scores_expected
 #
 #     def test_sort_behavioral_descending(self, page):
