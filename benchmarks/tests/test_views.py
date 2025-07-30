@@ -1,4 +1,4 @@
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from django.db import connection
 import logging
 from bs4 import BeautifulSoup
@@ -7,8 +7,9 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 
 
-class BaseTestCase(TransactionTestCase):
+class BaseTestCase(TestCase):
     # Completely disable Django's test database creation. We do this to force django to use the web_test DB
+    # Uses TestCase instead of TransactionTestCase to avoid flushing web_tests DB after each test
     @classmethod
     def setUpClass(cls):
         # Skip all Django test setup
@@ -26,31 +27,6 @@ class BaseTestCase(TransactionTestCase):
     def tearDown(self):
         # Skip Django's tearDown
         pass
-
-    @classmethod
-    def setUpTestData(cls):
-        """
-        This runs once for the entire test class.
-        Refreshes materialized views for all test classes that inherit from this base class.
-        """
-        logger.info("Starting materialized view refresh")
-        try:
-            # Execute the refresh function to update materialized views
-            with connection.cursor() as cursor:
-                logger.debug("Executing refresh_all_materialized_views()")
-                cursor.execute("SELECT refresh_all_materialized_views();")
-                logger.info("Successfully refreshed materialized views")
-                # Some error handling
-        except connection.OperationalError as e:
-            logger.error(f"Database connection error while refreshing views: {str(e)}")
-            raise RuntimeError("Database connection failed during materialized view refresh")
-        except connection.ProgrammingError as e:
-            logger.error(f"SQL error while refreshing views: {str(e)}")
-            raise RuntimeError("SQL error during materialized view refresh")
-        except Exception as e:
-            logger.error(f"Unexpected error while refreshing views: {str(e)}")
-            raise RuntimeError(f"Unexpected error during materialized view refresh: {str(e)}")
-
 
 
 class TestMaterializedViewQuery(BaseTestCase):
