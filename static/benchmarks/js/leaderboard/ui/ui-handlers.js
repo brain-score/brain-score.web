@@ -75,9 +75,9 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
         window.filteredOutBenchmarks.clear();
       }
       
-      // Apply filters
+      // Apply filters (skip auto-sort since this is a reset operation, but allow column visibility updates)
       if (typeof window.applyCombinedFilters === 'function') {
-        window.applyCombinedFilters();
+        window.applyCombinedFilters(false, true);
       }
     });
     console.log('✅ Reset benchmarks link handler set up');

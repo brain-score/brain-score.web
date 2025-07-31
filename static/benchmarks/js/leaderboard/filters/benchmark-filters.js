@@ -65,6 +65,10 @@ function setupBenchmarkCheckboxes(filterOptions) {
 // Filters benchmarks based on metadata criteria
 function addBenchmarksFilteredByMetadata() {
   if (!window.benchmarkMetadata || !window.benchmarkTree) return;
+  
+  // Prevent recursive calls during manual checkbox interactions
+  if (window.updatingCheckboxes || window.processingManualTreeChange) return;
+  window.updatingCheckboxes = true;
 
   const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
   
@@ -79,12 +83,40 @@ function addBenchmarksFilteredByMetadata() {
   // Check if stimuli filter is effectively disabled (at full range)
   const isStimuliFilterActive = stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax;
 
+  // Check if any metadata filters are active
+  const hasMetadataFilters = (
+    window.activeFilters.benchmark_regions.length > 0 ||
+    window.activeFilters.benchmark_species.length > 0 ||
+    window.activeFilters.benchmark_tasks.length > 0 ||
+    window.activeFilters.public_data_only ||
+    isStimuliFilterActive
+  );
+
+  // Don't preserve any manual unchecks - let metadata filtering completely control the tree
+  // Manual tree interactions should be independent and not interfere with metadata filtering
+  
+  // Reset all checkboxes to checked state
+  const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+  allCheckboxes.forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  
+  // Clear previous exclusions and rebuild from scratch
+  window.filteredOutBenchmarks.clear();
+  
+  // If no metadata filters are active, we're done (everything should be checked)
+  if (!hasMetadataFilters) {
+    window.updatingCheckboxes = false;
+    return;
+  }
+
   window.benchmarkMetadata.forEach(benchmark => {
     let shouldExclude = false;
 
     const children = hierarchyMap.get(benchmark.identifier) || [];
     const isParentBenchmark = children.length > 0;
 
+    // Apply metadata filters only to leaf benchmarks (parent benchmarks don't have region metadata)
     if (!isParentBenchmark) {
       if (window.activeFilters.benchmark_regions.length > 0) {
         if (!window.activeFilters.benchmark_regions.includes(benchmark.region)) {
@@ -110,7 +142,7 @@ function addBenchmarksFilteredByMetadata() {
         }
       }
 
-      // Only apply stimuli count filter if it's actually constrained (not at full range)
+      // Only apply stimuli count filter to leaf benchmarks
       if (isStimuliFilterActive && benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
         if (benchmark.num_stimuli < stimuliMin || benchmark.num_stimuli > stimuliMax) {
           shouldExclude = true;
@@ -120,8 +152,65 @@ function addBenchmarksFilteredByMetadata() {
 
     if (shouldExclude) {
       window.filteredOutBenchmarks.add(benchmark.identifier);
+      
+      // Also uncheck the corresponding checkbox in the benchmark tree
+      const checkbox = document.querySelector(`#benchmarkFilterPanel input[value="${benchmark.identifier}"]`);
+      if (checkbox) {
+        checkbox.checked = false;
+      }
     }
   });
+  
+  // After updating leaf checkboxes, update parent checkboxes based on their children
+  updateParentCheckboxes();
+  
+  // Reset the flag
+  window.updatingCheckboxes = false;
+}
+
+// Helper function to update parent checkboxes based on their children's state
+function updateParentCheckboxes() {
+  // Update checkboxes from bottom up (deepest first)
+  const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+  
+  // Process multiple times to ensure all levels are updated
+  for (let i = 0; i < 3; i++) {
+    allCheckboxes.forEach(parentCheckbox => {
+      const parentNode = parentCheckbox.closest('.benchmark-node');
+      
+      // Get immediate children only (not all descendants)
+      const immediateChildren = [];
+      const childUl = parentNode.querySelector(':scope > ul');
+      if (childUl) {
+        const immediateChildNodes = childUl.querySelectorAll(':scope > .benchmark-node');
+        immediateChildNodes.forEach(childNode => {
+          const childCheckbox = childNode.querySelector(':scope > .tree-node-header input[type="checkbox"]');
+          if (childCheckbox) {
+            immediateChildren.push(childCheckbox);
+          }
+        });
+      }
+      
+      // Update parent based on immediate children (if it has any)
+      if (immediateChildren.length > 0) {
+        const allChildrenUnchecked = immediateChildren.every(cb => !cb.checked);
+        const allChildrenChecked = immediateChildren.every(cb => cb.checked);
+        
+        if (allChildrenUnchecked) {
+          parentCheckbox.checked = false;
+          window.filteredOutBenchmarks.add(parentCheckbox.value);
+        } else if (allChildrenChecked) {
+          parentCheckbox.checked = true;
+          window.filteredOutBenchmarks.delete(parentCheckbox.value);
+        }
+        // For mixed state, keep current state but ensure parent is checked
+        else {
+          parentCheckbox.checked = true;
+          window.filteredOutBenchmarks.delete(parentCheckbox.value);
+        }
+      }
+    });
+  }
 }
 
 // Renders the benchmark tree structure with checkboxes
@@ -234,6 +323,14 @@ function renderBenchmarkTree(container, tree) {
     checkbox.checked = true;
 
     checkbox.addEventListener('change', (e) => {
+      // Don't process manual clicks if we're in the middle of metadata filtering
+      if (window.updatingCheckboxes) {
+        return;
+      }
+      
+      // Set flag to prevent metadata filtering from interfering with manual changes
+      window.processingManualTreeChange = true;
+      
       const isChecked = e.target.checked;
 
       if (!window.filteredOutBenchmarks) window.filteredOutBenchmarks = new Set();
@@ -245,11 +342,14 @@ function renderBenchmarkTree(container, tree) {
         uncheckAllDescendants(li);
       }
 
-      updateExclusions();
+      updateExclusionsFromTreeOnly();
 
       if (typeof window.applyCombinedFilters === 'function') {
         window.applyCombinedFilters();
       }
+      
+      // Reset flag
+      window.processingManualTreeChange = false;
     });
 
     const label = document.createElement('label');
@@ -341,6 +441,22 @@ function renderBenchmarkTree(container, tree) {
     if (window.benchmarkMetadata) {
       addBenchmarksFilteredByMetadata();
     }
+    
+    // Update count badges after changing exclusions
+    if (typeof window.updateAllCountBadges === 'function') {
+      window.updateAllCountBadges();
+    }
+  }
+  
+  function updateExclusionsFromTreeOnly() {
+    window.filteredOutBenchmarks.clear();
+
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    allCheckboxes.forEach(cb => {
+      if (!cb.checked) {
+        window.filteredOutBenchmarks.add(cb.value);
+      }
+    });
     
     // Update count badges after changing exclusions
     if (typeof window.updateAllCountBadges === 'function') {

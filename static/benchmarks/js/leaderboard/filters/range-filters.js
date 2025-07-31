@@ -78,6 +78,14 @@ function initializeDualHandleSlider(container) {
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
       console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
+      
+      // If this is the stimuli count slider, also update benchmark filters
+      if (sliderType === 'stimuliCount') {
+        if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
+          window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
+        }
+      }
+      
       debounceFilterUpdate();
     }
   }

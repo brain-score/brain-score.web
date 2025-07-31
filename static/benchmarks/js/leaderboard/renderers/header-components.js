@@ -113,9 +113,16 @@ function updateColumnVisibility() {
       return true; // Show global score when filtered score is not active
     }
     
-    // Check if this is a top-level category (always show if not excluded)
+    // Check if this is a top-level category
     const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
     if (topLevelCategories.includes(benchmarkId)) {
+      // Hide main column if it has no valid children left
+      if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+        const leafCount = window.getFilteredLeafCount(benchmarkId);
+        if (leafCount === 0) {
+          return false;
+        }
+      }
       return true;
     }
     
