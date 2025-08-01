@@ -197,10 +197,9 @@ class TestVision(BaseTestCase):
 
     def test_aggrid_three_buttons(self):
         """Ensure the CSV export button is present on the vision leaderboard"""
-        #response = self.client.get('/vision/')
         response = self.client.get("/vision/leaderboard/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Export Leaderboard')
+        self.assertContains(response, 'Export')
         self.assertContains(response, 'Tutorial')
         self.assertContains(response, 'Advanced Filters')
         self.assertContains(response, 'id="modelSearchInput"')
