@@ -51,7 +51,6 @@ if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
-hosts_list.append('127.0.0.1')
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -116,9 +115,25 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
 
 def get_db_info():
-    if os.getenv("DJANGO_ENV") == "development":
+    if os.getenv("DJANGO_ENV") == "test": # web test db
+        secrets = get_secret(db_secret_name, REGION_NAME)
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'web_tests',
+                'USER': 'postgres',
+                'PASSWORD': secrets["password"],
+                'HOST': secrets["host"],
+                'PORT': '5432',
+                'TEST': {
+                    'NAME': 'web_tests',  # This tells Django to use this exact name for tests
+                }
+            }
+        }
+    elif os.getenv("DJANGO_ENV") == "development":
         from dotenv import load_dotenv; load_dotenv()
 
         return {
@@ -131,7 +146,6 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
@@ -221,13 +235,6 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
     ('text/x-sass', 'sass {infile} {outfile}'),
 )
-
-# Additional Django Compressor settings for better reliability
-COMPRESS_ENABLED = True
-# Force recompilation in development for immediate changes
-COMPRESS_REBUILD_TIMEOUT = 10 if os.getenv("DJANGO_ENV") == "development" else 2592000  # 10 seconds in dev, 30 days in prod
-# Cache compressed files
-COMPRESS_CACHE_BACKEND = 'default'
 
 AUTH_USER_MODEL = 'benchmarks.User'
 
