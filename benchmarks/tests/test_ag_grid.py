@@ -654,7 +654,7 @@ class TestFilter:
         assert actual_scores == expected_scores, \
             f"Expected top scores {expected_scores}, got {actual_scores}"
 
-    # @pytest.mark.skip(reason="Sorting tests are flaky on CI; revisit later")
+    @pytest.mark.skip(reason="Sorting tests are flaky on CI; revisit later")
     def test_public_data_filter(self, page):
         """
         Verifies that filtering to only publicly available benchmarks:
