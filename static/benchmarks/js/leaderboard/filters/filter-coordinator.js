@@ -146,159 +146,6 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     }
   }, 50);
 
-  // DISABLED: toggleFilteredScoreColumn now handles sorting - no need for additional auto-sort
-  if (false && window.globalGridApi && !skipColumnToggle && !skipAutoSort) {
-    setTimeout(() => {
-      console.log('🔄 Auto-sort triggered');
-      
-      // Check if filtered score should be shown (same logic as toggleFilteredScoreColumn)
-      const stimuliMin = parseInt(document.getElementById('stimuliCountMin')?.value || 0);
-      const stimuliMax = parseInt(document.getElementById('stimuliCountMax')?.value || 1000);
-      const stimuliContainer = document.querySelector('#stimuliCountMin')?.closest('.filter-group')?.querySelector('.slider-container');
-      const stimuliRangeMin = parseInt(stimuliContainer?.dataset?.min || 0);
-      const stimuliRangeMax = parseInt(stimuliContainer?.dataset?.max || 1000);
-      const hasStimuliFiltering = (stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax);
-      
-      const hasBenchmarkMetadataFilters = (
-        window.activeFilters.benchmark_regions.length > 0 ||
-        window.activeFilters.benchmark_species.length > 0 ||
-        window.activeFilters.benchmark_tasks.length > 0 ||
-        window.activeFilters.public_data_only ||
-        hasStimuliFiltering
-      );
-      
-      const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
-      let hasNonEngineeringBenchmarkFilters = false;
-      const benchmarkPanel = document.getElementById('benchmarkFilterPanel');
-      if (benchmarkPanel && benchmarkPanel.children.length > 0) {
-        uncheckedCheckboxes.forEach(checkbox => {
-          const engineeringNode = document.querySelector('input[value="engineering_vision_v0"]')?.closest('.benchmark-node');
-          const isEngineeringChild = engineeringNode && engineeringNode.contains(checkbox);
-          const isEngineeringParent = checkbox.value === 'engineering_vision_v0';
-          if (!isEngineeringChild && !isEngineeringParent) {
-            hasNonEngineeringBenchmarkFilters = true;
-          }
-        });
-      }
-      
-      const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
-      
-      console.log('🔄 Auto-sort conditions:', {
-        shouldShowFilteredScore,
-        hasNonEngineeringBenchmarkFilters,
-        hasBenchmarkMetadataFilters,
-        hasStimuliFiltering,
-        uncheckedCount: uncheckedCheckboxes.length,
-        activeRegions: window.activeFilters.benchmark_regions
-      });
-      
-      if (shouldShowFilteredScore) {
-        console.log('🔄 APPLYING auto-sort by filtered_score');
-        
-        // Check if filtered_score column exists and is visible
-        const filteredScoreColumn = window.globalGridApi.getAllGridColumns().find(col => col.getColId() === 'filtered_score');
-        const currentSort = filteredScoreColumn?.getSort();
-        console.log('🔄 Filtered score column state:', {
-          exists: !!filteredScoreColumn,
-          isVisible: filteredScoreColumn?.isVisible(),
-          currentSort: currentSort
-        });
-        
-        // Always apply sort - when data changes due to filtering, we need to re-sort immediately
-        try {
-          console.log('🔄 About to apply sort to filtered_score column');
-          
-          // Add small delay to ensure grid has fully processed the new data
-          setTimeout(() => {
-            // First, ensure the column is visible and ready for sorting
-            window.globalGridApi.applyColumnState({
-              state: [
-                { colId: 'filtered_score', hide: false }
-              ]
-            });
-            
-            // Small delay to let AG-Grid process the visibility change
-            setTimeout(() => {
-              const result = window.globalGridApi.applyColumnState({
-                state: [
-                  { colId: 'filtered_score', sort: 'desc' }
-                ]
-              });
-              
-              console.log('🔄 Sort applied to filtered_score column, result:', result);
-            
-            // Add a listener to detect if sort changes unexpectedly
-            const sortChangeListener = () => {
-              const currentSort = filteredScoreColumn?.getSort();
-              if (currentSort !== 'desc') {
-                console.warn('🚨 SORT WAS CHANGED EXTERNALLY!', {
-                  newSort: currentSort,
-                  timestamp: Date.now()
-                });
-              }
-            };
-            
-            // Listen for sort changes for the next few seconds
-            window.globalGridApi.addEventListener('sortChanged', sortChangeListener);
-            setTimeout(() => {
-              window.globalGridApi.removeEventListener('sortChanged', sortChangeListener);
-            }, 3000);
-            
-            // Verify the sort was actually applied
-            setTimeout(() => {
-              const newSort = filteredScoreColumn?.getSort();
-              const isVisible = filteredScoreColumn?.isVisible();
-              console.log('🔄 Sort verification (50ms):', {
-                newSort,
-                isVisible,
-                sortApplied: newSort === 'desc'
-              });
-            }, 50);
-            
-            // Check again after a longer delay to see if something overrides it
-            setTimeout(() => {
-              const laterSort = filteredScoreColumn?.getSort();
-              const laterVisible = filteredScoreColumn?.isVisible();
-              console.log('🔄 Sort check (500ms later):', {
-                laterSort,
-                laterVisible,
-                stillSorted: laterSort === 'desc'
-              });
-            }, 500);
-            }, 25); // End of visibility processing delay
-          }, 50); // End of data processing delay
-          
-        } catch (error) {
-          console.error('🔄 Error applying sort:', error);
-          console.error('🔄 Error stack:', error);
-        }
-      } else if (hasNonEngineeringBenchmarkFilters) {
-        console.log('🔄 APPLYING auto-sort by main visible column');
-        // If we have benchmark filters but filtered score isn't shown, 
-        // still auto-sort by the main visible score column
-        const visibleMainColumns = ['neural_vision_v0', 'behavior_vision_v0'].filter(colId => {
-          if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
-            const leafCount = window.getFilteredLeafCount(colId);
-            return leafCount > 0; // Column is visible
-          }
-          return true;
-        });
-        
-        if (visibleMainColumns.length > 0) {
-          // Sort by the first visible main column
-          window.globalGridApi.applyColumnState({
-            state: [
-              { colId: visibleMainColumns[0], sort: 'desc' }
-            ]
-          });
-        }
-      } else {
-        console.log('🔄 NO auto-sort applied');
-      }
-    }, 200);
-  } else {
-    console.log('🔄 Auto-sort SKIPPED:', { hasGridApi: !!window.globalGridApi, skipColumnToggle, skipAutoSort });
-  }
 
   if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
     window.LeaderboardURLState.updateURLFromFilters();
@@ -465,7 +312,7 @@ function updateFilteredScores(rowData) {
   
   const workingRowData = rowData.map(row => ({ ...row }));
   
-  // First, restore original data for all columns
+  // First restore original data for all columns
   workingRowData.forEach((row) => {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
@@ -513,7 +360,7 @@ function updateFilteredScores(rowData) {
         const childScores = [];
         
         
-        // First pass: collect all children and determine if we have mixed valid/invalid scores
+        // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
         children.forEach(childId => {
           if (!excludedBenchmarks.has(childId) && row[childId]) {
@@ -525,10 +372,10 @@ function updateFilteredScores(rowData) {
           }
         });
         
-        // Check if we have any valid scores among the children
+        // Check if any valid scores among the children
         const hasAnyValidScores = childInfo.some(info => info.hasValidScore);
         
-        // Second pass: build the scores array
+        // Second pass, build the scores array
         childInfo.forEach(({ childId, childScore, hasValidScore }) => {
           if (hasValidScore) {
             // Include valid numeric scores
@@ -541,10 +388,6 @@ function updateFilteredScores(rowData) {
           // If no valid scores exist at all, skip everything (childScores will be empty)
         });
         
-        if (benchmarkId === 'V1_v0' && row.model === 'CORnet-S') {
-          console.log(`🔍 V1 childScores for ${row.model}:`, childScores);
-          console.log(`🔍 V1 final average:`, childScores.length > 0 ? childScores.reduce((a, b) => a + b, 0) / childScores.length : 'no scores');
-        }
         
         // Check if we should drop out this parent column
         let shouldDropOut = false;
@@ -810,18 +653,10 @@ function toggleFilteredScoreColumn(gridApi) {
           ]
         });
         
-        console.log('🔄 toggleFilteredScoreColumn: Applied sort to filtered_score programmatically');
-        
         // Verify it worked, and if not, try to trigger sort via the column API
         setTimeout(() => {
           const currentSort = filteredScoreColumn.getSort();
-          console.log('🔄 Sort verification after toggleFilteredScoreColumn:', {
-            currentSort,
-            isDesc: currentSort === 'desc'
-          });
-          
           if (currentSort !== 'desc') {
-            console.log('🔄 Programmatic sort failed, trying column.setSort()...');
             // Try alternative sorting method
             filteredScoreColumn.setSort('desc');
           }

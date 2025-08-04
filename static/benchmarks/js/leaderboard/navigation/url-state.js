@@ -49,7 +49,7 @@ function parseURLFilters() {
   // Update benchmark tree checkboxes
   updateBenchmarkTreeFromURL();
   
-  // Apply all filters - EXACTLY like old file
+  // Apply all filters
   if (typeof window.applyCombinedFilters === 'function') {
     window.applyCombinedFilters();
   }

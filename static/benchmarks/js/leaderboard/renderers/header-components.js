@@ -1,6 +1,6 @@
 // Header components for leaderboard grid
 
-// Helper function to build hierarchy map from benchmark tree (local version)
+// Helper function to build hierarchy map from benchmark tree
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   tree.forEach(node => {
     const nodeId = node.id || node.identifier || node.field || node.name;
@@ -387,8 +387,6 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         const directChildIds = directChildren.map(c => c.getColId());
         
         window.columnExpansionState.set(columnId, true);
-        
-        // Use applyColumnState instead of setColumnsVisible like original
         const showState = directChildIds.map(id => ({ colId: id, hide: false }));
         params.api.applyColumnState({ state: showState });
         
@@ -406,14 +404,14 @@ ExpandableHeaderComponent.prototype.init = function(params) {
         icon.className = 'fa-solid fa-down-left-and-up-right-to-center';
         
       } else {
-        // Collapse: hide ALL descendants recursively like original
+        // Collapse: hide ALL descendants recursively
         const allCols = params.api.getAllGridColumns();
         const allDescendantIds = getAllDescendantsFromHierarchy(columnId, buildHierarchyFromTree(window.benchmarkTree || []))
           .map(id => allCols.find(col => col.getColId() === id))
           .filter(Boolean)
           .map(col => col.getColId());
         
-        // Use applyColumnState instead of setColumnsVisible like original
+        // Use applyColumnState
         const hideState = allDescendantIds.map(id => ({ colId: id, hide: true }));
         params.api.applyColumnState({ state: hideState });
         

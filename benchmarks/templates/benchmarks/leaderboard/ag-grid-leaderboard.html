@@ -8,7 +8,9 @@
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
   <link rel="stylesheet" href="{% static 'benchmarks/css/main.css' %}">
 {% endblock %}
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+
 {# Override main_content to remove column constraints #}
 {% block main_content %}
   <div class="leaderboard-container">
@@ -16,7 +18,6 @@
       <!-- banner & icon… -->
     </div>
     
-
     <div id="leaderboardSearchWrapper">
       <input type="text" id="modelSearchInput" placeholder="Search models or submitter... (try: 'alexnet OR vit', 'imagenet AND resnet', 'NOT ferguson')" />
       <button id="tutorialBtn" class="btn-secondary" style="white-space: nowrap">
@@ -72,14 +73,6 @@
             </div>
           </div>
           
-{#          <div class="filter-group">#}
-{#            <label>Training Dataset</label>#}
-{#            <div class="filter-dropdown" id="trainingDatasetFilter">#}
-{#              <input type="text" placeholder="Select training dataset..." class="filter-input">#}
-{#              <div class="dropdown-content hidden"></div>#}
-{#            </div>#}
-{#          </div>#}
-          
           <div class="filter-group">
             <label>Model Family</label>
             <div class="filter-dropdown" id="modelFamilyFilter">
@@ -127,14 +120,6 @@
               </div>
             </div>
           </div>
-          
-{#          <div class="filter-group">#}
-{#            <label>Task Specialization</label>#}
-{#            <div class="filter-dropdown" id="taskSpecFilter">#}
-{#              <input type="text" placeholder="Select specialization..." class="filter-input">#}
-{#              <div class="dropdown-content hidden"></div>#}
-{#            </div>#}
-{#          </div>#}
         </div>
         
         <!-- Right column: Benchmark Properties -->
@@ -228,416 +213,62 @@
         </button>
         <button id="resetAllFiltersBtn" class="btn-primary">Reset All Filters</button>
       </div>
-
     </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-  {# 1) Load AG-Grid UMD bundle #}
-  <script
-    src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js">
-  </script>
+  {# Load AG-Grid UMD bundle #}
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
 
-  {# 2) Load tooltip component JS #}
+  {# Load tooltip component JS #}
   <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
 
-  {# 3) Load essential modular components that the main file delegates to #}
+  {# Load Driver.js for tutorial functionality #}
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  {# Load modular leaderboard components #}
   <script src="{% static 'benchmarks/js/leaderboard/core/constants.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/renderers/cell-renderers.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/renderers/header-components.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/search-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/benchmark-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/filters/search-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
-
-  {# 4) Load your main grid-wrapper JS (where you define initializeGrid) #}
+  <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
   <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-  {# 4) Load Driver.js for tutorial functionality #}
-  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
-  {# Load tour configurations in dependency order #}
-  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
-  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
-
-  {# 5) Kick it off once the DOM is ready #}
+  {# Pass Django data to JavaScript #}
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, starting initialization...');
-    
-    try {
-      // Parse data from Django
-      let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
-      
-      try {
-        rowData = JSON.parse('{{ row_data|escapejs }}');
-        columnDefs = JSON.parse('{{ column_defs|escapejs }}');
-        benchmarkGroups = JSON.parse('{{ benchmark_groups|escapejs }}');
-        benchmarkTree = JSON.parse('{{ benchmark_tree|escapejs }}');
-        filterOptions = JSON.parse('{{ filter_options|escapejs }}');
-        benchmarkMetadata = JSON.parse('{{ benchmark_metadata|escapejs }}');
-        benchmarkIds = JSON.parse('{{ benchmark_ids|escapejs }}');
-
-        let modelMetadataMap, benchmarkMetadataMap;
-      try {
-        modelMetadataMap = JSON.parse('{{ model_metadata_map|escapejs }}');
-      } catch (e) {
-        console.warn('No model_metadata_map provided:', e);
-        modelMetadataMap = {};
-      }
-      benchmarkMetadataMap = {};
-      benchmarkMetadata.forEach(entry => {
-        benchmarkMetadataMap[entry.identifier] = entry;
-      });
-      window.modelMetadataMap     = modelMetadataMap;
-      window.benchmarkMetadataMap = benchmarkMetadataMap;
-
-        console.log('All data loaded successfully, filter options:', filterOptions);
-      } catch (e) {
-        console.error('Error parsing data:', e);
-        return; // Stop if data parsing fails
-      }
-      
-      // Make data globally available
-      window.benchmarkTree = benchmarkTree;
-      window.originalRowData = rowData;
-      window.filterOptions = filterOptions;
-      window.benchmarkMetadata = benchmarkMetadata;
-      
-      window.benchmarkIds = benchmarkIds;
-      window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
-      window.benchmarkDataMetaMap    = JSON.parse('{{ benchmarkDataMetaMap|escapejs }}');
-      window.benchmarkMetricMetaMap  = JSON.parse('{{ benchmarkMetricMetaMap|escapejs }}');
-
-      const ranges = filterOptions || {};
-      console.log('🔍 Range debugging:', {
-        filterOptions: !!filterOptions,
-        parameterRanges: !!filterOptions?.parameter_ranges,
-        sizeRanges: !!filterOptions?.size_ranges,
-        stimuliRanges: !!filterOptions?.stimuli_ranges,
-        ranges: ranges,
-        parameterRangesMax: ranges.parameter_ranges?.max,
-        sizeRangesMax: ranges.size_ranges?.max,
-        stimuliRangesMax: ranges.stimuli_ranges?.max
-      });
-      
-      if (ranges.parameter_ranges?.max) {
-        document.getElementById('paramCountMin').max = ranges.parameter_ranges.max;
-        document.getElementById('paramCountMax').max = ranges.parameter_ranges.max;
-        document.getElementById('paramCountMax').value = ranges.parameter_ranges.max;
-        
-        // Update slider container data attributes - EXACTLY like old file
-        const paramSliderContainer = document.querySelector('#paramCountMin').closest('.filter-group')?.querySelector('.slider-container');
-        if (paramSliderContainer) {
-          paramSliderContainer.dataset.max = ranges.parameter_ranges.max;
-          const maxHandle = paramSliderContainer.querySelector('.handle-max');
-          if (maxHandle) {
-            maxHandle.dataset.value = ranges.parameter_ranges.max;
-          }
-        }
-      }
-      if (ranges.size_ranges?.max) {
-        document.getElementById('modelSizeMin').max = ranges.size_ranges.max;
-        document.getElementById('modelSizeMax').max = ranges.size_ranges.max;
-        document.getElementById('modelSizeMax').value = ranges.size_ranges.max;
-        
-        // Update slider container data attributes
-        const modelSizeSliderContainer = document.querySelector('#modelSizeMin').closest('.filter-group')?.querySelector('.slider-container');
-        if (modelSizeSliderContainer) {
-          modelSizeSliderContainer.dataset.max = ranges.size_ranges.max;
-          const maxHandle = modelSizeSliderContainer.querySelector('.handle-max');
-          if (maxHandle) {
-            maxHandle.dataset.value = ranges.size_ranges.max;
-          }
-        }
-      }
-      if (ranges.stimuli_ranges?.max) {
-        document.getElementById('stimuliCountMin').max = ranges.stimuli_ranges.max;
-        document.getElementById('stimuliCountMax').max = ranges.stimuli_ranges.max;
-        document.getElementById('stimuliCountMax').value = ranges.stimuli_ranges.max;
-        
-        // Update slider container data attributes
-        const stimuliSliderContainer = document.querySelector('#stimuliCountMin').closest('.filter-group')?.querySelector('.slider-container');
-        if (stimuliSliderContainer) {
-          stimuliSliderContainer.dataset.max = ranges.stimuli_ranges.max;
-          const maxHandle = stimuliSliderContainer.querySelector('.handle-max');
-          if (maxHandle) {
-            maxHandle.dataset.value = ranges.stimuli_ranges.max;
-          }
-        }
-      }
-      
-      // Initialize grid - EXACTLY like old file
-      if (typeof initializeGrid === 'function') {
-        console.log('🏗️ Initializing grid...');
-        initializeGrid(rowData, columnDefs, benchmarkGroups);
-      }
-      
-      // Setup UI elements - EXACTLY like old file
-      const panel = document.getElementById('advancedFiltersPanel');
-      const treeContainer = document.getElementById('benchmarkFilterPanel');
-      const container = document.querySelector('.leaderboard-container');
-      const advancedFilterBtn = document.getElementById('advancedFilterBtn');
-      const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
-      
-      // Render benchmark tree
-      if (typeof renderBenchmarkTree === 'function') {
-        renderBenchmarkTree(treeContainer, benchmarkTree);
-      }
-      
-      if (typeof populateFilterDropdowns === 'function') {
-        populateFilterDropdowns(filterOptions);
-      }
-      
-      if (typeof setupDropdownHandlers === 'function') {
-        setupDropdownHandlers();
-      }
-      
-      if (typeof setupBenchmarkCheckboxes === 'function') {
-        setupBenchmarkCheckboxes(filterOptions);
-      }
-      
-      setTimeout(() => {
-        initializeDualHandleSliders();
-      }, 100);
-      
-      // Initialize benchmark filters from URL or use defaults - EXACTLY like old file
-      setTimeout(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
-                                       urlParams.has('benchmark_species') ||
-                                       urlParams.has('benchmark_tasks') ||
-                                       urlParams.has('public_data_only') ||
-                                       urlParams.has('excluded_benchmarks');
-      
-        // Parse URL filters first (this will set checkbox states if URL params exist)
-        if (typeof parseURLFilters === 'function') {
-          parseURLFilters();
-        }
-        
-        // Always rebuild exclusion set based on current checkbox states
-        window.filteredOutBenchmarks = new Set();
-        const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-        allCheckboxes.forEach(cb => {
-          if (!cb.checked) {
-            window.filteredOutBenchmarks.add(cb.value);
-          }
-        });
-      
-        console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
-      }, 200);
-      
-      // Setup filter action buttons - EXACTLY like old file
-      const resetBtn = document.getElementById('resetAllFiltersBtn');
-      
-      if (resetBtn && typeof resetAllFilters === 'function') {
-        resetBtn.addEventListener('click', () => {
-          resetAllFilters();
-        });
-      }
-      
-      // Setup the reset benchmarks link - EXACTLY like old file
-      setTimeout(() => {
-        const resetLink = document.getElementById('resetBenchmarksLink');
-        if (resetLink) {
-          resetLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Check all checkboxes (include all benchmarks by default)
-            const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
-            allCheckboxes.forEach(cb => {
-              cb.checked = true;  // Check everything including engineering
-            });
-            
-            // Rebuild the exclusion set
-            window.filteredOutBenchmarks = new Set();
-            allCheckboxes.forEach(cb => {
-              if (!cb.checked) {
-                window.filteredOutBenchmarks.add(cb.value);
-              }
-            });
-            
-            // Trigger update
-            if (typeof applyCombinedFilters === 'function') {
-              applyCombinedFilters();
-            }
-          });
-        }
-        
-        // Setup the copy bibtex button
-        const copyBibtexBtn = document.getElementById('copyBibtexBtn');
-        if (copyBibtexBtn) {
-          copyBibtexBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof copyBibtexToClipboard === 'function') {
-              copyBibtexToClipboard();
-            }
-          });
-        }
-      }, 300);
-      
-      // Enhanced layout toggle functionality - EXACTLY like old file
-      // Track the panel visibility state separately from layout mode
-      let isPanelVisible = false;
-      
-      // Check for saved preference and set initial state
-      const savedLayout = localStorage.getItem('leaderboardLayout');
-      if (savedLayout === 'sidebar') {
-        container.classList.add('sidebar-mode');
-        panel.classList.add('hidden'); // Start hidden even in sidebar mode
-        panel.style.display = ''; // Don't force display
-        isPanelVisible = false; // Start with panel hidden
-        updateToggleButton('sidebar');
-      } else {
-        // Default state: horizontal mode with panel hidden
-        container.classList.remove('sidebar-mode');
-        panel.classList.add('hidden');
-        panel.style.display = '';
-        isPanelVisible = false;
-        updateToggleButton('horizontal');
-      }
-      
-      // Function to update toggle button text and icon
-      function updateToggleButton(mode) {
-        const toggleText = layoutToggleBtn?.querySelector('.toggle-text');
-        
-        if ( toggleText) {
-          if (mode === 'sidebar') {
-            toggleText.textContent = 'Full Width Mode';
-          } else {
-            toggleText.textContent = 'Sidebar Mode';
-          }
-        }
-      }
-      
-      // Function to position panel correctly
-      function positionPanel(mode) {
-        if (mode === 'horizontal') {
-          // In horizontal mode, move panel after breadcrumb (before grid)
-          const breadcrumb = document.querySelector('.leaderboard-breadcrumb');
-          if (breadcrumb && breadcrumb.nextSibling !== panel) {
-            breadcrumb.insertAdjacentElement('afterend', panel);
-          }
-        } else {
-          // In sidebar mode, move panel to end (for grid layout)
-          if (container.lastElementChild !== panel) {
-            container.appendChild(panel);
-          }
-        }
-      }
-      
-      // Set initial position
-      positionPanel(savedLayout === 'sidebar' ? 'sidebar' : 'horizontal');
-      
-      layoutToggleBtn?.addEventListener('click', () => {
-        const isSidebar = container.classList.toggle('sidebar-mode');
-        
-        if (isSidebar) {
-          // Switching TO sidebar mode
-          positionPanel('sidebar');
-          panel.classList.remove('hidden');
-          panel.style.display = 'block';
-          isPanelVisible = true;
-          updateToggleButton('sidebar');
-          localStorage.setItem('leaderboardLayout', 'sidebar');
-          container.classList.remove('filters-hidden');
-        } else {
-          // Switching TO horizontal mode
-          positionPanel('horizontal');
-          // Keep panel visible when switching modes
-          panel.classList.remove('hidden');
-          panel.style.display = 'block';
-          isPanelVisible = true;
-          updateToggleButton('horizontal');
-          localStorage.setItem('leaderboardLayout', 'horizontal');
-          container.classList.remove('filters-hidden');
-        }
-      });
-      
-      // Advanced filter button - setup SINGLE event listener
-      if (advancedFilterBtn) {
-        // Clone and replace to remove any existing listeners
-        const newAdvancedFilterBtn = advancedFilterBtn.cloneNode(true);
-        advancedFilterBtn.parentNode.replaceChild(newAdvancedFilterBtn, advancedFilterBtn);
-        
-        newAdvancedFilterBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation(); // Stop event bubbling
-          console.log('Advanced filter button clicked, sidebar mode:', container.classList.contains('sidebar-mode'));
-          
-          if (!container.classList.contains('sidebar-mode')) {
-            // In horizontal mode, toggle the panel
-            isPanelVisible = !isPanelVisible;
-            if (isPanelVisible) {
-              // Force show the panel
-              panel.classList.remove('hidden');
-              panel.style.display = 'block';
-              panel.style.visibility = 'visible';
-              panel.style.opacity = '1';
-              
-              // Remove the debug styling
-              panel.style.border = '';
-              panel.style.zIndex = '';
-              
-              // Double-check it's visible
-              setTimeout(() => {
-                const computedStyle = window.getComputedStyle(panel);
-                console.log('After showing - display:', computedStyle.display);
-                console.log('After showing - visibility:', computedStyle.visibility);
-                console.log('After showing - opacity:', computedStyle.opacity);
-                console.log('Panel offsetHeight:', panel.offsetHeight);
-              }, 10);
-            } else {
-              panel.classList.add('hidden');
-              panel.style.display = '';
-              panel.style.visibility = '';
-              panel.style.opacity = '';
-            }
-            console.log('Panel visibility toggled to:', isPanelVisible);
-            console.log('Panel classes after:', panel.className);
-          } else {
-            // In sidebar mode, also toggle visibility
-            isPanelVisible = !isPanelVisible;
-            if (isPanelVisible) {
-              panel.classList.remove('hidden');
-              panel.style.display = 'block';
-              container.classList.remove('filters-hidden');
-            } else {
-              panel.classList.add('hidden');
-              panel.style.display = '';
-              container.classList.add('filters-hidden');
-            }
-          }
-        });
-      }
-      
-      // Call parseURLFilters one more time to ensure filters are applied after all setup
-      // MOVED TO A LONGER DELAY to avoid conflicts
-      setTimeout(() => {
-        if (typeof parseURLFilters === 'function') {
-          console.log('Calling parseURLFilters...');
-          parseURLFilters();
-          // After parseURLFilters, check if panel state is still correct
-          if (!container.classList.contains('sidebar-mode') && !isPanelVisible) {
-            panel.classList.add('hidden');
-            console.log('Re-hiding panel after parseURLFilters');
-          }
-        }
-      }, 500); // Increased delay
-      
-    } catch (error) {
-      console.error('💥 Error during initialization:', error);
-    }
-  });
+    window.DJANGO_DATA = {
+      row_data: '{{ row_data|escapejs }}',
+      column_defs: '{{ column_defs|escapejs }}',
+      benchmark_groups: '{{ benchmark_groups|escapejs }}',
+      benchmark_tree: '{{ benchmark_tree|escapejs }}',
+      filter_options: '{{ filter_options|escapejs }}',
+      benchmark_metadata: '{{ benchmark_metadata|escapejs }}',
+      benchmark_ids: '{{ benchmark_ids|escapejs }}',
+      model_metadata_map: '{{ model_metadata_map|escapejs }}',
+      benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
+      benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
+      benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
+    };
   </script>
+
+  {# Load initialization script that handles the Django data #}
+  <script src="{% static 'benchmarks/js/leaderboard/core/template-initialization.js' %}"></script>
 {% endblock %}

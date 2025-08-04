@@ -1,20 +1,17 @@
 // Search functionality for leaderboard filtering
 
-// Get searchable text from a row - EXACTLY like original
+// Get searchable text from a row
 function getSearchableText(rowData) {
   const model = rowData.model || {};
   const searchFields = [
     model.name || '',
     model.submitter || ''
-    // Future: Add metadata fields here when needed
-    // rowData.metadata?.architecture || '', // Example: architecture: transformer
-    // rowData.metadata?.model_family || ''
   ];
   
   return searchFields.join(' ').toLowerCase();
 }
 
-// Parse search query with logical operators (OR, AND, NOT) - EXACTLY like original
+// Parse search query with logical operators (OR, AND, NOT)
 function parseSearchQuery(query) {
   if (!query.trim()) return null;
   
@@ -50,7 +47,7 @@ function parseSearchQuery(query) {
   };
 }
 
-// Execute parsed search query against searchable text - EXACTLY like original
+// Execute parsed search query against searchable text
 function executeSearchQuery(parsedQuery, searchableText) {
   if (!parsedQuery) return true;
   
@@ -72,12 +69,9 @@ function executeSearchQuery(parsedQuery, searchableText) {
   return evaluateNode(parsedQuery);
 }
 
-// Setup search input handlers - uses same pattern as original initializeGrid
+// Setup search input handlers
 function setupSearchHandlers() {
-  // This will be called from initializeGrid in the main file
-  // The original connects search directly in initializeGrid()
-  
-  // Connect the search input with logical operators - EXACTLY like original
+  // Connect the search input with logical operators
   const searchInput = document.getElementById('modelSearchInput');
   if (searchInput && window.globalGridApi) {
     // Remove any existing listeners
@@ -92,12 +86,8 @@ function setupSearchHandlers() {
       // Use external filter for logical search
       if (typeof window.globalGridApi.onFilterChanged === 'function') {
         window.globalGridApi.onFilterChanged();
-      } else {
-        console.warn('onFilterChanged not available on gridApi');
       }
     });
-  } else {
-    console.error('Search input not found or grid API not available');
   }
 }
 

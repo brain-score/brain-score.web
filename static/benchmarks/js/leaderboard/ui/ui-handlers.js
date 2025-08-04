@@ -2,7 +2,6 @@
 
 // Setup all UI handlers
 function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
-  console.log('🎛️ Setting up UI handlers...');
   
   // Advanced filters panel toggle
   if (advancedFilterBtn && panel) {
@@ -25,9 +24,7 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
         }
       }
     });
-    console.log('✅ Advanced filters button handler set up');
   } else {
-    console.warn('⚠️ Advanced filters button or panel not found');
   }
   
   // Layout toggle button
@@ -42,19 +39,16 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
         if (toggleText) toggleText.textContent = 'Normal Mode';
       }
     });
-    console.log('✅ Layout toggle button handler set up');
   }
   
   // Reset all filters button
   const resetAllFiltersBtn = document.getElementById('resetAllFiltersBtn');
   if (resetAllFiltersBtn) {
     resetAllFiltersBtn.addEventListener('click', function() {
-      console.log('Reset all filters clicked');
       if (typeof window.resetAllFilters === 'function') {
         window.resetAllFilters();
       }
     });
-    console.log('✅ Reset all filters button handler set up');
   }
   
   // Reset benchmarks link
@@ -62,7 +56,6 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
   if (resetBenchmarksLink) {
     resetBenchmarksLink.addEventListener('click', function(e) {
       e.preventDefault();
-      console.log('Reset benchmarks link clicked');
       
       // Check all benchmark checkboxes
       const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
@@ -80,29 +73,23 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
         window.applyCombinedFilters(false, true);
       }
     });
-    console.log('✅ Reset benchmarks link handler set up');
   }
   
-  console.log('✅ All UI handlers set up successfully');
 }
 
 // Initialize filters from URL parameters or set defaults
 function initializeFilters() {
-  console.log('🔧 Initializing filters...');
   
   // Try to parse URL filters first
   if (typeof window.LeaderboardURLState?.parseURLFilters === 'function') {
     try {
       window.LeaderboardURLState.parseURLFilters();
-      console.log('✅ URL filters parsed successfully');
     } catch (e) {
-      console.warn('⚠️ Error parsing URL filters:', e);
     }
   }
   
   // If no URL filters, ensure filters are in default state
   if (!window.activeFilters) {
-    console.log('📝 Setting default filter state...');
     window.activeFilters = {
       architecture: [],
       model_family: [],
@@ -134,7 +121,6 @@ function initializeFilters() {
     }, 100);
   }
   
-  console.log('✅ Filters initialized successfully');
 }
 
 // Export functions for use by other modules
@@ -147,5 +133,3 @@ window.LeaderboardUIHandlers = {
 window.setupUIHandlers = setupUIHandlers;
 window.initializeFilters = initializeFilters;
 
-// Log successful module load
-console.log('📦 LeaderboardUIHandlers module loaded successfully');
