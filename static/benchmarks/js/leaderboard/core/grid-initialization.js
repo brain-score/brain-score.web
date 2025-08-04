@@ -240,32 +240,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     console.error('AG Grid not found on window.agGrid');
   }
 
-  if (gridApi) {
-    const searchInput = document.getElementById('modelSearchInput');
-    if (searchInput) {
-      const newInput = searchInput.cloneNode(true);
-      searchInput.parentNode.replaceChild(newInput, searchInput);
-
-      newInput.addEventListener('input', function () {
-        const searchText = this.value;
-        // Parse search query with logical operators (OR, AND, NOT)
-        if (window.LeaderboardSearch?.parseSearchQuery) {
-          window.currentSearchQuery = window.LeaderboardSearch.parseSearchQuery(searchText);
-        } else {
-          window.currentSearchQuery = searchText ? { original: searchText } : null;
-        }
-        
-        if (typeof gridApi.onFilterChanged === 'function') {
-          gridApi.onFilterChanged();
-        } else {
-          console.warn('onFilterChanged not available on gridApi');
-        }
-      });
-    } else {
-      console.error('Search input not found');
-    }
-  } else {
-    console.error('Grid API not available after initialization');
+  // Search functionality is handled by the LeaderboardSearch module
+  if (typeof window.LeaderboardSearch?.setupSearchHandlers === 'function') {
+    window.LeaderboardSearch.setupSearchHandlers();
   }
 }
 

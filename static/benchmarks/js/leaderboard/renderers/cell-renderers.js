@@ -131,6 +131,3 @@ window.LeaderboardRenderers = {
   createRunnableStatusColumn,
   modelComparator
 };
-
-// Log successful module load
-console.log('📦 LeaderboardRenderers module loaded successfully');

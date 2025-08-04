@@ -81,31 +81,15 @@ function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
     // More comprehensive property checking
     const nodeId = node.id || node.identifier || node.field || node.name;
     
-    if (!nodeId) {
-      console.warn('🚨 Node missing identifier:', node);
-      return;
-    }
-    
     const children = node.children ? 
       node.children.map(child => child.id || child.identifier || child.field || child.name).filter(Boolean) : 
       [];
-      
-    console.log(`🔧 Processing node ${index}:`, {
-      nodeId,
-      childrenCount: children.length,
-      children: children.slice(0, 3)
-    });
     
     hierarchyMap.set(nodeId, children);
     
     if (node.children && node.children.length > 0) {
       buildHierarchyFromTree(node.children, hierarchyMap);
     }
-  });
-  
-  console.log('🔧 buildHierarchyFromTree completed:', {
-    finalMapSize: hierarchyMap.size,
-    entries: Array.from(hierarchyMap.entries()).slice(0, 5)
   });
   
   return hierarchyMap;

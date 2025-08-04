@@ -117,7 +117,7 @@ function modelComparator(a, b) {
 // ScoreCellRenderer
 function ScoreCellRenderer() {}
 ScoreCellRenderer.prototype.init = function(params) {
-  // grab the raw object off your row
+  // grab the raw object off row
   const field = params.colDef.field;
   const cellObj = params.data[field] || {};
 
@@ -163,21 +163,18 @@ window.currentSearchQuery = null;
 // SEARCH FUNCTIONALITY
 // =====================================
 
-// Get searchable text from a row - EXACTLY like original
+// Get searchable text from a row
 function getSearchableText(rowData) {
   const model = rowData.model || {};
   const searchFields = [
     model.name || '',
     model.submitter || ''
-    // Future: Add metadata fields here when needed
-    // rowData.metadata?.architecture || '', // Example: architecture: transformer
-    // rowData.metadata?.model_family || ''
   ];
   
   return searchFields.join(' ').toLowerCase();
 }
 
-// Parse search query with logical operators (OR, AND, NOT) - EXACTLY like original
+// Parse search query with logical operators (OR, AND, NOT)
 function parseSearchQuery(query) {
   if (!query.trim()) return null;
   
@@ -213,7 +210,7 @@ function parseSearchQuery(query) {
   };
 }
 
-// Execute parsed search query against searchable text - EXACTLY like original
+// Execute parsed search query against searchable text
 function executeSearchQuery(parsedQuery, searchableText) {
   if (!parsedQuery) return true;
   
@@ -249,7 +246,6 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     col.colId = col.field;
 
     // Columns are sortable by default via defaultColDef
-
     // Set up model column for sorting (search handled by external filter)
     if (col.field === 'model') {
       col.comparator = modelComparator;
@@ -390,7 +386,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
       
-      // Ensure filtered score column starts hidden (clean initial state) - EXACTLY like old file
+      // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
@@ -423,7 +419,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   }
 
   if (gridApi) {
-    // Connect the search input with logical operators - EXACTLY like original
+    // Connect the search input with logical operators
     const searchInput = document.getElementById('modelSearchInput');
     if (searchInput) {
       // Remove any existing listeners
@@ -643,6 +639,3 @@ window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
 window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
 window.renderBenchmarkTree = renderBenchmarkTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
-
-// Log successful module load
-console.log('📦 Monolithic leaderboard file loaded successfully');

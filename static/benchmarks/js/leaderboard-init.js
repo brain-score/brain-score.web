@@ -2,8 +2,6 @@
 // This module handles the initialization of the leaderboard with all its components
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 DOM loaded, starting leaderboard initialization...');
-  
   try {
     // Parse data from Django template
     let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
@@ -34,26 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const benchmarkGroupsText = benchmarkGroupsEl ? unescapeEscapedJson(benchmarkGroupsEl.textContent.trim()) : '';
       const benchmarkTreeText = benchmarkTreeEl ? unescapeEscapedJson(benchmarkTreeEl.textContent.trim()) : '';
       const filterOptionsText = filterOptionsEl ? unescapeEscapedJson(filterOptionsEl.textContent.trim()) : '';
-      
-      console.log('Raw JSON data lengths:', {
-        rowData: rowDataText.length,
-        columnDefs: columnDefsText.length,
-        benchmarkGroups: benchmarkGroupsText.length,
-        benchmarkTree: benchmarkTreeText.length,
-        filterOptions: filterOptionsText.length
-      });
-      
-      console.log('First 200 chars of rowData:', JSON.stringify(rowDataText.substring(0, 200)));
-      console.log('First 200 chars of columnDefs:', JSON.stringify(columnDefsText.substring(0, 200)));
-      
-      // Check if elements exist
-      console.log('Elements found:', {
-        rowDataEl: !!rowDataEl,
-        columnDefsEl: !!columnDefsEl,
-        benchmarkGroupsEl: !!benchmarkGroupsEl,
-        benchmarkTreeEl: !!benchmarkTreeEl,
-        filterOptionsEl: !!filterOptionsEl
-      });
       
       // Safe JSON parsing with fallbacks
       try {
@@ -136,23 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
       window.benchmarkIds = benchmarkIds;
       window.modelMetadataMap = modelMetadataMap;
       window.benchmarkMetadataMap = benchmarkMetadataMap;
-      
-      // Debug the benchmark tree structure
-      console.log('🌳 BenchmarkTree structure:', {
-        length: benchmarkTree?.length,
-        firstFew: benchmarkTree?.slice(0, 3)?.map(node => ({
-          id: node.id || node.identifier,
-          name: node.name,
-          childrenCount: node.children?.length || 0,
-          firstChildIds: node.children?.slice(0, 3)?.map(child => child.id || child.identifier)
-        }))
-      });
-      
-      // Debug: Look for average_vision_v0 specifically
-      const avgVisionNode = benchmarkTree?.find(node => 
-        (node.id === 'average_vision_v0' || node.identifier === 'average_vision_v0')
-      );
-      console.log('🎯 Found average_vision_v0 node:', avgVisionNode);
       
       // Initialize global state objects early
       if (!window.activeFilters) {
@@ -245,8 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Round up to reasonable increments and add some buffer
         calculatedRanges.max_param_count = Math.ceil(maxParamCount / 10) * 10 + 10;
         calculatedRanges.max_model_size = Math.ceil(maxModelSize / 100) * 100 + 100;
-        
-        console.log('📊 Calculated ranges from data:', calculatedRanges);
       }
       
       // Calculate max stimuli count from benchmark metadata
@@ -263,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (maxStimuliCount > 0) {
           calculatedRanges.max_stimuli_count = Math.ceil(maxStimuliCount / 100) * 100 + 100;
-          console.log('📊 Calculated max stimuli count from benchmark metadata:', calculatedRanges.max_stimuli_count);
         }
       }
       
@@ -274,9 +232,6 @@ document.addEventListener('DOMContentLoaded', function() {
         max_model_size: ranges.max_model_size || calculatedRanges.max_model_size,
         max_stimuli_count: ranges.max_stimuli_count || calculatedRanges.max_stimuli_count
       };
-      
-      console.log('📊 Final parameter ranges to use:', finalRanges);
-      console.log('📊 Original filterOptions ranges:', ranges);
       
       // Update parameter count range
       const paramCountMin = document.getElementById('paramCountMin');
@@ -295,8 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
             maxHandle.dataset.value = finalRanges.max_param_count;
           }
         }
-        
-        console.log('✅ Set param count range to:', finalRanges.max_param_count);
       }
       
       // Update model size range
@@ -316,8 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
             maxHandle.dataset.value = finalRanges.max_model_size;
           }
         }
-        
-        console.log('✅ Set model size range to:', finalRanges.max_model_size);
       }
       
       // Update stimuli count range
@@ -337,135 +288,13 @@ document.addEventListener('DOMContentLoaded', function() {
             maxHandle.dataset.value = finalRanges.max_stimuli_count;
           }
         }
-        
-        console.log('✅ Set stimuli count range to:', finalRanges.max_stimuli_count);
       }
-
-      console.log('✅ All data loaded successfully');
-      console.log('rowData count:', rowData.length);
-      console.log('columnDefs count:', columnDefs.length);
     } catch (e) {
-      console.error('❌ Error parsing data:', e);
-      console.warn('🧪 Using test data since Django template data is not available');
-      
-      // Provide test data for development/debugging
-      rowData = [
-        {
-          model: { name: 'Test Model 1', id: 'test1', submitter: 'Test User' },
-          rank: 1,
-          runnable_status: 'functional',
-          average_vision_v0: { value: 0.85, color: 'rgba(0, 255, 0, 0.5)' },
-          metadata: { runnable: true, architecture: 'ResNet', param_count: 25.6 }
-        },
-        {
-          model: { name: 'Test Model 2', id: 'test2', submitter: 'Another User' },
-          rank: 2,
-          runnable_status: 'issues',
-          average_vision_v0: { value: 0.75, color: 'rgba(255, 165, 0, 0.5)' },
-          metadata: { runnable: false, architecture: 'VGG', param_count: 138.0 }
-        }
-      ];
-      
-      columnDefs = [
-        { 
-          headerName: 'Model', 
-          field: 'model', 
-          width: 200, 
-          cellRenderer: 'modelCellRenderer',
-          pinned: 'left'
-        },
-        { 
-          headerName: 'Rank', 
-          field: 'rank', 
-          width: 80,
-          pinned: 'left'
-        },
-        { 
-          headerName: 'Average Vision', 
-          field: 'average_vision_v0', 
-          width: 150, 
-          cellRenderer: 'scoreCellRenderer',
-          headerComponent: 'expandableHeaderComponent',
-          context: { benchmarkId: 'average_vision_v0' }
-        }
-      ];
-      
-      benchmarkGroups = {
-        'average_vision_v0': ['neural_vision_v0', 'behavior_vision_v0']
-      };
-      
-      benchmarkTree = [
-        {
-          identifier: 'average_vision_v0',
-          name: 'Average Vision',
-          children: []
-        }
-      ];
-      
-      filterOptions = {
-        architectures: ['ResNet', 'VGG'],
-        model_families: ['CNN'],
-        parameter_ranges: {
-          max_param_count: 200,
-          max_model_size: 1000,
-          max_stimuli_count: 1000
-        }
-      };
-      
-      window.benchmarkTree = benchmarkTree;
-      window.originalRowData = rowData;
-      window.filterOptions = filterOptions;
-      window.benchmarkMetadata = [];
-      window.benchmarkIds = {};
-      window.modelMetadataMap = {};
-      window.benchmarkMetadataMap = {};
-      window.benchmarkStimuliMetaMap = {};
-      window.benchmarkDataMetaMap = {};
-      window.benchmarkMetricMetaMap = {};
-      
-      // Initialize global state objects for test data too
-      if (!window.activeFilters) {
-        window.activeFilters = {
-          architecture: [],
-          model_family: [],
-          training_dataset: [],
-          task_specialization: [],
-          min_param_count: null,
-          max_param_count: null,
-          min_model_size: null,
-          max_model_size: null,
-          min_score: null,
-          max_score: null,
-          runnable_only: false,
-          benchmark_regions: [],
-          benchmark_species: [],
-          benchmark_tasks: [],
-          public_data_only: false
-        };
-      }
-      
-      if (!window.filteredOutBenchmarks) {
-        window.filteredOutBenchmarks = new Set();
-      }
-      
-      if (!window.columnExpansionState) {
-        window.columnExpansionState = new Map();
-      }
-      
-      console.log('✅ Test data loaded successfully');
+      console.error('Error parsing data:', e);
+      throw new Error('Failed to parse required leaderboard data');
     }
     
-    // Range inputs already set up before grid initialization
-    
-    // Initialize the grid - EXACTLY like original monolithic file
-    console.log('🏗️ Initializing grid...');
-    console.log('Data summary:', {
-      rowDataCount: rowData.length,
-      columnDefsCount: columnDefs.length,
-      hasData: rowData.length > 0 && columnDefs.length > 0
-    });
-    
-    // Always call initializeGrid directly - just like the original did
+    // Initialize the grid
     initializeGrid(rowData, columnDefs, benchmarkGroups);
     
     // Setup UI components
@@ -480,53 +309,32 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Update count badges after everything is loaded
       setTimeout(() => {
-        console.log('🔄 Updating count badges...');
-        updateAllCountBadges(); // Call directly like original
+        updateAllCountBadges();
         
-        // Force refresh count badges even if the update function doesn't work
+        // Force refresh count badges
         setTimeout(() => {
           const countBadges = document.querySelectorAll('[data-parent-field]');
-          console.log('🔍 Found count badges:', countBadges.length);
           countBadges.forEach(badge => {
             const parentField = badge.dataset.parentField;
             const countElement = badge.querySelector('.count-value');
-            console.log('🔍 Badge details:', { parentField, hasCountElement: !!countElement });
             
             if (countElement && parentField) {
-              console.log('🔍 About to call getFilteredLeafCount for:', parentField);
-              console.log('🔍 Current state:', {
-                benchmarkTree: !!window.benchmarkTree,
-                filteredOutBenchmarks: !!window.filteredOutBenchmarks,
-                filteredOutSize: window.filteredOutBenchmarks?.size
-              });
-              const newCount = getFilteredLeafCount(parentField); // Call directly like original
-              console.log('🔄 Updating badge count:', { parentField, newCount });
+              const newCount = getFilteredLeafCount(parentField);
               countElement.textContent = newCount;
             }
           });
         }, 200);
       }, 100);
-      
-      // Debug: Check state after initialization
-      console.log('🔍 Post-initialization state:', {
-        filteredOutBenchmarks: Array.from(window.filteredOutBenchmarks || []),
-        columnExpansionState: Array.from(window.columnExpansionState?.entries() || []),
-        filteredScoreVisible: window.globalGridApi?.getColumn('filtered_score')?.isVisible()
-      });
     }, 200);
     
-    console.log('🎉 Leaderboard initialization complete!');
-    
   } catch (error) {
-    console.error('💥 Error during initialization:', error);
+    console.error('Error during initialization:', error);
   }
 });
 
-// Setup UI components - EXACTLY like original monolithic file setup pattern
+// Setup UI components
 function setupUIComponents(filterOptions, benchmarkTree) {
-  console.log('🎛️ Setting up UI components...');
-  
-  // Setup filter components - call functions directly like original
+  // Setup filter components
   const treeContainer = document.getElementById('benchmarkFilterPanel');
   if (treeContainer) {
     renderBenchmarkTree(treeContainer, benchmarkTree);
@@ -536,26 +344,20 @@ function setupUIComponents(filterOptions, benchmarkTree) {
   setupDropdownHandlers();
   setupBenchmarkCheckboxes(filterOptions);
   
-  // Initialize sliders with small delay like original
+  // Initialize sliders with small delay
   setTimeout(() => {
     initializeDualHandleSliders();
   }, 100);
-  
-  console.log('✅ UI components setup complete');
 }
 
 // Setup event handlers
 function setupEventHandlers() {
-  console.log('🔗 Setting up event handlers...');
-  
   // Advanced filter panel and layout controls
   setupAdvancedFilterPanel();
   setupLayoutControls();
   
   // Filter action buttons
   setupFilterActionButtons();
-  
-  console.log('✅ Event handlers setup complete');
 }
 
 // Setup advanced filter panel
@@ -680,7 +482,7 @@ function setupFilterActionButtons() {
   
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      resetAllFilters(); // Call directly like original
+      resetAllFilters();
     });
   }
   
@@ -698,22 +500,20 @@ function setupFilterActionButtons() {
       window.filteredOutBenchmarks = new Set();
       
       // Trigger update (skip column toggle during initialization)
-      applyCombinedFilters(true); // Call directly like original
+      applyCombinedFilters(true);
     });
   }
   
   if (copyBibtexBtn) {
     copyBibtexBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      copyBibtexToClipboard(); // Call directly like original
+      copyBibtexToClipboard();
     });
   }
 }
 
 // Initialize filters from URL or set defaults
 function initializeFilters() {
-  console.log('🔧 Initializing filters...');
-  
   const urlParams = new URLSearchParams(window.location.search);
   const hasExplicitBenchmarks = urlParams.has('benchmark_regions') ||
                                 urlParams.has('benchmark_species') ||
@@ -721,7 +521,7 @@ function initializeFilters() {
                                 urlParams.has('public_data_only') ||
                                 urlParams.has('excluded_benchmarks');
 
-  // Parse URL filters first - call directly like original
+  // Parse URL filters first
   parseURLFilters();
   
   // If no explicit benchmark filters in URL, use default (include all benchmarks)
@@ -736,8 +536,6 @@ function initializeFilters() {
       window.filteredOutBenchmarks.add(cb.value);
     }
   });
-  
-  console.log('✅ Filters initialized');
 }
 
 // Data extraction utilities for HTML template
@@ -774,5 +572,3 @@ function extractDataFromHTML() {
   
   return data;
 }
-
-console.log('📦 Leaderboard initialization script loaded');

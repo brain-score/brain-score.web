@@ -29,7 +29,7 @@ function populateDropdown(filterId, options) {
   });
 }
 
-// Handle filter option selection - multi-select version like original
+// Handle filter option selection
 function selectFilterOption(filterType, value, optionElement) {
   const dropdown = optionElement.closest('.filter-dropdown');
   const input = dropdown.querySelector('.filter-input');
@@ -60,7 +60,7 @@ function selectFilterOption(filterType, value, optionElement) {
     input.value = '';
   }
 
-  // Don't hide dropdown on selection (allow multiple selections)
+  // Don't hide dropdown on selection
   // Apply filters immediately
   if (typeof window.applyCombinedFilters === 'function') {
     window.applyCombinedFilters();
