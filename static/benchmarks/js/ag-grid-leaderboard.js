@@ -617,7 +617,7 @@ function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
   return [];
 }
 
-// Make all functions available globally - EXACTLY like original monolithic file
+// Make all functions available globally
 window.initializeGrid = initializeGrid;
 window.populateFilterDropdowns = populateFilterDropdowns;
 window.setupDropdownHandlers = setupDropdownHandlers;
