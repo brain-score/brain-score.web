@@ -71,11 +71,10 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                 cache_backend = caches["redis"]
                 if os.getenv("DJANGO_ENV") != "test":
                     logger.error(f"✅ Redis/Valkey cache available for domain {domain}")
-                else:
-                    pass
             except Exception as e:
                 cache_backend = default_cache
-                logger.error(f"❌ Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
+                if os.getenv("DJANGO_ENV") != "test":
+                    logger.error(f"❌ Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
 
             # Grab or initialize version
             version_key = f"cache_version_{domain}"
