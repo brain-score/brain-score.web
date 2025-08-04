@@ -12,6 +12,8 @@ from django.http import JsonResponse, HttpRequest
 import time
 import pickle
 import gzip
+import os
+
 logger = logging.getLogger(__name__)
 
 # Compression utilities for cache
@@ -67,7 +69,10 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             # Try to use Redis cache if available, otherwise fall back to default cache
             try:
                 cache_backend = caches["redis"]
-                logger.error(f"✅ Redis/Valkey cache available for domain {domain}")
+                if os.getenv("DJANGO_ENV") != "test":
+                    logger.error(f"✅ Redis/Valkey cache available for domain {domain}")
+                else:
+                    pass
             except Exception as e:
                 cache_backend = default_cache
                 logger.error(f"❌ Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
