@@ -495,4 +495,4 @@ def ag_grid_leaderboard(request, domain: str):
     context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
 
     # Render the AG-Grid templatearc
-    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-minimal.html', context)
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
