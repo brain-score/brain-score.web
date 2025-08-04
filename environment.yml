@@ -17,3 +17,4 @@ dependencies:
     - colour
     - tqdm
     - requests
+    - django-redis==5.3.0

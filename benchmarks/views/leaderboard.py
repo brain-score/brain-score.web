@@ -4,7 +4,10 @@ import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
 from .index import get_context
+from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
+from django.views.decorators.cache import cache_page
+from django.db.models import Model
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -102,7 +105,7 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
-@cache_get_context(timeout=24 * 60 * 60)
+@cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
 def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     """
     Get processed context data for AG Grid leaderboard.
@@ -426,7 +429,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
-
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
     data_map = {}
@@ -474,25 +476,45 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
-    # Return processed AG Grid context
-    ag_context = {
+    # Minimal cache payload including only include what the frontend actually needs
+    # This can be substantially reduced because there is a lot of duplication in the original context
+    minimal_context = {
+        # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
         'row_data': json.dumps([json_serializable(r) for r in row_data]),
-        'column_defs': json.dumps(column_defs),
-        'benchmark_groups': json.dumps(make_benchmark_groups(context['benchmarks'])),
-        'filter_options': json.dumps(filter_options),
-        'benchmark_metadata': json.dumps(benchmark_metadata_list),
-        'benchmark_tree': json.dumps(build_benchmark_tree([b for b in context['benchmarks'] if b.identifier != 'average_vision_v0'])),
-        'benchmark_ids': json.dumps(benchmark_ids)
+        'column_defs': context['column_defs'],
+        'benchmark_groups': context['benchmark_groups'],
+        'filter_options': context['filter_options'],
+        'benchmark_metadata': context['benchmark_metadata'],
+        'benchmark_tree': context['benchmark_tree'],
+        'benchmark_ids': json.dumps(benchmark_ids),
+        'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
+        'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
+        'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
+        'model_metadata_map': context['model_metadata_map'],
+        
+        # Essential metadata
+        'domain': context['domain'],
+        'has_user': context.get('has_user', False),
+        
+        # Citation info
+        'citation_general_url': context.get('citation_general_url', ''),
+        'citation_general_title': context.get('citation_general_title', ''),
+        'citation_general_bibtex': context.get('citation_general_bibtex', ''),
+        'citation_domain_url': context.get('citation_domain_url', ''),
+        'citation_domain_title': context.get('citation_domain_title', ''),
+        'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
+        
+        # Compare tab data
+        'comparison_data': context.get('comparison_data', '[]'),
     }
-    
-    # Merge with original context
-    context.update(ag_context)
-    return context
 
+    return minimal_context
+
+@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def ag_grid_leaderboard(request, domain: str):
     # 1) Determine user and fetch context
     user = request.user if request.user.is_authenticated else None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
+    context = get_ag_grid_context(user=user, domain=domain, show_public=True)
 
     # Render the AG-Grid templatearc
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)

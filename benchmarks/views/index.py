@@ -11,7 +11,7 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
-from time import time
+
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
 
@@ -34,36 +34,25 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-#@cache_base_model_query(timeout=1 * 15 * 60)  # 15 minutes cache
-# Explore caching entire leaderboard context without any filtering
-# which is then used downstream. Unclear if this has performance benefits.
+
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-
 # Cache the leaderboard HTML page
 # Server-side HTML caching until leaderboard views are introduced.
-@cache_page(24 * 60 * 60)
+@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
     
     # Get the appropriate context based on user authentication
-    start_time = time()
-    if user:
-        # User is authenticated - get personalized context (used for profile views)
-        leaderboard_context = get_context(user=user, domain=domain, show_public=False)
-    else:
-        # No user - get public context
-        leaderboard_context = get_context(domain=domain, show_public=True)
-    end_time = time()
-    print(f"Total time taken to get leaderboard context: {end_time - start_time} seconds")
+    leaderboard_context = get_context(user=user, domain=domain, show_public=True)
    
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
-@cache_get_context(timeout=24 * 60 * 60)
+@cache_get_context(timeout=7 * 24 * 60 * 60, key_prefix="index", use_compression=True)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
