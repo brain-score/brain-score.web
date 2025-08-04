@@ -516,5 +516,5 @@ def ag_grid_leaderboard(request, domain: str):
     user = request.user if request.user.is_authenticated else None
     context = get_ag_grid_context(user=user, domain=domain, show_public=True)
 
-    # Render the AG-Grid template
+    # Render the AG-Grid templatearc
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
