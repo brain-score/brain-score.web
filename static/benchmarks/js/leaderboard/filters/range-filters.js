@@ -3,7 +3,11 @@
 // Initialize all dual-handle range sliders
 function initializeDualHandleSliders() {
   const sliderContainers = document.querySelectorAll('.slider-container');
+
   sliderContainers.forEach(container => {
+    // Skip date sliders (e.g., Wayback)
+    if (container.dataset.type === 'date') return;
+
     initializeDualHandleSlider(container);
   });
 }
@@ -13,43 +17,43 @@ function initializeDualHandleSlider(container) {
   const minHandle = container.querySelector('.handle-min');
   const maxHandle = container.querySelector('.handle-max');
   const range = container.querySelector('.slider-range');
-  
+
   if (!minHandle || !maxHandle || !range) return;
-  
+
   const min = parseFloat(container.dataset.min) || 0;
   const max = parseFloat(container.dataset.max) || 100;
-  
+
   let minValue = parseFloat(minHandle.dataset.value) || min;
   let maxValue = parseFloat(maxHandle.dataset.value) || max;
-  
+
   // Find associated input fields
   const sliderGroup = container.closest('.filter-group');
-  const sliderType = sliderGroup?.querySelector('#paramCountMin') ? 'paramCount' : 
-                     sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' : 
+  const sliderType = sliderGroup?.querySelector('#paramCountMin') ? 'paramCount' :
+                     sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' :
                      sliderGroup?.querySelector('#stimuliCountMin') ? 'stimuliCount' : 'unknown';
-  
+
   const minInput = sliderGroup?.querySelector('.range-input-min');
   const maxInput = sliderGroup?.querySelector('.range-input-max');
-  
+
   function updateSliderPosition() {
     const minPercent = ((minValue - min) / (max - min)) * 100;
     const maxPercent = ((maxValue - min) / (max - min)) * 100;
-    
+
     minHandle.style.left = `${minPercent}%`;
     maxHandle.style.left = `${maxPercent}%`;
-    
+
     range.style.left = `${minPercent}%`;
     range.style.width = `${maxPercent - minPercent}%`;
-    
+
     // Update input fields
     if (minInput) minInput.value = Math.round(minValue);
     if (maxInput) maxInput.value = Math.round(maxValue);
   }
-  
+
   function updateActiveFilters(skipDebounce = false) {
     const filterId = container.closest('.filter-group').id;
-    
-    if (filterId === 'paramCountMin' || filterId === 'paramCountMax' || 
+
+    if (filterId === 'paramCountMin' || filterId === 'paramCountMax' ||
         sliderGroup?.querySelector('#paramCountMin') || sliderGroup?.querySelector('#paramCountMax')) {
       const oldValue = window.activeFilters.max_param_count;
       window.activeFilters.max_param_count = maxValue < max ? maxValue : null;
@@ -74,55 +78,55 @@ function initializeDualHandleSlider(container) {
         skipDebounce
       });
     }
-    
+
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
       console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
       debounceFilterUpdate();
     }
   }
-  
+
   function handleMouseMove(e, handle, isMin) {
     const rect = container.getBoundingClientRect();
     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const value = min + percent * (max - min);
-    
+
     if (isMin) {
       minValue = Math.min(value, maxValue - 1);
     } else {
       maxValue = Math.max(value, minValue + 1);
     }
-    
+
     updateSliderPosition();
     updateActiveFilters();
   }
-  
+
   function addMouseListeners(handle, isMin) {
     let isDragging = false;
-    
+
     handle.addEventListener('mousedown', (e) => {
       isDragging = true;
       document.addEventListener('mousemove', mouseMoveHandler);
       document.addEventListener('mouseup', mouseUpHandler);
       e.preventDefault();
     });
-    
+
     function mouseMoveHandler(e) {
       if (isDragging) {
         handleMouseMove(e, handle, isMin);
       }
     }
-    
+
     function mouseUpHandler() {
       isDragging = false;
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
     }
   }
-  
+
   addMouseListeners(minHandle, true);
   addMouseListeners(maxHandle, false);
-  
+
   // Input field synchronization
   if (minInput) {
     minInput.addEventListener('input', () => {
@@ -132,7 +136,7 @@ function initializeDualHandleSlider(container) {
       updateActiveFilters();
     });
   }
-  
+
   if (maxInput) {
     maxInput.addEventListener('input', () => {
       const value = parseFloat(maxInput.value) || max;
@@ -141,17 +145,20 @@ function initializeDualHandleSlider(container) {
       updateActiveFilters();
     });
   }
-  
+
   // Initial position - don't trigger filters during setup
   updateSliderPosition();
-  
+
   // Update active filters without debouncing during initial setup
   updateActiveFilters(true);
 }
 
 // Debounced filter update
 let filterUpdateTimeout;
-function debounceFilterUpdate() {
+
+function debounceFilterUpdate(caller = "unknown") {
+  console.log(`${new Date().toISOString()} 🔁 debounceFilterUpdate triggered by: ${caller}`);
+
   clearTimeout(filterUpdateTimeout);
   filterUpdateTimeout = setTimeout(() => {
     if (typeof window.applyCombinedFilters === 'function') {
@@ -164,17 +171,17 @@ function debounceFilterUpdate() {
 function resetSliderUI() {
   const ranges = window.filterOptions || {};
   const sliderContainers = document.querySelectorAll('.slider-container');
-  
+
   sliderContainers.forEach(container => {
     const minHandle = container.querySelector('.handle-min');
     const maxHandle = container.querySelector('.handle-max');
     const range = container.querySelector('.slider-range');
-    
+
     if (!minHandle || !maxHandle || !range) return;
-    
+
     const min = parseFloat(container.dataset.min) || 0;
     let max = parseFloat(container.dataset.max) || 100;
-    
+
     // Use correct max values from filterOptions
     const sliderGroup = container.closest('.filter-group');
     if (sliderGroup?.querySelector('#paramCountMin') && ranges.parameter_ranges?.max) {
@@ -187,21 +194,21 @@ function resetSliderUI() {
       max = ranges.stimuli_ranges.max;
       container.dataset.max = max;
     }
-    
+
     // Reset to full range
     minHandle.style.left = '0%';
     maxHandle.style.left = '100%';
     range.style.left = '0%';
     range.style.width = '100%';
-    
+
     // Update data attributes
     minHandle.dataset.value = min;
     maxHandle.dataset.value = max;
-    
+
     // Update input fields
     const minInput = sliderGroup?.querySelector('.range-input-min');
     const maxInput = sliderGroup?.querySelector('.range-input-max');
-    
+
     if (minInput) minInput.value = min;
     if (maxInput) maxInput.value = max;
   });
@@ -211,51 +218,168 @@ function resetSliderUI() {
 function getRangeValues(filterId) {
   const container = document.querySelector(`#${filterId}`)?.closest('.filter-group')?.querySelector('.slider-container');
   if (!container) return null;
-  
+
   const minHandle = container.querySelector('.handle-min');
   const maxHandle = container.querySelector('.handle-max');
-  
+
   if (!minHandle || !maxHandle) return null;
-  
+
   return {
     min: parseFloat(minHandle.dataset.value) || 0,
     max: parseFloat(maxHandle.dataset.value) || 100
   };
 }
 
+// Initialize a dual-handle range slider for date filters
+function initializeDualDateSlider(container) {
+  const minHandle = container.querySelector('.handle-min');
+  const maxHandle = container.querySelector('.handle-max');
+  const range = container.querySelector('.slider-range');
+
+  if (!minHandle || !maxHandle || !range) return;
+
+  // Convert dataset min/max to epoch
+  const minDate = new Date(container.dataset.min);
+  const maxDate = new Date(container.dataset.max);
+
+  const minEpoch = minDate.getTime();
+  const maxEpoch = maxDate.getTime();
+
+  let currentMin = new Date("2024-01-01T00:00:00Z").getTime();
+  let currentMax = new Date("2025-12-31T00:00:00Z").getTime();
+
+  const minInput = container.closest('.filter-group')?.querySelector('#waybackDateMin');
+  const maxInput = container.closest('.filter-group')?.querySelector('#waybackDateMax');
+
+  function epochToPercent(epoch) {
+    return ((epoch - minEpoch) / (maxEpoch - minEpoch)) * 100;
+  }
+
+  function percentToEpoch(percent) {
+    return minEpoch + percent * (maxEpoch - minEpoch) / 100;
+  }
+
+  function updateSliderPosition() {
+    const minPercent = epochToPercent(currentMin);
+    const maxPercent = epochToPercent(currentMax);
+
+    minHandle.style.left = `${minPercent}%`;
+    maxHandle.style.left = `${maxPercent}%`;
+
+    range.style.left = `${minPercent}%`;
+    range.style.width = `${maxPercent - minPercent}%`;
+
+    if (minInput) minInput.value = formatDateInput(new Date(currentMin));
+    if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
+  }
+
+  function updateActiveDateFilters() {
+    console.log("📅 Wayback date slider triggering debounceFilterUpdate");
+    window.activeFilters.wayback_min_date = new Date(currentMin);
+    window.activeFilters.wayback_max_date = new Date(currentMax);
+    debounceFilterUpdate("wayback-slider");
+  }
+
+  function handleMouseMove(e, isMin) {
+    const rect = container.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const rawDate = new Date(percentToEpoch(percent * 100));
+    rawDate.setUTCHours(0, 0, 0, 0);  // snap to midnight UTC
+    const epoch = rawDate.getTime();
+
+    if (isMin) {
+      currentMin = Math.min(epoch, currentMax - 86400000); // 1 day in ms
+    } else {
+      currentMax = Math.max(epoch, currentMin + 86400000);
+    }
+
+    updateSliderPosition();
+    updateActiveDateFilters();
+  }
+
+  function addMouseListeners(handle, isMin) {
+    let isDragging = false;
+
+    const mouseMoveHandler = (e) => {
+      if (isDragging) handleMouseMove(e, isMin);
+    };
+
+    const mouseUpHandler = () => {
+      isDragging = false;
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+    };
+
+    handle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+      e.preventDefault();
+    });
+  }
+
+  addMouseListeners(minHandle, true);
+  addMouseListeners(maxHandle, false);
+
+  if (minInput) {
+    minInput.addEventListener('input', () => {
+      const val = new Date(minInput.value).getTime();
+      currentMin = Math.max(minEpoch, Math.min(val, currentMax - 86400000));
+      updateSliderPosition();
+      updateActiveDateFilters();
+    });
+  }
+
+  if (maxInput) {
+    maxInput.addEventListener('input', () => {
+      const val = new Date(maxInput.value).getTime();
+      currentMax = Math.min(maxEpoch, Math.max(val, currentMin + 86400000));
+      updateSliderPosition();
+      updateActiveDateFilters();
+    });
+  }
+
+  // Initial input sync from slider state
+  if (minInput) minInput.value = formatDateInput(new Date(currentMin));
+  if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
+
+  // Initial rendering of slider and filters
+  updateSliderPosition();
+  updateActiveDateFilters();
+}
 // Set range values for a specific filter
 function setRangeValues(filterId, minVal, maxVal) {
   const container = document.querySelector(`#${filterId}`)?.closest('.filter-group')?.querySelector('.slider-container');
   if (!container) return;
-  
+
   const minHandle = container.querySelector('.handle-min');
   const maxHandle = container.querySelector('.handle-max');
   const range = container.querySelector('.slider-range');
-  
+
   if (!minHandle || !maxHandle || !range) return;
-  
+
   const min = parseFloat(container.dataset.min) || 0;
   const max = parseFloat(container.dataset.max) || 100;
-  
+
   const minValue = Math.max(min, Math.min(minVal, max));
   const maxValue = Math.max(min, Math.min(maxVal, max));
-  
+
   minHandle.dataset.value = minValue;
   maxHandle.dataset.value = maxValue;
-  
+
   const minPercent = ((minValue - min) / (max - min)) * 100;
   const maxPercent = ((maxValue - min) / (max - min)) * 100;
-  
+
   minHandle.style.left = `${minPercent}%`;
   maxHandle.style.left = `${maxPercent}%`;
   range.style.left = `${minPercent}%`;
   range.style.width = `${maxPercent - minPercent}%`;
-  
+
   // Update input fields
   const sliderGroup = container.closest('.filter-group');
   const minInput = sliderGroup?.querySelector('.range-input-min');
   const maxInput = sliderGroup?.querySelector('.range-input-max');
-  
+
   if (minInput) minInput.value = Math.round(minValue);
   if (maxInput) maxInput.value = Math.round(maxValue);
 }
@@ -264,6 +388,7 @@ function setRangeValues(filterId, minVal, maxVal) {
 window.LeaderboardRangeFilters = {
   initializeDualHandleSliders,
   initializeDualHandleSlider,
+  initializeDualDateSlider,
   resetSliderUI,
   getRangeValues,
   setRangeValues,

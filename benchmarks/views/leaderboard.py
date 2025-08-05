@@ -9,6 +9,7 @@ from ..utils import cache_get_context
 logger = logging.getLogger(__name__)
 import pytz
 from datetime import datetime
+import os
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
@@ -451,8 +452,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     if all_timestamps:
                 filter_options['datetime_range'] = {
-                    'min_timestamp': min(all_timestamps).isoformat(),
-                    'max_timestamp': max(all_timestamps).isoformat()
+                    'min': min(all_timestamps).isoformat(),
+                    'max': max(all_timestamps).isoformat()
                 }
 
 
@@ -524,5 +525,59 @@ def ag_grid_leaderboard(request, domain: str):
     user = request.user if request.user.is_authenticated else None
     context = get_ag_grid_context(user=user, domain=domain, show_public=(user is None))
 
+    save_ag_grid_context_to_files(context)
+
     # Render the AG-Grid templatearc
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-minimal.html', context)
+
+def save_ag_grid_context_to_files(context):
+   """
+   Save the AG Grid context data to individual JSON files.
+   """
+   output_dir = "ag_grid_exports"
+   # Create output directory if it doesn't exist
+   os.makedirs(output_dir, exist_ok=True)
+
+   # Define the data to save and their corresponding filenames
+   data_to_save = {
+       'row_data.json': context.get('row_data'),
+       'column_defs.json': context.get('column_defs'),
+    #    'benchmark_groups.json': context.get('benchmark_groups'),
+       'filter_options.json': context.get('filter_options'),
+    #    'benchmark_metadata.json': context.get('benchmark_metadata'),
+    #    'benchmark_tree.json': context.get('benchmark_tree'),
+    #    'benchmark_ids.json': context.get('benchmark_ids'),
+    #    'benchmark_stimuli_meta_map.json': context.get('benchmarkStimuliMetaMap'),
+    #    'benchmark_data_meta_map.json': context.get('benchmarkDataMetaMap'),
+    #    'benchmark_metric_meta_map.json': context.get('benchmarkMetricMetaMap'),
+    #    'model_metadata_map.json': context.get('model_metadata_map')
+   }
+
+   saved_files = {}
+
+   # Save each data structure to a separate file
+   for filename, data in data_to_save.items():
+       if data is not None:
+           file_path = os.path.join(output_dir, filename)
+
+           # If data is already JSON string, parse it first for pretty printing
+           if isinstance(data, str):
+               try:
+                   parsed_data = json.loads(data)
+                   with open(file_path, 'w', encoding='utf-8') as f:
+                       json.dump(parsed_data, f, indent=2, ensure_ascii=False)
+               except json.JSONDecodeError:
+                   # If it's not valid JSON, save as-is
+                   with open(file_path, 'w', encoding='utf-8') as f:
+                       f.write(data)
+           else:
+               # For non-string data, serialize directly
+               with open(file_path, 'w', encoding='utf-8') as f:
+                   json.dump(data, f, indent=2, ensure_ascii=False)
+
+           saved_files[filename] = file_path
+           logger.info(f"Saved {filename} to {file_path}")
+       else:
+           logger.warning(f"No data found for {filename}")
+
+   return saved_files

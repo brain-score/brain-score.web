@@ -731,6 +731,8 @@ window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
 window.renderBenchmarkTree = renderBenchmarkTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
 window.initializeWaybackDateFilter = initializeWaybackDateFilter;
+window.initializeDualDateSlider = initializeDualDateSlider;
+
 
 
 // Log successful module load
