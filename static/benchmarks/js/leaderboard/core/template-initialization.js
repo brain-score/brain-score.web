@@ -35,6 +35,13 @@ function initializeLeaderboardFromTemplate() {
       return; // Stop if data parsing fails
     }
     
+    // Clear URL parameters for language domain to ensure clean state
+    const domain = window.DJANGO_DATA?.domain || 'vision';
+    if (domain === 'language' && window.location.search) {
+      const newURL = window.location.pathname;
+      window.history.replaceState({}, '', newURL);
+    }
+    
     // Make data globally available
     window.benchmarkTree = benchmarkTree;
     window.originalRowData = rowData;
@@ -49,47 +56,68 @@ function initializeLeaderboardFromTemplate() {
     // Set up range sliders with correct max values
     const ranges = filterOptions || {};
     if (ranges.parameter_ranges?.max) {
-      document.getElementById('paramCountMin').max = ranges.parameter_ranges.max;
-      document.getElementById('paramCountMax').max = ranges.parameter_ranges.max;
-      document.getElementById('paramCountMax').value = ranges.parameter_ranges.max;
+      // Without advanced filters in language, these getElementByIds will be null resulting in console errors
+      const paramCountMin = document.getElementById('paramCountMin');
+      const paramCountMax = document.getElementById('paramCountMax');
+      // Here, and subsequent if statements, we perform a null check to avoid console errors
+      // `if (variable)` is a null check.
+      if (paramCountMin) paramCountMin.max = ranges.parameter_ranges.max;
+      if (paramCountMax) {
+        paramCountMax.max = ranges.parameter_ranges.max;
+        paramCountMax.value = ranges.parameter_ranges.max;
+      }
       
       // Update slider container data attributes
-      const paramSliderContainer = document.querySelector('#paramCountMin').closest('.filter-group')?.querySelector('.slider-container');
-      if (paramSliderContainer) {
-        paramSliderContainer.dataset.max = ranges.parameter_ranges.max;
-        const maxHandle = paramSliderContainer.querySelector('.handle-max');
-        if (maxHandle) {
-          maxHandle.dataset.value = ranges.parameter_ranges.max;
+      if (paramCountMin) {
+        const paramSliderContainer = paramCountMin.closest('.filter-group')?.querySelector('.slider-container');
+        if (paramSliderContainer) {
+          paramSliderContainer.dataset.max = ranges.parameter_ranges.max;
+          const maxHandle = paramSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.parameter_ranges.max;
+          }
         }
       }
     }
     if (ranges.size_ranges?.max) {
-      document.getElementById('modelSizeMin').max = ranges.size_ranges.max;
-      document.getElementById('modelSizeMax').max = ranges.size_ranges.max;
-      document.getElementById('modelSizeMax').value = ranges.size_ranges.max;
+      const modelSizeMin = document.getElementById('modelSizeMin');
+      const modelSizeMax = document.getElementById('modelSizeMax');
+      if (modelSizeMin) modelSizeMin.max = ranges.size_ranges.max;
+      if (modelSizeMax) {
+        modelSizeMax.max = ranges.size_ranges.max;
+        modelSizeMax.value = ranges.size_ranges.max;
+      }
       
       // Update slider container data attributes
-      const modelSizeSliderContainer = document.querySelector('#modelSizeMin').closest('.filter-group')?.querySelector('.slider-container');
-      if (modelSizeSliderContainer) {
-        modelSizeSliderContainer.dataset.max = ranges.size_ranges.max;
-        const maxHandle = modelSizeSliderContainer.querySelector('.handle-max');
-        if (maxHandle) {
-          maxHandle.dataset.value = ranges.size_ranges.max;
+      if (modelSizeMin) {
+        const modelSizeSliderContainer = modelSizeMin.closest('.filter-group')?.querySelector('.slider-container');
+        if (modelSizeSliderContainer) {
+          modelSizeSliderContainer.dataset.max = ranges.size_ranges.max;
+          const maxHandle = modelSizeSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.size_ranges.max;
+          }
         }
       }
     }
     if (ranges.stimuli_ranges?.max) {
-      document.getElementById('stimuliCountMin').max = ranges.stimuli_ranges.max;
-      document.getElementById('stimuliCountMax').max = ranges.stimuli_ranges.max;
-      document.getElementById('stimuliCountMax').value = ranges.stimuli_ranges.max;
+      const stimuliCountMin = document.getElementById('stimuliCountMin');
+      const stimuliCountMax = document.getElementById('stimuliCountMax');
+      if (stimuliCountMin) stimuliCountMin.max = ranges.stimuli_ranges.max;
+      if (stimuliCountMax) {
+        stimuliCountMax.max = ranges.stimuli_ranges.max;
+        stimuliCountMax.value = ranges.stimuli_ranges.max;
+      }
       
       // Update slider container data attributes
-      const stimuliSliderContainer = document.querySelector('#stimuliCountMin').closest('.filter-group')?.querySelector('.slider-container');
-      if (stimuliSliderContainer) {
-        stimuliSliderContainer.dataset.max = ranges.stimuli_ranges.max;
-        const maxHandle = stimuliSliderContainer.querySelector('.handle-max');
-        if (maxHandle) {
-          maxHandle.dataset.value = ranges.stimuli_ranges.max;
+      if (stimuliCountMin) {
+        const stimuliSliderContainer = stimuliCountMin.closest('.filter-group')?.querySelector('.slider-container');
+        if (stimuliSliderContainer) {
+          stimuliSliderContainer.dataset.max = ranges.stimuli_ranges.max;
+          const maxHandle = stimuliSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = ranges.stimuli_ranges.max;
+          }
         }
       }
     }
@@ -116,8 +144,8 @@ function setupUIComponents() {
   const advancedFilterBtn = document.getElementById('advancedFilterBtn');
   const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
   
-  // Render benchmark tree
-  if (typeof renderBenchmarkTree === 'function') {
+  // Render benchmark tree (only if elements exist - they don't exist for language domain)
+  if (typeof renderBenchmarkTree === 'function' && treeContainer) {
     renderBenchmarkTree(treeContainer, window.benchmarkTree);
   }
   

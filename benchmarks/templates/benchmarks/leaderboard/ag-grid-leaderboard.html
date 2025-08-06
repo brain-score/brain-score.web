@@ -24,10 +24,13 @@
         <span class="tutorial-icon">📚</span>
         <span class="text-wrapper">Tutorial</span>
       </button>
+      
+      {% if domain == "vision" %}
       <button id="advancedFilterBtn" style="white-space: nowrap">
         <span class="filter-icon">🔍</span>
         <span class="text-wrapper">Advanced Filters</span>
       </button>
+      {% endif %}
 
       <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard data and plugin metadata">
         <i class="fa-solid fa-download"></i>  Export
@@ -41,6 +44,7 @@
          style="width:100%;height:1500px;overflow-x:auto;">
     </div>
     
+    {% if domain == "vision" %}
     <div id="advancedFiltersPanel" class="advanced-filters hidden">
       <div class="filters-container">
         <!-- Left column: Benchmark filters -->
@@ -214,6 +218,7 @@
         <button id="resetAllFiltersBtn" class="btn-primary">Reset All Filters</button>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -245,7 +250,9 @@
   <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/filters/search-filters.js' %}"></script>
+  {% if domain == "vision" %}
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+  {% endif %}
   <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
@@ -265,7 +272,8 @@
       model_metadata_map: '{{ model_metadata_map|escapejs }}',
       benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
       benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
-      benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
+      benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}',
+      domain: '{{ domain|escapejs }}'
     };
   </script>
 
