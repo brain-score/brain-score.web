@@ -88,7 +88,8 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        path(f'{domain}/', partial(index, domain=domain), name='index'),
+        path(f'{domain}/', partial(leaderboard.ag_grid_leaderboard, domain=domain),
+             name=f'{domain}-leaderboard'),
         path(f'{domain}/leaderboard/', partial(leaderboard.ag_grid_leaderboard, domain=domain),
              name=f'{domain}-leaderboard'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
