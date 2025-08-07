@@ -1,4 +1,5 @@
 {% extends "benchmarks/components/app-view.html" %}
+{% include "partials/ag-grid-leaderboard-fragment.html" %}
 {% load static %}
 
 {% block banner %}
@@ -32,18 +33,12 @@
         <p class="benefits_info is-size-5-mobile">
             Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.
         </p>
-        <p class="benefits_info is-size-5-mobile">
-            Past scores are below. Submissions are located at the bottom.
-        </p>
 
         </form>
-        <button id="download-csv" class="button button-ghost">Download CSV</button>
-        <textarea id="csv-data" style="display:none;">{{ csv_downloadable }}</textarea>
-        <script src="{% static 'js/download_csv.js' %}" defer></script>
     </div>
 
     <div class="box leaderboard-table-component">
-        {% include "benchmarks/leaderboard/leaderboard-table.html" %}
+        {% include "benchmarks/leaderboard/partial-ag-grid-leaderboard.html" %}
     </div>
     <div class="box leaderboard-table-component">
         <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial">

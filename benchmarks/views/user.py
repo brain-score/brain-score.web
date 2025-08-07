@@ -21,6 +21,7 @@ from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.tokens import account_activation_token
+from benchmarks.views.leaderboard import get_ag_grid_context
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.conf import settings
@@ -699,18 +700,33 @@ class Profile(View):
             return render(request, 'benchmarks/login.html',
                           {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
-            context = get_context(request.user, domain=self.domain)
-            context["has_user"] = True
-            context["formatted"] = self.domain.capitalize()
+            base_context = get_context(request.user, domain=self.domain)
+            ag_grid_context = get_ag_grid_context(user=request.user, domain=self.domain, show_public=True)
+
+            # Merge both contexts
+            context = {
+                **base_context,
+                **ag_grid_context,
+                "has_user": True,
+                "formatted": self.domain.capitalize(),
+            }
             return render(request, 'benchmarks/profile.html', context)
 
     def post(self, request):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            context = get_context(user, domain=self.domain)
-            context["has_user"] = True
-            context["formatted"] = self.domain.capitalize()
+            base_context = get_context(user, domain=self.domain)
+            ag_grid_context = get_ag_grid_context(user=user, domain=self.domain, show_public=True)
+
+            # Merge both contexts
+            context = {
+                **base_context,
+                **ag_grid_context,
+                "has_user": True,
+                "formatted": self.domain.capitalize(),
+            }
+
             return render(request, 'benchmarks/profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain,
