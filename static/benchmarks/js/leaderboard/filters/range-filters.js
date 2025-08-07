@@ -230,123 +230,118 @@ function getRangeValues(filterId) {
   };
 }
 
-// Initialize a dual-handle range slider for date filters
-function initializeDualDateSlider(container) {
-  const minHandle = container.querySelector('.handle-min');
-  const maxHandle = container.querySelector('.handle-max');
-  const range = container.querySelector('.slider-range');
+// // Initialize a dual-handle range slider for date filters
+// function initializeDualDateSlider(container) {
+//   const minHandle = container.querySelector('.handle-min');
+//   const maxHandle = container.querySelector('.handle-max');
+//   const range = container.querySelector('.slider-range');
+//   const minInput = container.closest('.filter-group')?.querySelector('#waybackDateMin');
+//   const maxInput = container.closest('.filter-group')?.querySelector('#waybackDateMax');
 
-  if (!minHandle || !maxHandle || !range) return;
+//   if (!minHandle || !maxHandle || !range) return;
 
-  // Convert dataset min/max to epoch
-  const minDate = new Date(container.dataset.min);
-  const maxDate = new Date(container.dataset.max);
+//   // Convert dataset min/max to epoch
+//   const minDate = new Date(container.dataset.min);
+//   const maxDate = new Date(container.dataset.max);
 
-  const minEpoch = minDate.getTime();
-  const maxEpoch = maxDate.getTime();
+//   const minEpoch = minDate.getTime();
+//   const maxEpoch = maxDate.getTime();
 
-  let currentMin = new Date("2024-01-01T00:00:00Z").getTime();
-  let currentMax = new Date("2025-12-31T00:00:00Z").getTime();
+//   let currentMin = new Date(minHandle.dataset.value || container.dataset.min).getTime();
+//   let currentMax = new Date(maxHandle.dataset.value || container.dataset.max).getTime();
 
-  const minInput = container.closest('.filter-group')?.querySelector('#waybackDateMin');
-  const maxInput = container.closest('.filter-group')?.querySelector('#waybackDateMax');
+//   function epochToPercent(epoch) {
+//     return ((epoch - minEpoch) / (maxEpoch - minEpoch)) * 100;
+//   }
 
-  function epochToPercent(epoch) {
-    return ((epoch - minEpoch) / (maxEpoch - minEpoch)) * 100;
-  }
+//   function percentToEpoch(percent) {
+//     return minEpoch + percent * (maxEpoch - minEpoch) / 100;
+//   }
 
-  function percentToEpoch(percent) {
-    return minEpoch + percent * (maxEpoch - minEpoch) / 100;
-  }
+//   function updateSliderPosition() {
+//     const minPercent = epochToPercent(currentMin);
+//     const maxPercent = epochToPercent(currentMax);
 
-  function updateSliderPosition() {
-    const minPercent = epochToPercent(currentMin);
-    const maxPercent = epochToPercent(currentMax);
+//     minHandle.style.left = `${minPercent}%`;
+//     maxHandle.style.left = `${maxPercent}%`;
 
-    minHandle.style.left = `${minPercent}%`;
-    maxHandle.style.left = `${maxPercent}%`;
+//     range.style.left = `${minPercent}%`;
+//     range.style.width = `${maxPercent - minPercent}%`;
 
-    range.style.left = `${minPercent}%`;
-    range.style.width = `${maxPercent - minPercent}%`;
+//     if (minInput) minInput.value = formatDateInput(new Date(currentMin));
+//     if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
+//   }
 
-    if (minInput) minInput.value = formatDateInput(new Date(currentMin));
-    if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
-  }
+//   function updateActiveDateFilters() {
+//     console.log("📅 Wayback date slider triggering debounceFilterUpdate");
+//     window.activeFilters.wayback_min_date = new Date(currentMin);
+//     window.activeFilters.wayback_max_date = new Date(currentMax);
+//     debounceFilterUpdate("wayback-slider");
+//   }
 
-  function updateActiveDateFilters() {
-    console.log("📅 Wayback date slider triggering debounceFilterUpdate");
-    window.activeFilters.wayback_min_date = new Date(currentMin);
-    window.activeFilters.wayback_max_date = new Date(currentMax);
-    debounceFilterUpdate("wayback-slider");
-  }
+//   function handleMouseMove(e, isMin) {
+//     const rect = container.getBoundingClientRect();
+//     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+//     const rawDate = new Date(percentToEpoch(percent * 100));
+//     rawDate.setUTCHours(0, 0, 0, 0);  // snap to midnight UTC
+//     const epoch = rawDate.getTime();
 
-  function handleMouseMove(e, isMin) {
-    const rect = container.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const rawDate = new Date(percentToEpoch(percent * 100));
-    rawDate.setUTCHours(0, 0, 0, 0);  // snap to midnight UTC
-    const epoch = rawDate.getTime();
+//     if (isMin) {
+//       currentMin = Math.min(epoch, currentMax - 86400000); // 1 day in ms
+//     } else {
+//       currentMax = Math.max(epoch, currentMin + 86400000);
+//     }
 
-    if (isMin) {
-      currentMin = Math.min(epoch, currentMax - 86400000); // 1 day in ms
-    } else {
-      currentMax = Math.max(epoch, currentMin + 86400000);
-    }
+//     updateSliderPosition();
+//     updateActiveDateFilters();
+//   }
 
-    updateSliderPosition();
-    updateActiveDateFilters();
-  }
+//   function addMouseListeners(handle, isMin) {
+//     let isDragging = false;
 
-  function addMouseListeners(handle, isMin) {
-    let isDragging = false;
+//     const mouseMoveHandler = (e) => {
+//       if (isDragging) handleMouseMove(e, isMin);
+//     };
 
-    const mouseMoveHandler = (e) => {
-      if (isDragging) handleMouseMove(e, isMin);
-    };
+//     const mouseUpHandler = () => {
+//       isDragging = false;
+//       document.removeEventListener('mousemove', mouseMoveHandler);
+//       document.removeEventListener('mouseup', mouseUpHandler);
+//     };
 
-    const mouseUpHandler = () => {
-      isDragging = false;
-      document.removeEventListener('mousemove', mouseMoveHandler);
-      document.removeEventListener('mouseup', mouseUpHandler);
-    };
+//     handle.addEventListener('mousedown', (e) => {
+//       isDragging = true;
+//       document.addEventListener('mousemove', mouseMoveHandler);
+//       document.addEventListener('mouseup', mouseUpHandler);
+//       e.preventDefault();
+//     });
+//   }
 
-    handle.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      document.addEventListener('mousemove', mouseMoveHandler);
-      document.addEventListener('mouseup', mouseUpHandler);
-      e.preventDefault();
-    });
-  }
+//   addMouseListeners(minHandle, true);
+//   addMouseListeners(maxHandle, false);
 
-  addMouseListeners(minHandle, true);
-  addMouseListeners(maxHandle, false);
+//   minInput.addEventListener('input', () => {
+//     const val = new Date(minInput.value).getTime();
+//     currentMin = Math.max(minEpoch, Math.min(val, currentMax - 86400000));
+//     updateSliderPosition();
+//     updateActiveDateFilters();
+//   });
 
-  if (minInput) {
-    minInput.addEventListener('input', () => {
-      const val = new Date(minInput.value).getTime();
-      currentMin = Math.max(minEpoch, Math.min(val, currentMax - 86400000));
-      updateSliderPosition();
-      updateActiveDateFilters();
-    });
-  }
+//   maxInput.addEventListener('input', () => {
+//     const val = new Date(maxInput.value).getTime();
+//     currentMax = Math.min(maxEpoch, Math.max(val, currentMin + 86400000));
+//     updateSliderPosition();
+//     updateActiveDateFilters();
+//   });
 
-  if (maxInput) {
-    maxInput.addEventListener('input', () => {
-      const val = new Date(maxInput.value).getTime();
-      currentMax = Math.min(maxEpoch, Math.max(val, currentMin + 86400000));
-      updateSliderPosition();
-      updateActiveDateFilters();
-    });
-  }
+//   // Initial input sync from slider state
+//   // if (minInput) minInput.value = formatDateInput(new Date(currentMin));
+//   // if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
 
-  // Initial input sync from slider state
-  if (minInput) minInput.value = formatDateInput(new Date(currentMin));
-  if (maxInput) maxInput.value = formatDateInput(new Date(currentMax));
-
-  // Initial rendering of slider and filters
-  updateSliderPosition();
-  updateActiveDateFilters();
-}
+//   // Initial rendering of slider and filters
+//   updateSliderPosition();
+//   updateActiveDateFilters();
+// }
 // Set range values for a specific filter
 function setRangeValues(filterId, minVal, maxVal) {
   const container = document.querySelector(`#${filterId}`)?.closest('.filter-group')?.querySelector('.slider-container');

@@ -392,8 +392,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
-      initializeWaybackDateFilter();
-      syncSliderToDateInputs();
+      setTimeout(() => {
+        initializeWaybackDateFilter();
+        syncSliderWithDateInputs();
+      }, 0);
 
       // Ensure filtered score column starts hidden (clean initial state) - EXACTLY like old file
       params.api.applyColumnState({
@@ -523,36 +525,85 @@ function initializeDualHandleSliders() {
     window.LeaderboardRangeFilters.initializeDualHandleSliders();
   }
 }
+
+function formatDateInput(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+}
+
 function initializeWaybackDateFilter() {
   const dateMinInput = document.getElementById('waybackDateMin');
   const dateMaxInput = document.getElementById('waybackDateMax');
 
+  // Pre-fill inputs with default values from filterOptions
+  if (window.filterOptions?.datetime_range) {
+    const { min, max } = window.filterOptions.datetime_range;
+
+    if (min) {
+      dateMinInput.value = formatDateInput(new Date(min));
+    }
+    if (max) {
+      dateMaxInput.value = formatDateInput(new Date(max));
+    }
+  }
   const handleDateChange = () => {
-    const minDate = dateMinInput?.value ? new Date(dateMinInput.value) : null;
-    const maxDate = dateMaxInput?.value ? new Date(dateMaxInput.value) : null;
+    setTimeout(() => {
+      const dateMinInput = document.getElementById("waybackDateMin");
+      const dateMaxInput = document.getElementById("waybackDateMax");
 
-    window.activeFilters.wayback_min_date = minDate;
-    window.activeFilters.wayback_max_date = maxDate;
+      // Debug logs
+      console.log("Got inputs:", {
+        dateMinInput,
+        dateMaxInput,
+      });
 
-    applyCombinedFilters(); // triggers updateFilteredScores and re-renders
+      if (!dateMinInput || !dateMaxInput) {
+        console.error("Could not find one or both input elements.");
+        return;
+      }
+
+      console.log("Raw input values:", {
+        minValueAttr: dateMinInput.getAttribute("value"),
+        maxValueAttr: dateMaxInput.getAttribute("value"),
+        minInputValue: dateMinInput.value,
+        maxInputValue: dateMaxInput.value,
+      });
+
+      const minRaw = dateMinInput?.value;
+      const maxRaw = dateMaxInput?.value;
+
+      console.log("Manual date input values:", { minRaw, maxRaw });
+
+      const minDate = minRaw ? new Date(minRaw) : null;
+      const maxDate = maxRaw ? new Date(maxRaw) : null;
+
+      // Check validity
+      if (!minRaw || !maxRaw || isNaN(minDate) || isNaN(maxDate)) {
+        console.warn("One or both date inputs are empty or invalid. Skipping filter update.");
+        return;
+      }
+
+      // Update global filters
+      window.activeFilters.wayback_min_date = minDate;
+      window.activeFilters.wayback_max_date = maxDate;
+
+      console.log("Filter dates set:", { minDate, maxDate });
+
+      applyCombinedFilters(); // Trigger grid refresh
+    }, 0);
   };
 
-  if (dateMinInput && dateMaxInput) {
-    dateMinInput.addEventListener('change', handleDateChange);
-    dateMaxInput.addEventListener('change', handleDateChange);
-  }
+  const dateMinInputLive = document.getElementById("waybackDateMin");
+  const dateMaxInputLive = document.getElementById("waybackDateMax");
 
-  // Optional: initialize date inputs from min/max range
-  if (window.filterOptions?.datetime_range) {
-    dateMinInput.value = window.filterOptions.datetime_range.min;
-    dateMaxInput.value = window.filterOptions.datetime_range.max;
-    window.activeFilters.wayback_min_date = new Date(dateMinInput.value);
-    window.activeFilters.wayback_max_date = new Date(dateMaxInput.value);
-  }
-}
-
-function formatDateInput(date) {
-  return date.toISOString().split("T")[0];
+  // if (dateMinInputLive && dateMaxInputLive) {
+  //   ["change"].forEach(event => {
+  //     dateMinInputLive.addEventListener(event, handleDateChange);
+  //     dateMaxInputLive.addEventListener(event, handleDateChange);
+  //   });
+  // } else {
+  //   console.error("🚨 Date inputs not found in DOM when attaching listeners");
+  // }
 }
 
 function syncSliderWithDateInputs() {
@@ -568,7 +619,7 @@ function syncSliderWithDateInputs() {
     const maxUnix = parseInt(sliderMaxHandle.getAttribute('data-value'), 10);
 
     if (!isNaN(minUnix)) {
-      const minDate = new Date(minUnix * 1000);  // JS timestamps in ms
+      const minDate = new Date(minUnix);  // JS timestamps in ms
       dateMinInput.value = minDate.toISOString().slice(0, 10);
     }
 

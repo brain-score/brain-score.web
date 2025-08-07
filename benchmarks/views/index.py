@@ -14,6 +14,7 @@ from django.views.decorators.cache import cache_page
 from time import time
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -62,6 +63,25 @@ def view(request, domain: str):
 
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
+def get_datetime_range(models):
+    timestamps = []
+
+    for model in models:
+        for score in (model.scores or []):
+            ts = score.get("end_timestamp")
+            if ts:
+                try:
+                    timestamps.append(datetime.fromisoformat(ts))
+                except Exception:
+                    pass  # Ignore malformed timestamps
+
+    if timestamps:
+        return {
+            "min": min(timestamps).isoformat(),
+            "max": max(timestamps).isoformat(),
+        }
+
+    return None
 # Maintain 24-hr cache for leaderboard view
 @cache_get_context(timeout=24 * 60 * 60)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
@@ -198,6 +218,15 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             'citation_domain_title': '',
             'citation_domain_bibtex': ''
         })
+
+    # Compute min/max end_timestamp across all model scores
+    datetime_range = get_datetime_range(models)
+
+    # Inject into frontend context if available
+    if datetime_range:
+        context["filter_options"] = {
+            "datetime_range": datetime_range
+        }
 
     context['csv_downloadable'] = csv_data
     return context

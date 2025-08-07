@@ -39,28 +39,23 @@
         <div class="filter-header">
           <label>Wayback Timestamp</label>
           <div class="range-values">
-            <input type="date" class="range-input-min" id="waybackDateMin" value="2024-01-01"/>
+            <input type="date" class="range-input-min" id="waybackDateMin" style="width: 140px;" />
             <span class="range-separator">to</span>
-            <input type="date" class="range-input-max" id="waybackDateMax" value="2025-12-31"/>
+            <input type="date" class="range-input-max" id="waybackDateMax" style="width: 140px;" />
           </div>
         </div>
+
         <div class="range-filter dual-handle">
           <div
             id="waybackDateSlider"
             class="slider-container"
             data-type="date"
-            data-min="2024-01-01"
-            data-max="2025-12-31"
-          >
+            data-min="1704067200"
+            data-max="1767139200"
             <div class="slider-track"></div>
             <div class="slider-range"></div>
-            <div
-              class="slider-handle handle-min"
-              data-value="2024-01-01"
-            <div
-              class="slider-handle handle-max"
-              data-value="2025-12-31"
-            ></div>
+            <div class="slider-handle handle-min" data-value="2024-01-01"></div>
+            <div class="slider-handle handle-max" data-value="2025-12-31"></div>
           </div>
         </div>
       </div>
@@ -343,23 +338,28 @@
         return; // Stop if data parsing fails
       }
 
-      // set the wayback date range
-      function setWaybackDateRange() {
-      const minDate = document.getElementById('waybackDateMin').value;
-      const maxDate = document.getElementById('waybackDateMax').value;
-
-      // Convert to ISO string or timestamp
-      const minTimestamp = new Date(minDate).toISOString();
-      const maxTimestamp = new Date(maxDate).toISOString();
-
-      return { minTimestamp, maxTimestamp };
-      }
-
       // Make data globally available
       window.benchmarkTree = benchmarkTree;
       window.originalRowData = rowData;
       window.filterOptions = filterOptions;
       window.benchmarkMetadata = benchmarkMetadata;
+
+      setTimeout(() => {
+        if (typeof initializeWaybackDateFilter === 'function') {
+          console.log('📆 Delayed init of Wayback calendar inputs...');
+          initializeWaybackDateFilter();
+        } else {
+          console.warn('⚠️ initializeWaybackDateFilter not defined yet.');
+        }
+      }, 300);
+
+      const dateSlider = document.getElementById('waybackDateSlider');
+      if (typeof initializeDualDateSlider === 'function' && dateSlider) {
+        console.log('📆 Initializing dual date slider...');
+        initializeDualDateSlider(dateSlider);
+      } else {
+        console.warn('⚠️ Dual date slider init failed.');
+      }
 
       window.benchmarkIds = benchmarkIds;
       window.benchmarkStimuliMetaMap = JSON.parse('{{ benchmarkStimuliMetaMap|escapejs }}');
@@ -453,6 +453,8 @@
       if (typeof setupBenchmarkCheckboxes === 'function') {
         setupBenchmarkCheckboxes(filterOptions);
       }
+
+      window.activeFilters = window.activeFilters || {};
 
       setTimeout(() => {
         initializeDualHandleSliders();
