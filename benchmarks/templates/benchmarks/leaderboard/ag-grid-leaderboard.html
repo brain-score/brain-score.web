@@ -51,11 +51,11 @@
             class="slider-container"
             data-type="date"
             data-min="1704067200"
-            data-max="1767139200"
+            data-max="1767139200">
             <div class="slider-track"></div>
             <div class="slider-range"></div>
-            <div class="slider-handle handle-min" data-value="2024-01-01"></div>
-            <div class="slider-handle handle-max" data-value="2025-12-31"></div>
+            <div class="slider-handle handle-min" data-value="1704067200"></div>
+            <div class="slider-handle handle-max" data-value="1767139200"></div>
           </div>
         </div>
       </div>
@@ -346,10 +346,10 @@
 
       setTimeout(() => {
         if (typeof initializeWaybackDateFilter === 'function') {
-          console.log('📆 Delayed init of Wayback calendar inputs...');
+          console.log(' Delayed init of Wayback calendar inputs...');
           initializeWaybackDateFilter();
         } else {
-          console.warn('⚠️ initializeWaybackDateFilter not defined yet.');
+          console.warn(' initializeWaybackDateFilter not defined yet.');
         }
       }, 300);
 
@@ -358,7 +358,7 @@
         console.log('📆 Initializing dual date slider...');
         initializeDualDateSlider(dateSlider);
       } else {
-        console.warn('⚠️ Dual date slider init failed.');
+        console.warn('Dual date slider init failed.');
       }
 
       window.benchmarkIds = benchmarkIds;

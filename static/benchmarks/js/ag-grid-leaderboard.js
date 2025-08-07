@@ -531,6 +531,124 @@ function formatDateInput(date) {
   return date.toISOString().slice(0, 10); // 'YYYY-MM-DD'
 }
 
+function updateWaybackFilters(minRaw, maxRaw) {
+  const minDate = minRaw ? new Date(minRaw) : null;
+  const maxDate = maxRaw ? new Date(maxRaw) : null;
+
+  if (!minRaw || !maxRaw || isNaN(minDate) || isNaN(maxDate)) {
+    console.warn("One or both date inputs are empty or invalid. Skipping filter update.");
+    return;
+  }
+
+  window.activeFilters.wayback_min_date = minDate;
+  window.activeFilters.wayback_max_date = maxDate;
+
+  console.log("Wayback filters updated:", { minDate, maxDate });
+  debounceFilterUpdate("wayback-slider")
+}
+
+function syncSliderHandlesWithDateInputs() {
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+  const sliderContainer = document.querySelector('.slider-container');
+
+  if (!sliderMinHandle || !sliderMaxHandle || !dateMinInput || !dateMaxInput || !sliderContainer) return;
+
+  const sliderMin = parseInt(sliderContainer.getAttribute('data-min'), 10);
+  const sliderMax = parseInt(sliderContainer.getAttribute('data-max'), 10);
+
+  const minDate = new Date(dateMinInput.value);
+  const maxDate = new Date(dateMaxInput.value);
+
+  if (!isNaN(minDate.getTime())) {
+    let unix = Math.floor(minDate.getTime() / 1000);
+    unix = Math.max(sliderMin, Math.min(unix, sliderMax));
+    sliderMinHandle.setAttribute('data-value', unix);
+  }
+
+  if (!isNaN(maxDate.getTime())) {
+    let unix = Math.floor(maxDate.getTime() / 1000);
+    unix = Math.max(sliderMin, Math.min(unix, sliderMax));
+    sliderMaxHandle.setAttribute('data-value', unix);
+  }
+
+  updateSliderVisual(); // Triggers positioning
+}
+
+function syncDateInputsWithSliderHandles() {
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+  const dateMinInput = document.getElementById('waybackDateMin');
+  const dateMaxInput = document.getElementById('waybackDateMax');
+
+  if (!sliderMinHandle || !sliderMaxHandle || !dateMinInput || !dateMaxInput) return;
+
+  const minUnix = parseInt(sliderMinHandle.getAttribute('data-value'), 10);
+  const maxUnix = parseInt(sliderMaxHandle.getAttribute('data-value'), 10);
+
+  if (!isNaN(minUnix)) {
+    const minDate = new Date(minUnix * 1000);  // convert s to ms
+    dateMinInput.value = minDate.toISOString().slice(0, 10);
+  }
+
+  if (!isNaN(maxUnix)) {
+    const maxDate = new Date(maxUnix * 1000);
+    dateMaxInput.value = maxDate.toISOString().slice(0, 10);
+  }
+
+  // Update filters (optional but recommended)
+  updateWaybackFilters(dateMinInput.value, dateMaxInput.value);
+}
+
+function updateSliderVisual() {
+  const sliderContainer = document.querySelector('.slider-container');
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+  const sliderRange = document.querySelector('.slider-range');
+
+  ['mouseup', 'touchend'].forEach(eventType => {
+    sliderMinHandle.addEventListener(eventType, syncDateInputsWithSliderHandles);
+    sliderMaxHandle.addEventListener(eventType, syncDateInputsWithSliderHandles);
+  });
+
+  if (!sliderContainer || !sliderMinHandle || !sliderMaxHandle || !sliderRange) return;
+
+  const minUnix = parseInt(sliderMinHandle.getAttribute('data-value'), 10);
+  const maxUnix = parseInt(sliderMaxHandle.getAttribute('data-value'), 10);
+  const sliderMin = parseInt(sliderContainer.getAttribute('data-min'), 10);
+  const sliderMax = parseInt(sliderContainer.getAttribute('data-max'), 10);
+
+  if (isNaN(minUnix) || isNaN(maxUnix) || isNaN(sliderMin) || isNaN(sliderMax)) return;
+
+  const percent = (val) => ((val - sliderMin) / (sliderMax - sliderMin)) * 100;
+
+  const leftPercent = percent(minUnix);
+  const rightPercent = percent(maxUnix);
+
+  sliderMinHandle.style.left = `${leftPercent}%`;
+  sliderMaxHandle.style.left = `${rightPercent}%`;
+
+  sliderRange.style.left = `${leftPercent}%`;
+  sliderRange.style.width = `${rightPercent - leftPercent}%`;
+}
+
+function initializeSliderBoundsFromData() {
+  const sliderContainer = document.querySelector('.slider-container');
+  if (!sliderContainer || !window.filterOptions?.datetime_range) return;
+
+  const { min, max } = window.filterOptions.datetime_range;
+
+  if (min && max) {
+    const minUnix = Math.floor(new Date(min).getTime() / 1000);
+    const maxUnix = Math.floor(new Date(max).getTime() / 1000);
+
+    sliderContainer.setAttribute('data-min', minUnix);
+    sliderContainer.setAttribute('data-max', maxUnix);
+  }
+}
+
 function initializeWaybackDateFilter() {
   const dateMinInput = document.getElementById('waybackDateMin');
   const dateMaxInput = document.getElementById('waybackDateMax');
@@ -546,55 +664,27 @@ function initializeWaybackDateFilter() {
       dateMaxInput.value = formatDateInput(new Date(max));
     }
   }
+
+  // Shared handler for calendar input changes
   const handleDateChange = () => {
-    setTimeout(() => {
-      const dateMinInput = document.getElementById("waybackDateMin");
-      const dateMaxInput = document.getElementById("waybackDateMax");
-
-      // Debug logs
-      console.log("Got inputs:", {
-        dateMinInput,
-        dateMaxInput,
-      });
-
-      if (!dateMinInput || !dateMaxInput) {
-        console.error("Could not find one or both input elements.");
-        return;
-      }
-
-      console.log("Raw input values:", {
-        minValueAttr: dateMinInput.getAttribute("value"),
-        maxValueAttr: dateMaxInput.getAttribute("value"),
-        minInputValue: dateMinInput.value,
-        maxInputValue: dateMaxInput.value,
-      });
-
-      const minRaw = dateMinInput?.value;
-      const maxRaw = dateMaxInput?.value;
-
-      console.log("Manual date input values:", { minRaw, maxRaw });
-
-      const minDate = minRaw ? new Date(minRaw) : null;
-      const maxDate = maxRaw ? new Date(maxRaw) : null;
-
-      // Check validity
-      if (!minRaw || !maxRaw || isNaN(minDate) || isNaN(maxDate)) {
-        console.warn("One or both date inputs are empty or invalid. Skipping filter update.");
-        return;
-      }
-
-      // Update global filters
-      window.activeFilters.wayback_min_date = minDate;
-      window.activeFilters.wayback_max_date = maxDate;
-
-      console.log("Filter dates set:", { minDate, maxDate });
-
-      applyCombinedFilters(); // Trigger grid refresh
-    }, 0);
+    updateWaybackFilters(dateMinInput.value, dateMaxInput.value);
+    initializeSliderBoundsFromData()
+    syncSliderHandlesWithDateInputs()
+    setupSliderDragging()
   };
 
-  const dateMinInputLive = document.getElementById("waybackDateMin");
-  const dateMaxInputLive = document.getElementById("waybackDateMax");
+  // Attach event listeners
+  dateMinInput?.addEventListener("input", handleDateChange);
+  dateMaxInput?.addEventListener("input", handleDateChange);
+
+  updateWaybackFilters(dateMinInput.value, dateMaxInput.value);
+  initializeSliderBoundsFromData();
+  syncSliderHandlesWithDateInputs();
+  setupSliderDragging();
+  }
+
+  // const dateMinInputLive = document.getElementById("waybackDateMin");
+  // const dateMaxInputLive = document.getElementById("waybackDateMax");
 
   // if (dateMinInputLive && dateMaxInputLive) {
   //   ["change"].forEach(event => {
@@ -604,6 +694,38 @@ function initializeWaybackDateFilter() {
   // } else {
   //   console.error("🚨 Date inputs not found in DOM when attaching listeners");
   // }
+function setupSliderDragging() {
+  const sliderContainer = document.querySelector('.slider-container');
+  const sliderMinHandle = document.querySelector('.slider-handle.handle-min');
+  const sliderMaxHandle = document.querySelector('.slider-handle.handle-max');
+
+  if (!sliderContainer || !sliderMinHandle || !sliderMaxHandle) return;
+
+  const sliderMin = parseInt(sliderContainer.getAttribute('data-min'), 10);
+  const sliderMax = parseInt(sliderContainer.getAttribute('data-max'), 10);
+
+  function handleDrag(handleElement) {
+    function onMouseMove(e) {
+      const rect = sliderContainer.getBoundingClientRect();
+      const percent = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+      const unix = Math.floor(sliderMin + percent * (sliderMax - sliderMin));
+
+      handleElement.setAttribute('data-value', unix);
+      updateSliderVisual();
+      syncDateInputsWithSliderHandles();
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  sliderMinHandle.addEventListener('mousedown', () => handleDrag(sliderMinHandle));
+  sliderMaxHandle.addEventListener('mousedown', () => handleDrag(sliderMaxHandle));
 }
 
 function syncSliderWithDateInputs() {
