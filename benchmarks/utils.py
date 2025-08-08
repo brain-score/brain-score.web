@@ -85,9 +85,9 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             if key_prefix:
                 base_parts.append(key_prefix)
             
-            # Use global public cache when show_public=True, regardless of user
-            if show_public:
-                # (CASE 1: Public data) Create unique key for public data cache
+            # Use global public cache only when there is no user context and show_public=True
+            if (user is None) and show_public:
+                # (CASE 1: Public data, anonymous) Create unique key for public data cache
                 key_parts = base_parts + ['global', domain, 'public', f'v{cache_version}']
             elif user:
                 # (CASE 2: User data) Create unique key for user-specific cache

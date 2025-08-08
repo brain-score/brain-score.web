@@ -78,8 +78,16 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         # Superuser sees everything (super user profile view)
         models = all_model_data
     else:
-        # Filter for user's models (user profile view)
-        models = all_model_data.filter(Q(user__id=user.id))
+        # User profile view
+        # If show_public is True, include user's models plus all public models
+        # Otherwise, show only the user's own models
+        if show_public:
+            # Include: models owned/submitted by this user (via user_id or owner JSON), plus all public models
+            models = all_model_data.filter(
+                Q(public=True) | Q(user_id=user.id) | Q(owner__id=user.id)
+            )
+        else:
+            models = all_model_data.filter(Q(user_id=user.id))
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)

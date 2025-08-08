@@ -14,6 +14,38 @@
         <span class="text-wrapper">Tutorial</span>
       </button>
 
+      {# Profile toggle: show my models only vs my models + all public #}
+      {% if has_user %}
+      <style>
+        .toggle-wrapper { margin-left: 12px; display: inline-flex; align-items: center; gap: 8px; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; border-radius: 999px; background: #cfd3d7; border: none; padding: 0; cursor: pointer; transition: background .2s ease; }
+        .toggle-switch[aria-pressed="true"] { background: #45C676; }
+        .toggle-switch .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .2s ease; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+        .toggle-switch[aria-pressed="true"] .knob { left: 22px; }
+      </style>
+      <div class="toggle-wrapper">
+        <span>Include all public models</span>
+        <button id="includePublicToggleBtn" class="toggle-switch" aria-pressed="{% if include_public %}true{% else %}false{% endif %}" title="Include all public models">
+          <span class="knob"></span>
+        </button>
+      </div>
+      <script>
+        (function() {
+          const btn = document.getElementById('includePublicToggleBtn');
+          if (!btn) return;
+          btn.addEventListener('click', function() {
+            const isOn = this.getAttribute('aria-pressed') === 'true';
+            const nextOn = !isOn;
+            this.setAttribute('aria-pressed', String(nextOn));
+            const basePath = window.location.pathname;
+            const url = new URL(basePath, window.location.origin);
+            if (nextOn) url.searchParams.set('include_public', 'true');
+            window.location.href = url.toString();
+          });
+        })();
+      </script>
+      {% endif %}
+
       {% if domain == "vision" %}
       <button id="advancedFilterBtn" style="white-space: nowrap">
         <span class="filter-icon">🔍</span>

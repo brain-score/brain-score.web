@@ -700,8 +700,11 @@ class Profile(View):
             return render(request, 'benchmarks/login.html',
                           {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
-            base_context = get_context(request.user, domain=self.domain)
-            ag_grid_context = get_ag_grid_context(user=request.user, domain=self.domain, show_public=True)
+            # include_public=true shows user's models + all public models; default is user-only
+            include_public = request.GET.get('include_public', 'false').lower() in ('1', 'true', 'yes')
+
+            base_context = get_context(request.user, domain=self.domain, show_public=include_public)
+            ag_grid_context = get_ag_grid_context(user=request.user, domain=self.domain, show_public=include_public)
 
             # Merge both contexts
             context = {
@@ -709,6 +712,7 @@ class Profile(View):
                 **ag_grid_context,
                 "has_user": True,
                 "formatted": self.domain.capitalize(),
+                "include_public": include_public,
             }
             return render(request, 'benchmarks/profile.html', context)
 
@@ -716,8 +720,10 @@ class Profile(View):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            base_context = get_context(user, domain=self.domain)
-            ag_grid_context = get_ag_grid_context(user=user, domain=self.domain, show_public=True)
+            include_public = request.GET.get('include_public', 'false').lower() in ('1', 'true', 'yes')
+
+            base_context = get_context(user, domain=self.domain, show_public=include_public)
+            ag_grid_context = get_ag_grid_context(user=user, domain=self.domain, show_public=include_public)
 
             # Merge both contexts
             context = {
@@ -725,6 +731,7 @@ class Profile(View):
                 **ag_grid_context,
                 "has_user": True,
                 "formatted": self.domain.capitalize(),
+                "include_public": include_public,
             }
 
             return render(request, 'benchmarks/profile.html', context)
