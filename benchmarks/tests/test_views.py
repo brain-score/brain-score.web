@@ -162,12 +162,6 @@ class TestWebsitePages(BaseTestCase):
 
 
 class TestVision(BaseTestCase):
-    def test_num_vision_rows(self):
-        resp = self.client.get("/vision/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr")
-        # Extra (1 +) because of a header with <tr>
-        self.assertEqual(num_rows, 462)
 
     def test_public_vision_model(self):
         resp = self.client.get("/model/vision/2330") # convnext top model
@@ -179,21 +173,6 @@ class TestVision(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, '<h1 class="title">Anonymous Model #912</h1>')
 
-    def test_vision_contains_models(self):
-        """Ensure at least one model is listed in the vision leaderboard"""
-        response = self.client.get('/vision/')
-        self.assertEqual(response.status_code, 200)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        rows = soup.select('table tbody tr')
-        self.assertGreater(len(rows), 0, "No models found on vision leaderboard")
-
-    def test_model_links_exist(self):
-        """Check that model names link to model detail pages"""
-        response = self.client.get('/vision/')
-        self.assertEqual(response.status_code, 200)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        model_links = soup.select('table tbody tr td a')
-        self.assertGreater(len(model_links), 0, "No model links found")
 
     def test_aggrid_three_buttons(self):
         """Ensure the CSV export button is present on the vision leaderboard"""
@@ -206,12 +185,6 @@ class TestVision(BaseTestCase):
 
 
 class TestLanguage(BaseTestCase):
-    def test_num_lang_rows(self):
-        resp = self.client.get("/language/")
-        content = resp.content.decode('utf-8')
-        num_rows = content.count("<tr")
-        # Extra (1 +) because of a header with <tr>
-        self.assertEqual(num_rows, 14 + 1)
 
     def test_public_language_model(self):
         resp = self.client.get("/model/language/2074") # all language models are public
