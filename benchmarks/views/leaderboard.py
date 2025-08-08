@@ -356,7 +356,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     for b in groupings:
         field = b.identifier
         parent_field = b.parent['identifier']
-        hide = not parent_field.startswith('average_')  # show if neural or behavioral
+        hide = not parent_field.startswith(f'average_{domain}')  # show if neural or behavioral
         column_defs.append({
             'field': field,
             'headerName': b.short_name,

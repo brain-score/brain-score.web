@@ -391,7 +391,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         state: [
           { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
-          { colId: 'average_vision_v0', hide: false }
+          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
         ]
       });
     }
@@ -467,7 +467,13 @@ function setInitialColumnState() {
     }
     
     // Show top-level benchmark categories initially (including engineering)
-    const topLevelCategories = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+    const topLevelCategories = [
+      `average_${domain}_v0`, 
+      `neural_${domain}_v0`, 
+      `behavior_${domain}_v0`, 
+      `engineering_${domain}_v0`
+    ];
     const shouldShow = topLevelCategories.includes(colId);
     
     initialColumnState.push({ colId: colId, hide: !shouldShow });
