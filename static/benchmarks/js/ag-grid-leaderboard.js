@@ -904,7 +904,7 @@ window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
 window.renderBenchmarkTree = renderBenchmarkTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
 window.initializeWaybackDateFilter = initializeWaybackDateFilter;
-window.initializeDualDateSlider = initializeDualDateSlider;
+// window.initializeDualDateSlider = initializeDualDateSlider;
 
 
 

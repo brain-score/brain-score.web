@@ -383,7 +383,7 @@ function setRangeValues(filterId, minVal, maxVal) {
 window.LeaderboardRangeFilters = {
   initializeDualHandleSliders,
   initializeDualHandleSlider,
-  initializeDualDateSlider,
+  // initializeDualDateSlider,
   resetSliderUI,
   getRangeValues,
   setRangeValues,
