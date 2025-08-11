@@ -36,6 +36,8 @@ function parseURLFilters() {
   window.activeFilters.max_score = parseFloatParam('max_score');
   window.activeFilters.min_stimuli_count = parseFloatParam('min_stimuli_count');
   window.activeFilters.max_stimuli_count = parseFloatParam('max_stimuli_count');
+  window.activeFilters.min_wayback_timestamp = parseFloatParam('min_wayback_timestamp');
+  window.activeFilters.max_wayback_timestamp = parseFloatParam('max_wayback_timestamp');
   
   // Apply filters to UI
   applyFiltersToUI();
@@ -100,6 +102,44 @@ function applyFiltersToUI() {
       const min = window.activeFilters.min_stimuli_count || 0;
       const max = window.activeFilters.max_stimuli_count || 1000;
       window.LeaderboardRangeFilters.setRangeValues('stimuliCountMin', min, max);
+    }
+    
+    // Update wayback timestamp slider if values are set
+    if (window.activeFilters.min_wayback_timestamp !== null || window.activeFilters.max_wayback_timestamp !== null) {
+      // Update date inputs
+      const waybackDateMin = document.getElementById('waybackDateMin');
+      const waybackDateMax = document.getElementById('waybackDateMax');
+      
+      if (waybackDateMin && window.activeFilters.min_wayback_timestamp) {
+        const minDate = new Date(window.activeFilters.min_wayback_timestamp * 1000);
+        waybackDateMin.value = minDate.toISOString().split('T')[0];
+      }
+      
+      if (waybackDateMax && window.activeFilters.max_wayback_timestamp) {
+        const maxDate = new Date(window.activeFilters.max_wayback_timestamp * 1000);
+        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+      }
+      
+      // Update slider handles through the range filter system
+      const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
+      if (waybackSliderContainer) {
+        const minHandle = waybackSliderContainer.querySelector('.handle-min');
+        const maxHandle = waybackSliderContainer.querySelector('.handle-max');
+        
+        if (minHandle && window.activeFilters.min_wayback_timestamp) {
+          minHandle.dataset.value = window.activeFilters.min_wayback_timestamp;
+        }
+        if (maxHandle && window.activeFilters.max_wayback_timestamp) {
+          maxHandle.dataset.value = window.activeFilters.max_wayback_timestamp;
+        }
+        
+        // Trigger slider position update
+        if (typeof window.LeaderboardRangeFilters?.setRangeValues === 'function') {
+          const min = window.activeFilters.min_wayback_timestamp || waybackSliderContainer.dataset.min;
+          const max = window.activeFilters.max_wayback_timestamp || waybackSliderContainer.dataset.max;
+          window.LeaderboardRangeFilters.setRangeValues('waybackDateMin', min, max);
+        }
+      }
     }
   }
 }
@@ -188,6 +228,8 @@ function updateURLFromFilters() {
   addRange('max_score');
   addRange('min_stimuli_count');
   addRange('max_stimuli_count');
+  addRange('min_wayback_timestamp');
+  addRange('max_wayback_timestamp');
   
   // Add benchmark exclusions
   const excludedBenchmarks = encodeBenchmarkFilters();

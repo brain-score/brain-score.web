@@ -8,6 +8,9 @@ from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
 from django.db.models import Model
+from datetime import datetime
+import pytz
+
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -189,6 +192,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         benchmark_metadata_list.append(metadata_entry)
 
     # Build `row_data` from materialized-view models WITH metadata
+    all_timestamps = []
     row_data = []
     for model in context['models']:
         # base fields
@@ -304,13 +308,26 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
+            ts = score.get('end_timestamp')
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                except ValueError:
+                    ts = None
+            if ts:
+                ts = ts.astimezone(pytz.UTC)
+                iso_ts = ts.isoformat()
+                all_timestamps.append(ts)
+            else:
+                iso_ts = None
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'benchmark': score.get('benchmark', {})  # Include benchmark metadata for bibtex collection
+                'benchmark': score.get('benchmark', {}),  # Include benchmark metadata for bibtex collection
+                'timestamp': iso_ts
             }
         row_data.append(rd)
 
@@ -428,7 +445,15 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
         }
     }
-
+    if all_timestamps:
+        min_timestamp = min(all_timestamps)
+        max_timestamp = max(all_timestamps)
+        filter_options['datetime_range'] = {
+            'min': min_timestamp.isoformat(),
+            'max': max_timestamp.isoformat(),
+            'min_unix': int(min_timestamp.timestamp()),
+            'max_unix': int(max_timestamp.timestamp())
+        }
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
     data_map = {}

@@ -105,7 +105,9 @@ function initializeFilters() {
       benchmark_regions: [],
       benchmark_species: [],
       benchmark_tasks: [],
-      public_data_only: false
+      public_data_only: false,
+      min_wayback_timestamp: null,
+      max_wayback_timestamp: null
     };
   }
   
