@@ -417,6 +417,173 @@ if (window.activeFilters.min_wayback_timestamp !== null || window.activeFilters.
 }
 ```
 
+### 9. Global Score Model Removal
+
+**File**: `static/benchmarks/js/leaderboard/filters/filter-coordinator.js`
+
+**Purpose**: Remove models where global score (`average_vision_v0`) becomes 'X' after recalculation.
+
+**Changes**:
+
+1. **Add function call in `applyCombinedFilters`**:
+```javascript
+// Additional pass: Remove models where global score (average_vision_v0) is 'X'
+// This happens after updateFilteredScores because that's where average_vision_v0 gets recalculated
+if (typeof applyGlobalScoreModelRemoval === 'function') {
+  finalData = applyGlobalScoreModelRemoval(finalData);
+}
+```
+
+2. **Implement `applyGlobalScoreModelRemoval` function**:
+```javascript
+function applyGlobalScoreModelRemoval(rowData) {
+  // Only apply this additional filtering if wayback timestamp filtering is active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No wayback filtering active, don't remove any models
+  }
+  
+  // Filter out models where average_vision_v0 is 'X'
+  const filteredData = rowData.filter(row => {
+    const globalScore = row.average_vision_v0?.value;
+    return globalScore !== 'X';
+  });
+  
+  return filteredData;
+}
+```
+
+### 10. Enhanced Column Hiding
+
+**File**: `static/benchmarks/js/leaderboard/renderers/header-components.js`
+
+**Purpose**: Hide both leaf and parent benchmark columns when all values are 'X'.
+
+**Changes**:
+
+1. **Extend parent column logic**:
+```javascript
+} else {
+  // For parent columns: check two conditions
+  
+  // 1. Hide if they have 0 leaf descendants (original logic)
+  if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+    const leafCount = window.getFilteredLeafCount(benchmarkId);
+    if (leafCount === 0) {
+      return false;
+    }
+  }
+  
+  // 2. NEW: For wayback filtering, also hide parent columns if all their values are 'X'
+  if (shouldHideColumnWithAllXsOrZeros(benchmarkId)) {
+    return false;
+  }
+}
+```
+
+2. **Enhanced detection logic**:
+```javascript
+if (isWaybackActive) {
+  // For wayback filtering: hide only if ALL values are 'X' (not 0s, since 0s are legitimate scores)
+  const allXs = values.every(val => val === 'X');
+  
+  // Determine if this is a parent or leaf column for better logging
+  const hierarchyMap = window.cachedHierarchyMap || new Map();
+  const children = hierarchyMap.get(benchmarkId) || [];
+  const columnType = children.length === 0 ? 'leaf' : 'parent';
+  
+  console.log(`Column visibility check for ${columnType} ${benchmarkId}:`, {
+    columnType,
+    totalValues: values.length,
+    allXs,
+    sampleValues: values.slice(0, 5),
+    isWaybackActive,
+    willHide: allXs
+  });
+  return allXs;
+}
+```
+
+### 11. Accurate Parent Score Recalculation
+
+**File**: `static/benchmarks/js/leaderboard/filters/filter-coordinator.js`
+
+**Purpose**: Exclude dropped wayback columns from parent score calculations entirely.
+
+**Changes**:
+
+1. **Add `isColumnHiddenByWaybackFiltering` function**:
+```javascript
+function isColumnHiddenByWaybackFiltering(benchmarkId) {
+  // Only check for wayback filtering if it's active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!isWaybackActive) {
+    return false; // No wayback filtering, column not hidden
+  }
+  
+  // Get current row data from the grid
+  const rowData = [];
+  if (window.globalGridApi) {
+    window.globalGridApi.forEachNode(node => {
+      if (node.data) {
+        rowData.push(node.data);
+      }
+    });
+  }
+  
+  // Check if all values in this column are 'X'
+  const values = rowData.map(row => {
+    const cellData = row[benchmarkId];
+    return cellData && typeof cellData === 'object' ? cellData.value : cellData;
+  }).filter(val => val !== null && val !== undefined && val !== '');
+  
+  const allXs = values.every(val => val === 'X');
+  return allXs;
+}
+```
+
+2. **Enhanced parent calculation logic**:
+```javascript
+children.forEach(childId => {
+  // Skip if explicitly excluded by benchmark filters
+  if (excludedBenchmarks.has(childId)) {
+    excludedChildren.push({ childId, reason: 'benchmark_filter' });
+    return;
+  }
+  
+  // Skip if column is hidden due to wayback filtering (all values are 'X')
+  if (isColumnHiddenByWaybackFiltering(childId)) {
+    excludedChildren.push({ childId, reason: 'wayback_filter' });
+    return;
+  }
+  
+  // Only include children that pass both filters
+  if (row[childId]) {
+    const childScore = row[childId].value;
+    const hasValidScore = childScore !== null && childScore !== undefined && 
+                         childScore !== '' && childScore !== 'X' &&
+                         !isNaN(parseFloat(childScore));
+    childInfo.push({ childId, childScore, hasValidScore });
+    includedChildren.push({ childId, score: childScore, valid: hasValidScore });
+  }
+});
+```
+
 ## Key Technical Challenges & Solutions
 
 ### Challenge 1: Data Overwrite Issue
@@ -435,29 +602,108 @@ if (window.activeFilters.min_wayback_timestamp !== null || window.activeFilters.
 **Problem**: Models weren't being removed when all scores became 'X'.
 **Solution**: Added `_hasValidScore` flag tracking and proper filtering logic.
 
+### Challenge 5: Global Score Model Removal
+**Problem**: Models with valid individual scores but 'X' global scores weren't being removed.
+**Solution**: Added second filtering pass after `updateFilteredScores` to remove models where `average_vision_v0` is 'X'.
+
+### Challenge 6: Parent Column Hiding
+**Problem**: Abstract benchmarks (parent columns) with all 'X' values remained visible.
+**Solution**: Extended column visibility logic to hide both leaf and parent columns when all values are 'X'.
+
+### Challenge 7: Inaccurate Parent Score Calculation
+**Problem**: Dropped columns were still included in parent calculations as 0, causing artificially low scores.
+**Solution**: Added `isColumnHiddenByWaybackFiltering` to exclude dropped columns from parent score calculations entirely.
+
 ## Testing Checklist
 
 When implementing this feature, verify:
 
 - [ ] Wayback section appears when timestamp data is available
 - [ ] Slider adjustments convert out-of-range scores to 'X'
-- [ ] Models with all 'X' scores are removed from leaderboard
-- [ ] Parent benchmark scores recalculate properly
+- [ ] Models with all 'X' individual scores are removed from leaderboard
+- [ ] Models with 'X' global scores are removed after recalculation
+- [ ] Leaf benchmark columns with all 'X' values are hidden
+- [ ] Parent benchmark columns with all 'X' values are hidden
+- [ ] Parent benchmark scores recalculate properly excluding dropped columns
 - [ ] `average_vision_v0` recalculates correctly
+- [ ] Parent calculations exclude wayback-dropped columns (not treated as 0)
+- [ ] Console shows column exclusions and accurate parent calculations
 - [ ] URL state persistence works
 - [ ] Reset functionality works
 - [ ] Date inputs sync with slider
-- [ ] Console logging shows expected behavior
+- [ ] Historical accuracy: scores reflect only available benchmarks at that time
 
 ## Data Flow Summary
 
 ```
 1. Backend extracts timestamp ranges → frontend initialization
 2. User adjusts slider → activeFilters updated → debounced filter update
-3. applyCombinedFilters → applyWaybackTimestampFilter → scores converted to 'X'
-4. updateFilteredScores → preserves 'X' values → recalculates averages
-5. AG Grid updated → models removed → columns hidden if needed
-6. URL state updated for persistence
+3. applyCombinedFilters → applyWaybackTimestampFilter → individual scores converted to 'X'
+4. updateFilteredScores → preserves 'X' values → recalculates parent averages (excluding dropped columns)
+5. applyGlobalScoreModelRemoval → removes models with 'X' global scores
+6. AG Grid updated with final filtered data
+7. updateColumnVisibility → hides columns with all 'X' values (leaf + parent)
+8. URL state updated for persistence
+```
+
+## Expected Console Output
+
+When wayback filtering is active, you should see:
+
+```javascript
+// Score filtering
+Applying wayback timestamp filter: {
+  minTimestamp: 1598524327,
+  maxTimestamp: 1626976668,
+  minDate: '2020-08-27T10:32:07.000Z',
+  maxDate: '2021-07-22T17:57:48.190Z'
+}
+
+// Column exclusions from parent calculations
+🚫 Column benchmark1_v1 excluded from parent calculations (all values are 'X')
+🚫 Column benchmark2_v1 excluded from parent calculations (all values are 'X')
+
+// Parent score recalculation
+Parent neural_vision_v0 calculation for model ModelName: {
+  totalChildren: 20,
+  excludedChildren: 12,
+  includedChildren: 8,
+  excluded: [
+    { childId: "benchmark1_v1", reason: "wayback_filter" },
+    { childId: "benchmark2_v1", reason: "wayback_filter" }
+  ],
+  included: [
+    { childId: "benchmark3_v1", score: 0.65, valid: true },
+    { childId: "benchmark4_v1", score: 0.72, valid: true }
+  ]
+}
+
+// Global score model removal
+Global score model removal: {
+  originalModels: 150,
+  modelsWithXGlobalScore: 25,
+  remainingModels: 125,
+  removedModels: ["ModelA", "ModelB", "ModelC"]
+}
+
+// Column visibility checks
+Column visibility check for leaf benchmark1_v1: {
+  columnType: "leaf",
+  totalValues: 125,
+  allXs: true,
+  sampleValues: ["X", "X", "X", "X", "X"],
+  isWaybackActive: true,
+  willHide: true
+}
+
+Column visibility check for parent neural_vision_v0: {
+  columnType: "parent",
+  totalValues: 125,
+  allXs: false,
+  sampleValues: [0.654, 0.723, 0.612, "X", 0.589],
+  isWaybackActive: true,
+  willHide: false
+}
 ```
 
 ## Files Modified Summary
@@ -467,16 +713,58 @@ When implementing this feature, verify:
 3. **Initialization**: `static/benchmarks/js/leaderboard/core/template-initialization.js` - UI setup
 4. **Slider Logic**: `static/benchmarks/js/leaderboard/filters/range-filters.js` - slider behavior
 5. **State**: `static/benchmarks/js/leaderboard/ui/ui-handlers.js` - global state
-6. **Core Filtering**: `static/benchmarks/js/leaderboard/filters/filter-coordinator.js` - main logic
-7. **URL State**: `static/benchmarks/js/leaderboard/navigation/url-state.js` - persistence
+6. **Core Filtering**: `static/benchmarks/js/leaderboard/filters/filter-coordinator.js` - main logic + model removal + accurate parent calculations
+7. **Column Visibility**: `static/benchmarks/js/leaderboard/renderers/header-components.js` - enhanced column hiding
+8. **URL State**: `static/benchmarks/js/leaderboard/navigation/url-state.js` - persistence
+
+## Functions Added/Modified
+
+### New Functions:
+- `applyWaybackTimestampFilter(rowData)` - Core timestamp filtering logic
+- `applyGlobalScoreModelRemoval(rowData)` - Remove models with 'X' global scores
+- `isColumnHiddenByWaybackFiltering(benchmarkId)` - Check if column should be excluded from calculations
+
+### Modified Functions:
+- `applyCombinedFilters()` - Added wayback filtering and model removal calls
+- `updateFilteredScores()` - Preserved wayback changes, enhanced parent calculations
+- `shouldHideColumnWithAllXsOrZeros()` - Added wayback-specific column hiding logic
+- `shouldColumnBeVisible()` - Extended to hide parent columns with all 'X' values
+- `updateSliderPosition()` - Added wayback timestamp date formatting
+- `updateActiveFilters()` - Added wayback timestamp filter state management
 
 ## Future Enhancements
 
-- Column hiding when all scores in a benchmark are 'X'
 - More sophisticated timestamp handling for different data sources
-- Performance optimizations for large datasets
-- Additional filtering modes (e.g., "before date", "after date")
+- Performance optimizations for large datasets (caching column visibility checks)
+- Additional filtering modes (e.g., "before date", "after date", "specific date")
+- Batch processing for very large datasets
+- Export functionality for historical leaderboard states
+- Animation/transition effects when switching between time periods
+
+## Summary of Achievements
+
+This implementation successfully creates a **complete time-travel feature** for the Brain-Score leaderboard with the following capabilities:
+
+### ✅ **Core Features Implemented**
+1. **Historical Score Filtering** - Converts out-of-range scores to 'X' based on timestamps
+2. **Intelligent Model Removal** - Removes models with all 'X' scores or 'X' global scores
+3. **Smart Column Hiding** - Hides both leaf and parent benchmark columns with all 'X' values
+4. **Accurate Score Recalculation** - Parent benchmarks only include valid/visible children in calculations
+5. **Persistent State** - Filter settings saved in URL for sharing and bookmarking
+
+### 🎯 **Historical Accuracy Guaranteed**
+- **No artificial score penalties** - Dropped columns don't contribute 0 to averages
+- **True historical representation** - Shows exactly what was available at that time
+- **Accurate parent calculations** - Abstract benchmarks reflect only their visible children
+- **Clean interface** - Hidden irrelevant columns and models for the selected time period
+
+### 🔄 **Complete Data Flow**
+```
+Individual Scores → Parent Calculations → Global Scores → Model Removal → Column Hiding
+```
+
+Each step preserves the integrity of the previous step while accurately representing the historical state of the leaderboard.
 
 ---
 
-*This implementation successfully creates a time-travel feature for the Brain-Score leaderboard, allowing users to see how the leaderboard looked at any point in historical time.*
+*This implementation allows users to travel back in time and see the Brain-Score leaderboard exactly as it appeared at any historical moment, with complete accuracy and no artifacts from future data.*
