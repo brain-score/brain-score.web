@@ -456,7 +456,7 @@ class FinalModelContext(models.Model):
         public (bool): Whether the model is publicly visible
         model_meta (dict, optional): JSON object containing model metadata including (see modelmeta table; attributes become keys)
     """
-
+    
     model_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
@@ -528,3 +528,4 @@ class FileUploadTracker(models.Model):
 
     class Meta:
         db_table = 'brainscore_fileuploadtracker'
+
