@@ -95,6 +95,12 @@ function initializeLeaderboardFromTemplate() {
     }
     
     // Setup wayback timestamp slider if datetime range is available
+    // console.log('🕐 Checking wayback timestamp setup:', {
+    //   hasDatetimeRange: !!ranges.datetime_range,
+    //   min_unix: ranges.datetime_range?.min_unix,
+    //   max_unix: ranges.datetime_range?.max_unix
+    // });
+    
     if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
       const waybackSection = document.getElementById('waybackTimestampSection');
       const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');

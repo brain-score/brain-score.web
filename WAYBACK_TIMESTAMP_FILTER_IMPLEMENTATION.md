@@ -8,10 +8,12 @@ This document describes the complete implementation of the wayback timestamp fil
 
 1. **Score Filtering**: Converts out-of-range scores to 'X' based on timestamp
 2. **Model Removal**: Removes entire model rows when all scores become 'X'
-3. **Column Hiding**: Hides benchmark columns when all scores in that column are 'X'
-4. **Parent Score Recalculation**: Properly recalculates averages for parent benchmarks
-5. **Global Score Handling**: Special handling for `average_vision_v0` column
-6. **URL State Persistence**: Filter settings persist in URL for sharing/bookmarking
+3. **Global Score Model Removal**: Removes models when global score (`average_vision_v0`) becomes 'X'
+4. **Leaf Column Hiding**: Hides individual benchmark columns when all scores are 'X'
+5. **Parent Column Hiding**: Hides abstract benchmark columns when all scores are 'X'
+6. **Accurate Parent Score Recalculation**: Excludes dropped columns from parent calculations
+7. **Global Score Handling**: Special handling for `average_vision_v0` column
+8. **URL State Persistence**: Filter settings persist in URL for sharing/bookmarking
 
 ## Architecture Overview
 
@@ -19,7 +21,8 @@ The wayback timestamp filter integrates with the existing filtering system:
 
 ```
 User adjusts slider → debounceFilterUpdate() → applyCombinedFilters() → 
-applyWaybackTimestampFilter() → updateFilteredScores() → AG Grid update
+applyWaybackTimestampFilter() → updateFilteredScores() → 
+applyGlobalScoreModelRemoval() → AG Grid update → updateColumnVisibility()
 ```
 
 ## Implementation Steps

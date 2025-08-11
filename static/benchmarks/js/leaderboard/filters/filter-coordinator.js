@@ -127,6 +127,12 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       finalData = updatedData;
     }
   }
+  
+  // Additional pass: Remove models where global score (average_vision_v0) is 'X'
+  // This happens after updateFilteredScores because that's where average_vision_v0 gets recalculated
+  if (typeof applyGlobalScoreModelRemoval === 'function') {
+    finalData = applyGlobalScoreModelRemoval(finalData);
+  }
 
   // Update grid with filtered data - preserving original data structure
   if (window.globalGridApi) {
@@ -316,6 +322,53 @@ function resetAllFilters() {
   }
 }
 
+// Check if a column should be hidden due to wayback filtering (all values are 'X')
+function isColumnHiddenByWaybackFiltering(benchmarkId) {
+  // Only check for wayback filtering if it's active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!isWaybackActive) {
+    return false; // No wayback filtering, column not hidden
+  }
+  
+  // Get current row data from the grid
+  const rowData = [];
+  if (window.globalGridApi) {
+    window.globalGridApi.forEachNode(node => {
+      if (node.data) {
+        rowData.push(node.data);
+      }
+    });
+  }
+  
+  if (rowData.length === 0) {
+    return false;
+  }
+  
+  // Check if all values in this column are 'X'
+  const values = rowData.map(row => {
+    const cellData = row[benchmarkId];
+    return cellData && typeof cellData === 'object' ? cellData.value : cellData;
+  }).filter(val => val !== null && val !== undefined && val !== '');
+  
+  if (values.length === 0) {
+    return false; // Don't hide if no values
+  }
+  
+  const allXs = values.every(val => val === 'X');
+  
+  if (allXs) {
+    console.log(`🚫 Column ${benchmarkId} excluded from parent calculations (all values are 'X')`);
+  }
+  
+  return allXs;
+}
+
 // Update filtered scores based on current filters
 function updateFilteredScores(rowData) {
   if (!window.originalRowData || !window.benchmarkTree) return;
@@ -389,15 +442,42 @@ function updateFilteredScores(rowData) {
         
         // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
+        const excludedChildren = [];
+        const includedChildren = [];
+        
         children.forEach(childId => {
-          if (!excludedBenchmarks.has(childId) && row[childId]) {
+          // Skip if explicitly excluded by benchmark filters
+          if (excludedBenchmarks.has(childId)) {
+            excludedChildren.push({ childId, reason: 'benchmark_filter' });
+            return;
+          }
+          
+          // Skip if column is hidden due to wayback filtering (all values are 'X')
+          if (isColumnHiddenByWaybackFiltering(childId)) {
+            excludedChildren.push({ childId, reason: 'wayback_filter' });
+            return;
+          }
+          
+          if (row[childId]) {
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined && 
                                  childScore !== '' && childScore !== 'X' &&
                                  !isNaN(parseFloat(childScore));
             childInfo.push({ childId, childScore, hasValidScore });
+            includedChildren.push({ childId, score: childScore, valid: hasValidScore });
           }
         });
+        
+        // Debug logging for parent calculations
+        if (excludedChildren.length > 0 && row.id && parseInt(row.id) <= 3) {
+          console.log(`Parent ${benchmarkId} calculation for model ${row.model?.name}:`, {
+            totalChildren: children.length,
+            excludedChildren: excludedChildren.length,
+            includedChildren: includedChildren.length,
+            excluded: excludedChildren,
+            included: includedChildren.slice(0, 3)
+          });
+        }
         
         // Check if any valid scores among the children
         const hasAnyValidScores = childInfo.some(info => info.hasValidScore);
@@ -780,11 +860,14 @@ function toggleFilteredScoreColumn(gridApi) {
 
 // Apply wayback timestamp filtering to convert scores to 'X' when outside timestamp range
 function applyWaybackTimestampFilter(rowData) {
-  console.log('applyWaybackTimestampFilter called with activeFilters:', {
-    min_wayback_timestamp: window.activeFilters?.min_wayback_timestamp,
-    max_wayback_timestamp: window.activeFilters?.max_wayback_timestamp,
-    activeFiltersExists: !!window.activeFilters
-  });
+  // console.log('🔍 applyWaybackTimestampFilter called with:', {
+  //   inputRowCount: rowData?.length,
+  //   min_wayback_timestamp: window.activeFilters?.min_wayback_timestamp,
+  //   max_wayback_timestamp: window.activeFilters?.max_wayback_timestamp,
+  //   activeFiltersExists: !!window.activeFilters,
+  //   filterOptionsExists: !!window.filterOptions,
+  //   datetimeRangeExists: !!window.filterOptions?.datetime_range
+  // });
   
   // Check if wayback timestamp filters are set and not at full range
   const minTimestamp = window.activeFilters?.min_wayback_timestamp;
@@ -797,14 +880,19 @@ function applyWaybackTimestampFilter(rowData) {
   
   const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
   
+  // console.log('🎚️ Wayback filter range check:', {
+  //   minTimestamp,
+  //   maxTimestamp,
+  //   fullRangeMin,
+  //   fullRangeMax,
+  //   isAtFullRange,
+  //   hasMinTimestamp: !!minTimestamp,
+  //   hasMaxTimestamp: !!maxTimestamp,
+  //   willSkipFiltering: (!minTimestamp || !maxTimestamp || isAtFullRange)
+  // });
+  
   if (!minTimestamp || !maxTimestamp || isAtFullRange) {
-    console.log('No wayback timestamp filtering active - returning original data', {
-      minTimestamp,
-      maxTimestamp,
-      fullRangeMin,
-      fullRangeMax,
-      isAtFullRange
-    });
+    // console.log('❌ No wayback timestamp filtering active - returning original data');
     return rowData; // No timestamp filtering active
   }
   
@@ -1018,13 +1106,53 @@ function applyWaybackTimestampFilter(rowData) {
   return filteredWithValidModels;
 }
 
+// Remove models where global score (average_vision_v0) is 'X'
+// This is called after updateFilteredScores where average_vision_v0 gets recalculated
+function applyGlobalScoreModelRemoval(rowData) {
+  // Only apply this additional filtering if wayback timestamp filtering is active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No wayback filtering active, don't remove any models
+  }
+  
+  const originalCount = rowData.length;
+  
+  // Filter out models where average_vision_v0 is 'X'
+  const filteredData = rowData.filter(row => {
+    const globalScore = row.average_vision_v0?.value;
+    return globalScore !== 'X';
+  });
+  
+  const removedCount = originalCount - filteredData.length;
+  
+  console.log('Global score model removal:', {
+    originalModels: originalCount,
+    modelsWithXGlobalScore: removedCount,
+    remainingModels: filteredData.length,
+    removedModels: removedCount > 0 ? rowData.filter(row => row.average_vision_v0?.value === 'X').slice(0, 3).map(row => row.model?.name || 'Unknown') : []
+  });
+  
+  return filteredData;
+}
+
 // Export functions for use by other modules
 window.LeaderboardFilterCoordinator = {
   applyCombinedFilters,
   resetAllFilters,
   updateFilteredScores,
   toggleFilteredScoreColumn,
-  applyWaybackTimestampFilter
+  applyWaybackTimestampFilter,
+  applyGlobalScoreModelRemoval,
+  isColumnHiddenByWaybackFiltering
 };
 
 // Make main functions globally available for compatibility
@@ -1032,4 +1160,6 @@ window.applyCombinedFilters = applyCombinedFilters;
 window.resetAllFilters = resetAllFilters;
 window.updateFilteredScores = updateFilteredScores;
 window.applyWaybackTimestampFilter = applyWaybackTimestampFilter;
+window.applyGlobalScoreModelRemoval = applyGlobalScoreModelRemoval;
+window.isColumnHiddenByWaybackFiltering = isColumnHiddenByWaybackFiltering;
 window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;

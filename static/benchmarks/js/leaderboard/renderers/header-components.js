@@ -140,12 +140,19 @@ function updateColumnVisibility() {
         return false;
       }
     } else {
-      // For parent columns: hide if they have 0 leaf descendants
+      // For parent columns: check two conditions
+      
+      // 1. Hide if they have 0 leaf descendants (original logic)
       if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
         const leafCount = window.getFilteredLeafCount(benchmarkId);
         if (leafCount === 0) {
           return false;
         }
+      }
+      
+      // 2. NEW: For wayback filtering, also hide parent columns if all their values are 'X'
+      if (shouldHideColumnWithAllXsOrZeros(benchmarkId)) {
+        return false;
       }
     }
     
@@ -196,11 +203,37 @@ function updateColumnVisibility() {
       return false; // Don't hide if no values
     }
     
-    // Check if all values are 'X' or 0
-    const allXsOrZeros = values.every(val => val === 'X' || val === 0);
+    // Check if wayback timestamp filtering is active
+    const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+    const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+    const ranges = window.filterOptions?.datetime_range;
+    const fullRangeMin = ranges?.min_unix;
+    const fullRangeMax = ranges?.max_unix;
+    const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
     
-    
-    return allXsOrZeros;
+    if (isWaybackActive) {
+      // For wayback filtering: hide only if ALL values are 'X' (not 0s, since 0s are legitimate scores)
+      const allXs = values.every(val => val === 'X');
+      
+      // Determine if this is a parent or leaf column for better logging
+      const hierarchyMap = window.cachedHierarchyMap || new Map();
+      const children = hierarchyMap.get(benchmarkId) || [];
+      const columnType = children.length === 0 ? 'leaf' : 'parent';
+      
+      console.log(`Column visibility check for ${columnType} ${benchmarkId}:`, {
+        columnType,
+        totalValues: values.length,
+        allXs,
+        sampleValues: values.slice(0, 5),
+        isWaybackActive,
+        willHide: allXs
+      });
+      return allXs;
+    } else {
+      // For normal filtering: hide if all values are 'X' or 0 (original behavior)
+      const allXsOrZeros = values.every(val => val === 'X' || val === 0);
+      return allXsOrZeros;
+    }
   }
   
   allColumns.forEach(column => {
