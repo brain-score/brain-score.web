@@ -426,7 +426,7 @@ class FinalModelContext(models.Model):
             - median
             - comment
             - benchmark (dict): JSON object of appropriate FinalBenchmarkContext
-                - id
+                - id 
                 - url
                 - meta
                 - year
@@ -490,7 +490,7 @@ class FinalModelContext(models.Model):
     timestamp = models.DateTimeField(null=True, blank=True)
     primary_model_id = models.IntegerField(null=True, blank=True)
     num_secondary_models = models.IntegerField(null=True, blank=True)
-    # Model_meta related fields that returns a JSON object of the above metadata objects.
+    # Model_meta related fields that returns a JSON object of the above metadata objects. 
     # Columns become keys in the JSON object.
     model_meta = JSONBField(null=True, blank=True)
     class Meta:
@@ -514,7 +514,7 @@ class BenchmarkMinMax(models.Model):
     class Meta:
         managed = False
         db_table = 'mv_benchmark_minmax'
-
+        
 class FileUploadTracker(models.Model):
     id = models.AutoField(primary_key=True, serialize=False)
     filename = models.CharField(max_length=1000)
