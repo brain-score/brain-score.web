@@ -32,7 +32,7 @@ document.addEventListener('click', function (e) {
 
 
 // keep spinner up for a minimum duration
-const SPINNER_MIN_MS = 5000;
+const SPINNER_MIN_MS = 0;
 function hideSpinnerDelayed(ms = SPINNER_MIN_MS) {
   setTimeout(() => LoadingSpinner.hide(), ms);
 }
@@ -117,4 +117,3 @@ document.addEventListener('click', (e) => {
   // We don't preventDefault, so navigation proceeds normally.
   requestAnimationFrame(() => {});
 }, { capture: true });
-
