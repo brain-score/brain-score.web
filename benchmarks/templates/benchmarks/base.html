@@ -71,6 +71,7 @@
     <script defer src="{% static "/benchmarks/js/mobile_warning.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/code_hover.js" %}"></script>
     <script defer src="{% static "/benchmarks/js/hide_rows.js" %}"></script>
+    <script defer src="{% static "/benchmarks/js/loading-animation.js" %}"></script>
     {% endcompress %}
 
     <script type="module" src="{% static "/benchmarks/js/large_file_upload.js" %}"></script>
@@ -115,6 +116,23 @@
 </head>
 
 <body>
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="bs-loader-stack">
+    <div class="bs-grid-loader">
+      <!-- 25 cells for animation -->
+      <div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div>
+    </div>
+    <div class="bs-loader-label">Loading leaderboard…</div>
+  </div>
+</div>
+
+
+
     <div id="mobile-warning-modal" class="mobile-warning-modal is-hidden">
         <div class="modal-content">
           <p>You're viewing Brain-Score on a mobile device. For the best experience — featuring interactive benchmarks and
