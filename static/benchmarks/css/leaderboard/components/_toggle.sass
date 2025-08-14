@@ -1,0 +1,36 @@
+// Profile Toggle Switch Component
+// Used in profile pages to toggle between user-only and user+public model views
+
+.toggle-wrapper
+  margin-right: 12px
+  display: inline-flex
+  align-items: center
+  gap: 8px
+
+.toggle-switch
+  position: relative
+  width: 44px
+  height: 24px
+  border-radius: 999px
+  background: #cfd3d7
+  border: none
+  padding: 0
+  cursor: pointer
+  transition: background 0.2s ease
+
+  &[aria-pressed="true"]
+    background: #45C676
+
+  .knob
+    position: absolute
+    top: 2px
+    left: 2px
+    width: 20px
+    height: 20px
+    border-radius: 50%
+    background: #fff
+    transition: left 0.2s ease
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)
+
+  &[aria-pressed="true"] .knob
+    left: 22px
