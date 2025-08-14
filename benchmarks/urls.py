@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard
+    content_utils, benchmark, explore, leaderboard, report_issue
 from .utils import show_token, refresh_cache
 
 
@@ -82,6 +82,9 @@ non_domain_urls = [
 
     # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
+    
+    # Report issue endpoint
+    path('report-issue/', report_issue.report_issue_view, name='report_issue'),
 ]
 
 all_domain_urls = [non_domain_urls]
