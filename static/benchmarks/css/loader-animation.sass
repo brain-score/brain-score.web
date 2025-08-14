@@ -1,3 +1,14 @@
+$cols: 5
+$step: 100ms
+$anim-dur: 1.75s
+$max-delay: $step * (2 * $cols - 1)
+
+// animatable custom property (Chromium/Safari 17.4+)
+@property --cell-color
+  syntax: '<color>'
+  inherits: true
+  initial-value: #47b7de
+
 .loading-overlay
   position: fixed
   top: 0
@@ -15,17 +26,24 @@
   display: flex
   flex-wrap: wrap
   width: 128px
-  
+
+  // drive color on the container
+  --cell-color: #47b7de
+  animation: grid-color-sweep $anim-dur linear infinite
+
+  // cells read the variable + run the pulse
   div
     width: 20%
     padding-bottom: 20%
-    background: $brainscore_blue
-    animation: grid-loader 1.75s ease-in infinite
-    
-    // Generate animation delays for each of the 25 grid items
+    background: var(--cell-color)
+    animation: grid-loader $anim-dur ease-in infinite both
+
     @for $i from 1 through 25
       &:nth-child(#{$i})
-        animation-delay: #{100ms * (floor(($i - 1) / 5) + (($i - 1) % 5) + 1)}
+        $row: floor(($i - 1) / $cols)
+        $col: (($i - 1) % $cols)
+        $delay: $step * ($row + $col + 1)
+        animation-delay: -($max-delay - $delay)
 
 .loading-text
   color: white
@@ -44,3 +62,11 @@
   75%, 100%
     border-radius: 100%
     transform: scale(0)
+
+@keyframes grid-color-sweep
+  0%
+    --cell-color: #47b7de
+  50%
+    --cell-color: #52c282
+  100%
+    --cell-color: #47b7de
