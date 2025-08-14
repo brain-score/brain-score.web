@@ -106,13 +106,13 @@ def round_up_aesthetically(value):
 
 
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
-def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
     """
     Get processed context data for AG Grid leaderboard.
     This function handles all the expensive data processing and is cached.
     """
-    # Get the base context (this is already cached)
-    context = get_context(user=user, domain=domain, show_public=show_public)
+    # Get the base context (with user context via decorator)
+    context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
 
     # Extract model metadata for filters
     model_metadata = {
@@ -535,7 +535,9 @@ def ag_grid_leaderboard_content(request, domain: str):
         # Profile view - check include_public parameter
         user = request.user
         include_public = request.GET.get('include_public', 'false').lower() in ('1', 'true', 'yes')
-        show_public = include_public
+        # For profile views, always use show_public=False to ensure user-specific caching
+        # The include_public parameter controls the data filtering, not the cache strategy
+        show_public = include_public  # This controls what data is included
         cache_suffix = f"user_{user.id}_public_{include_public}"
     else:
         # Public leaderboard (default)
@@ -544,19 +546,13 @@ def ag_grid_leaderboard_content(request, domain: str):
         include_public = True
         cache_suffix = "public"
     
-    # Create a cache-aware context getter with user-specific cache keys
-    from django.core.cache import cache
-    cache_key = f"leaderboard_content_{domain}_{cache_suffix}"
+    # For profile views, force user-specific caching to prevent cache collision
+    force_user_cache = user_view and user is not None
+    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
     
-    # Try to get from cache first
-    context = cache.get(cache_key)
-    if context is None:
-        # Generate context and cache it
-        context = get_ag_grid_context(user=user, domain=domain, show_public=show_public)
-        # Add include_public flag for template use
-        context['include_public'] = include_public
-        context['has_user'] = user is not None
-        cache.set(cache_key, context, 7 * 24 * 60 * 60)  # 7 days
+    # Add template-specific flags (these don't need caching as they're lightweight)
+    context['include_public'] = include_public
+    context['has_user'] = user is not None
     
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)
