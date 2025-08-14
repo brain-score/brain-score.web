@@ -700,13 +700,13 @@ class Profile(View):
             return render(request, 'benchmarks/login.html',
                           {'form': LoginForm, "domain": self.domain, 'formatted': self.domain.capitalize()})
         else:
+            # Lightweight profile shell - no heavy leaderboard data
             base_context = get_context(request.user, domain=self.domain)
-            ag_grid_context = get_ag_grid_context(user=request.user, domain=self.domain, show_public=True)
-
-            # Merge both contexts
+            
+            # Only include essential context for the shell
             context = {
-                **base_context,
-                **ag_grid_context,
+                "user": request.user,
+                "domain": self.domain,
                 "has_user": True,
                 "formatted": self.domain.capitalize(),
             }
@@ -716,17 +716,16 @@ class Profile(View):
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
+            # Lightweight profile shell after login
             base_context = get_context(user, domain=self.domain)
-            ag_grid_context = get_ag_grid_context(user=user, domain=self.domain, show_public=True)
-
-            # Merge both contexts
+            
+            # Only include essential context for the shell
             context = {
-                **base_context,
-                **ag_grid_context,
+                "user": user,
+                "domain": self.domain,
                 "has_user": True,
                 "formatted": self.domain.capitalize(),
             }
-
             return render(request, 'benchmarks/profile.html', context)
         else:
             context = {"Incorrect": True, 'form': LoginForm, "domain": self.domain,

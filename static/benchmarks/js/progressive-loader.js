@@ -7,16 +7,22 @@ const ProgressiveLoader = {
     /**
      * Initialize progressive loading for leaderboard content
      * @param {string} domain - The domain (e.g., 'vision', 'language')
+     * @param {boolean} userView - Whether to load user-specific data (default: false for public)
      */
-    initializeLeaderboard: function(domain) {
+    initializeLeaderboard: function(domain, userView = false) {
         document.addEventListener('DOMContentLoaded', function() {
             // Show the loader immediately
             if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.show) {
                 LoadingAnimation.show();
             }
             
+            // Build the URL with user_view parameter if needed
+            const url = userView 
+                ? `/${domain}/leaderboard/content/?user_view=true`
+                : `/${domain}/leaderboard/content/`;
+            
             // Load the heavy content via AJAX
-            fetch(`/${domain}/leaderboard/content/`)
+            fetch(url)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
