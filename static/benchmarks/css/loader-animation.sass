@@ -70,3 +70,26 @@ $max-delay: $step * (2 * $cols - 1)
     --cell-color: #52c282
   100%
     --cell-color: #47b7de
+
+.bs-progress
+  width: 260px
+  height: 10px
+  background: rgba(255,255,255,0.15)
+  border-radius: 9999px
+  overflow: visible
+  margin-top: 14px
+  position: relative
+
+  &__bar
+    width: 0%
+    height: 100%
+    background: linear-gradient(90deg, $brainscore_blue, #22c55e)
+    transition: width 160ms ease
+    border-radius: inherit   // ← this keeps the fill rounded
+
+  &__label
+    position: absolute
+    top: -22px
+    right: 0
+    font-size: 12px
+    color: rgba(255,255,255,0.9)

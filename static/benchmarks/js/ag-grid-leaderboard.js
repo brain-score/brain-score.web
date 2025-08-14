@@ -237,6 +237,17 @@ function executeSearchQuery(parsedQuery, searchableText) {
 // =====================================
 
 function initializeGrid(rowData, columnDefs, benchmarkGroups) {
+
+
+  // Show loader and start progress if available
+  if (typeof LoadingAnimation !== 'undefined') {
+    LoadingAnimation.show();
+    if (typeof LoadingAnimation.startProgress === 'function') {
+      // Ramp to ~88% while loading data
+      LoadingAnimation.startProgress(88, 2500);
+    }
+  }
+
   window.originalRowData = rowData;
 
   // Initialize filtered scores (will be all the same as global initially)
@@ -346,10 +357,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Core cell renderers
       modelCellRenderer: ModelCellRenderer,
       scoreCellRenderer: ScoreCellRenderer,
-      
+
       // Runnable status functionality
       runnableStatusCellRenderer: RunnableStatusCellRenderer,
-      
+
       // Header components will be loaded from modular files
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
       leafComponent: window.LeaderboardHeaderComponents?.LeafHeaderComponent,
@@ -382,10 +393,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
-      
+
       // Set initial column visibility state
       setInitialColumnState();
-      
+
       // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
@@ -394,6 +405,11 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
         ]
       });
+
+            // Push progress to 92% once grid is ready
+      if (typeof LoadingAnimation !== 'undefined' && typeof LoadingAnimation.setProgress === 'function') {
+        LoadingAnimation.setProgress(92);
+      }
       
       // Hide loading animation when grid is fully ready
       setTimeout(() => {
