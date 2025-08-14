@@ -1,0 +1,46 @@
+.loading-overlay
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  background: rgba(0, 0, 0, 0.8)
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: center
+  z-index: 1000
+
+.grid-loader
+  display: flex
+  flex-wrap: wrap
+  width: 128px
+  
+  div
+    width: 20%
+    padding-bottom: 20%
+    background: $brainscore_blue
+    animation: grid-loader 1.75s ease-in infinite
+    
+    // Generate animation delays for each of the 25 grid items
+    @for $i from 1 through 25
+      &:nth-child(#{$i})
+        animation-delay: #{100ms * (floor(($i - 1) / 5) + (($i - 1) % 5) + 1)}
+
+.loading-text
+  color: white
+  font-size: 18px
+  font-weight: 500
+  margin-top: 20px
+  text-align: center
+
+@keyframes grid-loader
+  0%, 25%
+    border-radius: 100%
+    transform: scale(0)
+  50%
+    border-radius: 0
+    transform: none
+  75%, 100%
+    border-radius: 100%
+    transform: scale(0)

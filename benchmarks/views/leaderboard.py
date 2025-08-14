@@ -510,11 +510,27 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     return minimal_context
 
+
+def ag_grid_leaderboard_shell(request, domain: str):
+    """
+    Lightweight shell view that loads immediately with just the app structure
+    """
+    # Minimal context for the shell - just domain info
+    context = {
+        'domain': domain,
+        'domain_display': domain.capitalize(),
+    }
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
+
+
 @cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
-def ag_grid_leaderboard(request, domain: str):
-    # 1) Determine user and fetch context
+def ag_grid_leaderboard_content(request, domain: str):
+    """
+    Heavy content view that returns just the leaderboard content via AJAX
+    """
+    # Get full context for content (Determine user and fetch context)
     user = request.user if request.user.is_authenticated else None
     context = get_ag_grid_context(user=user, domain=domain, show_public=True)
-
-    # Render the AG-Grid templatearc
-    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
+    
+    # Return the full AG-Grid template
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)

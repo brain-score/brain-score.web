@@ -394,6 +394,13 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
         ]
       });
+      
+      // Hide loading animation when grid is fully ready
+      setTimeout(() => {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+          LoadingAnimation.hide();
+        }
+      }, 100);
     }
   };
 

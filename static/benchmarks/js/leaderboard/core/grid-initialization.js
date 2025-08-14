@@ -218,6 +218,13 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: 'average_vision_v0', hide: false }
         ]
       });
+      
+      // Hide loading animation when grid is fully ready
+      setTimeout(() => {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+          LoadingAnimation.hide();
+        }
+      }, 100);
     }
   };
 
