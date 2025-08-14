@@ -219,12 +219,14 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         ]
       });
       
-      // Hide loading animation when grid is fully ready
+      // Complete loading animation when grid is fully rendered
       setTimeout(() => {
-        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
+          LoadingAnimation.complete();
+        } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
           LoadingAnimation.hide();
         }
-      }, 100);
+      }, 300); // Increased timeout to ensure grid is fully rendered
     }
   };
 
