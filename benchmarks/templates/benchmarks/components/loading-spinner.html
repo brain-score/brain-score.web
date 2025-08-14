@@ -1,8 +1,15 @@
 {% load static %}
 
 <div id="loading-overlay" class="loading-overlay" style="display: none;">
-  <div class="loading-spinner"></div>
+  <div class="grid-loader">
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+  </div>
+  <div class="loading-text">Loading leaderboard...</div>
 </div>
 
-<!-- Include the loading spinner JavaScript -->
-<script defer src="{% static '/benchmarks/js/loading-spinner.js' %}"></script>
+<!-- Include the loading animation JavaScript -->
+<script defer src="{% static '/benchmarks/js/loader-animation.js' %}"></script>

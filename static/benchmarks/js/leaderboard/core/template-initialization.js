@@ -32,6 +32,10 @@ function initializeLeaderboardFromTemplate() {
 
     } catch (e) {
       console.error('Error parsing data:', e);
+      // Hide loading animation on error
+      if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+        LoadingAnimation.hide();
+      }
       return; // Stop if data parsing fails
     }
     
@@ -105,6 +109,10 @@ function initializeLeaderboardFromTemplate() {
     
   } catch (error) {
     console.error('Error during grid initialization:', error);
+    // Hide loading animation on error
+    if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+      LoadingAnimation.hide();
+    }
   }
 }
 
