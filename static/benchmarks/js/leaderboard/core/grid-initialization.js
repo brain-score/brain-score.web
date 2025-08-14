@@ -185,7 +185,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           return false;
         }
         const searchableText = window.LeaderboardSearch.getSearchableText(node.data);
-        if (!window.LeaderboardSearch.executeSearchQuery(searchableText, window.currentSearchQuery)) {
+        if (!window.LeaderboardSearch.executeSearchQuery(window.currentSearchQuery, searchableText)) {
           return false;
         }
       }
