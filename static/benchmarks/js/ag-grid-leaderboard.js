@@ -238,14 +238,10 @@ function executeSearchQuery(parsedQuery, searchableText) {
 
 function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
-
-  // Show loader and start progress if available
-  if (typeof LoadingAnimation !== 'undefined') {
-    LoadingAnimation.show();
-    if (typeof LoadingAnimation.startProgress === 'function') {
-      // Ramp to ~88% while loading data
-      LoadingAnimation.startProgress(88, 2500);
-    }
+  // Update progress if loader is already running (progressive loader handles show/hide)
+  if (typeof LoadingAnimation !== 'undefined' && typeof LoadingAnimation.setProgress === 'function') {
+    // Grid initialization is starting, bump progress to ~88%
+    LoadingAnimation.setProgress(88);
   }
 
   window.originalRowData = rowData;
@@ -411,12 +407,14 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         LoadingAnimation.setProgress(92);
       }
       
-      // Hide loading animation when grid is fully ready
+      // Complete loading animation when grid is fully rendered
       setTimeout(() => {
-        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
+          LoadingAnimation.complete();
+        } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
           LoadingAnimation.hide();
         }
-      }, 100);
+      }, 300); // Increased timeout to ensure grid is fully rendered
     }
   };
 

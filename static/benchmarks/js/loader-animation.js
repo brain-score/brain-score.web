@@ -3,7 +3,7 @@ const LoadingAnimation = {
   fallbackTimeout: null,
   _raf: null,
   _progress: 0,
-  _autoTarget: 95,       // auto mode won't cross this; complete() takes it to 100
+  _autoTarget: 90,       // auto mode won't cross this; complete() takes it to 100
   _autoSpeed: 0.025,     // base speed; tweak for slower/faster fill
   _lastTs: 0,
   _isVisible: false,
@@ -133,9 +133,3 @@ const LoadingAnimation = {
 window.addEventListener('pageshow', (e) => { if (e.persisted) LoadingAnimation.hide(); });
 window.addEventListener('popstate', () => LoadingAnimation.hide());
 
-// Auto-finish when the real page is fully loaded (images, styles, etc.)
-window.addEventListener('load', () => {
-  // If you prefer to tie completion to your app’s data-ready event instead,
-  // remove this handler and call LoadingAnimation.complete() yourself.
-  LoadingAnimation.complete();
-});
