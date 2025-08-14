@@ -161,7 +161,17 @@ const ProfileToggleModule = {
                 // Reset filters after initialization
                 setTimeout(() => {
                     this.resetAllFilters();
+                    
+                    // Hide the loading animation once everything is ready
+                    if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+                        LoadingAnimation.hide();
+                    }
                 }, 100);
+            } else {
+                // If initialization function is not found, hide loader anyway
+                if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+                    LoadingAnimation.hide();
+                }
             }
         }, 200);
     },
@@ -224,26 +234,27 @@ const ProfileToggleModule = {
     },
     
     /**
-     * Show loading indicator
-     * @param {string} message - Loading message to display
+     * Show loading indicator using the existing LoadingAnimation system
+     * @param {string} message - Loading message to display (optional)
      */
     showLoadingIndicator: function(message) {
-        const container = document.querySelector('.leaderboard-container');
-        if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 60px; color: #666;">
-                    <div style="margin-bottom: 20px;">
-                        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #47B7DE; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                    </div>
-                    <p>${message}</p>
-                </div>
-                <style>
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
-            `;
+        // Update loading text if message is provided
+        if (message) {
+            const loadingText = document.querySelector('.loading-text');
+            if (loadingText) {
+                loadingText.textContent = message;
+            }
+        }
+        
+        // Use the existing LoadingAnimation system
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.show) {
+            LoadingAnimation.show();
+        } else {
+            // Fallback to simple message if LoadingAnimation is not available
+            const container = document.querySelector('.leaderboard-container');
+            if (container) {
+                container.innerHTML = `<div style="text-align: center; padding: 60px; color: #666;"><p>${message || 'Loading...'}</p></div>`;
+            }
         }
     },
     
@@ -251,6 +262,11 @@ const ProfileToggleModule = {
      * Show error message
      */
     showErrorMessage: function() {
+        // Hide the loading animation first
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+            LoadingAnimation.hide();
+        }
+        
         const container = document.querySelector('.leaderboard-container');
         if (container) {
             container.innerHTML = '<div style="text-align: center; color: #e74c3c; padding: 40px;"><h3>Error loading models</h3><p>Please refresh the page to try again.</p></div>';
