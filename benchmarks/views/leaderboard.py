@@ -522,25 +522,26 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
-
 @cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX
-    Avoid user vs public cache conflict by cache key suffix
+    Supports include_public parameter for profile views
     """
     # Check if this is a user-specific view request
     user_view = request.GET.get('user_view', 'false').lower() == 'true'
     
     if user_view and request.user.is_authenticated:
-        # User-specific data (profile view)
+        # Profile view - check include_public parameter
         user = request.user
-        show_public = False
-        cache_suffix = f"user_{user.id}"
+        include_public = request.GET.get('include_public', 'false').lower() in ('1', 'true', 'yes')
+        show_public = include_public
+        cache_suffix = f"user_{user.id}_public_{include_public}"
     else:
-        # Public data (default)
+        # Public leaderboard (default)
         user = None
         show_public = True
+        include_public = True
         cache_suffix = "public"
     
     # Create a cache-aware context getter with user-specific cache keys
@@ -552,6 +553,9 @@ def ag_grid_leaderboard_content(request, domain: str):
     if context is None:
         # Generate context and cache it
         context = get_ag_grid_context(user=user, domain=domain, show_public=show_public)
+        # Add include_public flag for template use
+        context['include_public'] = include_public
+        context['has_user'] = user is not None
         cache.set(cache_key, context, 7 * 24 * 60 * 60)  # 7 days
     
     # Return the full AG-Grid template

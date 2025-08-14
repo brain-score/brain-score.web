@@ -72,11 +72,14 @@
   <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
   <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
 
-  <!-- Progressive loading script -->
-  <script src="{% static 'benchmarks/js/progressive-loader.js' %}"></script>
+  <!-- Profile Toggle Module -->
+  <script src="{% static 'benchmarks/js/profile-toggle-module.js' %}"></script>
   <script>
-    // Initialize progressive loading for user-specific data
-    ProgressiveLoader.initializeLeaderboard('{{ domain }}', true); // true = user_view
+    // Pass domain to global scope for the module
+    window.DJANGO_DOMAIN = '{{ domain }}';
+    
+    // Initialize profile page
+    ProfileToggleModule.initializeProfilePage('{{ domain }}');
   </script>
 
 {% endblock %}
