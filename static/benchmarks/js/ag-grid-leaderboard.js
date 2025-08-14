@@ -237,7 +237,6 @@ function executeSearchQuery(parsedQuery, searchableText) {
 // =====================================
 
 function initializeGrid(rowData, columnDefs, benchmarkGroups) {
-  LoadingSpinner.show();
   window.originalRowData = rowData;
 
   // Initialize filtered scores (will be all the same as global initially)
@@ -383,7 +382,11 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
+      
+      // Set initial column visibility state
       setInitialColumnState();
+      
+      // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
@@ -391,11 +394,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
         ]
       });
-      hideSpinnerDelayed();
-    },
- onFirstDataRendered: () => hideSpinnerDelayed(),
- onRowDataUpdated: () => hideSpinnerDelayed(),
- onModelUpdated: () => hideSpinnerDelayed(),
+    }
   };
 
   const eGridDiv = document.getElementById('leaderboardGrid');
@@ -445,7 +444,6 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   } else {
     console.error('Grid API not available after initialization');
-    window.LoadingSpinner?.hide();
   }
 }
 
