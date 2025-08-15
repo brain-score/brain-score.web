@@ -125,7 +125,7 @@ const LoadingAnimation = {
 
     // Smoothly finish to 100, then hide shortly after
     await this._animateTo(100, 350);
-    setTimeout(() => this.hide(), 200);
+    setTimeout(() => this.hide(), 10);
   }
 };
 

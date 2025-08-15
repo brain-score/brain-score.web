@@ -107,7 +107,7 @@ const ProgressiveLoader = {
                     LoadingAnimation.hide();
                 }
             }
-        }, 200);
+        }, 0);
     },
 
     /**
