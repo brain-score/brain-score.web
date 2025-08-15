@@ -185,7 +185,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           return false;
         }
         const searchableText = window.LeaderboardSearch.getSearchableText(node.data);
-        if (!window.LeaderboardSearch.executeSearchQuery(searchableText, window.currentSearchQuery)) {
+        if (!window.LeaderboardSearch.executeSearchQuery(window.currentSearchQuery, searchableText)) {
           return false;
         }
       }
@@ -218,6 +218,15 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: 'average_vision_v0', hide: false }
         ]
       });
+      
+      // Complete loading animation when grid is fully rendered
+      setTimeout(() => {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
+          LoadingAnimation.complete();
+        } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+          LoadingAnimation.hide();
+        }
+      }, 300); // Increased timeout to ensure grid is fully rendered
     }
   };
 

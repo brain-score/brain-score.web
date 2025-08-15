@@ -1,6 +1,15 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block table_library_dependencies %}
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
+  <link rel="stylesheet" href="{% static 'benchmarks/css/main.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+{% endblock %}
+
 {% block banner %}
 <h1>{{ formatted }} Profile</h1>
 <p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>
@@ -32,18 +41,14 @@
         <p class="benefits_info is-size-5-mobile">
             Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.
         </p>
-        <p class="benefits_info is-size-5-mobile">
-            Past scores are below. Submissions are located at the bottom.
-        </p>
 
         </form>
-        <button id="download-csv" class="button button-ghost">Download CSV</button>
-        <textarea id="csv-data" style="display:none;">{{ csv_downloadable }}</textarea>
-        <script src="{% static 'js/download_csv.js' %}" defer></script>
     </div>
 
     <div class="box leaderboard-table-component">
-        {% include "benchmarks/leaderboard/leaderboard-table.html" %}
+        <div class="leaderboard-container">
+            <!-- Content will be loaded here via AJAX -->
+        </div>
     </div>
     <div class="box leaderboard-table-component">
         <button onclick="location.href='logout/'" type="button" class="button button-primary tutorial">
@@ -52,4 +57,26 @@
     </div>
 
 {% endif %}
+
+  <!-- Load external dependencies for leaderboard -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+
+  <!-- Progressive loading script -->
+  <script src="{% static 'benchmarks/js/progressive-loader.js' %}"></script>
+  <script>
+    // Initialize progressive loading for user-specific data
+    ProgressiveLoader.initializeLeaderboard('{{ domain }}', true); // true = user_view
+  </script>
+
 {% endblock %}

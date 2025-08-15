@@ -356,7 +356,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     for b in groupings:
         field = b.identifier
         parent_field = b.parent['identifier']
-        hide = not parent_field.startswith('average_')  # show if neural or behavioral
+        hide = not parent_field.startswith(f'average_{domain}')  # show if neural or behavioral
         column_defs.append({
             'field': field,
             'headerName': b.short_name,
@@ -510,11 +510,49 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     return minimal_context
 
-@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
-def ag_grid_leaderboard(request, domain: str):
-    # 1) Determine user and fetch context
-    user = request.user if request.user.is_authenticated else None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=True)
 
-    # Render the AG-Grid templatearc
-    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
+def ag_grid_leaderboard_shell(request, domain: str):
+    """
+    Lightweight shell view that loads immediately with just the app structure
+    """
+    # Minimal context for the shell - just domain info
+    context = {
+        'domain': domain,
+        'domain_display': domain.capitalize(),
+    }
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
+
+
+@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
+def ag_grid_leaderboard_content(request, domain: str):
+    """
+    Heavy content view that returns just the leaderboard content via AJAX
+    Avoid user vs public cache conflict by cache key suffix
+    """
+    # Check if this is a user-specific view request
+    user_view = request.GET.get('user_view', 'false').lower() == 'true'
+    
+    if user_view and request.user.is_authenticated:
+        # User-specific data (profile view)
+        user = request.user
+        show_public = False
+        cache_suffix = f"user_{user.id}"
+    else:
+        # Public data (default)
+        user = None
+        show_public = True
+        cache_suffix = "public"
+    
+    # Create a cache-aware context getter with user-specific cache keys
+    from django.core.cache import cache
+    cache_key = f"leaderboard_content_{domain}_{cache_suffix}"
+    
+    # Try to get from cache first
+    context = cache.get(cache_key)
+    if context is None:
+        # Generate context and cache it
+        context = get_ag_grid_context(user=user, domain=domain, show_public=show_public)
+        cache.set(cache_key, context, 7 * 24 * 60 * 60)  # 7 days
+    
+    # Return the full AG-Grid template
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)

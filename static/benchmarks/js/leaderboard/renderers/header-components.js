@@ -114,7 +114,8 @@ function updateColumnVisibility() {
     }
     
     // Check if this is a top-level category
-    const topLevelCategories = ['neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'];
+    const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+    const topLevelCategories = [`neural_${domain}_v0`, `behavior_${domain}_v0`, `engineering_${domain}_v0`];
     if (topLevelCategories.includes(benchmarkId)) {
       // Hide main column if it has no valid children left
       if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
@@ -294,7 +295,11 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     average_vision_v0: 'Global Score',
     neural_vision_v0: 'Neural',
     behavior_vision_v0: 'Behavior',
-    engineering_vision_v0: 'Engineering'
+    engineering_vision_v0: 'Engineering',
+    average_language_v0: 'Global Score',
+    neural_language_v0: 'Neural',
+    behavior_language_v0: 'Behavior',
+    engineering_language_v0: 'Engineering'
   };
   const displayName = nameMap[benchmarkId] || params.displayName || benchmarkId;
 
@@ -334,7 +339,8 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   // Check if this is a parent column that should have a count badge
   const directChildren = getDirectChildren(colDef.field);
   const hasChildren = directChildren.length > 0;
-  const isTopLevelCategory = ['average_vision_v0', 'neural_vision_v0', 'behavior_vision_v0', 'engineering_vision_v0'].includes(colDef.field);
+  const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+  const isTopLevelCategory = [`average_${domain}_v0`, `neural_${domain}_v0`, `behavior_${domain}_v0`, `engineering_${domain}_v0`].includes(colDef.field);
 
   if (hasChildren || isTopLevelCategory) {
     const count = document.createElement('span');
@@ -358,10 +364,10 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     } else if (isTopLevelCategory) {
       // Fallback for top-level categories - assume reasonable counts
       const fallbackCounts = {
-        'average_vision_v0': 50,
-        'neural_vision_v0': 25,
-        'behavior_vision_v0': 25,
-        'engineering_vision_v0': 5
+        [`average_${domain}_v0`]: 50,
+        [`neural_${domain}_v0`]: 25,
+        [`behavior_${domain}_v0`]: 25,
+        [`engineering_${domain}_v0`]: 5
       };
       initialCount = fallbackCounts[colDef.field] || 0;
     } else {
