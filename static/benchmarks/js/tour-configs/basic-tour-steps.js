@@ -86,8 +86,10 @@ window.tourConfigs.defaultTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Expand neural benchmarks to show V1, V2, V4, IT columns
-        expandBenchmarkHeaders(['neural_vision_v0']);
+        // Wait a moment for grid to be ready, then expand neural benchmarks
+        setTimeout(() => {
+          expandBenchmarkHeaders(['neural_vision_v0']);
+        }, 300);
       }
     },
     {
@@ -102,8 +104,10 @@ window.tourConfigs.defaultTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Expand V1 to show individual benchmarks
-        expandBenchmarkHeaders(['V1_v0']);
+        // Wait a moment for previous expansion to complete, then expand V1
+        setTimeout(() => {
+          expandBenchmarkHeaders(['V1_v0']);
+        }, 400);
       }
     },
     {
@@ -120,13 +124,15 @@ window.tourConfigs.defaultTour = {
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
         // Ensure V1 is still expanded (in case user manually collapsed it)
-        expandBenchmarkHeaders(['V1_v0']);
+        setTimeout(() => {
+          expandBenchmarkHeaders(['V1_v0']);
+        }, 200);
         
         // Give a moment for any animations to complete
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve();
-          }, 500);
+          }, 600);
         });
       }
     },

@@ -18,24 +18,33 @@
 
   <input type="text" id="modelSearchInput" placeholder="Search models or submitter... (try: 'alexnet OR vit', 'imagenet AND resnet', 'NOT ferguson')" />
 
-  <button id="advancedFilterBtn" style="white-space: nowrap">
-    <span class="filter-icon">🔍</span>
-    <span class="text-wrapper">Advanced Filters</span>
-  </button>
-  <button id="tutorialBtn" class="btn-secondary" style="white-space: nowrap">
-    <span class="tutorial-icon">📚</span>
-    <span class="text-wrapper">Tutorial</span>
-  </button>
+  {% if domain  == "vision" %} <!-- Disable filtering for Language domain for now -->
+
+    <button id="advancedFilterBtn" style="white-space: nowrap">
+      <span class="filter-icon">🔍</span>
+      <span class="text-wrapper">Advanced Filters</span>
+    </button>
+    <button id="tutorialBtn" class="btn-secondary" style="white-space: nowrap">
+      <span class="tutorial-icon">📚</span>
+      <span class="text-wrapper">Walkthrough</span>
+    </button>
+  {% endif %}
+  
   <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard data and plugin metadata">
     <i class="fa-solid fa-download"></i>  Export
   </button>
+  {% if not has_user %}
+  <button id="reportIssueBtn" class="btn-secondary" style="background-color: #FF6B6B; color: white; border: none; white-space: nowrap" title="Report an issue with the leaderboard">
+    <i class="fa-solid fa-bug"></i> Report
+  </button>
+  {% endif %}
 </div>
 
 <div class="leaderboard-breadcrumb"></div>
 
-<div id="leaderboardGrid"
+<div id="leaderboardGrid"1
      class="ag-theme-alpine"
-     style="width:100%;height:1500px;overflow-x:auto;">
+     style="width:100%;height:calc(100vh - 300px);min-height:500px;overflow-x:auto;">
 </div>
 
 <div id="advancedFiltersPanel" class="advanced-filters hidden">
@@ -53,13 +62,13 @@
       </div>
       <div id="benchmarkFilterPanel"></div>
     </div>
-    
+
     <!-- Middle column: Model Properties -->
     <div class="filter-column">
       <div class="filter-column-header">
         <h4>Model Properties</h4>
       </div>
-      
+
       <div class="filter-group">
         <label>Architecture</label>
         <div class="filter-dropdown" id="architectureFilter">
@@ -69,7 +78,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <label>Model Family</label>
         <div class="filter-dropdown" id="modelFamilyFilter">
@@ -77,7 +86,7 @@
           <div class="dropdown-content hidden"></div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <div class="filter-header">
           <label>Parameter Count (M)</label>
@@ -97,7 +106,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <div class="filter-header">
           <label>Model Size (MB)</label>
@@ -118,13 +127,13 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Right column: Benchmark Properties -->
     <div class="filter-column benchmark-metadata-column">
       <div class="filter-column-header">
         <h4>Benchmark Properties</h4>
-      </div>  
-      
+      </div>
+
       <!-- Public Data Only -->
       <div class="filter-group">
           <label class="checkbox-label">
@@ -132,7 +141,7 @@
             <span>Publicly Available Data Only</span>
           </label>
       </div>
-      
+
       <!-- Benchmark Data Section -->
       <div class="metadata-section">
         <div class="filter-group checkbox-group">
@@ -156,7 +165,7 @@
             </label>
           </div>
         </div>
-        
+
         <div class="filter-group checkbox-group">
           <label>Species</label>
           <div class="checkbox-container" id="speciesFilter">
@@ -170,7 +179,7 @@
             </label>
           </div>
         </div>
-        
+
         <div class="filter-group checkbox-group">
           <label>Task</label>
           <div class="checkbox-container" id="taskFilter">
@@ -178,7 +187,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Benchmark Stimuli Section -->
       <div class="metadata-section">
         <div class="filter-group">
@@ -202,13 +211,85 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Action buttons -->
   <div class="filter-actions">
     <button id="toggleLayoutBtn" class="btn-secondary">
       <span class="toggle-text">Sidebar Mode</span>
     </button>
     <button id="resetAllFiltersBtn" class="btn-primary">Reset All Filters</button>
+  </div>
+</div>
+
+
+<!-- Report Issue Modal -->
+<div id="reportIssueModal" class="modal" style="display: none;">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Report an Issue</p>
+      <button class="delete" aria-label="close" id="closeReportModal"></button>
+    </header>
+    <section class="modal-card-body">
+      <form id="reportIssueForm">
+        <div class="field">
+          <label class="label">Issue Type</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="issueType" name="issueType" required>
+                <option value="">Select issue type...</option>
+                <option value="bug">🐛 Bug Report</option>
+                <option value="feature">✨ Feature Request</option>
+                <option value="data">📊 Benchmark Issue</option>
+                <option value="ui">🎨 UI/UX Issue</option>
+                <option value="other">❓ Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Issue Title</label>
+          <div class="control">
+            <input class="input" type="text" id="issueTitle" name="issueTitle" placeholder="Brief description of the issue" required maxlength="100">
+          </div>
+          <p class="help">Provide a concise title for your issue</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="issueDescription" name="issueDescription" placeholder="Detailed description of the issue, steps to reproduce, expected vs actual behavior, etc." required rows="6"></textarea>
+          </div>
+          <p class="help">Provide as much detail as possible to help us understand and resolve the issue</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Browser & System Info</label>
+          <div class="control">
+            <input class="input" type="text" id="systemInfo" name="systemInfo" readonly>
+          </div>
+          <p class="help">This information will be automatically included to help with debugging</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Contact Email (Optional)</label>
+          <div class="control">
+            <input class="input" type="email" id="contactEmail" name="contactEmail" placeholder="your.email@example.com">
+          </div>
+          <p class="help">Provide your email if you'd like updates on this issue</p>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button type="submit" form="reportIssueForm" class="button is-primary" id="submitIssueBtn">
+        <span class="icon">
+          <i class="fa-solid fa-paper-plane"></i>
+        </span>
+        <span>Submit Issue</span>
+      </button>
+      <button class="button" id="cancelReportModal">Cancel</button>
+    </footer>
   </div>
 </div>
 
@@ -221,10 +302,15 @@
 <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
-<script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+
+{% if domain  == "vision" %} <!-- Disable URL params for Language domain for now -->
+  <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+{% endif %}
+
 <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/issues/report-issue.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 

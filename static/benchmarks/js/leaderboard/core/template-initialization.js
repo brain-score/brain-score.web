@@ -135,6 +135,11 @@ function initializeLeaderboardFromTemplate() {
     setupFilters();
     setupEventHandlers();
     
+    // Setup report issue functionality
+    if (typeof window.LeaderboardReportIssue?.setupReportIssue === 'function') {
+      window.LeaderboardReportIssue.setupReportIssue();
+    }
+    
   } catch (error) {
     console.error('Error during grid initialization:', error);
     // Hide loading animation on error
