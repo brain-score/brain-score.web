@@ -21,12 +21,22 @@ def view(request, id: int, domain: str):
     # scores
     filtered_scores = (Score.objects
                        .filter(benchmark_id=id, model__public=True))
-    ordered_raw_scores = (filtered_scores
-                          .values_list('score_raw', flat=True)
-                          .exclude(score_raw__isnull=True)
-                          .order_by('-score_raw'))
-    benchmark_max = ordered_raw_scores.first()
-    benchmark_min = ordered_raw_scores.last()
+    # Get raw scores excluding null and NaN values
+    import math
+    all_raw_scores = (filtered_scores
+                     .values_list('score_raw', flat=True)
+                     .exclude(score_raw__isnull=True))
+    
+    # Filter out NaN values that Django might not exclude automatically
+    valid_scores = [score for score in all_raw_scores if not (isinstance(score, float) and math.isnan(score))]
+    
+    if valid_scores:
+        benchmark_max = max(valid_scores)
+        benchmark_min = min(valid_scores)
+    else:
+        # No valid scores available
+        benchmark_min = None
+        benchmark_max = None
 
     # score display
     scores = (filtered_scores
