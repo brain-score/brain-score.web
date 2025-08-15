@@ -1081,10 +1081,10 @@ class TestExtraFunctionality:
         with zipfile.ZipFile(zip_path, 'r') as zip_file:
             file_list = zip_file.namelist()
 
-            assert any(name.startswith("brain-score-plugin-metadata") and name.endswith(".csv") for name in file_list), \
-                "leaderboard*.csv not found in ZIP"
-            assert any(name.startswith("brain-score-leaderboard") and name.endswith(".csv") for name in file_list), \
-                "leaderboard*.csv not found in ZIP"
+            assert "plugin-info.csv" in file_list, \
+                "plugin-info.csv not found in ZIP"
+            assert "leaderboard.csv" in file_list, \
+                "leaderboard.csv not found in ZIP"
 
 
     def test_search_bar_filters_models_by_name(self, page):

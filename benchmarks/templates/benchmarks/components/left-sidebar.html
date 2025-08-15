@@ -12,7 +12,7 @@
 </a>
 
 {% url 'leaderboard' as leaderboard_url %}
-<a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/">
+<a class="{% if request.path == '/'|add:domain|add:'/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/leaderboard">
     <img class="menu-icon" src="{% static "benchmarks/img/leaderboard_icon.png" %}" alt="Leaderboard Icon">
     <span>Leaderboard</span>
 </a>

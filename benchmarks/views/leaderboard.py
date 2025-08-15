@@ -106,13 +106,13 @@ def round_up_aesthetically(value):
 
 
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
-def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False):
+def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
     """
     Get processed context data for AG Grid leaderboard.
     This function handles all the expensive data processing and is cached.
     """
-    # Get the base context (this is already cached)
-    context = get_context(user=user, domain=domain, show_public=show_public)
+    # Get the base context (with user context via decorator)
+    context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
 
     # Extract model metadata for filters
     model_metadata = {
@@ -356,7 +356,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     for b in groupings:
         field = b.identifier
         parent_field = b.parent['identifier']
-        hide = not parent_field.startswith('average_')  # show if neural or behavioral
+        hide = not parent_field.startswith(f'average_{domain}')  # show if neural or behavioral
         column_defs.append({
             'field': field,
             'headerName': b.short_name,
@@ -510,11 +510,49 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     return minimal_context
 
-@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
-def ag_grid_leaderboard(request, domain: str):
-    # 1) Determine user and fetch context
-    user = request.user if request.user.is_authenticated else None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=True)
 
-    # Render the AG-Grid templatearc
-    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard.html', context)
+def ag_grid_leaderboard_shell(request, domain: str):
+    """
+    Lightweight shell view that loads immediately with just the app structure
+    """
+    # Minimal context for the shell - just domain info
+    context = {
+        'domain': domain,
+        'domain_display': domain.capitalize(),
+    }
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
+
+@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
+def ag_grid_leaderboard_content(request, domain: str):
+    """
+    Heavy content view that returns just the leaderboard content via AJAX
+    Supports include_public parameter for profile views
+    """
+    # Check if this is a user-specific view request
+    user_view = request.GET.get('user_view', 'false').lower() == 'true'
+    
+    if user_view and request.user.is_authenticated:
+        # Profile view - check include_public parameter
+        user = request.user
+        include_public = request.GET.get('include_public', 'false').lower() in ('1', 'true', 'yes')
+        # For profile views, always use show_public=False to ensure user-specific caching
+        # The include_public parameter controls the data filtering, not the cache strategy
+        show_public = include_public  # This controls what data is included
+        cache_suffix = f"user_{user.id}_public_{include_public}"
+    else:
+        # Public leaderboard (default)
+        user = None
+        show_public = True
+        include_public = True
+        cache_suffix = "public"
+    
+    # For profile views, force user-specific caching to prevent cache collision
+    force_user_cache = user_view and user is not None
+    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
+    
+    # Add template-specific flags (these don't need caching as they're lightweight)
+    context['include_public'] = include_public
+    context['has_user'] = user is not None
+    
+    # Return the full AG-Grid template
+    return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)
