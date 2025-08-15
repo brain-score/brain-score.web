@@ -51,7 +51,8 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             domain: str = "vision",
             benchmark_filter: Optional[str] = None,
             model_filter: Optional[str] = None,
-            show_public: bool = False
+            show_public: bool = False,
+            force_user_cache: bool = False
         ) -> Dict[str, Any]:
             """
             Wrapper function that implements the caching logic.
@@ -62,6 +63,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                 benchmark_filter (Optional[str]): Filter to apply to benchmarks
                 model_filter (Optional[str]): Filter to apply to models
                 show_public (bool): Whether to show only public data
+                force_user_cache (bool): Force user-specific caching even when show_public=True
             
             Returns:
                 Dict[str, Any]: The context dictionary containing models, benchmarks, and other data
@@ -85,17 +87,19 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             if key_prefix:
                 base_parts.append(key_prefix)
             
-            # Use global public cache when show_public=True, regardless of user
-            if show_public:
-                # (CASE 1: Public data) Create unique key for public data cache
+            # Determine caching strategy based on user context and force_user_cache
+            if show_public and not force_user_cache and not user:
+                # (CASE 1: Global public data) Use global cache for anonymous public views
                 key_parts = base_parts + ['global', domain, 'public', f'v{cache_version}']
             elif user:
-                # (CASE 2: User data) Create unique key for user-specific cache
-                key_parts = base_parts + ['user', domain, str(user.id), str(show_public), f'v{cache_version}']
+                # (CASE 2: User-specific data) Always use user-specific cache when user is present
+                # This includes both user-only views and user+public views (profile toggle)
+                cache_type = 'forced' if force_user_cache else 'normal'
+                key_parts = base_parts + ['user', domain, str(user.id), str(show_public), cache_type, f'v{cache_version}']
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                          model_filter=model_filter, show_public=show_public)
+                          model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
             
             # Add filters to key prefix
             if benchmark_filter:
@@ -141,7 +145,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             logger.error(f"Cache miss for key: {cache_key}")
             func_start = time.time()
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                        model_filter=model_filter, show_public=show_public)
+                        model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
             
