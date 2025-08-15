@@ -171,7 +171,19 @@ class ReportIssueView(View):
             logger.warning(f"Could not retrieve GitHub token from AWS secrets: {e}")
             
         # Fallback to Django settings (for development)
-        return getattr(settings, 'GITHUB_TOKEN', '')
+        github_token = getattr(settings, 'GITHUB_TOKEN', '')
+        if github_token:
+            return github_token
+            
+        # Final fallback to environment variable
+        import os
+        env_token = os.getenv('GITHUB_TOKEN', '')
+        if env_token:
+            logger.info("Using GitHub token from environment variable")
+            return env_token
+            
+        logger.error("No GitHub token found in AWS secrets, Django settings, or environment variables")
+        return ''
     
     def _prepare_issue_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare the issue data for GitHub API"""
