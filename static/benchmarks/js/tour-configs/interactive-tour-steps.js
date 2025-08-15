@@ -138,25 +138,11 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
-        // Deselect V1 checkbox to show category filtering
+        // Simulate actual user click on the V1 checkbox 
         const v1Checkbox = document.querySelector('input[value="V1_v0"]');
         if (v1Checkbox && v1Checkbox.checked) {
-          // Set checkbox state
-          v1Checkbox.checked = false;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          v1Checkbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
+          // Simulate an actual user click - this will properly trigger all normal behaviors
+          v1Checkbox.click();
         }
       }
     },
@@ -189,6 +175,12 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Record current state before making changes
         window.tourStepState.recordCurrentStateForStep(stepIndex);
         
+        // Re-enable V1 silently before showing citations
+        const v1Checkbox = document.querySelector('input[value="V1_v0"]');
+        if (v1Checkbox && !v1Checkbox.checked) {
+          v1Checkbox.click();
+        }
+        
         // Scroll to the copy button to ensure it's visible
         const copyBtn = document.querySelector('#copyBibtexBtn');
         if (copyBtn && window.scrollElementIntoView) {
@@ -197,7 +189,8 @@ window.tourConfigs.interactiveBenchmarkTour = {
         
         // Click the copy button to demonstrate the functionality
         setTimeout(() => {
-          if (copyBtn) {
+          // Check if we're still on this step before creating popup
+          if (copyBtn && options.state.activeIndex === stepIndex) {
             // Create and show fake bibtex popup instead of actual copy
             const fakePopup = document.createElement('div');
             fakePopup.id = 'tour-bibtex-popup';
@@ -323,25 +316,11 @@ window.tourConfigs.interactiveBenchmarkTour = {
         // Store original state for restoration later
         window._tourOriginalBehaviorState = true;
         
-        // Uncheck behavioral benchmarks properly
+        // Simulate actual user click on behavioral benchmarks checkbox
         const behaviorCheckbox = document.querySelector('input[value="behavior_vision_v0"]');
         if (behaviorCheckbox && behaviorCheckbox.checked) {
-          // Set checkbox state
-          behaviorCheckbox.checked = false;
-          
-          // Trigger change event manually
-          const changeEvent = new Event('change', { bubbles: true });
-          behaviorCheckbox.dispatchEvent(changeEvent);
-          
-          // Call update functions with a small delay to ensure DOM is updated
-          setTimeout(() => {
-            if (window.updateExclusions) {
-              window.updateExclusions();
-            }
-            if (window.applyCombinedFilters) {
-              window.applyCombinedFilters();
-            }
-          }, 100);
+          // Simulate an actual user click
+          behaviorCheckbox.click();
         }
       }
     },
@@ -411,24 +390,10 @@ window.tourConfigs.interactiveBenchmarkTour = {
         
         // Small delay before unchecking to ensure scroll completes
         setTimeout(() => {
-          // Uncheck engineering benchmarks (they start checked by default)
+          // Simulate actual user click on engineering benchmarks
           if (engineeringCheckbox && engineeringCheckbox.checked) {
-            // Set checkbox state
-            engineeringCheckbox.checked = false;
-            
-            // Trigger change event manually
-            const changeEvent = new Event('change', { bubbles: true });
-            engineeringCheckbox.dispatchEvent(changeEvent);
-            
-            // Call update functions with a small delay to ensure DOM is updated
-            setTimeout(() => {
-              if (window.updateExclusions) {
-                window.updateExclusions();
-              }
-              if (window.applyCombinedFilters) {
-                window.applyCombinedFilters();
-              }
-            }, 100);
+            // Simulate an actual user click
+            engineeringCheckbox.click();
           }
         }, 300);
       }
