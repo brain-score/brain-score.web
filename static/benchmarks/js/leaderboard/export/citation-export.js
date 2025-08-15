@@ -16,7 +16,7 @@ function handleCitationExport() {
   try {
     const bibtexContent = collectBenchmarkBibtex();
 
-    if (!bibtexContent) {
+    if (!bibtexContent || bibtexContent.length === 0) {
       alert('No benchmarks selected for citation export.');
       return;
     }

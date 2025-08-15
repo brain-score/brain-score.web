@@ -304,13 +304,23 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
+            # Extract only essential benchmark fields for citation functionality
+            benchmark_info = score.get('benchmark', {})
+            minimal_benchmark = {}
+            if benchmark_info.get('bibtex'):
+                minimal_benchmark = {
+                    'bibtex': benchmark_info.get('bibtex'),
+                    'benchmark_type_id': benchmark_info.get('benchmark_type_id', '')
+                }
+            
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'benchmark': score.get('benchmark', {})  # Include benchmark metadata for bibtex collection
+                # Include minimal benchmark info only when needed for citations
+                'benchmark': minimal_benchmark if minimal_benchmark else None
             }
         row_data.append(rd)
 
@@ -441,7 +451,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # dump benchmark metadata (all three tables)
     context['benchmarkStimuliMetaMap'] = json.dumps(stimuli_map)
-    context['benchmarkDataMetaMap'] = json.dumps(data_map)
+    context['benchmarkDataMetaMap'] = json.dumps(data_map) 
     context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
 
     layer_map = context.get('layer_mapping', {})
@@ -476,8 +486,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
-    # Minimal cache payload including only include what the frontend actually needs
-    # This can be substantially reduced because there is a lot of duplication in the original context
+    # Optimized payload - removed benchmark objects from individual scores to reduce size
     minimal_context = {
         # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
         'row_data': json.dumps([json_serializable(r) for r in row_data]),
@@ -487,6 +496,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_metadata': context['benchmark_metadata'],
         'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
+        # Removed benchmarkMetaMap for simplicity
         'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
         'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
         'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],

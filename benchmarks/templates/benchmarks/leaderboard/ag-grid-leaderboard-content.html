@@ -46,7 +46,7 @@
 
 <div class="leaderboard-breadcrumb"></div>
 
-<div id="leaderboardGrid"1
+<div id="leaderboardGrid"
      class="ag-theme-alpine"
      style="width:100%;height:calc(100vh - 300px);min-height:500px;overflow-x:auto;">
 </div>
@@ -329,6 +329,7 @@
     benchmark_metadata: '{{ benchmark_metadata|escapejs }}',
     benchmark_ids: '{{ benchmark_ids|escapejs }}',
     model_metadata_map: '{{ model_metadata_map|escapejs }}',
+    domain: '{{ domain }}',
     benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
     benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
     benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
