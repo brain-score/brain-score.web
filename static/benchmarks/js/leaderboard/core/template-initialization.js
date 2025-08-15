@@ -176,14 +176,14 @@ function setupUIComponents() {
   
   setTimeout(() => {
     initializeDualHandleSliders();
-  }, 100);
+  }, 10);
   
   // Initial badge count update
   setTimeout(() => {
     if (typeof window.updateAllCountBadges === 'function') {
       window.updateAllCountBadges();
     }
-  }, 200);
+  }, 20);
 }
 
 function setupFilters() {
@@ -211,7 +211,7 @@ function setupFilters() {
     });
   
     console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
-  }, 200);
+  }, 20);
 }
 
 function setupEventHandlers() {
@@ -266,7 +266,7 @@ function setupEventHandlers() {
         }
       });
     }
-  }, 300);
+  }, 30);
   
   setupLayoutToggleHandlers();
 }
@@ -395,7 +395,7 @@ function setupLayoutToggleHandlers() {
         panel.classList.add('hidden');
       }
     }
-  }, 500);
+  }, 50);
 }
 
 // Export for global access

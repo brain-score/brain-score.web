@@ -226,7 +226,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
           LoadingAnimation.hide();
         }
-      }, 300); // Increased timeout to ensure grid is fully rendered
+      }, 10);
     }
   };
 
