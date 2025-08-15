@@ -6,9 +6,10 @@
 </div>
 
 <div id="leaderboardSearchWrapper">
+  <input type="text" id="modelSearchInput" placeholder="Search models or submitter... (try: 'alexnet OR vit', 'imagenet AND resnet', 'NOT ferguson')" />
 
   {% if domain  == "vision" %} <!-- Disable filtering for Language domain for now -->
-    <input type="text" id="modelSearchInput" placeholder="Search models or submitter... (try: 'alexnet OR vit', 'imagenet AND resnet', 'NOT ferguson')" />
+
     <button id="advancedFilterBtn" style="white-space: nowrap">
       <span class="filter-icon">🔍</span>
       <span class="text-wrapper">Advanced Filters</span>
@@ -51,13 +52,13 @@
       </div>
       <div id="benchmarkFilterPanel"></div>
     </div>
-    
+
     <!-- Middle column: Model Properties -->
     <div class="filter-column">
       <div class="filter-column-header">
         <h4>Model Properties</h4>
       </div>
-      
+
       <div class="filter-group">
         <label>Architecture</label>
         <div class="filter-dropdown" id="architectureFilter">
@@ -67,7 +68,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <label>Model Family</label>
         <div class="filter-dropdown" id="modelFamilyFilter">
@@ -75,7 +76,7 @@
           <div class="dropdown-content hidden"></div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <div class="filter-header">
           <label>Parameter Count (M)</label>
@@ -95,7 +96,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="filter-group">
         <div class="filter-header">
           <label>Model Size (MB)</label>
@@ -116,13 +117,13 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Right column: Benchmark Properties -->
     <div class="filter-column benchmark-metadata-column">
       <div class="filter-column-header">
         <h4>Benchmark Properties</h4>
-      </div>  
-      
+      </div>
+
       <!-- Public Data Only -->
       <div class="filter-group">
           <label class="checkbox-label">
@@ -130,7 +131,7 @@
             <span>Publicly Available Data Only</span>
           </label>
       </div>
-      
+
       <!-- Benchmark Data Section -->
       <div class="metadata-section">
         <div class="filter-group checkbox-group">
@@ -154,7 +155,7 @@
             </label>
           </div>
         </div>
-        
+
         <div class="filter-group checkbox-group">
           <label>Species</label>
           <div class="checkbox-container" id="speciesFilter">
@@ -168,7 +169,7 @@
             </label>
           </div>
         </div>
-        
+
         <div class="filter-group checkbox-group">
           <label>Task</label>
           <div class="checkbox-container" id="taskFilter">
@@ -176,7 +177,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Benchmark Stimuli Section -->
       <div class="metadata-section">
         <div class="filter-group">
@@ -200,7 +201,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Action buttons -->
   <div class="filter-actions">
     <button id="toggleLayoutBtn" class="btn-secondary">
@@ -236,7 +237,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="field">
           <label class="label">Issue Title</label>
           <div class="control">
@@ -244,7 +245,7 @@
           </div>
           <p class="help">Provide a concise title for your issue</p>
         </div>
-        
+
         <div class="field">
           <label class="label">Description</label>
           <div class="control">
@@ -252,7 +253,7 @@
           </div>
           <p class="help">Provide as much detail as possible to help us understand and resolve the issue</p>
         </div>
-        
+
         <div class="field">
           <label class="label">Browser & System Info</label>
           <div class="control">
@@ -260,7 +261,7 @@
           </div>
           <p class="help">This information will be automatically included to help with debugging</p>
         </div>
-        
+
         <div class="field">
           <label class="label">Contact Email (Optional)</label>
           <div class="control">
@@ -291,7 +292,11 @@
 <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
-<script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+
+{% if domain  == "vision" %} <!-- Disable URL params for Language domain for now -->
+  <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
+{% endif %}
+
 <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
@@ -318,6 +323,3 @@
 
 {# Load initialization script that handles the Django data #}
 <script src="{% static 'benchmarks/js/leaderboard/core/template-initialization.js' %}"></script>
-
-{# Load Driver.js CSS last to ensure proper cascade order #}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css"/>
