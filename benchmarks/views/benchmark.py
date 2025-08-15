@@ -38,9 +38,8 @@ def view(request, id: int, domain: str):
         benchmark_min = None
         benchmark_max = None
 
-    # score display
+    # score display - get all scores and sort them properly in Python to handle NaN values
     scores = (filtered_scores
-              .order_by(F('score_raw').desc(nulls_last=True))
               .select_related('model', 'model__reference'))
     BenchmarkDisplay = namedtuple('BenchmarkDisplay', field_names=[
         'short_name', 'depth'])
@@ -49,8 +48,23 @@ def view(request, id: int, domain: str):
     ModelRow = namedtuple('ModelRow', field_names=[
         'id', 'name', 'rank', 'public', 'competition', 'scores', 'reference_identifier',
         'owner', 'primary_model_id', 'num_secondary_models'])
+    # Sort scores properly in Python to handle NaN values correctly
+    # Convert to list and sort with custom key that puts valid scores first, then NaN/None
+    scores_list = list(scores)
+    
+    def sort_key(score_row):
+        score = score_row.score_raw
+        if score is None:
+            return (1, 0)  # None values last
+        elif isinstance(score, float) and math.isnan(score):
+            return (1, 0)  # NaN values last  
+        else:
+            return (0, -score)  # Valid scores first, sorted in descending order
+    
+    sorted_scores = sorted(scores_list, key=sort_key)
+    
     models = []
-    for model_rank, score_row in enumerate(scores, start=1):
+    for model_rank, score_row in enumerate(sorted_scores, start=1):
         models.append(ModelRow(
             id=score_row.model.id,
             name=score_row.model.name,
