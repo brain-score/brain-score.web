@@ -314,3 +314,6 @@
 
 {# Load initialization script that handles the Django data #}
 <script src="{% static 'benchmarks/js/leaderboard/core/template-initialization.js' %}"></script>
+
+{# Load Driver.js CSS last to ensure proper cascade order #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css"/>
