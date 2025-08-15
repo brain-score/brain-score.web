@@ -5,7 +5,7 @@ from django.db.models import F
 from django.shortcuts import render
 
 from benchmarks.models import BenchmarkInstance, Score
-from benchmarks.views.index import represent, representative_color, reference_identifier
+from benchmarks.views.index import represent, representative_color, reference_identifier, ENGINEERING_ROOT
 
 _logger = logging.getLogger(__name__)
 
@@ -17,6 +17,16 @@ def view(request, id: int, domain: str):
                  .get(id=id))  # `benchmark_type__domain=domain` is not needed since ids are unique)
     benchmark_identifier = benchmark.benchmark_type.identifier
     versioned_benchmark_identifier = f'{benchmark_identifier}_v{benchmark.version}'
+    
+    # Check if this is an engineering benchmark by looking at the benchmark hierarchy
+    # We need to check the root parent to determine if it's an engineering benchmark
+    from benchmarks.models import FinalBenchmarkContext
+    try:
+        benchmark_context = FinalBenchmarkContext.objects.get(benchmark_type_id=benchmark_identifier)
+        is_engineering = ENGINEERING_ROOT in benchmark_context.root_parent
+    except FinalBenchmarkContext.DoesNotExist:
+        # Fallback: check if the identifier itself contains 'engineering'
+        is_engineering = ENGINEERING_ROOT in benchmark_identifier
 
     # scores
     filtered_scores = (Score.objects
@@ -71,7 +81,7 @@ def view(request, id: int, domain: str):
             rank=model_rank,
             public=score_row.model.public, competition=score_row.model.competition,
             scores=[ScoreDisplay(
-                score_ceiled=represent(score_row.score_ceiled),
+                score_ceiled=represent(score_row.score_raw if is_engineering else score_row.score_ceiled),
                 score_raw=score_row.score_raw,
                 color=representative_color(score_row.score_raw, min_value=benchmark_min, max_value=benchmark_max),
                 versioned_benchmark_identifier=versioned_benchmark_identifier,
