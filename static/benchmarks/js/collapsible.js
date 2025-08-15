@@ -24,11 +24,6 @@ $(document).ready(function () {
                 Array.from(targets).forEach((target) => {
                     switch_state(target, control);
                 });
-                
-                // Only apply recursive hiding after initial setup and for user interactions
-                if (isCollapsing && !isInitialSetup) {
-                    recursivelyHideDescendants(identifier);
-                }
             }
         };
 
