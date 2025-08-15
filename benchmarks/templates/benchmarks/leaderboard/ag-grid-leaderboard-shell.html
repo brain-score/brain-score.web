@@ -36,6 +36,11 @@
   <!-- Progressive loading script -->
   <script src="{% static 'benchmarks/js/progressive-loader.js' %}"></script>
   <script>
+    // Provide domain for JavaScript functions.
+    window.DJANGO_DATA = {
+      domain: '{{ domain }}'
+    };
+    
     // Initialize progressive loading for this domain
     ProgressiveLoader.initializeLeaderboard('{{ domain }}');
   </script>

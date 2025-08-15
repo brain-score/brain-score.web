@@ -43,6 +43,10 @@ const ProgressiveLoader = {
      * @param {string} html - The HTML content to inject
      */
     injectContent: function(html) {
+        // Preserve the domain from the shell before injecting content
+        const shellDomain = window.DJANGO_DATA?.domain;
+        ProgressiveLoader.preservedDomain = shellDomain;
+        
         // Replace the entire main content with the loaded content
         const mainContent = document.querySelector('.leaderboard-container');
         if (mainContent) {
@@ -90,6 +94,11 @@ const ProgressiveLoader = {
     initializeAfterLoad: function() {
         // Wait a bit for all scripts to settle
         setTimeout(() => {
+            // Ensure domain is preserved in DJANGO_DATA after content load
+            if (ProgressiveLoader.preservedDomain && window.DJANGO_DATA) {
+                window.DJANGO_DATA.domain = ProgressiveLoader.preservedDomain;
+            }
+            
             if (typeof initializeLeaderboardFromTemplate === 'function') {
                 initializeLeaderboardFromTemplate();
             } else {
