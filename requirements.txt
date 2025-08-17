@@ -8,7 +8,7 @@ colour==0.1.5
 cython==3.0.0
 django-appconf==1.0.5
 django-compressor==4.4
-Django==4.0
+Django==4.2.16
 idna==3.4
 jmespath==1.0.1
 numpy==1.24.4
