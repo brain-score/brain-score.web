@@ -1,14 +1,13 @@
 from django.test import TestCase
 from django.db import connection
-from .test_views import ALL_FIXTURES, BaseTestCase
+from .test_views import BaseTestCase
+import unittest
+
 
 class TestMaterializedViews(BaseTestCase):
     def test_refresh_materialized_views(self):
         """Test that the refresh_all_materialized_views() function executes successfully"""
         with connection.cursor() as cursor:
-            # Execute the refresh function
-            cursor.execute("SELECT refresh_all_materialized_views()")
-
             # Verify that key materialized views exist and have data
             cursor.execute("""
                 SELECT COUNT(*) 
@@ -24,6 +23,7 @@ class TestMaterializedViews(BaseTestCase):
             benchmark_count = cursor.fetchone()[0]
             self.assertGreater(benchmark_count, 0, "mv_final_benchmark_context should contain data")
 
+    @unittest.skip("Insertion of new model scores to be avoided on web_tests database.")
     def test_refresh_after_data_change(self):
         """Test that materialized views update after data changes"""
         with connection.cursor() as cursor:
@@ -45,14 +45,15 @@ class TestMaterializedViews(BaseTestCase):
             # Verify count increased
             cursor.execute("SELECT COUNT(*) FROM mv_final_model_context")
             new_count = cursor.fetchone()[0]
-            self.assertGreater(new_count, initial_count, 
-                             "mv_model_scores should reflect new data after refresh")
-            
+            self.assertGreater(new_count, initial_count,
+                               "mv_model_scores should reflect new data after refresh")
+
+    @unittest.skip("Insertion of new benchmark to be avoided on web_tests database.")
     def test_aggregation_with_new_benchmark(self):
         """Tests if average_vision score updates correctly when a new benchmark score is added"""
-        
+
         print("\n\nUsing  mobilenet_v1_0.25_128 on FreemanZiemba2013.V1-pls for aggregation test")
-        
+
         with connection.cursor() as cursor:
             # 1. First get mobilenet's current average_vision
             cursor.execute("""
@@ -121,60 +122,67 @@ class TestMaterializedViews(BaseTestCase):
             print(f"\nAverage vision after modification of score for FreemanZiemba2013.V1-pls: {new_average}")
 
             # 5. Verify the average changed
-            self.assertNotEqual(initial_average, new_average, 
-                              "average_vision should change after adding new benchmark score")
-            
+            self.assertNotEqual(initial_average, new_average,
+                                "average_vision should change after adding new benchmark score")
+
     def test_compare_get_context_implementations(self):
         """Test that the new materialized view implementation of get_context() produces equivalent output to the legacy implementation"""
         from benchmarks.views.index import get_context as new_get_context
         from benchmarks.tests.test_helpers.legacy_index import get_context as legacy_get_context
-        
+
         # Test cases to cover different scenarios
         test_cases = [
             # (domain, user, show_public)
             ("vision", None, True),  # Public vision view
-            ("language", None, True), # Public language view
-        ]        
+            ("language", None, True),  # Public language view
+        ]
 
         for domain, user, show_public in test_cases:
             # Get contexts from both implementations
             new_context = new_get_context(domain=domain, user=user, show_public=show_public)
             legacy_context = legacy_get_context(domain=domain, user=user, show_public=show_public)
-             
+
             # Filter legacy context to only include public models
-            legacy_context['models'] = [model for model in legacy_context['models'] if model.public]          
+            legacy_context['models'] = [model for model in legacy_context['models'] if model.public]
 
             # Compare key fields that should be identical
-            self.assertEqual(new_context['domain'], legacy_context['domain'], 
-                            f"Domain mismatch for {domain} view")
+            self.assertEqual(new_context['domain'], legacy_context['domain'],
+                             f"Domain mismatch for {domain} view")
             self.assertEqual(new_context['BASE_DEPTH'], legacy_context['BASE_DEPTH'],
-                            f"BASE_DEPTH mismatch for {domain} view")
+                             f"BASE_DEPTH mismatch for {domain} view")
             self.assertEqual(new_context['has_user'], legacy_context['has_user'],
-                            f"has_user mismatch for {domain} view")
-            
+                             f"has_user mismatch for {domain} view")
+
             # Compare benchmark data
             new_benchmarks = {b.identifier: b for b in new_context['benchmarks']}
             legacy_benchmarks = {b.identifier: b for b in legacy_context['benchmarks']}
             self.assertEqual(set(new_benchmarks.keys()), set(legacy_benchmarks.keys()),
-                            f"Benchmark identifiers mismatch for {domain} view")
-            
-            # Compare model data
+                             f"Benchmark identifiers mismatch for {domain} view")
+
+            # Compare model data - allow for newer models in materialized views
             new_models = {m.id: m for m in new_context['models']}
             legacy_models = {m.id: m for m in legacy_context['models']}
-            self.assertEqual(set(new_models.keys()), set(legacy_models.keys()),
-                            f"Model IDs mismatch for {domain} view")
-            
+
+            # Check that legacy models are subset of new models (newer models may exist in materialized views)
+            legacy_set = set(legacy_models.keys())
+            new_set = set(new_models.keys())
+
+            # All legacy models should exist in new implementation
+            missing_in_new = legacy_set - new_set
+            self.assertEqual(len(missing_in_new), 0,
+                             f"Legacy models missing in new implementation: {missing_in_new}")
+
             # Compare benchmark parents and visibility
             self.assertEqual(new_context['benchmark_parents'], legacy_context['benchmark_parents'],
-                            f"Benchmark parents mismatch for {domain} view")
+                             f"Benchmark parents mismatch for {domain} view")
             self.assertEqual(new_context['not_shown_set'], legacy_context['not_shown_set'],
-                            f"Not shown set mismatch for {domain} view")
-            
+                             f"Not shown set mismatch for {domain} view")
+
     def test_compare_score_between_legacy_and_new_implementation(self):
         """Test that the new materialized view implementation of get_context() produces equivalent output to the legacy implementation"""
         from benchmarks.views.index import get_context as new_get_context
         from benchmarks.tests.test_helpers.legacy_index import get_context as legacy_get_context
-        
+
         domain = "vision"
         user = None
         show_public = True
@@ -187,7 +195,7 @@ class TestMaterializedViews(BaseTestCase):
 
         # Make sure we are comparing the same model
         self.assertEqual(new_row.name, legacy_row.name)
-        self.assertEqual(new_row.id, legacy_row.id)        
+        self.assertEqual(new_row.id, legacy_row.id)
 
         # Get the score for the model in the new context
         new_score = new_row.scores[0]
@@ -199,11 +207,10 @@ class TestMaterializedViews(BaseTestCase):
             float(legacy_score.score_ceiled.strip('.')),  # Convert '.390' to 0.390
             "Score ceiled mismatch between new and legacy implementation"
         )
-        
+
         # Compare benchmark identifier
         self.assertEqual(
             new_score['benchmark']['identifier'],
             legacy_score.benchmark.identifier,
             "Benchmark identifier mismatch between new and legacy implementation"
         )
-

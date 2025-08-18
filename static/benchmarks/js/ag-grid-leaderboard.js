@@ -1,0 +1,668 @@
+// static/benchmarks/js/ag-grid-leaderboard.js
+window.globalGridApi = null;
+window.globalColumnApi = null;
+
+// Global filter state for model properties
+window.activeFilters = {
+  architecture: [],
+  model_family: [],
+  training_dataset: [],
+  task_specialization: [],
+  max_param_count: null,
+  max_model_size: null,
+  runnable_only: false,
+  benchmark_regions: [],
+  benchmark_species: [],
+  benchmark_tasks: [],
+  public_data_only: false
+};
+
+// Global state for tracking column expansion
+window.columnExpansionState = new Map();
+
+// Global state for filtered out benchmarks
+window.filteredOutBenchmarks = new Set();
+
+// =====================================
+// CELL RENDERERS
+// =====================================
+
+// ModelCellRenderer
+function ModelCellRenderer() {}
+ModelCellRenderer.prototype.init = function(params) {
+  this.eGui = document.createElement('div');
+  this.eGui.className = 'model-cell';
+  const a = document.createElement('a');
+  a.href = `/model/vision/${params.value.id}`;
+  a.textContent = params.value.name;
+  this.eGui.appendChild(a);
+
+  // add submitter
+  if (params.value.submitter) {
+    const contributor = document.createElement('div');
+    contributor.className = 'model-submitter';
+    contributor.textContent = params.value.submitter;
+    this.eGui.appendChild(contributor);
+  }
+};
+ModelCellRenderer.prototype.getGui = function() {
+  return this.eGui;
+};
+
+// =====================================
+// RUNNABLE STATUS FUNCTIONALITY
+// =====================================
+
+// RunnableStatusCellRenderer - displays colored status circles with tooltips
+function RunnableStatusCellRenderer() {}
+RunnableStatusCellRenderer.prototype.init = function(params) {
+  this.eGui = document.createElement('div');
+  this.eGui.className = 'runnable-status-cell';
+  
+  const runnable = params.data?.metadata?.runnable;
+  const statusIcon = document.createElement('div');
+  statusIcon.className = 'runnable-status-icon';
+  
+  if (runnable === true) {
+    statusIcon.classList.add('runnable-green');
+  } else if (runnable === false) {
+    statusIcon.classList.add('runnable-red');
+  } else {
+    statusIcon.classList.add('runnable-grey');
+  }
+  
+  this.eGui.appendChild(statusIcon);
+};
+RunnableStatusCellRenderer.prototype.getGui = function() {
+  return this.eGui;
+};
+
+// Helper function to create runnable status column definition
+function createRunnableStatusColumn() {
+  return {
+    headerName: '',
+    field: 'runnable_status',
+    colId: 'runnable_status',
+    pinned: 'left',
+    width: 80,
+    cellRenderer: 'runnableStatusCellRenderer',
+    sortable: true,
+    filter: false,
+    headerClass: 'centered-header',
+    valueGetter: params => {
+      const runnable = params.data?.metadata?.runnable;
+      return runnable === true ? 2 : runnable === false ? 1 : 0; // For sorting: green > red > grey
+    },
+    tooltipValueGetter: params => {
+      const runnable = params.data?.metadata?.runnable;
+      if (runnable === true) {
+        return 'Model code is functional and runnable';
+      } else if (runnable === false) {
+        return 'Model code has known issues or is non-functional';
+      } else {
+        return 'Model code status unknown';
+      }
+    }
+  };
+}
+
+// Model Comparator for sorting models by name
+function modelComparator(a, b) {
+  // Both are objects like: { id, name, submitter }
+  const nameA = a?.name?.toLowerCase() || '';
+  const nameB = b?.name?.toLowerCase() || '';
+  return nameA.localeCompare(nameB);
+}
+
+// ScoreCellRenderer
+function ScoreCellRenderer() {}
+ScoreCellRenderer.prototype.init = function(params) {
+  // grab the raw object off row
+  const field = params.colDef.field;
+  const cellObj = params.data[field] || {};
+
+  // now unwrap
+  let display = 'X';
+  if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
+    display = Number(cellObj.value).toFixed(2);
+  }
+  const CELL_ALPHA = 0.85;
+  let bg = '#e0e1e2';
+  if (cellObj.color) {
+    const m = cellObj.color.match(/rgba?\([^)]*\)/);
+    if (m) {
+      const colorStr = m[0];
+      if (colorStr.startsWith('rgba(')) {
+        bg = colorStr.replace(/,\s*[\d.]+\)$/, `, ${CELL_ALPHA})`);
+      } else if (colorStr.startsWith('rgb(')) {
+        bg = colorStr.replace('rgb(', 'rgba(').replace(')', `, ${CELL_ALPHA})`);
+      } else {
+        bg = colorStr;
+      }
+    }
+  }
+
+  // build pill
+  this.eGui = document.createElement('div');
+  this.eGui.className = 'score-pill-container';
+  const pill = document.createElement('div');
+  pill.className = 'score-pill';
+  pill.textContent = display;
+  pill.style.backgroundColor = bg;
+  this.eGui.appendChild(pill);
+};
+ScoreCellRenderer.prototype.getGui = function() {
+  return this.eGui;
+};
+
+
+// Global search state - LOCAL VARIABLE like the original
+window.currentSearchQuery = null;
+
+// =====================================
+// SEARCH FUNCTIONALITY
+// =====================================
+
+// Get searchable text from a row
+function getSearchableText(rowData) {
+  const model = rowData.model || {};
+  const searchFields = [
+    model.name || '',
+    model.submitter || ''
+  ];
+  
+  return searchFields.join(' ').toLowerCase();
+}
+
+// Parse search query with logical operators (OR, AND, NOT)
+function parseSearchQuery(query) {
+  if (!query.trim()) return null;
+  
+  // Split by OR first (lowest precedence)
+  const orParts = query.toLowerCase().split(/\s+or\s+/);
+  
+  return {
+    type: 'OR',
+    parts: orParts.map(orPart => {
+      // Split by AND (higher precedence than OR)
+      const andParts = orPart.split(/\s+and\s+/);
+      
+      if (andParts.length === 1) {
+        // Handle NOT for single terms (e.g., "NOT alexnet")
+        const term = andParts[0].trim();
+        if (term.startsWith('not ')) {
+          return { type: 'NOT', term: term.substring(4).trim() };
+        }
+        return { type: 'TERM', term };
+      }
+      
+      return {
+        type: 'AND',
+        parts: andParts.map(andPart => {
+          const term = andPart.trim();
+          if (term.startsWith('not ')) {
+            return { type: 'NOT', term: term.substring(4).trim() };
+          }
+          return { type: 'TERM', term };
+        })
+      };
+    })
+  };
+}
+
+// Execute parsed search query against searchable text
+function executeSearchQuery(parsedQuery, searchableText) {
+  if (!parsedQuery) return true;
+  
+  function evaluateNode(node) {
+    switch (node.type) {
+      case 'TERM':
+        return searchableText.includes(node.term);
+      case 'NOT':
+        return !searchableText.includes(node.term);
+      case 'AND':
+        return node.parts.every(evaluateNode);
+      case 'OR':
+        return node.parts.some(evaluateNode);
+      default:
+        return false;
+    }
+  }
+  
+  return evaluateNode(parsedQuery);
+}
+
+// =====================================
+// INITIALIZATION
+// =====================================
+
+function initializeGrid(rowData, columnDefs, benchmarkGroups) {
+
+  // Update progress if loader is already running (progressive loader handles show/hide)
+  if (typeof LoadingAnimation !== 'undefined' && typeof LoadingAnimation.setProgress === 'function') {
+    // Grid initialization is starting, bump progress to ~88%
+    LoadingAnimation.setProgress(88);
+  }
+
+  window.originalRowData = rowData;
+
+  // Initialize filtered scores (will be all the same as global initially)
+  updateFilteredScores(rowData);
+
+  columnDefs.forEach(col => {
+    col.colId = col.field;
+
+    // Columns are sortable by default via defaultColDef
+    // Set up model column for sorting (search handled by external filter)
+    if (col.field === 'model') {
+      col.comparator = modelComparator;
+    }
+
+    // Set up score columns
+    if (col.cellRenderer === 'scoreCellRenderer') {
+      col.cellDataType = 'object';
+      col.valueFormatter = params => {
+        const v = params.value;
+        return (v && typeof v === 'object' && 'value' in v) ? v.value : v;
+      };
+
+      col.comparator = (valueA, valueB, nodeA, nodeB, isDescending) => {
+        const objA = valueA && typeof valueA === 'object' ? valueA : {};
+        const objB = valueB && typeof valueB === 'object' ? valueB : {};
+
+        const valA = 'value' in objA ? objA.value : valueA;
+        const valB = 'value' in objB ? objB.value : valueB;
+
+        const isMissingA = valA == null || valA === '' || valA === 'X';
+        const isMissingB = valB == null || valB === '' || valB === 'X';
+
+        const MISSING_VALUE = Number.NEGATIVE_INFINITY;
+
+        const numA = isMissingA ? MISSING_VALUE : parseFloat(valA);
+        const numB = isMissingB ? MISSING_VALUE : parseFloat(valB);
+
+        const isNanA = isNaN(numA) && !isMissingA;
+        const isNanB = isNaN(numB) && !isMissingB;
+
+        if (isNanA && isNanB) return 0;
+        if (isNanA) return -1;
+        if (isNanB) return 1;
+
+        return numA - numB;
+      };
+    }
+
+    if (col.headerComponent === 'expandableHeaderComponent') {
+      col.headerComponentParams = {
+        benchmarkId: col.context?.benchmarkId || null
+      };
+    }
+  });
+
+  // Add the runnable status column
+  const runnableStatusColumn = createRunnableStatusColumn();
+
+  // Add the filtered score column
+  const filteredScoreColumn = {
+    headerName: 'Filtered Score',
+    field: 'filtered_score',
+    colId: 'filtered_score',
+    hide: true,  // start hidden
+    pinned: 'left',
+    width: 150,
+    cellRenderer: 'scoreCellRenderer',
+    cellDataType: 'object',
+    sortable: true,
+    valueFormatter: params => {
+      const v = params.value;
+      return v && typeof v === 'object' && 'value' in v ? v.value : v;
+    },
+    headerClass: 'centered-header',
+    comparator: (valueA, valueB) => {
+      const objA = valueA && typeof valueA === 'object' ? valueA : {};
+      const objB = valueB && typeof valueB === 'object' ? valueB : {};
+
+      const valA = 'value' in objA ? objA.value : valueA;
+      const valB = 'value' in objB ? objB.value : valueB;
+
+      const isMissingA = valA == null || valA === '' || valA === 'X';
+      const isMissingB = valB == null || valB === '' || valB === 'X';
+
+      const numA = isMissingA ? Number.NEGATIVE_INFINITY : parseFloat(valA);
+      const numB = isMissingB ? Number.NEGATIVE_INFINITY : parseFloat(valB);
+
+      return numA - numB;
+    }
+  };
+
+  // Insert columns after the model column
+  const modelColumnIndex = columnDefs.findIndex(col => col.field === 'model');
+  if (modelColumnIndex !== -1) {
+    columnDefs.splice(modelColumnIndex + 1, 0, runnableStatusColumn, filteredScoreColumn);
+  } else {
+    columnDefs.push(runnableStatusColumn, filteredScoreColumn);
+  }
+
+  const gridOptions = {
+    rowData,
+    columnDefs,
+    headerHeight: 60,
+    rowHeight: 60,
+    tooltipShowDelay: 500, // Show tooltip after 0.5 seconds
+    components: {
+      // Core cell renderers
+      modelCellRenderer: ModelCellRenderer,
+      scoreCellRenderer: ScoreCellRenderer,
+
+      // Runnable status functionality
+      runnableStatusCellRenderer: RunnableStatusCellRenderer,
+
+      // Header components will be loaded from modular files
+      expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
+      leafComponent: window.LeaderboardHeaderComponents?.LeafHeaderComponent,
+    },
+    suppressFieldDotNotation: true,
+
+    // External filter for logical search
+    isExternalFilterPresent: () => {
+      return window.currentSearchQuery !== null;
+    },
+    // If search query is present, filter the grid based on the search query
+    doesExternalFilterPass: (node) => {
+      if (!window.currentSearchQuery) return true;
+      const searchableText = getSearchableText(node.data);
+      return executeSearchQuery(window.currentSearchQuery, searchableText);
+    },
+
+    sortingOrder: ['desc', 'asc', null],  // Sort cycle: desc -> asc -> none
+    defaultColDef: {
+      sortable: true,
+      resizable: false,
+      unSortIcon: true,  // Show unsort icon for 3-state sorting
+      valueFormatter: params => {
+        const v = params.value;
+        return (v != null && typeof v === 'object' && 'value' in v)
+          ? v.value
+          : v;
+      }
+    },
+    onGridReady: params => {
+      window.globalGridApi = params.api;
+      params.api.resetRowHeights();
+
+      // Set initial column visibility state
+      setInitialColumnState();
+
+      // Ensure filtered score column starts hidden (clean initial state)
+      params.api.applyColumnState({
+        state: [
+          { colId: 'runnable_status', hide: false },
+          { colId: 'filtered_score', hide: true },
+          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
+        ]
+      });
+
+            // Push progress to 92% once grid is ready
+      if (typeof LoadingAnimation !== 'undefined' && typeof LoadingAnimation.setProgress === 'function') {
+        LoadingAnimation.setProgress(92);
+      }
+      
+      // Complete loading animation when grid is fully rendered
+      setTimeout(() => {
+        if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
+          LoadingAnimation.complete();
+        } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
+          LoadingAnimation.hide();
+        }
+      }, 300); // Increased timeout to ensure grid is fully rendered
+    }
+  };
+
+  const eGridDiv = document.getElementById('leaderboardGrid');
+  if (!eGridDiv) {
+    console.error('Could not find #leaderboardGrid');
+    return;
+  }
+
+  let gridApi;
+
+  if (window.agGrid && typeof agGrid.createGrid === 'function') {
+    gridApi = agGrid.createGrid(eGridDiv, gridOptions);
+    window.globalGridApi = gridApi;
+    console.log('Grid API initialized (createGrid):', !!gridApi);
+  } else if (window.agGrid && typeof agGrid.Grid === 'function') {
+    const grid = new agGrid.Grid(eGridDiv, gridOptions);
+    gridApi = gridOptions.api;
+    window.globalGridApi = gridApi;
+    console.log('Grid API initialized (Grid constructor):', !!gridApi);
+  } else {
+    console.error('AG Grid not found on window.agGrid');
+  }
+
+  if (gridApi) {
+    // Connect the search input with logical operators
+    const searchInput = document.getElementById('modelSearchInput');
+    if (searchInput) {
+      // Remove any existing listeners
+      const newInput = searchInput.cloneNode(true);
+      searchInput.parentNode.replaceChild(newInput, searchInput);
+
+      newInput.addEventListener('input', function () {
+        const searchText = this.value;
+        
+        // Parse search query with logical operators (OR, AND, NOT)
+        window.currentSearchQuery = parseSearchQuery(searchText);
+        
+        // Use external filter for logical search
+        if (typeof gridApi.onFilterChanged === 'function') {
+          gridApi.onFilterChanged();
+        } else {
+          console.warn('onFilterChanged not available on gridApi');
+        }
+      });
+    } else {
+      console.error('Search input not found');
+    }
+  } else {
+    console.error('Grid API not available after initialization');
+  }
+}
+
+// Function to set initial column visibility state
+function setInitialColumnState() {
+  if (!window.globalGridApi) return;
+  
+  const allColumns = window.globalGridApi.getAllGridColumns();
+  const initialColumnState = [];
+  
+  // Initialize expansion state - all columns start collapsed
+  window.columnExpansionState.clear();
+  
+  allColumns.forEach(column => {
+    const colId = column.getColId();
+    
+    // Always show these columns (including runnable status)
+    if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
+      initialColumnState.push({ colId: colId, hide: false });
+      return;
+    }
+    
+    // Show top-level benchmark categories initially (including engineering)
+    const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+    const topLevelCategories = [
+      `average_${domain}_v0`, 
+      `neural_${domain}_v0`, 
+      `behavior_${domain}_v0`, 
+      `engineering_${domain}_v0`
+    ];
+    const shouldShow = topLevelCategories.includes(colId);
+    
+    initialColumnState.push({ colId: colId, hide: !shouldShow });
+    
+    // Initialize expansion state (all start collapsed)
+    if (topLevelCategories.includes(colId)) {
+      window.columnExpansionState.set(colId, false);
+    }
+  });
+  
+  // Apply initial column state
+  window.globalGridApi.applyColumnState({
+    state: initialColumnState
+  });
+}
+
+// Placeholder functions that will delegate to modular components
+function populateFilterDropdowns(filterOptions) {
+  if (typeof window.LeaderboardModelFilters?.populateFilterDropdowns === 'function') {
+    window.LeaderboardModelFilters.populateFilterDropdowns(filterOptions);
+  }
+}
+
+function setupDropdownHandlers() {
+  if (typeof window.LeaderboardModelFilters?.setupDropdownHandlers === 'function') {
+    window.LeaderboardModelFilters.setupDropdownHandlers();
+  }
+}
+
+function applyCombinedFilters(skipColumnToggle = false) {
+  if (typeof window.LeaderboardFilterCoordinator?.applyCombinedFilters === 'function') {
+    window.LeaderboardFilterCoordinator.applyCombinedFilters(skipColumnToggle);
+  }
+}
+
+function resetAllFilters() {
+  if (typeof window.LeaderboardFilterCoordinator?.resetAllFilters === 'function') {
+    window.LeaderboardFilterCoordinator.resetAllFilters();
+  }
+}
+
+function initializeDualHandleSliders() {
+  if (typeof window.LeaderboardRangeFilters?.initializeDualHandleSliders === 'function') {
+    window.LeaderboardRangeFilters.initializeDualHandleSliders();
+  }
+}
+
+function parseURLFilters() {
+  if (typeof window.LeaderboardURLState?.parseURLFilters === 'function') {
+    window.LeaderboardURLState.parseURLFilters();
+  }
+}
+
+function updateURLFromFilters() {
+  if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
+    window.LeaderboardURLState.updateURLFromFilters();
+  }
+}
+
+function encodeBenchmarkFilters() {
+  if (typeof window.LeaderboardURLState?.encodeBenchmarkFilters === 'function') {
+    return window.LeaderboardURLState.encodeBenchmarkFilters();
+  }
+  return null;
+}
+
+function decodeBenchmarkFilters(encodedFilters) {
+  if (typeof window.LeaderboardURLState?.decodeBenchmarkFilters === 'function') {
+    return window.LeaderboardURLState.decodeBenchmarkFilters(encodedFilters);
+  }
+  return [];
+}
+
+function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
+  if (typeof window.LeaderboardHeaderComponents?.buildHierarchyFromTree === 'function') {
+    return window.LeaderboardHeaderComponents.buildHierarchyFromTree(tree, hierarchyMap);
+  }
+  // Fallback implementation
+  tree.forEach(node => {
+    const children = node.children ? node.children.map(child => child.id) : [];
+    hierarchyMap.set(node.id, children);
+    if (node.children && node.children.length > 0) {
+      buildHierarchyFromTree(node.children, hierarchyMap);
+    }
+  });
+  return hierarchyMap;
+}
+
+function updateColumnVisibility() {
+  if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
+    window.LeaderboardHeaderComponents.updateColumnVisibility();
+  }
+}
+
+function copyBibtexToClipboard() {
+  if (typeof window.LeaderboardCitationExport?.copyBibtexToClipboard === 'function') {
+    window.LeaderboardCitationExport.copyBibtexToClipboard();
+  }
+}
+
+function updateAllCountBadges() {
+  if (typeof window.LeaderboardHierarchyUtils?.updateAllCountBadges === 'function') {
+    window.LeaderboardHierarchyUtils.updateAllCountBadges();
+  }
+}
+
+function getFilteredLeafCount(parentField) {
+  if (typeof window.LeaderboardHierarchyUtils?.getFilteredLeafCount === 'function') {
+    return window.LeaderboardHierarchyUtils.getFilteredLeafCount(parentField);
+  }
+  return 0;
+}
+
+function updateFilteredScores(rowData) {
+  if (typeof window.LeaderboardFilterCoordinator?.updateFilteredScores === 'function') {
+    const updatedData = window.LeaderboardFilterCoordinator.updateFilteredScores(rowData);
+    if (updatedData && window.globalGridApi) {
+      window.globalGridApi.setGridOption('rowData', updatedData);
+    }
+    return updatedData;
+  }
+  return rowData;
+}
+
+function toggleFilteredScoreColumn(gridApi) {
+  if (typeof window.LeaderboardFilterCoordinator?.toggleFilteredScoreColumn === 'function') {
+    window.LeaderboardFilterCoordinator.toggleFilteredScoreColumn(gridApi);
+  }
+}
+
+function setupBenchmarkCheckboxes(filterOptions) {
+  if (typeof window.LeaderboardBenchmarkFilters?.setupBenchmarkCheckboxes === 'function') {
+    window.LeaderboardBenchmarkFilters.setupBenchmarkCheckboxes(filterOptions);
+  }
+}
+
+function renderBenchmarkTree(container, benchmarkTree) {
+  if (typeof window.LeaderboardBenchmarkFilters?.renderBenchmarkTree === 'function') {
+    window.LeaderboardBenchmarkFilters.renderBenchmarkTree(container, benchmarkTree);
+  }
+}
+
+function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
+  if (typeof window.LeaderboardHeaderComponents?.getAllDescendantsFromHierarchy === 'function') {
+    return window.LeaderboardHeaderComponents.getAllDescendantsFromHierarchy(parentId, hierarchyMap);
+  }
+  return [];
+}
+
+// Make all functions available globally
+window.initializeGrid = initializeGrid;
+window.populateFilterDropdowns = populateFilterDropdowns;
+window.setupDropdownHandlers = setupDropdownHandlers;
+window.applyCombinedFilters = applyCombinedFilters;
+window.resetAllFilters = resetAllFilters;
+window.initializeDualHandleSliders = initializeDualHandleSliders;
+window.parseURLFilters = parseURLFilters;
+window.updateURLFromFilters = updateURLFromFilters;
+window.encodeBenchmarkFilters = encodeBenchmarkFilters;
+window.decodeBenchmarkFilters = decodeBenchmarkFilters;
+window.buildHierarchyFromTree = buildHierarchyFromTree;
+window.updateColumnVisibility = updateColumnVisibility;
+window.setInitialColumnState = setInitialColumnState;
+window.copyBibtexToClipboard = copyBibtexToClipboard;
+window.updateAllCountBadges = updateAllCountBadges;
+window.getFilteredLeafCount = getFilteredLeafCount;
+window.updateFilteredScores = updateFilteredScores;
+window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
+window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
+window.renderBenchmarkTree = renderBenchmarkTree;
+window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
