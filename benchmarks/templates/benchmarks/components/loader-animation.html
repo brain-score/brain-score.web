@@ -1,0 +1,20 @@
+{% load static %}
+
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+  <div class="grid-loader">
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+    <div></div><div></div><div></div><div></div><div></div>
+  </div>
+  <div class="loading-text">Loading leaderboard...</div>
+
+  <div class="bs-progress">
+    <div class="bs-progress__bar" id="loader-progress-bar"></div>
+    <div class="bs-progress__label" id="loader-progress-label">0%</div>
+  </div>
+</div>
+
+<!-- Include the loading animation JavaScript -->
+<script defer src="{% static '/benchmarks/js/loader-animation.js' %}"></script>
