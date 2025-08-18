@@ -14,6 +14,8 @@ import boto3
 import json
 import os
 from botocore.exceptions import NoCredentialsError
+import logging
+logger = logging.getLogger(__name__)
 
 
 def get_secret(secret_name, region_name):
@@ -50,6 +52,8 @@ hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasti
 if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
+hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
+hosts_list.append("127.0.0.1")
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
@@ -82,6 +86,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Compress HTTP responses
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -114,9 +119,25 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
 
 def get_db_info():
-    if os.getenv("DJANGO_ENV") == "development":
+    if os.getenv("DJANGO_ENV") == "test": # web test db
+        secrets = get_secret(db_secret_name, REGION_NAME)
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'web_tests',
+                'USER': 'postgres',
+                'PASSWORD': secrets["password"],
+                'HOST': secrets["host"],
+                'PORT': '5432',
+                'TEST': {
+                    'NAME': 'web_tests',  # This tells Django to use this exact name for tests
+                }
+            }
+        }
+    elif os.getenv("DJANGO_ENV") == "development":
         from dotenv import load_dotenv; load_dotenv()
 
         return {
@@ -129,13 +150,12 @@ def get_db_info():
                 'PORT': '5432'
             }
         }
-    db_secret_name = os.getenv("DB_CRED", "brainscore-1-ohio-cred-migrated")
     try:
         secrets = get_secret(db_secret_name, REGION_NAME)
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': secrets["dbInstanceIdentifier"],
+                'NAME': 'dev',
                 'USER': secrets["username"],
                 'PASSWORD': secrets["password"],
                 'HOST': secrets["host"],
@@ -165,6 +185,93 @@ def get_db_info():
 
 
 DATABASES = get_db_info()
+
+# Cache Configuration
+# https://docs.djangoproject.com/en/4.0/topics/cache/
+def get_cache_config():
+    '''
+    Use CACHE_ENV=staging for staging, CACHE_ENV=production for production, CACHE_ENV=development for development.
+    '''
+    
+    env = os.getenv("CACHE_ENV", os.getenv("DJANGO_ENV", "development"))
+
+    # 1) Local dev → in-memory
+    if env == "development":
+        cfg = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'brain-score-default-cache',
+                'TIMEOUT': 300,
+            }
+        }
+        print(f"[CACHE] environment={env} → using {cfg['default']['BACKEND']} @ {cfg['default']['LOCATION']}")
+        return cfg
+
+    # 2) Staging / Production → Redis
+    if env in ("staging", "production"):
+        secret_name = {
+            "staging": "brainscore-valkey-staging",
+            "production": "brainscore-valkey-production",
+        }[env]
+        try:
+            secrets = get_secret(secret_name, REGION_NAME)
+            host = secrets["host"]
+            port = secrets.get("port", 6379)
+        except Exception as e:
+            # couldn’t load secrets → fall back
+            print(f"Cache secret load failed ({e}), using locmem fallback")
+            return {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                    'LOCATION': 'brain-score-fallback-cache',
+                    'TIMEOUT': 300,
+                }
+            }
+        USE_REDIS_TUNNEL = os.getenv("USE_REDIS_TUNNEL") == "true"
+        if USE_REDIS_TUNNEL:
+            host = "127.0.0.1"
+            scheme = "rediss"
+        else:
+            scheme = "rediss"
+
+        timeout = 7*24*3600 if env == "staging" else 30*24*3600
+        prefix = f"brainscore:{env}"
+        redis_cfg = {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': f"rediss://{host}:{port}/0",
+                'TIMEOUT': timeout,
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'socket_timeout': 5,
+                        'socket_connect_timeout': 5,
+                        'retry_on_timeout': True,
+                        'health_check_interval': 30,
+                    },
+                    "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    'IGNORE_EXCEPTIONS': True,
+                },
+                'KEY_PREFIX': prefix,
+                'VERSION': 1,
+            }
+    
+        print(f"[CACHE] environment={env} → using {redis_cfg['BACKEND']} @ {redis_cfg['LOCATION']}")
+        return {'default': redis_cfg, 'redis': redis_cfg}
+
+    # 3) Fallback
+    cfg = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'brain-score-fallback-cache',
+            'TIMEOUT': 300,
+        }
+    }
+    print(f"[CACHE] environment={env} → fallback {cfg['default']['BACKEND']}")
+    return cfg
+
+CACHES = get_cache_config()
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

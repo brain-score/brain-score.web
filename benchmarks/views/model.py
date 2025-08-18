@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
+from .leaderboard import get_ag_grid_context
 from ..models import FinalModelContext
 from time import time
 _logger = logging.getLogger(__name__)
@@ -30,9 +31,8 @@ def view(request, id: int, domain: str):
                     # User is not the owner, but can still see with redacted info
                     pass
 
-        # Get context based on user authentication
-        # If an unauthenticated user visits a model page, cached context is returned.
-        context = get_context(user=user, domain=domain, show_public=False) if user else get_context(domain=domain, show_public=True)
+        # Get context for model cards - always use global public context for consistent ranking
+        context = get_context(user=None, domain=domain, show_public=True)
         
         # The public models are now cached within the user context
         public_models = context.get('public_models', context['models']) if user else context['models']
