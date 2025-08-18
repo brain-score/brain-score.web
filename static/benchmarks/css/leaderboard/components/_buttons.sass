@@ -1,0 +1,117 @@
+// components/_buttons.sass
+// Button styling module
+
+// ======================
+// BASE BUTTON STYLES
+// ======================
+button,
+.btn
+  border: none
+  color: white
+  transition: all 0.3s ease
+  padding: 8px 16px
+  border-radius: 4px
+  cursor: pointer
+  font-size: 14px
+
+// ======================
+// GRADIENT BUTTONS
+// ======================
+#advancedFilterBtn,
+#applyFiltersBtn
+  @include solid-button($primary-color)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+
+  .tutorial-icon
+    font-size: 1.1em
+    line-height: 1
+
+// Reset all filters button (special case - can be both gradient and in filter actions)
+#resetAllFiltersBtn
+  @include solid-button($primary-color)
+
+  // When inside filter actions, use gradient style
+  .filter-actions &
+    @include gradient-button
+    padding: 12px 24px
+    font-weight: 500
+    font-size: 0.9rem
+    flex: 0 0 auto
+
+    &:hover
+      background: $gradient-light !important
+
+// ======================
+// SOLID BUTTONS
+// ======================
+#resetFiltersBtn
+  @include solid-button($primary-color)
+
+#tutorialBtn
+  @include gradient-button
+  background: $gradient-primary !important
+  width: 180px
+  font-size: 15px
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+
+  &:hover
+    background: $gradient-light !important
+
+#toggleLayoutBtn
+  @include solid-button($primary-color)
+  display: flex
+  align-items: center
+  gap: 6px
+  padding: 12px 24px
+  font-size: 0.9rem
+  flex: 0 0 auto
+
+  .toggle-icon
+    font-size: 1.1em
+    line-height: 1
+
+// ======================
+// REPORT ISSUE BUTTON
+// ======================
+#reportIssueBtn
+  @include solid-button(#FF6B6B)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+  color: white !important
+  
+  &:hover
+    background-color: darken(#FF6B6B, 10%) !important
+    transform: translateY(-1px)
+  
+  &:active
+    transform: translateY(0)
+
+// ======================
+// BUTTON CLASSES
+// ======================
+.btn-primary
+  @include gradient-button
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem
+
+.btn-secondary
+  @include solid-button($primary-color)
+  padding: 12px 24px
+  font-weight: 500
+  font-size: 0.9rem

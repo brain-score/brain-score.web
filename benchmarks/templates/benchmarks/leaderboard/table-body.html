@@ -10,8 +10,7 @@
       <td class="rank">{{ model.rank }}</td>
       <td class="model">
         <div class="identifier" title="{{ model.reference_identifier }}">
-          <!-- Add spinner component when model card is clicked -->
-          <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}" onclick="LoadingSpinner.show()">
+          <a target="_self" rel="noopener noreferrer" href="{% url 'model-view' domain model.id %}">
             {{ model|display_model:user }}
           </a>
         </div>

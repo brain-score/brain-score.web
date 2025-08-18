@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore
+    content_utils, benchmark, explore, leaderboard, report_issue
 from .utils import show_token, refresh_cache
 
 
@@ -79,8 +79,12 @@ non_domain_urls = [
     path('release2.0/', release2_0.view, name='release2.0'),
 
     # Add the refresh_cache URL and make domain specific
+
     # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
+    
+    # Report issue endpoint
+    path('report-issue/', report_issue.report_issue_view, name='report_issue'),
 ]
 
 all_domain_urls = [non_domain_urls]
@@ -88,6 +92,10 @@ all_domain_urls = [non_domain_urls]
 for domain in supported_domains:
     domain_urls = [
         path(f'{domain}/', partial(index, domain=domain), name='index'),
+        path(f'{domain}/leaderboard/', partial(leaderboard.ag_grid_leaderboard_shell, domain=domain),
+             name=f'{domain}-leaderboard'),
+        path(f'{domain}/leaderboard/content/', partial(leaderboard.ag_grid_leaderboard_content, domain=domain),
+             name=f'{domain}-leaderboard-content'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),

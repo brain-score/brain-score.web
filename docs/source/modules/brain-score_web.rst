@@ -211,6 +211,12 @@ Submission/Upload Process
    * There must only be 1 plugin overall submitted (i.e., one model submitted at a time). The code itself can handle multiple plugins, but we artificially cap submissions at 1 plugin for Jenkins' sake.
    * They must not be the tutorial model (sanity check to make sure users do not submit the tutorial model).
 
+Web Testing Suite
+******************************
+
+The website has its own comprehensive testing suite. See :ref:`website-testing`
+
+
 Extraneous Website Information
 ******************************
 

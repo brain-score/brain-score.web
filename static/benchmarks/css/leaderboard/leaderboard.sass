@@ -1,0 +1,58 @@
+// Main leaderboard.sass file
+@import '../variables'
+@import 'gradient-theme'
+@import '../components/tooltip'
+
+// ======================
+// CONTAINER & LAYOUT
+// ======================
+.leaderboard-container
+  padding: 20px
+  display: block
+  overflow: visible
+  max-width: none
+  width: 100%
+  margin: 0
+  box-sizing: border-box
+  min-height: calc(100vh - 300px)
+
+  // ======================
+  // UTILITY CLASSES (scoped)
+  // ======================
+  .header-actions
+    display: flex
+    align-items: center
+    gap: 8px
+
+  .btn-icon
+    background: $primary-color
+    color: white
+    border: none
+    border-radius: 4px
+    padding: 6px 8px
+    font-size: 16px
+    cursor: pointer
+    transition: all 0.2s ease
+    min-width: 32px
+    height: 32px
+    display: flex
+    align-items: center
+    justify-content: center
+
+    &:hover
+      background: darken($primary-color, 10%)
+      transform: translateY(-1px)
+
+    &:active
+      transform: translateY(0)
+
+@import 'components/buttons'
+@import 'components/grid'
+@import 'components/cells'
+@import 'components/headers'
+@import 'components/filters'
+@import 'components/search'
+@import 'components/range-sliders'
+@import 'components/toggle'
+@import 'layouts/sidebar'
+@import 'layouts/responsive'
