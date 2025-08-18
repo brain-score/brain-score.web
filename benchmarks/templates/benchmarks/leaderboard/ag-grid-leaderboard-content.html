@@ -318,7 +318,7 @@
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-{# Pass Django data to JavaScript #}
+{# Pass optimized Django data to JavaScript #}
 <script>
   window.DJANGO_DATA = {
     row_data: '{{ row_data|escapejs }}',
@@ -330,9 +330,73 @@
     benchmark_ids: '{{ benchmark_ids|escapejs }}',
     model_metadata_map: '{{ model_metadata_map|escapejs }}',
     domain: '{{ domain }}',
-    benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
-    benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
-    benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
+    // Benchmark metadata maps removed from initial load - loaded on-demand
+    benchmarkStimuliMetaMap: null,
+    benchmarkDataMetaMap: null,
+    benchmarkMetricMetaMap: null
+  };
+  
+  // OPTIMIZATION: Add lazy loading functionality
+  window.LAZY_DATA_CACHE = {};
+  
+  window.loadBenchmarkMetadata = async function() {
+    if (window.LAZY_DATA_CACHE.benchmarkMetadata) {
+      return window.LAZY_DATA_CACHE.benchmarkMetadata;
+    }
+    
+    try {
+      const response = await fetch(`/{{ domain }}/leaderboard/benchmark-metadata/`);
+      const data = await response.json();
+      window.LAZY_DATA_CACHE.benchmarkMetadata = data;
+      
+      // Update DJANGO_DATA for backward compatibility
+      window.DJANGO_DATA.benchmarkStimuliMetaMap = JSON.stringify(data.benchmarkStimuliMetaMap);
+      window.DJANGO_DATA.benchmarkDataMetaMap = JSON.stringify(data.benchmarkDataMetaMap);
+      window.DJANGO_DATA.benchmarkMetricMetaMap = JSON.stringify(data.benchmarkMetricMetaMap);
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to load benchmark metadata:', error);
+      return null;
+    }
+  };
+  
+  window.loadModelDetails = async function() {
+    if (window.LAZY_DATA_CACHE.modelDetails) {
+      return window.LAZY_DATA_CACHE.modelDetails;
+    }
+    
+    try {
+      const response = await fetch(`/{{ domain }}/leaderboard/model-details/`);
+      const data = await response.json();
+      window.LAZY_DATA_CACHE.modelDetails = data;
+      
+      // Merge with existing model metadata
+      const completeMetadata = {...JSON.parse(window.DJANGO_DATA.model_metadata_map), ...data.model_metadata_map};
+      window.DJANGO_DATA.model_metadata_map = JSON.stringify(completeMetadata);
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to load model details:', error);
+      return null;
+    }
+  };
+  
+  window.loadComparisonData = async function() {
+    if (window.LAZY_DATA_CACHE.comparisonData) {
+      return window.LAZY_DATA_CACHE.comparisonData;
+    }
+    
+    try {
+      const response = await fetch(`/{{ domain }}/leaderboard/comparison-data/`);
+      const data = await response.json();
+      window.LAZY_DATA_CACHE.comparisonData = data;
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to load comparison data:', error);
+      return null;
+    }
   };
 </script>
 

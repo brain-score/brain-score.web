@@ -486,21 +486,73 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
-    # Optimized payload - removed benchmark objects from individual scores to reduce size
+    # OPTIMIZATION 1: Create compressed row data by removing redundant benchmark info
+    compressed_row_data = []
+    for row in row_data:
+        compressed_row = {
+            'id': row['id'],
+            'rank': row['rank'],
+            'model': row['model'],
+            # Only include essential metadata, remove verbose fields
+            'metadata': {
+                'architecture': row['metadata'].get('architecture', ''),
+                'model_family': row['metadata'].get('model_family', ''),
+                'total_parameter_count': row['metadata'].get('total_parameter_count', 0),
+                'runnable': row['metadata'].get('runnable', False)
+                # Removed: total_layers, model_size_mb, training_dataset, task_specialization
+            }
+        }
+        
+        # Add scores but remove the 'benchmark' field which contains redundant bibtex data
+        for key, value in row.items():
+            if key not in ['id', 'rank', 'model', 'metadata'] and isinstance(value, dict):
+                # Only keep essential score fields
+                compressed_row[key] = {
+                    'value': value.get('value', 'X'),
+                    'color': value.get('color', ''),
+                    'complete': value.get('complete', True)
+                    # Removed: raw, error, benchmark (contains large bibtex data)
+                }
+        
+        compressed_row_data.append(compressed_row)
+
+    # OPTIMIZATION 2: Create lightweight model metadata map (remove layer_mapping for initial load)
+    lightweight_model_meta = {}
+    for model_name, meta in model_meta_map.items():
+        lightweight_model_meta[model_name] = {
+            'architecture': meta.get('architecture', ''),
+            'model_family': meta.get('model_family', ''),
+            'total_parameter_count': meta.get('total_parameter_count', 0),
+            'runnable': meta.get('runnable', False)
+            # Removed: layer_mapping, training_dataset, task_specialization, etc.
+        }
+
+    # OPTIMIZATION 3: Create minimal benchmark metadata (only for filters)
+    minimal_benchmark_metadata = []
+    for item in benchmark_metadata_list:
+        minimal_benchmark_metadata.append({
+            'identifier': item['identifier'],
+            'region': item.get('region'),
+            'species': item.get('species'),
+            'task': item.get('task'),
+            'data_publicly_available': item.get('data_publicly_available', True)
+            # Removed: num_stimuli (can be loaded on demand)
+        })
+
+    # Optimized payload - significantly reduced size
     minimal_context = {
-        # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
-        'row_data': json.dumps([json_serializable(r) for r in row_data]),
+        # Essential frontend data with compression applied
+        'row_data': json.dumps([json_serializable(r) for r in compressed_row_data]),
         'column_defs': context['column_defs'],
         'benchmark_groups': context['benchmark_groups'],
         'filter_options': context['filter_options'],
-        'benchmark_metadata': context['benchmark_metadata'],
+        'benchmark_metadata': json.dumps(minimal_benchmark_metadata),
         'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
-        # Removed benchmarkMetaMap for simplicity
-        'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
-        'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
-        'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
-        'model_metadata_map': context['model_metadata_map'],
+        
+        # OPTIMIZATION 4: Remove large metadata maps for initial load
+        # These can be loaded on-demand via separate AJAX endpoints
+        'model_metadata_map': json.dumps(json_serializable(lightweight_model_meta)),
         
         # Essential metadata
         'domain': context['domain'],
@@ -514,8 +566,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
         
-        # Compare tab data
-        'comparison_data': context.get('comparison_data', '[]'),
+        # OPTIMIZATION 5: Remove comparison_data from initial load (load on-demand when compare tab is accessed)
+        # 'comparison_data': context.get('comparison_data', '[]'),
     }
 
     return minimal_context
@@ -566,3 +618,79 @@ def ag_grid_leaderboard_content(request, domain: str):
     
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)
+
+
+# OPTIMIZATION 6: On-demand endpoints for additional data
+@cache_page(7 * 24 * 60 * 60, key_prefix="benchmark_metadata")
+def get_benchmark_metadata(request, domain: str):
+    """
+    Load detailed benchmark metadata on-demand for citations and detailed views
+    """
+    try:
+        from django.http import JsonResponse
+        context = get_context(user=request.user if request.user.is_authenticated else None, 
+                            domain=domain, show_public=True)
+        
+        # Build complete benchmark metadata maps
+        stimuli_map = {}
+        data_map = {}
+        metric_map = {}
+        
+        for b in context['benchmarks']:
+            stimuli_map[b.identifier] = getattr(b, 'benchmark_stimuli_meta', {}) or {}
+            data_map[b.identifier] = getattr(b, 'benchmark_data_meta', {}) or {}
+            metric_map[b.identifier] = getattr(b, 'benchmark_metric_meta', {}) or {}
+        
+        return JsonResponse({
+            'benchmarkStimuliMetaMap': stimuli_map,
+            'benchmarkDataMetaMap': data_map,
+            'benchmarkMetricMetaMap': metric_map
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@cache_page(7 * 24 * 60 * 60, key_prefix="model_details")
+def get_model_details(request, domain: str):
+    """
+    Load detailed model metadata including layer mappings on-demand
+    """
+    try:
+        from django.http import JsonResponse
+        context = get_context(user=request.user if request.user.is_authenticated else None, 
+                            domain=domain, show_public=True)
+        
+        # Build complete model metadata map
+        complete_model_meta = {}
+        for m in context['models']:
+            if not (hasattr(m, 'model_meta') and m.model_meta):
+                continue
+            
+            meta = dict(m.model_meta)
+            if hasattr(m, 'layers'):
+                meta['layer_mapping'] = m.layers
+            
+            complete_model_meta[m.name] = meta
+        
+        return JsonResponse({
+            'model_metadata_map': json_serializable(complete_model_meta)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@cache_page(7 * 24 * 60 * 60, key_prefix="comparison_data")
+def get_comparison_data(request, domain: str):
+    """
+    Load comparison data on-demand when comparison tab is accessed
+    """
+    try:
+        from django.http import JsonResponse
+        context = get_context(user=request.user if request.user.is_authenticated else None, 
+                            domain=domain, show_public=True)
+        
+        return JsonResponse({
+            'comparison_data': context.get('comparison_data', '[]')
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

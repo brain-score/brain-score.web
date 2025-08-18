@@ -96,6 +96,13 @@ for domain in supported_domains:
              name=f'{domain}-leaderboard'),
         path(f'{domain}/leaderboard/content/', partial(leaderboard.ag_grid_leaderboard_content, domain=domain),
              name=f'{domain}-leaderboard-content'),
+        # On-demand data endpoints for payload optimization
+        path(f'{domain}/leaderboard/benchmark-metadata/', partial(leaderboard.get_benchmark_metadata, domain=domain),
+             name=f'{domain}-benchmark-metadata'),
+        path(f'{domain}/leaderboard/model-details/', partial(leaderboard.get_model_details, domain=domain),
+             name=f'{domain}-model-details'),
+        path(f'{domain}/leaderboard/comparison-data/', partial(leaderboard.get_comparison_data, domain=domain),
+             name=f'{domain}-comparison-data'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),
