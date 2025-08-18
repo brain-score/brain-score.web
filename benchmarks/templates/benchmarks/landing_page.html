@@ -47,7 +47,11 @@
             </div>
         </div>
         <div class="column is-half">
-            <img class="head_art image"  src="{% static "/benchmarks/img/head_art_1.png" %}" />
+            <picture>
+                <source srcset="{% static 'benchmarks/img/head_art_1.avif' %}" type="image/avif">
+                <source srcset="{% static 'benchmarks/img/head_art_1.webp' %}" type="image/webp">
+                <img class="head_art image" src="{% static 'benchmarks/img/head_art_1.png' %}" alt="Brain-Score hero illustration" decoding="async" fetchpriority="high" />
+            </picture>
         </div>
     </div>
 </div>
