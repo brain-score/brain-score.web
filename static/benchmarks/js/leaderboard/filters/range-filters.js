@@ -83,16 +83,19 @@ function initializeDualHandleSlider(container) {
     
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
-      
-      // If this is the stimuli count slider, also update benchmark filters
+      // Stimuli count affects benchmark filtering, others are model-only
       if (sliderType === 'stimuliCount') {
+        console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate (benchmark-level)`);
+        // Update benchmark filters for stimuli count
         if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
           window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
         }
+        debounceFilterUpdate();
+      } else {
+        console.log(`🎚️ ${sliderType} triggering debounceModelFilterUpdate (model-level)`);
+        // Model properties (param count, model size) should skip benchmark filtering
+        debounceModelFilterUpdate();
       }
-      
-      debounceFilterUpdate();
     }
   }
   
@@ -202,8 +205,8 @@ function initializeSingleHandleSlider(container) {
     
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      console.log('🎚️ Completeness triggering debounceFilterUpdate');
-      debounceFilterUpdate();
+      console.log('🎚️ Completeness triggering debounceModelFilterUpdate');
+      debounceModelFilterUpdate();
     }
   }
   
@@ -261,6 +264,18 @@ function debounceFilterUpdate() {
   filterUpdateTimeout = setTimeout(() => {
     if (typeof window.applyCombinedFilters === 'function') {
       window.applyCombinedFilters();
+    }
+  }, window.LeaderboardConstants.SLIDER_UPDATE_DELAY);
+}
+
+// Debounced model-only filter update (for completeness and other model properties)
+let modelFilterUpdateTimeout;
+function debounceModelFilterUpdate() {
+  clearTimeout(modelFilterUpdateTimeout);
+  modelFilterUpdateTimeout = setTimeout(() => {
+    if (typeof window.applyCombinedFilters === 'function') {
+      // Skip benchmark filters since this is model-only filtering
+      window.applyCombinedFilters(false, false, true);
     }
   }, window.LeaderboardConstants.SLIDER_UPDATE_DELAY);
 }
@@ -397,5 +412,6 @@ window.LeaderboardRangeFilters = {
   resetSliderUI,
   getRangeValues,
   setRangeValues,
-  debounceFilterUpdate
+  debounceFilterUpdate,
+  debounceModelFilterUpdate
 };

@@ -260,9 +260,9 @@ function setupEventHandlers() {
           }
         });
         
-        // Trigger update
+        // Trigger update - full filter application during reset
         if (typeof applyCombinedFilters === 'function') {
-          applyCombinedFilters();
+          applyCombinedFilters(false, false, false);
         }
       });
     }

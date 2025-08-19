@@ -1,11 +1,12 @@
 // Filter coordination - main orchestrator for all filtering functionality
 
 // Main function that applies all filters
-function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
+function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false, skipBenchmarkFilters = false) {
   if (!window.globalGridApi || !window.originalRowData) return;
   
 
-  if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
+  // Only update benchmark filters if not skipped (for model-only filters like completeness)
+  if (!skipBenchmarkFilters && typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
     window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
   }
 
@@ -315,7 +316,8 @@ function resetAllFilters() {
   }
 
   // Apply filters but skip auto-sort during reset (allow column visibility updates)
-  applyCombinedFilters(false, true);
+  // Don't skip benchmark filters during reset - we want full reset
+  applyCombinedFilters(false, true, false);
   
   // Reset sorting to original average_vision_v0 column when filters are reset
   if (window.globalGridApi) {

@@ -525,9 +525,9 @@ function setupDropdownHandlers() {
   }
 }
 
-function applyCombinedFilters(skipColumnToggle = false) {
+function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false, skipBenchmarkFilters = false) {
   if (typeof window.LeaderboardFilterCoordinator?.applyCombinedFilters === 'function') {
-    window.LeaderboardFilterCoordinator.applyCombinedFilters(skipColumnToggle);
+    window.LeaderboardFilterCoordinator.applyCombinedFilters(skipColumnToggle, skipAutoSort, skipBenchmarkFilters);
   }
 }
 
