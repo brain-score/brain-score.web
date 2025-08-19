@@ -61,9 +61,9 @@ function selectFilterOption(filterType, value, optionElement) {
   }
 
   // Don't hide dropdown on selection
-  // Apply filters immediately - skip benchmark filters for model properties
+  // Apply filters immediately
   if (typeof window.applyCombinedFilters === 'function') {
-    window.applyCombinedFilters(false, false, true);
+    window.applyCombinedFilters();
   }
 }
 

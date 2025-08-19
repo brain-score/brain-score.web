@@ -1,12 +1,11 @@
 // Filter coordination - main orchestrator for all filtering functionality
 
 // Main function that applies all filters
-function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false, skipBenchmarkFilters = false) {
+function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   if (!window.globalGridApi || !window.originalRowData) return;
   
 
-  // Only update benchmark filters if not skipped (for model-only filters like completeness)
-  if (!skipBenchmarkFilters && typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
+  if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
     window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
   }
 
@@ -167,6 +166,166 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false, sk
   }
 }
 
+// Model-only filter application (skips benchmark tree updates)
+function applyModelFilters(skipColumnToggle = false) {
+  if (!window.globalGridApi || !window.originalRowData) return;
+
+  // Skip updateBenchmarkFilters() to preserve benchmark tree state
+  
+  // Get benchmark checkbox values (use current state, don't update)
+  const selectedRegions = Array.from(document.querySelectorAll('.region-checkbox:checked')).map(cb => cb.value);
+  const selectedSpecies = Array.from(document.querySelectorAll('.species-checkbox:checked')).map(cb => cb.value);
+  const selectedTasks = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
+  const publicDataOnly = document.getElementById('publicDataFilter')?.checked || false;
+
+  // Update activeFilters
+  window.activeFilters.benchmark_regions = selectedRegions;
+  window.activeFilters.benchmark_species = selectedSpecies;
+  window.activeFilters.benchmark_tasks = selectedTasks;
+  window.activeFilters.public_data_only = publicDataOnly;
+
+  // Get current filter values from sliders
+  const modelSizeMinEl = document.getElementById('modelSizeMin');
+  const modelSizeMaxEl = document.getElementById('modelSizeMax');
+  const paramCountMinEl = document.getElementById('paramCountMin');
+  const paramCountMaxEl = document.getElementById('paramCountMax');
+  const scoreMinEl = document.getElementById('scoreMin');
+  const scoreMaxEl = document.getElementById('scoreMax');
+  const completenessThresholdEl = document.getElementById('completenessThreshold');
+
+  const modelSizeMin = modelSizeMinEl ? parseInt(modelSizeMinEl.value) || 0 : 0;
+  const modelSizeMax = modelSizeMaxEl ? parseInt(modelSizeMaxEl.value) || 1000 : 1000;
+  const paramCountMin = paramCountMinEl ? parseInt(paramCountMinEl.value) || 0 : 0;
+  const paramCountMax = paramCountMaxEl ? parseInt(paramCountMaxEl.value) || 100 : 100;
+  const scoreMin = scoreMinEl ? parseFloat(scoreMinEl.value) || 0 : 0;
+  const scoreMax = scoreMaxEl ? parseFloat(scoreMaxEl.value) || 1 : 1;
+  const completenessThreshold = completenessThresholdEl ? parseInt(completenessThresholdEl.value) || 0 : 0;
+
+  window.activeFilters.min_model_size = modelSizeMin;
+  window.activeFilters.max_model_size = modelSizeMax;
+  window.activeFilters.min_param_count = paramCountMin;
+  window.activeFilters.max_param_count = paramCountMax;
+  window.activeFilters.min_score = scoreMin;
+  window.activeFilters.max_score = scoreMax;
+  window.activeFilters.min_completeness = completenessThreshold;
+
+  // Apply the same filtering logic as applyCombinedFilters
+  const filteredData = window.originalRowData.filter(row => {
+    const metadata = row.metadata || {};
+
+    // Multi-select filters
+    if (window.activeFilters.architecture.length > 0) {
+      const modelArchitectures = metadata.architecture ?
+        metadata.architecture.split(',').map(a => a.trim()) : [];
+      const hasMatch = modelArchitectures.some(arch =>
+        window.activeFilters.architecture.includes(arch)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.model_family.length > 0) {
+      const modelFamilies = metadata.model_family ?
+        metadata.model_family.split(',').map(f => f.trim()) : [];
+      const hasMatch = modelFamilies.some(fam =>
+        window.activeFilters.model_family.includes(fam)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.training_dataset.length > 0) {
+      const modelDatasets = metadata.training_dataset ?
+        metadata.training_dataset.split(',').map(d => d.trim()) : [];
+      const hasMatch = modelDatasets.some(ds =>
+        window.activeFilters.training_dataset.includes(ds)
+      );
+      if (!hasMatch) return false;
+    }
+
+    if (window.activeFilters.task_specialization.length > 0) {
+      const modelSpecs = metadata.task_specialization ?
+        metadata.task_specialization.split(',').map(s => s.trim()) : [];
+      const hasMatch = modelSpecs.some(spec =>
+        window.activeFilters.task_specialization.includes(spec)
+      );
+      if (!hasMatch) return false;
+    }
+
+    // Range filters
+    if (modelSizeMinEl && modelSizeMaxEl) {
+      const modelSize = metadata.model_size_mb || 0;
+      if (modelSize < window.activeFilters.min_model_size ||
+          modelSize > window.activeFilters.max_model_size) {
+        return false;
+      }
+    }
+
+    if (paramCountMinEl && paramCountMaxEl) {
+      const paramCountInMillions = (metadata.total_parameter_count || 0) / 1_000_000;
+      if (paramCountInMillions < window.activeFilters.min_param_count ||
+          paramCountInMillions > window.activeFilters.max_param_count) {
+        return false;
+      }
+    }
+
+    if (scoreMinEl && scoreMaxEl) {
+      const avgScore = row.average_vision_v0?.value;
+      if (typeof avgScore === 'number') {
+        if (avgScore < window.activeFilters.min_score ||
+            avgScore > window.activeFilters.max_score) {
+          return false;
+        }
+      }
+    }
+
+    // Completeness filter - check if model has enough benchmark scores
+    if (completenessThresholdEl && window.activeFilters.min_completeness > 0) {
+      const modelCompleteness = window.calculateModelCompleteness 
+        ? window.calculateModelCompleteness(row, window.filteredOutBenchmarks)
+        : 0;
+      
+      if (modelCompleteness < window.activeFilters.min_completeness) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Update filtered scores and apply to grid (same as applyCombinedFilters)
+  let finalData = filteredData;
+  if (typeof updateFilteredScores === 'function') {
+    const updatedData = updateFilteredScores(filteredData);
+    if (updatedData) {
+      finalData = updatedData;
+    }
+  }
+
+  if (window.globalGridApi) {
+    window.globalGridApi.setGridOption('rowData', finalData);
+    window.globalGridApi.refreshCells({ force: true });
+  }
+  
+  if (!skipColumnToggle && typeof toggleFilteredScoreColumn === 'function') {
+    toggleFilteredScoreColumn(window.globalGridApi);
+  }
+  
+  if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
+    setTimeout(() => {
+      window.LeaderboardHeaderComponents.updateColumnVisibility();
+    }, 50);
+  }
+
+  setTimeout(() => {
+    if (typeof window.updateAllCountBadges === 'function') {
+      window.updateAllCountBadges();
+    }
+  }, 50);
+
+  if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
+    window.LeaderboardURLState.updateURLFromFilters();
+  }
+}
+
 // Reset all filters to default state
 function resetAllFilters() {
   window.activeFilters = {
@@ -316,8 +475,7 @@ function resetAllFilters() {
   }
 
   // Apply filters but skip auto-sort during reset (allow column visibility updates)
-  // Don't skip benchmark filters during reset - we want full reset
-  applyCombinedFilters(false, true, false);
+  applyCombinedFilters(false, true);
   
   // Reset sorting to original average_vision_v0 column when filters are reset
   if (window.globalGridApi) {
@@ -716,6 +874,7 @@ function toggleFilteredScoreColumn(gridApi) {
 // Export functions for use by other modules
 window.LeaderboardFilterCoordinator = {
   applyCombinedFilters,
+  applyModelFilters,
   resetAllFilters,
   updateFilteredScores,
   toggleFilteredScoreColumn
@@ -723,6 +882,7 @@ window.LeaderboardFilterCoordinator = {
 
 // Make main functions globally available for compatibility
 window.applyCombinedFilters = applyCombinedFilters;
+window.applyModelFilters = applyModelFilters;
 window.resetAllFilters = resetAllFilters;
 window.updateFilteredScores = updateFilteredScores;
 window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;

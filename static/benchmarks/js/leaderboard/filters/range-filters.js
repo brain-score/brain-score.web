@@ -83,19 +83,16 @@ function initializeDualHandleSlider(container) {
     
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      // Stimuli count affects benchmark filtering, others are model-only
+      console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
+      
+      // If this is the stimuli count slider, also update benchmark filters
       if (sliderType === 'stimuliCount') {
-        console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate (benchmark-level)`);
-        // Update benchmark filters for stimuli count
         if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
           window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
         }
-        debounceFilterUpdate();
-      } else {
-        console.log(`🎚️ ${sliderType} triggering debounceModelFilterUpdate (model-level)`);
-        // Model properties (param count, model size) should skip benchmark filtering
-        debounceModelFilterUpdate();
       }
+      
+      debounceFilterUpdate();
     }
   }
   
@@ -205,8 +202,14 @@ function initializeSingleHandleSlider(container) {
     
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      console.log('🎚️ Completeness triggering debounceModelFilterUpdate');
-      debounceModelFilterUpdate();
+      console.log('🎚️ Completeness triggering applyModelFilters (preserve tree state)');
+      // Use model-only filtering to preserve benchmark tree state
+      if (typeof window.applyModelFilters === 'function') {
+        clearTimeout(modelFilterUpdateTimeout);
+        modelFilterUpdateTimeout = setTimeout(() => {
+          window.applyModelFilters();
+        }, window.LeaderboardConstants.SLIDER_UPDATE_DELAY);
+      }
     }
   }
   
@@ -268,17 +271,8 @@ function debounceFilterUpdate() {
   }, window.LeaderboardConstants.SLIDER_UPDATE_DELAY);
 }
 
-// Debounced model-only filter update (for completeness and other model properties)
+// Model filter update timeout for completeness slider
 let modelFilterUpdateTimeout;
-function debounceModelFilterUpdate() {
-  clearTimeout(modelFilterUpdateTimeout);
-  modelFilterUpdateTimeout = setTimeout(() => {
-    if (typeof window.applyCombinedFilters === 'function') {
-      // Skip benchmark filters since this is model-only filtering
-      window.applyCombinedFilters(false, false, true);
-    }
-  }, window.LeaderboardConstants.SLIDER_UPDATE_DELAY);
-}
 
 // Reset all slider UI to default positions (use correct max values from filterOptions)
 function resetSliderUI() {
@@ -412,6 +406,5 @@ window.LeaderboardRangeFilters = {
   resetSliderUI,
   getRangeValues,
   setRangeValues,
-  debounceFilterUpdate,
-  debounceModelFilterUpdate
+  debounceFilterUpdate
 };

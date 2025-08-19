@@ -117,8 +117,7 @@ function initializeFilters() {
   // Apply initial filters (skip column toggle during initialization)
   if (typeof window.applyCombinedFilters === 'function') {
     setTimeout(() => {
-      // During initialization, apply all filters including benchmark filters
-      window.applyCombinedFilters(true, false, false);
+      window.applyCombinedFilters(true);
     }, 100);
   }
   
