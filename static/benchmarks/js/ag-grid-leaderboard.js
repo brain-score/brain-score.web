@@ -14,7 +14,8 @@ window.activeFilters = {
   benchmark_regions: [],
   benchmark_species: [],
   benchmark_tasks: [],
-  public_data_only: false
+  public_data_only: false,
+  min_completeness: 0
 };
 
 // Global state for tracking column expansion

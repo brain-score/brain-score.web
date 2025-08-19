@@ -28,6 +28,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   const paramCountMaxEl = document.getElementById('paramCountMax');
   const scoreMinEl = document.getElementById('scoreMin');
   const scoreMaxEl = document.getElementById('scoreMax');
+  const completenessThresholdEl = document.getElementById('completenessThreshold');
 
   const modelSizeMin = modelSizeMinEl ? parseInt(modelSizeMinEl.value) || 0 : 0;
   const modelSizeMax = modelSizeMaxEl ? parseInt(modelSizeMaxEl.value) || 1000 : 1000;
@@ -35,6 +36,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   const paramCountMax = paramCountMaxEl ? parseInt(paramCountMaxEl.value) || 100 : 100;
   const scoreMin = scoreMinEl ? parseFloat(scoreMinEl.value) || 0 : 0;
   const scoreMax = scoreMaxEl ? parseFloat(scoreMaxEl.value) || 1 : 1;
+  const completenessThreshold = completenessThresholdEl ? parseInt(completenessThresholdEl.value) || 0 : 0;
 
   window.activeFilters.min_model_size = modelSizeMin;
   window.activeFilters.max_model_size = modelSizeMax;
@@ -42,6 +44,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   window.activeFilters.max_param_count = paramCountMax;
   window.activeFilters.min_score = scoreMin;
   window.activeFilters.max_score = scoreMax;
+  window.activeFilters.min_completeness = completenessThreshold;
 
   const filteredData = window.originalRowData.filter(row => {
     const metadata = row.metadata || {};
@@ -110,6 +113,17 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       }
     }
 
+    // Completeness filter - check if model has enough benchmark scores
+    if (completenessThresholdEl && window.activeFilters.min_completeness > 0) {
+      const modelCompleteness = window.calculateModelCompleteness 
+        ? window.calculateModelCompleteness(row, window.filteredOutBenchmarks)
+        : 0;
+      
+      if (modelCompleteness < window.activeFilters.min_completeness) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -169,7 +183,8 @@ function resetAllFilters() {
     benchmark_regions: [],
     benchmark_species: [],
     benchmark_tasks: [],
-    public_data_only: false
+    public_data_only: false,
+    min_completeness: 0
   };
 
   // Reset UI elements
@@ -239,6 +254,22 @@ function resetAllFilters() {
         range.style.width = '100%';
         minHandle.dataset.value = 0;
         maxHandle.dataset.value = ranges.stimuli_ranges.max;
+      }
+    }
+  }
+
+  // Reset completeness slider
+  const completenessInput = document.getElementById('completenessThreshold');
+  if (completenessInput) {
+    completenessInput.value = 0;
+    const completenessSliderContainer = document.querySelector('#completenessThreshold')?.closest('.filter-group')?.querySelector('.slider-container');
+    if (completenessSliderContainer) {
+      const handle = completenessSliderContainer.querySelector('.handle-single');
+      const range = completenessSliderContainer.querySelector('.slider-range-single');
+      if (handle && range) {
+        handle.style.left = '0%';
+        range.style.width = '0%';
+        handle.dataset.value = 0;
       }
     }
   }

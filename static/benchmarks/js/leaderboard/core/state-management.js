@@ -17,7 +17,8 @@ window.activeFilters = {
   benchmark_regions: [],
   benchmark_species: [],
   benchmark_tasks: [],
-  public_data_only: false
+  public_data_only: false,
+  min_completeness: 0  // Minimum percentage of benchmark scores required (0-100)
 };
 
 // Global state for tracking column expansion
@@ -60,7 +61,8 @@ function resetGlobalState() {
     benchmark_regions: [],
     benchmark_species: [],
     benchmark_tasks: [],
-    public_data_only: false
+    public_data_only: false,
+    min_completeness: 0
   };
   
   window.columnExpansionState.clear();

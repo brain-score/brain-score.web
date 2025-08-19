@@ -141,6 +141,56 @@ function isParentBenchmark(benchmarkId, hierarchyMap) {
   return children.length > 0;
 }
 
+// Calculate the percentage of leaf benchmarks that have valid scores for a model
+function calculateModelCompleteness(modelRow, excludedBenchmarks = new Set()) {
+  if (!window.benchmarkTree || !modelRow) {
+    return 0;
+  }
+  
+  // Use cached hierarchy map to improve performance
+  if (!window.cachedHierarchyMap) {
+    window.cachedHierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
+  }
+  const hierarchyMap = window.cachedHierarchyMap;
+  
+  // Get all leaf benchmarks across all main categories (neural and behavior, excluding engineering)
+  const allLeafIds = new Set();
+  const visionCategories = ['neural_vision_v0', 'behavior_vision_v0']; // Exclude engineering for completeness calculation
+  
+  visionCategories.forEach(category => {
+    if (hierarchyMap.has(category)) {
+      const categoryLeafs = getAllLeafDescendants(category, hierarchyMap);
+      categoryLeafs.forEach(leafId => allLeafIds.add(leafId));
+    }
+  });
+  
+  // Filter out excluded benchmarks
+  const availableLeafIds = Array.from(allLeafIds).filter(leafId => !excludedBenchmarks.has(leafId));
+  
+  if (availableLeafIds.length === 0) {
+    return 100; // If no benchmarks are available, consider it 100% complete
+  }
+  
+  // Count how many leaf benchmarks have valid scores
+  let validScoreCount = 0;
+  
+  availableLeafIds.forEach(leafId => {
+    if (modelRow[leafId]) {
+      const score = modelRow[leafId].value;
+      const hasValidScore = score !== null && score !== undefined && 
+                           score !== '' && score !== 'X' &&
+                           !isNaN(parseFloat(score));
+      if (hasValidScore) {
+        validScoreCount++;
+      }
+    }
+  });
+  
+  // Calculate percentage
+  const completenessPercentage = (validScoreCount / availableLeafIds.length) * 100;
+  return Math.round(completenessPercentage);
+}
+
 // Get depth level of a benchmark in the hierarchy
 function getDepthLevel(benchmarkId, hierarchyMap, visited = new Set()) {
   if (visited.has(benchmarkId)) return 0;
@@ -253,6 +303,7 @@ window.LeaderboardHierarchyUtils = {
   findParent,
   isLeafBenchmark,
   isParentBenchmark,
+  calculateModelCompleteness,
   getDepthLevel,
   getBenchmarksAtDepth,
   getBenchmarkPath,
@@ -267,3 +318,4 @@ window.getFilteredLeafCount = getFilteredLeafCount;
 window.updateAllCountBadges = updateAllCountBadges;
 window.buildHierarchyFromTree = buildHierarchyFromTree;
 window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;
+window.calculateModelCompleteness = calculateModelCompleteness;

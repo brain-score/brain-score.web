@@ -2,9 +2,15 @@
 
 // Initialize all dual-handle range sliders
 function initializeDualHandleSliders() {
-  const sliderContainers = document.querySelectorAll('.slider-container');
-  sliderContainers.forEach(container => {
+  const dualSliderContainers = document.querySelectorAll('.range-filter.dual-handle .slider-container');
+  dualSliderContainers.forEach(container => {
     initializeDualHandleSlider(container);
+  });
+  
+  // Initialize single-handle sliders
+  const singleSliderContainers = document.querySelectorAll('.range-filter.single-handle .slider-container');
+  singleSliderContainers.forEach(container => {
+    initializeSingleHandleSlider(container);
   });
 }
 
@@ -157,6 +163,97 @@ function initializeDualHandleSlider(container) {
   updateActiveFilters(true);
 }
 
+// Initialize a single-handle range slider (for completeness filter)
+function initializeSingleHandleSlider(container) {
+  const handle = container.querySelector('.handle-single');
+  const range = container.querySelector('.slider-range-single');
+  
+  if (!handle || !range) return;
+  
+  const min = parseFloat(container.dataset.min) || 0;
+  const max = parseFloat(container.dataset.max) || 100;
+  
+  let value = parseFloat(handle.dataset.value) || min;
+  
+  // Find associated input field
+  const sliderGroup = container.closest('.filter-group');
+  const input = sliderGroup?.querySelector('#completenessThreshold');
+  
+  function updateSliderPosition() {
+    const percent = ((value - min) / (max - min)) * 100;
+    
+    handle.style.left = `${percent}%`;
+    range.style.width = `${percent}%`;
+    
+    // Update input field
+    if (input) input.value = Math.round(value);
+  }
+  
+  function updateActiveFilters(skipDebounce = false) {
+    const oldValue = window.activeFilters.min_completeness;
+    window.activeFilters.min_completeness = value;
+    
+    console.log('🎚️ Completeness filter update:', {
+      value,
+      oldFilterValue: oldValue,
+      newFilterValue: window.activeFilters.min_completeness,
+      skipDebounce
+    });
+    
+    // Apply filters with debouncing - but not during initial setup
+    if (!skipDebounce) {
+      console.log('🎚️ Completeness triggering debounceFilterUpdate');
+      debounceFilterUpdate();
+    }
+  }
+  
+  function handleMouseMove(e) {
+    const rect = container.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    value = min + percent * (max - min);
+    
+    updateSliderPosition();
+    updateActiveFilters();
+  }
+  
+  let isDragging = false;
+  
+  handle.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+    e.preventDefault();
+  });
+  
+  function mouseMoveHandler(e) {
+    if (isDragging) {
+      handleMouseMove(e);
+    }
+  }
+  
+  function mouseUpHandler() {
+    isDragging = false;
+    document.removeEventListener('mousemove', mouseMoveHandler);
+    document.removeEventListener('mouseup', mouseUpHandler);
+  }
+  
+  // Input field synchronization
+  if (input) {
+    input.addEventListener('input', () => {
+      const inputValue = parseFloat(input.value) || min;
+      value = Math.max(min, Math.min(inputValue, max));
+      updateSliderPosition();
+      updateActiveFilters();
+    });
+  }
+  
+  // Initial position - don't trigger filters during setup
+  updateSliderPosition();
+  
+  // Update active filters without debouncing during initial setup
+  updateActiveFilters(true);
+}
+
 // Debounced filter update
 let filterUpdateTimeout;
 function debounceFilterUpdate() {
@@ -171,9 +268,10 @@ function debounceFilterUpdate() {
 // Reset all slider UI to default positions (use correct max values from filterOptions)
 function resetSliderUI() {
   const ranges = window.filterOptions || {};
-  const sliderContainers = document.querySelectorAll('.slider-container');
   
-  sliderContainers.forEach(container => {
+  // Reset dual-handle sliders
+  const dualSliderContainers = document.querySelectorAll('.range-filter.dual-handle .slider-container');
+  dualSliderContainers.forEach(container => {
     const minHandle = container.querySelector('.handle-min');
     const maxHandle = container.querySelector('.handle-max');
     const range = container.querySelector('.slider-range');
@@ -212,6 +310,29 @@ function resetSliderUI() {
     
     if (minInput) minInput.value = min;
     if (maxInput) maxInput.value = max;
+  });
+  
+  // Reset single-handle sliders
+  const singleSliderContainers = document.querySelectorAll('.range-filter.single-handle .slider-container');
+  singleSliderContainers.forEach(container => {
+    const handle = container.querySelector('.handle-single');
+    const range = container.querySelector('.slider-range-single');
+    
+    if (!handle || !range) return;
+    
+    const min = parseFloat(container.dataset.min) || 0;
+    
+    // Reset to minimum value (0% completeness)
+    handle.style.left = '0%';
+    range.style.width = '0%';
+    
+    // Update data attribute
+    handle.dataset.value = min;
+    
+    // Update input field
+    const sliderGroup = container.closest('.filter-group');
+    const input = sliderGroup?.querySelector('.range-input-single');
+    if (input) input.value = min;
   });
 }
 
@@ -272,6 +393,7 @@ function setRangeValues(filterId, minVal, maxVal) {
 window.LeaderboardRangeFilters = {
   initializeDualHandleSliders,
   initializeDualHandleSlider,
+  initializeSingleHandleSlider,
   resetSliderUI,
   getRangeValues,
   setRangeValues,

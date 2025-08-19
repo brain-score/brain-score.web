@@ -36,6 +36,7 @@ function parseURLFilters() {
   window.activeFilters.max_score = parseFloatParam('max_score');
   window.activeFilters.min_stimuli_count = parseFloatParam('min_stimuli_count');
   window.activeFilters.max_stimuli_count = parseFloatParam('max_stimuli_count');
+  window.activeFilters.min_completeness = parseFloatParam('min_completeness') || 0;
   
   // Apply filters to UI
   applyFiltersToUI();
@@ -81,6 +82,7 @@ function applyFiltersToUI() {
   updateRangeInput('modelSizeMax', window.activeFilters.max_model_size);
   updateRangeInput('stimuliCountMin', window.activeFilters.min_stimuli_count);
   updateRangeInput('stimuliCountMax', window.activeFilters.max_stimuli_count);
+  updateRangeInput('completenessThreshold', window.activeFilters.min_completeness);
   
   // Update range sliders
   if (typeof window.LeaderboardRangeFilters?.setRangeValues === 'function') {
@@ -188,6 +190,7 @@ function updateURLFromFilters() {
   addRange('max_score');
   addRange('min_stimuli_count');
   addRange('max_stimuli_count');
+  addRange('min_completeness');
   
   // Add benchmark exclusions
   const excludedBenchmarks = encodeBenchmarkFilters();
