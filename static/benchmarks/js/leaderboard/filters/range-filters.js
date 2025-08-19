@@ -59,32 +59,14 @@ function initializeDualHandleSlider(container) {
         sliderGroup?.querySelector('#paramCountMin') || sliderGroup?.querySelector('#paramCountMax')) {
       const oldValue = window.activeFilters.max_param_count;
       window.activeFilters.max_param_count = maxValue < max ? maxValue : null;
-      console.log(`🎚️ ${sliderType} filter update:`, {
-        maxValue,
-        max,
-        isLessThan: maxValue < max,
-        oldFilterValue: oldValue,
-        newFilterValue: window.activeFilters.max_param_count,
-        skipDebounce
-      });
     } else if (filterId === 'modelSizeMin' || filterId === 'modelSizeMax' ||
                sliderGroup?.querySelector('#modelSizeMin') || sliderGroup?.querySelector('#modelSizeMax')) {
       const oldValue = window.activeFilters.max_model_size;
       window.activeFilters.max_model_size = maxValue < max ? maxValue : null;
-      console.log(`🎚️ ${sliderType} filter update:`, {
-        maxValue,
-        max,
-        isLessThan: maxValue < max,
-        oldFilterValue: oldValue,
-        newFilterValue: window.activeFilters.max_model_size,
-        skipDebounce
-      });
     }
     
     // Apply filters with debouncing - but not during initial setup
-    if (!skipDebounce) {
-      console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
-      
+    if (!skipDebounce) {     
       // If this is the stimuli count slider, also update benchmark filters
       if (sliderType === 'stimuliCount') {
         if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
@@ -193,16 +175,8 @@ function initializeSingleHandleSlider(container) {
     const oldValue = window.activeFilters.min_completeness;
     window.activeFilters.min_completeness = value;
     
-    console.log('🎚️ Completeness filter update:', {
-      value,
-      oldFilterValue: oldValue,
-      newFilterValue: window.activeFilters.min_completeness,
-      skipDebounce
-    });
-    
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      console.log('🎚️ Completeness triggering applyModelFilters (preserve tree state)');
       // Use model-only filtering to preserve benchmark tree state
       if (typeof window.applyModelFilters === 'function') {
         clearTimeout(modelFilterUpdateTimeout);
