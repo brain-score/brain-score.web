@@ -1,0 +1,338 @@
+{% extends 'benchmarks/components/app-view.html' %}
+{% load static %}
+
+{% block banner %}
+<h1>Brain-Score Blog</h1>
+<p>Latest insights, research updates, and developments from the Brain-Score team.</p>
+{% endblock %}
+
+{% block main_content %}
+<div class="blog-container">
+  <!-- Sidebar -->
+  <aside class="blog-sidebar">
+    <!-- Search -->
+    <div class="sidebar-widget">
+      <h3>Search</h3>
+      <form method="get" class="search-form">
+        <input type="text" name="search" placeholder="Search posts..." value="{{ search_query|default:'' }}">
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <!-- Categories -->
+    {% if categories %}
+                  <div class="sidebar-widget">
+              <h3 class="sidebar-header">Categories</h3>
+        <ul class="category-list">
+          <li><a href="{% url 'blog_list' %}" {% if not current_category %}class="active"{% endif %}>All Posts</a></li>
+          {% for category in categories %}
+            <li>
+              <a href="{% url 'blog_category' category|slugify %}" 
+                 {% if current_category == category %}class="active"{% endif %}>
+                {{ category }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Featured Posts -->
+    {% if featured_posts %}
+              <div class="sidebar-widget">
+          <h3 class="sidebar-header">Featured Posts</h3>
+        <ul class="featured-posts">
+          {% for post in featured_posts %}
+            <li>
+              <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+              <span class="featured-date">{{ post.created_at|date:"M d, Y" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </aside>
+
+  <div class="blog-main">
+    {% if search_query %}
+      <div class="search-results-header">
+        <h2>Search Results for "{{ search_query }}"</h2>
+        <p>Found {{ total_posts }} post{{ total_posts|pluralize }}</p>
+      </div>
+    {% elif current_category %}
+      <div class="category-header">
+        <h2>{{ current_category.name }}</h2>
+        {% if current_category.description %}
+          <p>{{ current_category.description }}</p>
+        {% endif %}
+      </div>
+    {% elif current_tag %}
+      <div class="tag-header">
+        <h2>Posts tagged: {{ current_tag }}</h2>
+      </div>
+    {% endif %}
+
+    {% if posts %}
+      <div class="blog-posts">
+        {% for post in posts %}
+          <article class="blog-post-preview">
+            <header class="post-header">
+              <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+              <div class="post-meta">
+                <span class="post-date">{{ post.created_at|date:"F d, Y" }}</span>
+                <span class="post-author">by {{ post.author_name }}</span>
+                {% if post.category %}
+                  <span class="post-category">
+                    <a href="{% url 'blog_category' post.category|slugify %}">{{ post.category }}</a>
+                  </span>
+                {% endif %}
+                <span class="reading-time">{{ post.reading_time }} min read</span>
+              </div>
+            </header>
+            
+            <div class="post-excerpt">
+              {% if post.excerpt %}
+                {{ post.excerpt|linebreaks }}
+              {% else %}
+                {{ post.content_text|truncatewords:50|linebreaks }}
+              {% endif %}
+            </div>
+            
+            {% if post.get_tags_list %}
+              <div class="post-tags">
+                {% for tag in post.get_tags_list %}
+                  <a href="{% url 'blog_tag' tag %}" class="tag">{{ tag }}</a>
+                {% endfor %}
+              </div>
+            {% endif %}
+            
+            <footer class="post-footer">
+              <a href="{{ post.get_absolute_url }}" class="read-more">Read More →</a>
+            </footer>
+          </article>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav class="pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" class="pagination-link">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" class="pagination-link">Previous</a>
+          {% endif %}
+          
+          <span class="pagination-info">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" class="pagination-link">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}" class="pagination-link">Last</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="no-posts">
+        <h3>No posts found</h3>
+        <p>{% if search_query %}Try a different search term.{% else %}Check back soon for new content!{% endif %}</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.blog-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 2rem;
+  padding-left: 0;
+}
+
+.blog-post-preview {
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.post-header h2 {
+  margin: 0 0 0.5rem 0;
+}
+
+.post-header h2 a {
+  color: #333;
+  text-decoration: none;
+}
+
+.post-header h2 a:hover {
+  color: #007cba;
+}
+
+.post-meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.post-meta span {
+  margin-right: 1rem;
+}
+
+.post-category a {
+  color: #007cba;
+  text-decoration: none;
+}
+
+.post-tags {
+  margin: 1rem 0;
+}
+
+.tag {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #666;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.tag:hover {
+  background: #007cba;
+  color: white;
+}
+
+.read-more {
+  color: #007cba;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.blog-sidebar {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  padding-left: 0;
+  border-radius: 0 8px 8px 0;
+  height: fit-content;
+}
+
+.sidebar-widget {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.sidebar-widget h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-form input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.search-form button {
+  padding: 0.5rem 1rem;
+  background: #007cba;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+}
+
+.category-list li {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-header {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.category-list a {
+  color: #666;
+  text-decoration: none;
+}
+
+.category-list a:hover,
+.category-list a.active {
+  color: #007cba;
+}
+
+.featured-posts {
+  list-style: none;
+  padding: 0;
+}
+
+.featured-posts li {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.featured-posts a {
+  color: #666;
+  text-decoration: none;
+}
+
+.featured-posts a:hover {
+  color: #007cba;
+}
+
+.featured-date {
+  display: block;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.pagination {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.pagination-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  background: #f0f0f0;
+  color: #333;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.pagination-link:hover {
+  background: #007cba;
+  color: white;
+}
+
+.pagination-info {
+  margin: 0 1rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .blog-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+</style>
+{% endblock %}

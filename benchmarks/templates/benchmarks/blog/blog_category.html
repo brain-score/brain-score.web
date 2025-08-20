@@ -1,0 +1,6 @@
+{% extends 'benchmarks/blog/blog_list.html' %}
+
+{% block banner %}
+<h1>{{ current_category.name }}</h1>
+<p>{% if current_category.description %}{{ current_category.description }}{% else %}Posts in {{ current_category.name }}{% endif %}</p>
+{% endblock %}
