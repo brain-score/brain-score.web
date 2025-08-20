@@ -1,6 +1,7 @@
 from functools import partial
 from django.conf import settings
 from django.urls import path
+from django.views.generic import RedirectView
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
     content_utils, benchmark, explore, leaderboard, report_issue
 from .utils import show_token, refresh_cache
@@ -14,9 +15,10 @@ non_domain_urls = [
     path('', user.LandingPage.as_view(), name='landing_page'),
     path('/', user.LandingPage.as_view(), name='landing_page'),
 
-    # global pages
-    path('explore', partial(explore.view, domain="vision"), name='explore'),
-    path('compare', partial(compare.view, domain="vision"), name='compare'),
+    # global pages - default to vision domain
+    path('explore/', RedirectView.as_view(url='/vision/explore/', permanent=False), name='default-explore'),
+    path('compare/', RedirectView.as_view(url='/vision/compare/', permanent=False), name='default-compare'),
+    path('leaderboard/', RedirectView.as_view(url='/vision/leaderboard/', permanent=False), name='default-leaderboard'),
     path('sponsors/', user.Sponsors.as_view(), name='sponsors'),
     path('faq/', user.Faq.as_view(), name='faq'),
     path('community', partial(community.view), name='community'),
@@ -35,10 +37,6 @@ non_domain_urls = [
     # central profile page, constant across all Brain-Score domains
     path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
     path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
-
-    # need navbar links when on /profile. Default to vision.
-    # this is a **temporary** fix until the new UI landing page is live.
-    path('profile/', user.Profile.as_view(domain="vision"), name='default-profile-navbar'),
     path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
