@@ -652,7 +652,8 @@ class ProfileAccount(View):
                 "domains": ["vision", "language"],
                 "files_submitted": files_submitted,
                 "total_used_gb": round(total_size_used / 1024**3, 3),
-                'quota_gb': 5.0}
+                'quota_gb': 5.0,
+                "domain": "vision"}  # Default domain for navigation links
             return render(request, 'benchmarks/central_profile.html', context)
 
     def post(self, request):
