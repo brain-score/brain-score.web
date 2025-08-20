@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard, report_issue
+    content_utils, benchmark, explore, leaderboard, report_issue, blog
 from .utils import show_token, refresh_cache
 
 
@@ -85,6 +85,12 @@ non_domain_urls = [
     
     # Report issue endpoint
     path('report-issue/', report_issue.report_issue_view, name='report_issue'),
+    
+    # Blog endpoints
+    path('blog/', blog.blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', blog.blog_detail, name='blog_detail'),
+    path('blog/category/<slug:slug>/', blog.blog_category, name='blog_category'),
+    path('blog/tag/<str:tag>/', blog.blog_tag, name='blog_tag'),
 ]
 
 all_domain_urls = [non_domain_urls]

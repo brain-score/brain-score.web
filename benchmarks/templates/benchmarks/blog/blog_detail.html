@@ -1,0 +1,369 @@
+{% extends 'benchmarks/components/app-view.html' %}
+{% load static %}
+
+{% block banner %}
+<h1>{{ post.title }}</h1>
+<div class="post-meta">
+  <span class="post-date">{{ post.created_at|date:"F d, Y" }}</span>
+  <span class="post-author">by {{ post.author_name }}</span>
+  {% if post.category %}
+    <span class="post-category">
+      <a href="{% url 'blog_category' post.category|slugify %}">{{ post.category }}</a>
+    </span>
+  {% endif %}
+  <span class="reading-time">{{ post.reading_time }} min read</span>
+</div>
+
+<style>
+/* Make banner text white */
+.banner .post-meta {
+  color: white !important;
+}
+.banner .post-meta span {
+  color: white !important;
+}
+.banner .post-meta a {
+  color: white !important;
+  text-decoration: underline;
+}
+.banner .post-meta a:hover {
+  color: #f0f0f0 !important;
+}
+.banner h1 {
+  color: white !important;
+}
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="blog-detail-container">
+  <!-- Sidebar -->
+  <aside class="blog-sidebar">
+    <!-- Author Info -->
+    <div class="sidebar-widget author-info">
+      <h3>About the Author</h3>
+      <p><strong>{{ post.author_name }}</strong></p>
+      <p>Member of the Brain-Score team</p>
+    </div>
+
+    <!-- Categories -->
+    {% if categories %}
+              <div class="sidebar-widget">
+          <h3 class="sidebar-header">Categories</h3>
+        <ul class="category-list">
+          {% for category in categories %}
+            <li>
+              <a href="{% url 'blog_category' category|slugify %}" 
+                 {% if post.category == category %}class="active"{% endif %}>
+                {{ category }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Related Posts -->
+    {% if related_posts %}
+              <div class="sidebar-widget">
+          <h3 class="sidebar-header">Related Posts</h3>
+        <ul class="related-posts">
+          {% for related_post in related_posts %}
+            <li>
+              <a href="{{ related_post.get_absolute_url }}">{{ related_post.title }}</a>
+              <span class="related-date">{{ related_post.created_at|date:"M d, Y" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Share -->
+    <div class="sidebar-widget">
+      <h3>Share This Post</h3>
+      <div class="share-buttons">
+        <a href="https://twitter.com/intent/tweet?text={{ post.title|urlencode }}&url={{ request.build_absolute_uri }}" 
+           target="_blank" class="share-button twitter">Twitter</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri }}" 
+           target="_blank" class="share-button linkedin">LinkedIn</a>
+        <a href="mailto:?subject={{ post.title|urlencode }}&body={{ request.build_absolute_uri }}" 
+           class="share-button email">Email</a>
+      </div>
+    </div>
+  </aside>
+
+  <article class="blog-post-content">
+    {% if post.excerpt %}
+      <div class="post-excerpt">
+        {{ post.excerpt|linebreaks }}
+      </div>
+    {% endif %}
+    
+    <div class="post-content">
+      {{ post.content|safe }}
+    </div>
+    
+    {% if post.get_tags_list %}
+      <div class="post-tags">
+        <strong>Tags:</strong>
+        {% for tag in post.get_tags_list %}
+          <a href="{% url 'blog_tag' tag %}" class="tag">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <div class="post-footer">
+      <p class="post-updated">
+        {% if post.updated_at != post.created_at %}
+          Last updated: {{ post.updated_at|date:"F d, Y" }}
+        {% endif %}
+      </p>
+      
+      <div class="post-navigation">
+        <a href="{% url 'blog_list' %}" class="back-to-blog">← Back to Blog</a>
+        {% if post.category %}
+          <a href="{% url 'blog_category' post.category|slugify %}" class="category-link">More in {{ post.category }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+</div>
+
+<style>
+.blog-detail-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 2rem;
+  padding-left: 0;
+}
+
+.post-meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.post-meta span {
+  margin-right: 1rem;
+}
+
+.post-category a {
+  color: #007cba;
+  text-decoration: none;
+}
+
+.post-excerpt {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-left: 4px solid #007cba;
+  margin: 2rem 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.post-content {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.post-content p {
+  margin-bottom: 1rem;
+}
+
+.post-content code {
+  background: #f4f4f4;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.post-content pre {
+  background: #f4f4f4;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.post-tags {
+  margin: 2rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid #eee;
+}
+
+.tag {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #666;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.tag:hover {
+  background: #007cba;
+  color: white;
+}
+
+.post-footer {
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+  margin-top: 2rem;
+}
+
+.post-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.back-to-blog,
+.category-link {
+  color: #007cba;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-to-blog:hover,
+.category-link:hover {
+  text-decoration: underline;
+}
+
+.blog-sidebar {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  padding-left: 0;
+  border-radius: 0 8px 8px 0;
+  height: fit-content;
+}
+
+.sidebar-widget {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.sidebar-widget h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.author-info {
+  text-align: center;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+}
+
+.category-list li {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-header {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.category-list a {
+  color: #666;
+  text-decoration: none;
+}
+
+.category-list a:hover,
+.category-list a.active {
+  color: #007cba;
+}
+
+.related-posts {
+  list-style: none;
+  padding: 0;
+}
+
+.related-posts li {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.related-posts a {
+  color: #666;
+  text-decoration: none;
+}
+
+.related-posts a:hover {
+  color: #007cba;
+}
+
+.related-date {
+  display: block;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.share-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.share-button {
+  display: block;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.share-button.twitter {
+  background: #1da1f2;
+}
+
+.share-button.linkedin {
+  background: #0077b5;
+}
+
+.share-button.email {
+  background: #666;
+}
+
+.share-button:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .blog-detail-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .post-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+</style>
+{% endblock %}
