@@ -74,12 +74,12 @@ class TestWebsitePages(BaseTestCase):
 
     def test_explore_page(self):
         """Test the explore page loads"""
-        response = self.client.get('/explore')
+        response = self.client.get('/vision/explore')
         self.assertEqual(response.status_code, 200)
 
     def test_compare_page(self):
         """Test the compare page loads"""
-        response = self.client.get('/compare')
+        response = self.client.get('/vision/compare')
         self.assertEqual(response.status_code, 200)
 
     def test_tutorials_home(self):
