@@ -19,18 +19,18 @@ button,
 // ======================
 #advancedFilterBtn,
 #applyFiltersBtn
-  @include gradient-button
-  background: $gradient-primary !important
-  width: 180px
-  font-size: 15px
+  @include solid-button($primary-color)
   display: flex
   align-items: center
   justify-content: center
   gap: 6px
   height: 40px
+  padding: 8px 16px
+  font-size: 15px
 
-  &:hover
-    background: $gradient-light !important
+  .tutorial-icon
+    font-size: 1.1em
+    line-height: 1
 
 // Reset all filters button (special case - can be both gradient and in filter actions)
 #resetAllFiltersBtn
@@ -54,18 +54,18 @@ button,
   @include solid-button($primary-color)
 
 #tutorialBtn
-  @include solid-button($primary-color)
+  @include gradient-button
+  background: $gradient-primary !important
+  width: 180px
+  font-size: 15px
   display: flex
   align-items: center
   justify-content: center
   gap: 6px
   height: 40px
-  padding: 8px 16px
-  font-size: 15px
 
-  .tutorial-icon
-    font-size: 1.1em
-    line-height: 1
+  &:hover
+    background: $gradient-light !important
 
 #toggleLayoutBtn
   @include solid-button($primary-color)
@@ -79,6 +79,27 @@ button,
   .toggle-icon
     font-size: 1.1em
     line-height: 1
+
+// ======================
+// REPORT ISSUE BUTTON
+// ======================
+#reportIssueBtn
+  @include solid-button(#FF6B6B)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+  color: white !important
+  
+  &:hover
+    background-color: darken(#FF6B6B, 10%) !important
+    transform: translateY(-1px)
+  
+  &:active
+    transform: translateY(0)
 
 // ======================
 // BUTTON CLASSES

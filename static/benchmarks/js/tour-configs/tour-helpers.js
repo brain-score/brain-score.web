@@ -35,8 +35,18 @@ function expandBenchmarkHeaders(columnIds) {
       if (countBadge) {
         // Check if currently collapsed by looking at the icon class
         const icon = countBadge.querySelector('i');
-        if (icon && icon.className.includes('fa-up-right-and-down-left-from-center')) {
-          // Only click if it's currently collapsed (showing expand icon)
+        if (icon) {
+          // Check for both possible collapse icon classes
+          const isCollapsed = icon.className.includes('fa-up-right-and-down-left-from-center') || 
+                             icon.className.includes('fa-expand') ||
+                             !window.columnExpansionState?.get(columnId);
+          
+          if (isCollapsed) {
+            // Only click if it's currently collapsed (showing expand icon)
+            countBadge.click();
+          }
+        } else {
+          // If no icon found, try clicking anyway (fallback)
           countBadge.click();
         }
       }
@@ -168,6 +178,9 @@ window.tourStepState = {
   restoreState(stepIndex) {
     const state = this.states.get(stepIndex);
     if (!state) return;
+    
+    // Clean up any tour-created popups when navigating backwards
+    this.cleanupTourElements();
     
     // Restore collapsed/expanded states
     if (state.collapsedNodes) {
@@ -372,6 +385,20 @@ window.tourStepState = {
     this.currentStep = 0;
     this.initialState = null;
     this.originalValues.clear();
+  },
+  
+  // Clean up tour-created elements
+  cleanupTourElements() {
+    // Remove fake bibtex popup
+    const popup = document.querySelector('#tour-bibtex-popup');
+    if (popup) {
+      popup.remove();
+    }
+    
+    // Clean up reference
+    if (window.tourBibtexPopup) {
+      delete window.tourBibtexPopup;
+    }
   }
 };
 

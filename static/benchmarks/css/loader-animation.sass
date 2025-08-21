@@ -1,0 +1,95 @@
+$cols: 5
+$step: 100ms
+$anim-dur: 1.75s
+$max-delay: $step * (2 * $cols - 1)
+
+// animatable custom property (Chromium/Safari 17.4+)
+@property --cell-color
+  syntax: '<color>'
+  inherits: true
+  initial-value: #47b7de
+
+.loading-overlay
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  height: 100%
+  background: rgba(0, 0, 0, 0.8)
+  display: flex
+  flex-direction: column
+  justify-content: center
+  align-items: center
+  z-index: 1000
+
+.grid-loader
+  display: flex
+  flex-wrap: wrap
+  width: 128px
+
+  // drive color on the container
+  --cell-color: #47b7de
+  animation: grid-color-sweep $anim-dur linear infinite
+
+  // cells read the variable + run the pulse
+  div
+    width: 20%
+    padding-bottom: 20%
+    background: var(--cell-color)
+    animation: grid-loader $anim-dur ease-in infinite both
+
+    @for $i from 1 through 25
+      &:nth-child(#{$i})
+        $row: floor(($i - 1) / $cols)
+        $col: (($i - 1) % $cols)
+        $delay: $step * ($row + $col + 1)
+        animation-delay: -($max-delay - $delay)
+
+.loading-text
+  color: white
+  font-size: 18px
+  font-weight: 500
+  margin-top: 20px
+  text-align: center
+
+@keyframes grid-loader
+  0%, 25%
+    border-radius: 100%
+    transform: scale(0)
+  50%
+    border-radius: 0
+    transform: none
+  75%, 100%
+    border-radius: 100%
+    transform: scale(0)
+
+@keyframes grid-color-sweep
+  0%
+    --cell-color: #47b7de
+  50%
+    --cell-color: #52c282
+  100%
+    --cell-color: #47b7de
+
+.bs-progress
+  width: 260px
+  height: 10px
+  background: rgba(255,255,255,0.15)
+  border-radius: 9999px
+  overflow: visible
+  margin-top: 14px
+  position: relative
+
+  &__bar
+    width: 0%
+    height: 100%
+    background: linear-gradient(90deg, $brainscore_blue, #22c55e)
+    transition: width 160ms ease
+    border-radius: inherit   // ← this keeps the fill rounded
+
+  &__label
+    position: absolute
+    top: -22px
+    right: 0
+    font-size: 12px
+    color: rgba(255,255,255,0.9)

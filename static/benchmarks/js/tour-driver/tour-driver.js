@@ -57,6 +57,11 @@ class TourDriver {
           window.cleanupNeuralHighlight();
         }
         
+        // Clean up tour-created elements
+        if (window.tourStepState && window.tourStepState.cleanupTourElements) {
+          window.tourStepState.cleanupTourElements();
+        }
+        
         if (callbacks.onPrevious) {
           callbacks.onPrevious();
         }

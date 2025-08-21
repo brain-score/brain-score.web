@@ -4,7 +4,7 @@
 function setupCitationExport() {
   const copyBibtexBtn = document.getElementById('copyBibtexBtn');
   if (!copyBibtexBtn) return;
-  
+
   copyBibtexBtn.addEventListener('click', (e) => {
     e.preventDefault();
     copyBibtexToClipboard();
@@ -15,15 +15,15 @@ function setupCitationExport() {
 function handleCitationExport() {
   try {
     const bibtexContent = collectBenchmarkBibtex();
-    
-    if (!bibtexContent) {
+
+    if (!bibtexContent || bibtexContent.length === 0) {
       alert('No benchmarks selected for citation export.');
       return;
     }
-    
+
     copyToClipboard(bibtexContent);
     showCopyFeedback();
-    
+
   } catch (error) {
     console.error('Error copying BibTeX to clipboard:', error);
     alert('Error copying citations to clipboard. Please try again.');
@@ -33,15 +33,15 @@ function handleCitationExport() {
 // Copy BibTeX to clipboard
 function copyBibtexToClipboard() {
   const bibtexList = collectBenchmarkBibtex();
-  
+
   if (bibtexList.length === 0) {
     alert('No citations found for selected benchmarks');
     return;
   }
-  
+
   // Format as a single string with double line breaks between entries
   const formattedBibtex = bibtexList.join('\n\n');
-  
+
   // Copy to clipboard
   navigator.clipboard.writeText(formattedBibtex).then(() => {
     const count = bibtexList.length;
@@ -61,49 +61,49 @@ function collectBenchmarkBibtex() {
   }
 
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  const hierarchyMap = window.LeaderboardHierarchyUtils?.buildHierarchyFromTree 
+  const hierarchyMap = window.LeaderboardHierarchyUtils?.buildHierarchyFromTree
     ? window.LeaderboardHierarchyUtils.buildHierarchyFromTree(window.benchmarkTree)
     : (window.benchmarkTree ? buildHierarchyFromTree(window.benchmarkTree) : new Map());
-  
+
   const bibtexSet = new Set();
-  
+
   // Helper function to determine if a benchmark is a leaf (has no children)
   function isLeafBenchmark(benchmarkId) {
     const children = hierarchyMap.get(benchmarkId) || [];
     return children.length === 0;
   }
-  
+
   // Use first model as reference for benchmark structure
   const firstModel = window.originalRowData[0];
-  
+
   // Go through each field in the model data
   Object.keys(firstModel).forEach(fieldName => {
     // Skip non-benchmark fields
     if (fieldName === 'id' || fieldName === 'rank' || fieldName === 'model' || fieldName === 'metadata') {
       return;
     }
-    
+
     const scoreData = firstModel[fieldName];
-    
+
     // Check if this is a leaf benchmark with bibtex data
-    if (scoreData && 
-        typeof scoreData === 'object' && 
-        scoreData.benchmark && 
+    if (scoreData &&
+        typeof scoreData === 'object' &&
+        scoreData.benchmark &&
         scoreData.benchmark.bibtex &&
         isLeafBenchmark(fieldName)) {
-      
+
       // Check if this benchmark is excluded using multiple patterns
       const baseFieldName = fieldName.replace(/_v\d+$/, '');
       const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
-      
+
       // Makes sure that we do not include benchmarks that we have excluded
       const isExcluded = excludedBenchmarks.has(fieldName) ||
                         excludedBenchmarks.has(baseFieldName) ||
                         excludedBenchmarks.has(benchmarkTypeId);
-      
+
       if (!isExcluded) {
         const bibtex = scoreData.benchmark.bibtex.trim();
-        
+
         // Add to set if valid (Set automatically handles duplicates)
         if (bibtex && bibtex !== 'null') {
           bibtexSet.add(bibtex);
@@ -111,7 +111,7 @@ function collectBenchmarkBibtex() {
       }
     }
   });
-  
+
   return Array.from(bibtexSet);
 }
 
@@ -119,8 +119,8 @@ function collectBenchmarkBibtex() {
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   tree.forEach(node => {
     const nodeId = node.id || node.identifier || node.field || node.name;
-    const children = node.children ? 
-      node.children.map(child => child.id || child.identifier || child.field || child.name).filter(Boolean) : 
+    const children = node.children ?
+      node.children.map(child => child.id || child.identifier || child.field || child.name).filter(Boolean) :
       [];
     if (nodeId) {
       hierarchyMap.set(nodeId, children);
@@ -146,7 +146,7 @@ function copyToClipboard(text) {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
       document.execCommand('copy');
       document.body.removeChild(textArea);
@@ -178,7 +178,7 @@ function getCitationPreview(maxEntries = 3) {
 // Export benchmark references
 function exportBenchmarkReferences() {
   const bibtexList = collectBenchmarkBibtex();
-  
+
   return {
     metadata: {
       generated_on: new Date().toISOString(),
