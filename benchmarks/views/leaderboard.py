@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
-from .index import get_context
+from .index import get_context, get_datetime_range
 from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
@@ -192,7 +192,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         benchmark_metadata_list.append(metadata_entry)
 
     # Build `row_data` from materialized-view models WITH metadata
-    all_timestamps = []
     row_data = []
     for model in context['models']:
         # base fields
@@ -314,7 +313,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'benchmark': score.get('benchmark', {})  # Include benchmark metadata for bibtex collection
+                'benchmark': score.get('benchmark', {}),  # Include benchmark metadata for bibtex collection
+                'timestamp': score.get('end_timestamp')  # Include end_timestamp for wayback filtering
             }
         row_data.append(rd)
 
@@ -432,12 +432,15 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
         }
     }
-    if all_timestamps:
-        min_timestamp = min(all_timestamps)
-        max_timestamp = max(all_timestamps)
+    # Compute datetime range for wayback timestamp filter
+    datetime_range = get_datetime_range(context['models'])
+    if datetime_range:
+        # Parse the timestamps to get Unix timestamps for the slider
+        min_timestamp = datetime.fromisoformat(datetime_range['min'])
+        max_timestamp = datetime.fromisoformat(datetime_range['max'])
         filter_options['datetime_range'] = {
-            'min': min_timestamp.isoformat(),
-            'max': max_timestamp.isoformat(),
+            'min': datetime_range['min'],
+            'max': datetime_range['max'],
             'min_unix': int(min_timestamp.timestamp()),
             'max_unix': int(max_timestamp.timestamp())
         }
