@@ -427,7 +427,7 @@ function createTutorialDropdown(tour) {
   dropdownMenu.style.cssText = `
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0;
     background: white;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -489,6 +489,10 @@ function createTutorialDropdown(tour) {
   
   // Replace button with dropdown container
   wrapper.replaceChild(dropdownContainer, tutorialBtn);
+  
+  // Remove the button's original margin since it's now handled by the container
+  tutorialBtn.style.marginLeft = '0';
+  
   dropdownContainer.appendChild(tutorialBtn);
   dropdownContainer.appendChild(dropdownMenu);
   

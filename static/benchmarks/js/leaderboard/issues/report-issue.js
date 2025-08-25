@@ -2,7 +2,7 @@
 
 // Setup report issue functionality
 function setupReportIssue() {
-  const reportButton = document.getElementById('reportIssueBtn');
+  const reportButton = document.getElementById('reportIssueText');
   const modal = document.getElementById('reportIssueModal');
   const closeButton = document.getElementById('closeReportModal');
   const cancelButton = document.getElementById('cancelReportModal');
