@@ -427,7 +427,7 @@ function createTutorialDropdown(tour) {
   dropdownMenu.style.cssText = `
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0;
     background: white;
     border: 1px solid #ddd;
     border-radius: 6px;
