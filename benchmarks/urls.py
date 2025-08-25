@@ -3,7 +3,7 @@ from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard, report_issue
+    content_utils, benchmark, explore, leaderboard, report_issue, competition2022_static
 from .utils import show_token, refresh_cache
 
 
@@ -73,7 +73,7 @@ non_domain_urls = [
     # competitions and releases
     path('competition/', competition2024.view, name='competition'),
     path('competition2024/', competition2024.view, name='competition2024'),
-    path('competition2022/', competition2022.view, name='competition2022'),
+    path('competition2022/', competition2022_static.view, name='competition2022'),
     path('release2.0/', release2_0.view, name='release2.0'),
 
     # Add the refresh_cache URL and make domain specific

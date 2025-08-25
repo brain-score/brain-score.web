@@ -1,0 +1,469 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+
+{# site navigation #}
+{% block main %}
+    <nav class="navbar is-fixed-top is-transparent" role="navigation"
+         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="/competition2022/" class="navbar-item">
+                    <img id="navbar-competition-logo" src="{% static 'benchmarks/img/logo-competition.png' %}"/>
+                </a>
+
+                <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="navMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <a class="navbar-item" href="#overview">Overview</a>
+                    <a class="navbar-item" href="#tracks">Tracks</a>
+                    <a class="navbar-item" href="#benchmarks">Benchmarks</a>
+                    <a class="navbar-item" href="#leaderboard">Leaderboard</a>
+                    <a class="navbar-item" href="#workshop">Cosyne Workshop</a>
+                    <a class="navbar-item" href="#tutorial">Tutorial</a>
+                    <a class="navbar-item" href="#contact">Contact</a>
+                    <a class="navbar-item" href="#FAQ">FAQ</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="hero competition-hero">
+        <div class="hero-body container">
+            <p class="title">
+                2022 Brain-Score Competition
+            </p>
+        </div>
+    </section>
+
+    {# intro #}
+    <section id="intro" class="section container center">
+
+    <p> <span class="has-text-weight-bold">
+                The 2022 Brain-Score Competition has now concluded! We received many great submissions, and will
+             be contacting the winner(s) of each prize individually, as well as moving forward with paper submissions.
+             We want to thank all the users who submitted models, our Sponsors, and COSYNE for hosting our workshop, which will
+            be held on March 21-22.
+        </span>
+    </p>
+
+        <p>
+            Our ability to recognize objects in the world relies on visual processing along the ventral visual stream, a
+            set of hierarchically-organized cortical areas. Recently, neuroscientists and machine-learning researchers
+            have produced computational models that have achieved moderate success at explaining primate object
+            recognition behavior and the neural representations that support it.
+            <span class="has-text-weight-bold">
+                The first edition of the Brain-Score Competition proposes to evaluate how well these models can predict
+                primate object recognition in 33 neuronal and behavioral benchmarks.
+            </span>
+        </p>
+        <p>
+            The Brain-Score Competition 2022 will be open to the scientific community and aims to accelerate the
+            development of better models of primate vision. It will do so by providing an infrastructure to evaluate
+            candidate models in a standardised and unified manner along a multitude of neuronal and behavioral
+            benchmarks. In addition, it will incentivize model submissions by providing visibility to participants - via
+            participation in a <a href="#workshop">Cosyne workshop</a> - and <a href="#tracks">monetary prizes</a>
+            (total pool of <span id="prize-pool">$6,000</span>) to the best performing models.
+        </p>
+        <p>
+            <span class="has-text-weight-bold">
+                <a target="_blank" href="http://www.brain-score.org/profile/">Submissions</a>
+                are open until 11:59pm February 28, 2022</span>.
+            For regular updates related to the competition, please follow
+            <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a> and join our
+            <a target="_blank"
+               href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-11coirur7-8aXKtIuMx1eDrIssN4GJZA">
+                Slack channel</a>.
+            Good Luck!
+        </p>
+
+        <figure>
+            <img id="graphical-abstract"
+                 src="{% static 'benchmarks/img/base_brain_models.png' %}"
+                 alt="Base v. Brain Models">
+            <figcaption>Figure from
+                <a href="https://www.cell.com/neuron/pdf/S0896-6273(20)30605-X.pdf">Schrimpf et al. 2020</a>
+            </figcaption>
+        </figure>
+    </section>
+
+    {# overview #}
+    <section id="overview" class="section container center">
+        <h3 class="title is-3">Overview</h3>
+
+        <p>
+            Participants should submit their models through the
+            <a target="_blank" href="http://www.brain-score.org/profile/">Brain-Score platform</a>.
+            Brain-Score currently accepts any image-computable model that can predict neural responses in ventral
+            visual stream areas and/or object recognition behavior. While the overarching goal of the competition is to
+            evaluate models that engage with the whole ventral visual stream, we also accept models that only attempt
+            to model some of its components (see <a href="#tracks">Competition Tracks</a> below). Submitted models can
+            be standard artificial neural networks (ANNs) for computer vision, which we call base models, or actual
+            brain models with their internal components committed to specific visual areas, and their field-of-view
+            mapped to a spatial visual extent (in visual degrees). To facilitate model submission, we provide helper
+            wrappers for neural networks implemented in Pytorch, Tensorflow or Keras. For more information about model
+            details, please check our
+            <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                tutorial</a>.
+        </p>
+        <p>
+            Submitted models will be evaluated in a total of 33 neuronal and behavioral benchmarks related to activity
+            in macaque visual cortical areas V1, V2, V4, and IT, and human psychophysical performance in a set of object
+            classification tasks. Each benchmark contains a set of measurements as well as a comparative metric that
+            evaluates how well the model can explain the experimental data. In the first edition of the Brain-Score
+            Competition, the metrics will consist of a standard neural predictivity metric using PLS regression, the
+            similarity of single-neuron response property distributions, and the alignment of object classification
+            performance at the level of individual images (see <a href="#benchmarks">Benchmarks</a> below).
+        </p>
+    </section>
+
+    {# tracks #}
+    <section id="tracks" class="section container">
+        <h3 class="title is-3">Competition Tracks</h3>
+
+        <div class="columns">
+            <div class="column is-full">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Main Track:</span>&nbsp;<span>V1, V2, V4, IT, and Behavior</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$2,000</span></li>
+                                <li>Second Prize: <span class='information'>$1,250</span></li>
+                                <li>Third Prize: <span class='information'>$750</span></li>
+                            </ul>
+                            <br/>
+                            <p>
+                                The main goal of the Brain-Score Competition 2022 is to advance the development of
+                                models of the primate ventral visual stream and object recognition behavior. We believe
+                                that modelling this system as a whole, holds better promise for success than efforts
+                                focused solely on modelling specific components. Thus, the main competition track will
+                                simultaneously evaluate models in all the neuronal benchmarks for all the ventral stream
+                                areas as well as in a behavioral benchmark. We will award the three models with the
+                                highest overall scores, which consists of the average of five components: V1, V2, V4,
+                                IT, and behavior.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="columns">
+            <div class="column is-half">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">V1 Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$1,000</span></li>
+                            </ul>
+                            <br/>
+                            <p>
+                                There is a large and vibrant community in neuroscience whose main focus is to model
+                                neuronal responses in the primary visual cortex (V1). For this reason, we will award the
+                                best V1 model from all the submissions. The V1 score is the average of a standard neural
+                                predictivity benchmark and a composite properties benchmark
+                                (see <a href="#benchmarks">Benchmarks</a> below).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-half">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="track">Behavior Track</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <ul class="prizes">
+                                <li>First Prize: <span class='information'>$1,000</span></li>
+                            </ul>
+                            <br/>
+                            <p>
+                                Cognitive scientists and machine learning researchers may be interested in modeling
+                                human object recognition behavior independently of the neural mechanisms that support
+                                it. We will award the best model in predicting human behavioral performance in a battery
+                                of object classification task.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        See the
+        <a target="_blank" href="{% static 'benchmarks/competition2022-official-rules.pdf' %}">official rules</a>
+        for full details.
+    </section>
+
+    {# benchmarks #}
+    <section id="benchmarks" class="section container">
+        <h3 class="title is-3">Benchmarks</h3>
+
+        <div id="stimuli-samples" class="samples_container container">
+            {# Static placeholder for stimuli samples - these would normally be dynamic #}
+            <p><em>Sample stimuli from the competition benchmarks were displayed here during the active competition.</em></p>
+        </div>
+        <br/>
+
+        <div> {# can't use ul inside p #}
+            The Brain-Score Competition 2022 will evaluate submitted models in 33 neuronal and behavioral benchmarks
+            related to primate object recognition behavior. These benchmarks contain the following metrics:
+
+            <ul>
+                <li>Neural predictivity (image-level consistency with PLS regression): Measures how well the responses
+                    to given images in a model area predict the responses of a neuronal population of the corresponding
+                    area in the macaque brain. First, the model responses are mapped to the neuronal recordings using a
+                    linear transformation (PLS regression with 25 components) on a training set of images. Then the
+                    model's predictivity is determined for held-out images by computing the Pearson correlation
+                    coefficient between the model's predictions and the neuronal responses. This procedure is performed
+                    using cross-validation in 10 splits. More details about this neural predictivity metric can be found
+                    in <a href="https://www.biorxiv.org/content/10.1101/407007v2">Schrimpf, Kubilius, et al. 2018</a>
+                    and <a href="https://www.pnas.org/content/111/23/8619">Yamins, Hong, et al. 2014</a>. There is one
+                    neural predictivity
+                    benchmark for each area of the ventral stream in the macaque brain. The V1 and V2 benchmarks were
+                    built using neuronal datasets first described in
+                    <a href="https://www.nature.com/articles/nn.3402">Freeman, Ziemba, et al. 2013</a>,
+                    and the V4 and IT benchmarks were built from recordings reported in
+                    <a href="https://www.jneurosci.org/content/35/39/13402.long">Majaj, Hong, et al. 2015</a>,
+                    <a href="https://osf.io/chwdk/">Sanghavi and DiCarlo 2020</a>,
+                    <a href="https://osf.io/fhy36/">Sanghavi, Jozwik and DiCarlo 2020</a>, and
+                    <a href="https://osf.io/fchme/">Sanghavi, Murty and DiCarlo 2020</a>.
+                </li>
+                <li>Single-neuron property distribution similarity: Measures whether single neurons in a model area are
+                    functionally similar to single-neurons in the corresponding monkey brain area. This is done by
+                    comparing the distribution of single-neuron response properties between the model area and the brain
+                    area using a similarity score (using the KS distance). For more details about this metric, please
+                    see <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2">Marques et al. 2021</a>.
+                    There are 22 single-neuron property distribution similarity benchmarks
+                    corresponding to different response properties in the monkey V1. These single-neuron property
+                    distributions relate to several aspects of V1 responses and are pooled in seven groups: orientation
+                    tuning, spatial frequency tuning, receptive-field size, surround modulation, texture modulation,
+                    response selectivity, and response magnitude.
+                </li>
+                <li>Behavioral consistency (normalized image-level): Measures the behavioral similarity between the
+                    model and humans in core object recognition tasks. This metric does not measure the overall accuracy
+                    of the model but whether it can predict the patterns of successes and failures of humans in a set of
+                    object recognition tasks. Model's and humans' behavioral accuracies are first transformed to a d'
+                    statistic and then compared using the Pearson correlation coefficient. For more details about this
+                    behavioral metric, please see
+                    <a href="https://www.jneurosci.org/content/38/33/7255">Rajalingham, Issa, et al. 2018</a> and
+                    <a href="https://www.biorxiv.org/content/10.1101/407007v2">Schrimpf, Kubilius, et al. 2018</a>.
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    {# leaderboard #}
+    <section id="leaderboard" class="section container tablecenter is-centered">
+        <h3 class="title is-3">Competition Leaderboard</h3>
+        <div class="content">
+            <p><em>The competition has concluded. Final leaderboards were available during the active competition period (February 2022).</em></p>
+            <p>Winners were announced at the COSYNE 2022 workshop in March 2022.</p>
+        </div>
+    </section>
+
+    {# workshop #}
+    <section id="workshop" class="section container">
+        <h3 class="title is-3">Cosyne Workshop</h3>
+        <p>
+            In parallel to the competition we will organize a workshop at Cosyne 2022 in Cascais, Portugal on March
+            21-22. The workshop,
+            <span class="has-text-italic">
+                Brain-Score and beyond: confronting brain-like ANNs with neuroscientific data
+            </span>,
+            will focus on 1) deep learning models from AI as theories of neural computations, and 2) the 2022
+            Brain-Score competition as a specific real-world system for brain model evaluation and development.
+        </p>
+        <div>  {# ul not allowed inside p, using div instead #}
+            During the workshop we will bring together theorists and experimenters to address:
+            <ul>
+                <li>
+                    What is the deep learning framework for neuroscience, and what is it not?
+                </li>
+                <li>
+                    What are the best competing frameworks for understanding computation in neural circuits?
+                </li>
+                <li>
+                    What are the strongest experimental findings that support the deep learning framework and/or its
+                    competitors?
+                </li>
+                <li>How should we modify the deep learning framework and/or other competing frameworks, to facilitate
+                    progress in neuroscience?
+                </li>
+            </ul>
+        </div>
+        <br/>
+        <p>
+            In addition to a fantastic lineup of established speakers,
+            <span class="has-text-weight-bold">
+                we will invite selected participants in the Brain-Score competition to present their modeling work
+                during the workshop either as a talk or a poster.
+            </span>
+            While attendance to the Cosyne workshop is not required to participate in the Brain-Score competition,
+            we encourage participants do so.
+        </p>
+    </section>
+
+    {# tutorial #}
+    <section id="tutorial" class="section container">
+        <h3 class="title is-3">Tutorial</h3>
+
+        <p>
+            To enter the competition, simply create an account on
+            <a target="_blank" href="https://www.brain-score.org/profile">the Brain-Score website</a>
+            and submit a model.
+            <span class="has-text-weight-bold">
+            Please check our full length
+            <a target="_blank"
+               href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">tutorial</a>
+            for detailed information about the model submission process</span>, as well as a quickstart
+            guide for those that want to get up and running as soon as possible. We include a step-by-step submission
+            example that should take less than 20 minutes to follow and replicate.
+        </p>
+        <p>
+            We aimed to make our tutorial as clear and easy to follow as possible for anyone with minimum Python
+            knowledge. However, if you still have any issues, feel free to contact us!
+        </p>
+    </section>
+
+    {# contact #}
+    <section id="contact" class="section container">
+        <h3 class="title is-3">Contact</h3>
+
+        <p>
+            We recommend that participants join our competiton
+            <a target="_blank"
+               href="https://join.slack.com/t/brainscorecom-otr4776/shared_invite/zt-11coirur7-8aXKtIuMx1eDrIssN4GJZA">
+                Slack Workspace</a>
+            and follow <a target="_blank" href="https://twitter.com/brain_score">Brain-Score on twitter</a>
+            for any questions, updates, model support, and other assistance.
+        </p>
+
+        <div> {# ul not allowed inside p #}
+            In addition, feel free to contact any of the team members.
+            <ul>
+                <li>Martin Schrimpf - msch@mit.edu/
+                    <a target="_blank" href="https://twitter.com/martin_schrimpf">@mschrimpf</a></li>
+                <li>Tiago Marques - tmarques@mit.edu/
+                    <a target="_blank" href="https://twitter.com/tiagogmarques">@tiagogmarques</a></li>
+                <li>Mike Ferguson - mferg@mit.edu</li>
+            </ul>
+        </div>
+    </section>
+
+    {# FAQ #}
+    <section id="FAQ" class="section container center">
+        <h3 class="title is-3">FAQ</h3>
+        <ol>
+            <li>
+                <h4>How do I submit a model?</h4>
+                <p> We have a full length
+                    <a target="_blank" href="https://brain-score.readthedocs.io/en/latest/modules/model_tutorial.html">
+                        tutorial</a> that walks users through the submission process- feel free to
+                    take a look, as it covers model submission, scoring, and results.
+                </p>
+            </li>
+            <li>
+                <h4>Why did you choose these benchmarks to score models against?</h4>
+                <p>
+                    We currently use the PLS25 neural predictivity metric to rank models; this is an established
+                    metric,
+                    but since it's most likely far from perfect, we will iterate on this going forward.
+                    We are also including novel, unpublished, recordings (Sanghavi2020, SanghaviJozwik2020,
+                    SanghaviMurty2020)-
+                    these data are from a single monkey, and while we verified data quality and signal reliability,
+                    the benchmarks are not vetted as strongly as the other datasets. We will discuss implications
+                    and empirical results of these benchmarks at the Cosyne workshop.
+                    Based on this year's results, we will also discuss if we should only include benchmarks from
+                    recordings with n>=2 monkeys. Please join the workshop and join the slack
+                    channel if you have input on these questions!
+                </p>
+            </li>
+            <li>
+                <h4>I have data that could be useful -- can I submit a benchmark?</h4>
+                <p>
+                    We also have a tutorial for those who wish to submit benchmarks, found
+                    <a href="https://brain-score.readthedocs.io/en/latest/modules/benchmark_tutorial.html">
+                        here</a>. We strongly encourage those with useful data to submit a poster at the
+                    <a href="https://www.cosyne.org/">COSYNE 2022</a> workshop as well.
+                </p>
+            </li>
+            <li>
+                <h4>Who will get prizes?</h4>
+                <p>
+                    See <a href="#tracks">Tracks</a> for the prize breakdown.
+                </p>
+            </li>
+            <li>
+                <h4>Does my model have to beat the current most brain-like model on brain-score.org?</h4>
+                <p>
+                    Nope! You only have to be the best out of all the competition submissions.
+                </p>
+            </li>
+            <li>
+                <h4>Can I submit a model developed by a third-party?</h4>
+                <p>
+                    If the model isn't on brain-score.org, you can submit a third-party base model or a brain model
+                    based on a third-party base model as long as it is properly cited.
+                </p>
+            </li>
+            <li>
+                <h4>Is public data available?</h4>
+                <p>
+                    Yes. Public data splits of many of the benchmarks can be found
+                    <a href="https://github.com/brain-score/brain-score/blob/master/brainscore/benchmarks/public_benchmarks.py#L87">here</a>.
+                    Use the list_public_assemblies function
+                    <a href="https://github.com/brain-score/brain-score/blob/master/brainscore/benchmarks/public_benchmarks.py#L87">
+                        here</a> as well to view all available public data.
+                </p>
+            </li>
+        </ol>
+    </section>
+
+    {# sponsors #}
+    <section class="section container">
+        <h3 class="title is-3">Sponsors</h3><br>
+        <div class="columns">
+            <div class="column">
+                <a href="https://quest.mit.edu/">
+                    <figure>
+                        <img src="{% static 'benchmarks/img/competition_logos/quest.svg' %}" alt="MIT Quest">
+                    </figure>
+                </a>
+            </div>
+
+            <div class="column">
+                <a href="https://engineering.purdue.edu/C-BRIC">
+                    <figure>
+                        <img src="{% static 'benchmarks/img/competition_logos/cbric.png' %}" alt="C-BRIC">
+                    </figure>
+                </a>
+            </div>
+
+            <div class="column">
+                <a href="https://mitibmwatsonailab.mit.edu/">
+                    <figure>
+                        <img src="{% static 'benchmarks/img/competition_logos/ibm.jpg' %}" alt="MIT-IBM Watson AI Lab">
+                    </figure>
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
