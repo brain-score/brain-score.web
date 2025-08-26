@@ -102,11 +102,7 @@ def view(request):
     context = {
         'leaderboard_keys': ['average', 'V1', 'behavior'],
         'error_message': 'Competition data unavailable',
-        'instructions': [
-            'To enable this page, either:',
-            '1. Run: python export_competition_data.py (to create pickle file)',
-            '2. Or ensure get_context function is available for original method',
-        ],
+        'instructions': ["You need to export the competition data first and save it as a pickle file. See `view_original()` for context structure."],
         'benchmarks_average_vision': [],
         'models_average_vision': [],
         'benchmarks_V1': [],
