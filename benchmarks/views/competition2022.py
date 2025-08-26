@@ -37,10 +37,16 @@ def view(request):
             # Convert dictionaries back to objects for template compatibility
             def dict_to_obj(d):
                 if isinstance(d, dict):
-                    obj = type('DictObj', (), {})()
-                    for key, value in d.items():
-                        setattr(obj, key, dict_to_obj(value))
-                    return obj
+                    class DictObj:
+                        def __init__(self, data):
+                            for key, value in data.items():
+                                setattr(self, key, dict_to_obj(value))
+                        
+                        def __getattr__(self, name):
+                            # Return None for missing attributes instead of raising AttributeError
+                            return None
+                    
+                    return DictObj(d)
                 elif isinstance(d, list):
                     return [dict_to_obj(item) for item in d]
                 else:
