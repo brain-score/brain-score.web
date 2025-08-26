@@ -1,5 +1,8 @@
 // Report Issue functionality for leaderboard
 
+// Constants for localStorage
+const FORM_SAVE_KEY = 'reportIssueFormData';
+
 // Setup report issue functionality
 function setupReportIssue() {
   const reportButton = document.getElementById('reportIssueBtn');
@@ -17,16 +20,19 @@ function setupReportIssue() {
   // Populate system info
   populateSystemInfo();
   
+  // Setup auto-save functionality
+  setupAutoSave();
+  
   // Event listeners
   reportButton.addEventListener('click', openReportModal);
-  closeButton?.addEventListener('click', closeReportModal);
-  cancelButton?.addEventListener('click', closeReportModal);
+  closeButton?.addEventListener('click', () => closeReportModal(false)); // false = don't clear saved data
+  cancelButton?.addEventListener('click', () => closeReportModal(true)); // true = clear saved data
   form.addEventListener('submit', handleReportSubmission);
   
   // Close modal when clicking outside
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      closeReportModal();
+      closeReportModal(false); // false = don't clear saved data
     }
   });
 }
@@ -38,6 +44,9 @@ function openReportModal() {
     modal.style.display = 'flex';
     document.body.classList.add('modal-open');
     
+    // Restore saved form data
+    restoreFormData();
+    
     // Focus on the first input
     const firstInput = modal.querySelector('select, input, textarea');
     if (firstInput) {
@@ -47,17 +56,20 @@ function openReportModal() {
 }
 
 // Close the report issue modal
-function closeReportModal() {
+function closeReportModal(clearSavedData = false) {
   const modal = document.getElementById('reportIssueModal');
   if (modal) {
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
     
-    // Reset form
-    const form = document.getElementById('reportIssueForm');
-    if (form) {
-      form.reset();
-      populateSystemInfo(); // Repopulate system info after reset
+    // Only reset form and clear saved data if explicitly requested (cancel button)
+    if (clearSavedData) {
+      const form = document.getElementById('reportIssueForm');
+      if (form) {
+        form.reset();
+        populateSystemInfo(); // Repopulate system info after reset
+        clearSavedFormData(); // Clear localStorage
+      }
     }
   }
 }
@@ -87,7 +99,8 @@ async function handleReportSubmission(event) {
     
     if (response.success) {
       showSuccessMessage(response.issue_url || 'Issue submitted successfully!');
-      closeReportModal();
+      clearSavedFormData(); // Clear saved data on successful submission
+      closeReportModal(true); // Clear form on successful submission
     } else {
       throw new Error(response.error || 'Failed to submit issue');
     }
@@ -347,6 +360,103 @@ function showErrorMessage(message) {
 
 
 
+// Setup auto-save functionality
+function setupAutoSave() {
+  const formFields = ['issueType', 'issueTitle', 'issueDescription', 'contactEmail'];
+  
+  formFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      // Save on input events (typing)
+      field.addEventListener('input', saveFormData);
+      // Save on change events (dropdown selections)
+      field.addEventListener('change', saveFormData);
+    }
+  });
+}
+
+// Save current form data to localStorage
+function saveFormData() {
+  try {
+    const formData = {
+      issueType: document.getElementById('issueType')?.value || '',
+      issueTitle: document.getElementById('issueTitle')?.value || '',
+      issueDescription: document.getElementById('issueDescription')?.value || '',
+      contactEmail: document.getElementById('contactEmail')?.value || '',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Only save if there's actually some content
+    const hasContent = Object.values(formData).some(value => 
+      value && value !== '' && typeof value === 'string' && value.trim().length > 0
+    );
+    
+    if (hasContent) {
+      localStorage.setItem(FORM_SAVE_KEY, JSON.stringify(formData));
+    }
+  } catch (error) {
+    console.warn('Could not save form data:', error);
+  }
+}
+
+// Restore form data from localStorage
+function restoreFormData() {
+  try {
+    const savedData = localStorage.getItem(FORM_SAVE_KEY);
+    if (!savedData) return;
+    
+    const formData = JSON.parse(savedData);
+    
+    // Check if saved data is recent (within 24 hours)
+    const savedTime = new Date(formData.timestamp);
+    const now = new Date();
+    const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+    
+    if (hoursDiff > 24) {
+      // Clear old data
+      clearSavedFormData();
+      return;
+    }
+    
+    // Restore form fields
+    if (formData.issueType) {
+      const issueTypeField = document.getElementById('issueType');
+      if (issueTypeField) issueTypeField.value = formData.issueType;
+    }
+    
+    if (formData.issueTitle) {
+      const issueTitleField = document.getElementById('issueTitle');
+      if (issueTitleField) issueTitleField.value = formData.issueTitle;
+    }
+    
+    if (formData.issueDescription) {
+      const issueDescField = document.getElementById('issueDescription');
+      if (issueDescField) issueDescField.value = formData.issueDescription;
+    }
+    
+    if (formData.contactEmail) {
+      const contactEmailField = document.getElementById('contactEmail');
+      if (contactEmailField) contactEmailField.value = formData.contactEmail;
+    }
+    
+    // Always refresh system info since it's dynamic
+    populateSystemInfo();
+    
+  } catch (error) {
+    console.warn('Could not restore form data:', error);
+    clearSavedFormData();
+  }
+}
+
+// Clear saved form data from localStorage
+function clearSavedFormData() {
+  try {
+    localStorage.removeItem(FORM_SAVE_KEY);
+  } catch (error) {
+    console.warn('Could not clear saved form data:', error);
+  }
+}
+
 // Export functions for use by other modules
 window.LeaderboardReportIssue = {
   setupReportIssue,
@@ -357,5 +467,8 @@ window.LeaderboardReportIssue = {
   validateFormData,
   submitIssueToBackend,
   showSuccessMessage,
-  showErrorMessage
+  showErrorMessage,
+  saveFormData,
+  restoreFormData,
+  clearSavedFormData
 };
