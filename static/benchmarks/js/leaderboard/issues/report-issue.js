@@ -29,6 +29,13 @@ function setupReportIssue() {
       closeReportModal();
     }
   });
+
+  // Close modal on escape key press (with saving)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeReportModal();
+    }
+  });
 }
 
 // Open the report issue modal
