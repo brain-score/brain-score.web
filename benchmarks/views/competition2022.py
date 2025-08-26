@@ -1,17 +1,125 @@
 import random
 import string
+import pickle
+import os
 from collections import namedtuple
 from operator import itemgetter
+from pathlib import Path
 
 from django.shortcuts import render
+from django.conf import settings
 from numpy.random.mtrand import RandomState
 
-from .index import get_context
+# Keep original functions for backward compatibility
+try:
+    from .index import get_context
+except ImportError:
+    get_context = None
 
 NUM_STIMULI_SAMPLES = 150
 
 
 def view(request):
+    """
+    Competition 2022 view with pickle fallback.
+    First tries to load from pickle file, falls back to original method if available.
+    """
+    # Path to the pickled data file
+    pickle_file = Path(settings.BASE_DIR) / 'competition2022_data.pkl'
+    
+    # Try pickle method first
+    if pickle_file.exists():
+        try:
+            # Load the pickled data
+            with open(pickle_file, 'rb') as f:
+                context = pickle.load(f)
+            
+            # Convert dictionaries back to objects for template compatibility
+            def dict_to_obj(d):
+                if isinstance(d, dict):
+                    obj = type('DictObj', (), {})()
+                    for key, value in d.items():
+                        setattr(obj, key, dict_to_obj(value))
+                    return obj
+                elif isinstance(d, list):
+                    return [dict_to_obj(item) for item in d]
+                else:
+                    return d
+            
+            # Convert all the data back to objects
+            for key in context:
+                if key.startswith('benchmarks_') or key.startswith('models_') or key == 'stimuli_samples':
+                    context[key] = dict_to_obj(context[key])
+            
+            # Fix stimuli sample paths - remove lab prefixes to match actual directory structure
+            if 'stimuli_samples' in context:
+                import os
+                samples_dir = Path(settings.BASE_DIR) / 'static' / 'benchmarks' / 'img' / 'benchmark_samples'
+                
+                # Build mapping from actual directories to corrected paths
+                available_dirs = set()
+                if samples_dir.exists():
+                    available_dirs = {d.name for d in samples_dir.iterdir() if d.is_dir()}
+                
+                for sample in context['stimuli_samples']:
+                    if hasattr(sample, 'path'):
+                        # Extract the path components
+                        path_parts = sample.path.split('/')
+                        if len(path_parts) >= 2:
+                            dir_name = path_parts[0]
+                            file_name = path_parts[1]
+                            
+                            # If the directory doesn't exist, try removing lab prefix
+                            if dir_name not in available_dirs:
+                                # Try removing lab prefix (e.g., "dicarlo.SanghaviMurty2020.V4-pls_v1" -> "SanghaviMurty2020.V4-pls_v1")
+                                if '.' in dir_name:
+                                    corrected_dir = '.'.join(dir_name.split('.')[1:])  # Remove first part before dot
+                                    if corrected_dir in available_dirs:
+                                        sample.path = f"{corrected_dir}/{file_name}"
+            
+            # Ensure required keys exist
+            if 'leaderboard_keys' not in context:
+                context['leaderboard_keys'] = ['average', 'V1', 'behavior']
+            
+            # Add success info
+            context['data_source'] = f'Loaded from {pickle_file}'
+            context['data_timestamp'] = os.path.getmtime(pickle_file)
+            
+            return render(request, 'benchmarks/competition2022.html', context)
+            
+        except Exception as e:
+            # Pickle failed, try original method below
+            print(f"Pickle loading failed: {e}")
+    
+    # Fallback to original method if get_context is available
+    if get_context is not None:
+        try:
+            return view_original(request)
+        except Exception as e:
+            print(f"Original method failed: {e}")
+    
+    # Both methods failed, return error page
+    context = {
+        'leaderboard_keys': ['average', 'V1', 'behavior'],
+        'error_message': 'Competition data unavailable',
+        'instructions': [
+            'To enable this page, either:',
+            '1. Run: python export_competition_data.py (to create pickle file)',
+            '2. Or ensure get_context function is available for original method',
+        ],
+        'benchmarks_average_vision': [],
+        'models_average_vision': [],
+        'benchmarks_V1': [],
+        'models_V1': [],
+        'benchmarks_behavior_vision': [],
+        'models_behavior_vision': [],
+        'stimuli_samples': [],
+    }
+    return render(request, 'benchmarks/competition2022.html', context)
+
+
+def view_original(request):
+    """Original competition2022 view implementation (fallback)."""
     context = {'leaderboard_keys': ['average', 'V1', 'behavior']}
     # specify exact set of benchmarks used in this competition (brain benchmarks only, ignore temporal benchmark)
     # A problem with this filter is that it only filters for the benchmark type, but not the *instance*.
@@ -119,14 +227,42 @@ def create_stimuli_samples(benchmark_instances, num_samples, available_sample_pe
     :param available_sample_per_benchmark: how many image files have been pre-generated per benchmark
     :return:
     """
+    import os
     StimulusSample = namedtuple('StimulusSample', field_names=['path', 'benchmark_identifier'])
+
+    # Build a mapping from benchmark identifier to actual directory name
+    samples_dir = 'static/benchmarks/img/benchmark_samples'
+    benchmark_dir_mapping = {}
+    
+    if os.path.exists(samples_dir):
+        for dir_name in os.listdir(samples_dir):
+            dir_path = os.path.join(samples_dir, dir_name)
+            if os.path.isdir(dir_path):
+                # Extract benchmark name from full directory name (remove lab prefix)
+                # e.g., "dicarlo.SanghaviJozwik2020.IT-pls_v1" -> "SanghaviJozwik2020.IT-pls"
+                if '.' in dir_name:
+                    parts = dir_name.split('.', 1)  # Split only on first dot
+                    if len(parts) > 1:
+                        benchmark_name = parts[1]  # Everything after first dot
+                        # Remove version suffix (e.g., "_v1")
+                        if '_v' in benchmark_name:
+                            benchmark_name = benchmark_name.rsplit('_v', 1)[0]
+                        benchmark_dir_mapping[benchmark_name] = dir_name
 
     samples = set()
     random = RandomState(42)
     while len(samples) < num_samples:
         benchmark = random.choice(benchmark_instances)
         sample_num = random.randint(low=0, high=available_sample_per_benchmark)
-        path = f"{benchmark.identifier}/{sample_num}.png"
+        
+        # Try to find the actual directory name for this benchmark
+        benchmark_identifier = benchmark.identifier
+        # Remove version suffix if present
+        if '_v' in benchmark_identifier:
+            benchmark_identifier = benchmark_identifier.rsplit('_v', 1)[0]
+            
+        actual_dir = benchmark_dir_mapping.get(benchmark_identifier, benchmark_identifier)
+        path = f"{actual_dir}/{sample_num}.png"
         sample = StimulusSample(path=path, benchmark_identifier=benchmark.identifier)
         samples.add(sample)
     samples = list(sorted(samples))  # make order deterministic
