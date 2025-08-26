@@ -87,19 +87,10 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
-<!-- Report Issue text -->
-{% if not has_user %}
-<span id="reportIssueText" title="Report an issue with the website">
-    <i class="fa-solid fa-bug"></i>
-    <span>Report Issue</span>
-</span>
-{% endif %}
-
 <!-- Include sidebar toggle functionality -->
 <script src="{% static 'benchmarks/js/sidebar-toggle.js' %}"></script>
 
 <!-- Report Issue Modal -->
-{% if not has_user %}
 <div id="reportIssueModal" class="modal" style="display: none;">
   <div class="modal-background"></div>
   <div class="modal-card">
@@ -181,4 +172,3 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 </script>
-{% endif %}
