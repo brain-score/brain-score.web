@@ -57,6 +57,7 @@
       min-height: 0
       flex: 1
       overflow-y: auto
+      max-height: none
 
       .filter-column
         width: 100%
@@ -65,8 +66,10 @@
 
         // Benchmark column in sidebar
         &.benchmark-column
-          #benchmarkFilterPanel
+          .filter-column-content
             max-height: 300px
+
+          #benchmarkFilterPanel
             width: 100% !important
             border: 1px solid #e1e5e9
 
