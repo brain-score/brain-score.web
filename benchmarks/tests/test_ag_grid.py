@@ -1058,6 +1058,109 @@ class TestFilter:
         entries = copied.strip().split('\n\n')
         assert len(entries) == 9, f" Expected 9 BibTeX entries, got {len(entries)}."
 
+    def test_filter_configuration_modal(self, page):
+        """
+        Test the filter configuration modal functionality:
+        1. Open advanced filters panel
+        2. Click gear icon to open configuration modal
+        3. Toggle a filter off/on
+        4. Verify filter visibility changes
+        5. Test persistence across page reload
+        """
+        # Step 1: Open advanced filters panel
+        advanced_filter_btn = page.locator('#advancedFilterBtn')
+        assert advanced_filter_btn.is_visible(), "❌ Advanced Filters button not found"
+        advanced_filter_btn.click()
+        page.wait_for_timeout(2000)
+        
+        # Verify advanced filters panel is visible
+        advanced_panel = page.locator('#advancedFiltersPanel')
+        assert advanced_panel.is_visible(), "❌ Advanced Filters panel not visible"
+        
+        # Step 2: Click gear icon to open configuration modal
+        gear_icon = page.locator('.configure-filters-gear')
+        assert gear_icon.is_visible(), "❌ Configure filters gear icon not found"
+        gear_icon.click()
+        page.wait_for_timeout(1000)
+        
+        # Verify modal opened
+        modal = page.locator('#filterConfigModal')
+        assert modal.is_visible(), "❌ Filter configuration modal not visible"
+        
+        # Step 3: Test toggling a filter (Architecture filter)
+        # First verify the architecture filter is currently visible
+        architecture_filter = page.locator('#architectureFilter')
+        assert architecture_filter.is_visible(), "❌ Architecture filter should be visible initially"
+        
+        # Find the architecture toggle in the modal
+        architecture_toggle = page.locator('[data-filter-id="architecture"]')
+        assert architecture_toggle.is_visible(), "❌ Architecture toggle not found in modal"
+        assert architecture_toggle.is_checked(), "❌ Architecture toggle should be checked initially"
+        
+        # Toggle it off
+        architecture_toggle.click()
+        page.wait_for_timeout(500)
+        assert not architecture_toggle.is_checked(), "❌ Architecture toggle should be unchecked after click"
+        
+        # Apply configuration
+        apply_btn = page.locator('#applyFilterConfig')
+        assert apply_btn.is_visible(), "❌ Apply configuration button not found"
+        apply_btn.click()
+        page.wait_for_timeout(1000)
+        
+        # Step 4: Verify filter is now hidden
+        assert not architecture_filter.is_visible(), "❌ Architecture filter should be hidden after configuration"
+        
+        # Step 5: Test "Hide All" functionality
+        # Reopen the modal
+        gear_icon.click()
+        page.wait_for_timeout(1000)
+        
+        # Click "Hide All" button
+        hide_all_btn = page.locator('#toggleAllFilters')
+        assert hide_all_btn.is_visible(), "❌ Hide All button not found"
+        hide_all_btn.click()
+        page.wait_for_timeout(500)
+        
+        # Apply configuration
+        apply_btn.click()
+        page.wait_for_timeout(1000)
+        
+        # Verify multiple filters are hidden (check a few key ones)
+        model_family_filter = page.locator('#modelFamilyFilter')
+        param_count_filter = page.locator('#paramCountMin')
+        assert not model_family_filter.is_visible(), "❌ Model Family filter should be hidden"
+        assert not param_count_filter.is_visible(), "❌ Parameter Count filter should be hidden"
+        
+        # Step 6: Test persistence across page reload
+        page.reload()
+        page.wait_for_selector('.ag-root', timeout=30000)
+        
+        # Open advanced filters again
+        advanced_filter_btn.click()
+        page.wait_for_timeout(2000)
+        
+        # Verify filters are still hidden
+        assert not architecture_filter.is_visible(), "❌ Architecture filter should remain hidden after reload"
+        assert not model_family_filter.is_visible(), "❌ Model Family filter should remain hidden after reload"
+        
+        # Step 7: Reset to defaults for cleanup
+        gear_icon.click()
+        page.wait_for_timeout(1000)
+        
+        reset_btn = page.locator('#resetToDefaults')
+        assert reset_btn.is_visible(), "❌ Reset to Defaults button not found"
+        reset_btn.click()
+        page.wait_for_timeout(500)
+        
+        apply_btn.click()
+        page.wait_for_timeout(1000)
+        
+        # Verify filters are visible again
+        assert architecture_filter.is_visible(), "❌ Architecture filter should be visible after reset"
+        assert model_family_filter.is_visible(), "❌ Model Family filter should be visible after reset"
+
+
 class TestExtraFunctionality:
 
     def test_csv_export_contains_expected_files(self, page, tmp_path):

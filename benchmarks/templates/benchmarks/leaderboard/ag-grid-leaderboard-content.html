@@ -28,6 +28,7 @@
       <span class="filter-icon">🔍</span>
       <span class="text-wrapper">Advanced Filters</span>
     </button>
+
     <button id="tutorialBtn" class="btn-secondary" style="white-space: nowrap">
       <span class="tutorial-icon">📚</span>
       <span class="text-wrapper">Walkthrough</span>
@@ -52,6 +53,9 @@
 </div>
 
 <div id="advancedFiltersPanel" class="advanced-filters hidden">
+  <button id="configureFiltersBtn" class="configure-filters-gear" title="Configure which filters are visible">
+    ⚙️
+  </button>
   <div class="filters-container">
     <!-- Left column: Benchmark filters -->
     <div class="filter-column benchmark-column">
@@ -306,6 +310,12 @@
 <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
+
+{# Phase 1, 2 & 3: Filter Configuration Scripts - Remove after testing #}
+<script src="{% static 'benchmarks/js/leaderboard/filters/filter-config-state.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/filters/filter-config-test.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/ui/filter-config-modal.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/filters/filter-config-renderer.js' %}"></script>
 
 {% if domain  == "vision" %} <!-- Disable URL params for Language domain for now -->
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
