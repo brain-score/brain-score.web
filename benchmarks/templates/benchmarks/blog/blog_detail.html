@@ -6,9 +6,11 @@
 <div class="post-meta">
   <span class="post-date">{{ post.created_at|date:"F d, Y" }}</span>
   <span class="post-author">by {{ post.author_name }}</span>
-  {% if post.category %}
+  {% if post.get_categories_list %}
     <span class="post-category">
-      <a href="{% url 'blog_category' post.category|slugify %}">{{ post.category }}</a>
+      {% for category in post.get_categories_list %}
+        <a href="{% url 'blog_category' category|slugify %}">{{ category }}</a>{% if not forloop.last %}, {% endif %}
+      {% endfor %}
     </span>
   {% endif %}
   <span class="reading-time">{{ post.reading_time }} min read</span>
@@ -36,7 +38,7 @@
           {% for category in categories %}
             <li>
               <a href="{% url 'blog_category' category|slugify %}" 
-                 {% if post.category == category %}class="active"{% endif %}>
+                 {% if category in post.get_categories_list %}class="active"{% endif %}>
                 {{ category }}
               </a>
             </li>
@@ -107,8 +109,10 @@
       
       <div class="post-navigation">
         <a href="{% url 'blog_list' %}" class="back-to-blog">← Back to Blog</a>
-        {% if post.category %}
-          <a href="{% url 'blog_category' post.category|slugify %}" class="category-link">More in {{ post.category }}</a>
+        {% if post.get_categories_list %}
+          {% for category in post.get_categories_list %}
+            <a href="{% url 'blog_category' category|slugify %}" class="category-link">More in {{ category }}</a>{% if not forloop.last %} | {% endif %}
+          {% endfor %}
         {% endif %}
       </div>
     </div>
