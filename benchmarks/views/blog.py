@@ -30,6 +30,11 @@ class BlogPost:
             return [tag.strip() for tag in self.tags.split(',')]
         return []
     
+    def get_categories_list(self):
+        if self.category:
+            return [category.strip() for category in self.category.split(',')]
+        return []
+    
     @property
     def reading_time(self):
         # Estimate reading time (250 words per minute) using raw content
@@ -89,8 +94,8 @@ def get_categories():
     posts = load_blog_posts()
     categories = set()
     for post in posts:
-        if post.category:
-            categories.add(post.category)
+        for category in post.get_categories_list():
+            categories.add(category)
     return sorted(categories)
 
 
@@ -102,7 +107,7 @@ def blog_list(request):
     # Category filtering
     category = request.GET.get('category')
     if category:
-        posts = [p for p in posts if p.category.lower() == category.lower()]
+        posts = [p for p in posts if category.lower() in [c.lower() for c in p.get_categories_list()]]
     
     # Tag filtering
     tag = request.GET.get('tag')
@@ -156,8 +161,11 @@ def blog_detail(request, slug):
     if not post:
         raise Http404("Blog post not found")
     
-    # Get related posts (same category)
-    related_posts = [p for p in posts if p.category == post.category and p.slug != slug][:3]
+    # Get related posts (posts that share at least one category)
+    post_categories = set(post.get_categories_list())
+    related_posts = [p for p in posts 
+                    if p.slug != slug and 
+                    bool(set(p.get_categories_list()) & post_categories)][:3]
     
     context = {
         'post': post,
@@ -171,12 +179,21 @@ def blog_detail(request, slug):
 def blog_category(request, slug):
     """Display posts from a specific category"""
     posts = load_blog_posts()
-    category_posts = [p for p in posts if p.category.lower().replace(' ', '-') == slug]
+    category_posts = [p for p in posts 
+                     if slug in [c.lower().replace(' ', '-') for c in p.get_categories_list()]]
     
     if not category_posts:
         raise Http404("Category not found")
     
-    category_name = category_posts[0].category
+    # Find the original category name from the first post that matches
+    category_name = None
+    for post in category_posts:
+        for cat in post.get_categories_list():
+            if cat.lower().replace(' ', '-') == slug:
+                category_name = cat
+                break
+        if category_name:
+            break
     
     # Pagination
     paginator = Paginator(category_posts, 10)
