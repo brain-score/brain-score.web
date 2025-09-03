@@ -5,7 +5,7 @@ from django.db.models import F
 from django.shortcuts import render
 
 from benchmarks.models import BenchmarkInstance, Score
-from benchmarks.views.index import represent, representative_color, reference_identifier
+from benchmarks.views.index import represent, representative_color, reference_identifier, ENGINEERING_ROOT
 
 _logger = logging.getLogger(__name__)
 
@@ -17,20 +17,39 @@ def view(request, id: int, domain: str):
                  .get(id=id))  # `benchmark_type__domain=domain` is not needed since ids are unique)
     benchmark_identifier = benchmark.benchmark_type.identifier
     versioned_benchmark_identifier = f'{benchmark_identifier}_v{benchmark.version}'
+    
+    # Check if this is an engineering benchmark by looking at the benchmark hierarchy
+    # We need to check the root parent to determine if it's an engineering benchmark
+    from benchmarks.models import FinalBenchmarkContext
+    try:
+        benchmark_context = FinalBenchmarkContext.objects.get(benchmark_type_id=benchmark_identifier)
+        is_engineering = ENGINEERING_ROOT in benchmark_context.root_parent
+    except FinalBenchmarkContext.DoesNotExist:
+        # Fallback: check if the identifier itself contains 'engineering'
+        is_engineering = ENGINEERING_ROOT in benchmark_identifier
 
     # scores
     filtered_scores = (Score.objects
                        .filter(benchmark_id=id, model__public=True))
-    ordered_raw_scores = (filtered_scores
-                          .values_list('score_raw', flat=True)
-                          .exclude(score_raw__isnull=True)
-                          .order_by('-score_raw'))
-    benchmark_max = ordered_raw_scores.first()
-    benchmark_min = ordered_raw_scores.last()
+    # Get raw scores excluding null and NaN values
+    import math
+    all_raw_scores = (filtered_scores
+                     .values_list('score_raw', flat=True)
+                     .exclude(score_raw__isnull=True))
+    
+    # Filter out NaN values that Django might not exclude automatically
+    valid_scores = [score for score in all_raw_scores if not (isinstance(score, float) and math.isnan(score))]
+    
+    if valid_scores:
+        benchmark_max = max(valid_scores)
+        benchmark_min = min(valid_scores)
+    else:
+        # No valid scores available
+        benchmark_min = None
+        benchmark_max = None
 
-    # score display
+    # score display - get all scores and sort them properly in Python to handle NaN values
     scores = (filtered_scores
-              .order_by(F('score_raw').desc(nulls_last=True))
               .select_related('model', 'model__reference'))
     BenchmarkDisplay = namedtuple('BenchmarkDisplay', field_names=[
         'short_name', 'depth'])
@@ -39,15 +58,30 @@ def view(request, id: int, domain: str):
     ModelRow = namedtuple('ModelRow', field_names=[
         'id', 'name', 'rank', 'public', 'competition', 'scores', 'reference_identifier',
         'owner', 'primary_model_id', 'num_secondary_models'])
+    # Sort scores properly in Python to handle NaN values correctly
+    # Convert to list and sort with custom key that puts valid scores first, then NaN/None
+    scores_list = list(scores)
+    
+    def sort_key(score_row):
+        score = score_row.score_raw
+        if score is None:
+            return (1, 0)  # None values last
+        elif isinstance(score, float) and math.isnan(score):
+            return (1, 0)  # NaN values last  
+        else:
+            return (0, -score)  # Valid scores first, sorted in descending order
+    
+    sorted_scores = sorted(scores_list, key=sort_key)
+    
     models = []
-    for model_rank, score_row in enumerate(scores, start=1):
+    for model_rank, score_row in enumerate(sorted_scores, start=1):
         models.append(ModelRow(
             id=score_row.model.id,
             name=score_row.model.name,
             rank=model_rank,
             public=score_row.model.public, competition=score_row.model.competition,
             scores=[ScoreDisplay(
-                score_ceiled=represent(score_row.score_ceiled),
+                score_ceiled=represent(score_row.score_raw if is_engineering else score_row.score_ceiled),
                 score_raw=score_row.score_raw,
                 color=representative_color(score_row.score_raw, min_value=benchmark_min, max_value=benchmark_max),
                 versioned_benchmark_identifier=versioned_benchmark_identifier,

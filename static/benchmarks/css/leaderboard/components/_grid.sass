@@ -22,7 +22,12 @@
   background-color: transparent
   opacity: 0
 
-.ag-header-cell:hover .ag-header-cell-resize
+// Show resize handles for resizable columns
+.ag-header-cell[col-id="model"] .ag-header-cell-resize
+  width: 4px !important
+  opacity: 1
+
+.ag-header-cell[col-id="model"]:hover .ag-header-cell-resize
   background-color: rgba(0, 0, 0, 0.1)
   cursor: col-resize
 

@@ -395,7 +395,15 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
         return f"background-color: {color_None}"
     if np.isnan(value):
         return f"background-color: {color_None}"
+    # Check if min_value or max_value is NaN, which would cause normalize_value to return NaN
+    if min_value is not None and np.isnan(min_value):
+        return f"background-color: {color_None}"
+    if max_value is not None and np.isnan(max_value):
+        return f"background-color: {color_None}"
     normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+    # Additional safety check in case normalized_value is NaN
+    if np.isnan(normalized_value):
+        return f"background-color: {color_None}"
     step = int(100 * normalized_value)
     try:
         color = colors[step]
