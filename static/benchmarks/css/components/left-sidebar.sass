@@ -170,3 +170,39 @@
 // Show nested dropdown on hover
 .left-sidebar .nested-dropdown:hover .nested-dropdown-content
   display: block
+
+// Report Issue text
+// Button has conflicts with _button sass styling
+#reportIssueText
+  position: absolute
+  bottom: 20px
+  left: 20px
+  color: #ccc
+  font-size: 14px
+  cursor: pointer
+  
+  i
+    display: none
+    
+  span
+    display: inline
+
+// Collapsed state
+.left-sidebar.collapsed #reportIssueText
+  left: 30px
+  
+  span
+    display: none
+    
+  i
+    display: inline
+
+@media (max-width: 1024px)
+  #reportIssueText
+    left: 30px
+    
+    span
+      display: none
+      
+    i
+      display: inline

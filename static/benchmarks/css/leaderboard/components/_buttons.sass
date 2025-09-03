@@ -55,17 +55,17 @@ button,
 
 #tutorialBtn
   @include gradient-button
-  background: $gradient-primary !important
-  width: 180px
+  background: #DBDBDB !important
+  width: auto
   font-size: 15px
   display: flex
   align-items: center
   justify-content: center
-  gap: 6px
+  gap: 4px
   height: 40px
 
   &:hover
-    background: $gradient-light !important
+    background: #BFBFBF !important
 
 #toggleLayoutBtn
   @include solid-button($primary-color)
@@ -80,26 +80,6 @@ button,
     font-size: 1.1em
     line-height: 1
 
-// ======================
-// REPORT ISSUE BUTTON
-// ======================
-#reportIssueBtn
-  @include solid-button(#FF6B6B)
-  display: flex
-  align-items: center
-  justify-content: center
-  gap: 6px
-  height: 40px
-  padding: 8px 16px
-  font-size: 15px
-  color: white !important
-  
-  &:hover
-    background-color: darken(#FF6B6B, 10%) !important
-    transform: translateY(-1px)
-  
-  &:active
-    transform: translateY(0)
 
 // ======================
 // BUTTON CLASSES
