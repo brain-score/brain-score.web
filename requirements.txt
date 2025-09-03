@@ -29,3 +29,4 @@ typing_extensions==4.7.1
 tzdata==2023.3
 urllib3==1.26.16
 playwright==1.53.0
+Markdown==3.8.2
