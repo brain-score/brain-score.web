@@ -28,6 +28,12 @@ Backend Architecture
 View Layer (``benchmarks/views/leaderboard.py``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+**get_ag_grid_context(user, domain, ...)**
+   - Core data processing function (cached for 7 days)
+   - Queries materialized views for model/benchmark data
+   - Builds filter metadata and column definitions
+   - Serializes everything to JSON for frontend consumption
+
 **ag_grid_leaderboard_shell(request, domain)**
    - Lightweight view that loads immediately
    - Returns basic page structure with AG-Grid dependencies
@@ -37,12 +43,6 @@ View Layer (``benchmarks/views/leaderboard.py``)
    - Heavy lifting view loaded via AJAX
    - Handles user permissions and caching strategies
    - Returns complete dataset as JSON
-
-**get_ag_grid_context(user, domain, ...)**
-   - Core data processing function (cached for 7 days)
-   - Queries materialized views for model/benchmark data
-   - Builds filter metadata and column definitions
-   - Serializes everything to JSON for frontend consumption
 
 Data Flow
 ^^^^^^^^^
