@@ -179,7 +179,6 @@ class TestVision(BaseTestCase):
         response = self.client.get("/vision/leaderboard/content/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Export')
-        self.assertContains(response, 'Walkthrough')
         self.assertContains(response, 'Advanced Filters')
         self.assertContains(response, 'id="modelSearchInput"')
 

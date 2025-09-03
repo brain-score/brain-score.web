@@ -87,5 +87,94 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<!-- Report Issue text -->
+<span id="reportIssueText" title="Report an issue with the website">
+    <i class="fa-solid fa-bug"></i>
+    <span>Report Issue</span>
+</span>
+
 <!-- Include sidebar toggle functionality -->
 <script src="{% static 'benchmarks/js/sidebar-toggle.js' %}"></script>
+
+<!-- Report Issue Modal -->
+<div id="reportIssueModal" class="modal" style="display: none;">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Report an Issue</p>
+      <button class="delete" aria-label="close" id="closeReportModal"></button>
+    </header>
+    <section class="modal-card-body">
+      <form id="reportIssueForm">
+        <div class="field">
+          <label class="label">Issue Type</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="issueType" name="issueType" required>
+                <option value="">Select issue type...</option>
+                <option value="bug">🐛 Bug Report</option>
+                <option value="feature">✨ Feature Request</option>
+                <option value="data">📊 Benchmark Issue</option>
+                <option value="ui">🎨 UI/UX Issue</option>
+                <option value="other">❓ Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Issue Title</label>
+          <div class="control">
+            <input class="input" type="text" id="issueTitle" name="issueTitle" placeholder="Brief description of the issue" required maxlength="100">
+          </div>
+          <p class="help">Provide a concise title for your issue</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="issueDescription" name="issueDescription" placeholder="Detailed description of the issue, steps to reproduce, expected vs actual behavior, etc." required rows="6"></textarea>
+          </div>
+          <p class="help">Provide as much detail as possible to help us understand and resolve the issue</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Browser & System Info</label>
+          <div class="control">
+            <input class="input" type="text" id="systemInfo" name="systemInfo" readonly 
+                   style="background-color: #f5f5f5; border-color: #dbdbdb; color: #777; cursor: default;">
+          </div>
+          <p class="help">This information will be automatically included to help with debugging</p>
+        </div>
+
+        <div class="field">
+          <label class="label">Contact Email (Optional)</label>
+          <div class="control">
+            <input class="input" type="email" id="contactEmail" name="contactEmail" placeholder="your.email@example.com">
+          </div>
+          <p class="help">Provide your email if you'd like updates on this issue</p>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button type="submit" form="reportIssueForm" class="button is-primary" id="submitIssueBtn">
+        <span class="icon">
+          <i class="fa-solid fa-paper-plane"></i>
+        </span>
+        <span>Submit Issue</span>
+      </button>
+      <button class="button" id="cancelReportModal">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Include report issue functionality -->
+<script src="{% static 'benchmarks/js/leaderboard/issues/report-issue.js' %}"></script>
+<script>
+  // Initialize report issue functionality when sidebar loads
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.LeaderboardReportIssue !== 'undefined') {
+      window.LeaderboardReportIssue.setupReportIssue();
+    }
+  });
+</script>
