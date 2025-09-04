@@ -187,6 +187,11 @@ Deployment
 
 See :ref:`website-deployment`
 
+Leaderboard Functionality
+**********
+
+See :ref:`ag-grid-leaderboard`
+
 Jenkins and the Submission Process
 **********************************
 
