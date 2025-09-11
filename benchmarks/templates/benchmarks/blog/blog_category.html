@@ -1,0 +1,16 @@
+{% extends 'benchmarks/blog/blog_list.html' %}
+
+{% block banner %}
+<h1>{{ current_category }} Blog Posts</h1>
+{% endblock %}
+
+{% block main_content %}
+{{ block.super }}
+
+<!-- Back button at bottom of category pages -->
+<div style="text-align: center; margin: 2rem 0; padding: 1rem;">
+  <a href="{% url 'blog_list' %}" style="display: inline-block; background: #47b7de; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    ← Back to All Blog Posts
+  </a>
+</div>
+{% endblock %}

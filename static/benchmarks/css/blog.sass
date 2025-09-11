@@ -1,0 +1,493 @@
+// ---------- styling for blog_list.html ----------
+
+.blog-container 
+  display: grid
+  grid-template-columns: 300px 1fr
+  gap: 2rem
+  max-width: none
+  margin: 0
+  padding: 2rem
+  padding-left: 0
+
+
+.blog-post-preview 
+  margin-bottom: 3rem
+  padding-bottom: 2rem
+  border-bottom: 1px solid #eee
+
+
+.post-header h2 
+  margin: 0 0 0.5rem 0
+  font-weight: bold
+  font-size: 1.5rem
+
+
+.post-header h2 a 
+  color: #333
+  text-decoration: none
+
+
+.post-header h2 a:hover 
+  color: #47b7de
+
+
+.post-meta 
+  color: #666
+  font-size: 0.9rem
+  margin-bottom: 1rem
+
+
+.post-meta span 
+  margin-right: 1rem
+
+
+.post-category a 
+  color: #47b7de 
+  text-decoration: none
+
+
+.post-tags 
+  margin: 1rem 0
+
+
+.tag 
+  display: inline-block
+  background: #f0f0f0
+  color: #666
+  padding: 0.25rem 0.5rem
+  border-radius: 3px
+  text-decoration: none
+  font-size: 0.8rem
+  margin-right: 0.5rem
+
+
+.tag:hover 
+  background: #47b7de
+  color: white
+
+
+.read-more 
+  color: #47b7de
+  text-decoration: none
+  font-weight: bold
+
+
+.blog-sidebar 
+  background: #f9f9f9
+  padding: 1.5rem
+  padding-left: 0
+  border-radius: 0 8px 8px 0
+  height: fit-content
+
+
+.sidebar-widget 
+  margin-bottom: 2rem
+  padding-left: 1.5rem
+
+
+.sidebar-widget h3 
+  margin-top: 0
+  color: #333
+
+
+.search-form 
+  display: flex
+  gap: 0.5rem
+
+
+.search-form input 
+  flex: 1
+  padding: 0.5rem
+  border: 1px solid #ddd
+  border-radius: 4px
+
+
+.search-form button 
+  padding: 0.5rem 1rem
+  background: #47b7de
+  color: white
+  border: none
+  border-radius: 4px
+  cursor: pointer
+
+
+.category-list 
+  list-style: none
+  padding: 0
+
+
+.category-list li 
+  margin-bottom: 0.5rem
+
+
+.sidebar-header 
+  font-weight: bold
+  font-size: 1.2em
+  color: #333
+  margin-bottom: 1rem
+
+
+.category-list a 
+  color: #666
+  text-decoration: none
+
+
+.category-list a:hover,
+.category-list a.active 
+  color: #47b7de
+
+
+.featured-posts 
+  list-style: none
+  padding: 0
+
+
+.featured-posts li 
+  margin-bottom: 1rem
+  padding-bottom: 1rem
+  border-bottom: 1px solid #eee
+
+
+.featured-posts a 
+  color: #666
+  text-decoration: none
+
+
+.featured-posts a:hover 
+  color: #47b7de
+
+
+.featured-date 
+  display: block
+  color: #999
+  font-size: 0.8rem
+
+
+.pagination 
+  text-align: center
+  margin-top: 2rem
+
+
+.pagination-link 
+  display: inline-block
+  padding: 0.5rem 1rem
+  margin: 0 0.25rem
+  background: #f0f0f0
+  color: #333
+  text-decoration: none
+  border-radius: 4px
+
+
+.pagination-link:hover 
+  background: #47b7de
+  color: white
+
+
+.pagination-info 
+  margin: 0 1rem
+  color: #666
+
+
+@media (max-width: 768px) 
+  .blog-container 
+    grid-template-columns: 1fr
+    gap: 1rem
+    padding: 1rem
+
+
+// ---------- styling for blog_detail.html ----------
+
+.author-info 
+  text-align: center
+  background: white
+  border-radius: 8px
+  padding: 1.5rem
+
+
+.category-list 
+  list-style: none
+  padding: 0
+
+
+.category-list li 
+  margin-bottom: 0.5rem
+
+
+.sidebar-header 
+  font-weight: bold
+  font-size: 1.2em
+  color: #333
+  margin-bottom: 1rem
+
+
+.category-list a 
+  color: #666
+  text-decoration: none
+
+
+.category-list a:hover,
+.category-list a.active 
+  color: #47b7de
+
+
+.related-posts 
+  list-style: none
+  padding: 0
+
+////
+
+.blog-detail-container 
+  display: grid
+  grid-template-columns: 300px 1fr
+  gap: 2rem
+  max-width: none
+  margin: 0
+  padding: 2rem
+  padding-left: 0
+
+
+.post-meta 
+  color: #666
+  font-size: 0.9rem
+  margin-top: 0.5rem
+
+.post-meta span 
+  margin-right: 1rem
+
+
+.post-category a 
+  color: #007cba
+  text-decoration: none
+
+
+.post-content 
+  font-size: 1.1rem
+  line-height: 1.7
+  margin-bottom: 2rem
+
+
+
+.post-content 
+  font-size: 1.1rem
+  line-height: 1.7
+  margin-bottom: 2rem
+
+
+.post-content h1
+  font-size: 2rem
+  font-weight: bold
+  margin: 2rem 0 1rem 0
+  color: #333
+
+.post-content h2
+  font-size: 1.6rem
+  font-weight: bold
+  margin: 2rem 0 1rem 0
+  color: #333
+
+.post-content h3
+  font-size: 1.3rem
+  font-weight: bold
+  margin: 1.5rem 0 1rem 0
+  color: #333
+
+.post-content h4
+  font-size: 1.1rem
+  font-weight: bold
+  margin: 1.5rem 0 1rem 0
+  color: #333
+
+
+.post-content p 
+  margin-bottom: 1rem
+
+
+.post-content code 
+  background: #f4f4f4
+  padding: 0.2rem 0.4rem
+  border-radius: 3px
+  font-family: 'Monaco', 'Consolas', monospace
+
+
+.post-content pre 
+  background: #f4f4f4
+  padding: 1rem
+  border-radius: 5px
+  overflow-x: auto
+  margin: 1rem 0
+
+.post-content ul
+  margin: 1rem 0
+  padding-left: 2rem
+  list-style-type: disc
+
+.post-content ol
+  margin: 1rem 0
+  padding-left: 2rem
+  list-style-type: decimal
+
+.post-content li
+  margin-bottom: 0.5rem
+  line-height: 1.6
+  display: list-item
+
+.post-content strong
+  font-weight: bold
+
+.post-content em
+  font-style: italic
+
+.tag 
+  display: inline-block
+  background: #f0f0f0
+  color: #666
+  padding: 0.25rem 0.5rem
+  border-radius: 3px
+  text-decoration: none
+  font-size: 0.8rem
+  margin-right: 0.5rem
+
+.tag:hover 
+  background: #47b7de
+  color: white
+
+.post-navigation 
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-top: 1rem
+
+
+.back-to-blog,
+.category-link 
+  color: #47b7de
+  text-decoration: none
+  font-weight: bold
+
+
+.back-to-blog:hover,
+.category-link:hover 
+  text-decoration: underline
+
+.blog-sidebar 
+  background: #f9f9f9
+  padding: 1.5rem
+  padding-left: 0
+  border-radius: 0 8px 8px 0
+  height: fit-content
+
+
+.sidebar-widget 
+  margin-bottom: 2rem
+  padding-left: 1.5rem
+
+
+.sidebar-widget h3 
+  margin-top: 0
+  color: #333
+
+
+
+
+
+
+
+
+
+
+.related-posts li 
+  margin-bottom: 1rem
+  padding-bottom: 1rem
+  border-bottom: 1px solid #eee
+
+
+.related-posts a 
+  color: #666
+  text-decoration: none
+
+
+.related-posts a:hover 
+  color: #47b7de
+
+
+.related-date 
+  display: block
+  color: #999
+  font-size: 0.8rem
+
+
+.share-buttons 
+  display: flex
+  flex-direction: row
+  gap: 0.5rem
+
+
+.share-button 
+  display: inline-block
+  text-decoration: none
+  color: #666
+  font-size: 1.5rem
+  transition: color 0.3s ease
+
+
+.share-button.twitter:hover 
+  color: #47b7de
+
+
+.share-button.github:hover 
+  color: #333
+
+
+.share-button.email:hover 
+  color: #666
+
+
+// Banner styles (detail page only)
+.banner 
+  .post-meta 
+    color: white !important
+    
+    span 
+      color: white !important
+    
+    a 
+      color: white !important
+      text-decoration: underline
+      
+      &:hover 
+        color: #f0f0f0 !important
+  
+  h1 
+    color: white !important
+
+// Detail-specific overrides (scoped to avoid conflicts)
+.blog-detail-container
+  .post-excerpt 
+    background: #f9f9f9
+    padding: 1.5rem
+    border-left: 4px solid #47b7de
+    margin: 2rem 0
+    font-size: 1.1rem
+    line-height: 1.6
+
+  .post-tags 
+    margin: 2rem 0
+    padding: 1rem 0
+    border-top: 1px solid #eee
+
+  .post-footer 
+    border-top: 1px solid #eee
+    padding-top: 1rem
+    margin-top: 2rem
+
+@media (max-width: 768px) 
+  .blog-detail-container 
+    grid-template-columns: 1fr
+    gap: 1rem
+    padding: 1rem
+  
+  
+  .post-navigation 
+    flex-direction: column
+    gap: 1rem
+
