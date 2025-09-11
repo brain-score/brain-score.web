@@ -18,9 +18,9 @@ As the platform expanded to hundreds of models and increasingly complex benchmar
 Recently, we’ve transformed the leaderboard from a passive display into a powerful exploratory tool, designed to help the community answer these deeper scientific questions with ease.
 
 
-<div class="comparison-container">
+<div class="comparison-container" style="--comparison-height: 500px;">
   <img src="/static/benchmarks/img/blog/leaderboard_overhaul/leaderboard_after.png" alt="After: New leaderboard design">
-  <div class="comparison-resize">
+  <div class="comparison-before">
     <img src="/static/benchmarks/img/blog/leaderboard_overhaul/leaderboard_before.png" alt="Before: Original leaderboard design">
   </div>
   <div class="comparison-slider"></div>

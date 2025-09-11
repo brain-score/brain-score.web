@@ -7,14 +7,17 @@ class ImageComparison {
   constructor(container) {
     this.container = container;
     this.slider = container.querySelector('.comparison-slider');
-    this.resize = container.querySelector('.comparison-resize');
+    this.beforeDiv = container.querySelector('.comparison-before');
+    this.labels = container.querySelector('.comparison-labels');
+    this.beforeLabel = container.querySelector('.comparison-labels .label:first-child');
+    this.afterLabel = container.querySelector('.comparison-labels .label:last-child');
     this.isDragging = false;
     
     this.init();
   }
   
   init() {
-    if (!this.slider || !this.resize) {
+    if (!this.slider || !this.beforeDiv) {
       console.warn('Image comparison slider elements not found');
       return;
     }
@@ -37,45 +40,8 @@ class ImageComparison {
     
     this.slider.addEventListener('keydown', this.handleKeyDown.bind(this));
     
-    // Setup image sizing
-    this.setupImages();
-    
     // Set initial position
     this.updatePosition(50);
-  }
-  
-  setupImages() {
-    const afterImg = this.container.querySelector('> img');
-    const beforeImg = this.resize.querySelector('img');
-    
-    if (afterImg && beforeImg) {
-      // Wait for the base image to load to get proper dimensions
-      if (afterImg.complete) {
-        this.syncImageSizes();
-      } else {
-        afterImg.addEventListener('load', () => this.syncImageSizes());
-      }
-      
-      // Also handle window resize
-      window.addEventListener('resize', () => this.syncImageSizes());
-    }
-  }
-  
-  syncImageSizes() {
-    const afterImg = this.container.querySelector('> img');
-    const beforeImg = this.resize.querySelector('img');
-    
-    if (afterImg && beforeImg) {
-      // Get the actual rendered dimensions of the after image
-      const rect = afterImg.getBoundingClientRect();
-      
-      // Set CSS custom properties for the before image to match exactly
-      this.container.style.setProperty('--container-width', rect.width + 'px');
-      this.container.style.setProperty('--container-height', rect.height + 'px');
-      
-      // Also set the resize container height to match
-      this.resize.style.height = rect.height + 'px';
-    }
   }
   
   handleMouseDown(e) {
@@ -160,9 +126,37 @@ class ImageComparison {
     // Clamp percentage between 0 and 100
     percentage = Math.max(0, Math.min(100, percentage));
     
-    this.resize.style.width = percentage + '%';
+    // Update clip-path to reveal the before image from left to right
+    // inset(top right bottom left) - we want to clip from the right
+    const rightClip = 100 - percentage;
+    this.beforeDiv.style.clipPath = `inset(0 ${rightClip}% 0 0)`;
     this.slider.style.left = percentage + '%';
     this.slider.setAttribute('aria-valuenow', percentage.toFixed(1));
+    
+    // Update label visibility based on slider position
+    this.updateLabels(percentage);
+  }
+  
+  updateLabels(percentage) {
+    if (this.beforeLabel && this.afterLabel) {
+      // Hide "Before" label when slider is at 0% (no before image visible)
+      if (percentage <= 10) {
+        this.beforeLabel.style.opacity = '0';
+        this.beforeLabel.style.visibility = 'hidden';
+      } else {
+        this.beforeLabel.style.opacity = '1';
+        this.beforeLabel.style.visibility = 'visible';
+      }
+      
+      // Hide "After" label when slider is at 100% (no after image visible)
+      if (percentage >= 90) {
+        this.afterLabel.style.opacity = '0';
+        this.afterLabel.style.visibility = 'hidden';
+      } else {
+        this.afterLabel.style.opacity = '1';
+        this.afterLabel.style.visibility = 'visible';
+      }
+    }
   }
   
   // Public method to set position programmatically
