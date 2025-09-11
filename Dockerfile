@@ -13,6 +13,7 @@ COPY package.json /app/
 COPY benchmarks /app/benchmarks
 COPY static /app/static
 COPY web /app/web
+COPY blog_posts /app/blog_posts
 
 RUN /opt/conda/bin/conda env create -f environment.yml
 RUN echo "conda activate brain-score.web" >> ~/.bashrc

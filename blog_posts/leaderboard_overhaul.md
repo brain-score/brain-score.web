@@ -6,6 +6,7 @@ category: Research, Engineering, New Features
 tags: leaderboard, neuroai, ag-grid, platform, benchmarking
 excerpt: How we transformed the Brain-Score leaderboard into a dynamic scientific exploration tool for understanding AI and brain alignment.
 featured: true
+show_on_site: false
 ---
 
 # Overhauling the Brain-Score Leaderboard

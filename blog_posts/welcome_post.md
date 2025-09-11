@@ -4,8 +4,9 @@ date: 2025-08-20
 author: Brain-Score Team
 category: Announcements
 tags: welcome, brain-score, neuroscience
-excerpt: Welcome to our new blog where we'll share insights, updates, and research from the Brain-Score project.
+excerpt: About the Brain-Score Blog
 featured: true
+show_on_site: true
 ---
 
 # Welcome to the Brain-Score Blog
