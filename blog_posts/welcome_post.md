@@ -1,6 +1,6 @@
 ---
 title: Welcome to the Brain-Score Blog
-date: 2025-08-20
+date: 2025-09-12
 author: Brain-Score Team
 category: Announcements
 tags: welcome, brain-score, neuroscience

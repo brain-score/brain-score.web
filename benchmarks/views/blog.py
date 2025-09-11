@@ -10,7 +10,7 @@ import markdown
 
 
 class BlogPost:
-    def __init__(self, slug, title, content, metadata):
+    def __init__(self, slug, title, content, metadata, filepath=None):
         self.slug = slug
         self.title = title
         # Convert markdown to HTML
@@ -22,6 +22,12 @@ class BlogPost:
         self.tags = metadata.get('tags', '')
         self.featured = metadata.get('featured', 'false').lower() == 'true'
         self.show_on_site = metadata.get('show_on_site', 'false').lower() == 'true'
+        
+        # Set updated_at from file modification time or use created_at as fallback
+        if filepath and os.path.exists(filepath):
+            self.updated_at = datetime.fromtimestamp(os.path.getmtime(filepath))
+        else:
+            self.updated_at = self.created_at
         
     def get_absolute_url(self):
         return f'/blog/{self.slug}/'
@@ -83,7 +89,7 @@ def load_blog_posts():
                             metadata[key.strip()] = value.strip()
                     
                     title = metadata.get('title', slug.replace('-', ' ').title())
-                    post = BlogPost(slug, title, post_content, metadata)
+                    post = BlogPost(slug, title, post_content, metadata, filepath)
                     # Only include posts that should be shown on site
                     if post.show_on_site:
                         posts.append(post)
