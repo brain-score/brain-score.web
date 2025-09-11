@@ -80,7 +80,7 @@
 </a>
 
 {% url 'comp2024' as comp2024_url %}
-<a class="{% if request.path == comp2024_url %}selected{% endif %}href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/competition2024">
+<a class="{% if request.path == comp2024_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/competition2024">
     <img class="menu-icon" src="{% static "/benchmarks/img/competition.png" %}" alt="Comp 24Icon">
     <span>Competition 2024</span>
 </a>
