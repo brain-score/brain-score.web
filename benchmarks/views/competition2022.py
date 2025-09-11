@@ -25,7 +25,7 @@ def view(request):
     First tries to load from pickle file, falls back to original method if available.
     """
     # Path to the pickled data file
-    pickle_file = Path(settings.BASE_DIR) / 'competition2022_data.pkl'
+    pickle_file = Path(settings.BASE_DIR) / 'static/benchmarks/competition2022_data.pkl'
     
     # Try pickle method first
     if pickle_file.exists():
