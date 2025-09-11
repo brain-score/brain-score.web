@@ -2,7 +2,7 @@
 
 // Setup report issue functionality
 function setupReportIssue() {
-  const reportButton = document.getElementById('reportIssueBtn');
+  const reportButton = document.getElementById('reportIssueText');
   const modal = document.getElementById('reportIssueModal');
   const closeButton = document.getElementById('closeReportModal');
   const cancelButton = document.getElementById('cancelReportModal');
@@ -20,12 +20,19 @@ function setupReportIssue() {
   // Event listeners
   reportButton.addEventListener('click', openReportModal);
   closeButton?.addEventListener('click', closeReportModal);
-  cancelButton?.addEventListener('click', closeReportModal);
+  cancelButton?.addEventListener('click', () => { form.reset(); populateSystemInfo(); closeReportModal(); });
   form.addEventListener('submit', handleReportSubmission);
   
   // Close modal when clicking outside
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
+      closeReportModal();
+    }
+  });
+
+  // Close modal on escape key press (with saving)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
       closeReportModal();
     }
   });
@@ -52,13 +59,6 @@ function closeReportModal() {
   if (modal) {
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-    
-    // Reset form
-    const form = document.getElementById('reportIssueForm');
-    if (form) {
-      form.reset();
-      populateSystemInfo(); // Repopulate system info after reset
-    }
   }
 }
 
@@ -87,6 +87,9 @@ async function handleReportSubmission(event) {
     
     if (response.success) {
       showSuccessMessage(response.issue_url || 'Issue submitted successfully!');
+      const form = document.getElementById('reportIssueForm');
+      form.reset();
+      populateSystemInfo();
       closeReportModal();
     } else {
       throw new Error(response.error || 'Failed to submit issue');
