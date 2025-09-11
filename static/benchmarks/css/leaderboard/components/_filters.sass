@@ -11,7 +11,7 @@
     margin: 1rem 0
     border-radius: 8px
     box-shadow: 0 2px 8px rgba(0,0,0,0.1)
-    overflow: hidden
+    overflow: visible !important
     display: block
 
     &.hidden
@@ -36,9 +36,8 @@
     display: grid
     gap: 20px
     align-items: stretch
-    min-height: 0
-    overflow-y: auto
-    max-height: calc(100vh - 200px)
+    min-height: 400px
+    overflow: visible !important
 
     // Desktop: 3 columns
     @media (min-width: 1200px)
@@ -54,8 +53,6 @@
     // Mobile: Single column
     @media (max-width: 767px)
       grid-template-columns: 1fr
-      gap: 12px
-      max-height: calc(100vh - 150px)
 
   // ======================
   // FILTER COLUMNS
@@ -68,14 +65,10 @@
     border: 1px solid #e9ecef
     display: flex
     flex-direction: column
-    min-height: 0
-    max-height: 100%
-    overflow: hidden
+    min-height: 400px
+    overflow: visible !important
     position: relative
     z-index: 1
-
-    @media (max-width: 767px)
-      padding: 15px
 
     // Benchmark column specific
     &.benchmark-column
@@ -86,6 +79,7 @@
         flex: 1
         overflow-y: auto
         height: auto
+        max-height: 340px
         width: 100%
 
       .benchmark-tree
@@ -107,7 +101,6 @@
     margin-bottom: 16px
     padding-bottom: 8px
     border-bottom: 1px solid #e9ecef
-    flex-shrink: 0
 
     h4
       margin: 0
@@ -125,28 +118,6 @@
       &:hover
         color: darken($primary-color, 10%)
         text-decoration: underline
-
-  // Scrollable content area for each filter column
-  .filter-column-content
-    flex: 1
-    overflow-y: auto
-    overflow-x: hidden
-    min-height: 0
-
-    // Custom scrollbar styling
-    &::-webkit-scrollbar
-      width: 6px
-
-    &::-webkit-scrollbar-track
-      background: #f1f3f5
-      border-radius: 3px
-
-    &::-webkit-scrollbar-thumb
-      background: #c1c8cd
-      border-radius: 3px
-
-      &:hover
-        background: #a6b1ba
 
   // ======================
   // BENCHMARK FILTER PANEL
@@ -353,13 +324,13 @@
     position: absolute !important
     top: calc(100% + 4px) !important
     left: 0 !important
-    right: 0 !important
+    width: 100% !important
     margin: 0 !important
     padding: 8px 0 !important
     background: white !important
     border: 2px solid $primary-color !important
     border-radius: 8px
-    max-height: 200px
+    max-height: 220px
     overflow-y: auto
     z-index: 1000 !important
     box-shadow: 0 8px 24px rgba(0,0,0,0.15)
