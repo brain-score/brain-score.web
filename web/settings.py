@@ -54,14 +54,21 @@ def get_ec2_private_ip():
     try:
         import requests
         # AWS instance metadata endpoint - only accessible from within EC2
-        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=1)
+        print("ALLOWED_HOSTS: Attempting to retrieve EC2 private IP from metadata endpoint...")
+        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=2)
         if response.status_code == 200:
             ip = response.text.strip()
+            print(f"ALLOWED_HOSTS: Retrieved IP from metadata endpoint: {ip}")
             # Validate private IP address
             if ip and ip.startswith(('10.', '172.', '192.168.')):
+                print(f"ALLOWED_HOSTS: Validated private IP: {ip}")
                 return ip
+            else:
+                print(f"ALLOWED_HOSTS: Invalid private IP format: {ip}")
+        else:
+            print(f"ALLOWED_HOSTS: Metadata endpoint returned status {response.status_code}")
     except Exception as e:
-        logger.debug(f"Could not retrieve EC2 private IP: {e}")
+        print(f"ALLOWED_HOSTS: Could not retrieve EC2 private IP: {e}")
     return None
 
 
@@ -77,17 +84,40 @@ hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbe
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append("127.0.0.1")
 
+# Immediate fix: Add the specific IPs that are failing from the logs
+# This ensures the app works while we debug the dynamic IP detection
+hosts_list.append("172.31.21.65")   # From original logs
+hosts_list.append("172.31.21.142")  # From recent logs
+print("ALLOWED_HOSTS: Added hardcoded AWS internal IPs as immediate fix")
+
 # Add EC2 private IP for AWS health checks and load balancer
 ec2_private_ip = get_ec2_private_ip()
 if ec2_private_ip:
     hosts_list.append(ec2_private_ip)
-    logger.info(f"Added EC2 private IP to ALLOWED_HOSTS: {ec2_private_ip}")
+    print(f"ALLOWED_HOSTS: Added EC2 private IP to ALLOWED_HOSTS: {ec2_private_ip}")
+else:
+    print("ALLOWED_HOSTS: Could not retrieve EC2 private IP - this may cause DisallowedHost errors")
+
+# Fallback: If metadata endpoint fails, add the specific IPs we know from logs
+if not ec2_private_ip and os.getenv("DJANGO_ENV") != 'development':
+    print("ALLOWED_HOSTS: EC2 metadata not available, adding known AWS internal IPs")
+    # Add the specific IPs that have appeared in your logs
+    known_aws_ips = [
+        "172.31.21.65",   # From your original logs
+        "172.31.21.142",  # From your recent logs
+    ]
+    for ip in known_aws_ips:
+        hosts_list.append(ip)
+        print(f"ALLOWED_HOSTS: Added known AWS IP to ALLOWED_HOSTS: {ip}")
 
 # Log the final ALLOWED_HOSTS for debugging (but not in production to avoid log spam)
 if DEBUG:
-    logger.info(f"Final ALLOWED_HOSTS: {hosts_list}")
+    print(f"ALLOWED_HOSTS: Final ALLOWED_HOSTS: {hosts_list}")
+else:
+    print(f"ALLOWED_HOSTS: Final count: {len(hosts_list)} hosts configured")
 
 ALLOWED_HOSTS = hosts_list
+
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
