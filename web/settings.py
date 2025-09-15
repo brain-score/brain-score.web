@@ -84,7 +84,11 @@ INSTALLED_APPS = [
     'compressor',
 ]
 
+# Health Check Middleware Solution
+# This middleware handles AWS health check requests before Django's ALLOWED_HOSTS validation,
+# preventing DisallowedHost errors while maintaining security for non-health-check requests
 MIDDLEWARE = [
+    'benchmarks.middleware.HealthCheckMiddleware',  # Handle health checks BEFORE security checks
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',  # Compress HTTP responses
     'django.contrib.sessions.middleware.SessionMiddleware',
