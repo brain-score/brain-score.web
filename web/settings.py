@@ -84,12 +84,6 @@ hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbe
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append("127.0.0.1")
 
-# Immediate fix: Add the specific IPs that are failing from the logs
-# This ensures the app works while we debug the dynamic IP detection
-hosts_list.append("172.31.21.65")   # From original logs
-hosts_list.append("172.31.21.142")  # From recent logs
-print("ALLOWED_HOSTS: Added hardcoded AWS internal IPs as immediate fix")
-
 # Add EC2 private IP for AWS health checks and load balancer
 ec2_private_ip = get_ec2_private_ip()
 if ec2_private_ip:
@@ -98,17 +92,18 @@ if ec2_private_ip:
 else:
     print("ALLOWED_HOSTS: Could not retrieve EC2 private IP - this may cause DisallowedHost errors")
 
-# Fallback: If metadata endpoint fails, add the specific IPs we know from logs
+# Fallback: If metadata endpoint fails but we're likely on AWS, 
+# try alternative methods to get the IP
 if not ec2_private_ip and os.getenv("DJANGO_ENV") != 'development':
-    print("ALLOWED_HOSTS: EC2 metadata not available, adding known AWS internal IPs")
-    # Add the specific IPs that have appeared in your logs
-    known_aws_ips = [
-        "172.31.21.65",   # From your original logs
-        "172.31.21.142",  # From your recent logs
-    ]
-    for ip in known_aws_ips:
-        hosts_list.append(ip)
-        print(f"ALLOWED_HOSTS: Added known AWS IP to ALLOWED_HOSTS: {ip}")
+    print("ALLOWED_HOSTS: EC2 metadata not available, trying alternative methods...")
+    
+    # Try to get IP from environment variables that AWS might set
+    aws_local_ipv4 = os.getenv('AWS_LOCAL_IPV4') or os.getenv('EC2_LOCAL_IPV4')
+    if aws_local_ipv4 and aws_local_ipv4.startswith(('10.', '172.', '192.168.')):
+        hosts_list.append(aws_local_ipv4)
+        print(f"ALLOWED_HOSTS: Added IP from environment variable: {aws_local_ipv4}")
+    else:
+        print("ALLOWED_HOSTS: No alternative IP sources found - health checks may fail")
 
 # Log the final ALLOWED_HOSTS for debugging (but not in production to avoid log spam)
 if DEBUG:
