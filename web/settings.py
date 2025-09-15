@@ -47,188 +47,57 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# Get EC2 instance IPs for AWS health checks and load balancer access
-def get_ec2_ips():
-    """Retrieve both public and private IP addresses of the EC2 instance for AWS access."""
-    ips = []
-    try:
-        import requests
-        # AWS instance metadata endpoint - only accessible from within EC2
-        print("METADATA: Attempting to retrieve EC2 IPs...")
-        sys.stderr.write("🔍 STDERR: METADATA: Attempting to retrieve EC2 IPs...\n")
-        sys.stderr.flush()
-        # Use a very short timeout to avoid hanging the startup process
-        
-        # Get private IP with very short timeout
-        try:
-            print("METADATA: Requesting private IP with 0.1s timeout...")
-            response = requests.get(
-                'http://169.254.169.254/latest/meta-data/local-ipv4', 
-                timeout=0.1  # Much shorter timeout to prevent hanging
-            )
-            print(f"METADATA: Private IP request completed, status: {response.status_code}")
-            if response.status_code == 200:
-                private_ip = response.text.strip()
-                print(f"METADATA: Retrieved private IP: {private_ip}")
-                if private_ip and private_ip.startswith(('10.', '172.', '192.168.')):
-                    ips.append(private_ip)
-                    print(f"METADATA: Valid private IP added: {private_ip}")
-                else:
-                    print(f"METADATA: Invalid private IP format: {private_ip}")
-        except Exception as e:
-            error_msg = f"METADATA: Failed to get private IP - {type(e).__name__}: {str(e)[:100]}"
-            print(error_msg)
-            sys.stderr.write(f"❌ STDERR: {error_msg}\n")
-            sys.stderr.flush()
-        
-        # Get public IP (this might be the source of health check requests)
-        try:
-            print("METADATA: Requesting public IP with 0.1s timeout...")
-            response = requests.get(
-                'http://169.254.169.254/latest/meta-data/public-ipv4', 
-                timeout=0.1  # Much shorter timeout to prevent hanging
-            )
-            print(f"METADATA: Public IP request completed, status: {response.status_code}")
-            if response.status_code == 200:
-                public_ip = response.text.strip()
-                print(f"METADATA: Retrieved public IP: {public_ip}")
-                # Validate it's a real IP and not empty
-                if public_ip and '.' in public_ip and not public_ip.startswith(('10.', '172.', '192.168.')):
-                    ips.append(public_ip)
-                    print(f"METADATA: Valid public IP added: {public_ip}")
-                else:
-                    print(f"METADATA: Invalid public IP format: {public_ip}")
-        except Exception as e:
-            error_msg = f"METADATA: Failed to get public IP - {type(e).__name__}: {str(e)[:100]}"
-            print(error_msg)
-            sys.stderr.write(f"❌ STDERR: {error_msg}\n")
-            sys.stderr.flush()
-            
-    except Exception as e:
-        error_msg = f"METADATA: General failure - {type(e).__name__}"
-        print(error_msg)
-        sys.stderr.write(f"❌ STDERR: {error_msg}\n")
-        sys.stderr.flush()
-    
-    final_msg = f"METADATA: Final result - found {len(ips)} IP(s): {ips}"
-    print(final_msg)
-    sys.stderr.write(f"🔍 STDERR: {final_msg}\n")
-    sys.stderr.flush()
-    return ips
-
-
-# AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
+# ALLOWED_HOSTS Configuration (simplified with middleware approach)
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
 if os.getenv("DJANGO_ENV") == 'development': 
     hosts_list.append('127.0.0.1')
     hosts_list.append('localhost')
 
-# Add known Elastic Beanstalk domains
-hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
-hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
-hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
-hosts_list.append("127.0.0.1")
+# Add Elastic Beanstalk domains with wildcard support
+hosts_list.extend([
+    "brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com",
+    "Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com", 
+    "Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com",
+    "*.eba-e8pevjnc.us-east-2.elasticbeanstalk.com",  # Wildcard for any new environments
+    "127.0.0.1"
+])
 
-# Add AWS-specific configurations for Elastic Beanstalk
-# Elastic Beanstalk health checks and load balancer can come from various AWS IPs
+# Security note: We do NOT add suspicious domains like:
+# - *.cprapid.com (known scanning service)
+# - Domains that look like IP addresses with dashes
+# These will be rejected by Django's ALLOWED_HOSTS security feature
+
+# MIDDLEWARE-BASED HEALTH CHECK SOLUTION
+# Since we now handle health checks via middleware, we can keep ALLOWED_HOSTS much cleaner
 if os.getenv("DJANGO_ENV") != 'development':
-    # Allow AWS internal health check patterns
-    print("AWS: Adding Elastic Beanstalk health check configurations...")
+    print("🔒 SECURITY: Using middleware-based health check solution")
+    print("🔒 INFO: Health checks handled by HealthCheckMiddleware - no AWS IPs needed in ALLOWED_HOSTS")
     
-    # AWS Application Load Balancer health checks can come from various IPs
-    # We need to be permissive for AWS infrastructure but secure for everything else
-    aws_health_check_ips = [
-        # AWS us-east-2 region common health check IPs (these change, but some are frequent)
-        "18.216.0.0",  # Broad AWS range for Ohio region
-        "18.217.0.0",  # Broad AWS range for Ohio region  
-        "18.218.0.0",  # Broad AWS range for Ohio region
-        "18.219.0.0",  # Broad AWS range for Ohio region
-        "52.15.0.0",   # Broad AWS range for Ohio region
-    ]
+    # We can now avoid adding any AWS IPs to ALLOWED_HOSTS!
+    # The middleware handles health checks before ALLOWED_HOSTS validation
     
-    # Note: Adding specific known failing IPs that are likely AWS infrastructure
-    for base_ip in aws_health_check_ips:
-        # We'll add the specific problematic IP we know about
-        pass  # We already added 18.217.29.212 in emergency_ips below
+    # Only add if you have specific non-health-check traffic from AWS
+    add_aws_ips = os.getenv("FORCE_AWS_IPS", "false").lower() == "true"
     
-    print("AWS: Elastic Beanstalk configurations added")
-
-# DEPLOYMENT TEST - This should cause an obvious error if the new code is deployed
-print("🚀 DEPLOYMENT TEST: This print should be visible in AWS logs! 🚀")
-import sys
-sys.stderr.write("🚀 STDERR TEST: New code is deployed! 🚀\n")
-
-# Add EC2 private IP for AWS health checks and load balancer
-# Multiple ways to ensure we see this debug info
-print("=" * 50)
-print("ALLOWED_HOSTS CONFIGURATION STARTING")
-print("=" * 50)
-
-# Also write to Django logs AND stderr to ensure visibility
-sys.stderr.write("STDERR: ALLOWED_HOSTS configuration starting\n")
-sys.stderr.flush()
-
-# Try to log to Django logger as well
-try:
-    logger.error("LOGGER: ALLOWED_HOSTS configuration starting - this should be visible")
-except:
-    pass
-
-ec2_ips = get_ec2_ips()
-if ec2_ips:
-    for ip in ec2_ips:
-        hosts_list.append(ip)
-        success_msg = f"SUCCESS: Added EC2 IP to ALLOWED_HOSTS: {ip}"
-        print(success_msg)
-        sys.stderr.write(f"✅ STDERR: {success_msg}\n")
-        sys.stderr.flush()
-    total_msg = f"SUCCESS: Added {len(ec2_ips)} EC2 IP(s) total"
-    print(total_msg)
-    sys.stderr.write(f"✅ STDERR: {total_msg}\n")
-    sys.stderr.flush()
-else:
-    warning_msg = "WARNING: Could not retrieve any EC2 IPs - this may cause DisallowedHost errors"
-    fallback_msg = "FALLBACK: Will try alternative methods..."
-    print(warning_msg)
-    print(fallback_msg)
-    sys.stderr.write(f"⚠️ STDERR: {warning_msg}\n")
-    sys.stderr.write(f"⚠️ STDERR: {fallback_msg}\n")
-    sys.stderr.flush()
-
-# Fallback: If metadata endpoint fails but we're likely on AWS, 
-# add the specific IP we know is failing as an emergency measure
-if not ec2_ips and os.getenv("DJANGO_ENV") != 'development':
-    print("FALLBACK: EC2 metadata failed, using emergency IP list...")
-    
-    # Try to get IP from environment variables that AWS might set
-    aws_local_ipv4 = os.getenv('AWS_LOCAL_IPV4') or os.getenv('EC2_LOCAL_IPV4')
-    if aws_local_ipv4 and aws_local_ipv4.startswith(('10.', '172.', '192.168.')):
-        hosts_list.append(aws_local_ipv4)
-        print(f"FALLBACK: Added IP from environment: {aws_local_ipv4}")
+    if add_aws_ips:
+        print("🔒 WARNING: FORCE_AWS_IPS enabled - adding minimal AWS ranges")
+        # Only add if absolutely necessary for non-health-check traffic
+        emergency_ips = ["172.31.0.0/16"]  # Private VPC range only
+        hosts_list.extend(emergency_ips)
+        print(f"🔒 Added minimal AWS ranges: {emergency_ips}")
     else:
-        # Emergency fallback: add the specific IPs that are failing
-        print("EMERGENCY: Adding known failing IPs to prevent service disruption")
-        emergency_ips = ["172.31.21.142", "172.31.21.65", "18.217.29.212"]
-        for ip in emergency_ips:
-            hosts_list.append(ip)
-            print(f"EMERGENCY: Added {ip} to ALLOWED_HOSTS")
+        print("🔒 SECURE: No AWS IPs in ALLOWED_HOSTS - maximum security achieved")
+    
+    print("🔒 SECURITY: Middleware-based configuration completed")
 
-# Final summary
-print("=" * 50)
-print(f"ALLOWED_HOSTS FINAL SUMMARY:")
-print(f"Total hosts configured: {len(hosts_list)}")
-if DEBUG:
-    print(f"Full list: {hosts_list}")
-else:
-    # Show just the IPs that start with 172.31 (the problematic ones)
-    aws_ips = [host for host in hosts_list if str(host).startswith('172.31')]
-    if aws_ips:
-        print(f"AWS internal IPs: {aws_ips}")
-    else:
-        print("WARNING: No AWS internal IPs found - DisallowedHost errors likely!")
-print("=" * 50)
-
+# Set ALLOWED_HOSTS (clean and simple with middleware handling health checks)
 ALLOWED_HOSTS = hosts_list
+
+print(f"🔒 ALLOWED_HOSTS configured: {len(ALLOWED_HOSTS)} entries")
+if DEBUG:
+    print(f"🔒 DEBUG: ALLOWED_HOSTS = {ALLOWED_HOSTS}")
+else:
+    print(f"🔒 PRODUCTION: {len(ALLOWED_HOSTS)} domain entries (health checks handled by middleware)")
 
 
 # Allows E-mail use
@@ -260,6 +129,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'benchmarks.middleware.HealthCheckMiddleware',  # Handle health checks BEFORE security checks
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',  # Compress HTTP responses
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -269,6 +139,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Note: Health check security is now handled by HealthCheckMiddleware
 
 ROOT_URLCONF = 'web.urls'
 
@@ -469,10 +341,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
-# Security settings for headers and cookies
+# Security settings for headers and cookies  
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+# Additional security settings to prevent Host header attacks
+USE_X_FORWARDED_HOST = False  # Prevent Host header spoofing through proxies
+USE_X_FORWARDED_PORT = False  # Prevent port spoofing
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 LANGUAGE_CODE = 'en-us'
