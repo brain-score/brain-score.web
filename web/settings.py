@@ -47,13 +47,46 @@ except NoCredentialsError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+# Get EC2 instance private IP for AWS health checks
+# Solution from: https://stackoverflow.com/a/33527496
+def get_ec2_private_ip():
+    """Retrieve the private IP address of the EC2 instance for AWS internal health checks."""
+    try:
+        import requests
+        # AWS instance metadata endpoint - only accessible from within EC2
+        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=1)
+        if response.status_code == 200:
+            ip = response.text.strip()
+            # Validate private IP address
+            if ip and ip.startswith(('10.', '172.', '192.168.')):
+                return ip
+    except Exception as e:
+        logger.debug(f"Could not retrieve EC2 private IP: {e}")
+    return None
+
+
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
-if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
+if os.getenv("DJANGO_ENV") == 'development': 
+    hosts_list.append('127.0.0.1')
+    hosts_list.append('localhost')
+
+# Add known Elastic Beanstalk domains
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append("127.0.0.1")
+
+# Add EC2 private IP for AWS health checks and load balancer
+ec2_private_ip = get_ec2_private_ip()
+if ec2_private_ip:
+    hosts_list.append(ec2_private_ip)
+    logger.info(f"Added EC2 private IP to ALLOWED_HOSTS: {ec2_private_ip}")
+
+# Log the final ALLOWED_HOSTS for debugging (but not in production to avoid log spam)
+if DEBUG:
+    logger.info(f"Final ALLOWED_HOSTS: {hosts_list}")
+
 ALLOWED_HOSTS = hosts_list
 
 # Allows E-mail use
