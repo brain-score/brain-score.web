@@ -87,7 +87,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
                 Q(public=True) | Q(user_id=user.id) | Q(owner__id=user.id)
             )
         else:
-            models = all_model_data.filter(Q(user_id=user.id))
+            models = all_model_data.filter(Q(user_id=user.id) | Q(owner__id=user.id))
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)
