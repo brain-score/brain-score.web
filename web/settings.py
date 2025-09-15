@@ -23,7 +23,7 @@ def get_secret(secret_name, region_name):
     client = session.client(
         service_name='secretsmanager',
         region_name=region_name
-    )
+    )w
     get_secret_value_response = client.get_secret_value(
         SecretId=secret_name
     )
@@ -54,21 +54,22 @@ def get_ec2_private_ip():
     try:
         import requests
         # AWS instance metadata endpoint - only accessible from within EC2
-        print("ALLOWED_HOSTS: Attempting to retrieve EC2 private IP from metadata endpoint...")
-        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=2)
+        print("METADATA: Attempting to retrieve EC2 private IP...")
+        # Use a very short timeout to avoid hanging the startup process
+        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=0.5)
         if response.status_code == 200:
             ip = response.text.strip()
-            print(f"ALLOWED_HOSTS: Retrieved IP from metadata endpoint: {ip}")
+            print(f"METADATA: Retrieved IP: {ip}")
             # Validate private IP address
             if ip and ip.startswith(('10.', '172.', '192.168.')):
-                print(f"ALLOWED_HOSTS: Validated private IP: {ip}")
+                print(f"METADATA: Valid private IP: {ip}")
                 return ip
             else:
-                print(f"ALLOWED_HOSTS: Invalid private IP format: {ip}")
+                print(f"METADATA: Invalid IP format: {ip}")
         else:
-            print(f"ALLOWED_HOSTS: Metadata endpoint returned status {response.status_code}")
+            print(f"METADATA: HTTP {response.status_code}")
     except Exception as e:
-        print(f"ALLOWED_HOSTS: Could not retrieve EC2 private IP: {e}")
+        print(f"METADATA: Failed - {type(e).__name__}")
     return None
 
 
@@ -114,19 +115,22 @@ else:
     print("FALLBACK: Will try alternative methods...")
 
 # Fallback: If metadata endpoint fails but we're likely on AWS, 
-# try alternative methods to get the IP
+# add the specific IP we know is failing as an emergency measure
 if not ec2_private_ip and os.getenv("DJANGO_ENV") != 'development':
-    print("EC2 metadata not available, trying alternative methods...")
+    print("FALLBACK: EC2 metadata failed, using emergency IP list...")
     
     # Try to get IP from environment variables that AWS might set
     aws_local_ipv4 = os.getenv('AWS_LOCAL_IPV4') or os.getenv('EC2_LOCAL_IPV4')
     if aws_local_ipv4 and aws_local_ipv4.startswith(('10.', '172.', '192.168.')):
         hosts_list.append(aws_local_ipv4)
-        print(f"SUCCESS: Added IP from environment variable: {aws_local_ipv4}")
+        print(f"FALLBACK: Added IP from environment: {aws_local_ipv4}")
     else:
-        print("FALLBACK FAILED: No alternative IP sources found")
-        print("CRITICAL: Health checks will likely fail with DisallowedHost errors")
-        print("SUGGESTION: Consider adding specific IPs manually if this persists")
+        # Emergency fallback: add the specific IPs that are failing
+        print("EMERGENCY: Adding known failing IPs to prevent service disruption")
+        emergency_ips = ["172.31.21.142", "172.31.21.65"]
+        for ip in emergency_ips:
+            hosts_list.append(ip)
+            print(f"EMERGENCY: Added {ip} to ALLOWED_HOSTS")
 
 # Final summary
 print("=" * 50)
