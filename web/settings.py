@@ -85,31 +85,47 @@ hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeansta
 hosts_list.append("127.0.0.1")
 
 # Add EC2 private IP for AWS health checks and load balancer
+print("=" * 50)
+print("ALLOWED_HOSTS CONFIGURATION STARTING")
+print("=" * 50)
+
 ec2_private_ip = get_ec2_private_ip()
 if ec2_private_ip:
     hosts_list.append(ec2_private_ip)
-    print(f"ALLOWED_HOSTS: Added EC2 private IP to ALLOWED_HOSTS: {ec2_private_ip}")
+    print(f"SUCCESS: Added EC2 private IP to ALLOWED_HOSTS: {ec2_private_ip}")
 else:
-    print("ALLOWED_HOSTS: Could not retrieve EC2 private IP - this may cause DisallowedHost errors")
+    print("WARNING: Could not retrieve EC2 private IP - this may cause DisallowedHost errors")
+    print("FALLBACK: Will try alternative methods...")
 
 # Fallback: If metadata endpoint fails but we're likely on AWS, 
 # try alternative methods to get the IP
 if not ec2_private_ip and os.getenv("DJANGO_ENV") != 'development':
-    print("ALLOWED_HOSTS: EC2 metadata not available, trying alternative methods...")
+    print("EC2 metadata not available, trying alternative methods...")
     
     # Try to get IP from environment variables that AWS might set
     aws_local_ipv4 = os.getenv('AWS_LOCAL_IPV4') or os.getenv('EC2_LOCAL_IPV4')
     if aws_local_ipv4 and aws_local_ipv4.startswith(('10.', '172.', '192.168.')):
         hosts_list.append(aws_local_ipv4)
-        print(f"ALLOWED_HOSTS: Added IP from environment variable: {aws_local_ipv4}")
+        print(f"SUCCESS: Added IP from environment variable: {aws_local_ipv4}")
     else:
-        print("ALLOWED_HOSTS: No alternative IP sources found - health checks may fail")
+        print("FALLBACK FAILED: No alternative IP sources found")
+        print("CRITICAL: Health checks will likely fail with DisallowedHost errors")
+        print("SUGGESTION: Consider adding specific IPs manually if this persists")
 
-# Log the final ALLOWED_HOSTS for debugging (but not in production to avoid log spam)
+# Final summary
+print("=" * 50)
+print(f"ALLOWED_HOSTS FINAL SUMMARY:")
+print(f"Total hosts configured: {len(hosts_list)}")
 if DEBUG:
-    print(f"ALLOWED_HOSTS: Final ALLOWED_HOSTS: {hosts_list}")
+    print(f"Full list: {hosts_list}")
 else:
-    print(f"ALLOWED_HOSTS: Final count: {len(hosts_list)} hosts configured")
+    # Show just the IPs that start with 172.31 (the problematic ones)
+    aws_ips = [host for host in hosts_list if str(host).startswith('172.31')]
+    if aws_ips:
+        print(f"AWS internal IPs: {aws_ips}")
+    else:
+        print("WARNING: No AWS internal IPs found - DisallowedHost errors likely!")
+print("=" * 50)
 
 ALLOWED_HOSTS = hosts_list
 
