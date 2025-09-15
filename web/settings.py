@@ -84,10 +84,26 @@ hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbe
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append("127.0.0.1")
 
+# DEPLOYMENT TEST - This should cause an obvious error if the new code is deployed
+print("🚀 DEPLOYMENT TEST: This print should be visible in AWS logs! 🚀")
+import sys
+sys.stderr.write("🚀 STDERR TEST: New code is deployed! 🚀\n")
+
 # Add EC2 private IP for AWS health checks and load balancer
+# Multiple ways to ensure we see this debug info
 print("=" * 50)
 print("ALLOWED_HOSTS CONFIGURATION STARTING")
 print("=" * 50)
+
+# Also write to Django logs AND stderr to ensure visibility
+sys.stderr.write("STDERR: ALLOWED_HOSTS configuration starting\n")
+sys.stderr.flush()
+
+# Try to log to Django logger as well
+try:
+    logger.error("LOGGER: ALLOWED_HOSTS configuration starting - this should be visible")
+except:
+    pass
 
 ec2_private_ip = get_ec2_private_ip()
 if ec2_private_ip:
