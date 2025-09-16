@@ -349,8 +349,10 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
         "domain": result["domain"],
         "version": result["version"],
         "keys_deleted": result["keys_deleted"],
+        "total_keys": result["total_keys"],
         "preserved_keys": result["preserved_keys"],
         "preserved_sessions": result.get("preserved_sessions"),
+        "preserved_key_samples": result["preserved_key_samples"],
         "rebuilt": rebuild_success,
         "message": f"{result['message']}. " + 
                   ("Rebuilt public leaderboard cache." if rebuild_success else "Cache rebuild failed.")
