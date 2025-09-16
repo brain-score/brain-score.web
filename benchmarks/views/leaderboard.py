@@ -532,7 +532,6 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
-#@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX

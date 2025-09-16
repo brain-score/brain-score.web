@@ -39,9 +39,6 @@ def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-# Cache the leaderboard HTML page
-# Server-side HTML caching until leaderboard views are introduced.
-#@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
