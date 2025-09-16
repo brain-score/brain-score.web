@@ -244,10 +244,12 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
         # Preserve sessions if requested
         if preserve_sessions and ('session' in key_str.lower() or key_str.startswith('django.contrib.sessions')):
             preserved_sessions += 1
+            # Add preserved key
             preserved_keys.append(f"SESSION: {key_str}")
             continue
 
         try:
+            # Delete key that is not supposed to be preserved
             client.delete(key_str)
             deleted_count += 1
         except Exception as e:
@@ -255,6 +257,7 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
             preserved_keys.append(f"ERROR: {key_str}")
 
     # Find keys that weren't matched by any pattern (these are the "other" preserved keys)
+    # We now record this so we can explore any stray keys that are not being cleared.
     all_keys = set()
     for key in client.scan_iter(match="*", count=1000):
         key_str = key.decode('utf-8') if isinstance(key, bytes) else str(key)
