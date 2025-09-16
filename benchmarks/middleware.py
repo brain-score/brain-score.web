@@ -45,4 +45,4 @@ class HealthCheckMiddleware(MiddlewareMixin):
             if header_count <= 3 and not request.COOKIES:
                 return HttpResponse("OK", content_type="text/plain", status=200)
         
-        return None  # Continue normal processing
+        return None
