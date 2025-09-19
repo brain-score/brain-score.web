@@ -58,13 +58,13 @@ class TestWebsitePages(BaseTestCase):
 
     def test_vision_leaderboard(self):
         """Test the vision leaderboard page"""
-        response = self.client.get('/vision/')
+        response = self.client.get('/vision/', follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Leaderboard', response.content)
 
     def test_language_leaderboard(self):
         """Test the language leaderboard page"""
-        response = self.client.get('/language/')
+        response = self.client.get('/language/', follow=True)
         self.assertEqual(response.status_code, 200)
 
     def test_profile_page(self):
