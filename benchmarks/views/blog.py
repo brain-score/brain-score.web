@@ -109,7 +109,6 @@ def get_categories():
     return sorted(categories)
 
 
-@cache_page(60 * 15)  # Cache for 15 minutes
 def blog_list(request):
     """Display list of blog posts with filtering"""
     posts = load_blog_posts()
