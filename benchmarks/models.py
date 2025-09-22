@@ -448,6 +448,8 @@ class FinalModelContext(models.Model):
                 - number_of_all_children
             - score_raw (float)
             - is_complete
+            - start_timestamp
+            - end_timestamp
             - score_ceiled_raw (float)
             - score_ceiled (string of score_ceiled_raw with three decimal places)
             - visual_degrees
