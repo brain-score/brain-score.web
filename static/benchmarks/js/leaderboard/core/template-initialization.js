@@ -125,6 +125,44 @@ function initializeLeaderboardFromTemplate() {
         }
       }
     }
+
+    // Initialize wayback timestamp filter if datetime_range data is available
+    if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+      const waybackSection = document.getElementById('waybackTimestampSection');
+      const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
+      const waybackDateMin = document.getElementById('waybackDateMin');
+      const waybackDateMax = document.getElementById('waybackDateMax');
+
+      if (waybackSection && waybackSliderContainer && waybackDateMin && waybackDateMax) {
+        // Show the wayback section
+        waybackSection.style.display = 'block';
+        
+        // Set slider range using Unix timestamps
+        waybackSliderContainer.dataset.min = ranges.datetime_range.min_unix;
+        waybackSliderContainer.dataset.max = ranges.datetime_range.max_unix;
+        
+        // Set initial handle positions
+        const minHandle = waybackSliderContainer.querySelector('.handle-min');
+        const maxHandle = waybackSliderContainer.querySelector('.handle-max');
+        if (minHandle && maxHandle) {
+          minHandle.dataset.value = ranges.datetime_range.min_unix;
+          maxHandle.dataset.value = ranges.datetime_range.max_unix;
+        }
+        
+        // Set date input values
+        const minDate = new Date(ranges.datetime_range.min_unix * 1000);
+        const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
+        waybackDateMin.value = minDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+        
+        console.log('Wayback timestamp filter initialized:', {
+          min_unix: ranges.datetime_range.min_unix,
+          max_unix: ranges.datetime_range.max_unix,
+          min_date: waybackDateMin.value,
+          max_date: waybackDateMax.value
+        });
+      }
+    }
     
     // Initialize grid
     if (typeof initializeGrid === 'function') {

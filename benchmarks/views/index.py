@@ -11,7 +11,8 @@ from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
 from django.views.decorators.cache import cache_page
-
+from datetime import datetime
+WORK
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
 
@@ -19,6 +20,24 @@ _logger = logging.getLogger(__name__)
 
 BASE_DEPTH = 1
 ENGINEERING_ROOT = 'engineering'
+
+def get_datetime_range(models):
+    """Extract min and max timestamps from model scores."""
+    timestamps = []
+    for model in models:
+        for score in (model.scores or []):
+            ts = score.get("end_timestamp")
+            if ts:
+                try:
+                    timestamps.append(datetime.fromisoformat(ts))
+                except Exception:
+                    pass  # Ignore malformed timestamps
+    if timestamps:
+        return {
+            "min": min(timestamps).isoformat(),
+            "max": max(timestamps).isoformat(),
+        }
+    return None
 
 '''
 Reference for previous color scheme

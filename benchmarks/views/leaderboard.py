@@ -3,11 +3,13 @@ import logging
 import numpy as np
 from collections import defaultdict
 from django.shortcuts import render
-from .index import get_context
+from .index import get_context, get_datetime_range
 from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
 from django.db.models import Model
+from datetime import datetime
+import pytz
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -319,8 +321,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                # Include minimal benchmark info only when needed for citations
-                'benchmark': minimal_benchmark if minimal_benchmark else None
+                'benchmark': minimal_benchmark if minimal_benchmark else None,  # Include benchmark metadata for bibtex collection
+                'timestamp': score.get('end_timestamp')  # Include end_timestamp for wayback filtering
             }
         row_data.append(rd)
 
@@ -438,6 +440,19 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
         }
     }
+
+    # Compute datetime range for wayback timestamp filter
+    datetime_range = get_datetime_range(context['models'])
+    if datetime_range:
+        # Parse the timestamps to get Unix timestamps for the slider
+        min_timestamp = datetime.fromisoformat(datetime_range['min'])
+        max_timestamp = datetime.fromisoformat(datetime_range['max'])
+        filter_options['datetime_range'] = {
+            'min': datetime_range['min'],
+            'max': datetime_range['max'],
+            'min_unix': int(min_timestamp.timestamp()),
+            'max_unix': int(max_timestamp.timestamp())
+        }
 
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}

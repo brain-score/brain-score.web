@@ -24,9 +24,10 @@ function initializeDualHandleSlider(container) {
   
   // Find associated input fields
   const sliderGroup = container.closest('.filter-group');
-  const sliderType = sliderGroup?.querySelector('#paramCountMin') ? 'paramCount' : 
-                     sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' : 
-                     sliderGroup?.querySelector('#stimuliCountMin') ? 'stimuliCount' : 'unknown';
+  const sliderType = sliderGroup?.querySelector('#paramCountMin') ? 'paramCount' :
+                     sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' :
+                     sliderGroup?.querySelector('#stimuliCountMin') ? 'stimuliCount' :
+                     sliderGroup?.querySelector('#waybackDateMin') ? 'waybackTimestamp' : 'unknown';
   
   const minInput = sliderGroup?.querySelector('.range-input-min');
   const maxInput = sliderGroup?.querySelector('.range-input-max');
@@ -42,8 +43,21 @@ function initializeDualHandleSlider(container) {
     range.style.width = `${maxPercent - minPercent}%`;
     
     // Update input fields
-    if (minInput) minInput.value = Math.round(minValue);
-    if (maxInput) maxInput.value = Math.round(maxValue);
+    if (sliderType === 'waybackTimestamp') {
+      // Convert Unix timestamps to date strings for date inputs
+      if (minInput) {
+        const minDate = new Date(minValue * 1000);
+        minInput.value = minDate.toISOString().split('T')[0];
+      }
+      if (maxInput) {
+        const maxDate = new Date(maxValue * 1000);
+        maxInput.value = maxDate.toISOString().split('T')[0];
+      }
+    } else {
+      // Standard numeric inputs
+      if (minInput) minInput.value = Math.round(minValue);
+      if (maxInput) maxInput.value = Math.round(maxValue);
+    }
   }
   
   function updateActiveFilters(skipDebounce = false) {
@@ -71,6 +85,17 @@ function initializeDualHandleSlider(container) {
         isLessThan: maxValue < max,
         oldFilterValue: oldValue,
         newFilterValue: window.activeFilters.max_model_size,
+        skipDebounce
+      });
+    } else if (filterId === 'waybackTimestampFilter' || sliderType === 'waybackTimestamp') {
+      window.activeFilters.min_wayback_timestamp = minValue;
+      window.activeFilters.max_wayback_timestamp = maxValue;
+      console.log(`🎚️ ${sliderType} filter update:`, {
+        minValue,
+        maxValue,
+        min: min,
+        max: max,
+        isAtFullRange: (minValue <= min && maxValue >= max),
         skipDebounce
       });
     }
@@ -134,7 +159,14 @@ function initializeDualHandleSlider(container) {
   // Input field synchronization
   if (minInput) {
     minInput.addEventListener('input', () => {
-      const value = parseFloat(minInput.value) || min;
+      let value;
+      if (sliderType === 'waybackTimestamp') {
+        // Convert date string to Unix timestamp
+        const dateValue = new Date(minInput.value);
+        value = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
+      } else {
+        value = parseFloat(minInput.value) || min;
+      }
       minValue = Math.max(min, Math.min(value, maxValue - 1));
       updateSliderPosition();
       updateActiveFilters();
@@ -143,7 +175,14 @@ function initializeDualHandleSlider(container) {
   
   if (maxInput) {
     maxInput.addEventListener('input', () => {
-      const value = parseFloat(maxInput.value) || max;
+      let value;
+      if (sliderType === 'waybackTimestamp') {
+        // Convert date string to Unix timestamp
+        const dateValue = new Date(maxInput.value);
+        value = isNaN(dateValue.getTime()) ? max : Math.floor(dateValue.getTime() / 1000);
+      } else {
+        value = parseFloat(maxInput.value) || max;
+      }
       maxValue = Math.min(max, Math.max(value, minValue + 1));
       updateSliderPosition();
       updateActiveFilters();
@@ -194,6 +233,9 @@ function resetSliderUI() {
     } else if (sliderGroup?.querySelector('#stimuliCountMin') && ranges.stimuli_ranges?.max) {
       max = ranges.stimuli_ranges.max;
       container.dataset.max = max;
+    } else if (sliderGroup?.querySelector('#waybackDateMin') && ranges.datetime_range?.max_unix) {
+      max = ranges.datetime_range.max_unix;
+      container.dataset.max = max;
     }
     
     // Reset to full range
@@ -210,8 +252,24 @@ function resetSliderUI() {
     const minInput = sliderGroup?.querySelector('.range-input-min');
     const maxInput = sliderGroup?.querySelector('.range-input-max');
     
-    if (minInput) minInput.value = min;
-    if (maxInput) maxInput.value = max;
+    // Check if this is a wayback timestamp slider
+    const isWaybackSlider = sliderGroup?.querySelector('#waybackDateMin');
+    
+    if (isWaybackSlider) {
+      // Convert Unix timestamps to date strings for date inputs
+      if (minInput && ranges.datetime_range?.min_unix) {
+        const minDate = new Date(ranges.datetime_range.min_unix * 1000);
+        minInput.value = minDate.toISOString().split('T')[0];
+      }
+      if (maxInput && ranges.datetime_range?.max_unix) {
+        const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
+        maxInput.value = maxDate.toISOString().split('T')[0];
+      }
+    } else {
+      // Standard numeric inputs
+      if (minInput) minInput.value = min;
+      if (maxInput) maxInput.value = max;
+    }
   });
 }
 

@@ -113,13 +113,25 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     return true;
   });
 
+  // Apply wayback timestamp filtering to scores BEFORE other score filtering
+  let timestampFilteredData = filteredData;
+  if (typeof applyWaybackTimestampFilter === 'function') {
+    timestampFilteredData = applyWaybackTimestampFilter(filteredData);
+  }
+
   // Update filtered scores on the filtered data BEFORE setting it on the grid
-  let finalData = filteredData;
+  let finalData = timestampFilteredData;
   if (typeof updateFilteredScores === 'function') {
-    const updatedData = updateFilteredScores(filteredData);
+    const updatedData = updateFilteredScores(timestampFilteredData);
     if (updatedData) {
       finalData = updatedData;
     }
+  }
+
+  // Additional pass: Remove models where global score (average_vision_v0) is 'X'
+  // This happens after updateFilteredScores because that's where average_vision_v0 gets recalculated
+  if (typeof applyGlobalScoreModelRemoval === 'function') {
+    finalData = applyGlobalScoreModelRemoval(finalData);
   }
 
   // Update grid with filtered data - preserving original data structure
@@ -169,7 +181,9 @@ function resetAllFilters() {
     benchmark_regions: [],
     benchmark_species: [],
     benchmark_tasks: [],
-    public_data_only: false
+    public_data_only: false,
+    min_wayback_timestamp: null,
+    max_wayback_timestamp: null
   };
 
   // Reset UI elements
@@ -307,22 +321,25 @@ function resetAllFilters() {
 function updateFilteredScores(rowData) {
   if (!window.originalRowData || !window.benchmarkTree) return;
   
+  console.log('updateFilteredScores called - checking for wayback timestamp changes...');
+  
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
   const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
   
-  const workingRowData = rowData.map(row => ({ ...row }));
-  
-  // First restore original data for all columns
-  workingRowData.forEach((row) => {
-    const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
-    if (!originalRow) return;
-    
-    Object.keys(originalRow).forEach(key => {
-      if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
-        row[key] = { ...originalRow[key] };
+  // Deep copy the rowData to preserve wayback timestamp filtering changes
+  const workingRowData = rowData.map(row => {
+    const newRow = { ...row };
+    // Deep copy all score objects to preserve wayback filtering changes
+    Object.keys(row).forEach(key => {
+      if (key !== 'model' && key !== 'rank' && key !== 'metadata' && row[key] && typeof row[key] === 'object') {
+        newRow[key] = { ...row[key] };
       }
     });
+    return newRow;
   });
+  
+  // Skip the original data restoration step since we want to preserve wayback timestamp filtering
+  // The workingRowData already contains the properly filtered data from applyWaybackTimestampFilter
   
   // Then process each row for filtering
   workingRowData.forEach((row) => {
@@ -363,7 +380,11 @@ function updateFilteredScores(rowData) {
         // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
         children.forEach(childId => {
-          if (!excludedBenchmarks.has(childId) && row[childId]) {
+          // Check if column is hidden by wayback filtering
+          const isHiddenByWayback = typeof isColumnHiddenByWaybackFiltering === 'function' && 
+                                   isColumnHiddenByWaybackFiltering(childId);
+          
+          if (!excludedBenchmarks.has(childId) && !isHiddenByWayback && row[childId]) {
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined && 
                                  childScore !== '' && childScore !== 'X' &&
@@ -401,7 +422,11 @@ function updateFilteredScores(rowData) {
           let nonZeroChildrenCount = 0;
           
           children.forEach(childId => {
-            if (!excludedBenchmarks.has(childId) && row[childId]) {
+            // Check if column is hidden by wayback filtering
+            const isHiddenByWayback = typeof isColumnHiddenByWaybackFiltering === 'function' && 
+                                     isColumnHiddenByWaybackFiltering(childId);
+            
+            if (!excludedBenchmarks.has(childId) && !isHiddenByWayback && row[childId]) {
               validChildrenCount++;
               const childScore = row[childId].value;
               if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
@@ -680,12 +705,231 @@ function toggleFilteredScoreColumn(gridApi) {
   }, 100);
 }
 
+// Check if column is hidden by wayback filtering
+function isColumnHiddenByWaybackFiltering(benchmarkId) {
+  // Only check for wayback filtering if it's active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!isWaybackActive) {
+    return false; // No wayback filtering, column not hidden
+  }
+  
+  // Get current row data from the grid
+  const rowData = [];
+  if (window.globalGridApi) {
+    window.globalGridApi.forEachNode(node => {
+      if (node.data) {
+        rowData.push(node.data);
+      }
+    });
+  }
+  
+  if (rowData.length === 0) {
+    return false;
+  }
+  
+  // Check if all values in this column are 'X'
+  const values = rowData.map(row => {
+    const cellData = row[benchmarkId];
+    return cellData && typeof cellData === 'object' ? cellData.value : cellData;
+  }).filter(val => val !== null && val !== undefined && val !== '');
+  
+  if (values.length === 0) {
+    return false; // Don't hide if no values
+  }
+  
+  const allXs = values.every(val => val === 'X');
+  return allXs;
+}
+
+// Apply wayback timestamp filtering
+function applyWaybackTimestampFilter(rowData) {
+  // Check if wayback timestamp filters are set and not at full range
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No timestamp filtering active
+  }
+  
+  console.log('Applying wayback timestamp filter:', {
+    minTimestamp,
+    maxTimestamp,
+    minDate: new Date(minTimestamp * 1000).toISOString(),
+    maxDate: new Date(maxTimestamp * 1000).toISOString()
+  });
+  
+  let totalScoresProcessed = 0;
+  let scoresWithTimestamps = 0;
+  let scoresWithoutTimestamps = 0;
+  let scoresFilteredOut = 0;
+  
+  const filteredData = rowData.map(row => {
+    const newRow = { ...row };
+    let hasValidScores = false;
+    let allScoresX = true;
+    
+    // Process each score field in the row
+    Object.keys(row).forEach(key => {
+      // Skip non-score fields
+      if (key === 'id' || key === 'rank' || key === 'model' || key === 'metadata') {
+        return;
+      }
+      
+      const scoreData = row[key];
+      if (scoreData && typeof scoreData === 'object' && scoreData.value !== undefined) {
+        totalScoresProcessed++;
+        
+        // Check if this score has a timestamp
+        const timestamp = scoreData.timestamp;
+        if (timestamp) {
+          scoresWithTimestamps++;
+          
+          try {
+            // Parse the timestamp and convert to Unix timestamp
+            const scoreTime = new Date(timestamp).getTime() / 1000;
+            
+            // Check if the score timestamp is within the wayback range
+            if (scoreTime >= minTimestamp && scoreTime <= maxTimestamp) {
+              // Score is within range, keep it
+              newRow[key] = { ...scoreData };
+              if (scoreData.value !== 'X') {
+                hasValidScores = true;
+                allScoresX = false;
+              }
+            } else {
+              // Score is outside range, convert to 'X'
+              newRow[key] = {
+                ...scoreData,
+                value: 'X',
+                raw: null,
+                error: null
+              };
+              scoresFilteredOut++;
+            }
+          } catch (error) {
+            console.warn('Error parsing timestamp:', timestamp, error);
+            // On error, treat as if no timestamp (convert to X)
+            newRow[key] = {
+              ...scoreData,
+              value: 'X',
+              raw: null,
+              error: null
+            };
+            scoresFilteredOut++;
+          }
+        } else {
+          // No timestamp, convert to 'X'
+          scoresWithoutTimestamps++;
+          newRow[key] = {
+            ...scoreData,
+            value: 'X',
+            raw: null,
+            error: null
+          };
+          scoresFilteredOut++;
+        }
+      }
+    });
+    
+    return newRow;
+  });
+  
+  // Filter out models where all individual scores became 'X'
+  const filteredWithValidModels = filteredData.filter(row => {
+    // Check if model has at least one non-'X' individual score
+    const hasValidScore = Object.keys(row).some(key => {
+      if (key === 'id' || key === 'rank' || key === 'model' || key === 'metadata') {
+        return false;
+      }
+      
+      const scoreData = row[key];
+      if (scoreData && typeof scoreData === 'object') {
+        return scoreData.value !== 'X' && scoreData.value !== null && scoreData.value !== undefined;
+      }
+      return false;
+    });
+    
+    return hasValidScore;
+  });
+  
+  const originalCount = rowData.length;
+  const filteredCount = filteredWithValidModels.length;
+  const removedCount = originalCount - filteredCount;
+  
+  console.log('Wayback timestamp filtering results:', {
+    originalRows: originalCount,
+    filteredRows: filteredCount,
+    removedRows: removedCount,
+    totalScoresProcessed,
+    scoresWithTimestamps,
+    scoresWithoutTimestamps,
+    scoresFilteredOut,
+    percentageScoresWithTimestamps: ((scoresWithTimestamps / totalScoresProcessed) * 100).toFixed(1) + '%',
+    percentageScoresFilteredOut: ((scoresFilteredOut / totalScoresProcessed) * 100).toFixed(1) + '%'
+  });
+  
+  return filteredWithValidModels;
+}
+
+// Apply global score model removal
+function applyGlobalScoreModelRemoval(rowData) {
+  // Only apply this additional filtering if wayback timestamp filtering is active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No wayback filtering active, don't remove any models
+  }
+  
+  const originalCount = rowData.length;
+  
+  // Filter out models where average_vision_v0 is 'X'
+  const filteredData = rowData.filter(row => {
+    const globalScore = row.average_vision_v0?.value;
+    return globalScore !== 'X';
+  });
+  
+  const removedCount = originalCount - filteredData.length;
+  
+  console.log('Global score model removal:', {
+    originalModels: originalCount,
+    modelsWithXGlobalScore: removedCount,
+    remainingModels: filteredData.length,
+    removedModels: removedCount > 0 ? rowData.filter(row => row.average_vision_v0?.value === 'X').slice(0, 3).map(row => row.model?.name || 'Unknown') : []
+  });
+  
+  return filteredData;
+}
+
 // Export functions for use by other modules
 window.LeaderboardFilterCoordinator = {
   applyCombinedFilters,
   resetAllFilters,
   updateFilteredScores,
-  toggleFilteredScoreColumn
+  toggleFilteredScoreColumn,
+  isColumnHiddenByWaybackFiltering,
+  applyWaybackTimestampFilter,
+  applyGlobalScoreModelRemoval
 };
 
 // Make main functions globally available for compatibility
@@ -693,3 +937,6 @@ window.applyCombinedFilters = applyCombinedFilters;
 window.resetAllFilters = resetAllFilters;
 window.updateFilteredScores = updateFilteredScores;
 window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
+window.isColumnHiddenByWaybackFiltering = isColumnHiddenByWaybackFiltering;
+window.applyWaybackTimestampFilter = applyWaybackTimestampFilter;
+window.applyGlobalScoreModelRemoval = applyGlobalScoreModelRemoval;
