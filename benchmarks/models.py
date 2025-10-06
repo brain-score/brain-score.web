@@ -273,8 +273,8 @@ class Score(models.Model):
     score_raw = models.FloatField(default=0, null=True)
     score_ceiled = models.FloatField(default=0, null=True)
     error = models.FloatField(default=0, null=True)
-    start_timestamp = models.DateTimeField(blank=True)
-    end_timestamp = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    start_timestamp = models.DateTimeField(null=True, blank=True)
+    end_timestamp = models.DateTimeField(null=True, blank=True)
     comment = models.CharField(max_length=1000, null=True)
 
     def __repr__(self):

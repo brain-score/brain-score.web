@@ -2,11 +2,11 @@
 // This handles Django data parsing and initial setup
 
 function initializeLeaderboardFromTemplate() {
-  
+
   try {
     // Parse data from Django
     let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
-    
+
     try {
       rowData = JSON.parse(window.DJANGO_DATA.row_data);
       columnDefs = JSON.parse(window.DJANGO_DATA.column_defs);
@@ -38,20 +38,20 @@ function initializeLeaderboardFromTemplate() {
       }
       return; // Stop if data parsing fails
     }
-    
+
     // Clear URL parameters for language domain to ensure clean state
     const domain = window.DJANGO_DATA?.domain || 'vision';
     if (domain === 'language' && window.location.search) {
       const newURL = window.location.pathname;
       window.history.replaceState({}, '', newURL);
     }
-    
+
     // Make data globally available
     window.benchmarkTree = benchmarkTree;
     window.originalRowData = rowData;
     window.filterOptions = filterOptions;
     window.benchmarkMetadata = benchmarkMetadata;
-    
+
     window.benchmarkIds = benchmarkIds;
     window.benchmarkStimuliMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkStimuliMetaMap);
     window.benchmarkDataMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkDataMetaMap);
@@ -70,7 +70,7 @@ function initializeLeaderboardFromTemplate() {
         paramCountMax.max = ranges.parameter_ranges.max;
         paramCountMax.value = ranges.parameter_ranges.max;
       }
-      
+
       // Update slider container data attributes
       if (paramCountMin) {
         const paramSliderContainer = paramCountMin.closest('.filter-group')?.querySelector('.slider-container');
@@ -91,7 +91,7 @@ function initializeLeaderboardFromTemplate() {
         modelSizeMax.max = ranges.size_ranges.max;
         modelSizeMax.value = ranges.size_ranges.max;
       }
-      
+
       // Update slider container data attributes
       if (modelSizeMin) {
         const modelSizeSliderContainer = modelSizeMin.closest('.filter-group')?.querySelector('.slider-container');
@@ -112,7 +112,7 @@ function initializeLeaderboardFromTemplate() {
         stimuliCountMax.max = ranges.stimuli_ranges.max;
         stimuliCountMax.value = ranges.stimuli_ranges.max;
       }
-      
+
       // Update slider container data attributes
       if (stimuliCountMin) {
         const stimuliSliderContainer = stimuliCountMin.closest('.filter-group')?.querySelector('.slider-container');
@@ -125,21 +125,58 @@ function initializeLeaderboardFromTemplate() {
         }
       }
     }
-    
+    // Initialize wayback timestamp filter if datetime_range data is available
+    if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+      const waybackSection = document.getElementById('waybackTimestampSection');
+      const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
+      const waybackDateMin = document.getElementById('waybackDateMin');
+      const waybackDateMax = document.getElementById('waybackDateMax');
+
+      if (waybackSection && waybackSliderContainer && waybackDateMin && waybackDateMax) {
+        // Show the wayback section
+        waybackSection.style.display = 'block';
+
+        // Set slider range using Unix timestamps
+        waybackSliderContainer.dataset.min = ranges.datetime_range.min_unix;
+        waybackSliderContainer.dataset.max = ranges.datetime_range.max_unix;
+
+        // Set initial handle positions
+        const minHandle = waybackSliderContainer.querySelector('.handle-min');
+        const maxHandle = waybackSliderContainer.querySelector('.handle-max');
+        if (minHandle && maxHandle) {
+          minHandle.dataset.value = ranges.datetime_range.min_unix;
+          maxHandle.dataset.value = ranges.datetime_range.max_unix;
+        }
+
+        // Set date input values
+        const minDate = new Date(ranges.datetime_range.min_unix * 1000);
+        const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
+        waybackDateMin.value = minDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+
+        console.log('Wayback timestamp filter initialized:', {
+          min_unix: ranges.datetime_range.min_unix,
+          max_unix: ranges.datetime_range.max_unix,
+          min_date: waybackDateMin.value,
+          max_date: waybackDateMax.value
+        });
+      }
+    }
+
     // Initialize grid
     if (typeof initializeGrid === 'function') {
       initializeGrid(rowData, columnDefs, benchmarkGroups);
     }
-    
+
     setupUIComponents();
     setupFilters();
     setupEventHandlers();
-    
+
     // Setup report issue functionality
     if (typeof window.LeaderboardReportIssue?.setupReportIssue === 'function') {
       window.LeaderboardReportIssue.setupReportIssue();
     }
-    
+
   } catch (error) {
     console.error('Error during grid initialization:', error);
     // Hide loading animation on error
@@ -156,28 +193,28 @@ function setupUIComponents() {
   const container = document.querySelector('.leaderboard-container');
   const advancedFilterBtn = document.getElementById('advancedFilterBtn');
   const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
-  
+
   // Render benchmark tree (only if elements exist - they don't exist for language domain)
   if (typeof renderBenchmarkTree === 'function' && treeContainer) {
     renderBenchmarkTree(treeContainer, window.benchmarkTree);
   }
-  
+
   if (typeof populateFilterDropdowns === 'function') {
     populateFilterDropdowns(window.filterOptions);
   }
-  
+
   if (typeof setupDropdownHandlers === 'function') {
     setupDropdownHandlers();
   }
-  
+
   if (typeof setupBenchmarkCheckboxes === 'function') {
     setupBenchmarkCheckboxes(window.filterOptions);
   }
-  
+
   setTimeout(() => {
     initializeDualHandleSliders();
   }, 10);
-  
+
   // Initial badge count update
   setTimeout(() => {
     if (typeof window.updateAllCountBadges === 'function') {
@@ -195,12 +232,12 @@ function setupFilters() {
                                    urlParams.has('benchmark_tasks') ||
                                    urlParams.has('public_data_only') ||
                                    urlParams.has('excluded_benchmarks');
-  
+
     // Parse URL filters first (this will set checkbox states if URL params exist)
     if (typeof parseURLFilters === 'function') {
       parseURLFilters();
     }
-    
+
     // Always rebuild exclusion set based on current checkbox states
     window.filteredOutBenchmarks = new Set();
     const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
@@ -209,7 +246,7 @@ function setupFilters() {
         window.filteredOutBenchmarks.add(cb.value);
       }
     });
-  
+
     console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
   }, 20);
 }
@@ -217,41 +254,41 @@ function setupFilters() {
 function setupEventHandlers() {
   // Setup filter action buttons
   const resetBtn = document.getElementById('resetAllFiltersBtn');
-  
+
   if (resetBtn && typeof resetAllFilters === 'function') {
     resetBtn.addEventListener('click', () => {
       resetAllFilters();
     });
   }
-  
+
   // Setup CSV export functionality
   if (typeof window.LeaderboardCSVExport?.setupCSVExport === 'function') {
     window.LeaderboardCSVExport.setupCSVExport();
   }
-  
+
   // Setup citation export functionality
   if (typeof window.LeaderboardCitationExport?.setupCitationExport === 'function') {
     window.LeaderboardCitationExport.setupCitationExport();
   }
-  
+
   // Setup model search functionality
   if (typeof window.LeaderboardSearch?.setupSearchHandlers === 'function') {
     window.LeaderboardSearch.setupSearchHandlers();
   }
-  
+
   // Setup the reset benchmarks link
   setTimeout(() => {
     const resetLink = document.getElementById('resetBenchmarksLink');
     if (resetLink) {
       resetLink.addEventListener('click', (e) => {
         e.preventDefault();
-        
+
         // Check all checkboxes (include all benchmarks by default)
         const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
         allCheckboxes.forEach(cb => {
           cb.checked = true;  // Check everything including engineering
         });
-        
+
         // Rebuild the exclusion set
         window.filteredOutBenchmarks = new Set();
         allCheckboxes.forEach(cb => {
@@ -259,7 +296,7 @@ function setupEventHandlers() {
             window.filteredOutBenchmarks.add(cb.value);
           }
         });
-        
+
         // Trigger update
         if (typeof applyCombinedFilters === 'function') {
           applyCombinedFilters();
@@ -267,7 +304,7 @@ function setupEventHandlers() {
       });
     }
   }, 30);
-  
+
   setupLayoutToggleHandlers();
 }
 
@@ -276,10 +313,10 @@ function setupLayoutToggleHandlers() {
   const container = document.querySelector('.leaderboard-container');
   const advancedFilterBtn = document.getElementById('advancedFilterBtn');
   const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
-  
+
   // Enhanced layout toggle functionality
   let isPanelVisible = false;
-  
+
   // Check for saved preference and set initial state
   const savedLayout = localStorage.getItem('leaderboardLayout');
   if (savedLayout === 'sidebar') {
@@ -295,11 +332,11 @@ function setupLayoutToggleHandlers() {
     isPanelVisible = false;
     updateToggleButton('horizontal');
   }
-  
+
   // Function to update toggle button text and icon
   function updateToggleButton(mode) {
     const toggleText = layoutToggleBtn?.querySelector('.toggle-text');
-    
+
     if (toggleText) {
       if (mode === 'sidebar') {
         toggleText.textContent = 'Full Width Mode';
@@ -308,7 +345,7 @@ function setupLayoutToggleHandlers() {
       }
     }
   }
-  
+
   // Function to position panel correctly
   function positionPanel(mode) {
     if (mode === 'horizontal') {
@@ -322,13 +359,13 @@ function setupLayoutToggleHandlers() {
       }
     }
   }
-  
+
   // Set initial position
   positionPanel(savedLayout === 'sidebar' ? 'sidebar' : 'horizontal');
-  
+
   layoutToggleBtn?.addEventListener('click', () => {
     const isSidebar = container.classList.toggle('sidebar-mode');
-    
+
     if (isSidebar) {
       positionPanel('sidebar');
       panel.classList.remove('hidden');
@@ -347,16 +384,16 @@ function setupLayoutToggleHandlers() {
       container.classList.remove('filters-hidden');
     }
   });
-  
+
   // Advanced filter button
   if (advancedFilterBtn) {
     const newAdvancedFilterBtn = advancedFilterBtn.cloneNode(true);
     advancedFilterBtn.parentNode.replaceChild(newAdvancedFilterBtn, advancedFilterBtn);
-    
+
     newAdvancedFilterBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (!container.classList.contains('sidebar-mode')) {
         isPanelVisible = !isPanelVisible;
         if (isPanelVisible) {
@@ -386,7 +423,7 @@ function setupLayoutToggleHandlers() {
       }
     });
   }
-  
+
   // Final URL parsing with delay to avoid conflicts
   setTimeout(() => {
     if (typeof parseURLFilters === 'function') {

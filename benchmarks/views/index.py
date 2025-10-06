@@ -14,6 +14,7 @@ from django.views.decorators.cache import cache_page
 
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -33,7 +34,23 @@ colors_gray = [colors_gray[int(a * np.power(i, b))] for i in range(len(colors_gr
 color_suffix = '_color'
 color_None = '#e0e1e2'
 
-
+def get_datetime_range(models):
+    """Extract min and max timestamps from model scores."""
+    timestamps = []
+    for model in models:
+        for score in (model.scores or []):
+            ts = score.get("end_timestamp")
+            if ts:
+                try:
+                    timestamps.append(datetime.fromisoformat(ts))
+                except Exception:
+                    pass  # Ignore malformed timestamps
+    if timestamps:
+        return {
+            "min": min(timestamps).isoformat(),
+            "max": max(timestamps).isoformat(),
+        }
+    return None
 
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""

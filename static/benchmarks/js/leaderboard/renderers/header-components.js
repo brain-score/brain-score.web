@@ -4,8 +4,8 @@
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   tree.forEach(node => {
     const nodeId = node.id || node.identifier || node.field || node.name;
-    const children = node.children ? 
-      node.children.map(child => child.id || child.identifier || child.field || child.name).filter(Boolean) : 
+    const children = node.children ?
+      node.children.map(child => child.id || child.identifier || child.field || child.name).filter(Boolean) :
       [];
     if (nodeId) {
       hierarchyMap.set(nodeId, children);
@@ -35,13 +35,13 @@ function createSortIndicator(params, element, fontSize = '12px') {
   indicator.style.marginLeft = '4px';
   indicator.style.fontSize = '16px';
   indicator.style.opacity = '0.87';
-  
+
   const updateSortIndicator = () => {
     const column = params.column;
     const currentSort = column.getSort();
-    
+
     indicator.classList.remove('ag-icon-asc', 'ag-icon-desc', 'ag-icon-none');
-    
+
     if (currentSort === 'asc') {
       indicator.classList.add('ag-icon-asc');
       indicator.style.opacity = '1';
@@ -56,7 +56,7 @@ function createSortIndicator(params, element, fontSize = '12px') {
 
   const handleSort = (event) => {
     event.stopPropagation();
-    
+
     const column = params.column;
     const colId = column.getColId();
     const currentSort = column.getSort();
@@ -68,7 +68,7 @@ function createSortIndicator(params, element, fontSize = '12px') {
         defaultState: { sort: null }
       });
     }
-    
+
     setTimeout(updateSortIndicator, 10);
   };
 
@@ -86,14 +86,14 @@ function createSortIndicator(params, element, fontSize = '12px') {
 // Update column visibility based on filtering state
 function updateColumnVisibility() {
   if (!window.globalGridApi || !window.benchmarkTree) return;
-  
+
   const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
-  
+
   // Get all columns
   const allColumns = window.globalGridApi.getAllGridColumns();
   const columnsToUpdate = [];
-  
+
   // Determine which columns should be visible based on:
   // 1. Current filter state (excluded benchmarks)
   // 2. Current expansion state (what the user has expanded)
@@ -102,7 +102,7 @@ function updateColumnVisibility() {
     if (excludedBenchmarks.has(benchmarkId)) {
       return false;
     }
-    
+
     // Check if this is the global score column and filtered score is active
     if (benchmarkId === 'average_vision_v0') {
       // Hide global score when filtered score is visible
@@ -112,7 +112,7 @@ function updateColumnVisibility() {
       }
       return true; // Show global score when filtered score is not active
     }
-    
+
     // Check if this is a top-level category
     const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
     const topLevelCategories = [`neural_${domain}_v0`, `behavior_${domain}_v0`, `engineering_${domain}_v0`];
@@ -126,7 +126,7 @@ function updateColumnVisibility() {
       }
       return true;
     }
-    
+
     // Determine if this is a leaf column or parent column (use cached hierarchy)
     if (!window.cachedHierarchyMap) {
       window.cachedHierarchyMap = buildHierarchyFromTree(window.benchmarkTree || []);
@@ -134,7 +134,7 @@ function updateColumnVisibility() {
     const hierarchyMap = window.cachedHierarchyMap;
     const children = hierarchyMap.get(benchmarkId) || [];
     const isLeafColumn = children.length === 0;
-    
+
     if (isLeafColumn) {
       // For leaf columns: hide if all values are X's or 0's
       if (shouldHideColumnWithAllXsOrZeros(benchmarkId)) {
@@ -148,8 +148,13 @@ function updateColumnVisibility() {
           return false;
         }
       }
+
+      // For wayback filtering, also hide parent columns if all their values are 'X'
+      if (shouldHideColumnWithAllXsOrZeros(benchmarkId)) {
+        return false;
+      }
     }
-    
+
     // For non-top-level benchmarks, check expansion state
     // Find the parent of this benchmark
     let parentId = null;
@@ -159,19 +164,19 @@ function updateColumnVisibility() {
         break;
       }
     }
-    
+
     if (!parentId) {
       // No parent found, treat as top-level
       return true;
     }
-    
+
     // Parent must be expanded and visible for this to be visible
     const isParentExpanded = window.columnExpansionState.get(parentId) === true;
     const isParentVisible = shouldColumnBeVisible(parentId);
-    
+
     return isParentExpanded && isParentVisible;
   }
-  
+
   function shouldHideColumnWithAllXsOrZeros(benchmarkId) {
     // Get current row data (filtered data)
     const rowData = [];
@@ -182,44 +187,72 @@ function updateColumnVisibility() {
         }
       });
     }
-    
+
     if (rowData.length === 0) {
       return false;
     }
-    
+
     // Check if all values in this column are X or 0
     const values = rowData.map(row => {
       const cellData = row[benchmarkId];
       return cellData && typeof cellData === 'object' ? cellData.value : cellData;
     }).filter(val => val !== null && val !== undefined && val !== '');
-    
+
     if (values.length === 0) {
       return false; // Don't hide if no values
     }
-    
+
+    // Check if wayback timestamp filtering is active
+    const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+    const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+    const ranges = window.filterOptions?.datetime_range;
+    const fullRangeMin = ranges?.min_unix;
+    const fullRangeMax = ranges?.max_unix;
+    const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+
+    if (isWaybackActive) {
+      // For wayback filtering: hide only if ALL values are 'X' (not 0s, since 0s are legitimate scores)
+      const allXs = values.every(val => val === 'X');
+
+      // Determine if this is a parent or leaf column for better logging
+      const hierarchyMap = window.cachedHierarchyMap || new Map();
+      const children = hierarchyMap.get(benchmarkId) || [];
+      const columnType = children.length === 0 ? 'leaf' : 'parent';
+
+      // console.log(`Column visibility check for ${columnType} ${benchmarkId}:`, {
+      //   columnType,
+      //   totalValues: values.length,
+      //   allXs,
+      //   sampleValues: values.slice(0, 5),
+      //   isWaybackActive,
+      //   willHide: allXs
+      // });
+      return allXs;
+    }
+
     // Check if all values are 'X' or 0
     const allXsOrZeros = values.every(val => val === 'X' || val === 0);
-    
-    
+
+
     return allXsOrZeros;
   }
-  
+
   allColumns.forEach(column => {
     const colId = column.getColId();
-    
+
     // Skip non-benchmark columns (including runnable status)
     if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
       return;
     }
-    
+
     const shouldShow = shouldColumnBeVisible(colId);
     const isCurrentlyVisible = column.isVisible();
-    
+
     if (shouldShow !== isCurrentlyVisible) {
       columnsToUpdate.push({ colId, hide: !shouldShow });
     }
   });
-  
+
   // Apply column visibility changes
   if (columnsToUpdate.length > 0) {
     window.globalGridApi.applyColumnState({
@@ -255,20 +288,20 @@ LeafHeaderComponent.prototype.init = function(params) {
   navigationArea.style.cursor = 'pointer';
   navigationArea.style.zIndex = '9';
   navigationArea.style.backgroundColor = 'transparent';
-  
+
   this.eGui.appendChild(navigationArea);
 
   navigationArea.addEventListener('click', (event) => {
     event.stopPropagation();
-    
+
     const colDef = params.column?.userProvidedColDef || params.column?.colDef || params.colDef || {};
     const benchmarkIdentifier = colDef.field || colDef.headerName || params.displayName;
-    
+
     if (!benchmarkIdentifier) {
       console.warn('Could not determine benchmark identifier from params:', params);
       return;
     }
-    
+
     const actualBenchmarkId = window.benchmarkIds && window.benchmarkIds[benchmarkIdentifier];
     if (actualBenchmarkId) {
       const domain = 'vision';
@@ -347,16 +380,16 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     count.className = 'benchmark-count';
     count.style.cursor = 'pointer';
     count.dataset.parentField = colDef.field;
-    
+
     const icon = document.createElement('i');
     icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
     icon.style.marginRight = '4px';
     icon.style.fontSize = '10px';
-    
+
     const countText = document.createElement('span');
     countText.className = 'count-value';
     countText.style.transition = 'all 0.2s ease';
-    
+
     // Calculate initial count
     let initialCount = 0;
     if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
@@ -374,9 +407,9 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       // For other parent columns, use the number of direct children as fallback
       initialCount = directChildren.length;
     }
-    
+
     countText.textContent = initialCount;
-    
+
     count.appendChild(icon);
     count.appendChild(countText);
     this.eGui.appendChild(count);
@@ -391,24 +424,24 @@ ExpandableHeaderComponent.prototype.init = function(params) {
 
       if (shouldExpand) {
         const directChildIds = directChildren.map(c => c.getColId());
-        
+
         window.columnExpansionState.set(columnId, true);
         const showState = directChildIds.map(id => ({ colId: id, hide: false }));
         params.api.applyColumnState({ state: showState });
-        
+
         const allCols = params.api.getAllGridColumns();
         const parentIndex = allCols.findIndex(col => col.getColId() === columnId);
         if (parentIndex !== -1) {
           const insertIndex = parentIndex + 1;
           params.api.moveColumns(directChildIds, insertIndex);
         }
-        
+
         directChildIds.forEach(childId => {
           window.columnExpansionState.set(childId, false);
         });
-        
+
         icon.className = 'fa-solid fa-down-left-and-up-right-to-center';
-        
+
       } else {
         // Collapse: hide ALL descendants recursively
         const allCols = params.api.getAllGridColumns();
@@ -416,19 +449,19 @@ ExpandableHeaderComponent.prototype.init = function(params) {
           .map(id => allCols.find(col => col.getColId() === id))
           .filter(Boolean)
           .map(col => col.getColId());
-        
+
         // Use applyColumnState
         const hideState = allDescendantIds.map(id => ({ colId: id, hide: true }));
         params.api.applyColumnState({ state: hideState });
-        
+
         // Update expansion state
         window.columnExpansionState.set(columnId, false);
-        
+
         // Mark all descendants as collapsed
         allDescendantIds.forEach(descendantId => {
           window.columnExpansionState.set(descendantId, false);
         });
-        
+
         icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
       }
 
@@ -436,7 +469,7 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       if (toggle) {
         toggle.textContent = shouldExpand ? '▴' : '▾';
       }
-      
+
       // Debounced column visibility update after expand/collapse
       if (window.expandCollapseUpdateTimeout) {
         clearTimeout(window.expandCollapseUpdateTimeout);
@@ -465,9 +498,9 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       if (event.target.closest('.expandable-header .benchmark-count') || event.target.closest('.sort-indicator')) {
         return;
       }
-      
+
       event.stopPropagation();
-      
+
       const column = params.column;
       const colId = column.getColId();
       const currentSort = column.getSort();
