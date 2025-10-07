@@ -39,7 +39,8 @@
     <div class="columns is-tablet is-variable is-1-tablet">
          <div class="column is-one-half">
             <pre><code>
-#Create and activate a new conda environment
+# Create and activate a new conda environment
+# myenv can be replaced with any name you want
 conda create -y -n myenv python=3.11
 conda activate myenv
 
@@ -66,7 +67,7 @@ python -m pip install -e .
     <h3 class="benefits_heading is-size-3-mobile">Step 2: Run a Model on a Benchmark</h3>
     <p class="benefits_info is-size-5-mobile shorter">
         Next, make sure your working directory is <span class="special_format">/vision</span>, and run the command below to score the model
-        <span class="special_format">pixels</span> on the publicly available data of a benchmark called <span class="special_format">MajajHong2015public.IT-pls</span>.
+        <span class="special_format">alexnet</span> on the publicly available data of a benchmark called <span class="special_format">MajajHong2015public.IT-pls</span>.
         In this command, <span class="special_format">pixels</span> is a Brain-Score "model identifier" and <span class="special_format">MajajHong2015public.IT-pls</span> is a Brain-Score "benchmark identifier".
         You can use the same command to run other models on the  <span class="special_format">MajajHong2015public.IT-pls</span>
         benchmark by changing the model identifier.  For example, try changing <span class="special_format">pixels</span>
@@ -79,12 +80,12 @@ python -m pip install -e .
         in its _init_.py file. Be aware that several of the models in this collection can be very memory intensive.
         For example the resnet50 model will run on a 2024 M3 Macbook Pro with 32 Gb of RAM, but will fail on the same machine with 16Gb.
         <p class="benefits_info is-size-5-mobile shorter">
-        Similarly You can find a comprehensive collection of
+        Similarly, you can find a comprehensive collection of
         available benchmarks in the <a href="https://github.com/brain-score/vision/tree/master/brainscore_vision/benchmarks">brainscore_vision/benchmarks directory</a>, and you can find the benchmark identifier(s) for each benchmark
-        in it's _init_.py file.
+        in its _init_.py file.
     </p>
     <pre class="modified_1"><code >
-python brainscore_vision score --model_identifier='pixels' --benchmark_identifier='MajajHong2015public.IT-pls'
+python brainscore_vision score --model_identifier='alexnet' --benchmark_identifier='MajajHong2015public.IT-pls'
     </code></pre>
 
     <p class="benefits_info is-size-5-mobile shorter">
