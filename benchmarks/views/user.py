@@ -428,6 +428,11 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
             if ' ' in item.filename:
                 return False, f"File '{item.filename}' contains spaces. Please remove spaces from all file names."
 
+            # Check for metadata files
+            filename = item.filename.lower()
+            if filename.endswith('metadata.yaml') or filename.endswith('metadata.yml'):
+                return False, f"We currently do not support user-contributed metadata files. Please remove the metadata.yaml/metadata.yml files from your submission. Brain-Score will populate metadata fields for you."
+
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
         if not has_plugin:  # checks for at least one plugin
