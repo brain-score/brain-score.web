@@ -161,20 +161,26 @@ function initializeDualHandleSlider(container) {
 
   // Input field synchronization
   if (minInput) {
-    minInput.addEventListener('input', () => {
-      const value = parseFloat(minInput.value) || min;
-      minValue = Math.max(min, Math.min(value, maxValue - 1));
-      updateSliderPosition();
-      updateActiveFilters();
+    minInput?.addEventListener('change', () => {
+      const ts = new Date(minInput.value).getTime() / 1000;
+      if (!isNaN(ts)) {
+        minValue = ts;
+        minHandle.dataset.value = ts;
+        updateSliderPosition();
+        updateActiveFilters();
+      }
     });
   }
 
   if (maxInput) {
-    maxInput.addEventListener('input', () => {
-      const value = parseFloat(maxInput.value) || max;
-      maxValue = Math.min(max, Math.max(value, minValue + 1));
+    maxInput?.addEventListener('change', () => {
+    const ts = new Date(maxInput.value).getTime() / 1000;
+    if (!isNaN(ts)) {
+      maxValue = ts;
+      maxHandle.dataset.value = ts;
       updateSliderPosition();
       updateActiveFilters();
+    }
     });
   }
 
@@ -182,18 +188,22 @@ function initializeDualHandleSlider(container) {
   if (sliderType === 'waybackTimestamp') {
     // Convert date string to Unix timestamp
     const dateValue = new Date(minInput.value);
-    value = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
+    minValue = isNaN(minDateValue.getTime()) ? min : Math.floor(minDateValue.getTime() / 1000);
+    minHandle.dataset.value = minValue;
   } else {
-    value = parseFloat(minInput.value) || min;
+    minValue = parseFloat(minInput.value) || min;
+    minHandle.dataset.value = minValue;
   }
 
   // For maxInput
   if (sliderType === 'waybackTimestamp') {
     // Convert date string to Unix timestamp
     const dateValue = new Date(maxInput.value);
-    value = isNaN(dateValue.getTime()) ? max : Math.floor(dateValue.getTime() / 1000);
+    maxValue = isNaN(dateValue.getTime()) ? max : Math.floor(dateValue.getTime() / 1000);
+    maxHandle.dataset.value = maxValue;
   } else {
-    value = parseFloat(maxInput.value) || max;
+    maxValue = parseFloat(maxInput.value) || max;
+    maxHandle.dataset.value = maxValue;
   }
 
   // Initial position - don't trigger filters during setup
