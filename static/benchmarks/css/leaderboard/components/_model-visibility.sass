@@ -1,10 +1,8 @@
 // Model Visibility Management Styles
 .model-visibility-section
-  background: #f8f9fa
-  border: 1px solid #e9ecef
-  border-radius: 8px
-  padding: 16px
-  margin-bottom: 20px
+  // Remove background and border since it's now inside a box
+  padding: 0
+  margin: 0
 
   .visibility-header
     display: flex
@@ -162,27 +160,11 @@
     .status-message
       font-weight: 500
 
-// Button overrides for apply button
+// Button overrides for apply button - match profile page button styles
 #applyVisibilityChanges
-  background: $primary-color
-  color: white
-  border: none
-  border-radius: 4px
-  padding: 8px 16px
-  font-size: 13px
-  font-weight: 600
-  cursor: pointer
-  transition: all 0.2s ease
-
-  &:hover:not(:disabled)
-    background: darken($primary-color, 10%)
-    transform: translateY(-1px)
-
-  &:active:not(:disabled)
-    transform: translateY(0)
-
+  // Let it inherit the standard .button.button-primary styles
   &:disabled
-    background: #6c757d
+    background: #6c757d !important
     cursor: not-allowed
     opacity: 0.6
 

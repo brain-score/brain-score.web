@@ -44,6 +44,26 @@
         </form>
     </div>
 
+       <!-- Model Visibility Management Section -->
+       <div class="box leaderboard-table-component">
+        <h3 class="benefits_heading is-size-3-mobile">Model Visibility Management</h3>
+        <p class="benefits_info is-size-5-mobile">
+            Manage the visibility of your model submissions. Make private models public to appear on the global leaderboard.
+        </p>
+        <div id="modelVisibilitySection" class="model-visibility-section">
+            <div id="userModelsList" class="user-models-list">
+                <!-- User models will be populated here by JavaScript -->
+            </div>
+            <div id="visibilityStatus" class="visibility-status" style="display: none;">
+                <span class="status-message"></span>
+            </div>
+            <div style="margin-top: 15px;">
+                <button id="applyVisibilityChanges" class="button button-primary" disabled>Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+
     <div class="box leaderboard-table-component">
         <div class="leaderboard-container">
             <!-- Content will be loaded here via AJAX -->
@@ -73,12 +93,31 @@
 
   <!-- Profile Toggle Module -->
   <script src="{% static 'benchmarks/js/profile-toggle-module.js' %}"></script>
+  <script src="{% static 'benchmarks/js/leaderboard/model-visibility-manager.js' %}"></script>
   <script>
     // Pass domain to global scope for the module
     window.DJANGO_DOMAIN = '{{ domain }}';
     
     // Initialize profile page
     ProfileToggleModule.initializeProfilePage('{{ domain }}');
+    
+    // Initialize model visibility manager when AG-Grid content is loaded
+    // We'll hook into the ProfileToggleModule's content loading
+    if (typeof ModelVisibilityManager !== 'undefined') {
+      // Wait for the AG-Grid content to be loaded, then initialize
+      const originalLoadContent = ProfileToggleModule.loadContent;
+      ProfileToggleModule.loadContent = function(url) {
+        return originalLoadContent.call(this, url).then(() => {
+          // Content loaded, now initialize visibility manager
+          setTimeout(() => {
+            if (document.getElementById('modelVisibilitySection')) {
+              console.log('Initializing ModelVisibilityManager after content load...');
+              ModelVisibilityManager.initialize();
+            }
+          }, 100);
+        });
+      };
+    }
   </script>
 
 {% endblock %}
