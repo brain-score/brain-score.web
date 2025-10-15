@@ -239,10 +239,20 @@ LeafHeaderComponent.prototype.init = function(params) {
   const label = document.createElement('span');
   label.className = 'leaf-header-label';
   label.textContent = params.displayName || params.colDef.headerName;
-  label.title = label.textContent;
 
   this.eGui.appendChild(label);
   createSortIndicator(params, this.eGui);
+
+  // Add custom tooltip with instant display for child headers
+  if (typeof addHoverTooltip === 'function') {
+    addHoverTooltip(this.eGui, label.textContent, { 
+      type: 'info', 
+      position: 'top'
+    });
+  } else {
+    // Fallback to native title attribute
+    this.eGui.title = label.textContent;
+  }
 
   // Navigation functionality
   const navigationArea = document.createElement('div');
@@ -315,7 +325,17 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   const title = document.createElement('span');
   title.className = 'expandable-header-label';
   title.textContent = displayName;
-  title.title = displayName;
+  
+  // Add custom tooltip with instant display for parent headers
+  if (typeof addHoverTooltip === 'function') {
+    addHoverTooltip(title, displayName, { 
+      type: 'info', 
+      position: 'top'
+    });
+  } else {
+    // Fallback to native title attribute
+    title.title = displayName;
+  }
 
   labelContainer.appendChild(title);
   this.eGui.appendChild(labelContainer);
