@@ -19,6 +19,22 @@
   </div>
   {% endif %}
 
+  {# Model Visibility Management Section #}
+  {% if has_user %}
+  <div id="modelVisibilitySection" class="model-visibility-section" style="margin-bottom: 15px;">
+    <div class="visibility-header">
+      <h4>Model Visibility Management</h4>
+      <button id="applyVisibilityChanges" class="btn-primary" disabled>Apply Changes</button>
+    </div>
+    <div id="userModelsList" class="user-models-list">
+      <!-- User models will be populated here by JavaScript -->
+    </div>
+    <div id="visibilityStatus" class="visibility-status" style="display: none;">
+      <span class="status-message"></span>
+    </div>
+  </div>
+  {% endif %}
+
   <input type="text" id="modelSearchInput" placeholder="Search models or submitter... (try: 'alexnet OR vit', 'imagenet AND resnet', 'NOT ferguson')" />
 
   {% if domain  == "vision" %} <!-- Disable filtering for Language domain for now -->
@@ -234,6 +250,7 @@
 <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/model-visibility-manager.js' %}"></script>
 
 {% if domain  == "vision" %} <!-- Disable URL params for Language domain for now -->
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
@@ -272,6 +289,14 @@
   // Initialize toggle functionality when this content loads
   if (typeof ProfileToggleModule !== 'undefined') {
     ProfileToggleModule.initializeToggle();
+  }
+  
+  // Initialize model visibility manager when this content loads
+  if (typeof ModelVisibilityManager !== 'undefined') {
+    console.log('Initializing ModelVisibilityManager from template...');
+    ModelVisibilityManager.initialize();
+  } else {
+    console.log('ModelVisibilityManager not found in template');
   }
 </script>
 {% endif %}

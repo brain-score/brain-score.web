@@ -195,6 +195,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         rd = {
             'id': model.model_id,
             'rank': model.rank,
+            'public': model.public,  # Add public field for visibility management
             'model': {
                 'id': model.model_id,
                 'name': model.name,
