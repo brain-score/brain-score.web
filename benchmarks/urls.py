@@ -95,7 +95,7 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        path(f'{domain}/', partial(index, domain=domain), name='index'),
+        path(f'{domain}/', RedirectView.as_view(url=f'/{domain}/leaderboard/', permanent=False), name='index'),
         path(f'{domain}/leaderboard/', partial(leaderboard.ag_grid_leaderboard_shell, domain=domain),
              name=f'{domain}-leaderboard'),
         path(f'{domain}/leaderboard/content/', partial(leaderboard.ag_grid_leaderboard_content, domain=domain),
