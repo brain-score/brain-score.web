@@ -6,7 +6,8 @@ ModelCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'model-cell';
   const a = document.createElement('a');
-  a.href = `/model/vision/${params.value.id}`;
+  const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+  a.href = `/model/${domain}/${params.value.id}`;
   a.textContent = params.value.name;
   this.eGui.appendChild(a);
 
