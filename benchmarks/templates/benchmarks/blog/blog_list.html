@@ -7,8 +7,15 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="blog-container">
+{# Flag to enable/disable sidebar - set to False to disable #}
+{% comment %}
+To disable sidebar: change True to False below
+To enable sidebar: change False to True below
+{% endcomment %}
+{% with show_sidebar=False %}
+<div class="blog-container{% if not show_sidebar %} no-sidebar{% endif %}">
   <!-- Sidebar -->
+  {% if show_sidebar %}
   <aside class="blog-sidebar">
     <!-- Search -->
     <div class="sidebar-widget">
@@ -52,6 +59,7 @@
       </div>
     {% endif %}
   </aside>
+  {% endif %}
 
   <div class="blog-main">
     {% if search_query %}
@@ -142,4 +150,5 @@
   </div>
 </div>
 
+{% endwith %}
 {% endblock %}
