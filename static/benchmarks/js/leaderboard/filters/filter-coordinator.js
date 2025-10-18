@@ -3,7 +3,7 @@
 // Main function that applies all filters
 function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   if (!window.globalGridApi || !window.originalRowData) return;
-  
+
 
   if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
     window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
@@ -113,13 +113,26 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     return true;
   });
 
-  // Update filtered scores on the filtered data BEFORE setting it on the grid
-  let finalData = filteredData;
+  // Apply wayback timestamp filtering first
+  let timestampFilteredData = filteredData;
+  if (typeof applyWaybackTimestampFilter === 'function') {
+    timestampFilteredData = applyWaybackTimestampFilter(filteredData);
+  }
+
+  // Initialize finalData
+  let finalData = timestampFilteredData;
+
+  // Update filtered scores
   if (typeof updateFilteredScores === 'function') {
-    const updatedData = updateFilteredScores(filteredData);
+    const updatedData = updateFilteredScores(timestampFilteredData);
     if (updatedData) {
       finalData = updatedData;
     }
+  }
+
+  // Additional pass: Remove models where global score is 'X'
+  if (typeof applyGlobalScoreModelRemoval === 'function') {
+    finalData = applyGlobalScoreModelRemoval(finalData);
   }
 
   // Update grid with filtered data - preserving original data structure
@@ -130,7 +143,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   if (!skipColumnToggle && typeof toggleFilteredScoreColumn === 'function') {
     toggleFilteredScoreColumn(window.globalGridApi);
   }
-  
+
   // Only update column visibility if we're not in the initial setup phase
   // During initial setup, setInitialColumnState() handles the column visibility
   if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
@@ -152,6 +165,162 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   }
 }
 
+function isColumnHiddenByWaybackFiltering(benchmarkId) {
+  // Only check for wayback filtering if it's active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+
+  if (!isWaybackActive) {
+    return false; // No wayback filtering, column not hidden
+  }
+
+  // Get current row data from the grid
+  const rowData = [];
+  if (window.globalGridApi) {
+    window.globalGridApi.forEachNode(node => {
+      if (node.data) {
+        rowData.push(node.data);
+      }
+    });
+  }
+
+  if (rowData.length === 0) {
+    return false;
+  }
+
+  // Check if all values in this column are 'X'
+  const values = rowData.map(row => {
+    const cellData = row[benchmarkId];
+    return cellData && typeof cellData === 'object' ? cellData.value : cellData;
+  }).filter(val => val !== null && val !== undefined && val !== '');
+
+  if (values.length === 0) {
+    return false; // Don't hide if no values
+  }
+
+  const allXs = values.every(val => val === 'X');
+  return allXs;
+}
+
+function applyWaybackTimestampFilter(rowData) {
+  // Check if wayback timestamp filters are set and not at full range
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No timestamp filtering active
+  }
+
+  console.log('Applying wayback timestamp filter:', {
+    minTimestamp,
+    maxTimestamp,
+    minDate: new Date(minTimestamp * 1000).toISOString(),
+    maxDate: new Date(maxTimestamp * 1000).toISOString()
+  });
+
+  // Stats counters
+  let totalScoresProcessed = 0;
+  let scoresWithTimestamps = 0;
+  let scoresWithoutTimestamps = 0;
+  let scoresFilteredOut = 0;
+
+  const filteredWithValidModels = rowData.map(row => {
+    const newRow = { ...row };
+
+    Object.keys(row).forEach(key => {
+      if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
+        totalScoresProcessed++;
+
+
+        const ts = row[key].timestamp;
+
+
+        if (!ts) {
+          scoresWithoutTimestamps++;
+          newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+        } else {
+          try {
+            const scoreTime = new Date(ts).getTime() / 1000; // Convert ISO string to Unix timestamp
+            if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
+              scoresFilteredOut++;
+              newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            } else {
+              scoresWithTimestamps++;
+            }
+          } catch (error) {
+            scoresWithoutTimestamps++;
+            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+          }
+        }
+      }
+    });
+
+    return newRow;
+  });
+
+  console.log("Wayback timestamp filtering results:", {
+    originalRows: rowData.length,
+    filteredRows: filteredWithValidModels.length,
+    totalScoresProcessed,
+    scoresWithTimestamps,
+    scoresWithoutTimestamps,
+    scoresFilteredOut,
+    percentageScoresWithTimestamps:
+      ((scoresWithTimestamps / Math.max(1, totalScoresProcessed)) * 100).toFixed(1) + "%",
+    percentageScoresFilteredOut:
+      ((scoresFilteredOut / Math.max(1, totalScoresProcessed)) * 100).toFixed(1) + "%"
+  });
+
+  return filteredWithValidModels;
+}
+
+function applyGlobalScoreModelRemoval(rowData) {
+  // Only apply this additional filtering if wayback timestamp filtering is active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+
+  // Get the actual range limits from filter options
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+
+  const isAtFullRange = (minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+
+  if (!minTimestamp || !maxTimestamp || isAtFullRange) {
+    return rowData; // No wayback filtering active, don't remove any models
+  }
+
+  const originalCount = rowData.length;
+
+  // Filter out models where average_vision_v0 is 'X'
+  const filteredData = rowData.filter(row => {
+    const globalScore = row.average_vision_v0?.value;
+    return globalScore !== 'X';
+  });
+
+  const removedCount = originalCount - filteredData.length;
+
+  console.log('Global score model removal:', {
+    originalModels: originalCount,
+    modelsWithXGlobalScore: removedCount,
+    remainingModels: filteredData.length,
+    removedModels: removedCount > 0 ? rowData.filter(row => row.average_vision_v0?.value === 'X').slice(0, 3).map(row => row.model?.name || 'Unknown') : []
+  });
+
+  return filteredData;
+}
+
 // Reset all filters to default state
 function resetAllFilters() {
   window.activeFilters = {
@@ -169,7 +338,9 @@ function resetAllFilters() {
     benchmark_regions: [],
     benchmark_species: [],
     benchmark_tasks: [],
-    public_data_only: false
+    public_data_only: false,
+    min_wayback_timestamp: null,
+    max_wayback_timestamp: null
   };
 
   // Reset UI elements
@@ -285,7 +456,7 @@ function resetAllFilters() {
 
   // Apply filters but skip auto-sort during reset (allow column visibility updates)
   applyCombinedFilters(false, true);
-  
+
   // Reset sorting to original average_vision_v0 column when filters are reset
   if (window.globalGridApi) {
     setTimeout(() => {
@@ -297,7 +468,7 @@ function resetAllFilters() {
       });
     }, 100);
   }
-  
+
   if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
     window.LeaderboardURLState.updateURLFromFilters();
   }
@@ -306,48 +477,48 @@ function resetAllFilters() {
 // Update filtered scores based on current filters
 function updateFilteredScores(rowData) {
   if (!window.originalRowData || !window.benchmarkTree) return;
-  
+
+  console.log('updateFilteredScores called - checking for wayback timestamp changes...');
+
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
   const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
-  
-  const workingRowData = rowData.map(row => ({ ...row }));
-  
-  // First restore original data for all columns
-  workingRowData.forEach((row) => {
-    const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
-    if (!originalRow) return;
-    
-    Object.keys(originalRow).forEach(key => {
-      if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
-        row[key] = { ...originalRow[key] };
+
+  // Deep copy the rowData to preserve wayback timestamp filtering changes
+  const workingRowData = rowData.map(row => {
+    const newRow = { ...row };
+    // Deep copy all score objects to preserve wayback filtering changes
+    Object.keys(row).forEach(key => {
+      if (key !== 'model' && key !== 'rank' && key !== 'metadata' && row[key] && typeof row[key] === 'object') {
+        newRow[key] = { ...row[key] };
       }
     });
+    return newRow;
   });
-  
+
   // Then process each row for filtering
   workingRowData.forEach((row) => {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
-    
+
     function getDepthLevel(benchmarkId, visited = new Set()) {
       if (visited.has(benchmarkId)) return 0;
       visited.add(benchmarkId);
-      
+
       const children = hierarchyMap.get(benchmarkId) || [];
       if (children.length === 0) return 0;
-      
+
       const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
       return maxChildDepth + 1;
     }
-    
+
     const allBenchmarkIds = Array.from(hierarchyMap.keys());
     const benchmarksByDepth = allBenchmarkIds
       .map(id => ({ id, depth: getDepthLevel(id) }))
       .sort((a, b) => a.depth - b.depth);
-    
+
     benchmarksByDepth.forEach(({ id: benchmarkId }) => {
       const children = hierarchyMap.get(benchmarkId) || [];
-      
+
       if (children.length === 0) {
         if (excludedBenchmarks.has(benchmarkId)) {
           row[benchmarkId] = {
@@ -358,23 +529,23 @@ function updateFilteredScores(rowData) {
         }
       } else {
         const childScores = [];
-        
-        
+
+
         // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
         children.forEach(childId => {
           if (!excludedBenchmarks.has(childId) && row[childId]) {
             const childScore = row[childId].value;
-            const hasValidScore = childScore !== null && childScore !== undefined && 
+            const hasValidScore = childScore !== null && childScore !== undefined &&
                                  childScore !== '' && childScore !== 'X' &&
                                  !isNaN(parseFloat(childScore));
             childInfo.push({ childId, childScore, hasValidScore });
           }
         });
-        
+
         // Check if any valid scores among the children
         const hasAnyValidScores = childInfo.some(info => info.hasValidScore);
-        
+
         // Second pass, build the scores array
         childInfo.forEach(({ childId, childScore, hasValidScore }) => {
           if (hasValidScore) {
@@ -387,11 +558,11 @@ function updateFilteredScores(rowData) {
           }
           // If no valid scores exist at all, skip everything (childScores will be empty)
         });
-        
-        
+
+
         // Check if we should drop out this parent column
         let shouldDropOut = false;
-        
+
         if (childScores.length === 0) {
           // No children available at all
           shouldDropOut = true;
@@ -399,7 +570,7 @@ function updateFilteredScores(rowData) {
           // Check if all non-excluded children are X or 0
           let validChildrenCount = 0;
           let nonZeroChildrenCount = 0;
-          
+
           children.forEach(childId => {
             if (!excludedBenchmarks.has(childId) && row[childId]) {
               validChildrenCount++;
@@ -412,11 +583,11 @@ function updateFilteredScores(rowData) {
               }
             }
           });
-          
+
           // Drop out if no valid children or all valid children are 0/X
           shouldDropOut = validChildrenCount === 0 || nonZeroChildrenCount === 0;
         }
-        
+
         if (shouldDropOut) {
           row[benchmarkId] = {
             ...row[benchmarkId],
@@ -432,14 +603,14 @@ function updateFilteredScores(rowData) {
         }
       }
     });
-    
+
     // Calculate global filtered score
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
-    
+
     visionCategories.forEach(category => {
       const isExcluded = excludedBenchmarks.has(category);
-      
+
       // Check if this column would be visible (not dropped out)
       let isColumnVisible = true;
       if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
@@ -448,7 +619,7 @@ function updateFilteredScores(rowData) {
           isColumnVisible = false; // Column is dropped out
         }
       }
-      
+
       // Only include in filtered score if column is visible and not excluded
       if (row[category] && !isExcluded && isColumnVisible) {
         const score = row[category].value;
@@ -468,8 +639,8 @@ function updateFilteredScores(rowData) {
         }
       }
     });
-    
-   
+
+
     if (categoryScores.length > 0) {
       const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
       row._tempFilteredScore = globalAverage;
@@ -481,15 +652,15 @@ function updateFilteredScores(rowData) {
   // Apply colors for recalculated benchmarks
   const allBenchmarkIds = Array.from(hierarchyMap.keys());
   const recalculatedBenchmarks = new Set();
-  
+
   allBenchmarkIds.forEach(benchmarkId => {
     const children = hierarchyMap.get(benchmarkId) || [];
-    
+
     if (children.length > 0) {
       const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
       if (hasExcludedChildren) {
         recalculatedBenchmarks.add(benchmarkId);
-        
+
         function markAncestorsRecalculated(targetId) {
           allBenchmarkIds.forEach(parentId => {
             const parentChildren = hierarchyMap.get(parentId) || [];
@@ -503,7 +674,7 @@ function updateFilteredScores(rowData) {
       }
     }
   });
-  
+
   // Apply blue coloring for recalculated benchmarks
   allBenchmarkIds.forEach(benchmarkId => {
     if (recalculatedBenchmarks.has(benchmarkId)) {
@@ -517,12 +688,12 @@ function updateFilteredScores(rowData) {
           }
         }
       });
-      
+
       if (scores.length > 0) {
         const minScore = Math.min(...scores);
         const maxScore = Math.max(...scores);
         const scoreRange = maxScore - minScore;
-        
+
         workingRowData.forEach(row => {
           if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
             const val = row[benchmarkId].value;
@@ -533,7 +704,7 @@ function updateFilteredScores(rowData) {
               const green = Math.round(173 + (105 * (1 - intensity)));
               const red = Math.round(216 * (1 - intensity));
               const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
-              
+
               row[benchmarkId].color = color;
             }
           }
@@ -557,7 +728,7 @@ function updateFilteredScores(rowData) {
   const globalFilteredScores = workingRowData
     .map(row => row._tempFilteredScore)
     .filter(score => score !== null);
-    
+
   const globalMinScore = globalFilteredScores.length > 0 ? Math.min(...globalFilteredScores) : 0;
   const globalMaxScore = globalFilteredScores.length > 0 ? Math.max(...globalFilteredScores) : 1;
   const globalScoreRange = globalMaxScore - globalMinScore;
@@ -614,7 +785,7 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
   let hasNonEngineeringBenchmarkFilters = false;
-  
+
   // Only check for non-engineering benchmark filters if the benchmark panel is ready
   const benchmarkPanel = document.getElementById('benchmarkFilterPanel');
   if (benchmarkPanel && benchmarkPanel.children.length > 0) {
@@ -630,7 +801,7 @@ function toggleFilteredScoreColumn(gridApi) {
   }
 
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
-  
+
 
   if (shouldShowFilteredScore) {
     // First, make column visible
@@ -640,7 +811,7 @@ function toggleFilteredScoreColumn(gridApi) {
         { colId: 'average_vision_v0', hide: true }
       ]
     });
-    
+
     // Then apply sort with a small delay to ensure AG-Grid has processed the visibility change
     setTimeout(() => {
       // Try to simulate a manual click on the column header
@@ -652,7 +823,7 @@ function toggleFilteredScoreColumn(gridApi) {
             { colId: 'filtered_score', sort: 'desc' }
           ]
         });
-        
+
         // Verify it worked, and if not, try to trigger sort via the column API
         setTimeout(() => {
           const currentSort = filteredScoreColumn.getSort();
@@ -671,7 +842,7 @@ function toggleFilteredScoreColumn(gridApi) {
       ]
     });
   }
-  
+
   // Ensure column visibility is updated after changing filtered score visibility
   setTimeout(() => {
     if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {

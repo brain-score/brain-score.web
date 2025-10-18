@@ -9,6 +9,9 @@ from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
 from django.db.models import Model
 logger = logging.getLogger(__name__)
+from .index import get_context, get_datetime_range  # Add get_datetime_range import
+from datetime import datetime
+import pytz
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
@@ -320,7 +323,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
                 # Include minimal benchmark info only when needed for citations
-                'benchmark': minimal_benchmark if minimal_benchmark else None
+                'benchmark': score.get('benchmark', {}),
+                'timestamp': score.get('end_timestamp')
             }
         row_data.append(rd)
 
@@ -438,6 +442,19 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
         }
     }
+
+    # Compute datetime range for wayback timestamp filter
+    datetime_range = get_datetime_range(context['models'])
+    if datetime_range:
+        # Parse the timestamps to get Unix timestamps for the slider
+        min_timestamp = datetime.fromisoformat(datetime_range['min'])
+        max_timestamp = datetime.fromisoformat(datetime_range['max'])
+        filter_options['datetime_range'] = {
+            'min': datetime_range['min'],
+            'max': datetime_range['max'],
+            'min_unix': int(min_timestamp.timestamp()),
+            'max_unix': int(max_timestamp.timestamp())
+        }
 
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
