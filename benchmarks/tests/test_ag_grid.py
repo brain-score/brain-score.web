@@ -1014,7 +1014,7 @@ class TestFilter:
         """)
 
         # 3) give the grid a moment to re-filter
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(500)
 
         # 4) verify both UI inputs and JS state
         min_val = page.evaluate("document.getElementById('waybackDateMin')?.value")
