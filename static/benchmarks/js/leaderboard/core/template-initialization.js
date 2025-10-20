@@ -125,10 +125,11 @@ function initializeLeaderboardFromTemplate() {
         }
       }
     }
+    
     // Initialize wayback timestamp filter if datetime_range data is available
     if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
       const waybackSection = document.getElementById('waybackTimestampSection');
-      const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
+      const waybackSliderContainer = document.querySelector('#waybackTimestampSection .slider-container');
       const waybackDateMin = document.getElementById('waybackDateMin');
       const waybackDateMax = document.getElementById('waybackDateMax');
 
@@ -306,16 +307,18 @@ function setupEventHandlers() {
   }, 30);
 
   setupLayoutToggleHandlers();
+  setupWaybackPanel();
 }
+
+// Global variables for panel state management
+let isPanelVisible = false;
+let isWaybackPanelVisible = false;
 
 function setupLayoutToggleHandlers() {
   const panel = document.getElementById('advancedFiltersPanel');
   const container = document.querySelector('.leaderboard-container');
   const advancedFilterBtn = document.getElementById('advancedFilterBtn');
   const layoutToggleBtn = document.getElementById('toggleLayoutBtn');
-
-  // Enhanced layout toggle functionality
-  let isPanelVisible = false;
 
   // Check for saved preference and set initial state
   const savedLayout = localStorage.getItem('leaderboardLayout');
@@ -394,6 +397,21 @@ function setupLayoutToggleHandlers() {
       e.preventDefault();
       e.stopPropagation();
 
+      // Close wayback panel if open
+      const waybackPanel = document.getElementById('waybackPanel');
+      if (waybackPanel && !waybackPanel.classList.contains('hidden')) {
+        waybackPanel.classList.add('hidden');
+        waybackPanel.style.display = '';
+        isWaybackPanelVisible = false;
+        
+        // Update wayback button text
+        const waybackBtn = document.getElementById('waybackBtn');
+        const textWrapper = waybackBtn?.querySelector('.text-wrapper');
+        if (textWrapper) {
+          textWrapper.textContent = 'Wayback';
+        }
+      }
+
       if (!container.classList.contains('sidebar-mode')) {
         isPanelVisible = !isPanelVisible;
         if (isPanelVisible) {
@@ -433,6 +451,146 @@ function setupLayoutToggleHandlers() {
       }
     }
   }, 50);
+}
+
+function setupWaybackPanel() {
+  const waybackBtn = document.getElementById('waybackBtn');
+  const waybackPanel = document.getElementById('waybackPanel');
+  const advancedFiltersPanel = document.getElementById('advancedFiltersPanel');
+  const advancedFilterBtn = document.getElementById('advancedFilterBtn');
+  const waybackStartDate = document.getElementById('waybackStartDate');
+  const waybackEndDate = document.getElementById('waybackEndDate');
+  const applyBtn = document.getElementById('applyWaybackBtn');
+  const resetBtn = document.getElementById('resetWaybackBtn');
+  
+  if (!waybackBtn || !waybackPanel) return;
+  
+  // Initialize date inputs with min/max from filterOptions
+  const ranges = window.filterOptions || {};
+  let minUnix, maxUnix;
+  
+  if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+    minUnix = ranges.datetime_range.min_unix;
+    maxUnix = ranges.datetime_range.max_unix;
+    
+    const minDate = new Date(minUnix * 1000);
+    const maxDate = new Date(maxUnix * 1000);
+    
+    waybackStartDate.value = minDate.toISOString().split('T')[0];
+    waybackEndDate.value = maxDate.toISOString().split('T')[0];
+    waybackStartDate.min = minDate.toISOString().split('T')[0];
+    waybackStartDate.max = maxDate.toISOString().split('T')[0];
+    waybackEndDate.min = minDate.toISOString().split('T')[0];
+    waybackEndDate.max = maxDate.toISOString().split('T')[0];
+  }
+  
+  // Wayback button click handler - toggle panel
+  waybackBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Close Advanced Filters if open
+    if (!advancedFiltersPanel.classList.contains('hidden')) {
+      advancedFiltersPanel.classList.add('hidden');
+      advancedFiltersPanel.style.display = '';
+      isPanelVisible = false;
+      
+      const textWrapper = advancedFilterBtn?.querySelector('.text-wrapper');
+      if (textWrapper) {
+        textWrapper.textContent = 'Advanced Filters';
+      }
+    }
+    
+    // Toggle wayback panel
+    isWaybackPanelVisible = !isWaybackPanelVisible;
+    if (isWaybackPanelVisible) {
+      waybackPanel.classList.remove('hidden');
+      
+      const textWrapper = waybackBtn.querySelector('.text-wrapper');
+      if (textWrapper) {
+        textWrapper.textContent = 'Hide Wayback';
+      }
+    } else {
+      waybackPanel.classList.add('hidden');
+      
+      const textWrapper = waybackBtn.querySelector('.text-wrapper');
+      if (textWrapper) {
+        textWrapper.textContent = 'Wayback';
+      }
+    }
+  });
+  
+  // Apply button - set wayback filter and trigger filtering
+  applyBtn?.addEventListener('click', () => {
+    const startDate = waybackStartDate.value;
+    const endDate = waybackEndDate.value;
+    
+    if (!startDate || !endDate) {
+      console.warn('Both start and end dates are required');
+      return;
+    }
+    
+    // Convert dates to Unix timestamps
+    const startUnix = Math.floor(new Date(startDate).getTime() / 1000);
+    const endUnix = Math.floor(new Date(endDate).getTime() / 1000);
+    
+    // Update window.activeFilters directly
+    if (!window.activeFilters) {
+      window.activeFilters = {};
+    }
+    window.activeFilters.min_wayback_timestamp = startUnix;
+    window.activeFilters.max_wayback_timestamp = endUnix;
+    
+    // Set values in the hidden Advanced Filters wayback inputs (for sync)
+    const waybackDateMin = document.getElementById('waybackDateMin');
+    const waybackDateMax = document.getElementById('waybackDateMax');
+    
+    if (waybackDateMin && waybackDateMax) {
+      waybackDateMin.value = startDate;
+      waybackDateMax.value = endDate;
+    }
+    
+    // Trigger the existing filter system
+    if (typeof window.applyCombinedFilters === 'function') {
+      window.applyCombinedFilters();
+    }
+    
+    console.log(`Wayback filter applied: ${startDate} to ${endDate} (Unix: ${startUnix} to ${endUnix})`);
+  });
+  
+  // Reset button - reset to full date range
+  resetBtn?.addEventListener('click', () => {
+    if (minUnix && maxUnix) {
+      const minDate = new Date(minUnix * 1000);
+      const maxDate = new Date(maxUnix * 1000);
+      
+      waybackStartDate.value = minDate.toISOString().split('T')[0];
+      waybackEndDate.value = maxDate.toISOString().split('T')[0];
+      
+      // Update window.activeFilters to full range
+      if (!window.activeFilters) {
+        window.activeFilters = {};
+      }
+      window.activeFilters.min_wayback_timestamp = minUnix;
+      window.activeFilters.max_wayback_timestamp = maxUnix;
+      
+      // Also reset the hidden Advanced Filters wayback inputs
+      const waybackDateMin = document.getElementById('waybackDateMin');
+      const waybackDateMax = document.getElementById('waybackDateMax');
+      
+      if (waybackDateMin && waybackDateMax) {
+        waybackDateMin.value = minDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+      }
+      
+      // Trigger the existing filter system
+      if (typeof window.applyCombinedFilters === 'function') {
+        window.applyCombinedFilters();
+      }
+      
+      console.log('Wayback filter reset to full range');
+    }
+  });
 }
 
 // Export for global access

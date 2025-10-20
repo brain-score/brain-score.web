@@ -32,6 +32,20 @@ button,
     font-size: 1.1em
     line-height: 1
 
+#waybackBtn
+  @include solid-button($primary-color)
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 6px
+  height: 40px
+  padding: 8px 16px
+  font-size: 15px
+
+  .filter-icon
+    font-size: 1.1em
+    line-height: 1
+
 // Reset all filters button (special case - can be both gradient and in filter actions)
 #resetAllFiltersBtn
   @include solid-button($primary-color)
