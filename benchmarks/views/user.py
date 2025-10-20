@@ -313,6 +313,9 @@ class Upload(View):
 
             if plugin == 'too_many_identifiers':
                 return render(request, 'benchmarks/invalid_zip.html', {'error': identifier, "domain": self.domain})
+            
+            if plugin == 'invalid_identifier':
+                return render(request, 'benchmarks/invalid_zip.html', {'error': identifier, "domain": self.domain})
 
             # ensure the user is not accidentally submitting the tutorial model
             page = "tutorial" if identifier == "resnet50_tutorial" else "already"
@@ -367,6 +370,12 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
 
         # grab identifiers from inits of all plugins
         plugin_identifiers = extract_identifiers(archive)
+        
+        # validate that no identifiers contain hyphens
+        hyphen_valid, hyphen_error = validate_identifiers_no_hyphens(plugin_identifiers)
+        if not hyphen_valid:
+            return False, ["invalid_identifier", hyphen_error]
+        
         under_plugin_limit = under_identifier_limit(plugin_identifiers)
         if not under_plugin_limit:
             return False, ["too_many_identifiers",
@@ -551,6 +560,21 @@ def extract_identifiers(zip_ref):
                         identifiers[plugin].update(matches)
 
     return identifiers
+
+
+def validate_identifiers_no_hyphens(identifier_dict):
+    """
+    Validates that no identifiers contain hyphens, which will cause scoring issues.
+    
+    :param identifier_dict: Dictionary with plugin types as keys and sets of identifiers as values
+    :return: Tuple of (is_valid, error_message)
+    """
+    for plugin, identifiers in identifier_dict.items():
+        for identifier in identifiers:
+            if '-' in identifier:
+                return False, f"Model name '{identifier}' in {plugin} plugin contains hyphens. Please use underscores instead of hyphens in model names."
+    
+    return True, ""
 
 
 def under_identifier_limit(identifier_dict):
