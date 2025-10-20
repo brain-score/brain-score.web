@@ -188,7 +188,7 @@ function initializeDualHandleSlider(container) {
   if (sliderType === 'waybackTimestamp') {
     // Convert date string to Unix timestamp
     const dateValue = new Date(minInput.value);
-    minValue = isNaN(minDateValue.getTime()) ? min : Math.floor(minDateValue.getTime() / 1000);
+    minValue = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
     minHandle.dataset.value = minValue;
   } else {
     minValue = parseFloat(minInput.value) || min;
