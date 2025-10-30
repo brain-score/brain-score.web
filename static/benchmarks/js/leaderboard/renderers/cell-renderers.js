@@ -117,6 +117,118 @@ function createRunnableStatusColumn() {
   };
 }
 
+// PublicToggleCellRenderer - displays toggle switch for public/private
+function PublicToggleCellRenderer() {}
+PublicToggleCellRenderer.prototype.init = function(params) {
+  this.params = params;
+  this.eGui = document.createElement('div');
+  this.eGui.className = 'public-toggle-cell';
+  this.eGui.style.display = 'flex';
+  this.eGui.style.justifyContent = 'center';
+  this.eGui.style.alignItems = 'center';
+  this.eGui.style.height = '100%';
+  
+  // Only show toggle if user owns the model
+  if (params.data && params.data.is_owner) {
+    const toggleWrapper = document.createElement('div');
+    toggleWrapper.className = 'toggle-wrapper';
+    toggleWrapper.style.cursor = 'pointer';
+    
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'toggle-switch';
+    
+    // Debug logging
+    console.log('Public toggle - params.data.public:', params.data.public);
+    console.log('Public toggle - typeof:', typeof params.data.public);
+    
+    const isPublic = params.data.public === true || params.data.public === 'true' || params.data.public === 1 || params.data.public === '1';
+    toggleButton.setAttribute('aria-pressed', isPublic ? 'true' : 'false');
+    toggleButton.title = isPublic ? 'Make private' : 'Make public';
+    
+    const knob = document.createElement('span');
+    knob.className = 'knob';
+    
+    toggleButton.appendChild(knob);
+    toggleWrapper.appendChild(toggleButton);
+    this.eGui.appendChild(toggleWrapper);
+    
+    // Add click handler
+    toggleButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.handleToggle(params);
+    });
+  }
+};
+PublicToggleCellRenderer.prototype.getGui = function() {
+  return this.eGui;
+};
+PublicToggleCellRenderer.prototype.handleToggle = function(params) {
+  const modelId = params.data.id;
+  const currentPublicStatus = !!params.data.public;
+  const newPublicStatus = !currentPublicStatus;
+
+  // Confirmation popup
+  const modelName = params.data?.model?.name || 'your model';
+  const action = currentPublicStatus ? 'private' : 'public';
+  const confirmMessage = `You are about to make your model "${modelName}" ${action}.\nPlease confirm this is what you want to do. \n\nAlso note that it may take up to 5 minutes for changes to be refelcted on the public leaderboard. Please do not submit another request during this time.`;
+  if (!window.confirm(confirmMessage)) {
+    return; // Cancelled by user
+  }
+  
+  // Send AJAX request to backend
+  fetch('/profile/public-ajax/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': this.getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      id: modelId,
+      public: newPublicStatus
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to update model visibility');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Update the row data
+    params.data.public = newPublicStatus;
+    
+    // Update the UI
+    const toggleButton = this.eGui.querySelector('.toggle-switch');
+    if (toggleButton) {
+      toggleButton.setAttribute('aria-pressed', newPublicStatus ? 'true' : 'false');
+      toggleButton.title = newPublicStatus ? 'Make private' : 'Make public';
+      
+      // Trigger AG-Grid refresh
+      if (window.globalGridApi) {
+        window.globalGridApi.refreshCells({ rowNodes: [params.node] });
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error updating model visibility:', error);
+    alert('Failed to update model visibility. Please try again.');
+  });
+};
+PublicToggleCellRenderer.prototype.getCookie = function(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
 // Model comparator for sorting
 function modelComparator(a, b) {
   const nameA = a?.name?.toLowerCase() || '';
@@ -129,6 +241,7 @@ window.LeaderboardRenderers = {
   ModelCellRenderer,
   RunnableStatusCellRenderer,
   ScoreCellRenderer,
+  PublicToggleCellRenderer,
   createRunnableStatusColumn,
   modelComparator
 };

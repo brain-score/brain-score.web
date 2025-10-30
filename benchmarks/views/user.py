@@ -855,7 +855,30 @@ class PublicAjax(View):
         verify_user_model_access(user=request.user, model=model)
         model.public = public
         model.save(update_fields=['public'])
+        
+        # Trigger leaderboard refresh job in Jenkins
+        trigger_leaderboard_refresh()
+        
         return JsonResponse("success", safe=False)
+
+
+def trigger_leaderboard_refresh():
+    """
+    Trigger the Jenkins "Refresh Leaderboard" job with dev parameter
+    """
+    try:
+        jenkins_url = "http://www.brain-score-jenkins.com:8080"
+        auth = get_secret("brainscore-website_jenkins_access_aws")
+        auth = (auth['user'], auth['password'])
+        
+        request_url = f"{jenkins_url}/job/Refresh%20Leaderboard/buildWithParameters?TOKEN=trigger2refreshLeaderboard&database=dev"
+        _logger.debug(f"Triggering leaderboard refresh: {request_url}")
+        
+        response = requests.post(request_url, auth=auth)
+        response.raise_for_status()
+        _logger.debug("Leaderboard refresh job triggered successfully")
+    except Exception as e:
+        _logger.error(f"Failed to trigger leaderboard refresh: {e}")
 
 
 def verify_user_model_access(user, model):
