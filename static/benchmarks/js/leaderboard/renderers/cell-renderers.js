@@ -167,14 +167,6 @@ PublicToggleCellRenderer.prototype.handleToggle = function(params) {
   const currentPublicStatus = !!params.data.public;
   const newPublicStatus = !currentPublicStatus;
 
-  // Confirmation popup
-  const modelName = params.data?.model?.name || 'your model';
-  const action = currentPublicStatus ? 'private' : 'public';
-  const confirmMessage = `You are about to make your model "${modelName}" ${action}.\nPlease confirm this is what you want to do. \n\nAlso note that it may take up to 5 minutes for changes to be refelcted on the public leaderboard. Please do not submit another request during this time.`;
-  if (!window.confirm(confirmMessage)) {
-    return; // Cancelled by user
-  }
-  
   // Send AJAX request to backend
   fetch('/profile/public-ajax/', {
     method: 'POST',
@@ -208,6 +200,27 @@ PublicToggleCellRenderer.prototype.handleToggle = function(params) {
         window.globalGridApi.refreshCells({ rowNodes: [params.node] });
       }
     }
+
+    // Inform user to apply changes (with bold model name)
+    const modelName = params.data?.model?.name || 'your model';
+    const note = document.createElement('div');
+    note.className = 'notification is-info is-light';
+    note.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 420px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: #eef6ff;
+      color: #114a7a;
+      font-size: 14px;
+    `;
+    note.innerHTML = `Changes saved for <strong>${modelName}</strong>.<br/>Please hit <strong>Apply</strong> below to apply your changes.`;
+    document.body.appendChild(note);
+    setTimeout(() => { if (note.parentNode) note.parentNode.removeChild(note); }, 5000);
   })
   .catch(error => {
     console.error('Error updating model visibility:', error);
