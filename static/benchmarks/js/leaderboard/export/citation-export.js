@@ -85,28 +85,31 @@ function collectBenchmarkBibtex() {
 
     const scoreData = firstModel[fieldName];
 
-    // Check if this is a leaf benchmark with bibtex data
+    // Check if this is a leaf benchmark
     if (scoreData &&
         typeof scoreData === 'object' &&
-        scoreData.benchmark &&
-        scoreData.benchmark.bibtex &&
         isLeafBenchmark(fieldName)) {
 
-      // Check if this benchmark is excluded using multiple patterns
-      const baseFieldName = fieldName.replace(/_v\d+$/, '');
-      const benchmarkTypeId = scoreData.benchmark.benchmark_type_id;
+      // Look up bibtex from the benchmark bibtex map
+      const bibtexData = window.benchmarkBibtexMap?.[fieldName];
+      // If there is bibtex data
+      if (bibtexData && bibtexData.bibtex) {
+        // Check if this benchmark is excluded using multiple patterns
+        const baseFieldName = fieldName.replace(/_v\d+$/, '');
+        const benchmarkTypeId = bibtexData.benchmark_type_id;
 
-      // Makes sure that we do not include benchmarks that we have excluded
-      const isExcluded = excludedBenchmarks.has(fieldName) ||
-                        excludedBenchmarks.has(baseFieldName) ||
-                        excludedBenchmarks.has(benchmarkTypeId);
+        // Makes sure that we do not include benchmarks that we have excluded
+        const isExcluded = excludedBenchmarks.has(fieldName) ||
+                          excludedBenchmarks.has(baseFieldName) ||
+                          excludedBenchmarks.has(benchmarkTypeId);
 
-      if (!isExcluded) {
-        const bibtex = scoreData.benchmark.bibtex.trim();
+        if (!isExcluded) {
+          const bibtex = bibtexData.bibtex.trim();
 
-        // Add to set if valid (Set automatically handles duplicates)
-        if (bibtex && bibtex !== 'null') {
-          bibtexSet.add(bibtex);
+          // Add to set if valid (Set automatically handles duplicates)
+          if (bibtex && bibtex !== 'null') {
+            bibtexSet.add(bibtex);
+          }
         }
       }
     }

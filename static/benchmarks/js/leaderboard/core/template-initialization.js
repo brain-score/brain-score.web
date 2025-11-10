@@ -56,6 +56,7 @@ function initializeLeaderboardFromTemplate() {
     window.benchmarkStimuliMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkStimuliMetaMap);
     window.benchmarkDataMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkDataMetaMap);
     window.benchmarkMetricMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkMetricMetaMap);
+    window.benchmarkBibtexMap = JSON.parse(window.DJANGO_DATA.benchmark_bibtex_map);
 
     // Set up range sliders with correct max values
     const ranges = filterOptions || {};

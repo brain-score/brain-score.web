@@ -105,6 +105,24 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
+def build_benchmark_bibtex_map(benchmarks):
+    """
+    Create a minimal map of benchmark IDs to citation data for frontend use.
+    Replaces full benchmark objects that were stored in each score (reducing payload size by ~80%).
+    Only includes leaf benchmarks (those with actual scores/bibtex).
+    """
+    bibtex_map = {}
+    for benchmark in benchmarks:
+        # Only include leaf benchmarks with bibtex
+        if benchmark.number_of_all_children == 0:
+            if hasattr(benchmark, 'benchmark_bibtex') and benchmark.benchmark_bibtex:
+                bibtex_map[benchmark.identifier] = {
+                    'bibtex': benchmark.benchmark_bibtex,
+                    'benchmark_type_id': benchmark.identifier.rsplit('_v', 1)[0] if '_v' in benchmark.identifier else benchmark.identifier
+                }
+    return bibtex_map
+
+
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
 def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False, is_profile_view=False):
     """
@@ -312,23 +330,14 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
-            # Extract only essential benchmark fields for citation functionality
-            benchmark_info = score.get('benchmark', {})
-            minimal_benchmark = {}
-            if benchmark_info.get('bibtex'):
-                minimal_benchmark = {
-                    'bibtex': benchmark_info.get('bibtex'),
-                    'benchmark_type_id': benchmark_info.get('benchmark_type_id', '')
-                }
             
+            # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
-                'complete': score.get('is_complete', True),
-                # Include minimal benchmark info only when needed for citations
-                'benchmark': minimal_benchmark if minimal_benchmark else None
+                'complete': score.get('is_complete', True)
             }
         row_data.append(rd)
 
@@ -503,6 +512,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
     
+    # Create benchmark bibtex map for citation export
+    context['benchmark_bibtex_map'] = json.dumps(build_benchmark_bibtex_map(context['benchmarks']))
+    
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:
@@ -519,6 +531,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_metadata': context['benchmark_metadata'],
         'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
+        'benchmark_bibtex_map': context['benchmark_bibtex_map'],
         # Removed benchmarkMetaMap for simplicity
         'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
         'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
