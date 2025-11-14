@@ -855,7 +855,45 @@ class PublicAjax(View):
         verify_user_model_access(user=request.user, model=model)
         model.public = public
         model.save(update_fields=['public'])
+        
         return JsonResponse("success", safe=False)
+
+
+def trigger_leaderboard_refresh():
+    """
+    Trigger the Jenkins "Refresh Leaderboard" job with dev parameter
+    """
+    try:
+        env = os.getenv("CACHE_ENV", "") 
+        print(f"----------{env}")
+        database = "prod" if env == "production" else "dev"
+        auth = get_secret("jenkins_url")
+        jenkins_url = auth["url"]
+        print(f"----------{jenkins_url}")
+        auth = get_secret("cache_refresh_url")
+        refresh_url = auth["url"]
+        print(f"----------{refresh_url}")
+        request_url = f"{jenkins_url}{refresh_url}{database}"
+        print(f"----------{request_url}")
+        auth = get_secret("brainscore-website_jenkins_access_aws")
+        auth = (auth['user'], auth['password'])
+        _logger.debug(f"Triggering leaderboard refresh: {request_url}")
+        
+        response = requests.post(request_url, auth=auth)
+        response.raise_for_status()
+        _logger.debug("Leaderboard refresh job triggered successfully")
+    except Exception as e:
+        _logger.error(f"Failed to trigger leaderboard refresh: {e}")
+
+
+class RefreshLeaderboardAjax(View):
+    """Explicit endpoint to trigger leaderboard refresh Jenkins job on demand."""
+    def post(self, request):
+        try:
+            trigger_leaderboard_refresh()
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 def verify_user_model_access(user, model):

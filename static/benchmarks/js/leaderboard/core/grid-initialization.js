@@ -169,6 +169,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       modelCellRenderer: window.LeaderboardRenderers?.ModelCellRenderer,
       scoreCellRenderer: window.LeaderboardRenderers?.ScoreCellRenderer,
       runnableStatusCellRenderer: window.LeaderboardRenderers?.RunnableStatusCellRenderer,
+      publicToggleCellRenderer: window.LeaderboardRenderers?.PublicToggleCellRenderer,
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
       leafComponent: window.LeaderboardHeaderComponents?.LeafHeaderComponent,
     },
