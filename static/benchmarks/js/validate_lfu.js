@@ -13,13 +13,15 @@
 
 export const allowedExtensions = [
     '.pt', '.pth', '.ckpt', '.bin', '.onnx', '.h5', '.hdf5', '.pb', '.tflite',
-    '.pkl', '.weights', '.npy', '.npz', '.safetensors', '.zip', '.csv', `.nc`
+    '.pkl', '.weights', '.npy', '.npz', '.safetensors', '.zip', '.csv', '.nc',
+    '.jpg', '.jpeg', '.png'
 ];
 
 export const allowedMimeTypes = [
     'application/octet-stream', 'application/zip', 'application/x-hdf5',
     'application/x-tar', 'application/x-pickle', 'application/x-npy',
-    'text/csv', 'application/json', 'application/x-netcdf'
+    'text/csv', 'application/json', 'application/x-netcdf', 'application/x-zip-compressed',
+    'image/jpeg', 'image/png'
 ];
 
 export const magicNumbers = {
@@ -34,6 +36,9 @@ export const magicNumbers = {
     '.tflite':     '544d4642',
     '.safetensors':'7b22686561646572223a',
     '.nc':         '',
+    '.jpg':        'ffd8ff',
+    '.jpeg':       'ffd8ff',
+    '.png':        '89504e47',
     '.csv':        '',
     '.pt':         '',
     '.pth':        '',
@@ -120,6 +125,9 @@ function mimeFromExtension(ext) {
         '.hdf5': 'application/x-hdf5',
         '.json': 'application/json',
         '.nc': 'application/x-netcdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
         '.onnx': 'application/octet-stream',
         '.pt': 'application/octet-stream',
         '.pth': 'application/octet-stream',
