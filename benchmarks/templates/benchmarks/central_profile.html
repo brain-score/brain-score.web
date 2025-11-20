@@ -96,7 +96,7 @@ file_path = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.
                               </button>
                               <div class="python-tooltip">
                                 <p>To use this file, copy and paste the code below into your Brain-Score plugin file:</p>
-<pre><code>from brainscore_vision.model_helpers.s3 import load_file
+<pre><code>from brainscore_core.supported_data_standards.brainio.s3 import  import load_file
 file_path = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
                       relative_path="{{f.filename}}",
                       version_id="{{f.version_id}}",
