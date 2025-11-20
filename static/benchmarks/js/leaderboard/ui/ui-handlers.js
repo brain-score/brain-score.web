@@ -88,6 +88,8 @@ function initializeFilters() {
     }
   }
 
+  const nowUnix = Math.floor(Date.now() / 1000);
+
   // If no URL filters, ensure filters are in default state
   if (!window.activeFilters) {
     window.activeFilters = {
@@ -106,8 +108,8 @@ function initializeFilters() {
       benchmark_species: [],
       benchmark_tasks: [],
       public_data_only: false,
-      min_wayback_timestamp: null,
-      max_wayback_timestamp: null
+      min_wayback_timestamp: 1598486400,
+      max_wayback_timestamp: nowUnix
     };
   }
 

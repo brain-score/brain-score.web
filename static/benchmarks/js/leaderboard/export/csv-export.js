@@ -107,12 +107,38 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
 
   // Create datetime comment for CSV files
   const datetimeComment = `# Generated on ${now.toISOString()} (${tz})`;
+  // Wayback date range logic
+  const DEFAULT_MIN_TS = 1598524327; // 2020 baseline in seconds
+
+  let minTs = window.activeFilters?.min_wayback_timestamp;
+  let maxTs = window.activeFilters?.max_wayback_timestamp;
+
+  // Set min to DEFAULT_MIN_TS if it's not been interacted with
+  if (minTs == null || minTs < DEFAULT_MIN_TS) {
+    minTs = DEFAULT_MIN_TS;
+  }
+
+  let startDate = new Date(minTs * 1000);
+
+  // For max: if it's missing or still in 1970, use "now"
+  let endDate;
+  if (maxTs == null) {
+    endDate = now;
+  } else {
+    const tentativeEnd = new Date(maxTs * 1000);
+    if (tentativeEnd.getUTCFullYear() === 1970) {
+      endDate = now;
+    } else {
+      endDate = tentativeEnd;
+    }
+  }
+  const waybackComment = `# Date from ${startDate.toISOString()} to ${endDate.toISOString()}`;
 
   // Add datetime comment to leaderboard CSV
-  const leaderboardCsvWithComment = `${datetimeComment}\n${leaderboardCsv}`;
+  const leaderboardCsvWithComment = `${datetimeComment}\n${waybackComment}\n${leaderboardCsv}`;
 
   // Add datetime comment to plugin CSV
-  const pluginCsvWithComment = `${datetimeComment}\n${pluginCsv}`;
+  const pluginCsvWithComment = `${datetimeComment}\n${waybackComment}\n${pluginCsv}`;
 
   // Create ZIP
   const zip = new JSZip();

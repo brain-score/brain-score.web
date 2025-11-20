@@ -36,8 +36,13 @@ function parseURLFilters() {
   window.activeFilters.max_score = parseFloatParam('max_score');
   window.activeFilters.min_stimuli_count = parseFloatParam('min_stimuli_count');
   window.activeFilters.max_stimuli_count = parseFloatParam('max_stimuli_count');
-  window.activeFilters.min_wayback_timestamp = parseFloatParam('min_wayback_timestamp');
-  window.activeFilters.max_wayback_timestamp = parseFloatParam('max_wayback_timestamp');
+  const defaultMin = window.filterOptions?.datetime_range?.min_unix;
+  const defaultMax = window.filterOptions?.datetime_range?.max_unix ?? Math.floor(Date.now() / 1000);
+
+  window.activeFilters.min_wayback_timestamp =
+    parseFloatParam('min_wayback_timestamp') ?? defaultMin;
+  window.activeFilters.max_wayback_timestamp =
+    parseFloatParam('max_wayback_timestamp') ?? defaultMax;
 
   // Apply filters to UI
   applyFiltersToUI();
