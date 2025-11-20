@@ -127,7 +127,7 @@ def build_benchmark_bibtex_map(benchmarks):
 
 
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
-def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
+def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False, is_profile_view=False):
     """
     Get processed context data for AG Grid leaderboard.
     This function handles all the expensive data processing and is cached.
@@ -212,6 +212,12 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
+        # Check if user is the owner of this model
+        is_owner = False
+        if user and not user.is_superuser:
+            model_user_id = model.user.get('id') if isinstance(model.user, dict) else getattr(model.user, 'id', None)
+            is_owner = (model_user_id == user.id) if model_user_id else False
+        
         # base fields
         rd = {
             'id': model.model_id,
@@ -220,7 +226,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'id': model.model_id,
                 'name': model.name,
                 'submitter': model.submitter.get('display_name') if model.submitter else None
-            }
+            },
+            'public': model.public,
+            'is_owner': is_owner
         }
 
         # Process model metadata if available
@@ -358,6 +366,21 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
          'getQuickFilterText': 'function(params) { return params.value?.name || ""; }'
          }
     ]
+    
+    # Add public/private toggle column for authenticated users in profile view only
+    # Only show on profile pages, not main leaderboard
+    if is_profile_view and user and not user.is_superuser:
+        public_toggle_column = {
+            'field': 'public_toggle',
+            'headerName': 'Public',
+            'pinned': 'left',
+            'width': 80,
+            'filter': False,
+            'sortable': False,
+            'cellRenderer': 'publicToggleCellRenderer',
+            'headerClass': 'text-center'
+        }
+        column_defs.append(public_toggle_column)
 
     # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
@@ -587,11 +610,12 @@ def ag_grid_leaderboard_content(request, domain: str):
     
     # For profile views, force user-specific caching to prevent cache collision
     force_user_cache = user_view and user is not None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
+    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache, is_profile_view=user_view)
     
     # Add template-specific flags (these don't need caching as they're lightweight)
     context['include_public'] = include_public
     context['has_user'] = user is not None
+    context['is_profile_view'] = user_view  # Flag to indicate if this is a profile view
     
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)

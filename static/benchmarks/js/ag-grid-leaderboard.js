@@ -357,6 +357,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       // Runnable status functionality
       runnableStatusCellRenderer: RunnableStatusCellRenderer,
+      
+      // Public toggle functionality
+      publicToggleCellRenderer: window.LeaderboardRenderers?.PublicToggleCellRenderer,
 
       // Header components will be loaded from modular files
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
