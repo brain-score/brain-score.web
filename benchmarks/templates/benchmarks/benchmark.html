@@ -1,6 +1,17 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block page_title %}{{ benchmark.benchmark_type.identifier }} - Benchmark{% endblock %}
+
+{% block og_title %}{{ benchmark.benchmark_type.identifier }} -  Benchmark{% endblock %}
+{% block twitter_title %}{{ benchmark.benchmark_type.identifier }} - Benchmark{% endblock %}
+
+{% block meta_description %}Brain-Score {{ benchmark.benchmark_type.domain }} benchmark {{ benchmark.benchmark_type.identifier }}.{% if benchmark.meta and benchmark.meta.number_of_stimuli %} {{ benchmark.meta.number_of_stimuli }} stimuli.{% endif %}{% endblock %}
+{% block og_description %}Brain-Score {{ benchmark.benchmark_type.domain }} benchmark {{ benchmark.benchmark_type.identifier }}. Compare model scores and view stimulus samples.{% endblock %}
+{% block twitter_description %}Brain-Score {{ benchmark.benchmark_type.domain }} benchmark {{ benchmark.benchmark_type.identifier }}.{% endblock %}
+
+{% block og_url %}{{ request.scheme }}://{{ request.get_host }}/benchmark/{{ benchmark.id }}/{{ benchmark.benchmark_type.domain }}{% endblock %}
+
 {% block banner %}
     <h1 class="title">{{ benchmark.benchmark_type.identifier }}</h1>
     <p>
