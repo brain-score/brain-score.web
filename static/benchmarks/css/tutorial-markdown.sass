@@ -17,6 +17,9 @@
   padding: 1.5rem
   border-left: 4px solid $brainscore_blue
   transition: box-shadow 0.2s, transform 0.2s
+  // Flexbox to align buttons at bottom
+  display: flex
+  flex-direction: column
 
   &:hover
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
@@ -32,6 +35,10 @@
     font-size: 0.9rem
     margin-bottom: 1rem
     line-height: 1.5
+    flex-grow: 1  // Push button to bottom
+
+  .button
+    align-self: flex-start  // Don't stretch button full width
 
   // Different accent colors for each card
   &.card-1

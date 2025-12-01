@@ -7,8 +7,6 @@ category: benchmarks
 
 # What is a Benchmark?
 
-## Definition
-
 A **benchmark** is a standardized scientific test that evaluates how well an artificial neural network model aligns with biological intelligence. At its core, a benchmark:
 
 1. **Reproduces an experiment** on an artificial model using the same stimuli and protocol as the original biological experiment
