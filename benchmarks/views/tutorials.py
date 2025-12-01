@@ -29,9 +29,6 @@ class Tutorial:
                     'linenums': False,
                     'guess_lang': False,  # Don't guess - prevents ASCII diagrams from being highlighted
                 },
-                'toc': {
-                    'permalink': True,
-                }
             }
         )
         self.description = metadata.get('description', '')

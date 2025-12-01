@@ -89,6 +89,25 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1)
 
   // Typography - same as blog post-content
+  // Headings are clickable to copy permalink
+  h1, h2, h3, h4
+    cursor: pointer
+    transition: color 0.2s
+    position: relative
+
+    &:hover
+      color: $brainscore_blue
+
+    &::after
+      content: ' 🔗'
+      font-size: 0.6em
+      opacity: 0
+      transition: opacity 0.2s
+      vertical-align: middle
+
+    &:hover::after
+      opacity: 0.5
+
   h1
     font-size: 2rem
     font-weight: bold
@@ -114,6 +133,24 @@
     font-weight: bold
     margin: 1.5rem 0 0.75rem 0
     color: #444
+
+  // Tooltip for "Copied!" feedback
+  .copy-tooltip
+    position: absolute
+    background: #333
+    color: white
+    padding: 0.25rem 0.5rem
+    border-radius: 4px
+    font-size: 0.75rem
+    font-weight: normal
+    top: -1.5rem
+    left: 0
+    opacity: 0
+    transition: opacity 0.3s
+    pointer-events: none
+
+    &.show
+      opacity: 1
 
   p
     line-height: 1.7

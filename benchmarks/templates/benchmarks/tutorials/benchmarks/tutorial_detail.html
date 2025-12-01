@@ -1,0 +1,73 @@
+{% extends 'benchmarks/components/app-view.html' %}
+{% load static %}
+
+{% block banner %}
+<h1>{{ tutorial.title }}</h1>
+{% if tutorial.description %}
+<p>{{ tutorial.description }}</p>
+{% endif %}
+{% endblock %}
+
+{% block main_content %}
+<div class="tutorial-detail-container">
+  <!-- Sidebar with Tutorial Navigation -->
+  <aside class="tutorial-sidebar">
+    <div class="sidebar-widget">
+      <h3 class="sidebar-header">Benchmark Tutorials</h3>
+      <ul class="tutorial-nav-list">
+        {% for t in tutorials %}
+          <li>
+            <a href="{{ t.get_absolute_url }}" 
+               {% if t.slug == tutorial.slug %}class="active"{% endif %}>
+              {{ t.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    
+    <div class="sidebar-widget">
+      <h3 class="sidebar-header">Quick Links</h3>
+      <ul class="quick-links">
+        <li><a href="https://github.com/brain-score/vision" target="_blank">Vision GitHub</a></li>
+        <li><a href="https://github.com/brain-score/language" target="_blank">Language GitHub</a></li>
+        <li><a href="{% url 'tutorial-troubleshooting' %}">Troubleshooting</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main Tutorial Content -->
+  <article class="tutorial-content">
+    <div class="tutorial-body">
+      {{ tutorial.content|safe }}
+    </div>
+    
+    <!-- Navigation Footer -->
+    <div class="tutorial-navigation">
+      <div class="nav-prev">
+        {% if prev_tutorial %}
+          <a href="{{ prev_tutorial.get_absolute_url }}" class="nav-link">
+            <span class="nav-direction">← Previous</span>
+            <span class="nav-title">{{ prev_tutorial.title }}</span>
+          </a>
+        {% endif %}
+      </div>
+      
+      <div class="nav-center">
+        <a href="{% url 'benchmark-tutorial' %}" class="back-to-tutorials">All Tutorials</a>
+      </div>
+      
+      <div class="nav-next">
+        {% if next_tutorial %}
+          <a href="{{ next_tutorial.get_absolute_url }}" class="nav-link">
+            <span class="nav-direction">Next →</span>
+            <span class="nav-title">{{ next_tutorial.title }}</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+</div>
+
+<script src="{% static 'benchmarks/js/tutorial.js' %}"></script>
+{% endblock %}
