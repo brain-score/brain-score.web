@@ -4,7 +4,50 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     initHeadingPermalinks();
+    initInteractiveChecklists();
 });
+
+/**
+ * Convert markdown-style checkboxes to interactive HTML checkboxes
+ * Looks for [ ] and [x] patterns in list items
+ */
+function initInteractiveChecklists() {
+    const tutorialBody = document.querySelector('.tutorial-body');
+    if (!tutorialBody) return;
+    
+    // Find all list items
+    const listItems = tutorialBody.querySelectorAll('li');
+    
+    listItems.forEach(function(li) {
+        const text = li.innerHTML;
+        
+        // Check for unchecked box [ ]
+        if (text.match(/^\s*\[ \]/)) {
+            li.innerHTML = text.replace(/^\s*\[ \]/, 
+                '<input type="checkbox" class="tutorial-checkbox"> ');
+            li.classList.add('checklist-item');
+        }
+        // Check for checked box [x] or [X]
+        else if (text.match(/^\s*\[[xX]\]/)) {
+            li.innerHTML = text.replace(/^\s*\[[xX]\]/, 
+                '<input type="checkbox" class="tutorial-checkbox" checked> ');
+            li.classList.add('checklist-item');
+        }
+    });
+    
+    // Add click handler for the entire list item (better UX)
+    document.querySelectorAll('.checklist-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            // Don't toggle if clicking the checkbox itself (it handles itself)
+            if (e.target.type === 'checkbox') return;
+            
+            const checkbox = item.querySelector('.tutorial-checkbox');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+        });
+    });
+}
 
 /**
  * Make headings clickable to copy permalink to clipboard

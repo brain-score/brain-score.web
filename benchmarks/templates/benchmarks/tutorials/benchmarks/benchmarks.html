@@ -21,26 +21,78 @@
         <div class="column is-one-half tutorial_text">
             <h3 class="benefits_heading is-size-3-mobile">Welcome, Benchmarkers!</h3>
             <p class="benefits_info is-size-5-mobile">
-                Benchmarks are at the core of Brain-Score.  They are used to test how well models match experimental observations.
-                If you want to add your experimental results into Brain-Score as a benchmark, the process
-                involves two main steps: first, you need to add your experimental stimuli as well as subject data. This
-                is covered in the first section of this tutorial, "Package Data".
+                Benchmarks are at the core of Brain-Score. They are used to test how well models match experimental observations.
+                If you want to add your experimental results into Brain-Score as a benchmark, these tutorials will guide you
+                through the entire process.
             </p>
             <p class="benefits_info is-size-5-mobile">
-                The second step involves creating and defining the benchmark file itself:
-                This is how and where you choose benchmark hyperparameters, such as visual degrees, a metric, and
-                a ceiling. This is covered in the "Create a Benchmark" section of this tutorial.
+                Brain-Score supports three types of benchmarks: <strong>neural</strong> (fMRI, electrophysiology, EEG),
+                <strong>behavioral</strong> (psychophysics, choices), and <strong>engineering</strong> (accuracy, robustness).
+                Our tutorials cover both neural and behavioral benchmarks with detailed examples.
             </p>
-
-             <p class="benefits_info is-size-5-mobile">
-                 Note: Brain-Score supports three types of benchmarks, differentiated by the type of experimental data
-                 that was gathered: neural (fMRI, PSTH, EEG, etc), behavioral, and engineering. In this
-                 benchmark tutorial series, we will explore a sample behavioral benchmark,
-                 <span class="special_format">Ferguson2024</span>.
-            </p>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data</button></a>
-            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark</button></a>
         </div>
+    </div>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Tutorial Series</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        Follow these tutorials in order, or jump to the section most relevant to your needs:
+    </p>
+    
+    <div class="tutorial-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        
+        <div class="tutorial-card" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border-left: 4px solid #007bff;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">1. What is a Benchmark?</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Understanding benchmark components, interfaces, metrics, and ceilings.
+            </p>
+            <a href="/tutorials/benchmarks/what-is-benchmark/" class="button button-primary tutorial" style="font-size: 0.85rem;">Start Here →</a>
+        </div>
+        
+        <div class="tutorial-card" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border-left: 4px solid #28a745;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">2. Data Packaging</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                How to prepare StimulusSets and DataAssemblies for your benchmark.
+            </p>
+            <a href="/tutorials/benchmarks/data-packaging/" class="button button-primary tutorial" style="font-size: 0.85rem;">Learn More →</a>
+        </div>
+        
+        <div class="tutorial-card" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border-left: 4px solid #6f42c1;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">3. Neural Benchmarks</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Creating benchmarks for neural recording data (V1, V4, IT, fMRI).
+            </p>
+            <a href="/tutorials/benchmarks/neural-benchmarks/" class="button button-primary tutorial" style="font-size: 0.85rem;">Learn More →</a>
+        </div>
+        
+        <div class="tutorial-card" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border-left: 4px solid #fd7e14;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">4. Behavioral Benchmarks</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Creating benchmarks for behavioral/psychophysical data.
+            </p>
+            <a href="/tutorials/benchmarks/behavioral-benchmarks/" class="button button-primary tutorial" style="font-size: 0.85rem;">Learn More →</a>
+        </div>
+        
+        <div class="tutorial-card" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border-left: 4px solid #17a2b8;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">5. Vision vs Language</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Key differences between vision and language benchmarks.
+            </p>
+            <a href="/tutorials/benchmarks/vision-vs-language/" class="button button-primary tutorial" style="font-size: 0.85rem;">Learn More →</a>
+        </div>
+        
+    </div>
+</div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Legacy Tutorials</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        These original tutorials walk through the <span class="special_format">Ferguson2024</span> benchmark as a detailed example:
+    </p>
+    <div style="margin-top: 1rem;">
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data (Legacy)</button></a>
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark (Legacy)</button></a>
     </div>
 </div>
 {% endblock %}

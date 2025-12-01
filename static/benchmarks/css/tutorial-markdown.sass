@@ -235,6 +235,37 @@
     border-top: 1px solid #eee
     margin: 2rem 0
 
+  // Interactive checklists
+  .checklist-item
+    list-style: none
+    margin-left: -1.5rem
+    margin-bottom: 0.1rem
+    padding: 0.25rem 0.75rem
+    border-radius: 4px
+    cursor: pointer
+    transition: background-color 0.15s
+    display: flex
+    align-items: flex-start
+    gap: 0.5rem
+
+    &:hover
+      background-color: #f8f9fa
+
+  .tutorial-checkbox
+    width: 1.1rem
+    height: 1.1rem
+    margin-top: 0.2rem
+    cursor: pointer
+    accent-color: $brainscore_green
+    flex-shrink: 0
+
+    &:checked + *
+      color: #888
+
+  // Style checked items with strikethrough (optional - remove if not wanted)
+  .checklist-item:has(.tutorial-checkbox:checked)
+    color: #888
+
   // Strong/emphasis
   strong
     font-weight: bold
