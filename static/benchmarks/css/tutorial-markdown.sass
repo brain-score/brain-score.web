@@ -1,6 +1,64 @@
 // Tutorial Markdown Pages Styling
 // This extends the blog styling for tutorial-specific needs
 
+// ============================================
+// Tutorial Landing Page (benchmarks.html)
+// ============================================
+
+.tutorial-cards
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+  gap: 1.5rem
+  margin-top: 1.5rem
+
+.tutorial-card
+  background: #f8f9fa
+  border-radius: 8px
+  padding: 1.5rem
+  border-left: 4px solid $brainscore_blue
+  transition: box-shadow 0.2s, transform 0.2s
+
+  &:hover
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    transform: translateY(-2px)
+
+  h4
+    margin: 0 0 0.5rem 0
+    color: #333
+    font-size: 1.1rem
+
+  p
+    color: #666
+    font-size: 0.9rem
+    margin-bottom: 1rem
+    line-height: 1.5
+
+  // Different accent colors for each card
+  &.card-1
+    border-left-color: #007bff
+
+  &.card-2
+    border-left-color: #28a745
+
+  &.card-3
+    border-left-color: #6f42c1
+
+  &.card-4
+    border-left-color: #fd7e14
+
+  &.card-5
+    border-left-color: #17a2b8
+
+.tutorial-buttons
+  margin-top: 1rem
+  display: flex
+  flex-wrap: wrap
+  gap: 0.5rem
+
+// ============================================
+// Tutorial Detail Page
+// ============================================
+
 // Main container - uses same grid as blog
 .tutorial-detail-container
   display: grid
