@@ -8,6 +8,7 @@ from django.views.decorators.cache import cache_page
 from ..utils import cache_get_context
 from django.views.decorators.cache import cache_page
 from django.db.models import Model
+from ..benchmark_config import get_excluded_benchmarks
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -498,6 +499,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if benchmark.id:  # Only include benchmarks with valid IDs
             benchmark_ids[benchmark.identifier] = benchmark.id
 
+    # Get excluded benchmarks for this domain
+    excluded_benchmarks = get_excluded_benchmarks(domain)
+    logger.warning("[DEBUG] Excluded benchmarks for domain=%s: %s", domain, excluded_benchmarks)
+    
     # Optimized payload - removed benchmark objects from individual scores to reduce size
     minimal_context = {
         # Essential frontend data (already JSON strings - reuse from context to avoid double encoding)
@@ -518,6 +523,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         # Essential metadata
         'domain': context['domain'],
         'has_user': context.get('has_user', False),
+        
+        # Excluded benchmarks list
+        'excluded_benchmarks': json.dumps(excluded_benchmarks),
         
         # Citation info
         'citation_general_url': context.get('citation_general_url', ''),

@@ -5,7 +5,7 @@ function initializeLeaderboardFromTemplate() {
   
   try {
     // Parse data from Django
-    let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
+    let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions, excludedBenchmarks;
     
     try {
       rowData = JSON.parse(window.DJANGO_DATA.row_data);
@@ -15,6 +15,7 @@ function initializeLeaderboardFromTemplate() {
       filterOptions = JSON.parse(window.DJANGO_DATA.filter_options);
       benchmarkMetadata = JSON.parse(window.DJANGO_DATA.benchmark_metadata);
       benchmarkIds = JSON.parse(window.DJANGO_DATA.benchmark_ids);
+      excludedBenchmarks = JSON.parse(window.DJANGO_DATA.excluded_benchmarks || '[]');
 
       let modelMetadataMap, benchmarkMetadataMap;
       try {
@@ -51,6 +52,26 @@ function initializeLeaderboardFromTemplate() {
     window.originalRowData = rowData;
     window.filterOptions = filterOptions;
     window.benchmarkMetadata = benchmarkMetadata;
+    
+    // Expand excluded benchmarks to include all descendants
+    // This ensures parent benchmarks and all their children are treated the same
+    const expandedExcluded = new Set(excludedBenchmarks);
+    function addDescendants(nodes, shouldAdd) {
+      if (!nodes) return;
+      nodes.forEach(node => {
+        if (shouldAdd || excludedBenchmarks.includes(node.id)) {
+          expandedExcluded.add(node.id);
+          // All descendants of an excluded node should also be marked excluded
+          if (node.children) {
+            addDescendants(node.children, true);
+          }
+        } else if (node.children) {
+          addDescendants(node.children, false);
+        }
+      });
+    }
+    addDescendants(benchmarkTree, false);
+    window.excludedBenchmarks = expandedExcluded;
     
     window.benchmarkIds = benchmarkIds;
     window.benchmarkStimuliMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkStimuliMetaMap);
@@ -210,8 +231,6 @@ function setupFilters() {
         window.filteredOutBenchmarks.add(cb.value);
       }
     });
-  
-    console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
   }, 20);
 }
 
