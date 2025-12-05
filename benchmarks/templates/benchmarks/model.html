@@ -1,7 +1,7 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
-{% block page_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
+{% block page_title %}Brain-Score - {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
 
 {% block og_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
 {% block twitter_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
