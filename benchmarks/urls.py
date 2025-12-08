@@ -37,6 +37,7 @@ non_domain_urls = [
     # central profile page, constant across all Brain-Score domains
     path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
     path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+    path('profile/refresh-leaderboard/', user.RefreshLeaderboardAjax.as_view(), name='RefreshLeaderboardAjax'),
     path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),

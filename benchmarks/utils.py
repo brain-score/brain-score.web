@@ -52,7 +52,8 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             benchmark_filter: Optional[str] = None,
             model_filter: Optional[str] = None,
             show_public: bool = False,
-            force_user_cache: bool = False
+            force_user_cache: bool = False,
+            **kwargs  # Accept any additional parameters
         ) -> Dict[str, Any]:
             """
             Wrapper function that implements the caching logic.
@@ -99,7 +100,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                          model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
+                          model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             
             # Add filters to key prefix
             if benchmark_filter:
@@ -145,7 +146,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             logger.error(f"Cache miss for key: {cache_key}")
             func_start = time.time()
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                        model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
+                        model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
             
