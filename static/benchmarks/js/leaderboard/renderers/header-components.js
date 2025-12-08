@@ -219,14 +219,6 @@ function updateColumnVisibility() {
       const children = hierarchyMap.get(benchmarkId) || [];
       const columnType = children.length === 0 ? 'leaf' : 'parent';
 
-      // console.log(`Column visibility check for ${columnType} ${benchmarkId}:`, {
-      //   columnType,
-      //   totalValues: values.length,
-      //   allXs,
-      //   sampleValues: values.slice(0, 5),
-      //   isWaybackActive,
-      //   willHide: allXs
-      // });
       return allXs;
     }
 
@@ -278,8 +270,8 @@ LeafHeaderComponent.prototype.init = function(params) {
 
   // Add custom tooltip with instant display for child headers
   if (typeof addHoverTooltip === 'function') {
-    addHoverTooltip(this.eGui, label.textContent, { 
-      type: 'info', 
+    addHoverTooltip(this.eGui, label.textContent, {
+      type: 'info',
       position: 'top'
     });
   } else {
@@ -358,11 +350,11 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   const title = document.createElement('span');
   title.className = 'expandable-header-label';
   title.textContent = displayName;
-  
+
   // Add custom tooltip with instant display for parent headers
   if (typeof addHoverTooltip === 'function') {
-    addHoverTooltip(title, displayName, { 
-      type: 'info', 
+    addHoverTooltip(title, displayName, {
+      type: 'info',
       position: 'top'
     });
   } else {

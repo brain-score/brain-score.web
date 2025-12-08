@@ -154,13 +154,6 @@ function initializeLeaderboardFromTemplate() {
         const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
         waybackDateMin.value = minDate.toISOString().split('T')[0];
         waybackDateMax.value = maxDate.toISOString().split('T')[0];
-
-        console.log('Wayback timestamp filter initialized:', {
-          min_unix: ranges.datetime_range.min_unix,
-          max_unix: ranges.datetime_range.max_unix,
-          min_date: waybackDateMin.value,
-          max_date: waybackDateMax.value
-        });
       }
     }
 

@@ -222,13 +222,6 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
-  console.log('Applying wayback timestamp filter:', {
-    minTimestamp,
-    maxTimestamp,
-    minDate: new Date(minTimestamp * 1000).toISOString(),
-    maxDate: new Date(maxTimestamp * 1000).toISOString()
-  });
-
   // Stats counters
   let totalScoresProcessed = 0;
   let scoresWithTimestamps = 0;
@@ -267,19 +260,6 @@ function applyWaybackTimestampFilter(rowData) {
     });
 
     return newRow;
-  });
-
-  console.log("Wayback timestamp filtering results:", {
-    originalRows: rowData.length,
-    filteredRows: filteredWithValidModels.length,
-    totalScoresProcessed,
-    scoresWithTimestamps,
-    scoresWithoutTimestamps,
-    scoresFilteredOut,
-    percentageScoresWithTimestamps:
-      ((scoresWithTimestamps / Math.max(1, totalScoresProcessed)) * 100).toFixed(1) + "%",
-    percentageScoresFilteredOut:
-      ((scoresFilteredOut / Math.max(1, totalScoresProcessed)) * 100).toFixed(1) + "%"
   });
 
   return filteredWithValidModels;
@@ -477,8 +457,6 @@ function resetAllFilters() {
 // Update filtered scores based on current filters
 function updateFilteredScores(rowData) {
   if (!window.originalRowData || !window.benchmarkTree) return;
-
-  console.log('updateFilteredScores called - checking for wayback timestamp changes...');
 
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
   const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
