@@ -30,8 +30,10 @@ BEHAVIOR:
 EXCLUDED_BENCHMARKS = [
 
     # Coggan to possibly be excluded in future:
+    "FreemanZiemba2013.V1-pls_v2",
     # "tong.Coggan2024_fMRI.V1-rdm_v1",
-    # "tong.Coggan2024_fMRI.V2-rdm_v1",
+    "tong.Coggan2024_fMRI.V2-rdm_v1",
+    "FreemanZiemba2013.V2-pls_v2",
     # "tong.Coggan2024_fMRI.V4-rdm_v1",
     # "tong.Coggan2024_fMRI.IT-rdm_v1",
     # "tong.Coggan2024_behavior-ConditionWiseAccuracySimilarity_v1"
