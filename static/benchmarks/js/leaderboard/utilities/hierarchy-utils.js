@@ -141,6 +141,15 @@ function isParentBenchmark(benchmarkId, hierarchyMap) {
   return children.length > 0;
 }
 
+// Check if a benchmark subtree is fully excluded
+// A benchmark is fully excluded if it OR all its descendants are in the excluded set
+function isFullyExcluded(benchmarkId, hierarchyMap, excludedSet) {
+  if (excludedSet.has(benchmarkId)) return true;
+  const children = hierarchyMap.get(benchmarkId) || [];
+  if (children.length === 0) return excludedSet.has(benchmarkId);
+  return children.every(child => isFullyExcluded(child, hierarchyMap, excludedSet));
+}
+
 // Get depth level of a benchmark in the hierarchy
 function getDepthLevel(benchmarkId, hierarchyMap, visited = new Set()) {
   if (visited.has(benchmarkId)) return 0;
@@ -253,6 +262,7 @@ window.LeaderboardHierarchyUtils = {
   findParent,
   isLeafBenchmark,
   isParentBenchmark,
+  isFullyExcluded,
   getDepthLevel,
   getBenchmarksAtDepth,
   getBenchmarkPath,

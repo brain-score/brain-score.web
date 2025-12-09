@@ -348,20 +348,10 @@ function updateFilteredScores(rowData) {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
     
-    function getDepthLevel(benchmarkId, visited = new Set()) {
-      if (visited.has(benchmarkId)) return 0;
-      visited.add(benchmarkId);
-      
-      const children = hierarchyMap.get(benchmarkId) || [];
-      if (children.length === 0) return 0;
-      
-      const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
-      return maxChildDepth + 1;
-    }
-    
+    // Process benchmarks from leaves up to parents (using shared utility)
     const allBenchmarkIds = Array.from(hierarchyMap.keys());
     const benchmarksByDepth = allBenchmarkIds
-      .map(id => ({ id, depth: getDepthLevel(id) }))
+      .map(id => ({ id, depth: window.LeaderboardHierarchyUtils.getDepthLevel(id, hierarchyMap) }))
       .sort((a, b) => a.depth - b.depth);
     
     benchmarksByDepth.forEach(({ id: benchmarkId }) => {
@@ -376,21 +366,13 @@ function updateFilteredScores(rowData) {
           };
         }
       } else {
-        // Parent benchmark: recalculate average from non-excluded children
-        // Helper to check if a benchmark subtree is fully excluded
-        function isFullyExcluded(benchmarkId) {
-          if (excludedBenchmarks.has(benchmarkId)) return true;
-          const subChildren = hierarchyMap.get(benchmarkId) || [];
-          if (subChildren.length === 0) return excludedBenchmarks.has(benchmarkId);
-          return subChildren.every(child => isFullyExcluded(child));
-        }
-        
+        // Parent benchmark: recalculate average from non-excluded children (using shared utility)
         const childScores = [];
         const childInfo = [];
         
         children.forEach(childId => {
           // Skip if child is explicitly excluded OR if its entire subtree is excluded
-          if (excludedBenchmarks.has(childId) || isFullyExcluded(childId)) return;
+          if (excludedBenchmarks.has(childId) || window.LeaderboardHierarchyUtils.isFullyExcluded(childId, hierarchyMap, excludedBenchmarks)) return;
           
           if (row[childId]) {
             const childScore = row[childId].value;
@@ -431,21 +413,13 @@ function updateFilteredScores(rowData) {
       }
     });
     
-    // Calculate global filtered score
-    // Helper to check if a benchmark subtree is fully excluded
-    function isFullyExcludedForGlobal(benchmarkId) {
-      if (excludedBenchmarks.has(benchmarkId)) return true;
-      const subChildren = hierarchyMap.get(benchmarkId) || [];
-      if (subChildren.length === 0) return excludedBenchmarks.has(benchmarkId);
-      return subChildren.every(child => isFullyExcludedForGlobal(child));
-    }
-    
+    // Calculate global filtered score (using shared utility)
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
     
     visionCategories.forEach(category => {
       // Skip if explicitly excluded OR if its entire subtree is excluded
-      if (excludedBenchmarks.has(category) || isFullyExcludedForGlobal(category)) return;
+      if (excludedBenchmarks.has(category) || window.LeaderboardHierarchyUtils.isFullyExcluded(category, hierarchyMap, excludedBenchmarks)) return;
       
       if (row[category]) {
         const score = row[category].value;
