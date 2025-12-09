@@ -371,6 +371,33 @@ function recalculateBaselineScores() {
     }
   });
   
+  // Recalculate colors for parent benchmarks based on NEW score distribution
+  // This ensures colors reflect the new min/max ranges after exclusions
+  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  const parentBenchmarkIds = allBenchmarkIds.filter(bid => {
+    const children = hierarchyMap.get(bid) || [];
+    return children.length > 0;  // Only parent benchmarks
+  });
+  
+  // Also include global score (average_vision_v0) if it exists
+  const globalScoreId = 'average_vision_v0';
+  if (!parentBenchmarkIds.includes(globalScoreId) && 
+      window.originalRowData.length > 0 && 
+      window.originalRowData[0][globalScoreId]) {
+    parentBenchmarkIds.push(globalScoreId);
+  }
+  
+  // Recalculate colors for each parent benchmark
+  parentBenchmarkIds.forEach(benchmarkId => {
+    if (window.LeaderboardColorUtils && window.LeaderboardColorUtils.recalculateColorsForBenchmark) {
+      window.LeaderboardColorUtils.recalculateColorsForBenchmark(
+        window.originalRowData,
+        benchmarkId,
+        hierarchyMap
+      );
+    }
+  });
+  
   // Recalculate ranks based on the new global scores
   recalculateRanks(window.originalRowData);
   
