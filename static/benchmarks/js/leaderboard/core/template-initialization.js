@@ -399,11 +399,95 @@ function recalculateBaselineScores() {
   // Note: We don't recompute color gradients to preserve the original backend colors
   // The colors may not perfectly match the new relative rankings, but visual consistency is maintained
   
+  // Recalculate ranks based on the new global scores
+  recalculateRanks(window.originalRowData);
+  
   // Update the grid with recalculated data
   if (window.globalGridApi) {
     window.globalGridApi.setGridOption('rowData', window.originalRowData);
     window.globalGridApi.refreshCells({ force: true });
   }
+}
+
+// Recalculate ranks based on the current global scores (average_vision_v0)
+// This ensures ranks reflect the recalculated scores after excluding benchmarks
+function recalculateRanks(rowData) {
+  if (!rowData || rowData.length === 0) return;
+  
+  // Extract global scores for each model
+  const modelScores = rowData.map(row => {
+    const globalScore = row.average_vision_v0;
+    let score = null;
+    let isX = false;
+    
+    if (globalScore) {
+      const val = globalScore.value;
+      if (val === 'X' || val === '' || val === null || val === undefined) {
+        isX = true;
+      } else {
+        const numVal = typeof val === 'string' ? parseFloat(val) : val;
+        if (!isNaN(numVal)) {
+          score = numVal;
+        } else {
+          isX = true;
+        }
+      }
+    } else {
+      isX = true;
+    }
+    
+    return { row, score, isX, modelName: row.model?.name || row.id || '' };
+  });
+  
+  // Sort: valid scores descending, then X at the bottom
+  modelScores.sort((a, b) => {
+    // X values go to the bottom
+    if (a.isX && !b.isX) return 1;
+    if (!a.isX && b.isX) return -1;
+    if (a.isX && b.isX) return a.modelName.localeCompare(b.modelName);
+    
+    // Sort by score descending
+    if (b.score !== a.score) return b.score - a.score;
+    
+    // Tiebreaker: model name
+    return a.modelName.localeCompare(b.modelName);
+  });
+  
+  // Assign ranks
+  let currentRank = 1;
+  let previousScore = null;
+  let tiedCount = 0;
+  
+  modelScores.forEach((item, index) => {
+    if (item.isX) {
+      // All X get the same rank (last valid rank + tied count + 1)
+      return;
+    }
+    
+    if (index === 0 || item.score !== previousScore) {
+      if (tiedCount > 0) {
+        currentRank += tiedCount;
+      }
+      tiedCount = 1;
+      item.row.rank = currentRank;
+    } else {
+      // Tie - same rank as previous
+      tiedCount++;
+      item.row.rank = modelScores[index - 1].row.rank;
+    }
+    
+    previousScore = item.score;
+  });
+  
+  // Assign rank to all X models (after all valid ones)
+  const xRank = currentRank + tiedCount;
+  modelScores.forEach(item => {
+    if (item.isX) {
+      item.row.rank = xRank;
+    }
+  });
+  
+  console.log('[recalculateRanks] Recalculated ranks for', rowData.length, 'models');
 }
 
 // Recompute color gradients for all benchmark columns after baseline recalculation
@@ -636,6 +720,9 @@ function setupLayoutToggleHandlers() {
 window.LeaderboardTemplateInitialization = {
   initializeLeaderboardFromTemplate
 };
+
+// Export recalculateRanks globally for use by other modules
+window.recalculateRanks = recalculateRanks;
 
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeLeaderboardFromTemplate);
