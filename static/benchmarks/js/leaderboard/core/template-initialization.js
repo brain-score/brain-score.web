@@ -396,9 +396,6 @@ function recalculateBaselineScores() {
     }
   });
   
-  // Note: We don't recompute color gradients to preserve the original backend colors
-  // The colors may not perfectly match the new relative rankings, but visual consistency is maintained
-  
   // Recalculate ranks based on the new global scores
   recalculateRanks(window.originalRowData);
   
@@ -488,48 +485,6 @@ function recalculateRanks(rowData) {
   });
   
   console.log('[recalculateRanks] Recalculated ranks for', rowData.length, 'models');
-}
-
-// Recompute color gradients for all benchmark columns after baseline recalculation
-function recomputeColorGradients(rowData, hierarchyMap) {
-  // Get all benchmark IDs from hierarchy, plus average_vision_v0 which is excluded from tree
-  const allBenchmarkIds = Array.from(hierarchyMap.keys());
-  allBenchmarkIds.push('average_vision_v0'); // Add Global Score column explicitly
-  
-  allBenchmarkIds.forEach(benchmarkId => {
-    const scores = [];
-    rowData.forEach(row => {
-      if (row[benchmarkId] && row[benchmarkId].value !== 'X' && row[benchmarkId].value !== null) {
-        const val = row[benchmarkId].value;
-        const numVal = typeof val === 'string' ? parseFloat(val) : val;
-        if (!isNaN(numVal)) {
-          scores.push(numVal);
-        }
-      }
-    });
-    
-    if (scores.length > 0) {
-      const minScore = Math.min(...scores);
-      const maxScore = Math.max(...scores);
-      const scoreRange = maxScore - minScore;
-      
-      rowData.forEach(row => {
-        if (row[benchmarkId] && row[benchmarkId].value !== 'X') {
-          const val = row[benchmarkId].value;
-          const numVal = typeof val === 'string' ? parseFloat(val) : val;
-          if (!isNaN(numVal)) {
-            // Use green gradient for baseline (matching the original green colors)
-            const intensity = scoreRange > 0 ? (numVal - minScore) / scoreRange : 0.5;
-            const red = Math.round(255 - (intensity * 100));
-            const green = Math.round(200 + (intensity * 55));
-            const blue = Math.round(150 - (intensity * 50));
-            const color = `rgba(${red}, ${green}, ${blue}, 0.6)`;
-            row[benchmarkId].color = color;
-          }
-        }
-      });
-    }
-  });
 }
 
 function setupEventHandlers() {
@@ -720,9 +675,6 @@ function setupLayoutToggleHandlers() {
 window.LeaderboardTemplateInitialization = {
   initializeLeaderboardFromTemplate
 };
-
-// Export recalculateRanks globally for use by other modules
-window.recalculateRanks = recalculateRanks;
 
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeLeaderboardFromTemplate);
