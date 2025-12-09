@@ -76,7 +76,7 @@
             "name":"Brain-Score neural and behavioral brain benchmarks",
             "alternateName":["Brain-Score.ventral-stream", "Brain-Score.vision"],
             "description":"Brain-Score evaluates models of the brain's ventral stream on their quantitative match to neural recordings and behavioral measurements",
-            "url":"http://www.brain-score.org",
+            "url":"{{ request.scheme }}://{{ request.get_host }}",
             "keywords":[
                 "computational neuroscience",
                 "human and primate vision",
@@ -94,7 +94,7 @@
     <meta property="og:title" content="{% block og_title %}Brain-Score{% endblock %}">
     <meta property="og:type" content="website">
     <meta property="og:description" content="{% block og_description %}Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.{% endblock %}">
-    <meta property="og:url" content="{% block og_url %}http://brain-score.org{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}/static/benchmarks/img/logo.png{% endblock %}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{% block twitter_title %}Brain-Score{% endblock %}">
