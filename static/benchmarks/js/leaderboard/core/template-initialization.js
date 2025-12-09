@@ -425,9 +425,9 @@ function recalculateRanks(rowData) {
     return a.modelName.localeCompare(b.modelName);
   });
   
-  // Assign ranks
+  // Assign ranks based on rounded scores (2 decimal places, matching display)
   let currentRank = 1;
-  let previousScore = null;
+  let previousRoundedScore = null;
   let tiedCount = 0;
   
   modelScores.forEach((item, index) => {
@@ -436,19 +436,23 @@ function recalculateRanks(rowData) {
       return;
     }
     
-    if (index === 0 || item.score !== previousScore) {
+    // Round to 2 decimal places for comparison (matching display format)
+    const roundedScore = Math.round(item.score * 100) / 100;
+    
+    // Compare rounded scores for tie detection
+    if (index === 0 || roundedScore !== previousRoundedScore) {
       if (tiedCount > 0) {
         currentRank += tiedCount;
       }
       tiedCount = 1;
       item.row.rank = currentRank;
     } else {
-      // Tie - same rank as previous
+      // Tie - same rounded score, use same rank as previous
       tiedCount++;
       item.row.rank = modelScores[index - 1].row.rank;
     }
     
-    previousScore = item.score;
+    previousRoundedScore = roundedScore;
   });
   
   // Assign rank to all X models (after all valid ones)
