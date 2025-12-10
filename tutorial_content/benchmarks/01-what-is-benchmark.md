@@ -127,7 +127,7 @@ Benchmarks interact with models through the `BrainModel` interface, which abstra
 
 ## Task Types
 
-Brain-Score supports several behavioral task types that enable models to perform cognitive tasks:
+Brain-Score supports several behavioral task types that enable models to perform cognitive tasks. These are defined in `vision/brainscore_vision/model_interface.py` and implemented in `vision/brainscore_vision/model_helpers/brain_transformation/behavior.py`.
 
 ### 1. Passive Task (`BrainModel.Task.passive`)
 - **Purpose**: Passive fixation without explicit behavioral output
@@ -161,6 +161,7 @@ probabilities = candidate.look_at(test_stimuli)
 candidate.start_task(BrainModel.Task.odd_one_out)
 choices = candidate.look_at(triplet_stimuli)
 ```
+
 
 ---
 
@@ -224,6 +225,28 @@ print(f"Score: {score.values:.3f} ± {score.attrs['error']:.3f}")
 | 0.4 - 0.59 | Moderate similarity |
 | 0.2 - 0.39 | Low similarity |
 | 0.0 - 0.19 | Very low similarity |
+
+### Score Structure
+
+For benchmarks to correctly write both `score_raw` (unceiled) and `score_ceiled` to the database, the returned `Score` object must have specific attributes.
+
+#### Required Attributes for Neural Benchmarks
+
+```python
+# The main score object contains the ceiled value
+score = Score(ceiled_value)
+
+# Required attributes (must be scalar Score objects)
+score.attrs['ceiling'] = Score(ceiling_value)           # Triggers non-engineering benchmark handling
+score.attrs[Score.RAW_VALUES_KEY] = Score(raw_value)    # The unceiled score
+```
+
+**Critical Requirements:**
+- `'ceiling'` must be present in `score.attrs` for non-engineering benchmarks
+- Both `ceiling` and `raw` must be `Score` objects containing **scalar values** (compatible with `.item()`)
+- Arrays will cause database writes to fail with: `"can only convert an array of size 1 to a Python scalar"`
+
+> ⚠️ **Note:** If `'ceiling'` is missing from `score.attrs`, the benchmark is treated as an engineering benchmark and only `score_raw` is written to the database (`score_ceiled` remains `NULL`).
 
 ---
 
@@ -302,4 +325,5 @@ Now that you understand what a benchmark is, continue to:
 1. **[Data Packaging](/tutorials/benchmarks/data-packaging/)** — Learn how to package your experimental data
 2. **[Neural Benchmarks](/tutorials/benchmarks/neural-benchmarks/)** — Create benchmarks comparing model activations to neural recordings
 3. **[Behavioral Benchmarks](/tutorials/benchmarks/behavioral-benchmarks/)** — Create benchmarks comparing model behavior to human behavior
+
 
