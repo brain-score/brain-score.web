@@ -231,7 +231,266 @@ function setupFilters() {
         window.filteredOutBenchmarks.add(cb.value);
       }
     });
+    
+    // Recalculate baseline scores to exclude the default-excluded benchmarks
+    // This ensures the Global Score on initial load correctly excludes these benchmarks
+    if (window.excludedBenchmarks && window.excludedBenchmarks.size > 0) {
+      setTimeout(() => {
+        recalculateBaselineScores();
+      }, 50);
+    }
   }, 20);
+}
+
+// Recalculate baseline scores to properly exclude the default-excluded benchmarks
+// This modifies originalRowData so that the "baseline" Global Score is correct
+// It also preserves the true original values so they can be restored when benchmarks are re-added
+function recalculateBaselineScores() {
+  if (!window.originalRowData || !window.benchmarkTree || !window.excludedBenchmarks) return;
+  
+  const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
+  const excludedBenchmarks = window.filteredOutBenchmarks || new Set();
+  
+  // Store the true original values BEFORE modifying (for restoring when benchmarks are re-added)
+  // Only do this once on initial load
+  if (!window.trueOriginalRowData) {
+    window.trueOriginalRowData = JSON.parse(JSON.stringify(window.originalRowData));
+  }
+  
+  // Recalculate scores for each row
+  window.originalRowData.forEach(row => {
+    // Process benchmarks from leaves up to parents (using shared utility)
+    const allBenchmarkIds = Array.from(hierarchyMap.keys());
+    const benchmarksByDepth = allBenchmarkIds
+      .map(id => ({ id, depth: window.LeaderboardHierarchyUtils.getDepthLevel(id, hierarchyMap) }))
+      .sort((a, b) => a.depth - b.depth);
+    
+    benchmarksByDepth.forEach(({ id: benchmarkId }) => {
+      const children = hierarchyMap.get(benchmarkId) || [];
+      
+      if (children.length === 0) {
+        // Leaf benchmark: mark as X if excluded
+        if (excludedBenchmarks.has(benchmarkId) && row[benchmarkId]) {
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: 'X',
+            color: '#e0e1e2'
+          };
+        }
+      } else {
+        // Parent benchmark: recalculate average from non-excluded children (using shared utility)
+        const childScores = [];
+        const childInfo = [];
+        
+        children.forEach(childId => {
+          // Skip if child is explicitly excluded OR if its entire subtree is excluded
+          if (excludedBenchmarks.has(childId) || window.LeaderboardHierarchyUtils.isFullyExcluded(childId, hierarchyMap, excludedBenchmarks)) return;
+          
+          if (row[childId]) {
+            const childScore = row[childId].value;
+            const hasValidScore = childScore !== null && childScore !== undefined && 
+                                 childScore !== '' && childScore !== 'X' &&
+                                 !isNaN(parseFloat(childScore));
+            childInfo.push({ childId, childScore, hasValidScore });
+          }
+        });
+        
+        const hasAnyValidScores = childInfo.some(info => info.hasValidScore);
+        
+        childInfo.forEach(({ childScore, hasValidScore }) => {
+          if (hasValidScore) {
+            childScores.push(parseFloat(childScore));
+          } else if (hasAnyValidScores && (childScore === 'X' || childScore === '')) {
+            // Treat X as 0 only if there are other valid scores (normal X, not fully excluded)
+            childScores.push(0);
+          }
+        });
+        
+        // Determine if this column should be dropped out
+        let shouldDropOut = childScores.length === 0 || !hasAnyValidScores;
+        
+        if (shouldDropOut) {
+          if (row[benchmarkId]) {
+            row[benchmarkId] = {
+              ...row[benchmarkId],
+              value: 'X',
+              color: '#e0e1e2'
+            };
+          }
+        } else if (row[benchmarkId]) {
+          const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
+          row[benchmarkId] = {
+            ...row[benchmarkId],
+            value: parseFloat(average.toFixed(3))
+          };
+        }
+      }
+    });
+    
+    // Recalculate average_vision_v0 (Global Score) from neural and behavior (using shared utility)
+    const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
+    const categoryScores = [];
+    
+    visionCategories.forEach(category => {
+      // Skip if explicitly excluded OR if its entire subtree is excluded
+      if (excludedBenchmarks.has(category) || window.LeaderboardHierarchyUtils.isFullyExcluded(category, hierarchyMap, excludedBenchmarks)) return;
+      
+      if (row[category]) {
+        const score = row[category].value;
+        if (score !== null && score !== undefined && score !== '') {
+          if (score === 'X') {
+            // Treat X as 0 (normal X, model has no data)
+            categoryScores.push(0);
+          } else {
+            const numVal = typeof score === 'string' ? parseFloat(score) : score;
+            if (!isNaN(numVal)) {
+              categoryScores.push(numVal);
+            } else {
+              categoryScores.push(0);
+            }
+          }
+        }
+      }
+    });
+    
+    if (row['average_vision_v0']) {
+      if (categoryScores.length > 0) {
+        const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
+        row['average_vision_v0'] = {
+          ...row['average_vision_v0'],
+          value: parseFloat(globalAverage.toFixed(3))
+        };
+      } else {
+        // All categories are excluded - mark global score as X
+        row['average_vision_v0'] = {
+          ...row['average_vision_v0'],
+          value: 'X',
+          color: '#e0e1e2'
+        };
+      }
+    }
+  });
+  
+  // Recalculate colors for parent benchmarks based on NEW score distribution
+  // This ensures colors reflect the new min/max ranges after exclusions
+  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  const parentBenchmarkIds = allBenchmarkIds.filter(bid => {
+    const children = hierarchyMap.get(bid) || [];
+    return children.length > 0;  // Only parent benchmarks
+  });
+  
+  // Also include global score (average_vision_v0) if it exists
+  const globalScoreId = 'average_vision_v0';
+  if (!parentBenchmarkIds.includes(globalScoreId) && 
+      window.originalRowData.length > 0 && 
+      window.originalRowData[0][globalScoreId]) {
+    parentBenchmarkIds.push(globalScoreId);
+  }
+  
+  // Recalculate colors for each parent benchmark
+  parentBenchmarkIds.forEach(benchmarkId => {
+    if (window.LeaderboardColorUtils && window.LeaderboardColorUtils.recalculateColorsForBenchmark) {
+      window.LeaderboardColorUtils.recalculateColorsForBenchmark(
+        window.originalRowData,
+        benchmarkId,
+        hierarchyMap
+      );
+    }
+  });
+  
+  // Recalculate ranks based on the new global scores
+  recalculateRanks(window.originalRowData);
+  
+  // Update the grid with recalculated data
+  if (window.globalGridApi) {
+    window.globalGridApi.setGridOption('rowData', window.originalRowData);
+    window.globalGridApi.refreshCells({ force: true });
+  }
+}
+
+// Recalculate ranks based on the current global scores (average_vision_v0)
+// This ensures ranks reflect the recalculated scores after excluding benchmarks
+function recalculateRanks(rowData) {
+  if (!rowData || rowData.length === 0) return;
+  
+  // Extract global scores for each model
+  const modelScores = rowData.map(row => {
+    const globalScore = row.average_vision_v0;
+    let score = null;
+    let isX = false;
+    
+    if (globalScore) {
+      const val = globalScore.value;
+      if (val === 'X' || val === '' || val === null || val === undefined) {
+        isX = true;
+      } else {
+        const numVal = typeof val === 'string' ? parseFloat(val) : val;
+        if (!isNaN(numVal)) {
+          score = numVal;
+        } else {
+          isX = true;
+        }
+      }
+    } else {
+      isX = true;
+    }
+    
+    return { row, score, isX, modelName: row.model?.name || row.id || '' };
+  });
+  
+  // Sort: valid scores descending, then X at the bottom
+  modelScores.sort((a, b) => {
+    // X values go to the bottom
+    if (a.isX && !b.isX) return 1;
+    if (!a.isX && b.isX) return -1;
+    if (a.isX && b.isX) return a.modelName.localeCompare(b.modelName);
+    
+    // Sort by score descending
+    if (b.score !== a.score) return b.score - a.score;
+    
+    // Tiebreaker: model name
+    return a.modelName.localeCompare(b.modelName);
+  });
+  
+  // Assign ranks based on rounded scores (2 decimal places, matching display)
+  let currentRank = 1;
+  let previousRoundedScore = null;
+  let tiedCount = 0;
+  
+  modelScores.forEach((item, index) => {
+    if (item.isX) {
+      // All X get the same rank (last valid rank + tied count + 1)
+      return;
+    }
+    
+    // Round to 2 decimal places for comparison (matching display format)
+    const roundedScore = Math.round(item.score * 100) / 100;
+    
+    // Compare rounded scores for tie detection
+    if (index === 0 || roundedScore !== previousRoundedScore) {
+      if (tiedCount > 0) {
+        currentRank += tiedCount;
+      }
+      tiedCount = 1;
+      item.row.rank = currentRank;
+    } else {
+      // Tie - same rounded score, use same rank as previous
+      tiedCount++;
+      item.row.rank = modelScores[index - 1].row.rank;
+    }
+    
+    previousRoundedScore = roundedScore;
+  });
+  
+  // Assign rank to all X models (after all valid ones)
+  const xRank = currentRank + tiedCount;
+  modelScores.forEach(item => {
+    if (item.isX) {
+      item.row.rank = xRank;
+    }
+  });
+  
+  console.log('[recalculateRanks] Recalculated ranks for', rowData.length, 'models');
 }
 
 function setupEventHandlers() {

@@ -320,13 +320,25 @@ function updateFilteredScores(rowData) {
   const workingRowData = rowData.map(row => ({ ...row }));
   
   // First restore original data for all columns
+  // For benchmarks that were default-excluded but are now re-added, use trueOriginalRowData
   workingRowData.forEach((row) => {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
+    const trueOriginalRow = window.trueOriginalRowData?.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
     
     Object.keys(originalRow).forEach(key => {
       if (key !== 'model' && key !== 'rank' && originalRow[key] && typeof originalRow[key] === 'object') {
-        row[key] = { ...originalRow[key] };
+        // Check if this is a re-added benchmark (was default-excluded, now included)
+        const isDefaultExcluded = window.excludedBenchmarks && window.excludedBenchmarks.has(key);
+        const isCurrentlyIncluded = !excludedBenchmarks.has(key);
+        const isReAdded = isDefaultExcluded && isCurrentlyIncluded;
+        
+        if (isReAdded && trueOriginalRow && trueOriginalRow[key]) {
+          // Restore from true original (before baseline recalculation)
+          row[key] = { ...trueOriginalRow[key] };
+        } else {
+          row[key] = { ...originalRow[key] };
+        }
       }
     });
   });
@@ -336,20 +348,10 @@ function updateFilteredScores(rowData) {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
     
-    function getDepthLevel(benchmarkId, visited = new Set()) {
-      if (visited.has(benchmarkId)) return 0;
-      visited.add(benchmarkId);
-      
-      const children = hierarchyMap.get(benchmarkId) || [];
-      if (children.length === 0) return 0;
-      
-      const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
-      return maxChildDepth + 1;
-    }
-    
+    // Process benchmarks from leaves up to parents (using shared utility)
     const allBenchmarkIds = Array.from(hierarchyMap.keys());
     const benchmarksByDepth = allBenchmarkIds
-      .map(id => ({ id, depth: getDepthLevel(id) }))
+      .map(id => ({ id, depth: window.LeaderboardHierarchyUtils.getDepthLevel(id, hierarchyMap) }))
       .sort((a, b) => a.depth - b.depth);
     
     benchmarksByDepth.forEach(({ id: benchmarkId }) => {
@@ -364,13 +366,15 @@ function updateFilteredScores(rowData) {
           };
         }
       } else {
+        // Parent benchmark: recalculate average from non-excluded children (using shared utility)
         const childScores = [];
-        
-        
-        // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
+        
         children.forEach(childId => {
-          if (!excludedBenchmarks.has(childId) && row[childId]) {
+          // Skip if child is explicitly excluded OR if its entire subtree is excluded
+          if (excludedBenchmarks.has(childId) || window.LeaderboardHierarchyUtils.isFullyExcluded(childId, hierarchyMap, excludedBenchmarks)) return;
+          
+          if (row[childId]) {
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined && 
                                  childScore !== '' && childScore !== 'X' &&
@@ -379,50 +383,19 @@ function updateFilteredScores(rowData) {
           }
         });
         
-        // Check if any valid scores among the children
         const hasAnyValidScores = childInfo.some(info => info.hasValidScore);
         
-        // Second pass, build the scores array
-        childInfo.forEach(({ childId, childScore, hasValidScore }) => {
+        childInfo.forEach(({ childScore, hasValidScore }) => {
           if (hasValidScore) {
-            // Include valid numeric scores
-            const numVal = parseFloat(childScore);
-            childScores.push(numVal);
+            childScores.push(parseFloat(childScore));
           } else if (hasAnyValidScores && (childScore === 'X' || childScore === '')) {
-            // If we have some valid scores, treat X/empty as 0
+            // Treat X as 0 only if there are other valid scores (normal X, not fully excluded)
             childScores.push(0);
           }
-          // If no valid scores exist at all, skip everything (childScores will be empty)
         });
         
-        
-        // Check if we should drop out this parent column
-        let shouldDropOut = false;
-        
-        if (childScores.length === 0) {
-          // No children available at all
-          shouldDropOut = true;
-        } else {
-          // Check if all non-excluded children are X or 0
-          let validChildrenCount = 0;
-          let nonZeroChildrenCount = 0;
-          
-          children.forEach(childId => {
-            if (!excludedBenchmarks.has(childId) && row[childId]) {
-              validChildrenCount++;
-              const childScore = row[childId].value;
-              if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
-                const numVal = typeof childScore === 'string' ? parseFloat(childScore) : childScore;
-                if (!isNaN(numVal) && numVal > 0) {
-                  nonZeroChildrenCount++;
-                }
-              }
-            }
-          });
-          
-          // Drop out if no valid children or all valid children are 0/X
-          shouldDropOut = validChildrenCount === 0 || nonZeroChildrenCount === 0;
-        }
+        // Determine if this column should be dropped out
+        let shouldDropOut = childScores.length === 0 || !hasAnyValidScores;
         
         if (shouldDropOut) {
           row[benchmarkId] = {
@@ -440,35 +413,25 @@ function updateFilteredScores(rowData) {
       }
     });
     
-    // Calculate global filtered score
+    // Calculate global filtered score (using shared utility)
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
     
     visionCategories.forEach(category => {
-      const isExcluded = excludedBenchmarks.has(category);
+      // Skip if explicitly excluded OR if its entire subtree is excluded
+      if (excludedBenchmarks.has(category) || window.LeaderboardHierarchyUtils.isFullyExcluded(category, hierarchyMap, excludedBenchmarks)) return;
       
-      // Check if this column would be visible (not dropped out)
-      let isColumnVisible = true;
-      if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
-        const leafCount = window.getFilteredLeafCount(category);
-        if (leafCount === 0) {
-          isColumnVisible = false; // Column is dropped out
-        }
-      }
-      
-      // Only include in filtered score if column is visible and not excluded
-      if (row[category] && !isExcluded && isColumnVisible) {
+      if (row[category]) {
         const score = row[category].value;
         if (score !== null && score !== undefined && score !== '') {
           if (score === 'X') {
-            // Treat X as 0 in filtered score calculation (but only if column is visible)
+            // Treat X as 0 (normal X, model has no data)
             categoryScores.push(0);
           } else {
             const numVal = typeof score === 'string' ? parseFloat(score) : score;
             if (!isNaN(numVal)) {
               categoryScores.push(numVal);
             } else {
-              // Treat non-numeric values as 0
               categoryScores.push(0);
             }
           }
@@ -489,29 +452,49 @@ function updateFilteredScores(rowData) {
   const allBenchmarkIds = Array.from(hierarchyMap.keys());
   const recalculatedBenchmarks = new Set();
   
+  // Helper function to mark ancestors as recalculated
+  function markAncestorsRecalculated(targetId) {
+    allBenchmarkIds.forEach(parentId => {
+      const parentChildren = hierarchyMap.get(parentId) || [];
+      if (parentChildren.includes(targetId)) {
+        recalculatedBenchmarks.add(parentId);
+        markAncestorsRecalculated(parentId);
+      }
+    });
+  }
+  
   allBenchmarkIds.forEach(benchmarkId => {
     const children = hierarchyMap.get(benchmarkId) || [];
     
     if (children.length > 0) {
-      // Only count as excluded if it's manually filtered (not a default-excluded benchmark)
-      const hasManuallyExcludedChildren = children.some(childId => {
-        const isExcluded = excludedBenchmarks.has(childId);
+      // Check for children that deviate from their default state
+      const hasChildrenDeviatingFromDefault = children.some(childId => {
+        const isCurrentlyExcluded = excludedBenchmarks.has(childId);
         const isDefaultExcluded = window.excludedBenchmarks && window.excludedBenchmarks.has(childId);
-        // Only count if excluded AND not a default-excluded benchmark
-        return isExcluded && !isDefaultExcluded;
-      });
-      if (hasManuallyExcludedChildren) {
-        recalculatedBenchmarks.add(benchmarkId);
         
-        function markAncestorsRecalculated(targetId) {
-          allBenchmarkIds.forEach(parentId => {
-            const parentChildren = hierarchyMap.get(parentId) || [];
-            if (parentChildren.includes(targetId)) {
-              recalculatedBenchmarks.add(parentId);
-              markAncestorsRecalculated(parentId);
-            }
-          });
-        }
+        // Case 1: Normal benchmark that was manually excluded (unchecked)
+        // isCurrentlyExcluded = true, isDefaultExcluded = false
+        const wasManuallyExcluded = isCurrentlyExcluded && !isDefaultExcluded;
+        
+        // Case 2: Excluded benchmark that was re-added (checked)
+        // isCurrentlyExcluded = false, isDefaultExcluded = true
+        const wasReAdded = !isCurrentlyExcluded && isDefaultExcluded;
+        
+        return wasManuallyExcluded || wasReAdded;
+      });
+      
+      if (hasChildrenDeviatingFromDefault) {
+        recalculatedBenchmarks.add(benchmarkId);
+        markAncestorsRecalculated(benchmarkId);
+      }
+    } else {
+      // Leaf benchmark: check if it itself deviates from default
+      const isCurrentlyExcluded = excludedBenchmarks.has(benchmarkId);
+      const isDefaultExcluded = window.excludedBenchmarks && window.excludedBenchmarks.has(benchmarkId);
+      
+      // If this leaf was re-added (default excluded but now included), mark it for blue coloring
+      if (!isCurrentlyExcluded && isDefaultExcluded) {
+        recalculatedBenchmarks.add(benchmarkId);
         markAncestorsRecalculated(benchmarkId);
       }
     }
@@ -625,28 +608,38 @@ function toggleFilteredScoreColumn(gridApi) {
     hasStimuliFiltering
   );
 
-  const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');
-  let hasNonEngineeringBenchmarkFilters = false;
+  let hasBenchmarkDeviationsFromDefault = false;
   
-  // Only check for non-engineering benchmark filters if the benchmark panel is ready
+  // Only check for benchmark deviations if the benchmark panel is ready
   const benchmarkPanel = document.getElementById('benchmarkFilterPanel');
   if (benchmarkPanel && benchmarkPanel.children.length > 0) {
-    uncheckedCheckboxes.forEach(checkbox => {
-      const engineeringNode = document.querySelector('input[value="engineering_vision_v0"]')?.closest('.benchmark-node');
+    const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
+    const engineeringNode = document.querySelector('input[value="engineering_vision_v0"]')?.closest('.benchmark-node');
+    
+    allCheckboxes.forEach(checkbox => {
       const isEngineeringChild = engineeringNode && engineeringNode.contains(checkbox);
       const isEngineeringParent = checkbox.value === 'engineering_vision_v0';
       
+      // Skip engineering benchmarks (they don't affect global score)
+      if (isEngineeringChild || isEngineeringParent) {
+        return;
+      }
+      
       // Check if this is an excluded benchmark (default unchecked)
       const isExcludedBenchmark = checkbox.dataset.excluded === 'true';
-
-      // Only count as a manual filter if it's not engineering and not a default-excluded benchmark
-      if (!isEngineeringChild && !isEngineeringParent && !isExcludedBenchmark) {
-        hasNonEngineeringBenchmarkFilters = true;
+      
+      // Expected default state: checked if NOT excluded, unchecked if excluded
+      const expectedDefaultState = !isExcludedBenchmark;
+      const actualState = checkbox.checked;
+      
+      // If the current state differs from the expected default, it's a modification
+      if (actualState !== expectedDefaultState) {
+        hasBenchmarkDeviationsFromDefault = true;
       }
     });
   }
 
-  const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
+  const shouldShowFilteredScore = hasBenchmarkDeviationsFromDefault || hasBenchmarkMetadataFilters;
 
   if (shouldShowFilteredScore) {
     // First, make column visible
