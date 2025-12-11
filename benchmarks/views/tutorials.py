@@ -1,9 +1,26 @@
 import os
 import re
+import unicodedata
 from django.shortcuts import render
 from django.http import Http404
 from django.conf import settings
 import markdown
+
+
+def slugify_heading(value, separator='-'):
+    """Convert heading text to a URL-friendly slug."""
+    # Normalize unicode characters
+    value = unicodedata.normalize('NFKD', str(value))
+    value = value.encode('ascii', 'ignore').decode('ascii')
+    # Convert to lowercase and replace spaces
+    value = value.lower()
+    # Remove special characters except alphanumeric and separator
+    value = re.sub(r'[^\w\s-]', '', value)
+    # Replace whitespace with separator
+    value = re.sub(r'[\s_]+', separator, value)
+    # Remove leading/trailing separators
+    value = value.strip(separator)
+    return value
 
 
 class Tutorial:
@@ -28,6 +45,11 @@ class Tutorial:
                     'css_class': 'codehilite',
                     'linenums': False,
                     'guess_lang': False,  # Don't guess - prevents ASCII diagrams from being highlighted
+                },
+                'toc': {
+                    'permalink': False,  # We handle permalinks in JS
+                    'toc_depth': 4,      # Include h1-h4
+                    'slugify': slugify_heading,
                 },
             }
         )

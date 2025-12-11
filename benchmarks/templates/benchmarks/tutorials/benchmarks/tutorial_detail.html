@@ -16,11 +16,15 @@
       <h3 class="sidebar-header">Benchmark Tutorials</h3>
       <ul class="tutorial-nav-list">
         {% for t in tutorials %}
-          <li>
+          <li class="tutorial-nav-item {% if t.slug == tutorial.slug %}is-active{% endif %}">
             <a href="{{ t.get_absolute_url }}" 
                {% if t.slug == tutorial.slug %}class="active"{% endif %}>
               {{ t.title }}
             </a>
+            {% if t.slug == tutorial.slug %}
+            <!-- TOC for current page (populated by JavaScript) -->
+            <nav class="toc-nav" id="toc-nav"></nav>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>
