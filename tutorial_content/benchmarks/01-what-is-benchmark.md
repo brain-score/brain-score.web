@@ -252,7 +252,7 @@ score.attrs[Score.RAW_VALUES_KEY] = Score(raw_value)    # The unceiled score
 
 ## Understanding Ceilings
 
-**Ceilings** represent the maximum expected performance given measurement noise and biological variability. They answer: "How well should we expect the best possible model to score?"
+**Ceilings** represent the maximum expected performance given measurement noise and biological variability. "How well should we expect the best possible model to score?"
 
 ### Why Ceilings Are Critical
 
