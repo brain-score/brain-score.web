@@ -43,6 +43,8 @@ Unlike neural benchmarks, behavioral benchmarks **do not** have a helper class. 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Why no helper class?** As covered in [Data Packaging](/tutorials/benchmarks/data-packaging/), `BehavioralAssembly` has no enforced dimensions—behavioral data can be 1D (correct/incorrect), 2D (probability distributions), or other shapes. This flexibility means behavioral experiments are too diverse for a single abstraction like `NeuralBenchmark`.
+
 ---
 
 ## Example 1: Rajalingham2018 (I2N Metric)
@@ -516,6 +518,135 @@ benchmark_registry['MyExperiment2024-accuracy'] = MyBehavioralBenchmark
 
 ---
 
+## Fitting Stimuli Requirements
+
+Fitting stimuli are training data that the model uses to learn task-specific readouts. Whether you need them depends on the task type:
+
+| Task Type | Fitting Stimuli Required? | Why | Example |
+|-----------|---------------------------|-----|---------|
+| `BrainModel.Task.probabilities` | **Yes** | Model needs labeled examples to train a classifier | Object categorization |
+| `BrainModel.Task.label` | No | Uses model's pre-trained label outputs | ImageNet classification |
+| `BrainModel.Task.odd_one_out` | No | Compares feature similarities directly | Triplet similarity |
+
+**Important**: Fitting stimuli should be **separate** from test stimuli to ensure fair evaluation. The model learns from fitting stimuli, then is tested on unseen test stimuli.
+
+```python
+# Good: Separate fitting and test sets
+self._fitting_stimuli = load_stimulus_set('MyExperiment2024_training')
+self._test_stimuli = load_stimulus_set('MyExperiment2024_test')
+
+# Bad: Using the same stimuli for both
+self._fitting_stimuli = self._test_stimuli  # Don't do this!
+```
+
+---
+
+## Testing Your Benchmark
+
+Every benchmark should include tests to verify it loads and produces expected scores:
+
+```python
+# vision/brainscore_vision/benchmarks/myexperiment2024/test.py
+
+import pytest
+from brainscore_vision import load_benchmark, load_model
+
+@pytest.mark.private_access
+class TestMyBehavioralBenchmark:
+    def test_benchmark_loads(self):
+        """Test that benchmark can be loaded"""
+        benchmark = load_benchmark('MyExperiment2024-accuracy')
+        assert benchmark is not None
+        assert benchmark.identifier == 'MyExperiment2024-accuracy'
+    
+    def test_ceiling_valid(self):
+        """Test ceiling is computed and in valid range"""
+        benchmark = load_benchmark('MyExperiment2024-accuracy')
+        ceiling = benchmark.ceiling
+        assert 0 < ceiling <= 1, f"Ceiling {ceiling} out of expected range"
+    
+    def test_benchmark_score(self):
+        """Test benchmark produces expected score for a known model"""
+        benchmark = load_benchmark('MyExperiment2024-accuracy')
+        model = load_model('alexnet')
+        
+        score = benchmark(model)
+        
+        # Document expected score for regression testing
+        assert 0 <= score <= 1
+        assert hasattr(score, 'attrs')
+        # Optional: assert abs(score - 0.35) < 0.05  # Expected ~0.35 for alexnet
+```
+
+---
+
+## Common Issues and Solutions
+
+#### Problem: "Model predictions have wrong shape"
+
+The model output doesn't match expected dimensions for the task.
+
+```python
+# Solution: Verify task type matches expected output
+# For probabilities task, output should be (presentations × choices)
+candidate.start_task(BrainModel.Task.probabilities, fitting_stimuli)
+predictions = candidate.look_at(stimulus_set)
+print(f"Shape: {predictions.shape}, Dims: {predictions.dims}")
+```
+
+#### Problem: "Fitting stimuli labels don't match test stimuli"
+
+The `image_label` column values are inconsistent between fitting and test sets.
+
+```python
+# Solution: Ensure consistent labeling
+fitting_labels = set(fitting_stimuli['image_label'].unique())
+test_labels = set(test_stimuli['image_label'].unique())
+assert fitting_labels == test_labels, f"Label mismatch: {fitting_labels} vs {test_labels}"
+```
+
+#### Problem: "Ceiling calculation takes too long"
+
+Split-half bootstrapping with many iterations is slow.
+
+```python
+# Solution: Pre-compute ceiling and store the value
+# Calculate once:
+ceiling_value = self._compute_ceiling()
+print(f"Pre-computed ceiling: {ceiling_value}")
+
+# Then use the value directly:
+ceiling_func=lambda: Score(0.85)  # Use pre-computed value
+```
+
+#### Problem: "Score exceeds 1.0 or is negative"
+
+Ceiling normalization isn't clamping properly.
+
+```python
+# Solution: Clamp the final score
+raw_score = self._metric(predictions, self._assembly)
+ceiling = self.ceiling
+ceiled_score = min(max(raw_score / ceiling, 0), 1)  # Clamp to [0, 1]
+```
+
+#### Problem: "start_task fails with unknown task"
+
+Task type not recognized by the model.
+
+```python
+# Solution: Use standard task types
+from brainscore_vision.model_interface import BrainModel
+
+# Valid tasks:
+BrainModel.Task.passive        # Neural recording only
+BrainModel.Task.label          # Discrete labels
+BrainModel.Task.probabilities  # Probability distributions
+BrainModel.Task.odd_one_out    # Similarity-based choices
+```
+
+---
+
 ## Behavioral Benchmark Checklist
 
 Before submitting your behavioral benchmark:
@@ -549,4 +680,5 @@ corrected_score = (raw_accuracy - chance_level) / (ceiling - chance_level)
 ## Next Steps
 
 - **[Vision vs Language](/tutorials/benchmarks/vision-vs-language/)** — Differences between vision and language benchmarks
+
 

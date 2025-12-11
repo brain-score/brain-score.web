@@ -11,20 +11,6 @@ Every Brain-Score benchmark requires experimental data packaged in standardized 
 
 ---
 
-## Table of Contents
-
-| Section | Topics |
-|---------|--------|
-| [Overview](#overview) | |
-| [The Data Structures](#the-data-structures) | [StimulusSet](#stimulusset) &#124; [Packaging StimulusSet](#packaging-stimulusset-locally) <br> [DataAssembly](#dataassembly) &#124; [NeuroidAssembly](#neuroidassembly-neural-recordings) &#124; [BehavioralAssembly](#behavioralassembly-behavioral-responses) &#124; [Packaging DataAssembly](#packaging-dataassembly-locally) |
-| [The Data Packaging Pipeline](#the-data-packaging-pipeline) | [Step 1: Prepare](#step-1-prepare-stimulus-set) &#124; [Step 2: Create](#step-2-create-data-assembly) &#124; [Step 3: Validate](#step-3-validate-and-package) &#124; [Step 4: Upload](#step-4-upload) &#124; [Step 5: Register](#step-5-register-in-__init__py) &#124; [Step 6: Test](#step-6-create-tests) |
-| [Data Plugin Directory Structure](#data-plugin-directory-structure) |  |
-| [Data Quality Checklist](#data-quality-checklist) |  |
-| [Common Issues and Solutions](#common-issues-and-solutions) |  |
-| [Next Steps](#next-steps) | Neural & Behavioral benchmarks |
-
----
-
 ## Overview
 
 Every data plugin is built around two fundamental data structures:

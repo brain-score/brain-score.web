@@ -13,27 +13,6 @@ By comparing model activations to neural recordings (fMRI, electrophysiology, EE
 
 ---
 
-## Table of Contents
-
-| Section | Topics |
-|---------|--------|
-| [Overview](#overview) | Existing benchmarks, key characteristics |
-| [Inheritance Structure](#inheritance-structure) | Benchmark → BenchmarkBase → NeuralBenchmark |
-| [What NeuralBenchmark Provides](#what-neuralbenchmark-provides) | Automatic features, parameters reference |
-| [Example: MajajHong2015](#example-majajhong2015) | Complete implementation walkthrough |
-| [Design Decisions in Neural Benchmarks](#design-decisions-in-neural-benchmarks) | Repetitions, stratification, time bins, regions |
-| [The Internal Consistency Ceiling](#the-internal-consistency-ceiling) | Ceiling calculation |
-| [What Happens Under the Hood](#what-happens-under-the-hood) | Detailed call flow |
-| [Common Neural Metrics](#common-neural-metrics) | PLS, Ridge, RidgeCV, Neuron-to-Neuron, RDM, CKA |
-| [Implementation Patterns](#implementation-patterns) | NeuralBenchmark, PropertiesBenchmark, BenchmarkBase |
-| [Building MyExperiment2024](#building-myexperiment2024-complete-example) | Complete benchmark implementation example |
-| [Registration](#registration) | Plugin setup |
-| [Testing Your Benchmark](#testing-your-benchmark) | Test file example |
-| [Common Issues and Solutions](#common-issues-and-solutions) | Troubleshooting |
-| [Neural Benchmark Checklist](#neural-benchmark-checklist) | Pre-submission verification |
-
----
-
 ## Overview
 
 | Benchmark | Description | Brain Region | Key Features |
