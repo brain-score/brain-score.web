@@ -11,6 +11,20 @@ Every Brain-Score benchmark requires experimental data packaged in standardized 
 
 ---
 
+## Table of Contents
+
+| Section | Topics |
+|---------|--------|
+| [Overview](#overview) | |
+| [The Data Structures](#the-data-structures) | [StimulusSet](#stimulusset) &#124; [Packaging StimulusSet](#packaging-stimulusset-locally) <br> [DataAssembly](#dataassembly) &#124; [NeuroidAssembly](#neuroidassembly-neural-recordings) &#124; [BehavioralAssembly](#behavioralassembly-behavioral-responses) &#124; [Packaging DataAssembly](#packaging-dataassembly-locally) |
+| [The Data Packaging Pipeline](#the-data-packaging-pipeline) | [Step 1: Prepare](#step-1-prepare-stimulus-set) &#124; [Step 2: Create](#step-2-create-data-assembly) &#124; [Step 3: Validate](#step-3-validate-and-package) &#124; [Step 4: Upload](#step-4-upload) &#124; [Step 5: Register](#step-5-register-in-__init__py) &#124; [Step 6: Test](#step-6-create-tests) |
+| [Data Plugin Directory Structure](#data-plugin-directory-structure) |  |
+| [Data Quality Checklist](#data-quality-checklist) |  |
+| [Common Issues and Solutions](#common-issues-and-solutions) |  |
+| [Next Steps](#next-steps) | Neural & Behavioral benchmarks |
+
+---
+
 ## Overview
 
 Every data plugin is built around two fundamental data structures:
@@ -24,7 +38,7 @@ Raw Data → Organize Stimuli → Create Assembly → Validate → Package → R
 
 ---
 
-## Understanding the Data Structures
+## The Data Structures
 
 ### StimulusSet
 
@@ -141,8 +155,8 @@ package_stimulus_set_locally(
     stimulus_set_identifier=stimulus_set.name,
 )
 ```
-
-```json
+Output:
+```text
 {
  'identifier': 'MyExperiment2024',
  'csv_path': '/path/to/Downloads/brainscore_packages/stimulus_MyExperiment2024.csv',
@@ -288,9 +302,9 @@ assembly = BehavioralAssembly(
 ```python
 # Probability distribution over choices
 choice_data = np.array([
-    [0.8, 0.1, 0.1],  # 80% choice A, 10% B, 10% C
-    [0.2, 0.7, 0.1],
-    [0.1, 0.2, 0.7]
+    [0.8, 0.1, 0.1],  # img_001; 80% choice A, 10% B, 10% C
+    [0.2, 0.7, 0.1],  # img_002;
+    [0.1, 0.2, 0.7]   # img_003
 ])
 
 assembly = BehavioralAssembly(
@@ -351,7 +365,8 @@ packaging.package_data_assembly_locally(
 
 Other supported assembly class types can be found in `core/brainscore_core/support_data_standards/brainio/fetch.py:resolve_assembly_class()`. These include `DataAssembly`, `NeuroidAssembly`, `BehavioralAssembly`, `PropertyAssembly`, `MetadataAssembly`, and `SpikeTimesAssembly`.
 
-```json
+Output:
+```text
 {
  'identifier': 'MyExperiment2024',
  'path': '/path/to/Downloads/brainscore_packages/assy_stimulus_MyExperiment2024.nc',
@@ -360,7 +375,7 @@ Other supported assembly class types can be found in `core/brainscore_core/suppo
  }
 ```
 
-When performing local packaging, unless a path is specified, the dataAssembly will be stored in `~/Downloads/brainscore_packages/`. The `sha1' is the hash for the assembly. The hashes are used to ensure data integrity and identify the exact version of each file. 
+When performing local packaging, unless a path is specified, the dataAssembly will be stored in `~/Downloads/brainscore_packages/`. The `sha1` is the hash for the assembly. The hashes are used to ensure data integrity and identify the exact version of each file. 
 
 Like the StimulusSet, you will need the hash when registering the data plugin, so keep it safe.
 
@@ -371,49 +386,89 @@ ___
 
 ### Step 1: Prepare Stimulus Set
 
+Create a `StimulusSet` with metadata and link it to your stimulus files. Ensure each stimulus has a unique `stimulus_id` and set the `name` attribute.
+
+```python
+stimulus_set = StimulusSet(metadata_df)
+stimulus_set.name = 'MyExperiment2024'
+stimulus_set.stimulus_paths = {stim_id: path for stim_id, path in ...}
+```
+
 ---
 
 ### Step 2: Create Data Assembly
 
+Build a `DataAssembly` with your experimental data. Include `stimulus_id` as a coordinate to link responses to stimuli.
+
+```python
+assembly = DataAssembly(data, coords={...}, dims=['presentation', 'neuroid', 'time_bin']) # for NeuroidAssembly
+```
+
 ---
 
-### Step 3: Validate Data
+### Step 3: Validate and Package
+
+Verify your data has unique IDs, no missing files, and no unexpected NaN values. Then package locally using `package_stimulus_set_locally()` and `package_data_assembly_locally()` — save the output hashes. The packaging function will perform some validation.
 
 ---
 
-### Step 4: Package and Upload
+### Step 4: Upload
 
+Once your data is packaged locally, upload it to Brain-Score's S3 storage through the [Brain-Score website](https://www.brain-score.org). Navigate to the upload page through the Central Profile Page and submit your packaged files (CSV, ZIP, and NC files).
+
+![Data Upload Interface](/static/benchmarks/img/benchmark_tutorial_upload.png)
+
+After uploading your three files, you'll receive the S3 `bucket` path and `version_id` values needed for registration through the `Copy Code` button.
+
+The Upload Portal will be soon updated to provide the exact code for loading the stimulus set and data assemblies.
 
 ---
 
 ### Step 5: Register in `__init__.py`
 
+The `__init__.py` file registers your data with Brain-Score's plugin system. When users call `load_stimulus_set('MyExperiment2024')` or `load_dataset('MyExperiment2024')`, these registrations tell the system where to find and how to load your data from S3.
+
 ```python
 # vision/brainscore_vision/data/myexperiment2024/__init__.py
 
-from brainscore_vision import data_registry, stimulus_set_registry
+from brainscore_vision import data_registry, stimulus_set_registry, load_stimulus_set
+from brainscore_core.supported_data_standards.brainio.s3 import load_stimulus_set_from_s3, load_assembly_from_s3
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
+
+# Provide bibtex for proper citation of the original dataset
+BIBTEX = """@article{MyExperiment2024,
+	title = {Neural correlates of visual object recognition in primates},
+	volume = {42},
+	doi = {10.1234/neuroscience.2024.00123},
+	journal = {Journal of Neuroscience},
+	author = {Pradeepan, Kartik S., and Ferguson, Mike.},
+	year = {2024},
+	}"""
 
 # Register stimulus set
+# The lambda ensures lazy loading — data is only fetched when actually requested
 stimulus_set_registry['MyExperiment2024'] = lambda: load_stimulus_set_from_s3(
-    identifier="MyExperiment2024",
-    bucket="brainscore-storage/brainscore-vision/data/user_000/",
-    csv_sha1="54d0645a875fcfb29bdf414db9cb54cc0ab3cacf",
-    zip_sha1="c96036d459f0a2ce4494ba73a2b18b8eec59f6b6",
-    csv_version_id="U405jdh2ECWCzwoZauxh0VNDSAHAb.2s",
-    zip_version_id="cTVQxPGpom_seCpwN2ltG_LK7eYGbZid",
-    filename_prefix="stimulus_"
+    identifier="MyExperiment2024",                         # Must match the key in the registry
+    bucket="brainscore-storage/brainscore-vision/data/..." # S3 bucket path (provided after upload)
+    csv_sha1="54d0645a875fcfb29bdf414db9cb54cc0ab3cacf",   # From local packaging output
+    zip_sha1="c96036d459f0a2ce4494ba73a2b18b8eec59f6b6",   # From local packaging output
+    csv_version_id="U405jdh2ECWCzwoZauxh0VNDSAHAb.2s",     # S3 version ID (provided after upload)
+    zip_version_id="cTVQxPGpom_seCpwN2ltG_LK7eYGbZid",     # S3 version ID (provided after upload)
+    filename_prefix="stimulus_"                            # Prefix used during packaging
     )
 
 # Register data assembly
 data_registry['MyExperiment2024'] = lambda: load_assembly_from_s3(
     identifier="MyExperiment2024",
-    version_id="yusgi5xpyrNzU10cjk69Z49G.CSyujXO",
-    sha1="ef217247308f806c2435f452c53481a04f5a6ba3",
-    bucket="brainscore-storage/brainscore-vision/models/user_508/",
-    cls=NeuroidAssembly,
-    stimulus_set_loader = lambda: load_stimulus_set('MyExperiment2024')
+    version_id="yusgi5xpyrNzU10cjk69Z49G.CSyujXO",         # S3 version ID
+    sha1="ef217247308f806c2435f452c53481a04f5a6ba3",       # From local packaging output
+    bucket="brainscore-storage/brainscore-vision/...",     # S3 bucket path (provided after upload)
+    cls=NeuroidAssembly,                                   # Assembly class (NeuroidAssembly or BehavioralAssembly)
+    stimulus_set_loader=lambda: load_stimulus_set('MyExperiment2024')  # Links to the stimulus set
 )
 ```
+
+> **Note:** The `bucket` and `version_id` values are provided by the Brain-Score team after you upload your packaged data. The `sha1` hashes come from your local packaging output.
 
 ---
 
@@ -477,8 +532,7 @@ class TestAssembly:
 # Run all tests for your data plugin
 pytest vision/brainscore_vision/data/myexperiment2024/test.py -v
 
-# Skip private access tests (for CI without credentials)
-pytest -m "not private_access" vision/brainscore_vision/data/myexperiment2024/test.py
+
 ```
 
 > ⚠️ **Note:** There are various ways to structure your tests. You can see more examples in every data plugin in `vision/brainscore_vision/data/{data identifier}/test.py`.
@@ -496,7 +550,7 @@ vision/brainscore_vision/data/myexperiment2024/
     └── data_packaging.py       # How data was packaged
 ```
 
-> ⚠️ **Note:** Once you've built the `__init__.py` and `test.py`, you're almost done. Place all files in an appropriately named folder. While not manadatory for the function of your benchmark, including the code used to process and package your data is highly recommended. This will help reproduce your benchmark as well as address any scientific questions.
+> ⚠️ **Note:** Once you've built the `__init__.py` and `test.py`, you're almost done. Place all files in an appropriately named folder. While not manadatory for the function of your benchmark, including the code used to process and package your data is highly recommended. This will help reproduce your benchmark as well as address any scientific questions. 
 
 ---
 
@@ -512,28 +566,19 @@ Before packaging data, verify:
 | **Consistent coordinates** | Verify `stimulus_id` values match between StimulusSet and DataAssembly |
 | **Proper dimensions** | Check that assembly dims match expected structure |
 
----
-
-## Naming Conventions
-
-| Type | Convention | Example |
-|------|------------|---------|
-| Data identifier | `AuthorYear` or descriptive | `MajajHong2015`, `ImageNet` |
-| Sub-datasets | Separate with dot | `MajajHong2015.IT` |
-| Multiple words | Use underscore | `Malania2007.vernier_only` |
 
 ---
 
 ## Common Issues and Solutions
 
-### Problem: "Duplicate stimulus IDs"
+#### Problem: "Duplicate stimulus IDs"
 
 ```python
 # Solution: Ensure unique IDs
 assert stimulus_set['stimulus_id'].nunique() == len(stimulus_set)
 ```
 
-### Problem: "Stimulus paths not found"
+#### Problem: "Stimulus paths not found"
 
 ```python
 # Solution: Verify all paths exist
@@ -542,12 +587,60 @@ for stimulus_id, path in stimulus_set.stimulus_paths.items():
         print(f"Missing: {stimulus_id} -> {path}")
 ```
 
-### Problem: "Assembly dimension mismatch"
+#### Problem: "Assembly dimension mismatch"
 
 ```python
 # Solution: Check dimensions
 print(f"Assembly dims: {assembly.dims}")
 print(f"Expected: ['presentation', 'neuroid'] or ['presentation']")
+```
+
+#### Problem: "stimulus_id type mismatch"
+
+The `stimulus_id` must be a **STRING** type. Integer IDs will cause issues with packaging and alignment.
+
+```python
+# Solution: Convert stimulus_id to string
+df['stimulus_id'] = df['stimulus_id'].astype(str)
+stimulus_set = StimulusSet(df)
+
+# Also ensure assembly stimulus_ids are strings
+coords = {'stimulus_id': ('presentation', [str(id) for id in stimulus_ids]), ...}
+```
+
+#### Problem: "'filename' column conflict"
+
+The packaging code adds its own `filename` column. If your data already has one, it will conflict.
+
+```python
+# Solution: Rename 'filename' before creating StimulusSet
+if 'filename' in df.columns:
+    df = df.rename(columns={'filename': 'image_filename'})
+```
+
+#### Problem: "Stimulus IDs don't match between StimulusSet and Assembly"
+
+All `stimulus_id` values in the assembly must exist in the StimulusSet.
+
+```python
+# Solution: Check alignment
+stim_ids = set(stimulus_set['stimulus_id'])
+assembly_ids = set(assembly.coords['stimulus_id'].values)
+missing = assembly_ids - stim_ids
+if missing:
+    print(f"Assembly has IDs not in StimulusSet: {missing}")
+```
+
+#### Problem: "NaN values in assembly"
+
+Unexpected NaN values can cause metric calculations to fail.
+
+```python
+# Solution: Check for NaN values
+nan_count = np.isnan(assembly.values).sum()
+if nan_count > 0:
+    print(f"Warning: {nan_count} NaN values found")
+    # Either fix the source data or document that NaNs are expected
 ```
 
 ---
