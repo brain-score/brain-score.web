@@ -86,7 +86,7 @@
                             <td class="copy-cell">
                               <button type="button"
                                       class="button is-small is-link copy-btn"
-                                      data-code='from brainscore_vision.model_helpers.s3 import load_file
+                                      data-code='from brainscore_core.supported_data_standards.brainio.s3 import load_file
 file_path = load_file(bucket="brainscore-storage", folder_name="brainscore-{{ f.domain }}/{{ f.plugin_type }}/user_{{ request.user.id }}/",
                       relative_path="{{f.filename}}",
                       version_id="{{f.version_id}}",
