@@ -34,6 +34,15 @@
       
       .dropdown-content
         transform: translateX(80px)
+        
+        // Bridge element to prevent hover gap when sidebar is collapsed
+        &::before
+          content: ''
+          position: absolute
+          left: -80px
+          top: 0
+          width: 80px
+          height: 100%
 
   a
     display: block
@@ -94,6 +103,15 @@
       
       .dropdown-content
         transform: translateX(80px)
+        
+        // Bridge element to prevent hover gap on narrow screens
+        &::before
+          content: ''
+          position: absolute
+          left: -80px
+          top: 0
+          width: 80px
+          height: 100%
 
 // Sidebar toggle button
 .sidebar-toggle

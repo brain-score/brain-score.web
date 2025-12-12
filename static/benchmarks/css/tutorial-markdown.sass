@@ -1,0 +1,714 @@
+// Tutorial Markdown Pages Styling
+// This extends the blog styling for tutorial-specific needs
+
+// ============================================
+// Tutorial Landing Page (benchmarks.html)
+// ============================================
+
+.tutorial-cards
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+  gap: 1.5rem
+  margin-top: 1.5rem
+
+.tutorial-card
+  background: #f8f9fa
+  border-radius: 8px
+  padding: 1.5rem
+  border-left: 4px solid $brainscore_blue
+  transition: box-shadow 0.2s, transform 0.2s
+  // Flexbox to align buttons at bottom
+  display: flex
+  flex-direction: column
+
+  &:hover
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    transform: translateY(-2px)
+
+  h4
+    margin: 0 0 0.5rem 0
+    color: #333
+    font-size: 1.1rem
+
+  p
+    color: #666
+    font-size: 0.9rem
+    margin-bottom: 1rem
+    line-height: 1.5
+    flex-grow: 1  // Push button to bottom
+
+  .button
+    align-self: flex-start  // Don't stretch button full width
+
+  // Different accent colors for each card
+  &.card-1
+    border-left-color: #007bff
+
+  &.card-2
+    border-left-color: #28a745
+
+  &.card-3
+    border-left-color: #6f42c1
+
+  &.card-4
+    border-left-color: #fd7e14
+
+  &.card-5
+    border-left-color: #17a2b8
+
+  &.card-6
+    border-left-color: #e83e8c
+
+.tutorial-buttons
+  margin-top: 1rem
+  display: flex
+  flex-wrap: wrap
+  gap: 0.5rem
+
+// ============================================
+// Tutorial Detail Page
+// ============================================
+
+// Main container - uses same grid as blog
+.tutorial-detail-container
+  display: grid
+  grid-template-columns: 320px 1fr
+  gap: 2rem
+  max-width: none
+  margin: 0
+  padding: 2rem
+  padding-left: 0
+
+// Sidebar - fixed positioning on scroll
+.tutorial-sidebar
+  background: #f9f9f9
+  padding: 1.5rem
+  padding-left: 0
+  border-radius: 0 8px 8px 0
+  height: fit-content
+  position: sticky
+  top: 1rem
+
+  .sidebar-widget
+    margin-bottom: 2rem
+    padding-left: 1.5rem
+
+  .sidebar-header
+    font-weight: bold
+    font-size: 1rem
+    color: #333
+    margin-bottom: 0.75rem
+    padding-bottom: 0.5rem
+    border-bottom: 2px solid $brainscore_blue
+
+// Tutorial navigation list
+.tutorial-nav-list
+  list-style: none
+  padding: 0
+  margin: 0
+
+  li
+    margin-bottom: 0.5rem
+
+  a
+    display: block
+    padding: 0.5rem 0.75rem
+    color: #555
+    text-decoration: none
+    border-radius: 4px
+    font-size: 0.9rem
+    transition: all 0.2s
+
+    &:hover
+      background: #e9ecef
+      color: $brainscore_blue
+
+    &.active
+      background: $brainscore_blue
+      color: white
+      font-weight: 500
+
+// Quick links in sidebar
+.quick-links
+  list-style: none
+  padding: 0
+  margin: 0
+
+  li
+    margin-bottom: 0.5rem
+
+  a
+    color: $brainscore_blue
+    text-decoration: none
+    font-size: 0.9rem
+
+    &:hover
+      text-decoration: underline
+
+// Tutorial nav item with inline TOC
+.tutorial-nav-item
+  &.is-active
+    // Style the active tutorial item
+    > a
+      background: $brainscore_blue
+      color: white
+      font-weight: 500
+    
+    // TOC appears under the active item
+    .toc-nav
+      margin-top: 0.5rem
+      margin-left: 0.5rem
+      padding-left: 0.5rem
+      border-left: 2px solid lighten($brainscore_blue, 30%)
+      max-height: 45vh
+      overflow-y: auto
+      
+      // Custom scrollbar
+      &::-webkit-scrollbar
+        width: 4px
+      
+      &::-webkit-scrollbar-track
+        background: #f1f1f1
+        border-radius: 2px
+      
+      &::-webkit-scrollbar-thumb
+        background: #ccc
+        border-radius: 2px
+        
+        &:hover
+          background: #aaa
+
+.toc-list
+  list-style: none
+  padding: 0
+  margin: 0
+
+.toc-item
+  margin: 0
+  position: relative
+  
+  // H2 items - always visible
+  &.toc-h2
+    margin-left: 0
+    
+    // Show arrow indicator if has children
+    > .toc-link
+      &::after
+        content: ''
+        display: inline-block
+        width: 0
+        height: 0
+        margin-left: 0.4rem
+        vertical-align: middle
+        border-left: 4px solid transparent
+        border-right: 4px solid transparent
+        border-top: 4px solid #999
+        opacity: 0
+        transition: opacity 0.15s, transform 0.2s
+    
+    &:has(.toc-sublist) > .toc-link::after
+      opacity: 0.6
+    
+    &:hover > .toc-link::after
+      opacity: 1
+      transform: rotate(-90deg)
+    
+  &.toc-h3
+    margin-left: 0
+    
+  &.toc-h4
+    margin-left: 0
+
+// Sublists - hidden by default, shown on hover
+.toc-sublist
+  list-style: none
+  padding: 0
+  margin: 0
+  max-height: 0
+  overflow: hidden
+  opacity: 0
+  transition: max-height 0.25s ease-out, opacity 0.2s ease-out
+  
+  // H3 list styling
+  &.toc-h3-list
+    padding-left: 0.75rem
+    border-left: 1px solid #e0e0e0
+    margin-left: 0.5rem
+    margin-top: 0.25rem
+  
+  // H4 list styling  
+  &.toc-h4-list
+    padding-left: 0.5rem
+    margin-left: 0.25rem
+    margin-top: 0.15rem
+
+// Show sublists on hover
+.toc-item:hover > .toc-sublist
+  max-height: 500px
+  opacity: 1
+
+// Keep sublist open when hovering over it
+.toc-sublist:hover
+  max-height: 500px
+  opacity: 1
+
+.toc-link
+  display: block
+  padding: 0.25rem 0.4rem
+  color: #555
+  text-decoration: none
+  font-size: 0.7rem
+  line-height: 1.25
+  border-left: 2px solid transparent
+  border-radius: 0 3px 3px 0
+  transition: all 0.15s ease
+  
+  &:hover
+    color: $brainscore_blue
+    background: #f0f7ff
+    border-left-color: lighten($brainscore_blue, 20%)
+    text-decoration: none
+  
+  &.active
+    color: $brainscore_blue
+    font-weight: 500
+    border-left-color: $brainscore_blue
+    background: rgba($brainscore_blue, 0.08)
+
+// Keep parent H2 highlighted when child is active
+.toc-item.toc-h2.has-active-child
+  > .toc-link
+    color: $brainscore_blue
+    border-left-color: $brainscore_blue
+    background: rgba($brainscore_blue, 0.04)
+
+// Sublist links are slightly smaller
+.toc-sublist .toc-link
+  font-size: 0.75rem
+  padding: 0.18rem 0.35rem
+  color: #666
+  
+.toc-h4-list .toc-link
+  font-size: 0.6rem
+  color: #777
+
+// Main content area
+.tutorial-content
+  flex: 1
+  min-width: 0
+
+.tutorial-body
+  background: white
+  padding: 2rem
+  border-radius: 8px
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
+
+  // Typography - same as blog post-content
+  // Headings are clickable to copy permalink
+  h1, h2, h3, h4
+    cursor: pointer
+    transition: color 0.2s
+    position: relative
+
+    &:hover
+      color: $brainscore_blue
+
+    &::after
+      content: ' 🔗'
+      font-size: 0.6em
+      opacity: 0
+      transition: opacity 0.2s
+      vertical-align: middle
+
+    &:hover::after
+      opacity: 0.5
+
+  h1
+    font-size: 2rem
+    font-weight: bold
+    margin: 2rem 0 1rem 0
+    color: #333
+    border-bottom: 1px solid #eee
+    padding-bottom: 0.5rem
+
+  h2
+    font-size: 1.6rem
+    font-weight: bold
+    margin: 2rem 0 1rem 0
+    color: #333
+
+  h3
+    font-size: 1.3rem
+    font-weight: bold
+    margin: 1.5rem 0 1rem 0
+    color: #444
+
+  h4
+    font-size: 1.1rem
+    font-weight: bold
+    margin: 1.5rem 0 0.75rem 0
+    color: #444
+
+  // Tooltip for "Copied!" feedback
+  .copy-tooltip
+    position: absolute
+    background: #333
+    color: white
+    padding: 0.25rem 0.5rem
+    border-radius: 4px
+    font-size: 0.75rem
+    font-weight: normal
+    top: -1.5rem
+    left: 0
+    opacity: 0
+    transition: opacity 0.3s
+    pointer-events: none
+
+    &.show
+      opacity: 1
+
+  p
+    line-height: 1.7
+    margin-bottom: 1rem
+    color: #444
+
+  // Lists
+  ul, ol
+    margin: 1rem 0
+    padding-left: 2rem
+
+  ul
+    list-style-type: disc
+
+  ol
+    list-style-type: decimal
+
+  li
+    margin-bottom: 0.5rem
+    line-height: 1.6
+    display: list-item
+
+  // Code - inline
+  code
+    background: #f4f4f4
+    padding: 0.2rem 0.4rem
+    border-radius: 3px
+    font-family: 'Monaco', 'Consolas', 'Fira Code', monospace
+    font-size: 0.9em
+    color: #c7254e
+
+  // Code blocks - pre
+  pre
+    background: #1e1e1e !important
+    color: #d4d4d4
+    padding: 1rem
+    border-radius: 6px
+    overflow-x: auto
+    margin: 1rem 0
+    font-size: 0.9rem
+    line-height: 1.5
+    border: none
+
+    code
+      background: transparent
+      padding: 0
+      color: inherit
+      font-size: inherit
+
+  // Tables
+  table
+    width: 100%
+    border-collapse: collapse
+    margin: 1rem 0
+
+  th, td
+    border: 1px solid #ddd
+    padding: 0.75rem
+    text-align: left
+
+  th
+    background: #f8f9fa
+    font-weight: 600
+
+  tr:nth-child(even)
+    background: #fafafa
+
+  // Blockquotes / Notes
+  blockquote
+    border-left: 4px solid $brainscore_blue
+    margin: 1rem 0
+    padding: 0.5rem 1rem
+    background: #f8f9fa
+    color: #555
+
+    p
+      margin: 0
+
+  // Horizontal rules
+  hr
+    border: none
+    border-top: 1px solid #eee
+    margin: 2rem 0
+
+  // Interactive checklists
+  .checklist-item
+    list-style: none
+    margin-left: -1.5rem
+    margin-bottom: 0.1rem
+    padding: 0.25rem 0.75rem
+    border-radius: 4px
+    cursor: pointer
+    transition: background-color 0.15s
+    display: flex
+    align-items: flex-start
+    gap: 0.5rem
+
+    &:hover
+      background-color: #f8f9fa
+
+  .tutorial-checkbox
+    width: 1.1rem
+    height: 1.1rem
+    margin-top: 0.2rem
+    cursor: pointer
+    accent-color: $brainscore_green
+    flex-shrink: 0
+
+    &:checked + *
+      color: #888
+
+  // Style checked items with strikethrough (optional - remove if not wanted)
+  .checklist-item:has(.tutorial-checkbox:checked)
+    color: #888
+
+  // Strong/emphasis
+  strong
+    font-weight: bold
+
+  em
+    font-style: italic
+
+  // Links
+  a
+    color: $brainscore_blue
+    text-decoration: none
+
+    &:hover
+      text-decoration: underline
+
+// Navigation footer between tutorials
+.tutorial-navigation
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-top: 2rem
+  padding-top: 2rem
+  border-top: 1px solid #eee
+
+.nav-prev, .nav-next
+  flex: 1
+
+.nav-center
+  flex: 0 0 auto
+  padding: 0 1rem
+
+.nav-next
+  text-align: right
+
+.nav-link
+  display: inline-block
+  text-decoration: none
+  color: $brainscore_blue
+  padding: 0.5rem 1rem
+  border-radius: 6px
+  transition: background 0.2s
+
+  &:hover
+    background: #f0f7ff
+    text-decoration: none
+
+.nav-direction
+  display: block
+  font-size: 0.85rem
+  color: #888
+
+.nav-title
+  display: block
+  font-weight: 500
+
+.back-to-tutorials
+  color: #666
+  text-decoration: none
+  font-size: 0.9rem
+
+  &:hover
+    color: $brainscore_blue
+
+// Codehilite (Pygments) syntax highlighting
+// Using a dark theme similar to VS Code Dark+
+.codehilite
+  background: #1e1e1e
+  border-radius: 6px
+  margin: 1rem 0
+  overflow-x: auto
+
+  pre
+    margin: 0
+    padding: 1rem
+    background: transparent
+
+.codehilite .hll
+  background-color: #3a3a3a
+
+.codehilite .c
+  color: #6a9955
+  font-style: italic
+
+.codehilite .err
+  color: #f44747
+
+.codehilite .k
+  color: #569cd6
+  font-weight: bold
+
+.codehilite .o
+  color: #d4d4d4
+
+.codehilite .ch, .codehilite .cm, .codehilite .c1, .codehilite .cs
+  color: #6a9955
+  font-style: italic
+
+.codehilite .cp
+  color: #c586c0
+
+.codehilite .cpf
+  color: #ce9178
+
+.codehilite .gd
+  color: #f44747
+
+.codehilite .ge
+  font-style: italic
+
+.codehilite .gh
+  color: #569cd6
+  font-weight: bold
+
+.codehilite .gi
+  color: #4ec9b0
+
+.codehilite .go
+  color: #808080
+
+.codehilite .gp
+  color: #6a9955
+
+.codehilite .gs
+  font-weight: bold
+
+.codehilite .gu
+  color: #569cd6
+  font-weight: bold
+
+.codehilite .gt
+  color: #f44747
+
+.codehilite .kc, .codehilite .kd, .codehilite .kn, .codehilite .kp, .codehilite .kr
+  color: #569cd6
+  font-weight: bold
+
+.codehilite .kt
+  color: #4ec9b0
+
+.codehilite .m, .codehilite .mf, .codehilite .mh, .codehilite .mi, .codehilite .mo
+  color: #b5cea8
+
+.codehilite .s, .codehilite .sa, .codehilite .sb, .codehilite .sc, .codehilite .dl, .codehilite .sd, .codehilite .s2, .codehilite .se, .codehilite .sh, .codehilite .si, .codehilite .sx, .codehilite .sr, .codehilite .s1, .codehilite .ss
+  color: #ce9178
+
+.codehilite .na
+  color: #9cdcfe
+
+.codehilite .nb
+  color: #dcdcaa
+
+.codehilite .nc
+  color: #4ec9b0
+  font-weight: bold
+
+.codehilite .no
+  color: #4fc1ff
+
+.codehilite .nd
+  color: #dcdcaa
+
+.codehilite .ni
+  color: #d4d4d4
+  font-weight: bold
+
+.codehilite .ne
+  color: #4ec9b0
+
+.codehilite .nf
+  color: #dcdcaa
+
+.codehilite .nl
+  color: #9cdcfe
+
+.codehilite .nn
+  color: #4ec9b0
+
+.codehilite .nt
+  color: #569cd6
+
+.codehilite .nv, .codehilite .vm, .codehilite .vc, .codehilite .vg, .codehilite .vi
+  color: #9cdcfe
+
+.codehilite .ow
+  color: #c586c0
+  font-weight: bold
+
+.codehilite .w
+  color: #d4d4d4
+
+.codehilite .p
+  color: #d4d4d4
+
+// Fenced code blocks without highlighting (ASCII diagrams, plain text)
+.tutorial-body pre:not(.codehilite pre)
+  background: #1e1e1e
+  color: #d4d4d4
+  white-space: pre  // Preserve whitespace exactly for ASCII art
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace
+  font-size: 0.85rem
+  line-height: 1.4
+
+  code
+    background: transparent
+    color: inherit
+    white-space: pre
+
+// Responsive adjustments
+@media (max-width: 900px)
+  .tutorial-detail-container
+    grid-template-columns: 1fr
+    gap: 1rem
+    padding: 1rem
+
+  .tutorial-sidebar
+    position: static
+    width: 100%
+    border-radius: 8px
+    padding: 1rem
+
+    .sidebar-widget
+      padding-left: 0
+
+  .tutorial-navigation
+    flex-wrap: wrap
+    gap: 1rem
+
+    .nav-prev, .nav-next, .nav-center
+      flex: 1 1 100%
+      text-align: center
+
