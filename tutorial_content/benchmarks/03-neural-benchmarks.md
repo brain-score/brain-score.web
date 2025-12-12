@@ -1281,7 +1281,6 @@ Before submitting your neural benchmark:
 - [ ] Loads data with `average_repetitions=False` for ceiling calculation
 - [ ] Uses internal consistency ceiling (split-half reliability)
 - [ ] Specifies correct `visual_degrees` from original experiment
-- [ ] Uses PLS or Ridge metric for regression-based comparison
 - [ ] Includes proper `bibtex` citation
 - [ ] Tests verify expected scores for known models
 
