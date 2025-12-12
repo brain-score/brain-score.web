@@ -125,6 +125,39 @@ Benchmarks interact with models through the `BrainModel` interface, which abstra
 
 ---
 
+## How Brain-Score Executes Benchmarks
+
+When a benchmark's `__call__` method is invoked:
+
+```python
+def __call__(self, candidate: BrainModel):
+    # 1. Configure the model for the task
+    #    Neural: candidate.start_recording(region, time_bins)
+    #    Behavioral: candidate.start_task(task, fitting_stimuli)
+    
+    # 2. Scale stimuli to match model's visual field
+    stimulus_set = place_on_screen(
+        self._stimulus_set,
+        target_visual_degrees=candidate.visual_degrees(),
+        source_visual_degrees=self._visual_degrees
+    )
+    
+    # 3. Present stimuli and collect model responses
+    model_response = candidate.look_at(stimulus_set, number_of_trials=N)
+    
+    # 4. Compare model responses to biological data using the metric
+    raw_score = self._metric(model_response, self._assembly)
+    
+    # 5. Normalize by ceiling
+    ceiled_score = raw_score / self.ceiling
+    
+    return ceiled_score
+```
+
+For more details on the call flow during scoring, see [Neural Benchmark Call Flow](/tutorials/benchmarks/neural-benchmarks/#neural-benchmark-call-flow) and [Behavioral Benchmark Call Flow](/tutorials/benchmarks/behavioral-benchmarks/#behavioral-benchmark-call-flow).
+
+---
+
 ## Task Types
 
 Brain-Score supports several behavioral task types that enable models to perform cognitive tasks. These are defined in `vision/brainscore_vision/model_interface.py` and implemented in `vision/brainscore_vision/model_helpers/brain_transformation/behavior.py`.

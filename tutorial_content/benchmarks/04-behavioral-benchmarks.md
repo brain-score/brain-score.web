@@ -9,9 +9,113 @@ category: benchmarks
 
 Behavioral benchmarks compare model behavioral responses to human psychophysical data from experiments measuring choices, reaction times, and other behavioral outputs.
 
+**Prerequisites**: Complete [Data Packaging](/tutorials/benchmarks/data-packaging/) first — you need a registered `BehavioralAssembly`.
+
+**Time**: ~30 minutes to implement (more complex than neural due to custom `__call__`).
+
 ---
 
-## Overview
+## Quick Start: Minimal Template
+
+Copy this template and modify for your data:
+
+```python
+# vision/brainscore_vision/benchmarks/yourbenchmark/__init__.py
+from brainscore_vision import benchmark_registry
+from .benchmark import YourBehavioralBenchmark
+
+benchmark_registry['YourBenchmark-accuracy'] = YourBehavioralBenchmark
+```
+
+```python
+# vision/brainscore_vision/benchmarks/yourbenchmark/benchmark.py
+from brainscore_vision import load_dataset, load_stimulus_set, load_metric
+from brainscore_vision.benchmarks import BenchmarkBase
+from brainscore_vision.benchmark_helpers.screen import place_on_screen
+from brainscore_vision.model_interface import BrainModel
+
+BIBTEX = """@article{YourName2024, ...}"""
+
+class YourBehavioralBenchmark(BenchmarkBase):
+    def __init__(self):
+        self._assembly = load_dataset('YourDataset')
+        self._fitting_stimuli = load_stimulus_set('YourDataset_fitting')
+        self._metric = load_metric('accuracy')  # or 'i2n', 'error_consistency'
+        self._visual_degrees = 8
+        
+        super().__init__(
+            identifier='YourBenchmark-accuracy',
+            version=1,
+            ceiling_func=lambda: self._metric.ceiling(self._assembly),
+            parent='behavior',
+            bibtex=BIBTEX
+        )
+    
+    def __call__(self, candidate: BrainModel):
+        # 1. Scale fitting stimuli and set up task
+        fitting_stimuli = place_on_screen(self._fitting_stimuli,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees)
+        candidate.start_task(BrainModel.Task.probabilities, fitting_stimuli)
+        
+        # 2. Scale test stimuli and get predictions
+        stimulus_set = place_on_screen(self._assembly.stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees)
+        predictions = candidate.look_at(stimulus_set, number_of_trials=1)
+        
+        # 3. Compare to human data
+        raw_score = self._metric(predictions, self._assembly)
+        return raw_score / self.ceiling
+```
+
+See [Registration](#registration) and [Testing](#testing-your-benchmark) below.
+
+---
+
+## Which Metric Should I Use?
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  What aspect of behavior are you comparing?                                 │
+│                                                                             │
+│  ├── Overall correctness                                                    │
+│  │   └── Use Accuracy                                                       │
+│  │       Example: Geirhos2021                                               │
+│  │                                                                          │
+│  ├── Which specific images are hard/easy                                    │
+│  │   └── Use I2N (image-level consistency)                                  │
+│  │       Example: Rajalingham2018                                           │
+│  │                                                                          │
+│  ├── Error patterns (accounting for chance)                                 │
+│  │   └── Use Error Consistency (Cohen's Kappa)                              │
+│  │       Example: Geirhos2021                                               │
+│  │                                                                          │
+│  ├── Derived scalar values (integrals, thresholds)                          │
+│  │   └── Use Value Delta                                                    │
+│  │       Example: Ferguson2024                                              │
+│  │                                                                          │
+│  └── Temporal dynamics of recognition                                       │
+│      └── Use OST (Object Solution Times)                                    │
+│          Example: Kar2019                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tutorial Overview
+
+This tutorial covers everything you need to build a behavioral benchmark:
+
+1. **Why no helper class** — Understanding the diversity of behavioral data
+2. **Full examples** — Annotated code from Rajalingham2018 and Ferguson2024
+3. **Metrics** — Choosing between Accuracy, I2N, Error Consistency, Value Delta, and OST
+4. **Fitting stimuli** — When and how to provide training data
+5. **Registration & testing** — Getting your benchmark into Brain-Score
+
+---
+
+## Example Benchmarks
 
 | Benchmark | Description | Task Type | Metric |
 |-----------|-------------|-----------|--------|
@@ -275,19 +379,39 @@ class _Ferguson2024ValueDelta(BenchmarkBase):
 
 ---
 
-## Key Differences from Neural Benchmarks
+## Understanding Ceilings
 
-| Aspect | Neural Benchmark | Behavioral Benchmark |
-|--------|------------------|---------------------|
-| Helper class | `NeuralBenchmark` | None (use `BenchmarkBase`) |
-| Model setup | `start_recording(region, time_bins)` | `start_task(task, fitting_stimuli)` |
-| Output | `NeuroidAssembly` (activations) | `BehavioralAssembly` (choices) |
-| Fitting data | Not needed | Usually required |
-| Implement `__call__` | No (inherited) | **Yes (required)** |
+The ceiling represents the **maximum achievable score** given the noise in the human data. If humans disagree with each other 20% of the time, a model can't be expected to match humans better than humans match themselves.
+
+**Common ceiling approaches for behavioral benchmarks:**
+
+```python
+# 1. Metric's built-in ceiling (e.g., I2N)
+ceiling_func=lambda: self._metric.ceiling(self._assembly)
+
+# 2. Split-half reliability across subjects
+def _compute_ceiling(self):
+    subjects = list(set(self._assembly.coords['subject'].values))
+    scores = []
+    for _ in range(100):  # Bootstrap
+        np.random.shuffle(subjects)
+        half1, half2 = subjects[:len(subjects)//2], subjects[len(subjects)//2:]
+        score = self._metric(
+            self._assembly.sel(subject=half1).mean('subject'),
+            self._assembly.sel(subject=half2).mean('subject')
+        )
+        scores.append(score.values)
+    return Score(np.mean(scores))
+
+# 3. Pre-computed ceiling (for expensive calculations)
+ceiling_func=lambda: Score(0.85)  # Stored value
+```
+
+**Normalized score**: `raw_score / ceiling` ensures scores are comparable across benchmarks with different noise levels.
 
 ---
 
-## Behavioral Metrics
+## Common Behavioral Metrics
 
 Behavioral benchmarks use diverse metrics to capture different aspects of human-model alignment. Here's an overview of the most common ones:
 
@@ -615,6 +739,18 @@ class MyBehavioralBenchmark(BenchmarkBase):
 
 ---
 
+## Key Differences from Neural Benchmarks
+
+| Aspect | Neural Benchmark | Behavioral Benchmark |
+|--------|------------------|---------------------|
+| Helper class | `NeuralBenchmark` | None (use `BenchmarkBase`) |
+| Model setup | `start_recording(region, time_bins)` | `start_task(task, fitting_stimuli)` |
+| Output | `NeuroidAssembly` (activations) | `BehavioralAssembly` (choices) |
+| Fitting data | Not needed | Usually required |
+| Implement `__call__` | No (inherited) | **Yes (required)** |
+
+---
+
 ## Benchmark Hierarchy
 
 The `parent` parameter determines where your benchmark appears in the leaderboard:
@@ -646,6 +782,18 @@ from brainscore_vision import benchmark_registry
 from .benchmark import MyBehavioralBenchmark
 
 benchmark_registry['MyExperiment2024-accuracy'] = MyBehavioralBenchmark
+```
+
+---
+
+## Plugin Directory Structure
+
+```
+vision/brainscore_vision/benchmarks/mybenchmark/
+├── __init__.py          # Registration (imports from benchmark.py)
+├── benchmark.py         # Benchmark implementation (class + factory)
+├── test.py              # Unit tests
+└── requirements.txt     # Dependencies (optional)
 ```
 
 ---
@@ -790,22 +938,7 @@ Before submitting your behavioral benchmark:
 - [ ] Implements ceiling calculation (split-half or cross-subject)
 - [ ] Includes proper `bibtex` citation
 - [ ] Tests verify expected scores for known models
-
----
-
-## Behavioral Benchmark Patterns
-
-- **Probabilities task**: Most common for fine-grained behavioral comparisons
-- **Fitting stimuli**: Always provide separate training data for fair comparison
-- **Chance correction**: Account for random performance baselines (e.g., 1/N for N-way choice)
-- **Subject variability**: Handle individual differences appropriately in ceiling calculations
-
-```python
-# Chance-corrected scoring
-chance_level = 1 / n_choices
-raw_accuracy = compute_accuracy(model_choices, human_choices)
-corrected_score = (raw_accuracy - chance_level) / (ceiling - chance_level)
-```
+- [ ] Considers chance correction if applicable (e.g., `1/N` for N-way choice)
 
 ---
 
