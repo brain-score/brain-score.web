@@ -210,6 +210,9 @@ class _Ferguson2024ValueDelta(BenchmarkBase):
 
 ## Behavioral Benchmark Call Flow
 
+<details>
+<summary><strong>Click to expand: Behavioral benchmark execution flow</strong></summary>
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │  INSIDE behavioral_benchmark.__call__(candidate)                             │
@@ -268,6 +271,8 @@ class _Ferguson2024ValueDelta(BenchmarkBase):
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
+</details>
+
 ---
 
 ## Key Differences from Neural Benchmarks
@@ -283,6 +288,43 @@ class _Ferguson2024ValueDelta(BenchmarkBase):
 ---
 
 ## Behavioral Metrics
+
+Behavioral benchmarks use diverse metrics to capture different aspects of human-model alignment. Here's an overview of the most common ones:
+
+### Metric Comparison Table
+
+| Metric | Registry Key | What It Measures | When to Use |
+|--------|-------------|------------------|-------------|
+| **Accuracy** | `accuracy` | Proportion of correct responses | Simple classification tasks |
+| **I2N** | `i2n` | Image-level error pattern consistency | Fine-grained behavioral similarity |
+| **Error Consistency** | `error_consistency` | Cohen's Kappa for error agreement | When error patterns matter more than accuracy |
+| **Accuracy Distance** | `accuracy_distance` | Relative distance between accuracies | Condition-wise performance matching |
+| **Value Delta** | `value_delta` | Sigmoid-weighted scalar comparison | Comparing derived metrics (e.g., integrals) |
+| **OST** | `ost` | Object Solution Time correlation | Temporal dynamics of recognition |
+
+> **Note**: All paths below are relative to `brainscore_vision/metrics/` in the vision repository.
+
+---
+
+### Accuracy
+
+The simplest metric — proportion of matching responses:
+
+```python
+# Located: metrics/accuracy/metric.py
+
+class Accuracy(Metric):
+    def __call__(self, source, target) -> Score:
+        values = source == target
+        center = np.mean(values)
+        score = Score(center)
+        score.attrs['error'] = np.std(values)
+        return score
+```
+
+**When to use**: Basic classification accuracy when you just need "how often does the model get it right?"
+
+---
 
 ### I2N (Image-Level Consistency)
 
@@ -301,21 +343,13 @@ Image 5 (cat vs tiger)      ✗              ✗              ✗    ← Both ma
 I2N(Model A, Humans) = 0.85   ← High: same error patterns
 I2N(Model B, Humans) = 0.45   ← Low: different error patterns
 
-Using simple Accuracy would miss this distinction.
+Accuracy would miss this distinction — both models score 90%!
 ```
 
 ```python
-# Located: brainscore_vision/metrics/i1i2/metric.py
+# Located: metrics/i1i2/metric.py
 
 class _I(_Behavior_Metric):
-    """
-    I2n: Image-level, object-level normalized behavioral similarity.
-    """
-    
-    def __call__(self, source_probabilities, target) -> Score:
-        return self._repeat(lambda random_state:
-                            self._call_single(source_probabilities, target, random_state))
-
     def _call_single(self, source_probabilities, target, random_state):
         # 1. Build "response matrix" from model probabilities
         source_response_matrix = self.target_distractor_scores(source_probabilities)
@@ -331,56 +365,72 @@ class _I(_Behavior_Metric):
         # 4. Correlate the two response matrices (per-image patterns)
         correlation = self.correlate(source_response_matrix, target_response_matrix)
         return correlation
-
-    def ceiling(self, assembly):
-        """How well do humans predict other humans? (split-half reliability)"""
-        half1, half2 = self.generate_halves(assembly)
-        rm1 = self.dprimes(self.build_response_matrix_from_responses(half1))
-        rm2 = self.dprimes(self.build_response_matrix_from_responses(half2))
-        return self.correlate(rm1, rm2)
 ```
+
+**When to use**: When you care about *which specific images* are hard, not just overall accuracy.
 
 ---
 
-### RDM/RSA (Representational Similarity Analysis)
+### Error Consistency (Cohen's Kappa)
 
-Compares the *structure* of representations:
+Measures agreement in error patterns, accounting for chance:
 
 ```python
-# Located: brainscore_vision/metrics/rdm/metric.py
+# Located: metrics/error_consistency/metric.py
 
-class RDMMetric(Metric):
-    def __call__(self, assembly1: NeuroidAssembly, assembly2: NeuroidAssembly) -> Score:
-        # 1. Build RDM for each assembly: (stimuli × neuroids) → (stimuli × stimuli)
-        rdm1 = self._rdm(assembly1)
-        rdm2 = self._rdm(assembly2)
+class ErrorConsistency(Metric):
+    """
+    Implements Cohen's Kappa from Geirhos et al., 2020
+    https://arxiv.org/abs/2006.16736
+    """
+    def compare_single_subject(self, source, target):
+        correct_source = source.values == source['truth'].values
+        correct_target = target.values == target['truth'].values
         
-        # 2. Compare the two RDMs using Spearman correlation
-        similarity = self._similarity(rdm1, rdm2)
-        return Score(similarity)
+        # Expected consistency by chance
+        accuracy_source = np.mean(correct_source)
+        accuracy_target = np.mean(correct_target)
+        expected = accuracy_source * accuracy_target + (1 - accuracy_source) * (1 - accuracy_target)
+        
+        # Observed consistency
+        observed = (correct_source == correct_target).sum() / len(target)
+        
+        # Cohen's Kappa: adjust for chance
+        kappa = (observed - expected) / (1.0 - expected)
+        return Score(kappa)
 ```
 
-**Pipeline visualization**:
+**When to use**: When comparing error patterns across different conditions (e.g., shape vs. texture experiments).
 
+---
+
+### Accuracy Distance
+
+Compares accuracy patterns across experimental conditions:
+
+```python
+# Located: metrics/accuracy_distance/metric.py
+
+class AccuracyDistance(Metric):
+    """
+    Measures relative distance between source and target accuracies,
+    adjusted for maximum possible difference.
+    """
+    def compare_single_subject(self, source, target):
+        source_correct = source.values.flatten() == target['truth'].values
+        target_correct = target.values == target['truth'].values
+        
+        source_mean = np.mean(source_correct)
+        target_mean = np.mean(target_correct)
+        
+        # Normalize by maximum possible distance
+        maximum_distance = max(1 - target_mean, target_mean)
+        relative_distance = 1 - abs(source_mean - target_mean) / maximum_distance
+        
+        return Score(relative_distance)
 ```
-Model Activations              Human fMRI Activations
-(stimuli × neurons)            (stimuli × voxels)
-       │                              │
-       ▼                              ▼
-   ┌───────────┐                 ┌───────────┐
-   │   RDM     │                 │   RDM     │
-   │ stimuli × │                 │ stimuli × │
-   │  stimuli  │                 │  stimuli  │
-   └───────────┘                 └───────────┘
-       │                              │
-       └──────────┬───────────────────┘
-                  ▼
-         Spearman correlation
-         (upper triangulars)
-                  │
-                  ▼
-              Score: 0.65
-```
+
+**When to use**: When you want to compare performance *patterns* across conditions, not just overall accuracy.
 
 ---
 
@@ -389,7 +439,7 @@ Model Activations              Human fMRI Activations
 Compares two scalar values using a sigmoid-weighted distance:
 
 ```python
-# Located: brainscore_vision/metrics/value_delta/metric.py
+# Located: metrics/value_delta/metric.py
 
 class ValueDelta(Metric):
     def __init__(self, scale: float = 1.00):
@@ -401,12 +451,71 @@ class ValueDelta(Metric):
         
         # Apply sigmoid: identical values → 1.0, large differences → 0.0
         center = 1 / (np.exp(self.scale * abs_diff))
-        center = min(max(center, 0), 1)
         
-        score = Score(center)
-        score.attrs['error'] = np.nan
-        score.attrs[Score.RAW_VALUES_KEY] = [source_value, target_value]
-        return score
+        return Score(min(max(center, 0), 1))
+```
+
+**When to use**: When comparing derived metrics like integrals, thresholds, or other scalar summaries.
+
+---
+
+### OST (Object Solution Times)
+
+Measures whether models predict the *temporal dynamics* of human object recognition:
+
+```python
+# Located: metrics/ost/metric.py
+
+class OSTCorrelation(Metric):
+    """
+    Object Solution Times metric from Kar et al., Nature Neuroscience 2019.
+    Tests whether models predict WHEN object identity emerges.
+    """
+    def compute_osts(self, train_source, test_source, test_osts):
+        # For each time bin, train classifier and check if threshold is reached
+        for time_bin_start in sorted(set(train_source['time_bin_start'].values)):
+            # Train classifier at this time point
+            classifier.fit(time_train_source, time_train_source['image_label'])
+            prediction_probabilities = classifier.predict_proba(time_test_source)
+            
+            # Check if model reaches human-like performance threshold
+            source_i1 = self.i1(prediction_probabilities)
+            # ... interpolate to find exact crossing time
+        
+        return predicted_osts
+    
+    def correlate(self, predicted_osts, target_osts):
+        # Spearman correlation: do models predict which images are "hard"?
+        correlation, p = spearmanr(predicted_osts, target_osts)
+        return Score(correlation)
+```
+
+**When to use**: When testing recurrent/temporal models on time-resolved behavioral data.
+
+---
+
+### Choosing the Right Behavioral Metric
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Decision Guide: Which Behavioral Metric?                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Q: What aspect of behavior do you want to compare?                         │
+│                                                                             │
+│  ├── Overall correctness → Accuracy                                         │
+│  │                                                                          │
+│  ├── Which specific images are hard/easy → I2N                              │
+│  │                                                                          │
+│  ├── Error patterns (accounting for chance) → Error Consistency             │
+│  │                                                                          │
+│  ├── Performance across conditions → Accuracy Distance                      │
+│  │                                                                          │
+│  ├── Derived scalar values (integrals, thresholds) → Value Delta            │
+│  │                                                                          │
+│  └── When recognition happens (temporal) → OST                              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -503,6 +612,29 @@ class MyBehavioralBenchmark(BenchmarkBase):
         ceiling.attrs['error'] = np.std(scores)
         return ceiling
 ```
+
+---
+
+## Benchmark Hierarchy
+
+The `parent` parameter determines where your benchmark appears in the leaderboard:
+
+```python
+super().__init__(
+    identifier='Ferguson2024tilted_line-value_delta',
+    parent='behavior',  # Groups under behavioral benchmarks
+    ...
+)
+```
+
+| Parent Value | Leaderboard Position |
+|--------------|---------------------|
+| `'behavior'` | Under behavioral benchmarks |
+| `'V1'`, `'IT'`, etc. | Under brain region (for neural-behavioral hybrids) |
+
+**Pre-defined categories** (`V1`, `V2`, `V4`, `IT`, `behavior`) are registered in the Brain-Score database. Your benchmark's `parent` links to one of these existing categories.
+
+The website automatically aggregates scores from benchmarks sharing the same `parent`.
 
 ---
 

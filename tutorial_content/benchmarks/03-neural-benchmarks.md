@@ -17,13 +17,14 @@ By comparing model activations to neural recordings (fMRI, electrophysiology, EE
 
 | Benchmark | Description | Brain Region | Key Features |
 |-----------|-------------|--------------|--------------|
-| `MajajHong2015` | IT and V4 neural responses to object images | V4, IT | PLS metric, 8° visual degrees, 50 trials |
-| `FreemanZiemba2013` | Neural responses to texture and natural images | V1, V2 | Early visual cortex, texture processing |
-| `Kar2019` | IT responses with object solution times | IT | Temporal dynamics, recurrent processing |
+| `MajajHong2015` | Monkey electrophysiology: object recognition | V4, IT | PLS metric, 8° visual degrees, 50 trials |
+| `Kar2019` | IT responses with object solution times | IT | Temporal dynamics, OST metric |
+| `Papale2025` | Monkey electrophysiology: extensive spiking data | V1, V2, V4, IT | Train/test split, reliability filtering |
+| `Coggan2024_fMRI` | Human fMRI: amodal completion | V1, V2, V4, IT | RSA/RDM metric, 9° visual degrees |
 
 **Key Characteristics**:
 - Use `NeuroidAssembly` data structures
-- Employ regression-based metrics (PLS, Ridge)
+- Employ regression-based metrics (PLS, Ridge) or similarity metrics (RSA)
 - Support temporal dynamics
 - Compare across brain regions (V1, V2, V4, IT)
 
@@ -147,6 +148,183 @@ def DicarloMajajHong2015ITPLS():
         ceiler=ceiler
     )
 ```
+
+---
+
+## Example: Kar2019 (Custom Temporal Benchmark)
+
+When you need custom `__call__` logic (e.g., temporal dynamics), inherit from `BenchmarkBase` directly:
+
+```python
+from brainscore_core import Score
+from brainscore_vision import load_dataset, load_metric
+from brainscore_vision.benchmarks import BenchmarkBase, ceil_score
+from brainscore_vision.benchmark_helpers.screen import place_on_screen
+
+# Time bins: 10ms windows from 70-250ms (captures temporal dynamics)
+TIME_BINS = [(t, t + 10) for t in range(70, 250, 10)]
+
+class DicarloKar2019OST(BenchmarkBase):
+    def __init__(self):
+        # Ceiling computed offline (not split-half, custom calculation)
+        ceiling = Score(.79)
+        
+        super().__init__(
+            identifier='Kar2019-ost',
+            version=2,
+            ceiling_func=lambda: ceiling,
+            parent='IT',
+            bibtex=BIBTEX
+        )
+        
+        # Load data and metric in __init__
+        self._assembly = load_dataset('Kar2019')
+        self._similarity_metric = load_metric('ost')  # Object Solution Time metric
+        self._visual_degrees = 8
+        self._time_bins = TIME_BINS
+
+    def __call__(self, candidate):
+        # Start temporal recording (multiple time bins)
+        candidate.start_recording('IT', time_bins=self._time_bins)
+        
+        # Scale stimuli to model's visual field
+        stimulus_set = place_on_screen(
+            self._assembly.stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees
+        )
+        
+        # Quick check: reject static models that can't predict temporal dynamics
+        check_recordings = candidate.look_at(stimulus_set[:1], number_of_trials=44)
+        if not temporally_varying(check_recordings):
+            return Score(np.nan)  # Early exit for incompatible models
+        
+        # Full evaluation
+        recordings = candidate.look_at(stimulus_set, number_of_trials=44)
+        score = self._similarity_metric(recordings, self._assembly)
+        return ceil_score(score, self.ceiling)
+```
+
+**Why use BenchmarkBase here?** The OST metric requires custom temporal handling and early rejection of static models—logic that doesn't fit `NeuralBenchmark`'s standard flow.
+
+---
+
+## Example: Papale2025 (Train/Test Split)
+
+For benchmarks with separate training and test sets, use `TrainTestNeuralBenchmark`:
+
+```python
+from brainscore_vision import load_dataset, load_metric
+from brainscore_vision.benchmark_helpers.neural_common import (
+    TrainTestNeuralBenchmark, average_repetition, filter_reliable_neuroids
+)
+from brainscore_vision.utils import LazyLoad
+
+VISUAL_DEGREES = 18  # Large field of view (monkey viewing distance)
+RELIABILITY_THRESHOLD = 0.3  # Filter out unreliable neurons
+
+def _Papale2025(region, similarity_metric, identifier_metric_suffix):
+    # LazyLoad defers S3 fetching until data is actually needed
+    train_assembly = LazyLoad(lambda: load_assembly(region, split='train', average_repetitions=False))
+    test_assembly = LazyLoad(lambda: load_assembly(region, split='test', average_repetitions=True))
+    test_assembly_repetition = LazyLoad(lambda: load_assembly(region, split='test', average_repetitions=False))
+    
+    return TrainTestNeuralBenchmark(
+        identifier=f'Papale2025.{region}-{identifier_metric_suffix}',
+        version=2,
+        
+        # Separate train and test assemblies
+        train_assembly=train_assembly,
+        test_assembly=test_assembly,
+        
+        similarity_metric=similarity_metric,
+        ceiling_func=lambda: load_metric('internal_consistency')(test_assembly_repetition),
+        visual_degrees=VISUAL_DEGREES,
+        number_of_trials=1,
+        parent=region,
+        bibtex=BIBTEX
+    )
+
+def load_assembly(region, split, average_repetitions):
+    assembly = load_dataset(f'Papale2025_{split}')
+    
+    # Filter neurons by reliability (remove noisy recordings)
+    assembly = filter_reliable_neuroids(assembly, RELIABILITY_THRESHOLD, 'reliability')
+    
+    assembly = assembly.sel(region=region)
+    if average_repetitions:
+        assembly = average_repetition(assembly)
+    return assembly
+```
+
+**Key features**: `TrainTestNeuralBenchmark` handles train/test splits; `LazyLoad` defers expensive S3 fetches; `filter_reliable_neuroids` removes noisy neurons.
+
+---
+
+## Example: Coggan2024_fMRI (RSA/RDM Metric)
+
+For fMRI with representational similarity analysis, create a custom benchmark class:
+
+```python
+from brainscore_vision import load_dataset
+from brainscore_vision.benchmarks import BenchmarkBase
+from brainscore_vision.benchmark_helpers.screen import place_on_screen
+
+class Coggan2024_fMRI_Benchmark(BenchmarkBase):
+    def __init__(self, identifier, assembly, ceiling_func, visual_degrees, **kwargs):
+        super().__init__(identifier=identifier, ceiling_func=ceiling_func, **kwargs)
+        self._assembly = assembly  # Pre-computed human RSM (not raw fMRI)
+        self._visual_degrees = visual_degrees
+        self.region = np.unique(assembly['region'])[0]
+
+    def __call__(self, candidate):
+        # Scale stimuli
+        stimulus_set = place_on_screen(
+            self._assembly.stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees
+        )
+        
+        # Get model activations
+        candidate.start_recording(self.region, time_bins=[(0, 250)])
+        source_assembly = candidate.look_at(stimulus_set, number_of_trials=1)
+        
+        # Compute RSM (Representational Similarity Matrix) from model
+        source_rsm = RSA(source_assembly)
+        
+        # Compare model RSM to human fMRI RSM
+        raw_score = get_score(source_rsm, self._assembly)
+        ceiling = self._ceiling_func(self._assembly)
+        return ceiler(raw_score, ceiling)
+
+
+def _Coggan2024_Region(region: str):
+    assembly = load_dataset('Coggan2024_fMRI')
+    assembly = assembly.sel(region=region)
+    
+    return Coggan2024_fMRI_Benchmark(
+        identifier=f'tong.Coggan2024_fMRI.{region}-rdm',
+        version=1,
+        assembly=assembly,
+        visual_degrees=9,
+        ceiling_func=get_ceiling,
+        parent=region,
+        bibtex=BIBTEX
+    )
+```
+
+**Key difference**: fMRI benchmarks often store pre-computed RSMs rather than raw voxel responses, then compare model RSMs to human RSMs using correlation.
+
+---
+
+## Benchmark Pattern Summary
+
+| Benchmark | Base Class | When to Use |
+|-----------|------------|-------------|
+| MajajHong2015 | `NeuralBenchmark` | Standard neural predictivity with PLS/Ridge |
+| Kar2019 | `BenchmarkBase` | Custom temporal dynamics, early rejection |
+| Papale2025 | `TrainTestNeuralBenchmark` | Explicit train/test splits |
+| Coggan2024_fMRI | Custom subclass | RSA/RDM, pre-computed representations |
 
 ---
 
@@ -766,180 +944,50 @@ class _Bracci2019RSA(BenchmarkBase):
 
 ---
 
-## Building MyExperiment2024: Complete Example
+## Benchmark Hierarchy
 
-This section builds a complete neural benchmark using the `MyExperiment2024` dataset that was packaged in the [Data Packaging Tutorial](02-data-packaging.md).
+The `parent` parameter determines where your benchmark appears in the leaderboard:
 
-### Prerequisites
+| Parent Value | Leaderboard Position |
+|--------------|---------------------|
+| `'V1'`, `'V2'`, `'V4'`, `'IT'` | Under existing brain region |
+| `'behavior'` | Under behavioral benchmarks |
 
-Ensure you have already:
-1. Packaged your `StimulusSet` and `NeuroidAssembly` (see [Data Packaging](02-data-packaging.md))
-2. Uploaded data to S3 and received version IDs
-3. Registered the data plugin in `brainscore_vision/data/myexperiment2024/`
+**Pre-defined categories** (`V1`, `V2`, `V4`, `IT`, `behavior`) are registered in the Brain-Score database. Your benchmark's `parent` links to one of these existing categories.
 
-### Step 1: Create the Benchmark File
+**Examples from existing benchmarks:**
 
 ```python
-# vision/brainscore_vision/benchmarks/myexperiment2024/benchmark.py
+# MajajHong2015 - region-based parent (V4 or IT)
+NeuralBenchmark(
+    identifier=f'MajajHong2015.{region}-pls',
+    parent=region,  # 'V4' or 'IT'
+    ...
+)
 
-from brainscore_vision import load_dataset, load_metric
-from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark
-from brainscore_vision.benchmark_helpers.screen import place_on_screen
-from brainscore_vision.metrics.internal_consistency import InternalConsistency
+# Kar2019 - IT cortex benchmark
+super().__init__(
+    identifier='Kar2019-ost',
+    parent='IT',
+    ...
+)
 
-# Bibtex for your publication (same as in data plugin)
-BIBTEX = """@article{MyExperiment2024,
-    title = {Neural correlates of visual object recognition in primates},
-    volume = {42},
-    doi = {10.1234/neuroscience.2024.00123},
-    journal = {Journal of Neuroscience},
-    author = {Pradeepan, Kartik S., and Ferguson, Mike.},
-    year = {2024},
-}"""
+# Papale2025 - human fMRI regions
+NeuralBenchmark(
+    identifier=f'Papale2025.{region}-{metric}',
+    parent=region,  # 'V1', 'V2', 'V4', 'IT'
+    ...
+)
 
-# Visual degrees used in the original experiment
-VISUAL_DEGREES = 8
-
-# Time bin for neural responses (in milliseconds)
-TIME_BINS = [(70, 170)]
-
-# Number of trials for model evaluation
-NUMBER_OF_TRIALS = 50
-
-
-def load_assembly(region: str, average_repetitions: bool = True):
-    """
-    Load the neural assembly for a specific brain region.
-    
-    Args:
-        region: Brain region to filter ('V4' or 'IT')
-        average_repetitions: If True, average across repeated presentations
-    
-    Returns:
-        NeuroidAssembly filtered by region
-    """
-    assembly = load_dataset('MyExperiment2024')
-    
-    # Filter by region if the assembly contains multiple regions
-    if 'region' in assembly.coords:
-        assembly = assembly.sel(neuroid=assembly['region'] == region)
-    
-    # Average across repetitions for the main assembly
-    if average_repetitions and 'repetition' in assembly.dims:
-        assembly = assembly.mean(dim='repetition')
-    
-    return assembly
-
-
-def MyExperiment2024ITPLS():
-    """
-    IT cortex benchmark using PLS regression.
-    
-    This is the main benchmark for comparing model representations
-    to IT neural responses from MyExperiment2024.
-    """
-    # Load the averaged assembly for metric computation
-    assembly = load_assembly(region='IT', average_repetitions=True)
-    
-    # Load the non-averaged assembly for ceiling computation
-    # (needs repetitions to compute split-half reliability)
-    assembly_repetition = load_assembly(region='IT', average_repetitions=False)
-    
-    # Create ceiling function using internal consistency
-    ceiler = InternalConsistency()
-    
-    return NeuralBenchmark(
-        identifier='MyExperiment2024.IT-pls',
-        assembly=assembly,
-        similarity_metric=load_metric('pls'),
-        visual_degrees=VISUAL_DEGREES,
-        number_of_trials=NUMBER_OF_TRIALS,
-        ceiling_func=lambda: ceiler(assembly_repetition),
-        parent='IT',
-        bibtex=BIBTEX
-    )
-
-
-def MyExperiment2024V4PLS():
-    """
-    V4 cortex benchmark using PLS regression.
-    """
-    assembly = load_assembly(region='V4', average_repetitions=True)
-    assembly_repetition = load_assembly(region='V4', average_repetitions=False)
-    
-    ceiler = InternalConsistency()
-    
-    return NeuralBenchmark(
-        identifier='MyExperiment2024.V4-pls',
-        assembly=assembly,
-        similarity_metric=load_metric('pls'),
-        visual_degrees=VISUAL_DEGREES,
-        number_of_trials=NUMBER_OF_TRIALS,
-        ceiling_func=lambda: ceiler(assembly_repetition),
-        parent='V4',
-        bibtex=BIBTEX
-    )
-
-
-def MyExperiment2024ITRidge():
-    """
-    IT cortex benchmark using Ridge regression.
-    
-    Alternative metric for users who prefer explicit regularization.
-    """
-    assembly = load_assembly(region='IT', average_repetitions=True)
-    assembly_repetition = load_assembly(region='IT', average_repetitions=False)
-    
-    ceiler = InternalConsistency()
-    
-    return NeuralBenchmark(
-        identifier='MyExperiment2024.IT-ridge',
-        assembly=assembly,
-        similarity_metric=load_metric('ridge'),
-        visual_degrees=VISUAL_DEGREES,
-        number_of_trials=NUMBER_OF_TRIALS,
-        ceiling_func=lambda: ceiler(assembly_repetition),
-        parent='IT',
-        bibtex=BIBTEX
-    )
+# Coggan2024_fMRI - also region-based
+NeuralBenchmark(
+    identifier=f'Coggan2024.fMRI.{region}-{metric}',
+    parent=region,
+    ...
+)
 ```
 
-### Step 2: Key Design Decisions Explained
-
-| Decision | Choice | Reasoning |
-|----------|--------|-----------|
-| **Helper class** | `NeuralBenchmark` | Standard neural predictivity; handles `look_at`, stimulus scaling, and ceiling normalization automatically |
-| **Metric** | `pls` (primary), `ridge` (alternative) | PLS is the Brain-Score standard; Ridge offered as alternative |
-| **Ceiling** | `InternalConsistency` | Measures split-half reliability to estimate noise ceiling |
-| **Time bins** | `(70, 170)` ms | Standard window for object recognition responses |
-| **Visual degrees** | `8°` | Must match the original experiment's stimulus size |
-| **Separate functions** | One per region/metric | Clean registration, clear identifiers |
-
-### Step 3: Understanding the Data Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  MyExperiment2024ITPLS() is called                                      │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  1. load_assembly('IT', average_repetitions=True)                       │
-│     └──→ Fetches NeuroidAssembly from S3 (lazy loading)                 │
-│     └──→ Filters to IT neurons only                                     │
-│     └──→ Averages across repetitions                                    │
-│                                                                         │
-│  2. load_assembly('IT', average_repetitions=False)                      │
-│     └──→ Same data, but keeps repetitions for ceiling                   │
-│                                                                         │
-│  3. NeuralBenchmark(...) creates benchmark instance                     │
-│     └──→ Stores assembly, metric, visual_degrees, etc.                  │
-│     └──→ ceiling_func is a lambda (computed lazily when needed)         │
-│                                                                         │
-│  4. When benchmark(model) is called later:                              │
-│     └──→ NeuralBenchmark.__call__ handles everything                    │
-│     └──→ Returns ceiling-normalized Score                               │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+The website automatically aggregates scores from benchmarks sharing the same `parent`.
 
 ---
 
@@ -948,30 +996,31 @@ def MyExperiment2024ITRidge():
 Register your benchmark in `__init__.py`:
 
 ```python
-# vision/brainscore_vision/benchmarks/myexperiment2024/__init__.py
+# vision/brainscore_vision/benchmarks/majajhong2015/__init__.py
 
 from brainscore_vision import benchmark_registry
 from .benchmark import (
-    MyExperiment2024ITPLS,
-    MyExperiment2024V4PLS,
-    MyExperiment2024ITRidge
+    DicarloMajajHong2015V4PLS,
+    DicarloMajajHong2015ITPLS,
+    MajajHongV4PublicBenchmark,
+    MajajHongITPublicBenchmark,
 )
 
 # Register each benchmark variant
-# The key is the identifier users will use to load the benchmark
-benchmark_registry['MyExperiment2024.IT-pls'] = MyExperiment2024ITPLS
-benchmark_registry['MyExperiment2024.V4-pls'] = MyExperiment2024V4PLS
-benchmark_registry['MyExperiment2024.IT-ridge'] = MyExperiment2024ITRidge
+benchmark_registry['MajajHong2015.V4-pls'] = DicarloMajajHong2015V4PLS
+benchmark_registry['MajajHong2015.IT-pls'] = DicarloMajajHong2015ITPLS
+benchmark_registry['MajajHong2015.V4.public-pls'] = MajajHongV4PublicBenchmark
+benchmark_registry['MajajHong2015.IT.public-pls'] = MajajHongITPublicBenchmark
 ```
 
-> **Note**: Each factory function (e.g., `MyExperiment2024ITPLS`) is registered directly. Brain-Score will call the function when the benchmark is loaded, creating a fresh instance each time.
+> **Note**: Each factory function is registered directly. Brain-Score calls the function when the benchmark is loaded, creating a fresh instance each time.
 
 ---
 
 ## Plugin Directory Structure
 
 ```
-vision/brainscore_vision/benchmarks/myexperiment2024/
+vision/brainscore_vision/benchmarks/majajhong2015/
 ├── __init__.py          # Registration (imports from benchmark.py)
 ├── benchmark.py         # Benchmark implementation (factory functions)
 ├── test.py              # Unit tests
@@ -985,48 +1034,30 @@ vision/brainscore_vision/benchmarks/myexperiment2024/
 Every benchmark should include tests to verify it loads and produces expected scores:
 
 ```python
-# vision/brainscore_vision/benchmarks/myexperiment2024/test.py
+# vision/brainscore_vision/benchmarks/majajhong2015/test.py
 
 import pytest
 from brainscore_vision import load_benchmark, load_model
 
-@pytest.mark.private_access
-class TestMyExperiment2024:
-    """Tests for MyExperiment2024 neural benchmarks."""
+@pytest.mark.parametrize("benchmark, expected", [
+    ('MajajHong2015.V4-pls', approx(0.89, abs=0.01)),
+    ('MajajHong2015.IT-pls', approx(0.82, abs=0.01)),
+])
+def test_MajajHong2015(benchmark, expected):
+    # Load precomputed features to speed up testing
+    filepath = Path(__file__).parent / 'alexnet-majaj2015.private-features.12.nc'
+    benchmark = load_benchmark(benchmark)
     
-    @pytest.mark.parametrize("identifier", [
-        'MyExperiment2024.IT-pls',
-        'MyExperiment2024.V4-pls',
-        'MyExperiment2024.IT-ridge',
-    ])
-    def test_benchmark_loads(self, identifier):
-        """Test that each benchmark variant can be loaded."""
-        benchmark = load_benchmark(identifier)
-        assert benchmark is not None
-        assert benchmark.identifier == identifier
+    # Run with precomputed features instead of full model
+    score = run_test(benchmark=benchmark, precomputed_features_filepath=filepath)
     
-    def test_ceiling_valid(self):
-        """Test ceiling is computed and in valid range."""
-        benchmark = load_benchmark('MyExperiment2024.IT-pls')
-        ceiling = benchmark.ceiling
-        assert 0 < ceiling <= 1, f"Ceiling {ceiling} out of expected range"
-        assert hasattr(ceiling, 'attrs')
-    
-    def test_benchmark_score(self):
-        """Test benchmark produces expected score for a known model."""
-        benchmark = load_benchmark('MyExperiment2024.IT-pls')
-        model = load_model('alexnet')
-        
-        score = benchmark(model)
-        
-        # Verify score is valid
-        assert 0 <= score <= 1
-        assert hasattr(score, 'attrs')
-        assert 'raw' in score.attrs or 'ceiling' in score.attrs
-        
-        # Optional: Document expected score for regression testing
-        # assert abs(score - 0.45) < 0.05  # Expected ~0.45 for alexnet
+    assert score == expected
 ```
+
+**Testing approaches**:
+- **Precomputed features**: Store model activations to speed up tests (as shown above)
+- **Quick smoke test**: Just verify benchmark loads without running full evaluation
+- **Known score regression**: Document expected scores to catch breaking changes
 
 ---
 
