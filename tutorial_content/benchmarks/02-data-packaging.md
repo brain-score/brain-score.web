@@ -31,6 +31,8 @@ Raw Data → Organize Stimuli → Create Assembly → Validate → Package → R
 `StimulusSet` extends pandas DataFrame with functionality for handling stimulus files:
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/stimuli.py
+
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
 
 # Create stimulus metadata
@@ -61,6 +63,8 @@ stimulus_set.name = 'MyExperiment2024'
 If you already have a CSV file that contains all relevant stimulus information, you can convert a Pandas DataFrame to a StimulusSet
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/stimuli.py
+
 import pandas as pd
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
 
@@ -134,6 +138,8 @@ stimulus_set.name = 'MyExperiment2024.condition_A'  # Sub-dataset variant
 Packaging the StimulusSet will produce two files. The CSV file contains the stimulus metadata (the DataFrame) - stimulus IDs, categories, conditions, etc. The ZIP file contains the actual stimulus files (images, audio, etc.). The enclosed images are renamed to based on the `stimulus_id` and referenced by `stimulus_paths`. 
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/packaging.py
+
 from brainscore_core.supported_data_standards.brainio.packaging import package_stimulus_set_locally
 
 package_stimulus_set_locally(
@@ -163,6 +169,8 @@ You will need the hashes when registering the data plugin, so keep them safe.
 `DataAssembly` is built on xarray for multi-dimensional scientific data:
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/assemblies.py
+
 from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
 import numpy as np
 
@@ -204,6 +212,8 @@ Coordinates provide named labels for dimensions. The format is:
 For neural data with dimensions: `presentations × neuroids × time_bins`
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/assemblies.py
+
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 
 # Neural data: presentations × neuroids × time_bins
@@ -265,6 +275,8 @@ among others....
 For behavioral measurements, typically with dimension: `presentations`
 
 ```python
+# Located: core/brainscore_core/supported_data_standards/brainio/assemblies.py
+
 from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
 
 # Simple 1D behavioral data
@@ -339,7 +351,9 @@ As mentioned in `What is a Benchmark` section, this flexibility extends to bench
 ### Packaging DataAssembly Locally
 
 ```python
-from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
+# Located: core/brainscore_core/supported_data_standards/brainio/packaging.py
+
+from brainscore_core.supported_data_standards.brainio import packaging
 
 packaging.package_data_assembly_locally(
     proto_data_assembly=assembly,

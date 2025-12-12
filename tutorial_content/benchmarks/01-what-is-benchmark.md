@@ -60,6 +60,8 @@ Every benchmark is built from four essential components:
 Every benchmark implements the `Benchmark` interface:
 
 ```python
+# Located: core/brainscore_core/benchmarks/__init__.py
+
 class Benchmark(ABC):
     def __call__(self, candidate: BrainModel) -> Score:
         """Evaluate a model and return normalized score"""
@@ -97,6 +99,9 @@ Most benchmarks inherit from `BenchmarkBase`, which provides:
 - Bibtex handling
 
 ```python
+# Located: core/brainscore_core/benchmarks/__init__.py (BenchmarkBase)
+#          vision/brainscore_vision/benchmarks/__init__.py (imports and extends)
+
 from brainscore_vision.benchmarks import BenchmarkBase
 
 class MyBenchmark(BenchmarkBase):
@@ -207,6 +212,8 @@ choices = candidate.look_at(triplet_stimuli)
 All Brain-Score metrics implement a simple interface:
 
 ```python
+# Located: core/brainscore_core/metrics/__init__.py
+
 from brainscore_core.metrics import Metric, Score
 
 class Metric:
@@ -233,6 +240,8 @@ For detailed metric examples and selection guidance, see the [Neural Benchmarks]
 `Score` objects extend simple numbers with rich metadata:
 
 ```python
+# Located: core/brainscore_core/metrics/__init__.py
+
 from brainscore_core.metrics import Score
 import numpy as np
 
@@ -263,7 +272,7 @@ print(f"Score: {score.values:.3f} ± {score.attrs['error']:.3f}")
 
 For benchmarks to correctly write both `score_raw` (unceiled) and `score_ceiled` to the database, the returned `Score` object must have specific attributes.
 
-#### Required Attributes for Neural Benchmarks
+#### Required Attributes for Non-Engineering Benchmarks
 
 ```python
 # The main score object contains the ceiled value
@@ -285,7 +294,7 @@ score.attrs[Score.RAW_VALUES_KEY] = Score(raw_value)    # The unceiled score
 
 ## Understanding Ceilings
 
-**Ceilings** represent the maximum expected performance given measurement noise and biological variability. "How well should we expect the best possible model to score?"
+**Ceilings** represent the maximum expected performance given measurement noise and biological variability. **"How well should we expect the best possible model to score?"**
 
 ### Why Ceilings Are Critical
 
@@ -317,37 +326,6 @@ def get_ceiling(assembly: NeuroidAssembly) -> Score:
     ceiling = pearson_correlation(half1.mean('repetition'), half2.mean('repetition'))
     return ceiling
 ```
-
----
-
-## Key Considerations Checklist
-
-Before creating a benchmark, ensure you have considered:
-
-### Scientific
-- [ ] Benchmark replicates an actual neuroscience or psychology experiment
-- [ ] Models are tested under the same conditions as biological subjects
-- [ ] Proper controls and error estimation are in place
-
-### Code Structure
-- [ ] Benchmark class ultimately inherits from `BenchmarkBase`
-- [ ] `identifier` follows naming convention: `AuthorYear-metric`
-- [ ] `version` is set (start at 1)
-
-### Ceilings
-- [ ] `ceiling_func` is implemented and returns valid Score
-- [ ] Ceiling includes error estimate in `.attrs['error']`
-- [ ] Appropriate ceiling type chosen for your data
-
-### Data Quality
-- [ ] Stimulus IDs are unique and consistent
-- [ ] All stimulus files exist and are accessible
-- [ ] No NaN or invalid values in assemblies
-
-### Documentation & Testing
-- [ ] `bibtex` includes proper citation
-- [ ] Tests verify benchmark loads and runs
-- [ ] Expected scores documented for at least one model
 
 ---
 
