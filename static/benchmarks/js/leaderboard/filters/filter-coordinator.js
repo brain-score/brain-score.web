@@ -370,6 +370,37 @@ function resetAllFilters() {
     }
   }
 
+  // Reset wayback timestamp slider to full range
+  if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+    const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
+    const waybackDateMin = document.getElementById('waybackDateMin');
+    const waybackDateMax = document.getElementById('waybackDateMax');
+    
+    if (waybackSliderContainer && waybackDateMin && waybackDateMax) {
+      const minHandle = waybackSliderContainer.querySelector('.handle-min');
+      const maxHandle = waybackSliderContainer.querySelector('.handle-max');
+      const range = waybackSliderContainer.querySelector('.slider-range');
+      
+      if (minHandle && maxHandle && range) {
+        // Reset slider handles to full range
+        minHandle.style.left = '0%';
+        maxHandle.style.left = '100%';
+        range.style.left = '0%';
+        range.style.width = '100%';
+        
+        // Update data attributes with full range timestamps
+        minHandle.dataset.value = ranges.datetime_range.min_unix;
+        maxHandle.dataset.value = ranges.datetime_range.max_unix;
+        
+        // Reset date input values to full range
+        const minDate = new Date(ranges.datetime_range.min_unix * 1000);
+        const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
+        waybackDateMin.value = minDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+      }
+    }
+  }
+
   // Reset ALL benchmark checkboxes to checked
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {

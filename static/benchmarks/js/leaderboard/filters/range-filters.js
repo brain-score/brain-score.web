@@ -241,6 +241,8 @@ function resetSliderUI() {
 
     // Use correct max values from filterOptions
     const sliderGroup = container.closest('.filter-group');
+    const isWaybackTimestamp = sliderGroup?.querySelector('#waybackDateMin');
+    
     if (sliderGroup?.querySelector('#paramCountMin') && ranges.parameter_ranges?.max) {
       max = ranges.parameter_ranges.max;
       container.dataset.max = max;
@@ -249,6 +251,11 @@ function resetSliderUI() {
       container.dataset.max = max;
     } else if (sliderGroup?.querySelector('#stimuliCountMin') && ranges.stimuli_ranges?.max) {
       max = ranges.stimuli_ranges.max;
+      container.dataset.max = max;
+    } else if (isWaybackTimestamp && ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+      min = ranges.datetime_range.min_unix;
+      max = ranges.datetime_range.max_unix;
+      container.dataset.min = min;
       container.dataset.max = max;
     }
 
@@ -266,8 +273,17 @@ function resetSliderUI() {
     const minInput = sliderGroup?.querySelector('.range-input-min');
     const maxInput = sliderGroup?.querySelector('.range-input-max');
 
-    if (minInput) minInput.value = min;
-    if (maxInput) maxInput.value = max;
+    if (isWaybackTimestamp) {
+      // For wayback timestamp, convert Unix timestamps to ISO date strings
+      const minDate = new Date(min * 1000);
+      const maxDate = new Date(max * 1000);
+      if (minInput) minInput.value = minDate.toISOString().split('T')[0];
+      if (maxInput) maxInput.value = maxDate.toISOString().split('T')[0];
+    } else {
+      // Standard numeric inputs
+      if (minInput) minInput.value = min;
+      if (maxInput) maxInput.value = max;
+    }
   });
 }
 
