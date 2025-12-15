@@ -43,8 +43,9 @@ def get_datetime_range(models):
             if ts:
                 try:
                     timestamps.append(datetime.fromisoformat(ts))
-                except Exception:
-                    pass  # Ignore malformed timestamps
+                except (ValueError, TypeError) as e:
+                    _logger.debug(f"Invalid timestamp format: {ts}, error: {e}")
+                    continue
     if timestamps:
         return {
             "min": min(timestamps).isoformat(),
@@ -108,7 +109,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Apply any additional model filters
     if model_filter:
-        model_query = list(model_filter(models))
+        models = list(model_filter(models))
 
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
@@ -231,7 +232,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
             for score in model.scores:
                 benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
                 if benchmark_id == f"average_{domain}":
-                    val = score.get("score_ceiled", score.get("score_ceiled"))
+                    val = score.get("score_ceiled")
                     if val is None or val == "":
                         # Exclude models with None or empty string
                         break
@@ -242,7 +243,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
                     try:
                         val_float = round(float(val), 2)
                         model_scores.append((model, val_float, False))
-                    except Exception:
+                    except (ValueError, TypeError):
                         # Exclude models with non-numeric, non-"X" values
                         break
                     break
@@ -438,8 +439,6 @@ def build_model_benchmark_frames(
     score_df = score_df.reindex(columns=leaf_benchmark_ids)
     timestamp_df = timestamp_df.reindex(columns=leaf_benchmark_ids)
 
-    score_df.to_csv("score_df.csv")
-    timestamp_df.to_csv("timestamp_df.csv")
     return score_df, timestamp_df
 
 # Resubmissions are currently not supported. Retaining for future use.
@@ -598,7 +597,7 @@ def get_parent_item(dictionary, key):
 def format_score(score):
     try:
         return f"{score:.3f}"
-    except:  # e.g. 'X'
+    except (TypeError, ValueError):  # e.g. 'X' or non-numeric values
         return score
 
 

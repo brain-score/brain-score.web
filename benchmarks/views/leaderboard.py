@@ -1,17 +1,16 @@
 import json
 import logging
-import numpy as np
 from collections import defaultdict
-from django.shortcuts import render
-from .index import get_context
-from django.views.decorators.cache import cache_page
-from ..utils import cache_get_context
-from django.views.decorators.cache import cache_page
-from django.db.models import Model
-logger = logging.getLogger(__name__)
-from .index import get_context, get_datetime_range  # Add get_datetime_range import
 from datetime import datetime
-import pytz
+
+import numpy as np
+from django.shortcuts import render
+from django.views.decorators.cache import cache_page
+
+from ..utils import cache_get_context
+from .index import get_context, get_datetime_range
+
+logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""

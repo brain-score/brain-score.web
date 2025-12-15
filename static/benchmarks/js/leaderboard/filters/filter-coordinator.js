@@ -222,37 +222,22 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
-  // Stats counters
-  let totalScoresProcessed = 0;
-  let scoresWithTimestamps = 0;
-  let scoresWithoutTimestamps = 0;
-  let scoresFilteredOut = 0;
-
   const filteredWithValidModels = rowData.map(row => {
     const newRow = { ...row };
 
     Object.keys(row).forEach(key => {
       if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
-        totalScoresProcessed++;
-
-
         const ts = row[key].timestamp;
 
-
         if (!ts) {
-          scoresWithoutTimestamps++;
           newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
         } else {
           try {
             const scoreTime = new Date(ts).getTime() / 1000; // Convert ISO string to Unix timestamp
             if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
-              scoresFilteredOut++;
               newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
-            } else {
-              scoresWithTimestamps++;
             }
           } catch (error) {
-            scoresWithoutTimestamps++;
             newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
           }
         }
@@ -287,15 +272,6 @@ function applyGlobalScoreModelRemoval(rowData) {
   const filteredData = rowData.filter(row => {
     const globalScore = row.average_vision_v0?.value;
     return globalScore !== 'X';
-  });
-
-  const removedCount = originalCount - filteredData.length;
-
-  console.log('Global score model removal:', {
-    originalModels: originalCount,
-    modelsWithXGlobalScore: removedCount,
-    remainingModels: filteredData.length,
-    removedModels: removedCount > 0 ? rowData.filter(row => row.average_vision_v0?.value === 'X').slice(0, 3).map(row => row.model?.name || 'Unknown') : []
   });
 
   return filteredData;
