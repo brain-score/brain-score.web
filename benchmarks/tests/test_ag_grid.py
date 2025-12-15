@@ -462,7 +462,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [103, 120, 120, 120, 120]
+        expected_ranks = [105, 131, 131, 131, 131]
         expected_models = [
             "ReAlnet10_cornet",
             "ReAlnet01_cornet",
@@ -512,7 +512,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [20, 25, 36, 39, 39]
+        expected_ranks = [20, 26, 37, 40, 40]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
@@ -572,7 +572,7 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [8, 13, 20, 25, 36]
+        expected_ranks = [8, 13, 20, 26, 37]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "convnext_tiny_imagenet_full_seed-0",
@@ -1177,7 +1177,7 @@ class TestExtraFunctionality:
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
         # Replace these with actual expected values
-        expected_ranks = [269, 346, 412, 441, 445]
+        expected_ranks = [280, 357, 423, 452, 456]
         expected_models = [
             "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",
