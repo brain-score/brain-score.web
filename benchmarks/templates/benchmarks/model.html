@@ -1,6 +1,17 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block page_title %}Brain-Score - {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
+
+{% block og_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
+{% block twitter_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
+
+{% block meta_description %}View {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %} scores on Brain-Score {{ model.domain }} benchmarks.{% if model.public and model.reference_identifier %} Paper: {{ model.reference_identifier }}.{% endif %}{% endblock %}
+{% block og_description %}View {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %} scores on Brain-Score {{ model.domain }} benchmarks.{% if model.public and model.reference_identifier %} Paper: {{ model.reference_identifier }}.{% endif %}{% endblock %}
+{% block twitter_description %}View {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %} scores on Brain-Score {{ model.domain }} benchmarks.{% endblock %}
+
+{% block og_url %}{{ request.scheme }}://{{ request.get_host }}/model/{{ model.id }}/{{ model.domain }}{% endblock %}
+
 {% block banner %}
     {% if model.public %}
         <h1 class="title">{{ model.name }}</h1>
