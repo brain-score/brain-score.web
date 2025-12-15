@@ -1003,11 +1003,12 @@ class TestFilter:
 
         # 2) set both inputs, then rerun the filter pipeline in JS
         # Set both min and max timestamps directly to avoid race conditions with event handlers
-        page.evaluate("""
+        result = page.evaluate("""
         () => {
         // Get the actual range limits to set min correctly (frozen to minimum)
         const ranges = window.filterOptions?.datetime_range;
         const fullRangeMin = ranges?.min_unix;
+        const fullRangeMax = ranges?.max_unix;
         
         // Set max timestamp
         const maxTimestamp = Math.floor(new Date("2024-08-12").getTime() / 1000);
@@ -1021,7 +1022,8 @@ class TestFilter:
         // Check if min handle should be frozen
         const isFrozen = typeof window.shouldFreezeMinHandle === 'function' && 
                          window.shouldFreezeMinHandle('waybackTimestamp');
-        window.activeFilters.min_wayback_timestamp = (isFrozen && fullRangeMin) ? fullRangeMin : (fullRangeMin || 1598486400);
+        const minTimestamp = (isFrozen && fullRangeMin) ? fullRangeMin : (fullRangeMin || 1598486400);
+        window.activeFilters.min_wayback_timestamp = minTimestamp;
         window.activeFilters.max_wayback_timestamp = maxTimestamp;
         
         // Update UI inputs to match the filter values
@@ -1035,24 +1037,64 @@ class TestFilter:
           minInput.value = minDate.toISOString().split('T')[0];
         }
         
+        // Debug: Check data before filtering
+        const beforeCount = window.originalRowData ? window.originalRowData.length : 0;
+        
         // Apply filters synchronously (no debounce)
         if (typeof applyCombinedFilters === 'function') {
           applyCombinedFilters();
         }
+        
+        // Debug: Check data after filtering
+        const afterCount = window.globalGridApi ? window.globalGridApi.getDisplayedRowCount() : 0;
+        const rowData = [];
+        if (window.globalGridApi) {
+          window.globalGridApi.forEachNode(node => {
+            if (node.data) rowData.push(node.data);
+          });
+        }
+        
+        return {
+          beforeCount,
+          afterCount,
+          minTimestamp,
+          maxTimestamp,
+          fullRangeMin,
+          fullRangeMax,
+          isFrozen,
+          rowDataCount: rowData.length
+        };
         }
         """)
+        
+        print(f"Filter debug: beforeCount={result.get('beforeCount')}, afterCount={result.get('afterCount')}, "
+              f"rowDataCount={result.get('rowDataCount')}, min={result.get('minTimestamp')}, "
+              f"max={result.get('maxTimestamp')}, range=[{result.get('fullRangeMin')}, {result.get('fullRangeMax')}]")
 
-        # 3) wait for grid to repaint - wait for actual cells to appear instead of fixed timeout
-        # This ensures the grid has finished filtering and rendering before we check results
-        try:
-            page.wait_for_selector('.ag-cell[col-id="model"]', timeout=10000, state='visible')
-        except Exception:
-            # Fallback: wait a bit longer and check if grid has any cells
-            page.wait_for_timeout(1000)
-            # Verify grid has data
-            cell_count = page.evaluate("document.querySelectorAll('.ag-cell[col-id=\"model\"]').length")
-            if cell_count == 0:
-                raise AssertionError("Grid is empty after filtering - no model cells found")
+        # 3) wait for grid to repaint - wait for grid to finish updating
+        # The grid update is asynchronous, so we need to wait for it to complete
+        # Check the debug output first to understand what happened
+        if result.get('afterCount', 0) == 0 and result.get('rowDataCount', 0) == 0:
+            # Grid is empty - this might be expected if all models were filtered out
+            # But we expect some models, so this is an error
+            raise AssertionError(
+                f"Grid is empty after filtering. Debug info: {result}. "
+                f"This suggests all models were filtered out by the wayback timestamp filter. "
+                f"Check if the filter range [{result.get('minTimestamp')}, {result.get('maxTimestamp')}] "
+                f"is correct and if models have timestamps in this range."
+            )
+        
+        # Wait for grid cells to actually appear in the DOM
+        # Use wait_for_function to wait for cells to be rendered
+        page.wait_for_function(
+            """
+            () => {
+              const cells = document.querySelectorAll('.ag-cell[col-id="model"]');
+              return cells.length > 0;
+            }
+            """,
+            timeout=10000
+        )
 
         # 4) verify both UI inputs and JS state
         min_val = page.evaluate("document.getElementById('waybackDateMin')?.value")
