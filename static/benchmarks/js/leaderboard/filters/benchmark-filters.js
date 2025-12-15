@@ -95,16 +95,25 @@ function addBenchmarksFilteredByMetadata() {
   // Don't preserve any manual unchecks - let metadata filtering completely control the tree
   // Manual tree interactions should be independent and not interfere with metadata filtering
   
-  // Reset all checkboxes to checked state
+  // Reset all checkboxes to checked state, EXCEPT for excluded benchmarks
   const allCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   allCheckboxes.forEach(checkbox => {
-    checkbox.checked = true;
+    // Keep excluded benchmarks unchecked
+    const isExcluded = checkbox.dataset.excluded === 'true';
+    checkbox.checked = !isExcluded;
   });
   
   // Clear previous exclusions and rebuild from scratch
   window.filteredOutBenchmarks.clear();
   
-  // If no metadata filters are active, we're done (everything should be checked)
+  // Add excluded benchmarks back to filteredOutBenchmarks
+  if (window.excludedBenchmarks) {
+    window.excludedBenchmarks.forEach(id => {
+      window.filteredOutBenchmarks.add(id);
+    });
+  }
+  
+  // If no metadata filters are active, we're done (excluded benchmarks remain unchecked)
   if (!hasMetadataFilters) {
     window.updatingCheckboxes = false;
     return;
@@ -310,7 +319,7 @@ function renderBenchmarkTree(container, tree) {
 
   container.appendChild(ul);
 
-  function createBenchmarkNode(node) {
+  function createBenchmarkNode(node, ancestorExcluded = false) {
     const li = document.createElement('li');
     li.classList.add('benchmark-node');
 
@@ -320,7 +329,20 @@ function renderBenchmarkTree(container, tree) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = node.id;
-    checkbox.checked = true;
+    
+    // Check if this benchmark OR any ancestor is in the excluded list
+    const isSelfExcluded = window.excludedBenchmarks && window.excludedBenchmarks.has(node.id);
+    const isExcluded = isSelfExcluded || ancestorExcluded;
+    
+    // Uncheck if this node itself is excluded, otherwise check
+    // (descendants of excluded parents stay checked unless they are also excluded)
+    checkbox.checked = !isSelfExcluded;
+    
+    // Mark as excluded for special handling (prevents blue styling)
+    // This applies to both the excluded node AND all its descendants
+    if (isExcluded) {
+      checkbox.dataset.excluded = 'true';
+    }
 
     checkbox.addEventListener('change', (e) => {
       // Don't process manual clicks if we're in the middle of metadata filtering
@@ -355,6 +377,16 @@ function renderBenchmarkTree(container, tree) {
     const label = document.createElement('label');
     label.appendChild(checkbox);
     label.append(` ${node.label}`);
+    
+    // Add tooltip for excluded benchmarks
+    if (isSelfExcluded) {
+      const infoIcon = document.createElement('span');
+      infoIcon.classList.add('excluded-benchmark-info');
+      infoIcon.textContent = ' ⓘ';
+      infoIcon.title = 'This benchmark is excluded by default. Contact the Brain-Score team for more info.';
+      infoIcon.style.cssText = 'cursor: default; color: #888; font-size: 0.85em;';
+      label.appendChild(infoIcon);
+    }
 
     let toggle = null;
     if (node.children?.length) {
@@ -385,7 +417,8 @@ function renderBenchmarkTree(container, tree) {
       childUl.classList.add('benchmark-tree');
       
       node.children.forEach(childNode => {
-        const childLi = createBenchmarkNode(childNode);
+        // Pass down whether this node or any ancestor is excluded
+        const childLi = createBenchmarkNode(childNode, isExcluded);
         childUl.appendChild(childLi);
       });
       

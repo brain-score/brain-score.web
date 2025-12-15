@@ -243,11 +243,13 @@ function resetAllFilters() {
     }
   }
 
-  // Reset ALL benchmark checkboxes to checked
+  // Reset ALL benchmark checkboxes to checked, EXCEPT for excluded benchmarks
   const checkboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]');
   checkboxes.forEach(cb => {
     if (cb) {
-      cb.checked = true;
+      // Keep excluded benchmarks unchecked
+      const isExcluded = cb.dataset.excluded === 'true';
+      cb.checked = !isExcluded;
     }
   });
 
@@ -263,8 +265,13 @@ function resetAllFilters() {
     publicDataCheckbox.checked = false;
   }
 
-  // Reset filtered benchmarks
+  // Reset filtered benchmarks (but keep excluded benchmarks in the set)
   window.filteredOutBenchmarks = new Set();
+  if (window.excludedBenchmarks) {
+    window.excludedBenchmarks.forEach(id => {
+      window.filteredOutBenchmarks.add(id);
+    });
+  }
   checkboxes.forEach(cb => {
     if (cb && !cb.checked) {
       window.filteredOutBenchmarks.add(cb.value);
@@ -486,8 +493,14 @@ function updateFilteredScores(rowData) {
     const children = hierarchyMap.get(benchmarkId) || [];
     
     if (children.length > 0) {
-      const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
-      if (hasExcludedChildren) {
+      // Only count as excluded if it's manually filtered (not a default-excluded benchmark)
+      const hasManuallyExcludedChildren = children.some(childId => {
+        const isExcluded = excludedBenchmarks.has(childId);
+        const isDefaultExcluded = window.excludedBenchmarks && window.excludedBenchmarks.has(childId);
+        // Only count if excluded AND not a default-excluded benchmark
+        return isExcluded && !isDefaultExcluded;
+      });
+      if (hasManuallyExcludedChildren) {
         recalculatedBenchmarks.add(benchmarkId);
         
         function markAncestorsRecalculated(targetId) {
@@ -622,15 +635,18 @@ function toggleFilteredScoreColumn(gridApi) {
       const engineeringNode = document.querySelector('input[value="engineering_vision_v0"]')?.closest('.benchmark-node');
       const isEngineeringChild = engineeringNode && engineeringNode.contains(checkbox);
       const isEngineeringParent = checkbox.value === 'engineering_vision_v0';
+      
+      // Check if this is an excluded benchmark (default unchecked)
+      const isExcludedBenchmark = checkbox.dataset.excluded === 'true';
 
-      if (!isEngineeringChild && !isEngineeringParent) {
+      // Only count as a manual filter if it's not engineering and not a default-excluded benchmark
+      if (!isEngineeringChild && !isEngineeringParent && !isExcludedBenchmark) {
         hasNonEngineeringBenchmarkFilters = true;
       }
     });
   }
 
   const shouldShowFilteredScore = hasNonEngineeringBenchmarkFilters || hasBenchmarkMetadataFilters;
-  
 
   if (shouldShowFilteredScore) {
     // First, make column visible
