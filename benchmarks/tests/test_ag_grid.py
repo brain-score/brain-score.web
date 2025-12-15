@@ -1040,49 +1040,159 @@ class TestFilter:
         // Debug: Check data before filtering
         const beforeCount = window.originalRowData ? window.originalRowData.length : 0;
         
+        // Debug: Sample a few models to check their timestamp data
+        const sampleModels = [];
+        if (window.originalRowData && window.originalRowData.length > 0) {
+          for (let i = 0; i < Math.min(3, window.originalRowData.length); i++) {
+            const model = window.originalRowData[i];
+            const avgScore = model.average_vision_v0;
+            sampleModels.push({
+              modelName: model.model_name || model.model,
+              avgScoreValue: avgScore?.value,
+              avgScoreTimestamp: avgScore?.timestamp,
+              hasTimestamp: !!avgScore?.timestamp
+            });
+          }
+        }
+        
         // Apply filters synchronously (no debounce)
         if (typeof applyCombinedFilters === 'function') {
           applyCombinedFilters();
         }
         
-        // Debug: Check data after filtering
-        const afterCount = window.globalGridApi ? window.globalGridApi.getDisplayedRowCount() : 0;
-        const rowData = [];
-        if (window.globalGridApi) {
-          window.globalGridApi.forEachNode(node => {
-            if (node.data) rowData.push(node.data);
-          });
-        }
+        // Note: Grid update is asynchronous - setGridOption is called but grid needs time to render
+        // On slower systems (EC2), this can take longer, so we'll check from Python side
         
+        // Return immediately - we'll check grid state from Python after waiting
         return {
           beforeCount,
-          afterCount,
           minTimestamp,
           maxTimestamp,
           fullRangeMin,
           fullRangeMax,
           isFrozen,
-          rowDataCount: rowData.length
+          sampleModels,
+          filterDebug: null  // Will check this separately after grid updates
         };
+        
+        // Debug: Check what happened in the filter
+        let filterDebug = null;
+        if (typeof applyWaybackTimestampFilter === 'function' && window.originalRowData) {
+          // Manually check what the filter would do to first model
+          const testModel = window.originalRowData[0];
+          if (testModel) {
+            const avgScore = testModel.average_vision_v0;
+            if (avgScore && avgScore.timestamp) {
+              try {
+                const scoreTime = new Date(avgScore.timestamp).getTime() / 1000;
+                filterDebug = {
+                  modelName: testModel.model_name || testModel.model,
+                  scoreTimestamp: avgScore.timestamp,
+                  scoreTimeUnix: scoreTime,
+                  minTimestamp,
+                  maxTimestamp,
+                  isInRange: scoreTime >= minTimestamp && scoreTime <= maxTimestamp,
+                  wouldBeX: scoreTime < minTimestamp || scoreTime > maxTimestamp
+                };
+              } catch (e) {
+                filterDebug = { error: String(e) };
+              }
+            } else {
+              filterDebug = { noTimestamp: true };
+            }
+          }
+        }
+        
         }
         """)
         
-        print(f"Filter debug: beforeCount={result.get('beforeCount')}, afterCount={result.get('afterCount')}, "
-              f"rowDataCount={result.get('rowDataCount')}, min={result.get('minTimestamp')}, "
+        print(f"Filter debug: beforeCount={result.get('beforeCount')}, min={result.get('minTimestamp')}, "
               f"max={result.get('maxTimestamp')}, range=[{result.get('fullRangeMin')}, {result.get('fullRangeMax')}]")
-
+        if result.get('sampleModels'):
+            print(f"Sample models: {result.get('sampleModels')}")
+        
         # 3) wait for grid to repaint - wait for grid to finish updating
-        # The grid update is asynchronous, so we need to wait for it to complete
-        # Check the debug output first to understand what happened
-        if result.get('afterCount', 0) == 0 and result.get('rowDataCount', 0) == 0:
-            # Grid is empty - this might be expected if all models were filtered out
-            # But we expect some models, so this is an error
-            raise AssertionError(
-                f"Grid is empty after filtering. Debug info: {result}. "
-                f"This suggests all models were filtered out by the wayback timestamp filter. "
-                f"Check if the filter range [{result.get('minTimestamp')}, {result.get('maxTimestamp')}] "
-                f"is correct and if models have timestamps in this range."
-            )
+        # The grid update is asynchronous, especially on slower systems like EC2
+        # Wait for grid cells to actually appear, with retries
+        max_retries = 10
+        retry_delay = 500  # ms
+        
+        for attempt in range(max_retries):
+            # Wait for grid to update
+            page.wait_for_timeout(retry_delay)
+            
+            # Check if grid has cells
+            grid_state = page.evaluate("""
+            () => {
+              const gridApi = window.globalGridApi;
+              if (!gridApi) return { ready: false, rowCount: 0, cellCount: 0 };
+              
+              const rowCount = gridApi.getDisplayedRowCount();
+              const cellCount = document.querySelectorAll('.ag-cell[col-id="model"]').length;
+              
+              return {
+                ready: true,
+                rowCount: rowCount,
+                cellCount: cellCount,
+                hasData: rowCount > 0 || cellCount > 0
+              };
+            }
+            """)
+            
+            if grid_state['hasData']:
+                print(f"Grid updated successfully after {attempt + 1} attempts: {grid_state['rowCount']} rows, {grid_state['cellCount']} cells")
+                break
+            
+            if attempt == max_retries - 1:
+                # Final attempt - get debug info
+                debug_info = page.evaluate("""
+                () => {
+                  const gridApi = window.globalGridApi;
+                  const originalCount = window.originalRowData ? window.originalRowData.length : 0;
+                  
+                  // Check filter debug
+                  let filterDebug = null;
+                  if (window.originalRowData && window.originalRowData.length > 0) {
+                    const testModel = window.originalRowData[0];
+                    const avgScore = testModel.average_vision_v0;
+                    if (avgScore && avgScore.timestamp) {
+                      try {
+                        const scoreTime = new Date(avgScore.timestamp).getTime() / 1000;
+                        const minTs = window.activeFilters?.min_wayback_timestamp;
+                        const maxTs = window.activeFilters?.max_wayback_timestamp;
+                        filterDebug = {
+                          scoreTimestamp: avgScore.timestamp,
+                          scoreTimeUnix: scoreTime,
+                          minTimestamp: minTs,
+                          maxTimestamp: maxTs,
+                          isInRange: scoreTime >= minTs && scoreTime <= maxTs
+                        };
+                      } catch (e) {
+                        filterDebug = { error: String(e) };
+                      }
+                    } else {
+                      filterDebug = { noTimestamp: true };
+                    }
+                  }
+                  
+                  return {
+                    originalCount,
+                    gridApiExists: !!gridApi,
+                    rowCount: gridApi ? gridApi.getDisplayedRowCount() : 0,
+                    cellCount: document.querySelectorAll('.ag-cell[col-id="model"]').length,
+                    activeFilters: window.activeFilters,
+                    filterDebug
+                  };
+                }
+                """)
+                
+                raise AssertionError(
+                    f"Grid is empty after filtering (attempted {max_retries} times). "
+                    f"Original data: {debug_info.get('originalCount')} models. "
+                    f"Grid state: {grid_state}. Debug: {debug_info}. "
+                    f"Filter range: [{result.get('minTimestamp')}, {result.get('maxTimestamp')}]. "
+                    f"Sample models: {result.get('sampleModels')}"
+                )
         
         # Wait for grid cells to actually appear in the DOM
         # Use wait_for_function to wait for cells to be rendered
