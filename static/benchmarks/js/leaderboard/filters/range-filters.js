@@ -1,5 +1,20 @@
 // Range slider functionality for numeric filters
 
+// ======================
+// CONFIGURATION
+// ======================
+// Set to true to freeze the min handle (start timestamp) for wayback timestamp slider
+// Set to false to allow both handles to be adjustable
+const FREEZE_WAYBACK_MIN_HANDLE = true;
+
+// Helper function to check if min handle should be frozen
+function shouldFreezeMinHandle(sliderType) {
+  return FREEZE_WAYBACK_MIN_HANDLE && sliderType === 'waybackTimestamp';
+}
+
+// Export for use in other modules
+window.shouldFreezeMinHandle = shouldFreezeMinHandle;
+
 // Initialize all dual-handle range sliders
 function initializeDualHandleSliders() {
   const sliderContainers = document.querySelectorAll('.slider-container');
@@ -33,6 +48,11 @@ function initializeDualHandleSlider(container) {
   const maxInput = sliderGroup?.querySelector('.range-input-max');
 
   function updateSliderPosition() {
+    // For wayback timestamp, ensure minValue is always locked to minimum if frozen
+    if (shouldFreezeMinHandle(sliderType)) {
+      minValue = min;
+    }
+    
     const minPercent = ((minValue - min) / (max - min)) * 100;
     const maxPercent = ((maxValue - min) / (max - min)) * 100;
 
@@ -91,10 +111,11 @@ function initializeDualHandleSlider(container) {
         skipDebounce
       });
     } else if (filterId === 'waybackTimestampFilter' || sliderType === 'waybackTimestamp') {
-      window.activeFilters.min_wayback_timestamp = minValue;
+      // For wayback timestamp, min is locked to minimum if frozen, otherwise use minValue
+      window.activeFilters.min_wayback_timestamp = shouldFreezeMinHandle(sliderType) ? min : minValue;
       window.activeFilters.max_wayback_timestamp = maxValue;
       console.log(`🎚️ ${sliderType} filter update:`, {
-        minValue,
+        minValue: min, // Always minimum (frozen)
         maxValue,
         min: min,
         max: max,
@@ -119,6 +140,11 @@ function initializeDualHandleSlider(container) {
   }
 
   function handleMouseMove(e, handle, isMin) {
+    // Prevent min handle movement if frozen
+    if (shouldFreezeMinHandle(sliderType) && isMin) {
+      return;
+    }
+
     const rect = container.getBoundingClientRect();
     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const value = min + percent * (max - min);
@@ -134,6 +160,11 @@ function initializeDualHandleSlider(container) {
   }
 
   function addMouseListeners(handle, isMin) {
+    // Skip adding listeners for disabled min handle if frozen
+    if (shouldFreezeMinHandle(sliderType) && isMin) {
+      return;
+    }
+
     let isDragging = false;
     let tooltip = null;
 
@@ -143,8 +174,8 @@ function initializeDualHandleSlider(container) {
       document.addEventListener('mouseup', mouseUpHandler);
       e.preventDefault();
       
-      // Create tooltip for wayback timestamp slider
-      if (sliderType === 'waybackTimestamp' && typeof createTooltip === 'function') {
+      // Create tooltip for wayback timestamp slider (only for max handle if min is frozen)
+      if (sliderType === 'waybackTimestamp' && typeof createTooltip === 'function' && (!shouldFreezeMinHandle(sliderType) || !isMin)) {
         const currentValue = isMin ? minValue : maxValue;
         const date = new Date(currentValue * 1000);
         const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -161,8 +192,8 @@ function initializeDualHandleSlider(container) {
       if (isDragging) {
         handleMouseMove(e, handle, isMin);
         
-        // Update tooltip for wayback timestamp slider
-        if (sliderType === 'waybackTimestamp' && tooltip && typeof createTooltip === 'function') {
+        // Update tooltip for wayback timestamp slider (only for max handle if min is frozen)
+        if (sliderType === 'waybackTimestamp' && tooltip && typeof createTooltip === 'function' && (!shouldFreezeMinHandle(sliderType) || !isMin)) {
           const currentValue = isMin ? minValue : maxValue;
           const date = new Date(currentValue * 1000);
           const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -197,15 +228,28 @@ function initializeDualHandleSlider(container) {
 
   // Input field synchronization
   if (minInput) {
-    minInput?.addEventListener('change', () => {
-      const ts = new Date(minInput.value).getTime() / 1000;
-      if (!isNaN(ts)) {
-        minValue = ts;
-        minHandle.dataset.value = ts;
-        updateSliderPosition();
-        updateActiveFilters();
-      }
-    });
+    // Skip event listener for wayback timestamp min input if frozen
+    if (!shouldFreezeMinHandle(sliderType)) {
+      minInput?.addEventListener('change', () => {
+        if (sliderType === 'waybackTimestamp') {
+          const ts = new Date(minInput.value).getTime() / 1000;
+          if (!isNaN(ts)) {
+            minValue = ts;
+            minHandle.dataset.value = ts;
+            updateSliderPosition();
+            updateActiveFilters();
+          }
+        } else {
+          const ts = parseFloat(minInput.value);
+          if (!isNaN(ts)) {
+            minValue = ts;
+            minHandle.dataset.value = ts;
+            updateSliderPosition();
+            updateActiveFilters();
+          }
+        }
+      });
+    }
   }
 
   if (maxInput) {
@@ -222,10 +266,26 @@ function initializeDualHandleSlider(container) {
 
   // For minInput
   if (sliderType === 'waybackTimestamp') {
-    // Convert date string to Unix timestamp
-    const dateValue = new Date(minInput.value);
-    minValue = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
-    minHandle.dataset.value = minValue;
+    // For wayback timestamp, lock min value to minimum if frozen
+    if (shouldFreezeMinHandle(sliderType)) {
+      minValue = min; // Always use the minimum timestamp
+      minHandle.dataset.value = minValue;
+      // Disable min input and handle for wayback timestamp
+      if (minInput) {
+        minInput.disabled = true;
+        minInput.style.cursor = 'not-allowed';
+        minInput.style.opacity = '0.6';
+      }
+      // Disable min handle dragging
+      minHandle.style.cursor = 'not-allowed';
+      minHandle.style.opacity = '0.6';
+      minHandle.classList.add('handle-disabled');
+    } else {
+      // If not frozen, initialize normally
+      const dateValue = new Date(minInput.value);
+      minValue = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
+      minHandle.dataset.value = minValue;
+    }
   } else {
     minValue = parseFloat(minInput.value) || min;
     minHandle.dataset.value = minValue;
@@ -293,6 +353,23 @@ function resetSliderUI() {
       max = ranges.datetime_range.max_unix;
       container.dataset.min = min;
       container.dataset.max = max;
+      // Lock min value for wayback timestamp if frozen
+      if (shouldFreezeMinHandle('waybackTimestamp')) {
+        const minHandle = container.querySelector('.handle-min');
+        const minInput = sliderGroup?.querySelector('.range-input-min');
+        if (minHandle) {
+          minHandle.dataset.value = min;
+          minHandle.style.left = '0%';
+          minHandle.style.cursor = 'not-allowed';
+          minHandle.style.opacity = '0.6';
+          minHandle.classList.add('handle-disabled');
+        }
+        if (minInput) {
+          minInput.disabled = true;
+          minInput.style.cursor = 'not-allowed';
+          minInput.style.opacity = '0.6';
+        }
+      }
     }
 
     // Reset to full range

@@ -198,6 +198,21 @@
         left: 50%
         transform: translate(-50%, -50%)
 
+      // Disabled handle styling for wayback timestamp min handle
+      &.handle-disabled
+        cursor: not-allowed !important
+        opacity: 0.6
+        background: #e9ecef
+        border-color: #ced4da
+
+        &:hover
+          transform: translate(-50%, -50%) scale(1)
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+
+        &:active
+          transform: translate(-50%, -50%) scale(1)
+          cursor: not-allowed !important
+
 // ======================
 // WAYBACK TIMESTAMP SPECIFIC STYLES
 // ======================
@@ -207,3 +222,9 @@
     width: 120px !important
     padding: 6px 8px !important
     font-size: 0.9rem !important
+
+  // Disabled min input styling
+  .range-input-min:disabled
+    background-color: #f8f9fa
+    cursor: not-allowed
+    opacity: 0.6

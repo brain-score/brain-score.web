@@ -382,21 +382,32 @@ function resetAllFilters() {
       const range = waybackSliderContainer.querySelector('.slider-range');
       
       if (minHandle && maxHandle && range) {
-        // Reset slider handles to full range
+        // Reset slider handles - min stays at minimum (frozen), max goes to maximum
         minHandle.style.left = '0%';
         maxHandle.style.left = '100%';
         range.style.left = '0%';
         range.style.width = '100%';
         
-        // Update data attributes with full range timestamps
+        // Update data attributes - min stays at minimum timestamp (frozen)
         minHandle.dataset.value = ranges.datetime_range.min_unix;
         maxHandle.dataset.value = ranges.datetime_range.max_unix;
         
-        // Reset date input values to full range
+        // Reset date input values - min stays at minimum if frozen, max goes to maximum
         const minDate = new Date(ranges.datetime_range.min_unix * 1000);
         const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
         waybackDateMin.value = minDate.toISOString().split('T')[0];
         waybackDateMax.value = maxDate.toISOString().split('T')[0];
+        
+        // Ensure min input remains disabled if frozen
+        if (waybackDateMin && typeof window.shouldFreezeMinHandle === 'function' && window.shouldFreezeMinHandle('waybackTimestamp')) {
+          waybackDateMin.disabled = true;
+          waybackDateMin.style.cursor = 'not-allowed';
+          waybackDateMin.style.opacity = '0.6';
+        } else if (waybackDateMin) {
+          waybackDateMin.disabled = false;
+          waybackDateMin.style.cursor = '';
+          waybackDateMin.style.opacity = '';
+        }
       }
     }
   }

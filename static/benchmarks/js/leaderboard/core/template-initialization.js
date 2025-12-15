@@ -147,13 +147,25 @@ function initializeLeaderboardFromTemplate() {
         if (minHandle && maxHandle) {
           minHandle.dataset.value = ranges.datetime_range.min_unix;
           maxHandle.dataset.value = ranges.datetime_range.max_unix;
+          // Disable min handle if frozen (check if function exists from range-filters.js)
+          if (typeof window.shouldFreezeMinHandle === 'function' && window.shouldFreezeMinHandle('waybackTimestamp')) {
+            minHandle.style.cursor = 'not-allowed';
+            minHandle.style.opacity = '0.6';
+            minHandle.classList.add('handle-disabled');
+          }
         }
 
-        // Set date input values
+        // Set date input values and disable min input if frozen
         const minDate = new Date(ranges.datetime_range.min_unix * 1000);
         const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
         waybackDateMin.value = minDate.toISOString().split('T')[0];
         waybackDateMax.value = maxDate.toISOString().split('T')[0];
+        // Disable min date input if frozen
+        if (typeof window.shouldFreezeMinHandle === 'function' && window.shouldFreezeMinHandle('waybackTimestamp')) {
+          waybackDateMin.disabled = true;
+          waybackDateMin.style.cursor = 'not-allowed';
+          waybackDateMin.style.opacity = '0.6';
+        }
       }
     }
 
