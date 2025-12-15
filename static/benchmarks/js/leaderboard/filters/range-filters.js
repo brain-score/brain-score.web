@@ -135,17 +135,47 @@ function initializeDualHandleSlider(container) {
 
   function addMouseListeners(handle, isMin) {
     let isDragging = false;
+    let tooltip = null;
 
     handle.addEventListener('mousedown', (e) => {
       isDragging = true;
       document.addEventListener('mousemove', mouseMoveHandler);
       document.addEventListener('mouseup', mouseUpHandler);
       e.preventDefault();
+      
+      // Create tooltip for wayback timestamp slider
+      if (sliderType === 'waybackTimestamp' && typeof createTooltip === 'function') {
+        const currentValue = isMin ? minValue : maxValue;
+        const date = new Date(currentValue * 1000);
+        const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        tooltip = createTooltip(handle, dateStr, {
+          type: 'info',
+          position: 'top',
+          duration: 999999, // Don't auto-hide while dragging
+          offset: 25
+        });
+      }
     });
 
     function mouseMoveHandler(e) {
       if (isDragging) {
         handleMouseMove(e, handle, isMin);
+        
+        // Update tooltip for wayback timestamp slider
+        if (sliderType === 'waybackTimestamp' && tooltip && typeof createTooltip === 'function') {
+          const currentValue = isMin ? minValue : maxValue;
+          const date = new Date(currentValue * 1000);
+          const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+          
+          // Update tooltip content and position
+          tooltip.remove();
+          tooltip = createTooltip(handle, dateStr, {
+            type: 'info',
+            position: 'top',
+            duration: 999999,
+            offset: 25
+          });
+        }
       }
     }
 
@@ -153,6 +183,12 @@ function initializeDualHandleSlider(container) {
       isDragging = false;
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // Remove tooltip when dragging ends
+      if (tooltip) {
+        tooltip.remove();
+        tooltip = null;
+      }
     }
   }
 

@@ -67,6 +67,28 @@
         </div>
       </div>
       <div id="benchmarkFilterPanel"></div>
+      
+      <!-- Wayback Timestamp Section -->
+      <div class="metadata-section" id="waybackTimestampSection" style="display: none; margin-top: 20px;">
+        <div class="filter-group" id="waybackTimestampFilter">
+          <div class="filter-header">
+            <label>Wayback Timestamp</label>
+            <div class="range-values">
+              <input type="date" class="range-input-min" id="waybackDateMin">
+              <span class="range-separator">to</span>
+              <input type="date" class="range-input-max" id="waybackDateMax">
+            </div>
+          </div>
+          <div class="range-filter dual-handle">
+            <div class="slider-container" data-min="0" data-max="2000000000">
+              <div class="slider-track"></div>
+              <div class="slider-range"></div>
+              <div class="slider-handle handle-min" data-value="0"></div>
+              <div class="slider-handle handle-max" data-value="2000000000"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Middle column: Model Properties -->
@@ -211,27 +233,6 @@
               <div class="slider-range"></div>
               <div class="slider-handle handle-min" data-value="0"></div>
               <div class="slider-handle handle-max" data-value="1000"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Wayback Timestamp Section -->
-      <div class="metadata-section" id="waybackTimestampSection" style="display: none;">
-        <div class="filter-group" id="waybackTimestampFilter">
-          <div class="filter-header">
-            <label>Wayback Timestamp</label>
-            <div class="range-values">
-              <input type="date" class="range-input-min" id="waybackDateMin">
-              <span class="range-separator">to</span>
-              <input type="date" class="range-input-max" id="waybackDateMax">
-            </div>
-          </div>
-          <div class="range-filter dual-handle">
-            <div class="slider-container" data-min="0" data-max="2000000000">
-              <div class="slider-track"></div>
-              <div class="slider-range"></div>
-              <div class="slider-handle handle-min" data-value="0"></div>
-              <div class="slider-handle handle-max" data-value="2000000000"></div>
             </div>
           </div>
         </div>
