@@ -117,6 +117,43 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   let timestampFilteredData = filteredData;
   if (typeof applyWaybackTimestampFilter === 'function') {
     timestampFilteredData = applyWaybackTimestampFilter(filteredData);
+    
+    // Recalculate colors for all benchmarks after wayback filtering
+    // This ensures colors reflect the new min/max ranges after filtering out scores outside the time range
+    if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
+      // Check if wayback filtering is actually active
+      const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+      const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+      const ranges = window.filterOptions?.datetime_range;
+      const fullRangeMin = ranges?.min_unix;
+      const fullRangeMax = ranges?.max_unix;
+      const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+      
+      if (isWaybackActive) {
+        // Build hierarchy map if not already cached
+        if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
+          window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
+        }
+        const hierarchyMap = window.cachedHierarchyMap || new Map();
+        
+        // Get all unique benchmark IDs from the row data
+        const benchmarkIds = new Set();
+        timestampFilteredData.forEach(row => {
+          Object.keys(row).forEach(key => {
+            // Skip non-benchmark fields
+            if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+                row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
+              benchmarkIds.add(key);
+            }
+          });
+        });
+        
+        // Recalculate colors for each benchmark
+        benchmarkIds.forEach(benchmarkId => {
+          window.LeaderboardColorUtils.recalculateColorsForBenchmark(timestampFilteredData, benchmarkId, hierarchyMap);
+        });
+      }
+    }
   }
 
   // Initialize finalData
