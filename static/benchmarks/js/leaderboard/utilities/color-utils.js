@@ -108,9 +108,10 @@ function calculateRepresentativeColor(value, minValue, maxValue, rootParent) {
  * @param {Array} rowData - Array of model row data
  * @param {string} benchmarkId - Benchmark identifier to recalculate colors for
  * @param {Map} hierarchyMap - Benchmark hierarchy map
+ * @param {Map} rootParentCache - Optional cache of benchmark -> root parent mappings (Priority 2 optimization)
  * @returns {void} Modifies rowData in place
  */
-function recalculateColorsForBenchmark(rowData, benchmarkId, hierarchyMap) {
+function recalculateColorsForBenchmark(rowData, benchmarkId, hierarchyMap, rootParentCache = null) {
   // Collect all values for this benchmark across all models
   const values = [];
   rowData.forEach(row => {
@@ -130,42 +131,47 @@ function recalculateColorsForBenchmark(rowData, benchmarkId, hierarchyMap) {
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   
-  // Determine root parent for color palette selection
-  // Find the root parent by traversing up the hierarchy
+  // Use cached root parent if available, otherwise traverse hierarchy
   let rootParent = null;
-  let currentId = benchmarkId;
-  const visited = new Set();
   
-  // Traverse up the hierarchy to find root
-  while (currentId && !visited.has(currentId)) {
-    visited.add(currentId);
+  if (rootParentCache && rootParentCache.has(benchmarkId)) {
+    rootParent = rootParentCache.get(benchmarkId);
+  } else {
+    // Fallback: Traverse hierarchy if cache not available
+    let currentId = benchmarkId;
+    const visited = new Set();
     
-    // Check if currentId is a root (no parent in hierarchy)
-    let hasParent = false;
-    for (const [parentId, children] of hierarchyMap.entries()) {
-      if (children.includes(currentId)) {
-        currentId = parentId;
-        hasParent = true;
+    // Traverse up the hierarchy to find root
+    while (currentId && !visited.has(currentId)) {
+      visited.add(currentId);
+      
+      // Check if currentId is a root (no parent in hierarchy)
+      let hasParent = false;
+      for (const [parentId, children] of hierarchyMap.entries()) {
+        if (children.includes(currentId)) {
+          currentId = parentId;
+          hasParent = true;
+          break;
+        }
+      }
+      
+      if (!hasParent) {
+        // This is a root
+        rootParent = currentId;
         break;
       }
     }
     
-    if (!hasParent) {
-      // This is a root
-      rootParent = currentId;
-      break;
-    }
-  }
-  
-  // Fallback: if we couldn't determine root parent, infer from benchmarkId
-  if (!rootParent) {
-    // Check if benchmarkId or any ancestor contains 'engineering'
-    const checkId = benchmarkId.toLowerCase();
-    if (checkId.includes('engineering')) {
-      rootParent = 'engineering_vision_v0';
-    } else {
-      // Default to neural for non-engineering benchmarks
-      rootParent = 'neural_vision_v0';
+    // Fallback: if we couldn't determine root parent, infer from benchmarkId
+    if (!rootParent) {
+      // Check if benchmarkId or any ancestor contains 'engineering'
+      const checkId = benchmarkId.toLowerCase();
+      if (checkId.includes('engineering')) {
+        rootParent = 'engineering_vision_v0';
+      } else {
+        // Default to neural for non-engineering benchmarks
+        rootParent = 'neural_vision_v0';
+      }
     }
   }
   

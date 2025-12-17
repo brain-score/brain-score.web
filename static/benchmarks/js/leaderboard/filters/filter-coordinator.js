@@ -115,8 +115,48 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
 
   // Apply wayback timestamp filtering first
   let timestampFilteredData = filteredData;
+  // Cache benchmarks hidden by wayback filtering (all X values)
+  window.waybackHiddenBenchmarks = new Set();
+  
   if (typeof applyWaybackTimestampFilter === 'function') {
     timestampFilteredData = applyWaybackTimestampFilter(filteredData);
+    
+    // Check if wayback filtering is actually active
+    const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+    const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+    const ranges = window.filterOptions?.datetime_range;
+    const fullRangeMin = ranges?.min_unix;
+    const fullRangeMax = ranges?.max_unix;
+    const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+    
+    if (isWaybackActive && timestampFilteredData.length > 0) {
+      // Collect all benchmark IDs from the data
+      const allBenchmarkIds = new Set();
+      timestampFilteredData.forEach(row => {
+        Object.keys(row).forEach(key => {
+          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+              row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
+            allBenchmarkIds.add(key);
+          }
+        });
+      });
+      
+      // Check which benchmarks have all X values (hidden by wayback filtering)
+      allBenchmarkIds.forEach(benchmarkId => {
+        const values = timestampFilteredData.map(row => {
+          const cellData = row[benchmarkId];
+          return cellData && typeof cellData === 'object' ? cellData.value : cellData;
+        }).filter(val => val !== null && val !== undefined && val !== '');
+        
+        // If all values are 'X', this benchmark is hidden by wayback filtering
+        if (values.length > 0 && values.every(val => val === 'X')) {
+          window.waybackHiddenBenchmarks.add(benchmarkId);
+        }
+      });
+    }
+  } else {
+    // No wayback filtering active, clear the cache
+    window.waybackHiddenBenchmarks.clear();
   }
 
   // Initialize finalData
@@ -154,6 +194,64 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       }
       const hierarchyMap = window.cachedHierarchyMap || new Map();
       
+      // Cache root parent lookups to avoid repeated hierarchy traversal
+      if (!window.rootParentCache || window.rootParentCache.size === 0) {
+        window.rootParentCache = new Map();
+        
+        // Get all benchmark IDs
+        const allBenchmarkIds = new Set();
+        finalData.forEach(row => {
+          Object.keys(row).forEach(key => {
+            if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+                row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
+              allBenchmarkIds.add(key);
+            }
+          });
+        });
+        // Also include average_vision_v0
+        allBenchmarkIds.add('average_vision_v0');
+        
+        // Build reverse lookup map (child -> parent) for efficient traversal
+        const childToParentMap = new Map();
+        for (const [parentId, children] of hierarchyMap.entries()) {
+          children.forEach(childId => {
+            childToParentMap.set(childId, parentId);
+          });
+        }
+        
+        // Find root parent for each benchmark
+        allBenchmarkIds.forEach(benchmarkId => {
+          let rootParent = null;
+          let currentId = benchmarkId;
+          const visited = new Set();
+          
+          // Traverse up the hierarchy using reverse lookup map
+          while (currentId && !visited.has(currentId)) {
+            visited.add(currentId);
+            const parentId = childToParentMap.get(currentId);
+            
+            if (!parentId) {
+              // This is a root
+              rootParent = currentId;
+              break;
+            }
+            currentId = parentId;
+          }
+          
+          // Fallback: if we couldn't determine root parent, infer from benchmarkId
+          if (!rootParent) {
+            const checkId = benchmarkId.toLowerCase();
+            if (checkId.includes('engineering')) {
+              rootParent = 'engineering_vision_v0';
+            } else {
+              rootParent = 'neural_vision_v0';
+            }
+          }
+          
+          window.rootParentCache.set(benchmarkId, rootParent);
+        });
+      }
+      
       // Get all unique benchmark IDs from the final filtered row data
       const benchmarkIds = new Set();
       finalData.forEach(row => {
@@ -167,13 +265,15 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       });
       
       // Recalculate colors for each benchmark using the final filtered dataset
-      // This ensures min/max is calculated from models that are actually displayed
       benchmarkIds.forEach(benchmarkId => {
-        window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap);
+        window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap, window.rootParentCache);
       });
       
       // Also recalculate color for average_vision_v0
-      window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, 'average_vision_v0', hierarchyMap);
+      window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, 'average_vision_v0', hierarchyMap, window.rootParentCache);
+    } else {
+      // Wayback filtering not active, clear root parent cache to free memory
+      window.rootParentCache = null;
     }
   }
 
@@ -208,44 +308,11 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
 }
 
 function isColumnHiddenByWaybackFiltering(benchmarkId) {
-  // Only check for wayback filtering if it's active
-  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
-  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
-  const ranges = window.filterOptions?.datetime_range;
-  const fullRangeMin = ranges?.min_unix;
-  const fullRangeMax = ranges?.max_unix;
-  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
-
-  if (!isWaybackActive) {
-    return false; // No wayback filtering, column not hidden
+  // Use cached Set of hidden benchmarks
+  if (window.waybackHiddenBenchmarks && window.waybackHiddenBenchmarks.has(benchmarkId)) {
+    return true;
   }
-
-  // Get current row data from the grid
-  const rowData = [];
-  if (window.globalGridApi) {
-    window.globalGridApi.forEachNode(node => {
-      if (node.data) {
-        rowData.push(node.data);
-      }
-    });
-  }
-
-  if (rowData.length === 0) {
-    return false;
-  }
-
-  // Check if all values in this column are 'X'
-  const values = rowData.map(row => {
-    const cellData = row[benchmarkId];
-    return cellData && typeof cellData === 'object' ? cellData.value : cellData;
-  }).filter(val => val !== null && val !== undefined && val !== '');
-
-  if (values.length === 0) {
-    return false; // Don't hide if no values
-  }
-
-  const allXs = values.every(val => val === 'X');
-  return allXs;
+  return false;
 }
 
 function applyWaybackTimestampFilter(rowData) {
@@ -321,6 +388,10 @@ function applyGlobalScoreModelRemoval(rowData) {
 
 // Reset all filters to default state
 function resetAllFilters() {
+  // Clear caches when filters are reset
+  window.waybackHiddenBenchmarks = new Set();
+  window.rootParentCache = null;
+  
   window.activeFilters = {
     architecture: [],
     model_family: [],
