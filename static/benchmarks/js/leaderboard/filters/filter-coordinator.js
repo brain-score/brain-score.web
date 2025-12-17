@@ -533,26 +533,27 @@ function updateFilteredScores(rowData) {
     return newRow;
   });
 
+  // Calculate depth levels once before processing rows
+  function getDepthLevel(benchmarkId, visited = new Set()) {
+    if (visited.has(benchmarkId)) return 0;
+    visited.add(benchmarkId);
+
+    const children = hierarchyMap.get(benchmarkId) || [];
+    if (children.length === 0) return 0;
+
+    const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
+    return maxChildDepth + 1;
+  }
+
+  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  const benchmarksByDepth = allBenchmarkIds
+    .map(id => ({ id, depth: getDepthLevel(id) }))
+    .sort((a, b) => a.depth - b.depth);
+
   // Then process each row for filtering
   workingRowData.forEach((row) => {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
     if (!originalRow) return;
-
-    function getDepthLevel(benchmarkId, visited = new Set()) {
-      if (visited.has(benchmarkId)) return 0;
-      visited.add(benchmarkId);
-
-      const children = hierarchyMap.get(benchmarkId) || [];
-      if (children.length === 0) return 0;
-
-      const maxChildDepth = Math.max(...children.map(child => getDepthLevel(child, new Set(visited))));
-      return maxChildDepth + 1;
-    }
-
-    const allBenchmarkIds = Array.from(hierarchyMap.keys());
-    const benchmarksByDepth = allBenchmarkIds
-      .map(id => ({ id, depth: getDepthLevel(id) }))
-      .sort((a, b) => a.depth - b.depth);
 
     benchmarksByDepth.forEach(({ id: benchmarkId }) => {
       const children = hierarchyMap.get(benchmarkId) || [];
@@ -688,7 +689,7 @@ function updateFilteredScores(rowData) {
   });
 
   // Apply colors for recalculated benchmarks
-  const allBenchmarkIds = Array.from(hierarchyMap.keys());
+  // Reuse allBenchmarkIds that was already calculated above
   const recalculatedBenchmarks = new Set();
 
   allBenchmarkIds.forEach(benchmarkId => {
