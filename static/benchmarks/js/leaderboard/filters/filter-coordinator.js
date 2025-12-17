@@ -857,7 +857,8 @@ window.LeaderboardFilterCoordinator = {
   applyCombinedFilters,
   resetAllFilters,
   updateFilteredScores,
-  toggleFilteredScoreColumn
+  toggleFilteredScoreColumn,
+  isColumnHiddenByWaybackFiltering
 };
 
 // Make main functions globally available for compatibility
