@@ -117,43 +117,6 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   let timestampFilteredData = filteredData;
   if (typeof applyWaybackTimestampFilter === 'function') {
     timestampFilteredData = applyWaybackTimestampFilter(filteredData);
-    
-    // Recalculate colors for all benchmarks after wayback filtering
-    // This ensures colors reflect the new min/max ranges after filtering out scores outside the time range
-    if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
-      // Check if wayback filtering is actually active
-      const minTimestamp = window.activeFilters?.min_wayback_timestamp;
-      const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
-      const ranges = window.filterOptions?.datetime_range;
-      const fullRangeMin = ranges?.min_unix;
-      const fullRangeMax = ranges?.max_unix;
-      const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
-      
-      if (isWaybackActive) {
-        // Build hierarchy map if not already cached
-        if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
-          window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
-        }
-        const hierarchyMap = window.cachedHierarchyMap || new Map();
-        
-        // Get all unique benchmark IDs from the row data
-        const benchmarkIds = new Set();
-        timestampFilteredData.forEach(row => {
-          Object.keys(row).forEach(key => {
-            // Skip non-benchmark fields
-            if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
-                row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
-              benchmarkIds.add(key);
-            }
-          });
-        });
-        
-        // Recalculate colors for each benchmark
-        benchmarkIds.forEach(benchmarkId => {
-          window.LeaderboardColorUtils.recalculateColorsForBenchmark(timestampFilteredData, benchmarkId, hierarchyMap);
-        });
-      }
-    }
   }
 
   // Initialize finalData
@@ -170,6 +133,48 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   // Additional pass: Remove models where global score is 'X'
   if (typeof applyGlobalScoreModelRemoval === 'function') {
     finalData = applyGlobalScoreModelRemoval(finalData);
+  }
+
+  // Recalculate colors for all benchmarks AFTER models are removed
+  // This ensures colors reflect the correct min/max ranges from the final filtered dataset
+  // Models with the same score will have the same color because min/max is calculated from the same dataset
+  if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
+    // Check if wayback filtering is actually active
+    const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+    const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+    const ranges = window.filterOptions?.datetime_range;
+    const fullRangeMin = ranges?.min_unix;
+    const fullRangeMax = ranges?.max_unix;
+    const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+    
+    if (isWaybackActive) {
+      // Build hierarchy map if not already cached
+      if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
+        window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
+      }
+      const hierarchyMap = window.cachedHierarchyMap || new Map();
+      
+      // Get all unique benchmark IDs from the final filtered row data
+      const benchmarkIds = new Set();
+      finalData.forEach(row => {
+        Object.keys(row).forEach(key => {
+          // Skip non-benchmark fields
+          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+              row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
+            benchmarkIds.add(key);
+          }
+        });
+      });
+      
+      // Recalculate colors for each benchmark using the final filtered dataset
+      // This ensures min/max is calculated from models that are actually displayed
+      benchmarkIds.forEach(benchmarkId => {
+        window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap);
+      });
+      
+      // Also recalculate color for average_vision_v0
+      window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, 'average_vision_v0', hierarchyMap);
+    }
   }
 
   // Update grid with filtered data - preserving original data structure
@@ -550,6 +555,22 @@ function updateFilteredScores(rowData) {
     .map(id => ({ id, depth: getDepthLevel(id) }))
     .sort((a, b) => a.depth - b.depth);
 
+  // Pre-calculate which benchmarks are "X" for ALL models (invalid benchmarks to exclude)
+  // This avoids recalculating for every row
+  const benchmarksAllX = new Set();
+  allBenchmarkIds.forEach(benchmarkId => {
+    const allValues = workingRowData.map(r => {
+      if (!r[benchmarkId]) return null;
+      const val = r[benchmarkId].value;
+      return val === null || val === undefined || val === '' ? null : val;
+    }).filter(v => v !== null);
+    
+    // If all non-null values are "X", this benchmark is invalid and should be excluded
+    if (allValues.length > 0 && allValues.every(v => v === 'X')) {
+      benchmarksAllX.add(benchmarkId);
+    }
+  });
+
   // Then process each row for filtering
   workingRowData.forEach((row) => {
     const originalRow = window.originalRowData.find(origRow => origRow.id === row.id);
@@ -569,11 +590,16 @@ function updateFilteredScores(rowData) {
       } else {
         const childScores = [];
 
-
         // First pass collect all children and determine if mixed valid/invalid scores
         const childInfo = [];
         children.forEach(childId => {
           if (!excludedBenchmarks.has(childId) && row[childId]) {
+            // Skip benchmarks that are "X" for all models (invalid benchmark)
+            // These should be excluded entirely from aggregation, not treated as 0
+            if (benchmarksAllX.has(childId)) {
+              return; // Exclude this benchmark entirely
+            }
+            
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined &&
                                  childScore !== '' && childScore !== 'X' &&
@@ -593,6 +619,7 @@ function updateFilteredScores(rowData) {
             childScores.push(numVal);
           } else if (hasAnyValidScores && (childScore === 'X' || childScore === '')) {
             // If we have some valid scores, treat X/empty as 0
+            // (This handles cases where some models have valid scores but this model has X)
             childScores.push(0);
           }
           // If no valid scores exist at all, skip everything (childScores will be empty)
@@ -643,9 +670,10 @@ function updateFilteredScores(rowData) {
       }
     });
 
-    // Calculate global filtered score
+    // Calculate global filtered score AND update average_vision_v0
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
+    let hasVisibleCategory = false;
 
     visionCategories.forEach(category => {
       const isExcluded = excludedBenchmarks.has(category);
@@ -657,6 +685,11 @@ function updateFilteredScores(rowData) {
         if (leafCount === 0) {
           isColumnVisible = false; // Column is dropped out
         }
+      }
+
+      // Track if at least one category is visible
+      if (!isExcluded && isColumnVisible && row[category]) {
+        hasVisibleCategory = true;
       }
 
       // Only include in filtered score if column is visible and not excluded
@@ -679,18 +712,112 @@ function updateFilteredScores(rowData) {
       }
     });
 
+    // Update average_vision_v0 (global score) to reflect the updated neural/behavior scores
+    // Only update if at least one category is visible. If neither is visible, leave it unchanged.
+    if (hasVisibleCategory) {
+      if (categoryScores.length > 0) {
+        // Check if both categories are X (both treated as 0, so average would be 0)
+        // If so, check if model has all 0/X scores - if yes, set to 'X' to filter it out
+        const neuralScore = row.neural_vision_v0?.value;
+        const behaviorScore = row.behavior_vision_v0?.value;
+        const bothAreX = (neuralScore === 'X' || neuralScore === null || neuralScore === undefined || neuralScore === '') &&
+                         (behaviorScore === 'X' || behaviorScore === null || behaviorScore === undefined || behaviorScore === '');
+        
+        if (bothAreX && categoryScores.length === 2 && categoryScores.every(s => s === 0)) {
+          // Both categories are X, check if model has all 0/X across all visible benchmarks
+          let hasAnyValidNonZeroScore = false;
+          allBenchmarkIds.forEach(benchmarkId => {
+            if (excludedBenchmarks.has(benchmarkId)) return;
+            if (benchmarksAllX.has(benchmarkId)) return;
+            if (!row[benchmarkId]) return;
+            
+            // Check if this benchmark is visible (not dropped out)
+            let isBenchmarkVisible = true;
+            if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+              const leafCount = window.getFilteredLeafCount(benchmarkId);
+              if (leafCount === 0) {
+                isBenchmarkVisible = false;
+              }
+            }
+            if (!isBenchmarkVisible) return;
+            
+            const score = row[benchmarkId].value;
+            if (score !== null && score !== undefined && score !== '' && score !== 'X') {
+              const numVal = typeof score === 'string' ? parseFloat(score) : score;
+              if (!isNaN(numVal) && numVal !== 0) {
+                hasAnyValidNonZeroScore = true;
+              }
+            }
+          });
 
-    if (categoryScores.length > 0) {
-      const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
-      row._tempFilteredScore = globalAverage;
-    } else {
-      row._tempFilteredScore = null;
+          if (!hasAnyValidNonZeroScore) {
+            // Model has all 0/X scores, set to 'X' so it gets filtered out
+            row.average_vision_v0 = {
+              ...row.average_vision_v0,
+              value: 'X',
+              color: '#e0e1e2'
+            };
+            row._tempFilteredScore = null;
+            return; // Skip the rest of the loop iteration
+          }
+        }
+        
+        // Normal case: calculate average
+        const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
+        row.average_vision_v0 = {
+          ...row.average_vision_v0,
+          value: parseFloat(globalAverage.toFixed(3))
+        };
+        row._tempFilteredScore = globalAverage;
+      } else {
+        // Both categories are visible but have no scores (all null/undefined/empty, not X)
+        // Check if model has all 0/X across all visible benchmarks
+        let hasAnyValidNonZeroScore = false;
+        allBenchmarkIds.forEach(benchmarkId => {
+          if (excludedBenchmarks.has(benchmarkId)) return;
+          if (benchmarksAllX.has(benchmarkId)) return;
+          if (!row[benchmarkId]) return;
+          
+          // Check if this benchmark is visible (not dropped out)
+          let isBenchmarkVisible = true;
+          if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+            const leafCount = window.getFilteredLeafCount(benchmarkId);
+            if (leafCount === 0) {
+              isBenchmarkVisible = false;
+            }
+          }
+          if (!isBenchmarkVisible) return;
+          
+          const score = row[benchmarkId].value;
+          if (score !== null && score !== undefined && score !== '' && score !== 'X') {
+            const numVal = typeof score === 'string' ? parseFloat(score) : score;
+            if (!isNaN(numVal) && numVal !== 0) {
+              hasAnyValidNonZeroScore = true;
+            }
+          }
+        });
+
+        if (!hasAnyValidNonZeroScore) {
+          // Model has all 0/X scores, set to 'X' so it gets filtered out
+          row.average_vision_v0 = {
+            ...row.average_vision_v0,
+            value: 'X',
+            color: '#e0e1e2'
+          };
+          row._tempFilteredScore = null;
+        }
+        // If model has some valid scores but categories are null/empty, don't update average_vision_v0
+      }
     }
+    // If neither category is visible, don't update average_vision_v0 (leave it as-is)
   });
 
   // Apply colors for recalculated benchmarks
   // Reuse allBenchmarkIds that was already calculated above
   const recalculatedBenchmarks = new Set();
+
+  // Always recalculate average_vision_v0 since we update it from neural/behavior scores
+  recalculatedBenchmarks.add('average_vision_v0');
 
   allBenchmarkIds.forEach(benchmarkId => {
     const children = hierarchyMap.get(benchmarkId) || [];
@@ -880,6 +1007,36 @@ function toggleFilteredScoreColumn(gridApi) {
         { colId: 'average_vision_v0', hide: false }
       ]
     });
+
+    // Check if wayback filter is active - if so, sort by average_vision_v0 descending
+    const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+    const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+    const ranges = window.filterOptions?.datetime_range;
+    const fullRangeMin = ranges?.min_unix;
+    const fullRangeMax = ranges?.max_unix;
+    const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+
+    if (isWaybackActive) {
+      // Sort by average_vision_v0 descending when wayback filter is active
+      setTimeout(() => {
+        const averageVisionColumn = gridApi.getAllGridColumns().find(col => col.getColId() === 'average_vision_v0');
+        if (averageVisionColumn) {
+          gridApi.applyColumnState({
+            state: [
+              { colId: 'average_vision_v0', sort: 'desc' }
+            ]
+          });
+
+          // Verify it worked, and if not, try to trigger sort via the column API
+          setTimeout(() => {
+            const currentSort = averageVisionColumn.getSort();
+            if (currentSort !== 'desc') {
+              averageVisionColumn.setSort('desc');
+            }
+          }, 50);
+        }
+      }, 25);
+    }
   }
 
   // Ensure column visibility is updated after changing filtered score visibility
