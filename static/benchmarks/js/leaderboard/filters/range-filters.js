@@ -256,8 +256,22 @@ function initializeDualHandleSlider(container) {
     maxInput?.addEventListener('change', () => {
     const ts = new Date(maxInput.value).getTime() / 1000;
     if (!isNaN(ts)) {
-      maxValue = ts;
-      maxHandle.dataset.value = ts;
+      // For wayback timestamp, ensure value doesn't exceed today's date
+      if (sliderType === 'waybackTimestamp') {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
+        const todayTs = Math.floor(today.getTime() / 1000);
+        if (ts > todayTs) {
+          // Clamp to today's date
+          maxInput.value = today.toISOString().split('T')[0];
+          maxValue = todayTs;
+        } else {
+          maxValue = ts;
+        }
+      } else {
+        maxValue = ts;
+      }
+      maxHandle.dataset.value = maxValue;
       updateSliderPosition();
       updateActiveFilters();
     }
@@ -391,7 +405,14 @@ function resetSliderUI() {
       const minDate = new Date(min * 1000);
       const maxDate = new Date(max * 1000);
       if (minInput) minInput.value = minDate.toISOString().split('T')[0];
-      if (maxInput) maxInput.value = maxDate.toISOString().split('T')[0];
+      if (maxInput) {
+        // Ensure max doesn't exceed today's date
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+        maxInput.value = maxDateStr > todayStr ? todayStr : maxDateStr;
+        maxInput.max = todayStr;
+      }
     } else {
       // Standard numeric inputs
       if (minInput) minInput.value = min;

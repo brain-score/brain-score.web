@@ -396,7 +396,12 @@ function resetAllFilters() {
         const minDate = new Date(ranges.datetime_range.min_unix * 1000);
         const maxDate = new Date(ranges.datetime_range.max_unix * 1000);
         waybackDateMin.value = minDate.toISOString().split('T')[0];
-        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+        // Ensure max doesn't exceed today's date
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDateStr > todayStr ? todayStr : maxDateStr;
+        waybackDateMax.max = todayStr;
         
         // Ensure min input remains disabled if frozen
         if (waybackDateMin && typeof window.shouldFreezeMinHandle === 'function' && window.shouldFreezeMinHandle('waybackTimestamp')) {

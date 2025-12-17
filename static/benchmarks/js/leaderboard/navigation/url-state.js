@@ -121,7 +121,16 @@ function applyFiltersToUI() {
 
       if (waybackDateMax && window.activeFilters.max_wayback_timestamp) {
         const maxDate = new Date(window.activeFilters.max_wayback_timestamp * 1000);
-        waybackDateMax.value = maxDate.toISOString().split('T')[0];
+        // Ensure max doesn't exceed today's date
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+        waybackDateMax.value = maxDateStr > todayStr ? todayStr : maxDateStr;
+        waybackDateMax.max = todayStr;
+      } else if (waybackDateMax) {
+        // Set max attribute even if no value is set from URL
+        const today = new Date();
+        waybackDateMax.max = today.toISOString().split('T')[0];
       }
     }
   }
