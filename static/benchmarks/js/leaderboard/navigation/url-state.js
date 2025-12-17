@@ -110,27 +110,39 @@ function applyFiltersToUI() {
     }
 
     if (window.activeFilters.min_wayback_timestamp !== null || window.activeFilters.max_wayback_timestamp !== null) {
-      // Update date inputs
-      const waybackDateMin = document.getElementById('waybackDateMin');
-      const waybackDateMax = document.getElementById('waybackDateMax');
+      // Update slider handles and date inputs using setRangeValues
+      if (typeof window.LeaderboardRangeFilters?.setRangeValues === 'function') {
+        const ranges = window.filterOptions?.datetime_range;
+        const defaultMin = ranges?.min_unix || 0;
+        const defaultMax = ranges?.max_unix || Math.floor(Date.now() / 1000);
+        
+        const minTimestamp = window.activeFilters.min_wayback_timestamp ?? defaultMin;
+        const maxTimestamp = window.activeFilters.max_wayback_timestamp ?? defaultMax;
+        
+        window.LeaderboardRangeFilters.setRangeValues('waybackTimestampFilter', minTimestamp, maxTimestamp);
+      } else {
+        // Fallback: Update date inputs only (if setRangeValues not available)
+        const waybackDateMin = document.getElementById('waybackDateMin');
+        const waybackDateMax = document.getElementById('waybackDateMax');
 
-      if (waybackDateMin && window.activeFilters.min_wayback_timestamp) {
-        const minDate = new Date(window.activeFilters.min_wayback_timestamp * 1000);
-        waybackDateMin.value = minDate.toISOString().split('T')[0];
-      }
+        if (waybackDateMin && window.activeFilters.min_wayback_timestamp) {
+          const minDate = new Date(window.activeFilters.min_wayback_timestamp * 1000);
+          waybackDateMin.value = minDate.toISOString().split('T')[0];
+        }
 
-      if (waybackDateMax && window.activeFilters.max_wayback_timestamp) {
-        const maxDate = new Date(window.activeFilters.max_wayback_timestamp * 1000);
-        // Ensure max doesn't exceed today's date
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-        const maxDateStr = maxDate.toISOString().split('T')[0];
-        waybackDateMax.value = maxDateStr > todayStr ? todayStr : maxDateStr;
-        waybackDateMax.max = todayStr;
-      } else if (waybackDateMax) {
-        // Set max attribute even if no value is set from URL
-        const today = new Date();
-        waybackDateMax.max = today.toISOString().split('T')[0];
+        if (waybackDateMax && window.activeFilters.max_wayback_timestamp) {
+          const maxDate = new Date(window.activeFilters.max_wayback_timestamp * 1000);
+          // Ensure max doesn't exceed today's date
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          const maxDateStr = maxDate.toISOString().split('T')[0];
+          waybackDateMax.value = maxDateStr > todayStr ? todayStr : maxDateStr;
+          waybackDateMax.max = todayStr;
+        } else if (waybackDateMax) {
+          // Set max attribute even if no value is set from URL
+          const today = new Date();
+          waybackDateMax.max = today.toISOString().split('T')[0];
+        }
       }
     }
   }

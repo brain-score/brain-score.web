@@ -451,8 +451,20 @@ function setRangeValues(filterId, minVal, maxVal) {
   const min = parseFloat(container.dataset.min) || 0;
   const max = parseFloat(container.dataset.max) || 100;
 
-  const minValue = Math.max(min, Math.min(minVal, max));
-  const maxValue = Math.max(min, Math.min(maxVal, max));
+  // Check if this is wayback timestamp slider
+  const sliderGroup = container.closest('.filter-group');
+  const isWaybackTimestamp = sliderGroup?.querySelector('#waybackDateMin');
+
+  // For wayback timestamp, handle frozen min handle
+  let minValue, maxValue;
+  if (isWaybackTimestamp && typeof window.shouldFreezeMinHandle === 'function' && window.shouldFreezeMinHandle('waybackTimestamp')) {
+    // Min is always locked to minimum
+    minValue = min;
+    maxValue = Math.max(min, Math.min(maxVal, max));
+  } else {
+    minValue = Math.max(min, Math.min(minVal, max));
+    maxValue = Math.max(min, Math.min(maxVal, max));
+  }
 
   minHandle.dataset.value = minValue;
   maxHandle.dataset.value = maxValue;
@@ -466,12 +478,39 @@ function setRangeValues(filterId, minVal, maxVal) {
   range.style.width = `${maxPercent - minPercent}%`;
 
   // Update input fields
-  const sliderGroup = container.closest('.filter-group');
   const minInput = sliderGroup?.querySelector('.range-input-min');
   const maxInput = sliderGroup?.querySelector('.range-input-max');
 
-  if (minInput) minInput.value = Math.round(minValue);
-  if (maxInput) maxInput.value = Math.round(maxValue);
+  if (isWaybackTimestamp) {
+    // For wayback timestamp, convert Unix timestamps to date strings
+    if (minInput) {
+      const minDate = new Date(minValue * 1000);
+      minInput.value = minDate.toISOString().split('T')[0];
+    }
+    if (maxInput) {
+      const maxDate = new Date(maxValue * 1000);
+      // Ensure max doesn't exceed today's date
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const maxDateStr = maxDate.toISOString().split('T')[0];
+      maxInput.value = maxDateStr > todayStr ? todayStr : maxDateStr;
+      maxInput.max = todayStr;
+      // Update maxValue if clamped
+      if (maxDateStr > todayStr) {
+        const todayTs = Math.floor(today.getTime() / 1000);
+        maxValue = Math.min(maxValue, todayTs);
+        maxHandle.dataset.value = maxValue;
+        // Recalculate position if value changed
+        const newMaxPercent = ((maxValue - min) / (max - min)) * 100;
+        maxHandle.style.left = `${newMaxPercent}%`;
+        range.style.width = `${newMaxPercent - minPercent}%`;
+      }
+    }
+  } else {
+    // Standard numeric inputs
+    if (minInput) minInput.value = Math.round(minValue);
+    if (maxInput) maxInput.value = Math.round(maxValue);
+  }
 }
 
 // Export functions for use by other modules
