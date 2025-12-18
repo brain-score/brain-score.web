@@ -3,7 +3,7 @@ from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard, report_issue, blog
+    content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
 from .utils import show_token, refresh_cache
 
 
@@ -68,6 +68,9 @@ non_domain_urls = [
     path('tutorials/benchmarks/create_benchmark',
          user.Tutorials.as_view(plugin="benchmarks", tutorial_type="create_benchmark"),
          name='benchmark-create-benchmark'),
+    # - new markdown-based benchmark tutorials
+    path('tutorials/benchmarks/<slug:slug>/', tutorials.benchmark_tutorial_detail,
+         name='benchmark-tutorial-detail'),
     # - brain model explanation
     path('brain_model', brain_model.view, name='brain-model'),
 
