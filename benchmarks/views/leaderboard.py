@@ -1,13 +1,15 @@
 import json
 import logging
-import numpy as np
 from collections import defaultdict
+from datetime import datetime
+
+import numpy as np
 from django.shortcuts import render
-from .index import get_context
 from django.views.decorators.cache import cache_page
+
 from ..utils import cache_get_context
-from django.views.decorators.cache import cache_page
-from django.db.models import Model
+from .index import get_context, get_datetime_range
+
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -214,7 +216,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if user and not user.is_superuser:
             model_user_id = model.user.get('id') if isinstance(model.user, dict) else getattr(model.user, 'id', None)
             is_owner = (model_user_id == user.id) if model_user_id else False
-        
+
         # base fields
         rd = {
             'id': model.model_id,
@@ -330,14 +332,15 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
-            
+
             # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
-                'complete': score.get('is_complete', True)
+                'complete': score.get('is_complete', True),
+                'timestamp': score.get('end_timestamp')
             }
         row_data.append(rd)
 
@@ -362,7 +365,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
          'getQuickFilterText': 'function(params) { return params.value?.name || ""; }'
          }
     ]
-    
+
     # Add public/private toggle column for authenticated users in profile view only
     # Only show on profile pages, not main leaderboard
     if is_profile_view and user and not user.is_superuser:
@@ -471,6 +474,19 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
     }
 
+    # Compute datetime range for wayback timestamp filter
+    datetime_range = get_datetime_range(context['models'])
+    if datetime_range:
+        # Parse the timestamps to get Unix timestamps for the slider
+        min_timestamp = datetime.fromisoformat(datetime_range['min'])
+        max_timestamp = datetime.fromisoformat(datetime_range['max'])
+        filter_options['datetime_range'] = {
+            'min': datetime_range['min'],
+            'max': datetime_range['max'],
+            'min_unix': int(min_timestamp.timestamp()),
+            'max_unix': int(max_timestamp.timestamp())
+        }
+
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
     data_map = {}
@@ -511,10 +527,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
-    
+
     # Create benchmark bibtex map for citation export
     context['benchmark_bibtex_map'] = json.dumps(build_benchmark_bibtex_map(context['benchmarks']))
-    
+
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:
@@ -537,11 +553,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
         'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
         'model_metadata_map': context['model_metadata_map'],
-        
+
         # Essential metadata
         'domain': context['domain'],
         'has_user': context.get('has_user', False),
-        
+
         # Citation info
         'citation_general_url': context.get('citation_general_url', ''),
         'citation_general_title': context.get('citation_general_title', ''),
@@ -549,7 +565,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_url': context.get('citation_domain_url', ''),
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
-        
+
         # Compare tab data
         'comparison_data': context.get('comparison_data', '[]'),
     }
@@ -575,7 +591,7 @@ def ag_grid_leaderboard_content(request, domain: str):
     """
     # Check if this is a user-specific view request
     user_view = request.GET.get('user_view', 'false').lower() == 'true'
-    
+
     if user_view and request.user.is_authenticated:
         # Profile view - check include_public parameter
         user = request.user
@@ -590,15 +606,15 @@ def ag_grid_leaderboard_content(request, domain: str):
         show_public = True
         include_public = True
         cache_suffix = "public"
-    
+
     # For profile views, force user-specific caching to prevent cache collision
     force_user_cache = user_view and user is not None
     context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache, is_profile_view=user_view)
-    
+
     # Add template-specific flags (these don't need caching as they're lightweight)
     context['include_public'] = include_public
     context['has_user'] = user is not None
     context['is_profile_view'] = user_view  # Flag to indicate if this is a profile view
-    
+
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)
