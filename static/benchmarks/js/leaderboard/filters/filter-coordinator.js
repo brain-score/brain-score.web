@@ -115,7 +115,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
 
   // Apply wayback timestamp filtering first
   let timestampFilteredData = filteredData;
-  // Cache benchmarks hidden by wayback filtering (all X values)
+  // Cache benchmarks hidden by wayback filtering (all X values set by wayback, not originally X)
   window.waybackHiddenBenchmarks = new Set();
   
   if (typeof applyWaybackTimestampFilter === 'function') {
@@ -141,15 +141,60 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
         });
       });
       
-      // Check which benchmarks have all X values (hidden by wayback filtering)
+      // Check which benchmarks have all X values that were SET BY wayback filtering
+      // (not originally X values from model failures)
+      // Compare against filteredData (input to wayback filtering) to see what wayback changed
+      // This distinguishes between:
+      // 1. X values set by wayback filtering (should hide column and exclude from aggregation)
+      // 2. X values that were originally X (should NOT hide column, treat as 0 in aggregation)
       allBenchmarkIds.forEach(benchmarkId => {
-        const values = timestampFilteredData.map(row => {
-          const cellData = row[benchmarkId];
-          return cellData && typeof cellData === 'object' ? cellData.value : cellData;
-        }).filter(val => val !== null && val !== undefined && val !== '');
+        let hasAnyValues = false;
+        let xCount = 0;
+        let nonXCount = 0;
         
-        // If all values are 'X', this benchmark is hidden by wayback filtering
-        if (values.length > 0 && values.every(val => val === 'X')) {
+        // Iterate through ALL rows in filteredData (before wayback filtering) to ensure comprehensive check
+        filteredData.forEach((beforeWaybackRow) => {
+          // Find the corresponding row in timestampFilteredData (after wayback filtering) by ID
+          const waybackFilteredRow = timestampFilteredData.find(row => row.id === beforeWaybackRow.id);
+          if (!waybackFilteredRow) {
+            // Row was removed by wayback filtering (model removal) - skip it
+            // This happens when global score becomes X and model is removed
+            return;
+          }
+          
+          const beforeWaybackValue = beforeWaybackRow[benchmarkId]?.value;
+          const waybackFilteredValue = waybackFilteredRow[benchmarkId]?.value;
+          
+          // Skip rows where the benchmark doesn't exist or has no value before wayback filtering
+          if (beforeWaybackValue === null || beforeWaybackValue === undefined || beforeWaybackValue === '') {
+            // Also check if wayback filtering set it to X (due to missing timestamp)
+            if (waybackFilteredValue === 'X') {
+              // Wayback filtering set a missing value to X - this counts as wayback-set X
+              hasAnyValues = true;
+              xCount++;
+            }
+            return;
+          }
+          
+          // We have a value before wayback filtering - check what wayback did to it
+          hasAnyValues = true;
+          
+          // If the wayback-filtered value is X, count it
+          if (waybackFilteredValue === 'X') {
+            xCount++;
+          } else {
+            // If wayback-filtered value is not X, then this benchmark shouldn't be hidden
+            nonXCount++;
+          }
+        });
+        
+        // When wayback filtering is active, hide if ALL values are X (regardless of origin)
+        // The distinction between originally X and wayback-set X only matters when wayback is NOT active
+        // When wayback IS active, if all values are X, the column should be hidden
+        const allValuesAreX = hasAnyValues && xCount > 0 && nonXCount === 0;
+        
+        if (hasAnyValues && allValuesAreX) {
+          // All values are X - hide the column when wayback filtering is active
           window.waybackHiddenBenchmarks.add(benchmarkId);
         }
       });
@@ -626,21 +671,25 @@ function updateFilteredScores(rowData) {
     .map(id => ({ id, depth: getDepthLevel(id) }))
     .sort((a, b) => a.depth - b.depth);
 
-  // Pre-calculate which benchmarks are "X" for ALL models (invalid benchmarks to exclude)
-  // This avoids recalculating for every row
-  const benchmarksAllX = new Set();
-  allBenchmarkIds.forEach(benchmarkId => {
-    const allValues = workingRowData.map(r => {
-      if (!r[benchmarkId]) return null;
-      const val = r[benchmarkId].value;
-      return val === null || val === undefined || val === '' ? null : val;
-    }).filter(v => v !== null);
-    
-    // If all non-null values are "X", this benchmark is invalid and should be excluded
-    if (allValues.length > 0 && allValues.every(v => v === 'X')) {
-      benchmarksAllX.add(benchmarkId);
-    }
-  });
+  // Determine which benchmarks should be excluded from aggregation
+  // Only exclude benchmarks that are hidden by wayback filtering (not benchmarks where all models failed)
+  const benchmarksToExcludeFromAggregation = new Set();
+  
+  // Check if wayback filtering is active
+  const minTimestamp = window.activeFilters?.min_wayback_timestamp;
+  const maxTimestamp = window.activeFilters?.max_wayback_timestamp;
+  const ranges = window.filterOptions?.datetime_range;
+  const fullRangeMin = ranges?.min_unix;
+  const fullRangeMax = ranges?.max_unix;
+  const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
+  
+  // Only exclude benchmarks hidden by wayback filtering
+  // When wayback filtering is NOT active, benchmarks with all "X" values should be treated as 0 (incomplete scores), not excluded
+  if (isWaybackActive && window.waybackHiddenBenchmarks) {
+    window.waybackHiddenBenchmarks.forEach(benchmarkId => {
+      benchmarksToExcludeFromAggregation.add(benchmarkId);
+    });
+  }
 
   // Then process each row for filtering
   workingRowData.forEach((row) => {
@@ -665,9 +714,10 @@ function updateFilteredScores(rowData) {
         const childInfo = [];
         children.forEach(childId => {
           if (!excludedBenchmarks.has(childId) && row[childId]) {
-            // Skip benchmarks that are "X" for all models (invalid benchmark)
+            // Skip benchmarks that are hidden by wayback filtering
             // These should be excluded entirely from aggregation, not treated as 0
-            if (benchmarksAllX.has(childId)) {
+            // Benchmarks where all models failed (originally "X") should NOT be excluded - treat as 0
+            if (benchmarksToExcludeFromAggregation.has(childId)) {
               return; // Exclude this benchmark entirely
             }
             
@@ -799,7 +849,7 @@ function updateFilteredScores(rowData) {
           let hasAnyValidNonZeroScore = false;
           allBenchmarkIds.forEach(benchmarkId => {
             if (excludedBenchmarks.has(benchmarkId)) return;
-            if (benchmarksAllX.has(benchmarkId)) return;
+            if (benchmarksToExcludeFromAggregation.has(benchmarkId)) return;
             if (!row[benchmarkId]) return;
             
             // Check if this benchmark is visible (not dropped out)
@@ -841,44 +891,15 @@ function updateFilteredScores(rowData) {
         };
         row._tempFilteredScore = globalAverage;
       } else {
-        // Both categories are visible but have no scores (all null/undefined/empty, not X)
-        // Check if model has all 0/X across all visible benchmarks
-        let hasAnyValidNonZeroScore = false;
-        allBenchmarkIds.forEach(benchmarkId => {
-          if (excludedBenchmarks.has(benchmarkId)) return;
-          if (benchmarksAllX.has(benchmarkId)) return;
-          if (!row[benchmarkId]) return;
-          
-          // Check if this benchmark is visible (not dropped out)
-          let isBenchmarkVisible = true;
-          if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
-            const leafCount = window.getFilteredLeafCount(benchmarkId);
-            if (leafCount === 0) {
-              isBenchmarkVisible = false;
-            }
-          }
-          if (!isBenchmarkVisible) return;
-          
-          const score = row[benchmarkId].value;
-          if (score !== null && score !== undefined && score !== '' && score !== 'X') {
-            const numVal = typeof score === 'string' ? parseFloat(score) : score;
-            if (!isNaN(numVal) && numVal !== 0) {
-              hasAnyValidNonZeroScore = true;
-            }
-          }
-        });
-
-        if (!hasAnyValidNonZeroScore) {
-          // Model has all 0/X scores, set to 'X' so it gets filtered out
-          row.average_vision_v0 = {
-            ...row.average_vision_v0,
-            value: 'X',
-            color: '#e0e1e2'
-          };
-          row._tempFilteredScore = null;
-        }
-        // If model has some valid scores but categories are null/empty, don't update average_vision_v0
+        // categoryScores.length === 0 means both categories are excluded or not visible
+        // In this case, filtered_score should be 'X' because there are no valid scores
+        row._tempFilteredScore = null;
+        // Don't update average_vision_v0 - leave it as-is when both categories are excluded
       }
+    } else {
+      // Neither category is visible - filtered_score should be 'X'
+      row._tempFilteredScore = null;
+      // Don't update average_vision_v0 - leave it as-is when neither category is visible
     }
     // If neither category is visible, don't update average_vision_v0 (leave it as-is)
   });

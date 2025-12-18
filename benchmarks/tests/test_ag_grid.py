@@ -994,7 +994,8 @@ class TestFilter:
            a) the slider inputs read  "2020-08-27T00:00:00.000Z" and "2024-08-12T22:41:02.470Z"
            b) window.activeFilters.min_wayback_timestamp == 2020-08-27T00:00:00.000Z and
               window.activeFilters.max_wayback_timestamp == 2024-08-12T22:41:02.470Z.
-        6) Extracts and verifies the top-5 rows (ranks, model names, global scores) match expectations.
+        6) Sorts the grid by global score (average_vision_v0) descending.
+        7) Extracts and verifies the top-5 rows (ranks, model names, global scores) match expectations when sorted by global score.
         """
         # 1) open the panel
         page.click('#advancedFilterBtn')
@@ -1015,23 +1016,37 @@ class TestFilter:
 
         # 3) give the grid a moment to re-filter
         page.wait_for_timeout(500)
-
+    
         # 4) verify both UI inputs and JS state
         min_val = page.evaluate("document.getElementById('waybackDateMin')?.value")
         max_val = page.evaluate("document.getElementById('waybackDateMax')?.value")
-
+    
         print(f" WaybackDateMin input: {min_val}")
         print(f" WaybackDateMax input: {max_val}")
-
+    
         expected_min_val = "2020-08-27"
         expected_max_val = "2024-08-12"
-
+    
         # UI check (ISO strings)
         assert min_val == expected_min_val, f"Min input mismatch: {min_val}"
         assert max_val == expected_max_val, f"Max input mismatch: {max_val}"
-
-
-        # 5) verify leaderboard contents after filter
+    
+        # 5) Sort by global score (average_vision_v0) descending
+        page.evaluate("""
+        () => {
+        if (window.globalGridApi) {
+            window.globalGridApi.applyColumnState({
+                state: [
+                    { colId: 'average_vision_v0', sort: 'desc' },
+                    { colId: 'rank', sort: null }
+                ]
+            });
+        }
+        }
+        """)
+        page.wait_for_timeout(500)
+    
+        # 6) verify leaderboard contents after filter and sorting by global score
         expected_ranks = [8, 8, 13, 20, 26]
         expected_models = [
             "cvt_cvt-w24-384-in22k_finetuned-in1k_4",
@@ -1041,7 +1056,7 @@ class TestFilter:
             "effnetb1_cutmixpatch_augmix_robust32_avge4e7_manylayers_324x288",
         ]
         expected_scores = ["0.43", "0.43", "0.41", "0.40", "0.39"]
-
+    
         actual_ranks  = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]

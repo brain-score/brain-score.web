@@ -211,22 +211,22 @@ function updateColumnVisibility() {
     const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
 
     if (isWaybackActive) {
-      // For wayback filtering: hide only if ALL values are 'X' (not 0s, since 0s are legitimate scores)
-      const allXs = values.every(val => val === 'X');
-
-      // Determine if this is a parent or leaf column for better logging
-      const hierarchyMap = window.cachedHierarchyMap || new Map();
-      const children = hierarchyMap.get(benchmarkId) || [];
-      const columnType = children.length === 0 ? 'leaf' : 'parent';
-
-      return allXs;
+      // For wayback filtering: hide only if this benchmark is in waybackHiddenBenchmarks
+      // This ensures we only hide columns where wayback filtering set all values to X,
+      // not columns where all models failed (originally X values)
+      if (window.waybackHiddenBenchmarks && window.waybackHiddenBenchmarks.has(benchmarkId)) {
+        return true;
+      }
+      // If not in waybackHiddenBenchmarks, don't hide (even if all values are X from model failures)
+      return false;
     }
 
-    // Check if all values are 'X' or 0
-    const allXsOrZeros = values.every(val => val === 'X' || val === 0);
-
-
-    return allXsOrZeros;
+    // When wayback filtering is NOT active:
+    // Don't hide columns based on "X" values alone - these are model failures, not invalid benchmarks
+    // Only hide if all values are 0 (which indicates an invalid/empty benchmark)
+    // This ensures model property filters don't incorrectly hide columns when all filtered models failed
+    const allZeros = values.every(val => val === 0);
+    return allZeros;
   }
 
   allColumns.forEach(column => {
