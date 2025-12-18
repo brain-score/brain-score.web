@@ -73,6 +73,11 @@
   </article>
 </div>
 
+<!-- Pass search data to JavaScript -->
+<script>
+  window.tutorialSearchData = {{ search_data|safe }};
+</script>
+<script src="{% static 'benchmarks/js/tutorial-search.js' %}"></script>
 <script src="{% static 'benchmarks/js/tutorial.js' %}"></script>
 
 <!-- MathJax for rendering LaTeX equations -->
