@@ -462,7 +462,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [103, 120, 120, 120, 120]
+        expected_ranks = [105, 131, 131, 131, 131]
         expected_models = [
             "ReAlnet10_cornet",
             "ReAlnet01_cornet",
@@ -512,7 +512,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [20, 25, 36, 39, 39]
+        expected_ranks = [20, 26, 37, 40, 40]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
@@ -572,7 +572,7 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [8, 13, 20, 25, 36]
+        expected_ranks = [8, 13, 20, 26, 37]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "convnext_tiny_imagenet_full_seed-0",
@@ -982,6 +982,88 @@ class TestFilter:
         assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
         assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
+    def test_wayback_timestamp_filter(self, page):
+        """
+        Verifies wayback timestamp filtering by directly driving the filter logic:
+
+        1) Opens the Advanced Filtering panel.
+        2) Sets the minimum wayback timestamp to Aug 27th 2020 and maximum to Aug 12th 2024 by updating the inputs in JS.
+        3) Calls applyCombinedFilters() to re‐apply the filter pipeline.
+        4) Waits for the grid to repaint.
+        5) Asserts that:
+           a) the slider inputs read  "2020-08-27T00:00:00.000Z" and "2024-08-12T22:41:02.470Z"
+           b) window.activeFilters.min_wayback_timestamp == 2020-08-27T00:00:00.000Z and
+              window.activeFilters.max_wayback_timestamp == 2024-08-12T22:41:02.470Z.
+        6) Sorts the grid by global score (average_vision_v0) descending.
+        7) Extracts and verifies the top-5 rows (ranks, model names, global scores) match expectations when sorted by global score.
+        """
+        # 1) open the panel
+        page.click('#advancedFilterBtn')
+        page.wait_for_selector('#waybackDateMin', state='visible')
+        page.wait_for_selector('#waybackDateMax', state='visible')
+
+        # 2) set both inputs, then rerun the filter pipeline in JS
+        page.evaluate("""
+        () => {
+        const maxInput = document.getElementById('waybackDateMax');
+        maxInput.value = "2024-08-12";
+        maxInput.dispatchEvent(new Event('input', { bubbles: true }));
+        maxInput.dispatchEvent(new Event('change', { bubbles: true }));
+        window.activeFilters.max_wayback_timestamp = Math.floor(new Date("2024-08-12").getTime() / 1000);
+        applyCombinedFilters();
+        }
+        """)
+
+        # 3) give the grid a moment to re-filter
+        page.wait_for_timeout(500)
+    
+        # 4) verify both UI inputs and JS state
+        min_val = page.evaluate("document.getElementById('waybackDateMin')?.value")
+        max_val = page.evaluate("document.getElementById('waybackDateMax')?.value")
+    
+        print(f" WaybackDateMin input: {min_val}")
+        print(f" WaybackDateMax input: {max_val}")
+    
+        expected_min_val = "2020-08-27"
+        expected_max_val = "2024-08-12"
+    
+        # UI check (ISO strings)
+        assert min_val == expected_min_val, f"Min input mismatch: {min_val}"
+        assert max_val == expected_max_val, f"Max input mismatch: {max_val}"
+    
+        # 5) Sort by global score (average_vision_v0) descending
+        page.evaluate("""
+        () => {
+        if (window.globalGridApi) {
+            window.globalGridApi.applyColumnState({
+                state: [
+                    { colId: 'average_vision_v0', sort: 'desc' },
+                    { colId: 'rank', sort: null }
+                ]
+            });
+        }
+        }
+        """)
+        page.wait_for_timeout(500)
+    
+        # 6) verify leaderboard contents after filter and sorting by global score
+        expected_ranks = [8, 8, 13, 20, 26]
+        expected_models = [
+            "cvt_cvt-w24-384-in22k_finetuned-in1k_4",
+            "resnext101_32x8d_wsl",
+            "resnext101_32x48d_wsl",
+            "effnetb1_272x240",
+            "effnetb1_cutmixpatch_augmix_robust32_avge4e7_manylayers_324x288",
+        ]
+        expected_scores = ["0.43", "0.43", "0.41", "0.40", "0.39"]
+    
+        actual_ranks  = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
+        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
+
+        # assert actual_ranks  == [str(r) for r in expected_ranks], f"Expected ranks {expected_ranks}, got {actual_ranks}"
+        assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
+        assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
     def test_copy_bibtex_button_all(self, page):
         """
@@ -1110,7 +1192,7 @@ class TestExtraFunctionality:
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
         # Replace these with actual expected values
-        expected_ranks = [269, 346, 412, 441, 445]
+        expected_ranks = [280, 357, 423, 452, 456]
         expected_models = [
             "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",

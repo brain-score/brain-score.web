@@ -31,16 +31,44 @@ function getFilteredLeafCount(parentField) {
       }
     });
     
-    // Count how many are NOT excluded
-    const count = Array.from(allLeafIds).filter(leafId => !excludedBenchmarks.has(leafId)).length;
+    // Count how many are NOT excluded (by benchmark tree) AND not hidden by wayback filtering
+    const count = Array.from(allLeafIds).filter(leafId => {
+      // Exclude if in filteredOutBenchmarks
+      if (excludedBenchmarks.has(leafId)) {
+        return false;
+      }
+      
+      // Also exclude if hidden by wayback filtering
+      if (typeof window.LeaderboardFilterCoordinator?.isColumnHiddenByWaybackFiltering === 'function') {
+        if (window.LeaderboardFilterCoordinator.isColumnHiddenByWaybackFiltering(leafId)) {
+          return false;
+        }
+      }
+      
+      return true;
+    }).length;
     return count;
   }
   
   // For specific categories, get direct leaf descendants
   const leafDescendants = getAllLeafDescendants(parentField, hierarchyMap);
   
-  // Count how many are NOT excluded
-  const count = leafDescendants.filter(leafId => !excludedBenchmarks.has(leafId)).length;
+  // Count how many are NOT excluded (by benchmark tree) AND not hidden by wayback filtering
+  const count = leafDescendants.filter(leafId => {
+    // Exclude if in filteredOutBenchmarks
+    if (excludedBenchmarks.has(leafId)) {
+      return false;
+    }
+    
+    // Also exclude if hidden by wayback filtering
+    if (typeof window.LeaderboardFilterCoordinator?.isColumnHiddenByWaybackFiltering === 'function') {
+      if (window.LeaderboardFilterCoordinator.isColumnHiddenByWaybackFiltering(leafId)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }).length;
   
   return count;
 }
