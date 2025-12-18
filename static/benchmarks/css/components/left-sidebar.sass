@@ -34,6 +34,18 @@
       
       .dropdown-content
         transform: translateX(80px)
+        // Invisible bridge to make dropdown easier to click when collapsed
+        &::before
+          content: ''
+          position: absolute
+          left: -80px
+          top: 0
+          width: 80px
+          height: 100%
+          min-height: 50px
+          background: transparent
+          pointer-events: auto
+          z-index: 1002
 
   a
     display: block
@@ -94,6 +106,18 @@
       
       .dropdown-content
         transform: translateX(80px)
+        // Invisible bridge to make dropdown easier to click when collapsed
+        &::before
+          content: ''
+          position: absolute
+          left: -80px
+          top: 0
+          width: 80px
+          height: 100%
+          min-height: 50px
+          background: transparent
+          pointer-events: auto
+          z-index: 1002
 
 // Sidebar toggle button
 .sidebar-toggle
@@ -142,7 +166,8 @@
   text-decoration: none
   display: block
 
-.left-sidebar .dropdown:hover > .dropdown-content
+.left-sidebar .dropdown:hover > .dropdown-content,
+.left-sidebar .dropdown-content:hover
   display: block
 
 // Change color on hover
