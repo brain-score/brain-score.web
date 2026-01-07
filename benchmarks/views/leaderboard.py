@@ -475,7 +475,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     }
 
     # Compute datetime range for wayback timestamp filter
-    datetime_range = get_datetime_range(context['models'])
+    datetime_range = get_datetime_range(domain=domain)
     if datetime_range:
         # Parse the timestamps to get Unix timestamps for the slider
         min_timestamp = datetime.fromisoformat(datetime_range['min'])
