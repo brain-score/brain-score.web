@@ -23,7 +23,7 @@ class SignupForm(UserCreationForm):
         model = User
         fields = ('email',)
 
-
+#c omment
 class LoginForm(AuthenticationForm):
     class Meta:
         model = User
