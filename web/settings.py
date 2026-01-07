@@ -236,7 +236,7 @@ def get_cache_config():
 
         timeout = 7*24*3600 if env == "staging" else 30*24*3600
         
-        # CACHE_INSTANCE_ID allows multiple instances (e.g., prod clone) to use same Redis without conflicts
+        # CACHE_INSTANCE_ID allows multiple instances (e.g., staging) to use same Redis without conflicts
         instance_id = os.getenv("CACHE_INSTANCE_ID", "")
         prefix = f"brainscore:{env}:{instance_id}" if instance_id else f"brainscore:{env}"
         
