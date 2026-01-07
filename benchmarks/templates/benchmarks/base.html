@@ -3,13 +3,6 @@
 {% load static %}
 {% load compress %}
 
-{% with "Brain-Score" as title %}
-{% with "Brain-Score Benchmark" as title_long %}
-{% with "Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements." as description %}
-{% with "http://brain-score.org" as url %}
-{% with "/static/benchmarks/img/icon.png" as icon_url %}
-{% with "/static/benchmarks/img/logo.png" as logo_url %}
-
 <html lang="en">
 <head>
     <!-- Global Site Tag (gtag.js) - Google Analytics -->
@@ -49,7 +42,7 @@
     {# data #}
     <script type="text/javascript">
         comparison_data = {{ comparison_data|safe }};
-        logo_url = "{{ logo_url }}";
+        logo_url = "/static/benchmarks/img/logo.png";
     </script>
 
     {# own sources #}
@@ -83,7 +76,7 @@
             "name":"Brain-Score neural and behavioral brain benchmarks",
             "alternateName":["Brain-Score.ventral-stream", "Brain-Score.vision"],
             "description":"Brain-Score evaluates models of the brain's ventral stream on their quantitative match to neural recordings and behavioral measurements",
-            "url":"http://www.brain-score.org",
+            "url":"{{ request.scheme }}://{{ request.get_host }}",
             "keywords":[
                 "computational neuroscience",
                 "human and primate vision",
@@ -95,20 +88,20 @@
 
     <meta name="keywords" content="neuroscience benchmark, neuroscience competition, neuroscience challenge, neuroscience, benchmark, competition, challenge, neural networks, machine learning, deep learning, ventral stream, brain-score, brain">
 
-    <meta name="description" content="{{description}}">
-    <link rel="icon" href="{{icon_url}}">
+    <meta name="description" content="{% block meta_description %}Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.{% endblock %}">
+    <link rel="icon" href="{% block icon_url %}/static/benchmarks/img/icon.png{% endblock %}">
 
-    <meta property="og:title" content="{{title}}">
+    <meta property="og:title" content="{% block og_title %}Brain-Score{% endblock %}">
     <meta property="og:type" content="website">
-    <meta property="og:description" content="{{description}}">
-    <meta property="og:url" content="{{url}}">
-    <meta property="og:image" content="{{logo_url}}">
+    <meta property="og:description" content="{% block og_description %}Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}/static/benchmarks/img/logo.png{% endblock %}">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="{{title}}">
-    <meta name="twitter:description" content="{{description}}">
-    <meta name="twitter:image" content="{{logo_url}}">
+    <meta name="twitter:title" content="{% block twitter_title %}Brain-Score{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Brain-Score is a platform for researchers to test models on how well they predict neural and behavioral brain measurements.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}/static/benchmarks/img/logo.png{% endblock %}">
 
-    <title>{{title}}</title>
+    <title>{% block page_title %}Brain-Score{% endblock %}</title>
 
 
 
@@ -130,10 +123,3 @@
 </body>
 
 </html>
-
-{% endwith %}
-{% endwith %}
-{% endwith %}
-{% endwith %}
-{% endwith %}
-{% endwith %}

@@ -28,11 +28,11 @@
       <span class="text-wrapper">Advanced Filters</span>
     </button>
   {% endif %}
-  
+
   <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard data and plugin metadata">
     <i class="fa-solid fa-download"></i>  Export
   </button>
-  
+
   {% if domain == "vision" %}
   <button id="tutorialBtn" style="margin-left: 8px;" title="Interactive walkthrough of the leaderboard">
     <i class="fa-solid fa-info"></i>
@@ -47,6 +47,11 @@
      class="ag-theme-alpine"
      style="width:100%;height:1500px;min-height:500px;overflow-x:auto;">
 </div>
+{% if has_user %}
+<div style="margin-top: 12px; display: flex; justify-content: flex-start;">
+  <button id="applyPublicChangesBtn" class="button button-primary" title="Apply public/private changes and refresh leaderboard">Apply Changes</button>
+</div>
+{% endif %}
 
 <div id="advancedFiltersPanel" class="advanced-filters hidden">
   <div class="filters-container">
@@ -62,6 +67,28 @@
         </div>
       </div>
       <div id="benchmarkFilterPanel"></div>
+      
+      <!-- Wayback Timestamp Section -->
+      <div class="metadata-section" id="waybackTimestampSection" style="display: none; margin-top: 20px;">
+        <div class="filter-group" id="waybackTimestampFilter">
+          <div class="filter-header">
+            <label>Wayback Machine</label>
+            <div class="range-values">
+              <input type="date" class="range-input-min" id="waybackDateMin">
+              <span class="range-separator">to</span>
+              <input type="date" class="range-input-max" id="waybackDateMax">
+            </div>
+          </div>
+          <div class="range-filter dual-handle">
+            <div class="slider-container" data-min="0" data-max="2000000000">
+              <div class="slider-track"></div>
+              <div class="slider-range"></div>
+              <div class="slider-handle handle-min" data-value="0"></div>
+              <div class="slider-handle handle-max" data-value="2000000000"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Middle column: Model Properties -->
@@ -240,6 +267,7 @@
 {% endif %}
 
 <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/utilities/color-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
@@ -275,4 +303,5 @@
     ProfileToggleModule.initializeToggle();
   }
 </script>
+<script src="{% static 'benchmarks/js/refresh_leaderboard.js' %}"></script>
 {% endif %}
