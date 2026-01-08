@@ -9,7 +9,7 @@ category: benchmarks
 
 Once you've created and tested your benchmark locally, the final step is submitting it to the Brain-Score platform. This tutorial walks you through the complete submission process—from packaging your data to creating a pull request.
 
-> ⚠️ **Note**: All data uploaded to Brain-Score is set by default to be publicly accessible. If you would like to **ensure your data remains private**, please contact a member of the Brain-Score team by either joining our [Slack](https://www.brain-score.org/community) or making a [GitHub Issue](https://github.com/brain-score/vision/issues). 
+> ⚠️ **Note**: All data uploaded to Brain-Score is set by default to be publicly accessible in the spirit of open science. If you would like to **ensure your data remains private**, please contact a member of the Brain-Score team by either joining our [Slack](https://www.brain-score.org/community) or making a [GitHub Issue](https://github.com/brain-score/vision/issues). 
 > Additionally, all benchmark scores, regardless if the underlying data is public or private, is set to being publicly visible.
 
 ## Summary
