@@ -309,6 +309,8 @@ SELECT
   s.score_ceiled,
   s.error,
   s.comment,
+  s.start_timestamp,
+  s.end_timestamp,
   CASE WHEN s.score_raw IS NOT NULL THEN TRUE ELSE FALSE END AS is_complete
 FROM
   -- All models
@@ -358,6 +360,8 @@ SELECT
   END AS score_ceiled,
   bs.error,
   bs.comment,
+  bs.start_timestamp,
+  bs.end_timestamp,
   bs.is_complete
 FROM mv_base_scores bs
 JOIN mv_final_benchmark_context fbt
@@ -385,6 +389,8 @@ CREATE TABLE final_agg_scores (
   root_parent       text,
   error             numeric,
   comment           text,
+  start_timestamp   timestamp,
+  end_timestamp     timestamp,
   is_leaf           boolean
 );
 
@@ -406,7 +412,7 @@ BEGIN
   -- Only proceed if we have data (should always be true)
   IF max_depth > 0 THEN
     -- Insert leaf scores.
-    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
+    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, start_timestamp, end_timestamp, is_leaf)
     SELECT
       bs.id,
       t.identifier,
@@ -419,6 +425,8 @@ BEGIN
       t.root_parent,
       bs.error,
       bs.comment,
+      bs.start_timestamp,
+      bs.end_timestamp,
       TRUE    -- sets is_leaf= true
     FROM mv_benchmark_tree t
     JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
@@ -428,7 +436,7 @@ BEGIN
 
     -- Loop from max_depth-1 down to 0 (i.e., roll up scores to compute parents)
     FOR d IN REVERSE max_depth-1 .. 0 LOOP
-      INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, is_leaf)
+      INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, start_timestamp, end_timestamp, is_leaf)
       SELECT
         p.identifier AS benchmark,
         s.model_id,
@@ -458,6 +466,9 @@ BEGIN
 
         p.depth,
         p.sort_path,
+        -- For parent nodes, use earliest start_timestamp and latest end_timestamp from children
+        MIN(s.start_timestamp) AS start_timestamp,
+        MAX(s.end_timestamp) AS end_timestamp,
         FALSE -- sets parent nodes to is_leaf = false
       FROM mv_benchmark_tree p
       JOIN mv_benchmark_children bc ON p.identifier = bc.parent_id
@@ -598,6 +609,8 @@ SELECT
   fa.is_leaf,
   fa.error,
   fa.comment,
+  fa.start_timestamp,
+  fa.end_timestamp,
   m.visual_degrees,
   m.id           AS model_pk,
   m.name         AS model_name,
@@ -898,6 +911,8 @@ SELECT
   b.is_leaf,
   b.error,
   b.comment,
+  b.start_timestamp,
+  b.end_timestamp,
   b.visual_degrees,
   b.model_pk,
   b.model_name,
@@ -1027,6 +1042,8 @@ score_json AS (
                   END,
                 'error', error,
                 'comment', comment,
+                'start_timestamp', start_timestamp,
+                'end_timestamp', end_timestamp,
                 'visual_degrees', visual_degrees,
                 'color', color,
                 'median', median_score,
