@@ -653,7 +653,7 @@ Brain-Score provides several metrics for comparing model representations to neur
 | **CKA** | `cka` | Representational geometry alignment | Comparing representational structure |
 | **RDM** | `rdm` | Stimulus similarity structure correlation | Classic RSA; stimulus similarity structures |
 
-> **Note**: All paths below are relative to `brainscore_vision/metrics/` in the vision repository.
+> ⚠️ **Note**: All paths below are relative to `brainscore_vision/metrics/` in the vision repository.
 
 ### Regression-Based Metrics (Encoding Models)
 
