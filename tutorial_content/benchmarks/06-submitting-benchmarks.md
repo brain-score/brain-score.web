@@ -487,7 +487,7 @@ Before submitting your PR, verify:
 If you encounter issues during submission:
 
 - **GitHub Issues**: Open an issue on the [vision repository](https://github.com/brain-score/vision/issues)
-- **Slack**: [Slack]
+- **Slack**: [Slack](https://www.brain-score.org/community)
 
 ---
 
