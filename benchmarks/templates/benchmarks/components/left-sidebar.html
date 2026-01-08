@@ -36,19 +36,20 @@
     </a>
     <div class="dropdown-content">
         <div class="nested-dropdown">
-            <a href="https://www.brain-score.org/tutorials/models">Models</a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models">Models</a>
             <div class="nested-dropdown-content">
-                <a href="https://www.brain-score.org/tutorials/models/quickstart">Quickstart</a>
-                <a href="https://www.brain-score.org/tutorials/models/deepdive_1">Deep Dive 1</a>
-                <a href="https://www.brain-score.org/tutorials/models/deepdive_2">Deep Dive 2</a>
-                <a href="https://www.brain-score.org/tutorials/models/deepdive_3">Deep Dive 3</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/quickstart">Quickstart</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_1">Deep Dive 1</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_2">Deep Dive 2</a>
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/models/deepdive_3">Deep Dive 3</a>
             </div>
         </div>
         <div class="nested-dropdown">
-            <a href="https://www.brain-score.org/tutorials/benchmarks">Benchmarks</a>
+            <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks">Benchmarks</a>
             <div class="nested-dropdown-content">
-                <a href="https://www.brain-score.org/tutorials/benchmarks/package_data">Package Data</a>
-                <a href="https://www.brain-score.org/tutorials/benchmarks/create_benchmark">Create Benchmark</a>
+                {% for t in benchmark_tutorials %}
+                <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}{{ t.get_absolute_url }}">{{ t.title }}</a>
+                {% endfor %}
             </div>
         </div>
     </div>

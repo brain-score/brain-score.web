@@ -9,6 +9,20 @@ category: benchmarks
 
 Once you've created and tested your benchmark locally, the final step is submitting it to the Brain-Score platform. This tutorial walks you through the complete submission process—from packaging your data to creating a pull request.
 
+## Summary
+
+The benchmark submission process follows these key steps:
+
+```
+1. Package Data     → Validate and format stimuli + assemblies
+2. Create Benchmark → Implement benchmark class with ceiling
+3. Test Locally     → Write and run unit tests
+4. Upload Data      → Package and upload to S3
+5. Submit PR        → Fork, commit, and create pull request
+6. Review Process   → Address feedback and iterate
+7. Merge & Deploy   → Benchmark goes live on Brain-Score
+```
+
 ---
 
 ## Overview of Data Packaging
@@ -230,14 +244,16 @@ package_stimulus_set_locally(
     proto_stimulus_set=stimulus_set,
     stimulus_set_identifier='MyExperiment2024',
 )
-# Output:
-# {
-#  'identifier': 'MyExperiment2024',
-#  'csv_path': '~/Downloads/brainscore_packages/stimulus_MyExperiment2024.csv',
-#  'zip_path': '~/Downloads/brainscore_packages/stimulus_MyExperiment2024.zip',
-#  'csv_sha1': '1d47ea4a09ddd72cebabca95b985646650f21646',
-#  'zip_sha1': 'c96036d459f0a2ce4494ba73a2b18b8eec59f6b6'
-# }
+'''
+Output:
+ {
+  'identifier': 'MyExperiment2024',
+  'csv_path': '~/Downloads/brainscore_packages/stimulus_MyExperiment2024.csv',
+  'zip_path': '~/Downloads/brainscore_packages/stimulus_MyExperiment2024.zip',
+  'csv_sha1': '1d47ea4a09ddd72cebabca95b985646650f21646',
+  'zip_sha1': 'c96036d459f0a2ce4494ba73a2b18b8eec59f6b6'
+}
+'''
 
 # Package data assembly
 packaging.package_data_assembly_locally(
@@ -246,13 +262,15 @@ packaging.package_data_assembly_locally(
     stimulus_set_identifier='MyExperiment2024',
     assembly_class_name='NeuroidAssembly',  # or 'BehavioralAssembly'
 )
-# Output:
-# {
-#  'identifier': 'MyExperiment2024',
-#  'path': '~/Downloads/brainscore_packages/assy_MyExperiment2024.nc',
-#  'sha1': '3c45d95e2e61616c885758df0d463fddbfc2b427',
-#  'cls': 'NeuroidAssembly'
-# }
+'''
+Output:
+ {
+  'identifier': 'MyExperiment2024',
+  'path': '~/Downloads/brainscore_packages/assy_MyExperiment2024.nc',
+  'sha1': '3c45d95e2e61616c885758df0d463fddbfc2b427',
+  'cls': 'NeuroidAssembly'
+}
+'''
 ```
 
 Save the SHA hashes — you'll need them for registration.
