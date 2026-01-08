@@ -185,12 +185,14 @@
   left: 160px
   top: 0
   background-color: white
-  width: 180px
+  min-width: 180px
+  width: max-content
   box-shadow: 0px 8px 16px rgba(0,0,0,0.2)
   z-index: 1001
 
 .left-sidebar .nested-dropdown-content a
   font-size: 0.9em
+  white-space: nowrap
 
 // Show nested dropdown on hover
 .left-sidebar .nested-dropdown:hover .nested-dropdown-content

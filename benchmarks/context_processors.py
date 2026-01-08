@@ -26,3 +26,14 @@ def common_variables(request):
     return {
         'comparison_data': json.dumps([]),  # Default empty array
     }
+
+
+def benchmark_tutorials(request):
+    """
+    Make benchmark tutorials available in all templates.
+    Used for dynamic sidebar navigation.
+    """
+    from benchmarks.views.tutorials import load_benchmark_tutorials
+    return {
+        'benchmark_tutorials': load_benchmark_tutorials()
+    }
