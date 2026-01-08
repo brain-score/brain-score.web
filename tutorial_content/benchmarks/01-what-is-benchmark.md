@@ -38,18 +38,22 @@ Every benchmark is built from four essential components:
 │  1. STIMULUS SET                                                 │
 │     • Collection of experimental stimuli (images, text, etc.)    │
 │     • Metadata about each stimulus                               │
+|     • What is the model's input?                                 |
 │                                                                  │
 │  2. DATA ASSEMBLY                                                │
 │     • Biological measurements (neural or behavioral)             │
 │     • Experimental conditions and subject information            │
+|     • What is the model comparing against?                       |
 │                                                                  │
 │  3. METRIC                                                       │
 │     • Statistical comparison method                              │
 │     • Defines how similarity is quantified                       │
+|     • How are we comparing the model and the subject?            |
 │                                                                  │
 │  4. CEILING                                                      │
 │     • Maximum expected performance given noise                   │
 │     • Enables score normalization                                │
+|     • How well could a model theoretically do?                   |
 └──────────────────────────────────────────────────────────────────┘
 ```
 

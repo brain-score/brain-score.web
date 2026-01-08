@@ -61,6 +61,14 @@ class Tutorial:
         
     def get_absolute_url(self):
         return f'/tutorials/benchmarks/{self.slug}/'
+    
+    @property
+    def reading_time(self):
+        """Estimate reading time at 200 words per minute."""
+        # Strip HTML tags for accurate word count
+        text_content = re.sub(r'<[^>]+>', '', self.content)
+        word_count = len(text_content.split())
+        return max(1, round(word_count / 200))
 
 
 def load_benchmark_tutorials():
