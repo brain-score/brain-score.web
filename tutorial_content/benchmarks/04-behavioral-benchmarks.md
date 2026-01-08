@@ -33,6 +33,7 @@ from brainscore_vision import load_dataset, load_stimulus_set, load_metric
 from brainscore_vision.benchmarks import BenchmarkBase
 from brainscore_vision.benchmark_helpers.screen import place_on_screen
 from brainscore_vision.model_interface import BrainModel
+from brainscore_vision.benchmark_helpers import bound_score
 
 BIBTEX = """@article{YourName2024, ...}"""
 
@@ -66,10 +67,28 @@ class YourBehavioralBenchmark(BenchmarkBase):
         
         # 3. Compare to human data
         raw_score = self._metric(predictions, self._assembly)
-        return raw_score / self.ceiling
+        return bound_score(raw_score / self.ceiling)
 ```
 
 See [Registration](#registration) and [Testing](#testing-your-benchmark) below.
+
+---
+
+## Behavioral Benchmark Checklist
+
+Before submitting your behavioral benchmark:
+
+- [ ] Inherits from `BenchmarkBase` directly (not a helper class)
+- [ ] Implements `__call__` method
+- [ ] Uses fitting stimuli separate from test stimuli
+- [ ] Uses `start_task()` to configure behavioral task
+- [ ] Implements ceiling calculation (split-half or cross-subject)
+- [ ] Includes proper `bibtex` citation
+- [ ] Tests verify expected scores for known models
+- [ ] Considers chance correction if applicable (e.g., `1/N` for N-way choice)
+- [ ] Uses `bound_score()` to clamp scores between [0, 1]
+
+
 
 ---
 
@@ -153,6 +172,9 @@ Unlike neural benchmarks, behavioral benchmarks **do not** have a helper class. 
 
 ## Example 1: Rajalingham2018 (I2N Metric)
 
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
 This benchmark compares model and human object recognition patterns at the image level:
 
 ```python
@@ -222,9 +244,14 @@ class _DicarloRajalingham2018(BenchmarkBase):
 - **I2N metric**: Measures image-by-image behavioral consistency
 - **Custom ceiling**: Uses the metric's `ceiling()` method (split-half reliability)
 
+</details>
+
 ---
 
 ## Example 2: Ferguson2024 (Value Delta Metric)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
 
 This benchmark measures visual search asymmetry — how model performance patterns match humans across different conditions:
 
@@ -309,6 +336,8 @@ class _Ferguson2024ValueDelta(BenchmarkBase):
 - **Pre-computed ceilings**: Stored to avoid expensive recalculation
 - **Custom post-processing**: Converts probabilities to discrete choices
 - **Derived metric**: Computes "integral" from raw responses before comparison
+
+</details>
 
 ---
 
@@ -925,20 +954,6 @@ BrainModel.Task.probabilities  # Probability distributions
 BrainModel.Task.odd_one_out    # Similarity-based choices
 ```
 
----
-
-## Behavioral Benchmark Checklist
-
-Before submitting your behavioral benchmark:
-
-- [ ] Inherits from `BenchmarkBase` directly (not a helper class)
-- [ ] Implements `__call__` method
-- [ ] Uses fitting stimuli separate from test stimuli
-- [ ] Uses `start_task()` to configure behavioral task
-- [ ] Implements ceiling calculation (split-half or cross-subject)
-- [ ] Includes proper `bibtex` citation
-- [ ] Tests verify expected scores for known models
-- [ ] Considers chance correction if applicable (e.g., `1/N` for N-way choice)
 
 ---
 

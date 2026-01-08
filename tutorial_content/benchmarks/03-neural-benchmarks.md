@@ -34,6 +34,7 @@ benchmark_registry['YourBenchmark.IT-pls'] = YourBenchmarkIT
 from brainscore_vision import load_dataset, load_metric, load_ceiling
 from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark
 
+
 BIBTEX = """@article{YourName2024, ...}"""
 
 def YourBenchmarkIT():
@@ -58,6 +59,21 @@ def YourBenchmarkIT():
 ```
 
 That's it for a standard neural benchmark. See [Registration](#registration) and [Testing](#testing-your-benchmark) below.
+
+---
+
+## Neural Benchmark Checklist
+
+Before submitting your neural benchmark:
+
+- [ ] Uses `NeuroidAssembly` with correct dimensions (`presentation × neuroid × time_bin`)
+- [ ] Loads data with `average_repetitions=True` for model comparison
+- [ ] Loads data with `average_repetitions=False` for ceiling calculation
+- [ ] Uses internal consistency ceiling (split-half reliability)
+- [ ] Specifies correct `visual_degrees` from original experiment
+- [ ] Includes proper `bibtex` citation
+- [ ] Tests verify expected scores for known models
+- [ ] Uses `bound_score()` to clamp scores between [0, 1]
 
 ---
 
@@ -178,6 +194,9 @@ When you use the `NeuralBenchmark` helper class, you get these features automati
 
 ## Example 1: MajajHong2015
 
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
 Here's the complete structure of a neural benchmark using `NeuralBenchmark`:
 
 ```python
@@ -239,9 +258,14 @@ def DicarloMajajHong2015ITPLS():
     )
 ```
 
+</details>
+
 ---
 
 ## Example 2: Kar2019 (Custom Temporal Benchmark)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
 
 When you need custom `__call__` logic (e.g., temporal dynamics), inherit from `BenchmarkBase` directly:
 
@@ -297,9 +321,14 @@ class DicarloKar2019OST(BenchmarkBase):
 
 **Why use BenchmarkBase here?** The OST metric requires custom temporal handling and early rejection of static models—logic that doesn't fit `NeuralBenchmark`'s standard flow.
 
+</details>
+
 ---
 
 ## Example 3: Papale2025 (Train/Test Split)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
 
 For benchmarks with separate training and test sets, use `TrainTestNeuralBenchmark`:
 
@@ -349,9 +378,14 @@ def load_assembly(region, split, average_repetitions):
 
 **Key features**: `TrainTestNeuralBenchmark` handles train/test splits; `LazyLoad` defers expensive S3 fetches; `filter_reliable_neuroids` removes noisy neurons.
 
+</details>
+
 ---
 
-## Exampl 4: Coggan2024_fMRI (RSA/RDM Metric)
+## Example 4: Coggan2024_fMRI (RSA/RDM Metric)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
 
 For fMRI with representational similarity analysis, create a custom benchmark class:
 
@@ -404,6 +438,8 @@ def _Coggan2024_Region(region: str):
 ```
 
 **Key difference**: fMRI benchmarks often store pre-computed RSMs rather than raw voxel responses, then compare model RSMs to human RSMs using correlation.
+
+</details>
 
 ---
 
@@ -1270,19 +1306,7 @@ print(f"Samples: {len(assembly['presentation'])}, Features: {len(assembly['neuro
 # PLS needs samples > features; consider using Ridge for high-dimensional data
 ```
 
----
 
-## Neural Benchmark Checklist
-
-Before submitting your neural benchmark:
-
-- [ ] Uses `NeuroidAssembly` with correct dimensions (`presentation × neuroid × time_bin`)
-- [ ] Loads data with `average_repetitions=True` for model comparison
-- [ ] Loads data with `average_repetitions=False` for ceiling calculation
-- [ ] Uses internal consistency ceiling (split-half reliability)
-- [ ] Specifies correct `visual_degrees` from original experiment
-- [ ] Includes proper `bibtex` citation
-- [ ] Tests verify expected scores for known models
 
 ---
 

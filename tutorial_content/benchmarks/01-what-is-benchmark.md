@@ -61,7 +61,7 @@ Every benchmark is built from four essential components:
 
 ## The Benchmark Interface
 
-Every benchmark implements the `Benchmark` interface:
+Every benchmark implements the `Benchmark` interface. You can think of it as "every benchmark must have these things, but we won't define how they work - this is up to each specific benchmark. This means that every benchmark must include the following methods based on the template below: 
 
 ```python
 # Located: core/brainscore_core/benchmarks/__init__.py
@@ -307,7 +307,7 @@ score.attrs[Score.RAW_VALUES_KEY] = Score(raw_value)    # The unceiled score
 3. **Interpretability**: Ceiling-normalized scores are interpretable (1.0 = perfect within noise limits)
 4. **Statistical Validity**: Proper statistical inference requires noise estimates
 
-> ⚠️ **Critical**: A benchmark without a ceiling is not interpretable. Always implement `ceiling_func`.
+> ⚠️ **Critical**: A benchmark without a ceiling is not interpretable. Always implement `ceiling_func`. Ideally, ceilings should be calculated using the same metric as model-subject comparisons; i.e. whatever you use to compare models to subjects, try to use that to compare subject-subject performance.
 
 ### Types of Ceilings
 
@@ -335,7 +335,7 @@ def get_ceiling(assembly: NeuroidAssembly) -> Score:
 
 ## Next Steps
 
-Now that you understand what a benchmark is, continue to:
+Now that you understand what a benchmark is, continue on to:
 
 1. **[Data Packaging](/tutorials/benchmarks/data-packaging/)** — Learn how to package your experimental data
 2. **[Neural Benchmarks](/tutorials/benchmarks/neural-benchmarks/)** — Create benchmarks comparing model activations to neural recordings

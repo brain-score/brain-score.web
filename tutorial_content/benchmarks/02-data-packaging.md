@@ -28,7 +28,7 @@ Raw Data → Organize Stimuli → Create Assembly → Validate → Package → R
 
 ### StimulusSet
 
-`StimulusSet` extends pandas DataFrame with functionality for handling stimulus files:
+`StimulusSet` extends the pandas DataFrame class with functionality for handling stimulus files:
 
 ```python
 # Located: core/brainscore_core/supported_data_standards/brainio/stimuli.py
@@ -60,7 +60,7 @@ stimulus_set.stimulus_paths = {
 stimulus_set.name = 'MyExperiment2024'
 ```
 
-If you already have a CSV file that contains all relevant stimulus information, you can convert a Pandas DataFrame to a StimulusSet
+If you already have a CSV file that contains all relevant stimulus information, you can convert a Pandas DataFrame into a StimulusSet
 
 ```python
 # Located: core/brainscore_core/supported_data_standards/brainio/stimuli.py
@@ -108,7 +108,7 @@ stimulus_set.stimulus_paths = {
 | `name` | Unique name for the stimulus set | Yes |
 | Metadata columns | Experimental variables (category, condition, etc.) | Recommended |
 
-> ⚠️ **Note:** A 'filename' field cannot be part of the StimulusSet. To avoid conflict with packaging code, rename 'filename' to 'image_filename'. The packaging code will add its own 'filename' column with zip filenames.
+> ⚠️ **Note:** A 'filename' field cannot be part of the StimulusSet. To avoid conflict with packaging code, rename 'filename' to 'stimulus_filename'. The packaging code will add its own 'filename' column with zip filenames.
 
 
 ---
@@ -135,7 +135,7 @@ stimulus_set.name = 'MyExperiment2024.condition_A'  # Sub-dataset variant
 
 ### Packaging StimulusSet Locally
 
-Packaging the StimulusSet will produce two files. The CSV file contains the stimulus metadata (the DataFrame) - stimulus IDs, categories, conditions, etc. The ZIP file contains the actual stimulus files (images, audio, etc.). The enclosed images are renamed to based on the `stimulus_id` and referenced by `stimulus_paths`. 
+Packaging the StimulusSet will produce two files: The  first is a CSV file containing the stimulus metadata (the DataFrame) - stimulus IDs, categories, conditions, etc. The second is a ZIP file containing the actual stimulus files (images, audio, etc.). The enclosed stimuli are renamed to based on the `stimulus_id` and referenced by `stimulus_paths`. 
 
 ```python
 # Located: core/brainscore_core/supported_data_standards/brainio/packaging.py
@@ -160,7 +160,7 @@ Output:
 
 When performing local packaging, unless a path is specified, the StimulusSet will be stored in `~/Downloads/brainscore_packages/`. The `csv_sha1` and `zip_sha1` are the hashes for the respective files. The hashes are used to ensure data integrity and identify the exact version of each file. 
 
-You will need the hashes when registering the data plugin, so keep them safe.
+> ⚠️ **Note:** You will need the hashes when registering the data plugin, so keep them safe.
 
 ---
 
@@ -333,7 +333,7 @@ Behavioral data comes in many forms:
 | Reaction times | `presentation` | Response latencies |
 | Similarity judgments | `presentation` | Odd-one-out choices |
 
-As mentioned in `What is a Benchmark` section, this flexibility extends to benchmarks: there is no `BehavioralBenchmark` helper class (unlike `NeuralBenchmark`). Each behavioral benchmark inherits directly from `BenchmarkBase` and implements its own `__call__` method to handle its specific task logic.
+As mentioned in the [What is a Benchmark](/tutorials/benchmarks/what-is-benchmark/) tutorial, this flexibility extends to benchmarks: there is no `BehavioralBenchmark` helper class (unlike `NeuralBenchmark`). Each behavioral benchmark inherits directly from `BenchmarkBase` and implements its own `__call__` method to handle its specific task logic.
 
 **Optional Coordinate Use Cases**:
 
@@ -377,7 +377,7 @@ Output:
 
 When performing local packaging, unless a path is specified, the dataAssembly will be stored in `~/Downloads/brainscore_packages/`. The `sha1` is the hash for the assembly. The hashes are used to ensure data integrity and identify the exact version of each file. 
 
-Like the StimulusSet, you will need the hash when registering the data plugin, so keep it safe.
+> ⚠️ **Note:** Like the StimulusSet, you will need the hash when registering the data plugin, so keep it safe.
 
 
 ___
