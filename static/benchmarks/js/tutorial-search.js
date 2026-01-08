@@ -200,7 +200,6 @@
         });
         
         const allTermsMatchFullText = queryTerms.every(term => fullText.includes(term));
-        const allTermsMatchFullText = queryTerms.every(term => fullText.includes(term));
         const allTermsMatchCodeBlocks = codeBlocks.some(codeBlock => {
             if (!codeBlock) return false;
             const codeText = (codeBlock.text || codeBlock).toLowerCase();
