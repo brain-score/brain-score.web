@@ -84,8 +84,9 @@ function createRunnableStatusColumn() {
     headerName: '',
     field: 'runnable_status',
     colId: 'runnable_status',
-    pinned: 'left',
-    width: 80,
+    lockPosition: true,
+    suppressMovable: true,
+    width: 60,
     cellRenderer: 'runnableStatusCellRenderer',
     sortable: true,
     filter: false,
@@ -309,7 +310,8 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     field: 'filtered_score',
     colId: 'filtered_score',
     hide: true,  // start hidden
-    pinned: 'left',
+    lockPosition: true,
+    suppressMovable: true,
     width: 150,
     cellRenderer: 'scoreCellRenderer',
     cellDataType: 'object',
@@ -336,11 +338,31 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   };
 
-  // Insert columns after the model column
+  // Extract rank and model columns, then reconstruct with correct order: Rank, Model, Status
+  const rankColumnIndex = columnDefs.findIndex(col => col.field === 'rank');
   const modelColumnIndex = columnDefs.findIndex(col => col.field === 'model');
-  if (modelColumnIndex !== -1) {
-    columnDefs.splice(modelColumnIndex + 1, 0, runnableStatusColumn, filteredScoreColumn);
+  
+  // Remove rank and model from their current positions (remove higher index first to preserve indices)
+  let rankColumn = null;
+  let modelColumn = null;
+  
+  if (rankColumnIndex !== -1 && modelColumnIndex !== -1) {
+    // Remove in reverse order of indices to preserve positions
+    if (rankColumnIndex > modelColumnIndex) {
+      rankColumn = columnDefs.splice(rankColumnIndex, 1)[0];
+      modelColumn = columnDefs.splice(modelColumnIndex, 1)[0];
+    } else {
+      modelColumn = columnDefs.splice(modelColumnIndex, 1)[0];
+      rankColumn = columnDefs.splice(rankColumnIndex, 1)[0];
+    }
+    
+    // Insert pinned columns at the beginning in correct order: Rank, Model, Status, Filtered Score
+    columnDefs.unshift(filteredScoreColumn);
+    columnDefs.unshift(runnableStatusColumn);
+    columnDefs.unshift(modelColumn);
+    columnDefs.unshift(rankColumn);
   } else {
+    // Fallback: just append the new columns
     columnDefs.push(runnableStatusColumn, filteredScoreColumn);
   }
 
@@ -397,7 +419,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
-      // Ensure filtered score column starts hidden (clean initial state)
+      // Set column visibility
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
