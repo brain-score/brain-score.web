@@ -419,7 +419,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
-      // Set column visibility
+      // Ensure filtered score column starts hidden (clean initial state)
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
