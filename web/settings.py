@@ -109,6 +109,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'benchmarks.context_processors.common_variables',
+                'benchmarks.context_processors.domain_processor',
+                'benchmarks.context_processors.benchmark_tutorials',
             ],
         },
     },
