@@ -164,10 +164,28 @@ class Tutorials(View):
     plugin = None
 
     def get(self, request):
+        context = {}
+        
+        # Add search data for benchmark tutorials
+        if self.plugin == 'benchmarks' and self.tutorial_type == 'benchmarks':
+            from . import tutorials
+            import json
+            benchmark_tutorials = tutorials.load_benchmark_tutorials()
+            search_data = []
+            for t in benchmark_tutorials:
+                search_data.append({
+                    'slug': t.slug,
+                    'title': t.title,
+                    'description': t.description,
+                    'url': t.get_absolute_url(),
+                    'searchable': t.searchable_content
+                })
+            context['search_data'] = json.dumps(search_data)
+        
         if self.plugin is not None:
-            return render(request, f'benchmarks/tutorials/{self.plugin}/{self.tutorial_type}.html')
+            return render(request, f'benchmarks/tutorials/{self.plugin}/{self.tutorial_type}.html', context)
         else:
-            return render(request, f'benchmarks/tutorials/{self.tutorial_type}.html')
+            return render(request, f'benchmarks/tutorials/{self.tutorial_type}.html', context)
 
 
 class LargeFileUpload(View):
