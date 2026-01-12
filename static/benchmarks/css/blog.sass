@@ -306,19 +306,109 @@
   margin-bottom: 1rem
 
 
+// Code styling - inline code (light background for readability)
 .post-content code 
-  background: #f4f4f4
-  padding: 0.2rem 0.4rem
-  border-radius: 3px
-  font-family: 'Monaco', 'Consolas', monospace
+  background: rgba(175, 184, 193, 0.2)
+  padding: 0.2em 0.4em
+  border-radius: 6px
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace
+  font-size: 85%
+  color: #1f2328
 
 
 .post-content pre 
-  background: #f4f4f4
+  background: #0d1117
   padding: 1rem
-  border-radius: 5px
+  border-radius: 6px
   overflow-x: auto
   margin: 1rem 0
+  border: 1px solid #30363d
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace
+  font-size: 0.875rem
+  line-height: 1.45
+  color: #e6edf3
+
+  code
+    background: transparent
+    padding: 0
+    color: inherit
+    font-size: inherit
+    border: none
+
+
+// Codehilite (Pygments) syntax highlighting - GitHub Dark Theme
+.post-content .codehilite
+  background: #0d1117
+  border-radius: 6px
+  margin: 1rem 0
+  overflow-x: auto
+  border: 1px solid #30363d
+
+  pre
+    margin: 0
+    padding: 1rem
+    background: transparent
+    color: #e6edf3
+    border: none
+
+// Highlighted line
+.post-content .codehilite .hll
+  background-color: #264f78
+
+// Comments
+.post-content .codehilite .c
+  color: #8b949e
+  font-style: italic
+
+// Keywords
+.post-content .codehilite .k
+  color: #ff7b72
+
+// Comment variants
+.post-content .codehilite .ch, .post-content .codehilite .cm, .post-content .codehilite .c1, .post-content .codehilite .cs
+  color: #8b949e
+  font-style: italic
+
+// Keyword variants
+.post-content .codehilite .kc, .post-content .codehilite .kd, .post-content .codehilite .kn, .post-content .codehilite .kp, .post-content .codehilite .kr
+  color: #ff7b72
+
+// Strings
+.post-content .codehilite .s, .post-content .codehilite .sa, .post-content .codehilite .sb, .post-content .codehilite .sc, .post-content .codehilite .dl, .post-content .codehilite .sd, .post-content .codehilite .s2, .post-content .codehilite .se, .post-content .codehilite .sh, .post-content .codehilite .si, .post-content .codehilite .sx, .post-content .codehilite .sr, .post-content .codehilite .s1, .post-content .codehilite .ss
+  color: #a5d6ff
+
+// Numbers
+.post-content .codehilite .m, .post-content .codehilite .mf, .post-content .codehilite .mh, .post-content .codehilite .mi, .post-content .codehilite .mo
+  color: #79c0ff
+
+// Name function
+.post-content .codehilite .nf
+  color: #d2a8ff
+
+// Name class
+.post-content .codehilite .nc
+  color: #ffa657
+  font-weight: bold
+
+// Name builtin
+.post-content .codehilite .nb
+  color: #79c0ff
+
+// Name decorator
+.post-content .codehilite .nd
+  color: #d2a8ff
+
+// Name tag
+.post-content .codehilite .nt
+  color: #7ee787
+
+// Name attribute
+.post-content .codehilite .na
+  color: #7ee787
+
+// Operators and punctuation
+.post-content .codehilite .o, .post-content .codehilite .p
+  color: #e6edf3
 
 .post-content ul
   margin: 1rem 0

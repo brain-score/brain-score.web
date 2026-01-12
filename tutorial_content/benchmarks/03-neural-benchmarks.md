@@ -83,7 +83,7 @@ Before submitting your neural benchmark:
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  Do you have standard neural recordings (electrophysiology/fMRI)?           │
 │  ├── YES → Use NeuralBenchmark (Quick Start above)                          │
-│  │         Examples: MajajHong2015, FreemanZiemba2013                        │
+│  │         Examples: MajajHong2015, FreemanZiemba2013                       │
 │  │                                                                          │
 │  └── NO → What's special about your data?                                   │
 │      │                                                                      │

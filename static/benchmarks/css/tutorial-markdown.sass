@@ -388,32 +388,34 @@
     line-height: 1.6
     display: list-item
 
-  // Code - inline
+  // Code - inline (light background for readability on white page)
   code
-    background: #f4f4f4
-    padding: 0.2rem 0.4rem
-    border-radius: 3px
-    font-family: 'Monaco', 'Consolas', 'Fira Code', monospace
-    font-size: 0.9em
-    color: #c7254e
+    background: rgba(175, 184, 193, 0.2)
+    padding: 0.2em 0.4em
+    border-radius: 6px
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace
+    font-size: 85%
+    color: #1f2328
 
-  // Code blocks - pre
+  // Code blocks - pre (GitHub Dark style)
   pre
-    background: #1e1e1e !important
-    color: #d4d4d4
+    background: #0d1117
+    color: #e6edf3
     padding: 1rem
     border-radius: 6px
     overflow-x: auto
     margin: 1rem 0
-    font-size: 0.9rem
-    line-height: 1.5
-    border: none
+    font-size: 0.875rem
+    line-height: 1.45
+    border: 1px solid #30363d
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace
 
     code
       background: transparent
       padding: 0
       color: inherit
       font-size: inherit
+      border: none
 
   // Tables
   table
@@ -545,143 +547,196 @@
     color: $brainscore_blue
 
 // Codehilite (Pygments) syntax highlighting
-// Using a dark theme similar to VS Code Dark+
+// GitHub Dark Theme
 .codehilite
-  background: #1e1e1e
+  background: #0d1117
   border-radius: 6px
   margin: 1rem 0
   overflow-x: auto
+  border: 1px solid #30363d
 
   pre
     margin: 0
     padding: 1rem
     background: transparent
+    color: #e6edf3
 
+// Highlighted line
 .codehilite .hll
-  background-color: #3a3a3a
+  background-color: #264f78
 
+// Comments
 .codehilite .c
-  color: #6a9955
+  color: #8b949e
   font-style: italic
 
+// Errors
 .codehilite .err
-  color: #f44747
+  color: #f85149
 
+// Keywords
 .codehilite .k
-  color: #569cd6
-  font-weight: bold
+  color: #ff7b72
 
+// Operators
 .codehilite .o
-  color: #d4d4d4
+  color: #e6edf3
 
+// Comment variants (hash, multiline, single, special)
 .codehilite .ch, .codehilite .cm, .codehilite .c1, .codehilite .cs
-  color: #6a9955
+  color: #8b949e
   font-style: italic
 
+// Preprocessor
 .codehilite .cp
-  color: #c586c0
+  color: #ff7b72
 
+// Preprocessor file
 .codehilite .cpf
-  color: #ce9178
+  color: #a5d6ff
 
+// Diff deleted
 .codehilite .gd
-  color: #f44747
+  color: #ffa198
+  background-color: #490202
 
+// Generic emphasis
 .codehilite .ge
   font-style: italic
 
+// Generic heading
 .codehilite .gh
-  color: #569cd6
+  color: #79c0ff
   font-weight: bold
 
+// Diff inserted
 .codehilite .gi
-  color: #4ec9b0
+  color: #7ee787
+  background-color: #04260f
 
+// Generic output
 .codehilite .go
-  color: #808080
+  color: #8b949e
 
+// Generic prompt
 .codehilite .gp
-  color: #6a9955
+  color: #8b949e
+  font-weight: bold
 
+// Generic strong
 .codehilite .gs
   font-weight: bold
 
+// Generic subheading
 .codehilite .gu
-  color: #569cd6
+  color: #79c0ff
   font-weight: bold
 
+// Generic traceback
 .codehilite .gt
-  color: #f44747
+  color: #f85149
 
+// Keyword variants (constant, declaration, namespace, pseudo, reserved)
 .codehilite .kc, .codehilite .kd, .codehilite .kn, .codehilite .kp, .codehilite .kr
-  color: #569cd6
-  font-weight: bold
+  color: #ff7b72
 
+// Keyword type
 .codehilite .kt
-  color: #4ec9b0
+  color: #ffa657
 
+// Numbers (generic, float, hex, integer, octal)
 .codehilite .m, .codehilite .mf, .codehilite .mh, .codehilite .mi, .codehilite .mo
-  color: #b5cea8
+  color: #79c0ff
 
+// Strings (all variants)
 .codehilite .s, .codehilite .sa, .codehilite .sb, .codehilite .sc, .codehilite .dl, .codehilite .sd, .codehilite .s2, .codehilite .se, .codehilite .sh, .codehilite .si, .codehilite .sx, .codehilite .sr, .codehilite .s1, .codehilite .ss
-  color: #ce9178
+  color: #a5d6ff
 
+// Name attribute
 .codehilite .na
-  color: #9cdcfe
+  color: #7ee787
 
+// Name builtin
 .codehilite .nb
-  color: #dcdcaa
+  color: #79c0ff
 
+// Name class
 .codehilite .nc
-  color: #4ec9b0
+  color: #ffa657
   font-weight: bold
 
+// Name constant
 .codehilite .no
-  color: #4fc1ff
+  color: #79c0ff
 
+// Name decorator
 .codehilite .nd
-  color: #dcdcaa
+  color: #d2a8ff
 
+// Name entity
 .codehilite .ni
-  color: #d4d4d4
+  color: #e6edf3
   font-weight: bold
 
+// Name exception
 .codehilite .ne
-  color: #4ec9b0
+  color: #ffa657
 
+// Name function
 .codehilite .nf
-  color: #dcdcaa
+  color: #d2a8ff
 
+// Name label
 .codehilite .nl
-  color: #9cdcfe
+  color: #79c0ff
 
+// Name namespace
 .codehilite .nn
-  color: #4ec9b0
+  color: #ffa657
 
+// Name tag
 .codehilite .nt
-  color: #569cd6
+  color: #7ee787
 
+// Name variable variants
 .codehilite .nv, .codehilite .vm, .codehilite .vc, .codehilite .vg, .codehilite .vi
-  color: #9cdcfe
+  color: #ffa657
 
+// Operator word
 .codehilite .ow
-  color: #c586c0
+  color: #ff7b72
   font-weight: bold
 
+// Whitespace
 .codehilite .w
-  color: #d4d4d4
+  color: #e6edf3
 
+// Punctuation
 .codehilite .p
-  color: #d4d4d4
+  color: #e6edf3
+
+// Python specific: self, True, False, None
+.codehilite .bp
+  color: #79c0ff
+
+// Python magic methods
+.codehilite .fm
+  color: #d2a8ff
+
+// Number binary/long
+.codehilite .mb, .codehilite .il
+  color: #79c0ff
 
 // Fenced code blocks without highlighting (ASCII diagrams, plain text)
 .tutorial-body pre:not(.codehilite pre)
-  background: #1e1e1e
-  color: #d4d4d4
+  background: #0d1117
+  color: #e6edf3
   white-space: pre  // Preserve whitespace exactly for ASCII art
-  font-family: 'Monaco', 'Consolas', 'Courier New', monospace
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace
   font-size: 0.85rem
-  line-height: 1.4
+  line-height: 1.45
+  border: 1px solid #30363d
+  border-radius: 6px
 
   code
     background: transparent
