@@ -255,8 +255,6 @@ function setupFilters() {
         window.filteredOutBenchmarks.add(cb.value);
       }
     });
-
-    console.log('Excluded benchmarks after initialization:', [...window.filteredOutBenchmarks]);
   }, 20);
 }
 
