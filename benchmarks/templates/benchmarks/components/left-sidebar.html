@@ -11,19 +11,16 @@
     <img src="{% static "/benchmarks/img/b-w_logo.png" %}" alt="Brain-Score Logo">
 </a>
 
-{% url 'leaderboard' as leaderboard_url %}
 <a class="{% if 'leaderboard' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/leaderboard">
     <img class="menu-icon" src="{% static "benchmarks/img/leaderboard_icon.png" %}" alt="Leaderboard Icon">
     <span>Leaderboard</span>
 </a>
 
-{% url 'explore' as explore_url %}
 <a class="{% if request.path == '/'|add:domain|add:'/explore/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/explore">
     <img class="menu-icon" src="{% static "benchmarks/img/total_benchmarks_icon.png" %}" alt="Explore Icon">
     <span>Explore</span>
 </a>
 
-{% url 'compare' as compare_url %}
 <a class="{% if request.path == '/'|add:domain|add:'/compare/' %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/{{ domain }}/compare">
     <img class="menu-icon" src="{% static "benchmarks/img/compare_icon.png" %}" alt="Compare Icon">
     <span>Compare</span>
@@ -55,7 +52,6 @@
     </div>
 </div>
 
-{% url 'profile' as profile_url %}
 <a class="{% if 'profile' in request.path %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/profile/{{ domain }}">
     <img class="menu-icon" src="{% static "/benchmarks/img/profile_icon.png" %}" alt="Profile Icon">
     <span>Profile</span>
@@ -80,7 +76,7 @@
     <span>FAQ</span>
 </a>
 
-{% url 'comp2024' as comp2024_url %}
+{% url 'competition2024' as comp2024_url %}
 <a class="{% if request.path == comp2024_url %}selected{% endif %}" href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/competition2024">
     <img class="menu-icon" src="{% static "/benchmarks/img/competition.png" %}" alt="Comp 24Icon">
     <span>Competition 2024</span>
