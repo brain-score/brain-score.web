@@ -865,16 +865,12 @@ def trigger_leaderboard_refresh():
     """
     try:
         env = os.getenv("CACHE_ENV", "") 
-        print(f"----------{env}")
         database = "prod" if env == "production" else "dev"
         auth = get_secret("jenkins_url")
         jenkins_url = auth["url"]
-        print(f"----------{jenkins_url}")
         auth = get_secret("cache_refresh_url")
         refresh_url = auth["url"]
-        print(f"----------{refresh_url}")
         request_url = f"{jenkins_url}{refresh_url}{database}"
-        print(f"----------{request_url}")
         auth = get_secret("brainscore-website_jenkins_access_aws")
         auth = (auth['user'], auth['password'])
         _logger.debug(f"Triggering leaderboard refresh: {request_url}")
