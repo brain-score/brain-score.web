@@ -426,12 +426,17 @@ function applyWaybackTimestampFilter(rowData) {
         const scoreVersion = row[key].version;
         const benchmarkTypeId = extractBenchmarkTypeId(key);
 
-        // Check version first (if version timeline is available)
-        if (hasVersionTimeline && benchmarkTypeId) {
+        // Parent benchmarks (version = 0) are calculated aggregates, not actual benchmark instances.
+        // They don't exist in the version timeline, so skip version checking for them.
+        // Only apply timestamp filtering to parent benchmarks.
+        const isParentBenchmark = scoreVersion === 0;
+
+        // Check version first (if version timeline is available and not a parent benchmark)
+        if (hasVersionTimeline && benchmarkTypeId && !isParentBenchmark) {
           const activeVersion = activeVersions[benchmarkTypeId];
 
           if (activeVersion === undefined) {
-            // Benchmark didn't exist at wayback time (no version was active)
+            // Leaf benchmark didn't exist at wayback time (no version was active)
             newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
             return; // Skip further checks for this score
           }
@@ -443,7 +448,7 @@ function applyWaybackTimestampFilter(rowData) {
           }
         }
 
-        // Then check timestamp (existing logic)
+        // Then check timestamp (applies to both parent and leaf benchmarks)
         if (!ts) {
           newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
         } else {
