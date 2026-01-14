@@ -58,6 +58,14 @@ function initializeLeaderboardFromTemplate() {
     window.benchmarkMetricMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkMetricMetaMap);
     window.benchmarkBibtexMap = JSON.parse(window.DJANGO_DATA.benchmark_bibtex_map);
 
+    // Parse version timeline for wayback machine (version-aware filtering)
+    try {
+      window.versionTimeline = JSON.parse(window.DJANGO_DATA.version_timeline || '[]');
+    } catch (e) {
+      console.warn('Failed to parse version timeline:', e);
+      window.versionTimeline = [];
+    }
+
     // Set up range sliders with correct max values
     const ranges = filterOptions || {};
     if (ranges.parameter_ranges?.max) {
