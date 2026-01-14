@@ -360,6 +360,42 @@ function isColumnHiddenByWaybackFiltering(benchmarkId) {
   return false;
 }
 
+/**
+ * Extract benchmark_type_id from a versioned identifier
+ * e.g., "MajajHong2015.V4-pls_v4" -> "MajajHong2015.V4-pls"
+ */
+function extractBenchmarkTypeId(columnKey) {
+  if (!columnKey || typeof columnKey !== 'string') return null;
+  return columnKey.replace(/_v\d+$/, '');
+}
+
+/**
+ * Get which benchmark versions were active at a given timestamp.
+ * Uses the version timeline data loaded from the server.
+ * @param {Date} targetDate - The wayback date
+ * @returns {Object} Map of benchmark_type_id -> active version number
+ */
+function getActiveVersionsAtDate(targetDate) {
+  const activeVersions = {};
+
+  if (!window.versionTimeline || !Array.isArray(window.versionTimeline)) {
+    return activeVersions;
+  }
+
+  const targetTime = targetDate.getTime();
+
+  window.versionTimeline.forEach(entry => {
+    const validFrom = entry.valid_from ? new Date(entry.valid_from).getTime() : 0;
+    const validTo = entry.valid_to ? new Date(entry.valid_to).getTime() : Infinity;
+
+    if (validFrom <= targetTime && targetTime < validTo) {
+      activeVersions[entry.benchmark_type_id] = entry.version;
+    }
+  });
+
+  return activeVersions;
+}
+
 function applyWaybackTimestampFilter(rowData) {
   // Check if wayback timestamp filters are set and not at full range
   const minTimestamp = window.activeFilters?.min_wayback_timestamp;
@@ -376,13 +412,38 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
+  // Get active versions at the wayback date (using max timestamp as the wayback point)
+  const waybackDate = new Date(maxTimestamp * 1000);
+  const activeVersions = getActiveVersionsAtDate(waybackDate);
+  const hasVersionTimeline = Object.keys(activeVersions).length > 0;
+
   const filteredWithValidModels = rowData.map(row => {
     const newRow = { ...row };
 
     Object.keys(row).forEach(key => {
       if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
         const ts = row[key].timestamp;
+        const scoreVersion = row[key].version;
+        const benchmarkTypeId = extractBenchmarkTypeId(key);
 
+        // Check version first (if version timeline is available)
+        if (hasVersionTimeline && benchmarkTypeId) {
+          const activeVersion = activeVersions[benchmarkTypeId];
+
+          if (activeVersion === undefined) {
+            // Benchmark didn't exist at wayback time (no version was active)
+            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            return; // Skip further checks for this score
+          }
+
+          if (scoreVersion !== undefined && scoreVersion !== activeVersion) {
+            // Score is from a different version than what was active
+            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            return; // Skip further checks for this score
+          }
+        }
+
+        // Then check timestamp (existing logic)
         if (!ts) {
           newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
         } else {
