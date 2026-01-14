@@ -1439,6 +1439,10 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_base_scores;
     REFRESH MATERIALIZED VIEW mv_base_scores_fixed_engineering;
 
+    -- Refresh version timeline for wayback machine
+    RAISE NOTICE 'Refreshing Version Timeline';
+    REFRESH MATERIALIZED VIEW mv_version_timeline;
+
     -- Only try to populate if we have data
     IF EXISTS (SELECT 1 FROM mv_benchmark_tree LIMIT 1) THEN
         RAISE NOTICE 'Performing Aggregation';
