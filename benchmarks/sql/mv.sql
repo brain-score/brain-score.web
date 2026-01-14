@@ -452,6 +452,54 @@ $$ LANGUAGE plpgsql STABLE;
 
 
 -- ********************************************************************************
+-- get_leaf_scores_for_wayback()
+-- Returns all leaf benchmark scores that were valid at a given timestamp.
+-- Filters scores to only those:
+--   1. Belonging to a benchmark version that was active at that time
+--   2. Created before the target timestamp
+-- ********************************************************************************
+DROP FUNCTION IF EXISTS get_leaf_scores_for_wayback(TIMESTAMP WITH TIME ZONE);
+CREATE OR REPLACE FUNCTION get_leaf_scores_for_wayback(
+  target_timestamp TIMESTAMP WITH TIME ZONE
+) RETURNS TABLE (
+  score_id INTEGER,
+  model_id INTEGER,
+  benchmark_type_id VARCHAR,
+  benchmark_id INTEGER,
+  version INTEGER,
+  score_raw FLOAT,
+  score_ceiled FLOAT,
+  error FLOAT,
+  comment TEXT,
+  end_timestamp TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    s.id AS score_id,
+    s.model_id,
+    bi.benchmark_type_id::VARCHAR,
+    bi.id AS benchmark_id,
+    bi.version,
+    s.score_raw::FLOAT,
+    s.score_ceiled::FLOAT,
+    s.error::FLOAT,
+    s.comment,
+    s.end_timestamp
+  FROM brainscore_score s
+  JOIN brainscore_benchmarkinstance bi ON s.benchmark_id = bi.id
+  JOIN mv_version_timeline vt ON bi.id = vt.instance_id
+  WHERE
+    -- Version was active at target time
+    vt.valid_from <= target_timestamp
+    AND (vt.valid_to > target_timestamp OR vt.valid_to IS NULL)
+    -- Score existed at target time
+    AND s.end_timestamp <= target_timestamp;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+
+-- ********************************************************************************
 -- STEP C: Aggregate Scores for all Benchmarks
 -- These aggregations steps create "final_agg_scores", a table (not MV).
 -- "populate_final_agg_scores()" calculates leaf and parent-level scores.
