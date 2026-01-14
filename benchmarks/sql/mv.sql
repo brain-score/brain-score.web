@@ -419,6 +419,39 @@ JOIN mv_final_benchmark_context fbt
 
 
 -- ********************************************************************************
+--
+--  WAYBACK MACHINE FUNCTIONS
+--
+-- ********************************************************************************
+
+-- ********************************************************************************
+-- get_benchmark_version_at_timestamp()
+-- Returns which benchmark version was "active" at a given timestamp.
+-- Used by the wayback machine to determine correct versions to display.
+-- ********************************************************************************
+DROP FUNCTION IF EXISTS get_benchmark_version_at_timestamp(TIMESTAMP WITH TIME ZONE);
+CREATE OR REPLACE FUNCTION get_benchmark_version_at_timestamp(
+  target_timestamp TIMESTAMP WITH TIME ZONE
+) RETURNS TABLE (
+  benchmark_type_id VARCHAR,
+  active_version INTEGER,
+  instance_id INTEGER
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    vt.benchmark_type_id::VARCHAR,
+    vt.version AS active_version,
+    vt.instance_id
+  FROM mv_version_timeline vt
+  WHERE
+    vt.valid_from <= target_timestamp
+    AND (vt.valid_to > target_timestamp OR vt.valid_to IS NULL);
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+
+-- ********************************************************************************
 -- STEP C: Aggregate Scores for all Benchmarks
 -- These aggregations steps create "final_agg_scores", a table (not MV).
 -- "populate_final_agg_scores()" calculates leaf and parent-level scores.
