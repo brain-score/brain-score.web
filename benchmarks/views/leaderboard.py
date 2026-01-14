@@ -334,13 +334,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 continue
 
             # Store only the score data - benchmark citation data moved to separate map
+            # Include version for wayback machine filtering
+            benchmark_data = score.get('benchmark', {})
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
                 'raw': score.get('score_raw'),
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp')
+                'timestamp': score.get('end_timestamp'),
+                'version': benchmark_data.get('version')
             }
         row_data.append(rd)
 
