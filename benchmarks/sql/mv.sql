@@ -90,6 +90,56 @@ FROM brainscore_benchmarkinstance bi
 GROUP BY bi.benchmark_type_id;
 
 -- ********************************************************************************
+-- STEP 3.1: Version Timeline for Wayback Machine
+-- "mv_version_timeline" tracks when each benchmark version was "active" based on
+-- the first score submitted for that version. This enables the wayback machine
+-- to show the correct benchmark version that was current at any historical date.
+--
+-- Logic:
+--   - valid_from = timestamp of first score for this version
+--   - valid_to = timestamp of first score for the NEXT version (or NULL if current)
+--   - is_current = true if this is the latest version (valid_to IS NULL)
+-- ********************************************************************************
+DROP MATERIALIZED VIEW IF EXISTS mv_version_timeline CASCADE;
+CREATE MATERIALIZED VIEW mv_version_timeline AS
+WITH version_first_score AS (
+  -- Find the earliest score timestamp for each benchmark version
+  SELECT
+    bi.id AS instance_id,
+    bi.benchmark_type_id,
+    bi.version,
+    MIN(s.end_timestamp) AS first_score_at
+  FROM brainscore_benchmarkinstance bi
+  LEFT JOIN brainscore_score s ON s.benchmark_id = bi.id
+  GROUP BY bi.id, bi.benchmark_type_id, bi.version
+),
+version_periods AS (
+  -- Calculate valid_from and valid_to using window function
+  SELECT
+    instance_id,
+    benchmark_type_id,
+    version,
+    first_score_at AS valid_from,
+    LEAD(first_score_at) OVER (
+      PARTITION BY benchmark_type_id
+      ORDER BY version
+    ) AS valid_to
+  FROM version_first_score
+)
+SELECT
+  instance_id,
+  benchmark_type_id,
+  version,
+  valid_from,
+  valid_to,
+  CASE WHEN valid_to IS NULL THEN true ELSE false END AS is_current
+FROM version_periods;
+
+-- Index for efficient lookups by benchmark and time range
+CREATE INDEX idx_version_timeline_lookup
+  ON mv_version_timeline(benchmark_type_id, valid_from, valid_to);
+
+-- ********************************************************************************
 -- STEP 4: Mark Each Benchmark as Leaf (has no children) or Parent
 -- "mv_leaf_status" is joined to distinguish leaf vs. parent.
 -- ********************************************************************************
