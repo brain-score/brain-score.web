@@ -125,6 +125,34 @@ def build_benchmark_bibtex_map(benchmarks):
     return bibtex_map
 
 
+def get_version_timeline_json():
+    """
+    Return version timeline data for client-side wayback filtering.
+    This data tells the frontend when each benchmark version was "active".
+    """
+    from django.db import connection
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT benchmark_type_id, version, valid_from, valid_to
+                FROM mv_version_timeline
+                ORDER BY benchmark_type_id, version
+            """)
+            return [
+                {
+                    'benchmark_type_id': row[0],
+                    'version': row[1],
+                    'valid_from': row[2].isoformat() if row[2] else None,
+                    'valid_to': row[3].isoformat() if row[3] else None
+                }
+                for row in cursor.fetchall()
+            ]
+    except Exception as e:
+        logger.warning(f"Failed to fetch version timeline: {e}")
+        return []
+
+
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
 def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False, is_profile_view=False):
     """
@@ -556,6 +584,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
         'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
         'model_metadata_map': context['model_metadata_map'],
+
+        # Version timeline for wayback machine (client-side filtering)
+        'version_timeline': json.dumps(get_version_timeline_json()),
 
         # Essential metadata
         'domain': context['domain'],
