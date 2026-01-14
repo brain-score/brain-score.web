@@ -607,6 +607,35 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     return minimal_context
 
 
+def wayback_snapshot_manifest(request, domain: str):
+    """
+    Serve the wayback snapshot manifest with proper caching headers.
+    Returns 404 if no snapshots are available.
+    """
+    from django.http import JsonResponse, Http404
+    from django.conf import settings
+    import os
+
+    manifest_path = os.path.join(
+        settings.BASE_DIR, 'static', 'benchmarks', 'snapshots', domain, 'manifest.json'
+    )
+
+    if not os.path.exists(manifest_path):
+        raise Http404("No snapshots available for this domain")
+
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+
+        response = JsonResponse(manifest)
+        # Cache for 1 hour - manifest may be updated when new snapshots are generated
+        response['Cache-Control'] = 'public, max-age=3600'
+        return response
+    except Exception as e:
+        logger.error(f"Error reading snapshot manifest: {e}")
+        raise Http404("Error reading snapshot manifest")
+
+
 def ag_grid_leaderboard_shell(request, domain: str):
     """
     Lightweight shell view that loads immediately with just the app structure

@@ -1,0 +1,19 @@
+{
+  "domain": "vision",
+  "generated_at": "2026-01-14T14:33:27.652445",
+  "snapshot_count": 2,
+  "snapshots": [
+    {
+      "date": "2024-01-01",
+      "filename": "2024-01-01.json",
+      "size": 8926182,
+      "compressed": false
+    },
+    {
+      "date": "2024-01-01",
+      "filename": "2024-01-01.json.gz",
+      "size": 3528658,
+      "compressed": true
+    }
+  ]
+}

@@ -104,6 +104,8 @@ for domain in supported_domains:
              name=f'{domain}-leaderboard'),
         path(f'{domain}/leaderboard/content/', partial(leaderboard.ag_grid_leaderboard_content, domain=domain),
              name=f'{domain}-leaderboard-content'),
+        path(f'{domain}/leaderboard/snapshots/manifest.json', partial(leaderboard.wayback_snapshot_manifest, domain=domain),
+             name=f'{domain}-snapshot-manifest'),
         path(f'profile/{domain}/', user.Profile.as_view(domain=domain), name=f'{domain}-information'),
         path(f'profile/{domain}/submit/', user.Upload.as_view(domain=domain), name=f'{domain}-submit'),
         path(f'profile/<str:domain>/resubmit/', partial(user.resubmit, domain=domain), name=f'resubmit'),

@@ -484,7 +484,7 @@ BEGIN
     s.score_raw::FLOAT,
     s.score_ceiled::FLOAT,
     s.error::FLOAT,
-    s.comment,
+    s.comment::TEXT,
     s.end_timestamp
   FROM brainscore_score s
   JOIN brainscore_benchmarkinstance bi ON s.benchmark_id = bi.id
