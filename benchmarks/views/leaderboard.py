@@ -340,7 +340,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp')
+                'timestamp': score.get('end_timestamp'),
+                # Wayback machine: version timeline data
+                'version_valid_from': score.get('version_valid_from'),
+                'version_valid_to': score.get('version_valid_to'),
+                'historical_versions': score.get('historical_versions')
             }
         row_data.append(rd)
 
