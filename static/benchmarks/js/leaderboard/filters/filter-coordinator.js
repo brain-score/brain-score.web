@@ -507,10 +507,21 @@ function applyGlobalScoreModelRemoval(rowData) {
     return rowData; // No wayback filtering active, don't remove any models
   }
 
-  const originalCount = rowData.length;
+  const waybackMs = maxTimestamp * 1000;
 
-  // Filter out models where average_vision_v0 is 'X'
+  // Filter out models that:
+  // 1. Were submitted after the wayback date (model didn't exist yet)
+  // 2. Have average_vision_v0 as 'X' (no valid scores at wayback date)
   const filteredData = rowData.filter(row => {
+    // Check if model was submitted after wayback date
+    if (row.submission_timestamp) {
+      const submissionTime = new Date(row.submission_timestamp).getTime();
+      if (submissionTime > waybackMs) {
+        return false; // Model didn't exist at wayback date
+      }
+    }
+
+    // Check if global score is X (no valid scores)
     const globalScore = row.average_vision_v0?.value;
     return globalScore !== 'X';
   });
