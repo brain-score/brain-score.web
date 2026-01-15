@@ -90,6 +90,49 @@ FROM brainscore_benchmarkinstance bi
 GROUP BY bi.benchmark_type_id;
 
 -- ********************************************************************************
+-- STEP 3.5: Version Timeline for Wayback Machine
+-- "mv_version_timeline" tracks when each benchmark version was "active"
+-- by inferring from the first score submission for each version.
+-- Used by wayback functionality to determine which version was current at any date.
+-- ********************************************************************************
+DROP MATERIALIZED VIEW IF EXISTS mv_version_timeline CASCADE;
+CREATE MATERIALIZED VIEW mv_version_timeline AS
+WITH version_first_score AS (
+  -- Find the earliest score timestamp for each benchmark version
+  SELECT
+    bi.id AS instance_id,
+    bi.benchmark_type_id,
+    bi.version,
+    MIN(s.end_timestamp) AS first_score_at
+  FROM brainscore_benchmarkinstance bi
+  LEFT JOIN brainscore_score s ON s.benchmark_id = bi.id
+  GROUP BY bi.id, bi.benchmark_type_id, bi.version
+),
+version_periods AS (
+  -- Calculate valid_from and valid_to using window function
+  -- valid_from = when this version first received a score
+  -- valid_to = when the next version first received a score (NULL if current)
+  SELECT
+    instance_id,
+    benchmark_type_id,
+    version,
+    first_score_at AS valid_from,
+    LEAD(first_score_at) OVER (
+      PARTITION BY benchmark_type_id
+      ORDER BY version
+    ) AS valid_to
+  FROM version_first_score
+)
+SELECT
+  instance_id,
+  benchmark_type_id,
+  version,
+  valid_from,
+  valid_to,
+  CASE WHEN valid_to IS NULL THEN true ELSE false END AS is_current
+FROM version_periods;
+
+-- ********************************************************************************
 -- STEP 4: Mark Each Benchmark as Leaf (has no children) or Parent
 -- "mv_leaf_status" is joined to distinguish leaf vs. parent.
 -- ********************************************************************************
@@ -984,13 +1027,22 @@ WITH score_with_value AS (
             WHEN ms.is_leaf THEN b.score_raw
             ELSE ms.score_raw
         END AS score_raw_value,
-        to_jsonb(bm) AS meta
+        to_jsonb(bm) AS meta,
+        -- Version timeline data for wayback machine
+        vt.valid_from AS version_valid_from,
+        vt.valid_to AS version_valid_to,
+        vt.is_current AS version_is_current
     FROM mv_model_scores_enriched ms
     LEFT JOIN mv_base_scores_fixed_engineering b
            ON b.benchmark_id = ms.benchmark_id
           AND b.model_id     = ms.model_id
     LEFT JOIN brainscore_benchmarkmeta bm
            ON bm.id = ms.meta_id
+    -- Join version timeline for leaf benchmarks (parents don't have versions)
+    LEFT JOIN mv_version_timeline vt
+           ON vt.benchmark_type_id = ms.benchmark_identifier
+          AND vt.version = ms.version
+          AND ms.is_leaf = TRUE
     -- SUGGESTION: This isn't necessary however is a catch if we have overlapping identifiers between domains.
     WHERE ms.benchmark_domain = ms.model_domain
 ),
@@ -1049,11 +1101,41 @@ score_json AS (
                 'median', median_score,
                 'best', best_score,
                 'rank', benchmark_rank,
-                'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END
+                'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END,
+                -- Wayback machine: version timeline data
+                'version_valid_from', version_valid_from,
+                'version_valid_to', version_valid_to,
+                'version_is_current', version_is_current,
+                -- Wayback machine: historical versions (scores from older benchmark versions)
+                'historical_versions', (
+                    SELECT jsonb_object_agg(
+                        hv.version::text,
+                        jsonb_build_object(
+                            'value', CASE
+                                WHEN swv.root_parent ILIKE '%engineering%' THEN hs.score_raw
+                                ELSE hs.score_ceiled
+                            END,
+                            'score_raw', hs.score_raw,
+                            'timestamp', hs.end_timestamp,
+                            'version', hv.version,
+                            'version_valid_from', hvt.valid_from,
+                            'version_valid_to', hvt.valid_to
+                        )
+                    )
+                    FROM brainscore_benchmarkinstance hv
+                    JOIN brainscore_score hs
+                        ON hs.benchmark_id = hv.id
+                        AND hs.model_id = swv.model_id
+                    JOIN mv_version_timeline hvt
+                        ON hvt.instance_id = hv.id
+                    WHERE hv.benchmark_type_id = swv.benchmark_identifier
+                        AND hv.version < swv.version
+                        AND swv.is_leaf = TRUE
+                )
             )
             ORDER BY overall_order
         ) AS scores
-    FROM score_with_value
+    FROM score_with_value swv
     GROUP BY model_id
 )
 SELECT
@@ -1300,6 +1382,7 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_benchmark_tree;
     REFRESH MATERIALIZED VIEW mv_benchmark_children;
     REFRESH MATERIALIZED VIEW mv_latest_benchmark_instance;
+    REFRESH MATERIALIZED VIEW mv_version_timeline;
     REFRESH MATERIALIZED VIEW mv_leaf_status;
     REFRESH MATERIALIZED VIEW mv_final_benchmark_context;
 
