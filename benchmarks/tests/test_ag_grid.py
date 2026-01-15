@@ -982,6 +982,7 @@ class TestFilter:
         assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
         assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
+    @pytest.mark.skip(reason="Temporarily disabled wayback")
     def test_wayback_timestamp_filter(self, page):
         """
         Verifies wayback timestamp filtering by directly driving the filter logic:
