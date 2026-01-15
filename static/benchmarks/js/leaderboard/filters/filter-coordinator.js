@@ -376,23 +376,94 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
+  // Convert maxTimestamp (Unix seconds) to milliseconds for Date comparison
+  const waybackMs = maxTimestamp * 1000;
+
   const filteredWithValidModels = rowData.map(row => {
     const newRow = { ...row };
 
     Object.keys(row).forEach(key => {
-      if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
-        const ts = row[key].timestamp;
+      const scoreObj = row[key];
+      if (!scoreObj || typeof scoreObj !== "object" || scoreObj.value === undefined) {
+        return;
+      }
 
-        if (!ts) {
-          newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
-        } else {
+      // Step 1: Determine which version was active at wayback date
+      let activeVersionData = null;
+
+      // Check if this score has version timeline data (leaf benchmarks only)
+      if (scoreObj.version_valid_from !== undefined && scoreObj.version_valid_from !== null) {
+        const validFrom = new Date(scoreObj.version_valid_from).getTime();
+        const validTo = scoreObj.version_valid_to
+          ? new Date(scoreObj.version_valid_to).getTime()
+          : Infinity;
+
+        if (waybackMs >= validFrom && waybackMs < validTo) {
+          // Current version was active at wayback date
+          activeVersionData = scoreObj;
+        } else if (scoreObj.historical_versions) {
+          // Search historical versions for the one active at wayback date
+          for (const [ver, data] of Object.entries(scoreObj.historical_versions)) {
+            if (data.version_valid_from) {
+              const hvFrom = new Date(data.version_valid_from).getTime();
+              const hvTo = data.version_valid_to
+                ? new Date(data.version_valid_to).getTime()
+                : Infinity;
+
+              if (waybackMs >= hvFrom && waybackMs < hvTo) {
+                activeVersionData = data;
+                break;
+              }
+            }
+          }
+        }
+
+        // Step 2: Swap data or mark as X based on version availability
+        if (!activeVersionData) {
+          // No version existed at this wayback date
+          newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+          return;
+        }
+
+        // If we found a historical version, swap in its data
+        if (activeVersionData !== scoreObj) {
+          newRow[key] = {
+            ...scoreObj,
+            value: activeVersionData.value,
+            score_raw: activeVersionData.score_raw,
+            timestamp: activeVersionData.timestamp,
+            // Keep original benchmark metadata but use historical score data
+          };
+        }
+
+        // Step 3: Check if the score existed at wayback date (timestamp filter)
+        const ts = newRow[key].timestamp;
+        if (ts) {
           try {
-            const scoreTime = new Date(ts).getTime() / 1000; // Convert ISO string to Unix timestamp
-            if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
-              newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            const scoreTime = new Date(ts).getTime();
+            if (scoreTime > waybackMs) {
+              // Score was submitted after wayback date
+              newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
             }
           } catch (error) {
-            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
+          }
+        }
+      } else {
+        // Parent benchmarks (no version timeline) - use original timestamp filtering
+        const ts = scoreObj.timestamp;
+
+        if (!ts) {
+          // Parent benchmarks without timestamps are re-aggregated, leave as-is
+          // They will be recomputed by updateFilteredScores()
+        } else {
+          try {
+            const scoreTime = new Date(ts).getTime() / 1000;
+            if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
+              newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+            }
+          } catch (error) {
+            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
           }
         }
       }
