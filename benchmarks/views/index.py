@@ -231,7 +231,9 @@ def filter_and_rank_models(models, domain: str = "vision"):
     for model in models:
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                versioned_id = score.get("versioned_benchmark_identifier", "")
+                # Strip version suffix to get benchmark_type_id (e.g., "average_vision_v0" -> "average_vision")
+                benchmark_id = versioned_id.rsplit("_v", 1)[0] if "_v" in versioned_id else versioned_id
                 if benchmark_id == f"average_{domain}":
                     val = score.get("score_ceiled")
                     if val is None or val == "":
@@ -337,8 +339,9 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
         # Process all scores for this model
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score["benchmark"]["benchmark_type_id"]
                 versioned_benchmark_id = score["versioned_benchmark_identifier"]
+                # Strip version suffix to get benchmark_type_id
+                benchmark_id = versioned_benchmark_id.rsplit("_v", 1)[0] if "_v" in versioned_benchmark_id else versioned_benchmark_id
                 # Add to scores dataframe if it's a relevant benchmark
                 if benchmark_id in benchmark_names:
                     record[benchmark_id] = score["score_ceiled"]
@@ -415,7 +418,9 @@ def build_model_benchmark_frames(
 
         if model.scores:
             for score in model.scores:
-                benchmark_id = (score.get("benchmark") or {}).get("benchmark_type_id")
+                versioned_id = score.get("versioned_benchmark_identifier", "")
+                # Strip version suffix to get benchmark_type_id
+                benchmark_id = versioned_id.rsplit("_v", 1)[0] if "_v" in versioned_id else versioned_id
                 if benchmark_id not in leaf_benchmark_set:
                     continue
 

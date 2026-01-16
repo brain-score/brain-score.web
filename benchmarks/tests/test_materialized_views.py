@@ -208,9 +208,9 @@ class TestMaterializedViews(BaseTestCase):
             "Score ceiled mismatch between new and legacy implementation"
         )
 
-        # Compare benchmark identifier
+        # Compare benchmark identifier (use versioned_benchmark_identifier since benchmark object is now minimal)
         self.assertEqual(
-            new_score['benchmark']['identifier'],
+            new_score['versioned_benchmark_identifier'],
             legacy_score.benchmark.identifier,
             "Benchmark identifier mismatch between new and legacy implementation"
         )

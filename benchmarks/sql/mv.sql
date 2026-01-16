@@ -1056,27 +1056,11 @@ score_json AS (
         model_id,
         jsonb_agg(
             jsonb_build_object(
+                -- Minimal benchmark object to reduce payload size (~80% reduction)
+                -- Full benchmark metadata available in mv_final_benchmark_context
                 'benchmark', jsonb_build_object(
-                    'id',                benchmark_id,
                     'benchmark_type_id', benchmark_identifier,
-                    'version',           version,
-                    'ceiling',           ceiling,
-                    'ceiling_error',     ceiling_error,
-                    'meta_id',           meta_id,
-                    'children',          children,
-                    'parent',            parent,
-                    'root_parent',       root_parent,
-                    'depth',             depth,
-                    'number_of_all_children', number_of_all_children,
-                    'overall_order',     overall_order,
-                    'identifier',        benchmark_identifier || '_v' || version,
-                    'short_name',        short_name,
-                    'author',            benchmark_author,
-                    'year',              benchmark_year,
-                    'url',               benchmark_url,
-                    'reference_identifier', benchmark_reference_identifier,
-                    'bibtex',            benchmark_bibtex,
-                    'meta',              meta
+                    'identifier',        benchmark_identifier || '_v' || version
                 ),
                 'versioned_benchmark_identifier', benchmark_identifier || '_v' || version,
                 'score_raw', score_raw_value,
