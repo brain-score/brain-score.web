@@ -24,8 +24,8 @@ static_directory = Path(__file__).parent.parent.parent / 'static' / 'benchmarks'
 def sample_benchmark_images(request):
     # import locally. When the regular website is run, these dependencies will not be installed.
     from PIL import Image
-    from brainio.assemblies import NeuroidAssembly
-    from brainio.stimuli import StimulusSet
+    from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
+    from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
     from brainscore_vision import load_benchmark
     from brainscore_vision.model_interface import BrainModel
 
