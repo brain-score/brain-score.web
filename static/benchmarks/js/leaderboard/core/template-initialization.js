@@ -126,8 +126,8 @@ function initializeLeaderboardFromTemplate() {
         }
       }
     }
-    // Initialize wayback timestamp filter if datetime_range data is available
-    if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
+    // Initialize wayback timestamp filter if datetime_range data is available and feature is enabled
+    if (window.LeaderboardConstants?.ENABLE_WAYBACK_SLIDER && ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
       const waybackSection = document.getElementById('waybackTimestampSection');
       const waybackSliderContainer = document.querySelector('#waybackTimestampFilter .slider-container');
       const waybackDateMin = document.getElementById('waybackDateMin');

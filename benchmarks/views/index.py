@@ -35,24 +35,24 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
-def get_datetime_range(models):
-    """Extract min and max timestamps from model scores."""
-    timestamps = []
-    for model in models:
-        for score in (model.scores or []):
-            ts = score.get("end_timestamp")
-            if ts:
-                try:
-                    timestamps.append(datetime.fromisoformat(ts))
-                except (ValueError, TypeError) as e:
-                    _logger.debug(f"Invalid timestamp format: {ts}, error: {e}")
-                    continue
-    if timestamps:
-        return {
-            "min": min(timestamps).isoformat(),
-            "max": max(timestamps).isoformat(),
-        }
-    return None
+def get_datetime_range(models=None, domain="vision"):
+    """
+    Return the datetime range for the Wayback slider without iterating through all models.
+    - min: Hardcoded to the earliest score timestamp (Aug 27, 2020)
+    - max: Today's date (scores are always in the past)
+    """
+    from datetime import timezone
+    
+    # Earliest score timestamp in the database (fixed, never changes)
+    min_date = datetime(2020, 8, 27, tzinfo=timezone.utc)
+    
+    # Max is always today (scores can't be in the future)
+    max_date = datetime.now(timezone.utc)
+    
+    return {
+        "min": min_date.isoformat(),
+        "max": max_date.isoformat(),
+    }
 
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
