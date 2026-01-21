@@ -227,7 +227,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'submitter': model.submitter.get('display_name') if model.submitter else None
             },
             'public': model.public,
-            'is_owner': is_owner
+            'is_owner': is_owner,
+            # Submission timestamp for wayback filtering (exclude models that didn't exist yet)
+            'submission_timestamp': model.timestamp.isoformat() if model.timestamp else None
         }
 
         # Process model metadata if available
@@ -340,7 +342,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'error': score.get('error'),
                 'color': score.get('color'),
                 'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp')
+                'timestamp': score.get('end_timestamp'),
+                # Wayback machine: version timeline data
+                'version_valid_from': score.get('version_valid_from'),
+                'version_valid_to': score.get('version_valid_to'),
+                'historical_versions': score.get('historical_versions')
             }
         row_data.append(rd)
 

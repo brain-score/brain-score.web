@@ -175,9 +175,9 @@ class BenchmarkInstance(models.Model):
     ceiling = models.FloatField(default=0, null=True)
     ceiling_error = models.FloatField(null=True)
     meta = models.ForeignKey(BenchmarkMeta, null=True, on_delete=models.PROTECT)
-    stimuli_meta = models.OneToOneField(BenchmarkStimuliMeta, null=True, on_delete=models.CASCADE)
-    data_meta = models.OneToOneField(BenchmarkDataMeta, null=True, on_delete=models.CASCADE)
-    metric_meta = models.OneToOneField(BenchmarkMetricMeta, null=True, on_delete=models.CASCADE)
+    stimuli_meta = models.ForeignKey(BenchmarkStimuliMeta, null=True, on_delete=models.SET_NULL)
+    data_meta = models.ForeignKey(BenchmarkDataMeta, null=True, on_delete=models.SET_NULL)
+    metric_meta = models.ForeignKey(BenchmarkMetricMeta, null=True, on_delete=models.SET_NULL)
 
     def __repr__(self):
         return generic_repr(self)

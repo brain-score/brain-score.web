@@ -130,24 +130,30 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
     
     if (isWaybackActive && timestampFilteredData.length > 0) {
-      // Collect all benchmark IDs from the data
-      const allBenchmarkIds = new Set();
+      // Collect all LEAF benchmark IDs from the data (only leaves have version_valid_from)
+      // Parent benchmarks should NOT be added to waybackHiddenBenchmarks because they
+      // haven't been re-aggregated yet at this point
+      const allLeafBenchmarkIds = new Set();
       timestampFilteredData.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' &&
               row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
-            allBenchmarkIds.add(key);
+            // Only include LEAF benchmarks (those with version_valid_from)
+            // Parent benchmarks don't have version timeline data
+            if (row[key].version_valid_from !== undefined && row[key].version_valid_from !== null) {
+              allLeafBenchmarkIds.add(key);
+            }
           }
         });
       });
-      
-      // Check which benchmarks have all X values that were SET BY wayback filtering
+
+      // Check which LEAF benchmarks have all X values that were SET BY wayback filtering
       // (not originally X values from model failures)
       // Compare against filteredData (input to wayback filtering) to see what wayback changed
       // This distinguishes between:
       // 1. X values set by wayback filtering (should hide column and exclude from aggregation)
       // 2. X values that were originally X (should NOT hide column, treat as 0 in aggregation)
-      allBenchmarkIds.forEach(benchmarkId => {
+      allLeafBenchmarkIds.forEach(benchmarkId => {
         let hasAnyValues = false;
         let xCount = 0;
         let nonXCount = 0;
@@ -376,23 +382,104 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
+  // Convert maxTimestamp (Unix seconds) to milliseconds for Date comparison
+  const waybackMs = maxTimestamp * 1000;
+
   const filteredWithValidModels = rowData.map(row => {
     const newRow = { ...row };
 
     Object.keys(row).forEach(key => {
-      if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
-        const ts = row[key].timestamp;
+      const scoreObj = row[key];
+      if (!scoreObj || typeof scoreObj !== "object" || scoreObj.value === undefined) {
+        return;
+      }
+
+      // Step 1: Determine which version was active at wayback date
+      let activeVersionData = null;
+
+      // Check if this score has version timeline data (leaf benchmarks only)
+      if (scoreObj.version_valid_from !== undefined && scoreObj.version_valid_from !== null) {
+        const validFrom = new Date(scoreObj.version_valid_from).getTime();
+        const validTo = scoreObj.version_valid_to
+          ? new Date(scoreObj.version_valid_to).getTime()
+          : Infinity;
+
+        if (waybackMs >= validFrom && waybackMs < validTo) {
+          // Current version was active at wayback date
+          activeVersionData = scoreObj;
+        } else if (scoreObj.historical_versions) {
+          // Search historical versions for the one active at wayback date
+          for (const [ver, data] of Object.entries(scoreObj.historical_versions)) {
+            if (data.version_valid_from) {
+              const hvFrom = new Date(data.version_valid_from).getTime();
+              const hvTo = data.version_valid_to
+                ? new Date(data.version_valid_to).getTime()
+                : Infinity;
+
+              if (waybackMs >= hvFrom && waybackMs < hvTo) {
+                activeVersionData = data;
+                break;
+              }
+            }
+          }
+        }
+
+        // Step 2: Swap data or mark as X based on version availability
+        if (!activeVersionData) {
+          // No version existed at this wayback date
+          newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+          return;
+        }
+
+        // If we found a historical version, swap in its data
+        if (activeVersionData !== scoreObj) {
+          // Check if the historical version actually has score data
+          if (activeVersionData.value === null || activeVersionData.value === undefined) {
+            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+            return;
+          }
+
+          newRow[key] = {
+            ...scoreObj,
+            value: activeVersionData.value,
+            score_raw: activeVersionData.score_raw,
+            timestamp: activeVersionData.timestamp,
+            // Keep original benchmark metadata but use historical score data
+          };
+        }
+
+        // Step 3: Check if the score existed at wayback date (timestamp filter)
+        // Only apply timestamp filtering to CURRENT version scores
+        // Historical versions are already validated by their version_valid_from/to range
+        if (activeVersionData === scoreObj) {
+          const ts = newRow[key].timestamp;
+          if (ts) {
+            try {
+              const scoreTime = new Date(ts).getTime();
+              if (scoreTime > waybackMs) {
+                // Score was submitted after wayback date
+                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
+              }
+            } catch (error) {
+              newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
+            }
+          }
+        }
+      } else {
+        // Parent benchmarks (no version timeline) - use original timestamp filtering
+        const ts = scoreObj.timestamp;
 
         if (!ts) {
-          newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+          // Parent benchmarks without timestamps are re-aggregated, leave as-is
+          // They will be recomputed by updateFilteredScores()
         } else {
           try {
-            const scoreTime = new Date(ts).getTime() / 1000; // Convert ISO string to Unix timestamp
+            const scoreTime = new Date(ts).getTime() / 1000;
             if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
-              newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+              newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
             }
           } catch (error) {
-            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
           }
         }
       }
@@ -420,10 +507,21 @@ function applyGlobalScoreModelRemoval(rowData) {
     return rowData; // No wayback filtering active, don't remove any models
   }
 
-  const originalCount = rowData.length;
+  const waybackMs = maxTimestamp * 1000;
 
-  // Filter out models where average_vision_v0 is 'X'
+  // Filter out models that:
+  // 1. Were submitted after the wayback date (model didn't exist yet)
+  // 2. Have average_vision_v0 as 'X' (no valid scores at wayback date)
   const filteredData = rowData.filter(row => {
+    // Check if model was submitted after wayback date
+    if (row.submission_timestamp) {
+      const submissionTime = new Date(row.submission_timestamp).getTime();
+      if (submissionTime > waybackMs) {
+        return false; // Model didn't exist at wayback date
+      }
+    }
+
+    // Check if global score is X (no valid scores)
     const globalScore = row.average_vision_v0?.value;
     return globalScore !== 'X';
   });
