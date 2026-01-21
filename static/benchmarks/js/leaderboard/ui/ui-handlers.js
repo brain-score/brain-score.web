@@ -6,7 +6,6 @@ function setupUIHandlers(panel, container, advancedFilterBtn, layoutToggleBtn) {
   // Advanced filters panel toggle
   if (advancedFilterBtn && panel) {
     advancedFilterBtn.addEventListener('click', function() {
-      console.log('Advanced filters button clicked');
       const textWrapper = advancedFilterBtn.querySelector('.text-wrapper');
       if (panel.classList.contains('hidden')) {
         panel.classList.remove('hidden');
