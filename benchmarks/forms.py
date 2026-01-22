@@ -1,9 +1,41 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.forms.widgets import CheckboxInput
+from django.utils.safestring import mark_safe
 
 User = get_user_model()
+
+
+class ToggleSwitchWidget(CheckboxInput):
+    def render(self, name: str, value, attrs=None, renderer=None) -> str:  # noqa: ARG002
+        checked = value if value is not None else False
+        aria_pressed = "true" if checked else "false"
+        checkbox_checked = "checked" if checked else ""
+
+        initial_label = "Public" if checked else "Private"
+        label_color = "#45C676" if checked else "#6b7280"
+
+        return mark_safe(f'''
+            <div class="toggle-wrapper">
+                <input type="checkbox" name="{name}" id="id_{name}"
+                       {checkbox_checked} style="display: none;">
+                <button type="button" class="toggle-switch"
+                        aria-pressed="{aria_pressed}"
+                        onclick="var cb = document.getElementById('id_{name}');
+                                 var label = document.getElementById('id_{name}_label');
+                                 var pressed = this.getAttribute('aria-pressed') === 'true';
+                                 this.setAttribute('aria-pressed', !pressed);
+                                 cb.checked = !pressed;
+                                 label.textContent = !pressed ? 'Public' : 'Private';
+                                 label.style.color = !pressed ? '#45C676' : '#6b7280';">
+                    <span class="knob"></span>
+                </button>
+                <span id="id_{name}_label" style="font-family: 'Open Sans', sans-serif; font-size: 13px; font-weight: 200; color: {label_color};">
+                    {initial_label}
+                </span>
+            </div>
+        ''')
 
 
 class SignupForm(UserCreationForm):
@@ -37,9 +69,14 @@ class UploadPlaceHolder(forms.Form):
 
 class UploadFileForm(forms.Form):
     zip_file = forms.FileField(label="", help_text='Required')
-    public = forms.BooleanField(label='Make model scores public (can be changed later):', required=False,
-                                help_text='Check if you want the results of your submitted models included in the '
-                                          'public ranking.')
+    public = forms.BooleanField(
+        label='Model Score Visibility (modifiable):',
+        required=False,
+        initial=True,
+        widget=ToggleSwitchWidget(),
+        help_text='Toggle if you want the results of your submitted models included in the '
+                  'public ranking.',
+    )
 
     class Meta:
         model = UploadPlaceHolder
