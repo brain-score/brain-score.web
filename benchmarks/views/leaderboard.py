@@ -134,6 +134,14 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     # Get the base context (with user context via decorator)
     context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
 
+    # DEBUG: Check how many models we got
+    models = context.get('models', [])
+    logger.warning(f"DEBUG get_ag_grid_context: got {len(models)} models from get_context")
+    if models:
+        logger.warning(f"DEBUG get_ag_grid_context: first model has {len(models[0].scores) if hasattr(models[0], 'scores') and models[0].scores else 0} scores")
+        if hasattr(models[0], 'scores') and models[0].scores and len(models[0].scores) > 0:
+            logger.warning(f"DEBUG get_ag_grid_context: first score keys: {list(models[0].scores[0].keys())}")
+
     # Extract model metadata for filters
     model_metadata = {
         'architectures': set(),

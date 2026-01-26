@@ -83,9 +83,10 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
 
     # Build model query based on user permissions
-    # Necessary to wrap query in function to allow caching of query results. 
+    # Necessary to wrap query in function to allow caching of query results.
     # For now, it is disabled. Provided minimal performance gains.
     all_model_data = get_base_model_query(domain)
+    _logger.warning(f"DEBUG get_context: get_base_model_query returned {all_model_data.count()} models")
 
     if user is None:
         # Public view - only show public models
@@ -107,6 +108,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)
+    _logger.warning(f"DEBUG get_context: after permission filters, got {len(models)} models")
 
     # Apply any additional model filters
     if model_filter:
@@ -114,7 +116,9 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
+    _logger.warning(f"DEBUG get_context: before filter_and_rank_models, got {len(models)} models")
     model_rows_reranked = filter_and_rank_models(models, domain)
+    _logger.warning(f"DEBUG get_context: after filter_and_rank_models, got {len(model_rows_reranked)} models")
 
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
@@ -231,7 +235,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
     for model in models:
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                benchmark_id = score.get("benchmark_type_id")
                 if benchmark_id == f"average_{domain}":
                     val = score.get("score_ceiled")
                     if val is None or val == "":
@@ -337,7 +341,7 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
         # Process all scores for this model
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score["benchmark"]["benchmark_type_id"]
+                benchmark_id = score["benchmark_type_id"]
                 versioned_benchmark_id = score["versioned_benchmark_identifier"]
                 # Add to scores dataframe if it's a relevant benchmark
                 if benchmark_id in benchmark_names:
