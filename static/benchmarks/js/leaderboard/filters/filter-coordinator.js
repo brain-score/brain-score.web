@@ -223,6 +223,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   // Recalculate colors for all benchmarks AFTER models are removed
   // This ensures colors reflect the correct min/max ranges from the final filtered dataset
   // Models with the same score will have the same color because min/max is calculated from the same dataset
+  // BUT: Skip benchmarks that have blue colors from advanced filtering (excluded children)
   if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
     // Check if wayback filtering is actually active
     const minTimestamp = window.activeFilters?.min_wayback_timestamp;
@@ -231,23 +232,61 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     const fullRangeMin = ranges?.min_unix;
     const fullRangeMax = ranges?.max_unix;
     const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
-    
+
     if (isWaybackActive) {
       // Build hierarchy map if not already cached
       if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
         window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
       }
       const hierarchyMap = window.cachedHierarchyMap || new Map();
-      
+
+      // Identify benchmarks with blue colors from advanced filtering
+      // These are parent benchmarks with excluded children - we should NOT overwrite their blue colors
+      const benchmarksWithBlueColors = new Set();
+      const excludedBenchmarks = window.filteredOutBenchmarks || new Set();
+
+      if (excludedBenchmarks.size > 0) {
+        // Get all benchmark IDs for hierarchy traversal
+        const allBenchmarkIds = Array.from(hierarchyMap.keys());
+
+        // Find benchmarks with excluded children (these have blue colors from updateFilteredScores)
+        allBenchmarkIds.forEach(benchmarkId => {
+          const children = hierarchyMap.get(benchmarkId) || [];
+          if (children.length > 0) {
+            const hasExcludedChildren = children.some(childId => excludedBenchmarks.has(childId));
+            if (hasExcludedChildren) {
+              benchmarksWithBlueColors.add(benchmarkId);
+
+              // Also mark all ancestors as having blue colors
+              function markAncestorsBlue(targetId) {
+                allBenchmarkIds.forEach(parentId => {
+                  const parentChildren = hierarchyMap.get(parentId) || [];
+                  if (parentChildren.includes(targetId)) {
+                    benchmarksWithBlueColors.add(parentId);
+                    markAncestorsBlue(parentId);
+                  }
+                });
+              }
+              markAncestorsBlue(benchmarkId);
+            }
+          }
+        });
+
+        // Also mark average_vision_v0 if neural or behavior categories are affected
+        if (benchmarksWithBlueColors.has('neural_vision_v0') || benchmarksWithBlueColors.has('behavior_vision_v0')) {
+          benchmarksWithBlueColors.add('average_vision_v0');
+        }
+      }
+
       // Cache root parent lookups to avoid repeated hierarchy traversal
       if (!window.rootParentCache || window.rootParentCache.size === 0) {
         window.rootParentCache = new Map();
-        
+
         // Get all benchmark IDs
         const allBenchmarkIds = new Set();
         finalData.forEach(row => {
           Object.keys(row).forEach(key => {
-            if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+            if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' &&
                 row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
               allBenchmarkIds.add(key);
             }
@@ -255,7 +294,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
         });
         // Also include average_vision_v0
         allBenchmarkIds.add('average_vision_v0');
-        
+
         // Build reverse lookup map (child -> parent) for efficient traversal
         const childToParentMap = new Map();
         for (const [parentId, children] of hierarchyMap.entries()) {
@@ -263,18 +302,18 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
             childToParentMap.set(childId, parentId);
           });
         }
-        
+
         // Find root parent for each benchmark
         allBenchmarkIds.forEach(benchmarkId => {
           let rootParent = null;
           let currentId = benchmarkId;
           const visited = new Set();
-          
+
           // Traverse up the hierarchy using reverse lookup map
           while (currentId && !visited.has(currentId)) {
             visited.add(currentId);
             const parentId = childToParentMap.get(currentId);
-            
+
             if (!parentId) {
               // This is a root
               rootParent = currentId;
@@ -282,7 +321,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
             }
             currentId = parentId;
           }
-          
+
           // Fallback: if we couldn't determine root parent, infer from benchmarkId
           if (!rootParent) {
             const checkId = benchmarkId.toLowerCase();
@@ -292,30 +331,35 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
               rootParent = 'neural_vision_v0';
             }
           }
-          
+
           window.rootParentCache.set(benchmarkId, rootParent);
         });
       }
-      
+
       // Get all unique benchmark IDs from the final filtered row data
       const benchmarkIds = new Set();
       finalData.forEach(row => {
         Object.keys(row).forEach(key => {
           // Skip non-benchmark fields
-          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' &&
               row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
             benchmarkIds.add(key);
           }
         });
       });
-      
+
       // Recalculate colors for each benchmark using the final filtered dataset
+      // BUT: Skip benchmarks that have blue colors from advanced filtering
       benchmarkIds.forEach(benchmarkId => {
-        window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap, window.rootParentCache);
+        if (!benchmarksWithBlueColors.has(benchmarkId)) {
+          window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap, window.rootParentCache);
+        }
       });
-      
-      // Also recalculate color for average_vision_v0
-      window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, 'average_vision_v0', hierarchyMap, window.rootParentCache);
+
+      // Also recalculate color for average_vision_v0 (unless it has blue color)
+      if (!benchmarksWithBlueColors.has('average_vision_v0')) {
+        window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, 'average_vision_v0', hierarchyMap, window.rootParentCache);
+      }
     } else {
       // Wayback filtering not active, clear root parent cache to free memory
       window.rootParentCache = null;
