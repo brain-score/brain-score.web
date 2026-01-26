@@ -345,7 +345,7 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
 
                 model_data.update({
                     f"{versioned_benchmark_id}-score": score['score_ceiled'],
-                    f"{versioned_benchmark_id}-error": score['error'],
+                    f"{versioned_benchmark_id}-error": score.get('error', None),
                     f"{versioned_benchmark_id}-is_complete": score['is_complete']
                 })
 

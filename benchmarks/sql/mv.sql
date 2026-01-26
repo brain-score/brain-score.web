@@ -1027,28 +1027,19 @@ score_json AS (
                     'meta',              meta
                 ),
                 'versioned_benchmark_identifier', benchmark_identifier || '_v' || version,
-                'score_raw', score_raw_value,
-                'score_ceiled_raw', score_ceiled_value,
                 'score_ceiled',
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
                     WHEN score_ceiled_value >= 1
                         THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
-                                    , 'FM0.0')                               -- always “#.0”
+                                    , 'FM0.0')                               -- always "#.0"
                     -- FM0.000 determines the formatting of text
                     WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
                     ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
                   END,
                 'error', error,
-                'comment', comment,
-                'start_timestamp', start_timestamp,
                 'end_timestamp', end_timestamp,
-                'visual_degrees', visual_degrees,
-                'color', color,
-                'median', median_score,
-                'best', best_score,
-                'rank', benchmark_rank,
                 'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END
             )
             ORDER BY overall_order
