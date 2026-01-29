@@ -28,7 +28,7 @@ class TestSort:
         Verify that the rank column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [1, 2, 2, 2, 5]]
+        scores_expected = [str(x) for x in [1, 2, 3, 4, 4]]
         assert scores_actual == scores_expected
 
     def test_model_descending(self, page):
@@ -53,7 +53,7 @@ class TestSort:
         Verify that the average_vision_v0 column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [0.47, 0.45, 0.45, 0.45, 0.44]]
+        scores_expected = [str(x) for x in [0.46, 0.45, 0.43, 0.43, 0.43]]
         assert scores_actual == scores_expected
 
     @pytest.mark.skip(reason="Sorting tests are flaky on EC2; revisit later")
@@ -309,37 +309,37 @@ class TestFilter:
         [
             (
                     ["neural_vision_v0", "Baker2022_v0"],
-                    [2, 2, 13, 1, 5],
+                    [2, 4, 1, 4, 15],
                     [
+                        "vit_large_patch14_clip_224:openai_ft_in1k",
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
-                        "convnext_xlarge:fb_in22k_ft_in1k",
-                        "convnext_xxlarge:clip_laion2b_soup_ft_in1k",
                         "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
-                        "vit_large_patch14_clip_224:openai_ft_in1k"
+                        "convnext_xlarge:fb_in22k_ft_in1k",
+                        "convnext_xxlarge:clip_laion2b_soup_ft_in1k"
                     ],
-                    ["0.58", "0.55", "0.55", "0.55", "0.53"]
+                    ["0.58", "0.58", "0.55", "0.55", "0.55"]
             ),
             (
                     ["V1_v0", "V2_v0", "IT_v0"],
-                    [2, 2, 5, 13, 5],
+                    [2, 4, 3, 4, 19],
                     [
-                        "convnext_xlarge:fb_in22k_ft_in1k",
-                        "vit_large_patch14_clip_224:laion2b_ft_in1k",
                         "vit_large_patch14_clip_224:openai_ft_in1k",
-                        "resnext101_32x48d_wsl",
-                        "vit_base_patch16_clip_224:openai_ft_in1k"
+                        "convnext_xlarge:fb_in22k_ft_in1k",
+                        "convnext_large:fb_in22k_ft_in1k",
+                        "vit_large_patch14_clip_224:laion2b_ft_in1k",
+                        "resnext101_32x48d_wsl"
                     ],
-                    ["0.50", "0.48", "0.48", "0.48", "0.47"]
+                    ["0.49", "0.48", "0.47", "0.47", "0.46"]
             ),
             (
                     ["neural_vision_v0", "behavior_vision_v0"],
-                    [1, 2, 2, 2, 5],
+                    [1, 2, 3, 4, 4],
                     [
                         "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+                        "vit_large_patch14_clip_224:openai_ft_in1k",
+                        "convnext_large:fb_in22k_ft_in1k",
                         "convnext_xlarge:fb_in22k_ft_in1k",
-                        "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
-                        "vit_large_patch14_clip_224:laion2b_ft_in1k",
-                        "vit_base_patch16_clip_224:openai_ft_in1k"
+                        "vit_base_patch16_clip_224:openai_ft_in12k_in1k"
                     ],
                     ["X", "X", "X", "X", "X"]
             ),
@@ -462,15 +462,15 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [105, 131, 131, 131, 131]
+        expected_ranks = [131, 131, 131, 131, 131]
         expected_models = [
-            "ReAlnet10_cornet",
             "ReAlnet01_cornet",
-            "ReAlnet02_cornet",
-            "ReAlnet03_cornet",
-            "ReAlnet04_cornet"
+            "ReAlnet05_cornet",
+            "ReAlnet07_cornet",
+            "ReAlnet08_cornet",
+            "ReAlnet09_cornet"
         ]
-        expected_scores = ["0.31", "0.30", "0.30", "0.30", "0.30"]
+        expected_scores = ["0.29", "0.29", "0.29", "0.29", "0.29"]
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -512,15 +512,15 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [20, 26, 37, 40, 40]
+        expected_ranks = [12, 25, 40, 40, 49]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
             "resnet50_robust_l2_eps1",
             "resnet50_tutorial",
-            "resnet_50_v2"
+            "resnet50-sup"
         ]
-        expected_scores = ['0.40', '0.39', '0.38', '0.37', '0.37']
+        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.35']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -572,15 +572,15 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [8, 13, 20, 26, 37]
+        expected_ranks = [8, 12, 15, 25, 40]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
-            "convnext_tiny_imagenet_full_seed-0",
             "resnet50-VITO-8deg-cc",
+            "convnext_tiny_imagenet_full_seed-0",
             "convnext_tiny:in12k_ft_in1k",
-            "resnet50_robust_l2_eps1"
+            "Res2Net50_26w_4s"
         ]
-        expected_scores = ['0.43', '0.41', '0.40', '0.39', '0.38']
+        expected_scores = ['0.41', '0.41', '0.40', '0.38', '0.36']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -632,15 +632,15 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_model_size') == 100
         assert page.evaluate('() => window.activeFilters.max_model_size') == 1000
 
-        expected_ranks = [1, 2, 5, 5, 8]
+        expected_ranks = [1, 3, 4, 4, 8]
         expected_models = [
             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
+            "convnext_large:fb_in22k_ft_in1k",
             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
             "vit_base_patch16_clip_224:openai_ft_in1k",
-            "vit_relpos_base_patch16_clsgap_224:sw_in1k",
-            "convnext_large:fb_in22k_ft_in1k"
+            "swin_small_patch4_window7_224:ms_in22k_ft_in1k"
         ]
-        expected_scores = ['0.47', '0.45', '0.44', '0.44', '0.43']
+        expected_scores = ['0.46', '0.43', '0.43', '0.43', '0.41']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -1193,7 +1193,7 @@ class TestExtraFunctionality:
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
         # Replace these with actual expected values
-        expected_ranks = [280, 357, 423, 452, 456]
+        expected_ranks = [294, 374, 441, 474, 477]
         expected_models = [
             "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",
