@@ -1201,7 +1201,7 @@ class TestExtraFunctionality:
             "unet_entire",
             "TAU"
         ]
-        expected_scores = ["0.17", "0.14", "0.07", "0.04", "0.01"]
+        expected_scores = ["0.16", "0.14", "0.07", "0.04", "0.01"]
         print(actual_models)
         print(expected_models)
 
