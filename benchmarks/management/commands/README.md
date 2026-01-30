@@ -35,7 +35,7 @@ python manage.py profile_leaderboard vision --top 20 --output my_profile.txt
 
 ```
 === ENVIRONMENT CHECK ===
-Database Host: brain-score-dev.c8x9y2z3a4b5.us-east-1.rds.amazonaws.com
+Database Host: ***.***.us-east-1.rds.amazonaws.com
 Cache Backend: django.core.cache.backends.locmem.LocMemCache
 ✓ Using local memory cache (dev environment)
 
@@ -128,7 +128,7 @@ python manage.py audit_payload language
 
 ```
 === ENVIRONMENT CHECK ===
-Database Host: brain-score-dev.c8x9y2z3a4b5.us-east-1.rds.amazonaws.com
+Database Host: ***.***.us-east-1.rds.amazonaws.com
 Cache Backend: django.core.cache.backends.locmem.LocMemCache
 ✓ Using local memory cache (dev environment)
 
