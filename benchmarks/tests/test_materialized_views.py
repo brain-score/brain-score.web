@@ -210,7 +210,7 @@ class TestMaterializedViews(BaseTestCase):
 
         # Compare benchmark identifier
         self.assertEqual(
-            new_score['benchmark']['identifier'],
+            new_score['versioned_benchmark_identifier'],
             legacy_score.benchmark.identifier,
             "Benchmark identifier mismatch between new and legacy implementation"
         )
