@@ -196,9 +196,55 @@ function recalculateColorsForBenchmark(rowData, benchmarkId, hierarchyMap, rootP
   });
 }
 
+/**
+ * Compute min/max values for all benchmarks
+ * Called once when data loads, cached for performance
+ *
+ * @param {Array} rowData - Array of model row data
+ * @param {Array} columnDefs - Column definitions from grid
+ * @returns {Object} Map of benchmarkId -> {min, max}
+ */
+function computeBenchmarkMinMax(rowData, columnDefs) {
+  const benchmarkStats = {};
+
+  // Get all benchmark column IDs (exclude rank, model, etc.)
+  const benchmarkIds = columnDefs
+    .filter(col => col.field !== 'rank' && col.field !== 'model' && col.field !== 'runnable_status' && col.field !== 'filtered_score' && col.field !== 'public_toggle')
+    .map(col => col.field);
+
+  benchmarkIds.forEach(benchmarkId => {
+    const values = [];
+
+    rowData.forEach(row => {
+      const scoreData = row[benchmarkId];
+      if (scoreData && scoreData.value !== 'X' && scoreData.value !== null) {
+        const numValue = typeof scoreData.value === 'string'
+          ? parseFloat(scoreData.value)
+          : scoreData.value;
+
+        if (!isNaN(numValue)) {
+          values.push(numValue);
+        }
+      }
+    });
+
+    if (values.length > 0) {
+      benchmarkStats[benchmarkId] = {
+        min: Math.min(...values),
+        max: Math.max(...values)
+      };
+    } else {
+      benchmarkStats[benchmarkId] = { min: 0, max: 1 };
+    }
+  });
+
+  return benchmarkStats;
+}
+
 // Export functions
 window.LeaderboardColorUtils = {
   calculateRepresentativeColor,
-  recalculateColorsForBenchmark
+  recalculateColorsForBenchmark,
+  computeBenchmarkMinMax
 };
 

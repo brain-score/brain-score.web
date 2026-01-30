@@ -57,13 +57,21 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     console.warn('No row data provided - creating empty grid');
     rowData = [];
   }
-  
+
   if (!columnDefs || columnDefs.length === 0) {
     console.warn('No column definitions provided - creating basic columns');
     columnDefs = [
       { headerName: 'Model', field: 'model', width: 200 },
       { headerName: 'No Data', field: 'no_data', width: 200 }
     ];
+  }
+
+  // Compute benchmark min/max stats for client-side color computation
+  if (window.LeaderboardColorUtils?.computeBenchmarkMinMax) {
+    window.benchmarkStats = window.LeaderboardColorUtils.computeBenchmarkMinMax(rowData, columnDefs);
+  } else {
+    console.warn('LeaderboardColorUtils.computeBenchmarkMinMax not available - colors may not display correctly');
+    window.benchmarkStats = {};
   }
 
   columnDefs.forEach(col => {

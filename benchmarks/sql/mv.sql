@@ -1004,51 +1004,21 @@ score_json AS (
         model_id,
         jsonb_agg(
             jsonb_build_object(
-                'benchmark', jsonb_build_object(
-                    'id',                benchmark_id,
-                    'benchmark_type_id', benchmark_identifier,
-                    'version',           version,
-                    'ceiling',           ceiling,
-                    'ceiling_error',     ceiling_error,
-                    'meta_id',           meta_id,
-                    'children',          children,
-                    'parent',            parent,
-                    'root_parent',       root_parent,
-                    'depth',             depth,
-                    'number_of_all_children', number_of_all_children,
-                    'overall_order',     overall_order,
-                    'identifier',        benchmark_identifier || '_v' || version,
-                    'short_name',        short_name,
-                    'author',            benchmark_author,
-                    'year',              benchmark_year,
-                    'url',               benchmark_url,
-                    'reference_identifier', benchmark_reference_identifier,
-                    'bibtex',            benchmark_bibtex,
-                    'meta',              meta
-                ),
+                'benchmark_type_id', benchmark_identifier,
                 'versioned_benchmark_identifier', benchmark_identifier || '_v' || version,
-                'score_raw', score_raw_value,
-                'score_ceiled_raw', score_ceiled_value,
                 'score_ceiled',
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
                     WHEN score_ceiled_value >= 1
                         THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
-                                    , 'FM0.0')                               -- always “#.0”
-                    -- FM0.000 determines the formatting of text
-                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
-                    ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
+                                    , 'FM0.0')                               -- always "#.0"
+                    -- Round to 2 decimal places for consistent display (0.415 → 0.42, not 0.41)
+                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(ROUND(score_ceiled_value::numeric, 2), 'FM0.00'))
+                    ELSE TO_CHAR(ROUND(score_ceiled_value::numeric, 2), 'FM0.00')
                   END,
                 'error', error,
-                'comment', comment,
-                'start_timestamp', start_timestamp,
                 'end_timestamp', end_timestamp,
-                'visual_degrees', visual_degrees,
-                'color', color,
-                'median', median_score,
-                'best', best_score,
-                'rank', benchmark_rank,
                 'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END
             )
             ORDER BY overall_order
