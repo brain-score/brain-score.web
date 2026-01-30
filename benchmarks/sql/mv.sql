@@ -1013,9 +1013,9 @@ score_json AS (
                     WHEN score_ceiled_value >= 1
                         THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
                                     , 'FM0.0')                               -- always "#.0"
-                    -- FM0.000 determines the formatting of text
-                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
-                    ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
+                    -- Round to 2 decimal places for consistent display (0.415 → 0.42, not 0.41)
+                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(ROUND(score_ceiled_value::numeric, 2), 'FM0.00'))
+                    ELSE TO_CHAR(ROUND(score_ceiled_value::numeric, 2), 'FM0.00')
                   END,
                 'error', error,
                 'end_timestamp', end_timestamp,

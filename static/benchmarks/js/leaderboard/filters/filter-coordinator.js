@@ -818,7 +818,7 @@ function updateFilteredScores(rowData) {
           const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
           row[benchmarkId] = {
             ...row[benchmarkId],
-            value: parseFloat(average.toFixed(3))
+            value: parseFloat(average.toFixed(2))
           };
         }
       }
@@ -920,7 +920,7 @@ function updateFilteredScores(rowData) {
         const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
         row.average_vision_v0 = {
           ...row.average_vision_v0,
-          value: parseFloat(globalAverage.toFixed(3))
+          value: parseFloat(globalAverage.toFixed(2))
         };
         row._tempFilteredScore = globalAverage;
       } else {
@@ -1036,7 +1036,7 @@ function updateFilteredScores(rowData) {
       const color = `rgba(${red}, ${green}, ${baseBlue}, 0.6)`;
 
       row.filtered_score = {
-        value: parseFloat(mean.toFixed(3)),
+        value: parseFloat(mean.toFixed(2)),
         color: color
       };
     } else {

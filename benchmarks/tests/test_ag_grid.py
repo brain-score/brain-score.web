@@ -28,7 +28,7 @@ class TestSort:
         Verify that the rank column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [1, 2, 3, 4, 4]]
+        scores_expected = [str(x) for x in [1, 2, 3, 3, 5]]
         assert scores_actual == scores_expected
 
     def test_model_descending(self, page):
@@ -53,7 +53,7 @@ class TestSort:
         Verify that the average_vision_v0 column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [0.46, 0.45, 0.43, 0.43, 0.43]]
+        scores_expected = [str(x) for x in [0.46, 0.45, 0.44, 0.44, 0.44]]
         assert scores_actual == scores_expected
 
     @pytest.mark.skip(reason="Sorting tests are flaky on EC2; revisit later")
@@ -309,7 +309,7 @@ class TestFilter:
         [
             (
                     ["neural_vision_v0", "Baker2022_v0"],
-                    [2, 4, 1, 4, 15],
+                    [2, 5, 1, 3, 15],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
@@ -321,7 +321,7 @@ class TestFilter:
             ),
             (
                     ["V1_v0", "V2_v0", "IT_v0"],
-                    [2, 4, 3, 4, 19],
+                    [2, 3, 3, 5, 19],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "convnext_xlarge:fb_in22k_ft_in1k",
@@ -329,11 +329,11 @@ class TestFilter:
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
                         "resnext101_32x48d_wsl"
                     ],
-                    ["0.49", "0.48", "0.47", "0.47", "0.46"]
+                    ["0.49", "0.48", "0.47", "0.47", "0.47"]
             ),
             (
                     ["neural_vision_v0", "behavior_vision_v0"],
-                    [1, 2, 3, 4, 4],
+                    [1, 2, 3, 3, 5],
                     [
                         "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
                         "vit_large_patch14_clip_224:openai_ft_in1k",
@@ -462,13 +462,13 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [131, 131, 131, 131, 131]
+        expected_ranks = [134, 134, 134, 134, 134]
         expected_models = [
             "ReAlnet01_cornet",
+            "ReAlnet02_cornet",
             "ReAlnet05_cornet",
             "ReAlnet07_cornet",
-            "ReAlnet08_cornet",
-            "ReAlnet09_cornet"
+            "ReAlnet08_cornet"
         ]
         expected_scores = ["0.29", "0.29", "0.29", "0.29", "0.29"]
 
@@ -512,7 +512,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [12, 25, 40, 40, 49]
+        expected_ranks = [13, 25, 40, 40, 49]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
@@ -520,7 +520,7 @@ class TestFilter:
             "resnet50_tutorial",
             "resnet50-sup"
         ]
-        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.35']
+        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.34']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -572,7 +572,7 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [8, 12, 15, 25, 40]
+        expected_ranks = [8, 13, 15, 25, 40]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "resnet50-VITO-8deg-cc",
@@ -580,7 +580,7 @@ class TestFilter:
             "convnext_tiny:in12k_ft_in1k",
             "Res2Net50_26w_4s"
         ]
-        expected_scores = ['0.41', '0.41', '0.40', '0.38', '0.36']
+        expected_scores = ['0.42', '0.41', '0.40', '0.38', '0.35']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -632,15 +632,15 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_model_size') == 100
         assert page.evaluate('() => window.activeFilters.max_model_size') == 1000
 
-        expected_ranks = [1, 3, 4, 4, 8]
+        expected_ranks = [1, 3, 5, 5, 8]
         expected_models = [
             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
             "convnext_large:fb_in22k_ft_in1k",
             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
             "vit_base_patch16_clip_224:openai_ft_in1k",
-            "swin_small_patch4_window7_224:ms_in22k_ft_in1k"
+            "resnext101_32x8d_wsl"
         ]
-        expected_scores = ['0.46', '0.43', '0.43', '0.43', '0.41']
+        expected_scores = ['0.46', '0.44', '0.44', '0.43', '0.42']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -1193,15 +1193,15 @@ class TestExtraFunctionality:
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
         # Replace these with actual expected values
-        expected_ranks = [294, 374, 441, 474, 477]
+        expected_ranks = [293, 371, 441, 474, 477]
         expected_models = [
             "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",
             "bp_resnet50_julios",
             "unet_entire",
-            "TAU"
+            "ConvLSTM"
         ]
-        expected_scores = ["0.16", "0.14", "0.07", "0.04", "0.01"]
+        expected_scores = ["0.15", "0.14", "0.07", "0.04", "0.01"]
         print(actual_models)
         print(expected_models)
 
