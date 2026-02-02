@@ -53,21 +53,45 @@ ScoreCellRenderer.prototype.init = function(params) {
   const cellObj = params.data[field] || {};
 
   let display = 'X';
+  let bg = window.LeaderboardConstants.DEFAULT_CELL_BG;
+
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
     display = Number(cellObj.value).toFixed(2);
-  }
-  
-  let bg = window.LeaderboardConstants.DEFAULT_CELL_BG;
-  if (cellObj.color) {
-    const m = cellObj.color.match(/rgba?\([^)]*\)/);
-    if (m) {
-      const colorStr = m[0];
-      if (colorStr.startsWith('rgba(')) {
-        bg = colorStr.replace(/,\s*[\d.]+\)$/, `, ${window.LeaderboardConstants.CELL_ALPHA})`);
-      } else if (colorStr.startsWith('rgb(')) {
-        bg = colorStr.replace('rgb(', 'rgba(').replace(')', `, ${window.LeaderboardConstants.CELL_ALPHA})`);
-      } else {
-        bg = colorStr;
+
+    // Check if color is already set (e.g., blue from advanced filtering)
+    // If so, use that color instead of recalculating
+    if (cellObj.color) {
+      bg = cellObj.color;
+    } else {
+      // Compute color client-side using existing color-utils.js function
+      const benchmarkId = field;
+      const stats = window.benchmarkStats && window.benchmarkStats[benchmarkId];
+
+      if (stats && window.LeaderboardColorUtils?.calculateRepresentativeColor) {
+        // Get root parent for color palette selection (engineering vs. non-engineering)
+        const rootParent = params.colDef.context?.rootParent || null;
+
+        // Calculate color using existing function
+        const colorCss = window.LeaderboardColorUtils.calculateRepresentativeColor(
+          parseFloat(cellObj.value),
+          stats.min,
+          stats.max,
+          rootParent
+        );
+
+        // Extract rgba value from CSS string (format: "background-color: rgb(...); background-color: rgba(...);")
+        const rgbaMatch = colorCss.match(/rgba?\([^)]*\)/g);
+        if (rgbaMatch && rgbaMatch.length > 0) {
+          // Use the last match (rgba with alpha channel)
+          const colorStr = rgbaMatch[rgbaMatch.length - 1];
+          if (colorStr.startsWith('rgba(')) {
+            bg = colorStr.replace(/,\s*[\d.]+\)$/, `, ${window.LeaderboardConstants.CELL_ALPHA})`);
+          } else if (colorStr.startsWith('rgb(')) {
+            bg = colorStr.replace('rgb(', 'rgba(').replace(')', `, ${window.LeaderboardConstants.CELL_ALPHA})`);
+          } else {
+            bg = colorStr;
+          }
+        }
       }
     }
   }
@@ -136,11 +160,7 @@ PublicToggleCellRenderer.prototype.init = function(params) {
     
     const toggleButton = document.createElement('button');
     toggleButton.className = 'toggle-switch';
-    
-    // Debug logging
-    console.log('Public toggle - params.data.public:', params.data.public);
-    console.log('Public toggle - typeof:', typeof params.data.public);
-    
+
     const isPublic = params.data.public === true || params.data.public === 'true' || params.data.public === 1 || params.data.public === '1';
     toggleButton.setAttribute('aria-pressed', isPublic ? 'true' : 'false');
     toggleButton.title = isPublic ? 'Make private' : 'Make public';

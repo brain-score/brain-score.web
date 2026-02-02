@@ -7,12 +7,252 @@ from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
 from .leaderboard import get_ag_grid_context
-from ..models import FinalModelContext
+from ..models import FinalModelContext, BenchmarkMeta
 from time import time
 _logger = logging.getLogger(__name__)
 
 # Thread-local storage for benchmark lookup (used by template filters)
 _thread_locals = threading.local()
+
+# Precomputed color arrays matching JavaScript client-side logic
+REDGREEN_COLORS = [
+    '#ff0000', '#ff0000', '#ff0000', '#ff0000', '#fe0600', '#fe0600', '#fd0d01', '#fd0d01', '#fc1301', '#fb1901',
+    '#fb1901', '#fa1f02', '#f92502', '#f92502', '#f82b02', '#f73103', '#f73103', '#f63703', '#f53d03', '#f44204',
+    '#f44204', '#f44804', '#f34d04', '#f25305', '#f15805', '#f15805', '#f05e05', '#ef6306', '#ee6806', '#ed6e06',
+    '#ec7307', '#eb7807', '#ea7d07', '#e98208', '#e88708', '#e88708', '#e78c08', '#e69109', '#e69509', '#e59a09',
+    '#e49f0a', '#e3a30a', '#e2a80a', '#e1ac0a', '#e0b10b', '#dfb50b', '#deb90b', '#ddbe0c', '#dcc20c', '#dcc60c',
+    '#dbca0d', '#d9d20d', '#d8d60d', '#d4d70e', '#cfd60e', '#c9d50e', '#c4d40f', '#bed40f', '#b9d30f', '#b4d20f',
+    '#aed110', '#a4cf10', '#9fce10', '#9acd11', '#95cc11', '#90cc11', '#8bcb11', '#86ca12', '#7dc812', '#78c712',
+    '#74c613', '#6fc613', '#6ac513', '#66c413', '#5dc214', '#59c114', '#55c014', '#51c015', '#48be15', '#44bd15',
+    '#40bc16', '#3cbb16', '#38bb16', '#31b917', '#2db817', '#29b717', '#26b617', '#1eb518', '#1bb418', '#18b319',
+    '#18b21c', '#19b124', '#19b028', '#19af2b', '#19ad32', '#1aad36', '#1aac39', '#1aaa40', '#1aa943', '#1ba947',
+    '#1ba84a'
+]
+
+GRAY_COLORS = [
+    '#f2f2f2', '#f2f2f2', '#f2f2f2', '#f2f2f2', '#f0f0f0', '#f0f0f0', '#eeeeee', '#eeeeee', '#ededed', '#ebebeb',
+    '#ebebeb', '#e9e9e9', '#e7e7e7', '#e7e7e7', '#e6e6e6', '#e4e4e4', '#e4e4e4', '#e2e2e2', '#e0e0e0', '#dedede',
+    '#dedede', '#dddddd', '#dbdbdb', '#d9d9d9', '#d7d7d7', '#d7d7d7', '#d6d6d6', '#d4d4d4', '#d2d2d2', '#d0d0d0',
+    '#cecece', '#cdcdcd', '#cbcbcb', '#c9c9c9', '#c7c7c7', '#c7c7c7', '#c5c5c5', '#c4c4c4', '#c2c2c2', '#c0c0c0',
+    '#bebebe', '#bdbdbd', '#bbbbbb', '#b9b9b9', '#b7b7b7', '#b5b5b5', '#b4b4b4', '#b2b2b2', '#b0b0b0', '#aeaeae',
+    '#adadad', '#a9a9a9', '#a7a7a7', '#a5a5a5', '#a4a4a4', '#a2a2a2', '#a0a0a0', '#9e9e9e', '#9d9d9d', '#9b9b9b',
+    '#999999', '#959595', '#949494', '#929292', '#909090', '#8e8e8e', '#8d8d8d', '#8b8b8b', '#878787', '#858585',
+    '#848484', '#828282', '#808080', '#7e7e7e', '#7b7b7b', '#797979', '#777777', '#757575', '#727272', '#707070',
+    '#6e6e6e', '#6c6c6c', '#6b6b6b', '#676767', '#656565', '#646464', '#626262', '#5e5e5e', '#5c5c5c', '#5b5b5b',
+    '#595959', '#555555', '#545454', '#525252', '#4e4e4e', '#4c4c4c', '#4b4b4b', '#474747', '#454545', '#444444',
+    '#424242'
+]
+
+COLOR_NONE = '#e0e1e2'
+GAMMA = 0.5
+
+
+def enrich_model_scores_with_benchmarks(model, benchmarks):
+    """
+    Enrich model scores with full benchmark metadata.
+
+    After optimization, the materialized view only stores benchmark_type_id in scores.
+    This function adds back the full benchmark object with metadata for the model detail page.
+
+    Args:
+        model: Model object with scores
+        benchmarks: List of FinalBenchmarkContext objects from get_context
+    """
+    if not hasattr(model, 'scores') or not model.scores:
+        return
+
+    # Create benchmark lookup by benchmark_type_id
+    benchmark_lookup = {bench.benchmark_type_id: bench for bench in benchmarks}
+
+    # Query all BenchmarkMeta objects we'll need
+    meta_ids = [bench.meta_id for bench in benchmarks if bench.meta_id is not None]
+    meta_lookup = {}
+    if meta_ids:
+        metas = BenchmarkMeta.objects.filter(id__in=meta_ids)
+        meta_lookup = {meta.id: meta for meta in metas}
+
+    # Enrich each score with full benchmark object
+    for score in model.scores:
+        if not isinstance(score, dict):
+            continue
+
+        benchmark_type_id = score.get('benchmark_type_id')
+        if not benchmark_type_id or benchmark_type_id not in benchmark_lookup:
+            continue
+
+        bench = benchmark_lookup[benchmark_type_id]
+
+        # Create benchmark dict with all fields needed by template
+        benchmark_dict = {
+            'benchmark_type_id': bench.benchmark_type_id,
+            'identifier': bench.identifier,
+            'short_name': bench.short_name,
+            'version': bench.version,
+            'depth': bench.depth,
+            'parent': bench.parent,
+            'children': bench.children,
+            'root_parent': bench.root_parent,
+            'ceiling': bench.ceiling,
+            'ceiling_error': bench.ceiling_error,
+            'url': bench.benchmark_url,
+            'bibtex': bench.benchmark_bibtex,
+            'number_of_all_children': bench.number_of_all_children,
+        }
+
+        # Add meta if available
+        if bench.meta_id and bench.meta_id in meta_lookup:
+            meta = meta_lookup[bench.meta_id]
+            benchmark_dict['meta'] = {
+                'number_of_stimuli': meta.number_of_stimuli,
+                'number_of_recording_sites': meta.number_of_recording_sites,
+                'recording_sites': meta.recording_sites,
+                'behavioral_task': meta.behavioral_task,
+            }
+        else:
+            benchmark_dict['meta'] = None
+
+        # Add benchmark object to score
+        score['benchmark'] = benchmark_dict
+
+
+def compute_score_statistics(model, public_models):
+    """
+    Compute color, best, and median statistics for model scores.
+
+    These fields were removed from the materialized view during optimization
+    but are needed for the model detail page visualizations.
+
+    Replicates JavaScript client-side logic from color-utils.js
+
+    Args:
+        model: Model object with enriched scores
+        public_models: List of all public models to compute statistics against
+    """
+    if not hasattr(model, 'scores') or not model.scores:
+        return
+
+    # Collect scores by benchmark for computing best/median/min/max
+    benchmark_scores = {}
+    for other_model in public_models:
+        if not hasattr(other_model, 'scores') or not other_model.scores:
+            continue
+        for other_score in other_model.scores:
+            if not isinstance(other_score, dict):
+                continue
+            benchmark_id = other_score.get('benchmark_type_id')
+            if not benchmark_id:
+                continue
+            score_value = other_score.get('score_ceiled')
+            if score_value in ('', 'X', None):
+                continue
+            try:
+                score_float = float(score_value)
+                if benchmark_id not in benchmark_scores:
+                    benchmark_scores[benchmark_id] = []
+                benchmark_scores[benchmark_id].append(score_float)
+            except (ValueError, TypeError):
+                continue
+
+    # Compute statistics for each score
+    for score in model.scores:
+        if not isinstance(score, dict):
+            continue
+
+        benchmark_id = score.get('benchmark_type_id')
+        if not benchmark_id:
+            continue
+
+        score_value = score.get('score_ceiled')
+
+        # Compute color using same logic as JavaScript client-side
+        if score_value not in ('', 'X', None):
+            try:
+                score_float = float(score_value)
+                all_scores = benchmark_scores.get(benchmark_id, [])
+                if all_scores:
+                    min_score = min(all_scores)
+                    max_score = max(all_scores)
+
+                    # Determine if this is an engineering benchmark
+                    root_parent = score.get('benchmark', {}).get('root_parent', '')
+                    is_engineering = 'engineering' in root_parent.lower() if root_parent else False
+
+                    # Calculate color using JavaScript logic (returns rgba string)
+                    color_rgba = calculate_representative_color(
+                        score_float, min_score, max_score, is_engineering
+                    )
+                    score['color'] = f'background-color: {color_rgba}'
+                else:
+                    score['color'] = f'background-color: {COLOR_NONE}'
+            except (ValueError, TypeError):
+                score['color'] = f'background-color: {COLOR_NONE}'
+        else:
+            score['color'] = f'background-color: {COLOR_NONE}'
+
+        # Compute best and median from all public model scores
+        all_scores = benchmark_scores.get(benchmark_id, [])
+        if all_scores:
+            score['best'] = max(all_scores)
+            score['median'] = np.median(all_scores)
+        else:
+            score['best'] = 0
+            score['median'] = 0
+
+
+def calculate_representative_color(value, min_value, max_value, is_engineering):
+    """
+    Calculate representative color for a score value.
+    Replicates the JavaScript calculateRepresentativeColor function.
+
+    Args:
+        value: The score value
+        min_value: Minimum value in the distribution
+        max_value: Maximum value in the distribution
+        is_engineering: Whether this is an engineering benchmark (uses grayscale)
+
+    Returns:
+        CSS color string with RGBA (e.g., 'rgba(255, 0, 0, 0.85)')
+    """
+    # Normalize the input value between 0 and 1
+    if max_value - min_value == 0:
+        normalized_value = 0.5
+    else:
+        normalized_value = (value - min_value) / (max_value - min_value)
+    normalized_value = max(0.0, min(1.0, normalized_value))
+
+    # Apply gamma correction to emphasize differences at the top-end
+    normalized_value = normalized_value ** (1.0 / GAMMA)
+
+    # Scale down the normalized value (0.8 factor)
+    normalized_value = 0.8 * normalized_value
+    normalized_value = max(0.0, min(1.0, normalized_value))
+
+    # Get color array index (0-100)
+    idx = int(100 * normalized_value)
+    if idx > 100:
+        idx = 100
+
+    # Determine color palette based on benchmark type
+    color_hex = GRAY_COLORS[idx] if is_engineering else REDGREEN_COLORS[idx]
+
+    # Extract RGB values from hex color
+    r = int(color_hex[1:3], 16)
+    g = int(color_hex[3:5], 16)
+    b = int(color_hex[5:7], 16)
+
+    # Calculate alpha based on value position
+    # Linear interpolation: alpha ranges from 0.1 (at min) to 1.0 (at max)
+    if max_value - min_value == 0:
+        alpha = 1.0
+    else:
+        slope = -0.9 / (min_value - max_value)
+        intercept = 0.1 - slope * min_value
+        alpha = slope * value + intercept
+    alpha = max(0.0, min(1.0, alpha))
+
+    # Return RGBA color string
+    return f'rgba({r}, {g}, {b}, {alpha:.2f})'
+
 
 def view(request, id: int, domain: str):
     start_time = time()
@@ -68,24 +308,27 @@ def view(request, id: int, domain: str):
         if filtered_models:
             # Found in context, use this for complete data
             model = filtered_models[0]
-            
-            # Add per-benchmark ranking information using public models
-            try:
-                add_benchmark_rankings(model, {'models': public_models})
-            except ValueError:
-                pass
         else:
             # Not found in context, use the database object
             model = model_obj
-            
-            # If using the database object directly, still calculate rankings
-            if hasattr(model, 'scores') and model.scores:
-                try:
-                    # Add the current model to the public models temporarily for ranking
-                    ranking_context = {'models': public_models + [model]}
-                    add_benchmark_rankings(model, ranking_context)
-                except ValueError:
-                    pass
+
+        # Enrich scores with full benchmark metadata for model detail page
+        # (Materialized view optimization removed benchmark objects from scores)
+        enrich_model_scores_with_benchmarks(model, context['benchmarks'])
+
+        # Include current model in statistics calculation for consistency with leaderboard
+        # (Ensures min/max values match what's shown in leaderboard grid)
+        models_for_stats = public_models if model in public_models else public_models + [model]
+
+        # Compute statistics (color, best, median) for visualization
+        compute_score_statistics(model, models_for_stats)
+
+        # Add per-benchmark ranking information using public models
+        if hasattr(model, 'scores') and model.scores:
+            try:
+                add_benchmark_rankings(model, {'models': models_for_stats})
+            except ValueError:
+                pass
 
         # Build benchmark lookup map for template filters (keyed by versioned identifier)
         benchmark_lookup = {}

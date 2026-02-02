@@ -1056,37 +1056,25 @@ score_json AS (
         model_id,
         jsonb_agg(
             jsonb_build_object(
-                -- Minimal benchmark object to reduce payload size (~80% reduction)
-                -- Full benchmark metadata available in mv_final_benchmark_context
-                'benchmark', jsonb_build_object(
-                    'benchmark_type_id', benchmark_identifier,
-                    'identifier',        benchmark_identifier || '_v' || version
-                ),
+                -- Flat benchmark_type_id (optimized structure from master)
+                'benchmark_type_id', benchmark_identifier,
                 'versioned_benchmark_identifier', benchmark_identifier || '_v' || version,
-                'score_raw', score_raw_value,
-                'score_ceiled_raw', score_ceiled_value,
                 'score_ceiled',
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
                     WHEN score_ceiled_value >= 1
                         THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
-                                    , 'FM0.0')                               -- always “#.0”
-                    -- FM0.000 determines the formatting of text
-                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
-                    ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
+                                    , 'FM0.0')                               -- always "#.0"
+                    -- Store 3 decimal places for detail pages (compare, model card, benchmark)
+                    -- Leaderboard JS formats to 2 decimals at display time via toFixed(2)
+                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(ROUND(score_ceiled_value::numeric, 3), 'FM0.000'))
+                    ELSE TO_CHAR(ROUND(score_ceiled_value::numeric, 3), 'FM0.000')
                   END,
                 'error', error,
-                'comment', comment,
-                'start_timestamp', start_timestamp,
                 'end_timestamp', end_timestamp,
-                'visual_degrees', visual_degrees,
-                'color', color,
-                'median', median_score,
-                'best', best_score,
-                'rank', benchmark_rank,
                 'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END,
-                -- Wayback machine: version timeline data
+                -- Wayback machine: version timeline data (from wayback branch)
                 'version_valid_from', version_valid_from,
                 'version_valid_to', version_valid_to,
                 'version_is_current', version_is_current,

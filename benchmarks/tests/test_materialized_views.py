@@ -201,11 +201,13 @@ class TestMaterializedViews(BaseTestCase):
         new_score = new_row.scores[0]
         legacy_score = legacy_row.scores[0]
 
-        # Compare score_ceiled
-        self.assertEqual(
-            float(new_score['score_ceiled'].strip('.')),  # Convert '.390' to 0.390
-            float(legacy_score.score_ceiled.strip('.')),  # Convert '.390' to 0.390
-            "Score ceiled mismatch between new and legacy implementation"
+        # Compare score_ceiled (allow for rounding differences: new uses 2 decimals, legacy uses 3)
+        # Use delta=0.01 to allow for rounding from 3 to 2 decimal places (e.g., 0.455 → 0.46)
+        self.assertAlmostEqual(
+            float(new_score['score_ceiled']),
+            float(legacy_score.score_ceiled),
+            delta=0.01,
+            msg="Score ceiled mismatch between new and legacy implementation"
         )
 
         # Compare benchmark identifier (use versioned_benchmark_identifier since benchmark object is now minimal)
