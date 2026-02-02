@@ -306,7 +306,12 @@ SELECT
   fbc.version,
   fbc.overall_order,
   s.score_raw,
-  s.score_ceiled,
+  -- Cap score_ceiled between 0 and 1 inclusive
+  CASE
+    WHEN s.score_ceiled IS NULL THEN NULL
+    WHEN s.score_ceiled::text ILIKE 'nan' THEN s.score_ceiled
+    ELSE GREATEST(LEAST(s.score_ceiled::numeric, 1), 0)
+  END AS score_ceiled,
   s.error,
   s.comment,
   s.start_timestamp,
