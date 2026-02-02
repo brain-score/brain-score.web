@@ -653,6 +653,28 @@ def get_score_ceiled(score_row):
 
 
 @register.filter
+def cap_score(value):
+    """
+    Cap a score value between 0 and 1 inclusive.
+    Handles string values like '.415' or '1.1' as well as floats.
+    Non-numeric values (like 'X' or '') are returned unchanged.
+    """
+    if value in ('', 'X', None):
+        return value
+    try:
+        num = float(value)
+        capped = max(0.0, min(1.0, num))
+        # Preserve the original formatting style (leading dot for < 1)
+        if capped < 1:
+            # Format to 3 decimal places, strip leading zero
+            return f'{capped:.3f}'.lstrip('0') or '0'
+        else:
+            return '1.0'
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
 def get_score_best(score_row):
     """Get best score from score row dictionary"""
     try:

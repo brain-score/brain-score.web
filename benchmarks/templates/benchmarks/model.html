@@ -128,12 +128,12 @@
                             <table class="benchmarks">
                                 <tr class="list_entry">
                                     {# score #}
-                                    <td {% if score_row.error %}title="score: {{ score_row.score_ceiled }} ± {{ score_row.error }}"{% endif %}
+                                    <td {% if score_row.error %}title="score: {{ score_row.score_ceiled|cap_score }} ± {{ score_row.error }}"{% endif %}
                                         data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
                                         data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                                         class="score_cell displaySquare depth_{{ score_row|get_benchmark_depth }} clicker"
                                         style="{{ score_row.color }}; ">
-                                        {{ score_row.score_ceiled }}
+                                        {{ score_row.score_ceiled|cap_score }}
                                     </td>
                                     {# benchmark general info #}
                                     <td class="benchmark_info depth_{{ score_row|get_benchmark_depth }}">
@@ -171,8 +171,8 @@
                                         <div class="bar_container">
                                             <div class="bar"
                                                  style="{{ score_row|get_score_color }};
-                                                         --score:{{ score_row|get_score_ceiled|score_style }}%;">
-                                                {{ score_row|get_score_ceiled }}
+                                                         --score:{{ score_row|get_score_ceiled|cap_score|score_style }}%;">
+                                                {{ score_row|get_score_ceiled|cap_score }}
                                             </div>
                                             <span class="label zero">0</span>
                                             <div title="ceiling" class="vertical_line ceiling"></div>
