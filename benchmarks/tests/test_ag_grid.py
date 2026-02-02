@@ -309,7 +309,7 @@ class TestFilter:
         [
             (
                     ["neural_vision_v0", "Baker2022_v0"],
-                    [2, 5, 1, 3, 15],
+                    [2, 4, 1, 4, 15],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
@@ -321,7 +321,7 @@ class TestFilter:
             ),
             (
                     ["V1_v0", "V2_v0", "IT_v0"],
-                    [2, 3, 3, 5, 19],
+                    [2, 4, 3, 4, 19],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "convnext_xlarge:fb_in22k_ft_in1k",
@@ -333,7 +333,7 @@ class TestFilter:
             ),
             (
                     ["neural_vision_v0", "behavior_vision_v0"],
-                    [1, 2, 3, 3, 5],
+                    [1, 2, 3, 4, 4],
                     [
                         "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
                         "vit_large_patch14_clip_224:openai_ft_in1k",
@@ -462,10 +462,10 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [134, 134, 134, 134, 134]
+        expected_ranks = [130, 130, 130, 130, 130]
         expected_models = [
+            "ReAlnet10_cornet",
             "ReAlnet01_cornet",
-            "ReAlnet02_cornet",
             "ReAlnet05_cornet",
             "ReAlnet07_cornet",
             "ReAlnet08_cornet"
@@ -512,13 +512,13 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [13, 25, 40, 40, 49]
+        expected_ranks = [10, 25, 40, 40, 49]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
             "resnet50_robust_l2_eps1",
             "resnet50_tutorial",
-            "resnet50-sup"
+            "resnet_50_v2"
         ]
         expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.34']
 
@@ -572,13 +572,13 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [8, 13, 15, 25, 40]
+        expected_ranks = [10, 10, 15, 25, 40]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "resnet50-VITO-8deg-cc",
             "convnext_tiny_imagenet_full_seed-0",
             "convnext_tiny:in12k_ft_in1k",
-            "Res2Net50_26w_4s"
+            "resnet50_robust_l2_eps1"
         ]
         expected_scores = ['0.42', '0.41', '0.40', '0.38', '0.35']
 
@@ -632,13 +632,13 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_model_size') == 100
         assert page.evaluate('() => window.activeFilters.max_model_size') == 1000
 
-        expected_ranks = [1, 3, 5, 5, 8]
+        expected_ranks = [1, 3, 4, 4, 8]
         expected_models = [
             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
             "convnext_large:fb_in22k_ft_in1k",
             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
             "vit_base_patch16_clip_224:openai_ft_in1k",
-            "resnext101_32x8d_wsl"
+            "vit_relpos_base_patch16_clsgap_224:sw_in1k"
         ]
         expected_scores = ['0.46', '0.44', '0.44', '0.43', '0.42']
 
@@ -1192,7 +1192,7 @@ class TestExtraFunctionality:
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
         # Replace these with actual expected values
-        expected_ranks = [293, 371, 441, 474, 477]
+        expected_ranks = [294, 374, 442, 473, 477]
         expected_models = [
             "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",
@@ -1200,7 +1200,7 @@ class TestExtraFunctionality:
             "unet_entire",
             "ConvLSTM"
         ]
-        expected_scores = ["0.15", "0.14", "0.07", "0.04", "0.01"]
+        expected_scores = ["0.16", "0.14", "0.07", "0.04", "0.01"]
         print(actual_models)
         print(expected_models)
 

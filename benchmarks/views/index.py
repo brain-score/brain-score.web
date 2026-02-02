@@ -149,7 +149,9 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Build CSV data and comparison data
     # Combined to a single pass through models to avoid redundant calculations.
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
-    model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
+    # PERF: Commented out - builds DataFrames that are not currently used by any view/template.
+    # Takes ~1.7s due to 52k individual pd.to_datetime calls. Re-enable when wayback feature needs this.
+    # model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
 
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
@@ -218,8 +220,9 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         })
 
     context['csv_downloadable'] = csv_data
-    context['model_leaf_benchmark_scores_df'] = model_score_df
-    context['model_leaf_benchmark_timestamps_df'] = model_timestamp_df
+    # PERF: Commented out - not currently used by any view/template
+    # context['model_leaf_benchmark_scores_df'] = model_score_df
+    # context['model_leaf_benchmark_timestamps_df'] = model_timestamp_df
     return context
 
 
@@ -246,7 +249,9 @@ def filter_and_rank_models(models, domain: str = "vision"):
                         model_scores.append((model, None, True))
                         break
                     try:
-                        val_float = round(float(val), 2)
+                        # Use f-string formatting to match JavaScript's toFixed(2) rounding behavior
+                        # Python's round() uses banker's rounding which differs from JS
+                        val_float = float(f"{float(val):.2f}")
                         model_scores.append((model, val_float, False))
                     except (ValueError, TypeError):
                         # Exclude models with non-numeric, non-"X" values
