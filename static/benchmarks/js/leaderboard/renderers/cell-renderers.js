@@ -136,11 +136,7 @@ PublicToggleCellRenderer.prototype.init = function(params) {
     
     const toggleButton = document.createElement('button');
     toggleButton.className = 'toggle-switch';
-    
-    // Debug logging
-    console.log('Public toggle - params.data.public:', params.data.public);
-    console.log('Public toggle - typeof:', typeof params.data.public);
-    
+
     const isPublic = params.data.public === true || params.data.public === 'true' || params.data.public === 1 || params.data.public === '1';
     toggleButton.setAttribute('aria-pressed', isPublic ? 'true' : 'false');
     toggleButton.title = isPublic ? 'Make private' : 'Make public';

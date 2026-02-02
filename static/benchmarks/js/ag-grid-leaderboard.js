@@ -433,12 +433,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   if (window.agGrid && typeof agGrid.createGrid === 'function') {
     gridApi = agGrid.createGrid(eGridDiv, gridOptions);
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (createGrid):', !!gridApi);
   } else if (window.agGrid && typeof agGrid.Grid === 'function') {
     const grid = new agGrid.Grid(eGridDiv, gridOptions);
     gridApi = gridOptions.api;
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (Grid constructor):', !!gridApi);
   } else {
     console.error('AG Grid not found on window.agGrid');
   }
