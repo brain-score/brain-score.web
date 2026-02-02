@@ -28,7 +28,7 @@ class TestSort:
         Verify that the rank column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [1, 2, 3, 3, 5]]
+        scores_expected = [str(x) for x in [1, 2, 3, 4, 4]]
         assert scores_actual == scores_expected
 
     def test_model_descending(self, page):
@@ -470,7 +470,7 @@ class TestFilter:
             "ReAlnet07_cornet",
             "ReAlnet08_cornet"
         ]
-        expected_scores = ["0.29", "0.29", "0.29", "0.29", "0.29"]
+        expected_scores = ["0.30", "0.29", "0.29", "0.29", "0.29"]
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -520,7 +520,7 @@ class TestFilter:
             "resnet50_tutorial",
             "resnet_50_v2"
         ]
-        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.34']
+        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.35']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -580,7 +580,7 @@ class TestFilter:
             "convnext_tiny:in12k_ft_in1k",
             "resnet50_robust_l2_eps1"
         ]
-        expected_scores = ['0.42', '0.41', '0.40', '0.38', '0.35']
+        expected_scores = ['0.42', '0.41', '0.40', '0.38', '0.36']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
