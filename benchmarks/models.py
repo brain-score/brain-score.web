@@ -418,40 +418,19 @@ class FinalModelContext(models.Model):
         submitter (dict, optional): JSON object with submitter information (same structure as user)
         build_status (str): Current build status of the model
         layers (dict, optional): JSON object containing layer information for IT, V1, V2, V4
-        scores (dict, optional): Nested JSON object containing benchmark scores and metadata with each dictionary containingkeys:
-            - best
-            - rank
-            - color
-            - error
-            - median
-            - comment
-            - benchmark (dict): JSON object of appropriate FinalBenchmarkContext
-                - id 
-                - url
-                - meta
-                - year
-                - depth
-                - author
-                - bibtex
-                - parent
-                - ceiling
-                - meta_id
-                - version
-                - children
-                - identifier
-                - short_name
-                - root_parent
-                - ceiling_error
-                - overall_order
-                - benchmark_type_id
-                - reference_identifier
-                - number_of_all_children
-            - score_raw (float)
-            - is_complete
-            - score_ceiled_raw (float)
-            - score_ceiled (string of score_ceiled_raw with three decimal places)
-            - visual_degrees
-            - versioned_benchmark_identifier
+        scores (list, optional): JSON array of score objects. Each score contains only essential fields
+            - benchmark_type_id (str): Benchmark identifier for lookups (flattened from nested structure)
+            - versioned_benchmark_identifier (str): Full identifier with version suffix (e.g., "MajajHong2015.IT-pls_v1")
+            - score_ceiled (str): Displayed score value formatted to 3 decimal places
+            - error (float, optional): Error margin for uncertainty/error bars
+            - end_timestamp (str): Timestamp for wayback machine feature
+            - is_complete (int): Data availability flag (0 or 1)
+
+            Note: Fields removed during optimization (computed on-demand or moved client-side):
+            - benchmark object (20+ fields) -> use FinalBenchmarkContext for full metadata
+            - color -> computed client-side in color-utils.js
+            - score_raw, score_ceiled_raw, comment, visual_degrees -> not displayed
+            - best, median, rank -> computed on-demand in model detail view
         competition (str, optional): Competition the model is part of
         public (bool): Whether the model is publicly visible
         model_meta (dict, optional): JSON object containing model metadata including (see modelmeta table; attributes become keys)
@@ -475,12 +454,9 @@ class FinalModelContext(models.Model):
     # IT, V1, V2, V4
     layers = JSONBField(null=True, blank=True)
     rank = models.IntegerField()
-    # Scores returns a JSON object with all scores for a model with the following keys:
-    # Best, rank, color, error, median, comment, benchmark, score_raw, is_complete, score_ceiled (str), visual_degrees, score_ceiled_raw (int), versioned_benchmark_identifier, score_raw, score_ceiled_raw, score_ceiled, error, comment, visual_degrees, color, median, best, rank, is_complete
-    # The benchmark key returns a dictionary with the following keys:
-    # id, url, meta, year, year, depth, author, bibtex, parent
-    # Parent is itself a dictionary with the following keys:
-    # order, domain, visible, owner_id, parent_id, identifier, reference_id
+    # Scores: JSON array of score objects (optimized Jan 2026). Each score contains:
+    # benchmark_type_id, versioned_benchmark_identifier, score_ceiled, error, end_timestamp, is_complete
+    # See class docstring for full details and optimization notes.
     scores = JSONBField(null=True, blank=True)
     build_status = models.CharField(max_length=64)
     # Submitter returns a JSON object with the same keys as user

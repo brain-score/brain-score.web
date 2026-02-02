@@ -53,6 +53,9 @@ function parseURLFilters() {
     window.filteredOutBenchmarks = new Set(decodeBenchmarkFilters(excludedBenchmarks));
   }
 
+  // Set flag to prevent metadata filtering from overwriting URL-based exclusions
+  window.restoringFromURL = true;
+
   // Update benchmark tree checkboxes
   updateBenchmarkTreeFromURL();
 
@@ -60,6 +63,9 @@ function parseURLFilters() {
   if (typeof window.applyCombinedFilters === 'function') {
     window.applyCombinedFilters();
   }
+
+  // Clear flag after restoration
+  window.restoringFromURL = false;
 }
 
 // Apply parsed filters to UI elements

@@ -134,6 +134,14 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     # Get the base context (with user context via decorator)
     context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
 
+    # DEBUG: Check how many models we got
+    models = context.get('models', [])
+    logger.warning(f"DEBUG get_ag_grid_context: got {len(models)} models from get_context")
+    if models:
+        logger.warning(f"DEBUG get_ag_grid_context: first model has {len(models[0].scores) if hasattr(models[0], 'scores') and models[0].scores else 0} scores")
+        if hasattr(models[0], 'scores') and models[0].scores and len(models[0].scores) > 0:
+            logger.warning(f"DEBUG get_ag_grid_context: first score keys: {list(models[0].scores[0].keys())}")
+
     # Extract model metadata for filters
     model_metadata = {
         'architectures': set(),
@@ -336,9 +344,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
                 'value': score.get('score_ceiled', 'X'),
-                'raw': score.get('score_raw'),
-                'error': score.get('error'),
-                'color': score.get('color'),
                 'complete': score.get('is_complete', True),
                 'timestamp': score.get('end_timestamp')
             }
@@ -381,6 +386,25 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         }
         column_defs.append(public_toggle_column)
 
+    # Build benchmark ID -> root parent mapping for color palette selection
+    benchmark_root_parent_map = {}
+
+    def find_root_parent(benchmark):
+        """Find the root parent (top-level category) for a benchmark."""
+        current = benchmark
+        while current.parent:
+            parent_id = current.parent['identifier']
+            parent_obj = next((b for b in context['benchmarks'] if b.identifier == parent_id), None)
+            if parent_obj:
+                current = parent_obj
+            else:
+                break
+        return current.identifier
+
+    # Build the mapping for all benchmarks
+    for b in context['benchmarks']:
+        benchmark_root_parent_map[b.identifier] = find_root_parent(b)
+
     # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
     for b in root_parents:
@@ -393,7 +417,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'hide': False,
             'sortable': True,
             'width': 150,
-            'context': {'parentField': None, 'benchmarkId': field}
+            'context': {
+                'parentField': None,
+                'benchmarkId': field,
+                'rootParent': benchmark_root_parent_map.get(field)
+            }
         })
 
     # All other groupings (version==0 & has parent) hidden initially
@@ -412,7 +440,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'width': 150,
             'context': {
                 'parentField': parent_field,
-                'benchmarkId': field
+                'benchmarkId': field,
+                'rootParent': benchmark_root_parent_map.get(field)
             }
         })
 
@@ -440,7 +469,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'cellRenderer': 'scoreCellRenderer',
             'hide': True,
             'sortable': True,
-            'context': {'parentField': parent_field}
+            'context': {
+                'parentField': parent_field,
+                'rootParent': benchmark_root_parent_map.get(field)
+            }
         })
 
     # Convert filter metadata to frontend-friendly format

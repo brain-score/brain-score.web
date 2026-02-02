@@ -65,9 +65,13 @@ function setupBenchmarkCheckboxes(filterOptions) {
 // Filters benchmarks based on metadata criteria
 function addBenchmarksFilteredByMetadata() {
   if (!window.benchmarkMetadata || !window.benchmarkTree) return;
-  
+
   // Prevent recursive calls during manual checkbox interactions
   if (window.updatingCheckboxes || window.processingManualTreeChange) return;
+
+  // During URL restoration, don't reset checkboxes - preserve URL-based exclusions
+  if (window.restoringFromURL) return;
+
   window.updatingCheckboxes = true;
 
   const hierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
