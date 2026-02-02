@@ -94,16 +94,6 @@ function getAllLeafDescendants(benchmarkId, hierarchyMap) {
 
 // Build hierarchy map from benchmark tree
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-  console.log('🔧 buildHierarchyFromTree called with:', {
-    treeLength: tree?.length,
-    mapSize: hierarchyMap.size,
-    firstNodes: tree?.slice(0, 3)?.map(node => ({
-      id: node.id,
-      identifier: node.identifier,
-      name: node.name,
-      childrenCount: node.children?.length || 0
-    }))
-  });
   
   tree.forEach((node, index) => {
     // More comprehensive property checking
