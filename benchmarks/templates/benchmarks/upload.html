@@ -9,41 +9,47 @@
         <div class="container login-left vision_submit">
             <h1 style="font-size: 2em;">Submission System, {{ formatted }} </h1>
             <br>
-            <h1 style="font-size: 1.25em;">Below you can upload a plugin. Plugins can either be a {{ domain }} model, benchmark, dataset,
-            or metric. </h1>
+            <h1 style="font-size: 1.25em;">Upload a {{ domain }} model, benchmark, dataset, or metric plugin.</h1>
             <div style="margin: 20px 0;"></div>
-            <h1 style="font-size: 1.0em; font-weight: bold;">DISCLAIMER: Private submissions keep scores private, but all code will
-            still be publicly visible in the vision repo. </h1>
+            <h1 style="font-size: 1.0em; font-weight: bold;">NOTE: Private submissions keep scores private, but code remains publicly visible. </h1>
             <p class="benefits_info is-size-5-mobile shorter submission">
-                You may submit either a new plugin or a revision for a plugin that you have already submitted.
-                (You must be the original submitter of a plugin to submit a revision). Details on proper submission
-                formatting are available in the <a href="https://www.brain-score.org/tutorials/models">
-                model tutorials</a>.
+                Model revisions require a new <code style="font-family: 'Courier New', monospace; background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px;">model_identifier</code> (submitted as a new plugin). Benchmark revisions must be done via pull request and versioned appropriately.
             </p>
+            <p class="benefits_info is-size-5-mobile shorter submission">
+                Model submissions require the following ZIP file structure: <code style="font-family: 'Courier New', monospace; background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px;">submission/models/{model_identifier}/</code>.
+                See <a href="https://www.brain-score.org/tutorials/models/deepdive_3">
+                model tutorials</a> for formatting details.
+            </p>
+            <hr style="margin: 24px 0; border: none; border-top: 1px solid #e0e0e0;">
             <form action="" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 {% for field in form %}
-                    <p class="special">
-                        <br>
+                    {% if field.name == 'public' %}
+                    <div class="special" style="margin-top: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                        {{ field.label_tag }}{{ field }}
+                    </div>
+                    {% for error in field.errors %}
+                        <p style="color: red">{{ error }}</p>
+                    {% endfor %}
+                    {% else %}
+                    <div class="special" style="margin-top: 20px;">
                         {{ field.label_tag }}
                         {{ field }}
-                        <br>
                         {% if field.help_text %}
                             <small style="display: none">{{ field.help_text }}</small>
                         {% endif %}
                         {% for error in field.errors %}
                             <p style="color: red">{{ error }}</p>
                         {% endfor %}
-                    </p>
+                    </div>
+                    {% endif %}
                 {% endfor %}
-                </p>
-                <br>
-                <button type="submit" class="button submission">Submit Plugin</button>
-                <br>
+                <div style="text-align: right; margin-top: 24px;">
+                    <button type="submit" class="button submission">Submit Plugin</button>
+                </div>
             </form>
-            <br>
-        <p style="font-size: 12px"><a href="/profile/{{ domain }}">Return to {{ domain }} profile page</a></p>
+            <p style="font-size: 12px; margin-top: 20px; text-align: right;"><a href="/profile/{{ domain }}">Return to {{ domain }} profile page</a></p>
         </div>
     </div>
 </div>
