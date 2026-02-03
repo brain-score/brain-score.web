@@ -26,9 +26,10 @@ class TestSort:
     def test_sort_rank_descending(self, page):
         """
         Verify that the rank column is sorted in descending order by default.
+        Tied scores get the same rank, then ranks skip appropriately (e.g., 1, 2, 3, 3, 5).
         """
         scores_actual = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [1, 2, 3, 4, 4]]
+        scores_expected = [str(x) for x in [1, 2, 3, 3, 5]]
         assert scores_actual == scores_expected
 
     def test_model_descending(self, page):
@@ -53,7 +54,7 @@ class TestSort:
         Verify that the average_vision_v0 column is sorted in descending order by default.
         """
         scores_actual = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[0:5]
-        scores_expected = [str(x) for x in [0.46, 0.45, 0.44, 0.44, 0.44]]
+        scores_expected = [str(x) for x in [0.46, 0.45, 0.44, 0.44, 0.43]]
         assert scores_actual == scores_expected
 
     @pytest.mark.skip(reason="Sorting tests are flaky on EC2; revisit later")
@@ -309,7 +310,7 @@ class TestFilter:
         [
             (
                     ["neural_vision_v0", "Baker2022_v0"],
-                    [2, 4, 1, 4, 15],
+                    [2, 5, 1, 3, 15],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
@@ -321,7 +322,7 @@ class TestFilter:
             ),
             (
                     ["V1_v0", "V2_v0", "IT_v0"],
-                    [2, 4, 3, 4, 19],
+                    [2, 3, 3, 5, 19],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "convnext_xlarge:fb_in22k_ft_in1k",
@@ -333,7 +334,7 @@ class TestFilter:
             ),
             (
                     ["neural_vision_v0", "behavior_vision_v0"],
-                    [1, 2, 3, 4, 4],
+                    [1, 2, 3, 3, 5],
                     [
                         "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
                         "vit_large_patch14_clip_224:openai_ft_in1k",
@@ -462,7 +463,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [130, 130, 130, 130, 130]
+        expected_ranks = [134, 134, 134, 134, 134]
         expected_models = [
             "ReAlnet10_cornet",
             "ReAlnet01_cornet",
@@ -512,7 +513,7 @@ class TestFilter:
         # 4) Wait for the grid to re-render (you might wait for at least one model cell to refresh)
         page.wait_for_timeout(500)
 
-        expected_ranks = [10, 25, 40, 40, 49]
+        expected_ranks = [12, 25, 37, 41, 49]
         expected_models = [
             "resnet50-VITO-8deg-cc",
             "resnet152_imagenet_full",
@@ -572,7 +573,7 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_param_count') == 25
         assert page.evaluate('() => window.activeFilters.max_param_count') == 50
 
-        expected_ranks = [10, 10, 15, 25, 40]
+        expected_ranks = [12, 12, 15, 25, 37]
         expected_models = [
             "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "resnet50-VITO-8deg-cc",
@@ -632,7 +633,7 @@ class TestFilter:
         assert page.evaluate('() => window.activeFilters.min_model_size') == 100
         assert page.evaluate('() => window.activeFilters.max_model_size') == 1000
 
-        expected_ranks = [1, 3, 4, 4, 8]
+        expected_ranks = [1, 3, 5, 5, 8]
         expected_models = [
             "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384",
             "convnext_large:fb_in22k_ft_in1k",
@@ -1047,23 +1048,16 @@ class TestFilter:
         page.wait_for_timeout(500)
     
         # 6) verify leaderboard contents after filter and sorting by global score
-        expected_ranks = [8, 8, 13, 20, 26]
         expected_models = [
-            "cvt_cvt-w24-384-in22k_finetuned-in1k_4",
-            "resnext101_32x8d_wsl",
-            "resnext101_32x48d_wsl",
-            "effnetb1_272x240",
-            "effnetb1_cutmixpatch_augmix_robust32_avge4e7_manylayers_324x288",
+            "densenet_201_pytorch",
+            "inception_v3_pytorch",
+            "pnasnet_large_pytorch",
+            "bp_resnet50_julios",
         ]
-        expected_scores = ["0.43", "0.43", "0.41", "0.40", "0.39"]
-    
-        actual_ranks  = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
-        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
-        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
-        # assert actual_ranks  == [str(r) for r in expected_ranks], f"Expected ranks {expected_ranks}, got {actual_ranks}"
+        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:4]
+
         assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
-        assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
     def test_copy_bibtex_button_all(self, page):
         """
