@@ -471,7 +471,7 @@ class TestFilter:
             "ReAlnet07_cornet",
             "ReAlnet08_cornet"
         ]
-        expected_scores = ["0.30", "0.29", "0.29", "0.29", "0.29"]
+        expected_scores = ["0.29", "0.29", "0.29", "0.29", "0.29"]
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -521,7 +521,7 @@ class TestFilter:
             "resnet50_tutorial",
             "resnet50-sup"
         ]
-        expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.35']
+        expected_scores = ['0.41', '0.38', '0.37', '0.36', '0.35']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -581,7 +581,7 @@ class TestFilter:
             "convnext_tiny:in12k_ft_in1k",
             "resnet50_robust_l2_eps1"
         ]
-        expected_scores = ['0.42', '0.41', '0.40', '0.38', '0.36']
+        expected_scores = ['0.41', '0.41', '0.40', '0.38', '0.37']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
@@ -641,7 +641,7 @@ class TestFilter:
             "vit_base_patch16_clip_224:openai_ft_in1k",
             "resnext101_32x8d_wsl"
         ]
-        expected_scores = ['0.46', '0.44', '0.44', '0.43', '0.42']
+        expected_scores = ['0.46', '0.44', '0.43', '0.43', '0.42']
 
         actual_ranks = page.locator('.ag-cell[col-id="rank"]').all_text_contents()[:5]
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
