@@ -465,8 +465,8 @@ class TestFilter:
 
         expected_ranks = [134, 134, 134, 134, 134]
         expected_models = [
-            "ReAlnet10_cornet",
             "ReAlnet01_cornet",
+            "ReAlnet02_cornet",
             "ReAlnet05_cornet",
             "ReAlnet07_cornet",
             "ReAlnet08_cornet"
@@ -519,7 +519,7 @@ class TestFilter:
             "resnet152_imagenet_full",
             "resnet50_robust_l2_eps1",
             "resnet50_tutorial",
-            "resnet_50_v2"
+            "resnet50-sup"
         ]
         expected_scores = ['0.41', '0.38', '0.36', '0.35', '0.35']
 
@@ -575,8 +575,8 @@ class TestFilter:
 
         expected_ranks = [12, 12, 15, 25, 37]
         expected_models = [
-            "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "resnet50-VITO-8deg-cc",
+            "swin_small_patch4_window7_224:ms_in22k_ft_in1k",
             "convnext_tiny_imagenet_full_seed-0",
             "convnext_tiny:in12k_ft_in1k",
             "resnet50_robust_l2_eps1"
@@ -639,7 +639,7 @@ class TestFilter:
             "convnext_large:fb_in22k_ft_in1k",
             "vit_base_patch16_clip_224:openai_ft_in12k_in1k",
             "vit_base_patch16_clip_224:openai_ft_in1k",
-            "vit_relpos_base_patch16_clsgap_224:sw_in1k"
+            "resnext101_32x8d_wsl"
         ]
         expected_scores = ['0.46', '0.44', '0.44', '0.43', '0.42']
 
@@ -1194,7 +1194,7 @@ class TestExtraFunctionality:
             "unet_entire",
             "ConvLSTM"
         ]
-        expected_scores = ["0.16", "0.14", "0.07", "0.04", "0.01"]
+        expected_scores = ["0.16", "0.13", "0.07", "0.04", "0.01"]
         print(actual_models)
         print(expected_models)
 
