@@ -127,7 +127,8 @@ ScoreCellRenderer.prototype.init = function(params) {
   let bg = '#e0e1e2';
 
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
-    display = Number(cellObj.value).toFixed(2);
+    // Value is pre-rounded by Python backend
+    display = String(cellObj.value);
 
     // Check if color is already set (e.g., blue from advanced filtering)
     // If so, use that color instead of recalculating

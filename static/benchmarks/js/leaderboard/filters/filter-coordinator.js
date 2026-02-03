@@ -922,10 +922,36 @@ function updateFilteredScores(rowData) {
       }
     });
 
-    // Calculate global filtered score AND update average_vision_v0
+    // Calculate global filtered score AND conditionally update average_vision_v0
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
     let hasVisibleCategory = false;
+
+    // Check if any benchmarks are actually excluded or have reduced leaf counts
+    // If not, we should NOT recalculate average_vision_v0 - use Python's value
+    let anyChildExcluded = false;
+    let anyChildReduced = false;
+
+    visionCategories.forEach(category => {
+      if (excludedBenchmarks.has(category)) {
+        anyChildExcluded = true;
+      }
+      // Check if any leaf benchmarks under this category are excluded
+      allBenchmarkIds.forEach(benchmarkId => {
+        if (excludedBenchmarks.has(benchmarkId)) {
+          // Check if this benchmark is a descendant of the category
+          // For simplicity, check if it's in the benchmark tree under this category
+          anyChildExcluded = true;
+        }
+      });
+      // Check if leaf count is reduced
+      if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+        const leafCount = window.getFilteredLeafCount(category);
+        if (leafCount === 0) {
+          anyChildReduced = true;
+        }
+      }
+    });
 
     visionCategories.forEach(category => {
       const isExcluded = excludedBenchmarks.has(category);
@@ -964,9 +990,13 @@ function updateFilteredScores(rowData) {
       }
     });
 
+    // Only recalculate average_vision_v0 if filters have actually changed something
+    // If no benchmarks are excluded and all leaves are visible, use Python's original value
+    const shouldRecalculateAverage = anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0;
+
     // Update average_vision_v0 (global score) to reflect the updated neural/behavior scores
-    // Only update if at least one category is visible. If neither is visible, leave it unchanged.
-    if (hasVisibleCategory) {
+    // Only update if at least one category is visible AND recalculation is needed
+    if (hasVisibleCategory && shouldRecalculateAverage) {
       if (categoryScores.length > 0) {
         // Check if both categories are X (both treated as 0, so average would be 0)
         // If so, check if model has all 0/X scores - if yes, set to 'X' to filter it out
@@ -974,7 +1004,7 @@ function updateFilteredScores(rowData) {
         const behaviorScore = row.behavior_vision_v0?.value;
         const bothAreX = (neuralScore === 'X' || neuralScore === null || neuralScore === undefined || neuralScore === '') &&
                          (behaviorScore === 'X' || behaviorScore === null || behaviorScore === undefined || behaviorScore === '');
-        
+
         if (bothAreX && categoryScores.length === 2 && categoryScores.every(s => s === 0)) {
           // Both categories are X, check if model has all 0/X across all visible benchmarks
           let hasAnyValidNonZeroScore = false;
@@ -982,7 +1012,7 @@ function updateFilteredScores(rowData) {
             if (excludedBenchmarks.has(benchmarkId)) return;
             if (benchmarksToExcludeFromAggregation.has(benchmarkId)) return;
             if (!row[benchmarkId]) return;
-            
+
             // Check if this benchmark is visible (not dropped out)
             let isBenchmarkVisible = true;
             if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
@@ -992,7 +1022,7 @@ function updateFilteredScores(rowData) {
               }
             }
             if (!isBenchmarkVisible) return;
-            
+
             const score = row[benchmarkId].value;
             if (score !== null && score !== undefined && score !== '' && score !== 'X') {
               const numVal = typeof score === 'string' ? parseFloat(score) : score;
@@ -1013,8 +1043,8 @@ function updateFilteredScores(rowData) {
             return; // Skip the rest of the loop iteration
           }
         }
-        
-        // Normal case: calculate average
+
+        // Recalculate average since filters are active
         const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
         row.average_vision_v0 = {
           ...row.average_vision_v0,
@@ -1026,6 +1056,15 @@ function updateFilteredScores(rowData) {
         // In this case, filtered_score should be 'X' because there are no valid scores
         row._tempFilteredScore = null;
         // Don't update average_vision_v0 - leave it as-is when both categories are excluded
+      }
+    } else if (hasVisibleCategory) {
+      // No recalculation needed - use original Python value for filtered score
+      const originalScore = row.average_vision_v0?.value;
+      if (originalScore !== null && originalScore !== undefined && originalScore !== '' && originalScore !== 'X') {
+        const numVal = typeof originalScore === 'string' ? parseFloat(originalScore) : originalScore;
+        row._tempFilteredScore = !isNaN(numVal) ? numVal : null;
+      } else {
+        row._tempFilteredScore = null;
       }
     } else {
       // Neither category is visible - filtered_score should be 'X'

@@ -1,5 +1,6 @@
 import json
 import logging
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Union, List, Dict, Any, Tuple
 from django.contrib.auth.models import User
 from django.utils.functional import wraps
@@ -249,9 +250,11 @@ def filter_and_rank_models(models, domain: str = "vision"):
                         model_scores.append((model, None, True))
                         break
                     try:
-                        # Use f-string formatting to match JavaScript's toFixed(2) rounding behavior
-                        # Python's round() uses banker's rounding which differs from JS
-                        val_float = float(f"{float(val):.2f}")
+                        # Use ROUND_HALF_UP for consistent rounding
+                        # Round to 2 decimal places to match display precision
+                        val_str = str(val) if not isinstance(val, str) else val
+                        val_decimal = Decimal(val_str).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                        val_float = float(val_decimal)
                         model_scores.append((model, val_float, False))
                     except (ValueError, TypeError):
                         # Exclude models with non-numeric, non-"X" values

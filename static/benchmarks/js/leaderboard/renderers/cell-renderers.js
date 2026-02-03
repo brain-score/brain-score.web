@@ -56,7 +56,9 @@ ScoreCellRenderer.prototype.init = function(params) {
   let bg = window.LeaderboardConstants.DEFAULT_CELL_BG;
 
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
-    display = Number(cellObj.value).toFixed(2);
+    // Value is pre-rounded to 2 decimal places by Python backend
+    // Use the value directly - it's already properly formatted
+    display = String(cellObj.value);
 
     // Check if color is already set (e.g., blue from advanced filtering)
     // If so, use that color instead of recalculating
