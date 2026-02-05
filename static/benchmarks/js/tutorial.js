@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initHeadingPermalinks();
     initInteractiveChecklists();
     initTocScrollSpy();
+    initCodeBlockAnchors(); // Add IDs to code blocks for linking
+    initAnchorScroll(); // Handle scrolling to anchors (e.g., from search results)
 });
 
 /**
@@ -293,5 +295,107 @@ function initHeadingPermalinks() {
             });
         });
     });
+}
+
+/**
+ * Handle scrolling to anchor on page load (e.g., from search results)
+ */
+function initAnchorScroll() {
+    // Check if there's a hash in the URL
+    if (window.location.hash) {
+        // Wait for content to be fully rendered
+        setTimeout(function() {
+            const hash = window.location.hash.substring(1); // Remove #
+            let target = document.getElementById(hash);
+            
+            // If it's a code block anchor (code-block-N), find the Nth code block
+            if (!target && hash.startsWith('code-block-')) {
+                const blockIndex = parseInt(hash.replace('code-block-', ''));
+                
+                // Try to find by ID first (in case anchors were already added)
+                target = document.getElementById(hash);
+                
+                // If not found, find by index
+                if (!target) {
+                    // Prioritize .codehilite divs
+                    let codeBlocks = document.querySelectorAll('.tutorial-body .codehilite');
+                    if (codeBlocks.length === 0) {
+                        codeBlocks = document.querySelectorAll('.tutorial-body pre');
+                    }
+                    
+                    // Filter out pre elements inside codehilite
+                    const filteredBlocks = Array.from(codeBlocks).filter(function(block) {
+                        if (block.tagName === 'PRE') {
+                            return !block.closest('.codehilite');
+                        }
+                        return true;
+                    });
+                    
+                    if (filteredBlocks.length > blockIndex) {
+                        target = filteredBlocks[blockIndex];
+                        // Add ID if it doesn't have one
+                        if (!target.id) {
+                            target.id = hash;
+                        }
+                    }
+                }
+            }
+            
+            if (target) {
+                // Scroll to the target with offset for fixed header
+                const offset = 100; // Adjust based on your header height
+                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+                
+                // Highlight the target briefly
+                target.style.transition = 'background-color 0.3s';
+                target.style.backgroundColor = 'rgba(71, 183, 222, 0.2)';
+                setTimeout(function() {
+                    target.style.backgroundColor = '';
+                    setTimeout(function() {
+                        target.style.transition = '';
+                    }, 300);
+                }, 2000);
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Add IDs to code blocks for linking from search results
+ */
+function initCodeBlockAnchors() {
+    const tutorialBody = document.querySelector('.tutorial-body');
+    if (!tutorialBody) return;
+    
+    // Find all code blocks - prioritize .codehilite divs (they wrap pre>code)
+    // If no .codehilite, fall back to direct <pre> elements
+    let codeBlocks = tutorialBody.querySelectorAll('.codehilite');
+    
+    // If no codehilite blocks, look for direct pre elements
+    if (codeBlocks.length === 0) {
+        codeBlocks = tutorialBody.querySelectorAll('pre');
+    }
+    
+    // Filter out pre elements that are inside codehilite (to avoid double counting)
+    const filteredBlocks = Array.from(codeBlocks).filter(function(block) {
+        // If it's a pre element, check if it's inside a codehilite
+        if (block.tagName === 'PRE') {
+            return !block.closest('.codehilite');
+        }
+        return true; // Keep codehilite divs
+    });
+    
+    filteredBlocks.forEach(function(block, index) {
+        // Only add ID if it doesn't already have one
+        if (!block.id) {
+            block.id = `code-block-${index}`;
+        }
+    });
+    
 }
 
