@@ -130,16 +130,12 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
     
     if (isWaybackActive && timestampFilteredData.length > 0) {
-      // Collect all LEAF benchmark IDs from the data (only leaves have version_valid_from)
-      // Parent benchmarks should NOT be added to waybackHiddenBenchmarks because they
-      // haven't been re-aggregated yet at this point
+      // Collect leaf benchmark IDs (only leaves have version_valid_from)
       const allLeafBenchmarkIds = new Set();
       timestampFilteredData.forEach(row => {
         Object.keys(row).forEach(key => {
           if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' &&
               row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
-            // Only include LEAF benchmarks (those with version_valid_from)
-            // Parent benchmarks don't have version timeline data
             if (row[key].version_valid_from !== undefined && row[key].version_valid_from !== null) {
               allLeafBenchmarkIds.add(key);
             }
@@ -147,60 +143,37 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
         });
       });
 
-      // Check which LEAF benchmarks have all X values that were SET BY wayback filtering
-      // (not originally X values from model failures)
-      // Compare against filteredData (input to wayback filtering) to see what wayback changed
-      // This distinguishes between:
-      // 1. X values set by wayback filtering (should hide column and exclude from aggregation)
-      // 2. X values that were originally X (should NOT hide column, treat as 0 in aggregation)
+      // Identify benchmarks where ALL models have 'X' after wayback filtering (benchmark didn't exist at that date)
       allLeafBenchmarkIds.forEach(benchmarkId => {
         let hasAnyValues = false;
         let xCount = 0;
         let nonXCount = 0;
-        
-        // Iterate through ALL rows in filteredData (before wayback filtering) to ensure comprehensive check
+
         filteredData.forEach((beforeWaybackRow) => {
-          // Find the corresponding row in timestampFilteredData (after wayback filtering) by ID
           const waybackFilteredRow = timestampFilteredData.find(row => row.id === beforeWaybackRow.id);
-          if (!waybackFilteredRow) {
-            // Row was removed by wayback filtering (model removal) - skip it
-            // This happens when global score becomes X and model is removed
-            return;
-          }
-          
+          if (!waybackFilteredRow) return;
+
           const beforeWaybackValue = beforeWaybackRow[benchmarkId]?.value;
           const waybackFilteredValue = waybackFilteredRow[benchmarkId]?.value;
-          
-          // Skip rows where the benchmark doesn't exist or has no value before wayback filtering
+
           if (beforeWaybackValue === null || beforeWaybackValue === undefined || beforeWaybackValue === '') {
-            // Also check if wayback filtering set it to X (due to missing timestamp)
             if (waybackFilteredValue === 'X') {
-              // Wayback filtering set a missing value to X - this counts as wayback-set X
               hasAnyValues = true;
               xCount++;
             }
             return;
           }
-          
-          // We have a value before wayback filtering - check what wayback did to it
+
           hasAnyValues = true;
-          
-          // If the wayback-filtered value is X, count it
           if (waybackFilteredValue === 'X') {
             xCount++;
           } else {
-            // If wayback-filtered value is not X, then this benchmark shouldn't be hidden
             nonXCount++;
           }
         });
-        
-        // When wayback filtering is active, hide if ALL values are X (regardless of origin)
-        // The distinction between originally X and wayback-set X only matters when wayback is NOT active
-        // When wayback IS active, if all values are X, the column should be hidden
+
         const allValuesAreX = hasAnyValues && xCount > 0 && nonXCount === 0;
-        
         if (hasAnyValues && allValuesAreX) {
-          // All values are X - hide the column when wayback filtering is active
           window.waybackHiddenBenchmarks.add(benchmarkId);
         }
       });
@@ -226,28 +199,20 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     finalData = applyGlobalScoreModelRemoval(finalData);
   }
 
-  // Recalculate colors for all benchmarks AFTER models are removed
-  // This ensures colors reflect the correct min/max ranges from the final filtered dataset
-  // Models with the same score will have the same color because min/max is calculated from the same dataset
-  // BUT: Skip benchmarks that have blue colors from advanced filtering (excluded children)
+  // Recalculate colors after filtering (skip benchmarks with blue colors from excluded children)
   if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
-    // Build hierarchy map if not already cached
     if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
       window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
     }
     const hierarchyMap = window.cachedHierarchyMap || new Map();
 
-    // Identify benchmarks with blue colors from advanced filtering
-    // These are parent benchmarks with excluded children - we should NOT overwrite their blue colors
-    // This logic runs regardless of wayback filtering state
+    // Identify benchmarks with blue colors (parents with excluded children)
     const benchmarksWithBlueColors = new Set();
     const excludedBenchmarks = window.filteredOutBenchmarks || new Set();
 
     if (excludedBenchmarks.size > 0) {
-      // Get all benchmark IDs for hierarchy traversal
       const allBenchmarkIds = Array.from(hierarchyMap.keys());
 
-      // Find benchmarks with excluded children (these have blue colors from updateFilteredScores)
       allBenchmarkIds.forEach(benchmarkId => {
         const children = hierarchyMap.get(benchmarkId) || [];
         if (children.length > 0) {
@@ -255,7 +220,6 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
           if (hasExcludedChildren) {
             benchmarksWithBlueColors.add(benchmarkId);
 
-            // Also mark all ancestors as having blue colors
             function markAncestorsBlue(targetId) {
               allBenchmarkIds.forEach(parentId => {
                 const parentChildren = hierarchyMap.get(parentId) || [];
@@ -276,11 +240,9 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       }
     }
 
-    // Cache root parent lookups to avoid repeated hierarchy traversal
+    // Cache root parent lookups for hierarchy traversal
     if (!window.rootParentCache || window.rootParentCache.size === 0) {
       window.rootParentCache = new Map();
-
-      // Get all benchmark IDs
       const allBenchmarkIds = new Set();
       finalData.forEach(row => {
         Object.keys(row).forEach(key => {
@@ -293,7 +255,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       // Also include average_vision_v0
       allBenchmarkIds.add('average_vision_v0');
 
-      // Build reverse lookup map (child -> parent) for efficient traversal
+      // Build reverse lookup map (child -> parent)
       const childToParentMap = new Map();
       for (const [parentId, children] of hierarchyMap.entries()) {
         children.forEach(childId => {
@@ -301,26 +263,22 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
         });
       }
 
-      // Find root parent for each benchmark
       allBenchmarkIds.forEach(benchmarkId => {
         let rootParent = null;
         let currentId = benchmarkId;
         const visited = new Set();
 
-        // Traverse up the hierarchy using reverse lookup map
         while (currentId && !visited.has(currentId)) {
           visited.add(currentId);
           const parentId = childToParentMap.get(currentId);
-
           if (!parentId) {
-            // This is a root
             rootParent = currentId;
             break;
           }
           currentId = parentId;
         }
 
-        // Fallback: if we couldn't determine root parent, infer from benchmarkId
+        // Fallback: infer from benchmarkId
         if (!rootParent) {
           const checkId = benchmarkId.toLowerCase();
           if (checkId.includes('engineering')) {
@@ -346,9 +304,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       });
     });
 
-    // Recalculate colors for each benchmark using the final filtered dataset
-    // This ensures colors reflect the correct min/max ranges after filtering
-    // BUT: Always skip benchmarks that have blue colors from excluded children
+    // Recalculate colors (skip benchmarks with blue colors from excluded children)
     benchmarkIds.forEach(benchmarkId => {
       if (!benchmarksWithBlueColors.has(benchmarkId)) {
         window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap, window.rootParentCache);
@@ -506,12 +462,8 @@ function applyWaybackTimestampFilter(rowData) {
           }
         }
       } else {
-        // Parent benchmarks (no version timeline) should always be re-aggregated from children
-        // DO NOT filter parent benchmarks based on their timestamp - the timestamp represents
-        // when the most recent child score was submitted, not when the parent benchmark existed.
-        // Parent benchmark values will be recomputed by updateFilteredScores() based on
-        // their children's (filtered) scores.
-        // Leave parent benchmarks as-is for re-aggregation.
+        // Parent benchmarks (no version timeline) - leave as-is for re-aggregation from children.
+        // Do not filter by timestamp; the timestamp is the child's submission time, not existence.
       }
     });
 
@@ -987,13 +939,9 @@ function updateFilteredScores(rowData) {
       }
     });
 
-    // Only recalculate average_vision_v0 if filters have actually changed something
-    // If no benchmarks are excluded and all leaves are visible, use Python's original value
-    // Include wayback filtering (benchmarksToExcludeFromAggregation) as a trigger for recalculation
+    // Only recalculate if filters changed something; otherwise use Python's original value
     const shouldRecalculateAverage = anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0 || benchmarksToExcludeFromAggregation.size > 0;
 
-    // Update average_vision_v0 (global score) to reflect the updated neural/behavior scores
-    // Only update if at least one category is visible AND recalculation is needed
     if (hasVisibleCategory && shouldRecalculateAverage) {
       if (categoryScores.length > 0) {
         // Check if both categories are X (both treated as 0, so average would be 0)
@@ -1065,11 +1013,9 @@ function updateFilteredScores(rowData) {
         row._tempFilteredScore = null;
       }
     } else {
-      // Neither category is visible - filtered_score should be 'X'
+      // Neither category is visible - filtered_score should be null
       row._tempFilteredScore = null;
-      // Don't update average_vision_v0 - leave it as-is when neither category is visible
     }
-    // If neither category is visible, don't update average_vision_v0 (leave it as-is)
   });
 
   // Apply colors for recalculated benchmarks

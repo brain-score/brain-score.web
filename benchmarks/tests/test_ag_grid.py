@@ -1059,9 +1059,6 @@ class TestFilter:
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
-        print(f"Actual models: {actual_models}")
-        print(f"Actual scores: {actual_scores}")
-
         # Verify the key expected models appear in the top results
         for expected_model in expected_top_models:
             assert expected_model in actual_models, f"Expected {expected_model} in top models, got {actual_models}"
