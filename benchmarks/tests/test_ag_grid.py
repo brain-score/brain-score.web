@@ -1197,18 +1197,16 @@ class TestExtraFunctionality:
         actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
         actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
 
-        # Replace these with actual expected values
-        expected_ranks = [294, 374, 442, 473, 477]
+        # Updated after alexnet models were removed from public leaderboard
+        expected_ranks = [365, 431, 462, 466, 466]
         expected_models = [
-            "alexnet",
             "yudixie_resnet50_imagenet1kpret_0_240312",
             "bp_resnet50_julios",
             "unet_entire",
-            "ConvLSTM"
+            "ConvLSTM",
+            "MIM"
         ]
-        expected_scores = ["0.16", "0.13", "0.07", "0.04", "0.01"]
-        print(actual_models)
-        print(expected_models)
+        expected_scores = ["0.13", "0.07", "0.04", "0.01", "0.01"]
 
         # Compare results
         assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
