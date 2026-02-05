@@ -472,9 +472,16 @@ function applyWaybackTimestampFilter(rowData) {
             return;
           }
 
+          // Format historical version value for leaderboard display (2 decimal places)
+          // Historical values are raw floats, current values are pre-formatted strings
+          let formattedValue = activeVersionData.value;
+          if (typeof formattedValue === 'number') {
+            formattedValue = formattedValue.toFixed(2);
+          }
+
           newRow[key] = {
             ...scoreObj,
-            value: activeVersionData.value,
+            value: formattedValue,
             score_raw: activeVersionData.score_raw,
             timestamp: activeVersionData.timestamp,
             // Keep original benchmark metadata but use historical score data
@@ -499,22 +506,12 @@ function applyWaybackTimestampFilter(rowData) {
           }
         }
       } else {
-        // Parent benchmarks (no version timeline) - use original timestamp filtering
-        const ts = scoreObj.timestamp;
-
-        if (!ts) {
-          // Parent benchmarks without timestamps are re-aggregated, leave as-is
-          // They will be recomputed by updateFilteredScores()
-        } else {
-          try {
-            const scoreTime = new Date(ts).getTime() / 1000;
-            if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
-              newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
-            }
-          } catch (error) {
-            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
-          }
-        }
+        // Parent benchmarks (no version timeline) should always be re-aggregated from children
+        // DO NOT filter parent benchmarks based on their timestamp - the timestamp represents
+        // when the most recent child score was submitted, not when the parent benchmark existed.
+        // Parent benchmark values will be recomputed by updateFilteredScores() based on
+        // their children's (filtered) scores.
+        // Leave parent benchmarks as-is for re-aggregation.
       }
     });
 
@@ -992,7 +989,8 @@ function updateFilteredScores(rowData) {
 
     // Only recalculate average_vision_v0 if filters have actually changed something
     // If no benchmarks are excluded and all leaves are visible, use Python's original value
-    const shouldRecalculateAverage = anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0;
+    // Include wayback filtering (benchmarksToExcludeFromAggregation) as a trigger for recalculation
+    const shouldRecalculateAverage = anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0 || benchmarksToExcludeFromAggregation.size > 0;
 
     // Update average_vision_v0 (global score) to reflect the updated neural/behavior scores
     // Only update if at least one category is visible AND recalculation is needed
