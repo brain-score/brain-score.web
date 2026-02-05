@@ -88,45 +88,18 @@ function initializeDualHandleSlider(container) {
 
     if (filterId === 'paramCountMin' || filterId === 'paramCountMax' ||
         sliderGroup?.querySelector('#paramCountMin') || sliderGroup?.querySelector('#paramCountMax')) {
-      const oldValue = window.activeFilters.max_param_count;
       window.activeFilters.max_param_count = maxValue < max ? maxValue : null;
-      console.log(`🎚️ ${sliderType} filter update:`, {
-        maxValue,
-        max,
-        isLessThan: maxValue < max,
-        oldFilterValue: oldValue,
-        newFilterValue: window.activeFilters.max_param_count,
-        skipDebounce
-      });
     } else if (filterId === 'modelSizeMin' || filterId === 'modelSizeMax' ||
                sliderGroup?.querySelector('#modelSizeMin') || sliderGroup?.querySelector('#modelSizeMax')) {
-      const oldValue = window.activeFilters.max_model_size;
       window.activeFilters.max_model_size = maxValue < max ? maxValue : null;
-      console.log(`🎚️ ${sliderType} filter update:`, {
-        maxValue,
-        max,
-        isLessThan: maxValue < max,
-        oldFilterValue: oldValue,
-        newFilterValue: window.activeFilters.max_model_size,
-        skipDebounce
-      });
     } else if (filterId === 'waybackTimestampFilter' || sliderType === 'waybackTimestamp') {
       // For wayback timestamp, min is locked to minimum if frozen, otherwise use minValue
       window.activeFilters.min_wayback_timestamp = shouldFreezeMinHandle(sliderType) ? min : minValue;
       window.activeFilters.max_wayback_timestamp = maxValue;
-      console.log(`🎚️ ${sliderType} filter update:`, {
-        minValue: min, // Always minimum (frozen)
-        maxValue,
-        min: min,
-        max: max,
-        isAtFullRange: (minValue <= min && maxValue >= max),
-        skipDebounce
-      });
     }
 
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
-      console.log(`🎚️ ${sliderType} triggering debounceFilterUpdate`);
 
       // If this is the stimuli count slider, also update benchmark filters
       if (sliderType === 'stimuliCount') {

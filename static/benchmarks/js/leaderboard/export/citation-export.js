@@ -163,8 +163,7 @@ function copyToClipboard(text) {
 
 // Show copy feedback
 function showCopyFeedback() {
-  // Simple feedback
-  console.log('Citations copied to clipboard');
+  // Citations copied to clipboard
 }
 
 // Get citation count
