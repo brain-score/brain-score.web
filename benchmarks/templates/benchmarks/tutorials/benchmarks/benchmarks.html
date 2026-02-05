@@ -91,4 +91,10 @@
         <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark (Legacy)</button></a>
     </div>
 </div>
+
+<!-- Pass search data to JavaScript -->
+<script>
+  window.tutorialSearchData = {{ search_data|safe }};
+</script>
+<script src="{% static 'benchmarks/js/tutorial-search.js' %}"></script>
 {% endblock %}
