@@ -416,7 +416,7 @@ function applyWaybackTimestampFilter(rowData) {
         // Step 2: Swap data or mark as X based on version availability
         if (!activeVersionData) {
           // No version existed at this wayback date
-          newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+          newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2", waybackExcluded: true };
           return;
         }
 
@@ -424,7 +424,7 @@ function applyWaybackTimestampFilter(rowData) {
         if (activeVersionData !== scoreObj) {
           // Check if the historical version actually has score data
           if (activeVersionData.value === null || activeVersionData.value === undefined) {
-            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2" };
+            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2", waybackExcluded: true };
             return;
           }
 
@@ -454,10 +454,10 @@ function applyWaybackTimestampFilter(rowData) {
               const scoreTime = new Date(ts).getTime();
               if (scoreTime > waybackMs) {
                 // Score was submitted after wayback date
-                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
+                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
               }
             } catch (error) {
-              newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2" };
+              newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
             }
           }
         }
@@ -769,6 +769,26 @@ function updateFilteredScores(rowData) {
     window.waybackHiddenBenchmarks.forEach(benchmarkId => {
       benchmarksToExcludeFromAggregation.add(benchmarkId);
     });
+
+    // Propagate exclusion upward through the hierarchy: if ALL children of a parent
+    // are excluded (user-filtered or wayback-hidden), the parent benchmark also didn't
+    // exist at the wayback date and should be excluded from its own parent's denominator.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      allBenchmarkIds.forEach(benchmarkId => {
+        if (benchmarksToExcludeFromAggregation.has(benchmarkId)) return;
+        const children = hierarchyMap.get(benchmarkId) || [];
+        if (children.length === 0) return;
+        const allChildrenExcluded = children.every(childId =>
+          excludedBenchmarks.has(childId) || benchmarksToExcludeFromAggregation.has(childId)
+        );
+        if (allChildrenExcluded) {
+          benchmarksToExcludeFromAggregation.add(benchmarkId);
+          changed = true;
+        }
+      });
+    }
   }
 
   // Then process each row for filtering
@@ -800,7 +820,7 @@ function updateFilteredScores(rowData) {
             if (benchmarksToExcludeFromAggregation.has(childId)) {
               return; // Exclude this benchmark entirely
             }
-            
+
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined &&
                                  childScore !== '' && childScore !== 'X' &&
@@ -840,6 +860,7 @@ function updateFilteredScores(rowData) {
 
           children.forEach(childId => {
             if (!excludedBenchmarks.has(childId) && row[childId]) {
+              if (benchmarksToExcludeFromAggregation.has(childId)) return;
               validChildrenCount++;
               const childScore = row[childId].value;
               if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
@@ -865,7 +886,7 @@ function updateFilteredScores(rowData) {
           const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
           row[benchmarkId] = {
             ...row[benchmarkId],
-            value: parseFloat(average.toFixed(2))
+            value: average.toFixed(2)
           };
         }
       }
@@ -940,7 +961,9 @@ function updateFilteredScores(rowData) {
     });
 
     // Only recalculate if filters changed something; otherwise use Python's original value
-    const shouldRecalculateAverage = anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0 || benchmarksToExcludeFromAggregation.size > 0;
+    // Always recalculate when wayback is active because neural/behavior scores have been
+    // re-aggregated from wayback-filtered children even if no benchmarks are fully excluded
+    const shouldRecalculateAverage = isWaybackActive || anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0 || benchmarksToExcludeFromAggregation.size > 0;
 
     if (hasVisibleCategory && shouldRecalculateAverage) {
       if (categoryScores.length > 0) {
@@ -994,7 +1017,7 @@ function updateFilteredScores(rowData) {
         const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
         row.average_vision_v0 = {
           ...row.average_vision_v0,
-          value: parseFloat(globalAverage.toFixed(2))
+          value: globalAverage.toFixed(2)
         };
         row._tempFilteredScore = globalAverage;
       } else {
