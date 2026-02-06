@@ -983,90 +983,192 @@ class TestFilter:
         assert actual_models == expected_models, f"Expected models {expected_models}, got {actual_models}"
         assert actual_scores == expected_scores, f"Expected scores {expected_scores}, got {actual_scores}"
 
-    def test_wayback_timestamp_filter(self, page):
-        """
-        Verifies wayback timestamp filtering by directly driving the filter logic:
-
-        1) Opens the Advanced Filtering panel.
-        2) Sets the minimum wayback timestamp to Aug 27th 2020 and maximum to Aug 12th 2024 by updating the inputs in JS.
-        3) Calls applyCombinedFilters() to re‐apply the filter pipeline.
-        4) Waits for the grid to repaint.
-        5) Asserts that:
-           a) the slider inputs read  "2020-08-27T00:00:00.000Z" and "2024-08-12T22:41:02.470Z"
-           b) window.activeFilters.min_wayback_timestamp == 2020-08-27T00:00:00.000Z and
-              window.activeFilters.max_wayback_timestamp == 2024-08-12T22:41:02.470Z.
-        6) Sorts the grid by global score (average_vision_v0) descending.
-        7) Extracts and verifies the top-5 rows (ranks, model names, global scores) match expectations when sorted by global score.
-        """
-        # 1) open the panel
+    @staticmethod
+    def _set_wayback_date(page, date_str: str) -> None:
+        """Helper: set the wayback max date, apply filters, and sort by global score."""
         page.click('#advancedFilterBtn')
-        page.wait_for_selector('#waybackDateMin', state='visible')
         page.wait_for_selector('#waybackDateMax', state='visible')
 
-        # 2) set both inputs, then rerun the filter pipeline in JS
+        page.evaluate(f"""
+        () => {{
+            const maxInput = document.getElementById('waybackDateMax');
+            maxInput.value = "{date_str}";
+            maxInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            maxInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            window.activeFilters.max_wayback_timestamp = Math.floor(
+                new Date("{date_str}").getTime() / 1000
+            );
+            applyCombinedFilters();
+        }}
+        """)
+        page.wait_for_timeout(500)
+
         page.evaluate("""
         () => {
-        const maxInput = document.getElementById('waybackDateMax');
-        maxInput.value = "2024-08-12";
-        maxInput.dispatchEvent(new Event('input', { bubbles: true }));
-        maxInput.dispatchEvent(new Event('change', { bubbles: true }));
-        window.activeFilters.max_wayback_timestamp = Math.floor(new Date("2024-08-12").getTime() / 1000);
-        applyCombinedFilters();
+            if (window.globalGridApi) {
+                window.globalGridApi.applyColumnState({
+                    state: [
+                        { colId: 'average_vision_v0', sort: 'desc' },
+                        { colId: 'rank', sort: null }
+                    ]
+                });
+            }
         }
+        """)
+        page.wait_for_timeout(500)
+
+    @staticmethod
+    def _get_model_scores(page, model_name: str) -> dict:
+        """Helper: extract score dict for a specific model from the grid."""
+        return page.evaluate(f"""
+        () => {{
+            let target = null;
+            window.globalGridApi.forEachNodeAfterFilterAndSort(node => {{
+                const d = node.data;
+                const name = (d.model && d.model.name) ? String(d.model.name) : String(d.id || '');
+                if (name.includes("{model_name}")) target = d;
+            }});
+            if (!target) return null;
+            const name = (target.model && target.model.name) ? target.model.name : target.id;
+            return {{
+                model: String(name || ''),
+                average: target.average_vision_v0?.value,
+                neural: target.neural_vision_v0?.value,
+                behavior: target.behavior_vision_v0?.value,
+                engineering: target.engineering_vision_v0?.value,
+            }};
+        }}
         """)
 
-        # 3) give the grid a moment to re-filter
-        page.wait_for_timeout(500)
-    
-        # 4) verify both UI inputs and JS state
+    @staticmethod
+    def _assert_score_near(actual_str, expected: float, tolerance: float = 0.01,
+                           label: str = "") -> None:
+        """Assert a score string is numeric, has 2 decimal places, and is within tolerance."""
+        assert actual_str is not None, f"{label}: score is None"
+        assert actual_str != 'X', f"{label}: score is 'X', expected ~{expected}"
+        val = float(actual_str)
+        assert abs(val - expected) <= tolerance, (
+            f"{label}: {val} not within +/-{tolerance} of expected {expected}"
+        )
+        s = str(actual_str)
+        assert '.' in s and len(s.split('.')[1]) == 2, (
+            f"{label}: '{s}' does not have exactly 2 decimal places"
+        )
+
+    def test_wayback_dec_2024_ground_truth(self, page):
+        """
+        Validates wayback scores at 12/10/2024 against a CSV export taken on that
+        date. Checks global, neural, behavior, and engineering scores for multiple
+        models across different score ranges. Tolerance is +/- 0.01 to account for
+        acceptable rounding differences between Python backend and JS re-aggregation.
+        """
+        self._set_wayback_date(page, "2024-12-10")
+
+        # Ground truth from scratch/dec102024_benchmark_scores.csv
+        ground_truth = {
+            "cvt_cvt-w24-384-in22k_finetuned-in1k_4": {
+                "average": 0.43, "neural": 0.33, "behavior": 0.53, "engineering": 0.63,
+            },
+            "resnext101_32x8d_wsl": {
+                "average": 0.43, "neural": 0.34, "behavior": 0.52, "engineering": 0.58,
+            },
+            "resnet50-VITO-8deg-cc": {
+                "average": 0.20, "neural": 0.28, "behavior": 0.11, "engineering": 0.39,
+            },
+            "resnet50_tutorial": {
+                "average": 0.37, "neural": 0.31, "behavior": 0.43, "engineering": 0.37,
+            },
+        }
+
+        for model_name, expected in ground_truth.items():
+            scores = self._get_model_scores(page, model_name)
+            assert scores is not None, f"Model '{model_name}' not found in grid at 12/10/2024"
+
+            for key in ("average", "neural", "behavior", "engineering"):
+                self._assert_score_near(
+                    scores[key], expected[key],
+                    label=f"{model_name}.{key}",
+                )
+
+    def test_wayback_feb_2024_aggregation_excludes_future_benchmarks(self, page):
+        """
+        At 02/21/2024, many behavior sub-benchmarks (Maniquet2024, Ferguson2024,
+        Baker2022, BMD2024, tong.Coggan2024) did not yet exist. Their leaf scores
+        are correctly marked X by wayback filtering, but those benchmarks must be
+        excluded from the denominator entirely -- not treated as 0.
+
+        For the top model (cvt), behavior should aggregate over the ~2 benchmarks
+        that existed (Geirhos2021 ~0.62, Rajalingham ~0.60) giving ~0.61, NOT the
+        diluted ~0.20 from dividing by all 8 current children.
+
+        Also verifies that the global score is correctly re-aggregated from the
+        wayback-updated neural and behavior values.
+        """
+        self._set_wayback_date(page, "2024-02-21")
+
+        scores = self._get_model_scores(page, "cvt_cvt-w24-384-in22k_finetuned-in1k_4")
+        assert scores is not None, "Top model not found at 02/21/2024"
+
+        # Behavior must NOT be diluted by future benchmarks counted as 0
+        behavior_val = float(scores['behavior'])
+        assert behavior_val > 0.50, (
+            f"Behavior score {behavior_val} is too low -- future benchmarks are being "
+            f"counted as 0 in the denominator instead of excluded"
+        )
+
+        # Global score must equal avg(neural, behavior), not the stale Python value.
+        # At this date neural is well below 0.40, so the global should be
+        # noticeably different from the present-day 0.46.
+        neural_val = float(scores['neural'])
+        average_val = float(scores['average'])
+        expected_global = (neural_val + behavior_val) / 2
+        assert abs(average_val - expected_global) <= 0.01, (
+            f"Global score {average_val} does not match avg(neural={neural_val}, "
+            f"behavior={behavior_val}) = {expected_global:.2f}. "
+            f"average_vision_v0 may not be re-aggregated from wayback-updated children."
+        )
+
+        # Verify 2-decimal formatting on all scores
+        for key in ("average", "neural", "behavior"):
+            s = str(scores[key])
+            assert '.' in s and len(s.split('.')[1]) == 2, (
+                f"Score '{s}' ({key}) does not have exactly 2 decimal places"
+            )
+
+    def test_wayback_aug_2024_top_models(self, page):
+        """
+        Verifies that at 08/12/2024 the expected top models are present and have
+        reasonable global scores. This is a lighter smoke-test for a date between
+        the other two wayback tests.
+        """
+        self._set_wayback_date(page, "2024-08-12")
+
         min_val = page.evaluate("document.getElementById('waybackDateMin')?.value")
         max_val = page.evaluate("document.getElementById('waybackDateMax')?.value")
-    
-        print(f" WaybackDateMin input: {min_val}")
-        print(f" WaybackDateMax input: {max_val}")
-    
-        expected_min_val = "2020-08-27"
-        expected_max_val = "2024-08-12"
-    
-        # UI check (ISO strings)
-        assert min_val == expected_min_val, f"Min input mismatch: {min_val}"
-        assert max_val == expected_max_val, f"Max input mismatch: {max_val}"
-    
-        # 5) Sort by global score (average_vision_v0) descending
-        page.evaluate("""
-        () => {
-        if (window.globalGridApi) {
-            window.globalGridApi.applyColumnState({
-                state: [
-                    { colId: 'average_vision_v0', sort: 'desc' },
-                    { colId: 'rank', sort: null }
-                ]
-            });
-        }
-        }
-        """)
-        page.wait_for_timeout(500)
-    
-        # 6) verify leaderboard contents after filter and sorting by global score
-        # Key models that should appear at top when wayback is set to Aug 2024:
-        # - cvt_cvt-w24-384-in22k_finetuned-in1k_4 (submitted 2022, should have historical scores)
-        # - resnext101_32x8d_wsl (submitted Aug 2020, should have historical scores)
+        assert min_val == "2020-08-27", f"Min input mismatch: {min_val}"
+        assert max_val == "2024-08-12", f"Max input mismatch: {max_val}"
+
+        actual_models = page.locator(
+            '.ag-cell[col-id="model"] a'
+        ).all_text_contents()[:5]
+
         expected_top_models = [
             "cvt_cvt-w24-384-in22k_finetuned-in1k_4",
             "resnext101_32x8d_wsl",
         ]
-
-        actual_models = page.locator('.ag-cell[col-id="model"] a').all_text_contents()[:5]
-        actual_scores = page.locator('.ag-cell[col-id="average_vision_v0"]').all_text_contents()[:5]
-
-        # Verify the key expected models appear in the top results
         for expected_model in expected_top_models:
-            assert expected_model in actual_models, f"Expected {expected_model} in top models, got {actual_models}"
+            assert expected_model in actual_models, (
+                f"Expected {expected_model} in top models, got {actual_models}"
+            )
 
-        # Verify scores are reasonable (should be around 0.40-0.45 for top models)
+        actual_scores = page.locator(
+            '.ag-cell[col-id="average_vision_v0"]'
+        ).all_text_contents()[:5]
         for score in actual_scores[:2]:
             score_val = float(score)
-            assert 0.35 <= score_val <= 0.50, f"Score {score} outside expected range for top models"
+            assert 0.35 <= score_val <= 0.50, (
+                f"Score {score} outside expected range for top models"
+            )
 
     def test_copy_bibtex_button_all(self, page):
         """
