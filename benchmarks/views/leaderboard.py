@@ -2,6 +2,7 @@ import json
 import logging
 from collections import defaultdict
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 import numpy as np
 from django.shortcuts import render
@@ -235,7 +236,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'submitter': model.submitter.get('display_name') if model.submitter else None
             },
             'public': model.public,
-            'is_owner': is_owner
+            'is_owner': is_owner,
+            # Submission timestamp for wayback filtering (exclude models that didn't exist yet)
+            'submission_timestamp': model.timestamp.isoformat() if model.timestamp else None
         }
 
         # Process model metadata if available
@@ -341,11 +344,28 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             if not vid:
                 continue
 
+            # Round score to 2 decimal places for display
+            # This ensures consistency between ranking and display
+            raw_score = score.get('score_ceiled', 'X')
+
+            if raw_score and raw_score != 'X' and raw_score != '':
+                try:
+                    rounded = Decimal(str(raw_score)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    display_value = format(rounded, 'f')
+                except (ValueError, TypeError):
+                    display_value = raw_score
+            else:
+                display_value = raw_score
+
             # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
-                'value': score.get('score_ceiled', 'X'),
+                'value': display_value,
                 'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp')
+                'timestamp': score.get('end_timestamp'),
+                # Wayback machine: version timeline data
+                'version_valid_from': score.get('version_valid_from'),
+                'version_valid_to': score.get('version_valid_to'),
+                'historical_versions': score.get('historical_versions')
             }
         row_data.append(rd)
 

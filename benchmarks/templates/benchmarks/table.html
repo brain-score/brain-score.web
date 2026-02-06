@@ -123,7 +123,7 @@
                         data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
                         class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
                         style="{{ score_row.color }}; display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }} ">
-                        {{ score_row.score_ceiled }}
+                        {{ score_row.score_ceiled|cap_score }}
                     </td>
                 {% endfor %}
                 {% if has_user %}
