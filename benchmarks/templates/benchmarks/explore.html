@@ -8,6 +8,7 @@
 
 
 {% block content %}
+    <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <div class="columns">
         <div class="column">
             <div class="banner box benchmark-box">
@@ -27,7 +28,15 @@
 
             {% if representative_models %}
             <div class="mb-4">
-                <h3 class="title is-5">Representative Models</h3>
+                <h3 class="title is-5">
+                    Representative Models ({{ representative_models|length }})
+                    <span class="icon is-small ml-1"
+                          data-tooltip="This curated set includes reference models (e.g., AlexNet, CORnet-S), top performers from the 2024 competition, and a diverse selection of ~75 models spanning different architectures and neural area specializations."
+                          data-tooltip-position="right"
+                          style="cursor: help; color: #5C8DB8;">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                </h3>
                 <div>
                     {% for model in representative_models %}
                         <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
