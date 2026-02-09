@@ -22,13 +22,28 @@
         </div>
         <div class="column">
             <div class="banner box model-box">
-                <h2 class="title is-title-2">{{ models|length }} public Models</h2>
+                <h2 class="title is-title-2">{{ total_model_count }} public Models</h2>
             </div>
 
+            {% if representative_models %}
+            <div class="mb-4">
+                <h3 class="title is-5">Representative Models</h3>
+                <div>
+                    {% for model in representative_models %}
+                        <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <hr>
+            {% endif %}
+
             <div>
-                {% for model in models %}
-                    <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
-                {% endfor %}
+                <h3 class="title is-5">Other Models</h3>
+                <div>
+                    {% for model in other_models %}
+                        <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
