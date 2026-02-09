@@ -639,7 +639,7 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
-@cache_page_for_public_only(timeout=60 * 60)  # Cache public view for 1 hour
+@cache_page_for_public_only(timeout=60 * 60 * 7 * 24)  # Cache public view for 7 days
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX
