@@ -1,7 +1,7 @@
 // loading-animation.js
 const LoadingAnimation = {
   // Set to true to disable the loading animation (for performance testing)
-  DISABLED: true,
+  DISABLED: false,
 
   fallbackTimeout: null,
   _raf: null,
