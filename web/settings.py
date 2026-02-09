@@ -53,6 +53,8 @@ if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated dev site
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
+hosts_list.append("brain-score.org")
+hosts_list.append("www.brain-score.org")
 hosts_list.append("127.0.0.1")
 ALLOWED_HOSTS = hosts_list
 
@@ -305,7 +307,7 @@ AUTH_PASSWORD_VALIDATORS = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-
+SECURE_SSL_REDIRECT = True
 
 LANGUAGE_CODE = 'en-us'
 
