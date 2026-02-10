@@ -1,4 +1,4 @@
-{% load static compress %}
+{% load static %}
 
 <!-- This template contains just the heavy leaderboard content -->
 
@@ -252,8 +252,7 @@
 
 
 
-{# Load leaderboard-specific JavaScript modules (bundled to reduce HTTP requests) #}
-{% compress js %}
+{# Load leaderboard-specific JavaScript modules #}
 <script src="{% static 'benchmarks/js/leaderboard/core/constants.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/renderers/cell-renderers.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/renderers/header-components.js' %}"></script>
@@ -262,20 +261,17 @@
 <script src="{% static 'benchmarks/js/leaderboard/filters/model-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/range-filters.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/filters/filter-coordinator.js' %}"></script>
-{% endcompress %}
 
 {% if domain  == "vision" %} <!-- Disable URL params for Language domain for now -->
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
 {% endif %}
 
-{% compress js %}
 <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/utilities/color-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
-{% endcompress %}
 
 {# Pass Django data to JavaScript - using |safe since data is already JSON-serialized #}
 <script>
