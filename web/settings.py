@@ -61,7 +61,11 @@ ALLOWED_HOSTS = hosts_list
 
 # CloudFront CDN configuration (only active when env vars are set on staging)
 CLOUDFRONT_DISTRIBUTION_ID = os.getenv("CLOUDFRONT_DISTRIBUTION_ID")
-CLOUDFRONT_ORIGIN_SECRET = os.getenv("CLOUDFRONT_ORIGIN_SECRET")
+try:
+    cf_secrets = get_secret("CLOUDFRONT_ORIGIN_SECRET", REGION_NAME)
+    CLOUDFRONT_ORIGIN_SECRET = cf_secrets["token"]
+except Exception:
+    CLOUDFRONT_ORIGIN_SECRET = os.getenv("CLOUDFRONT_ORIGIN_SECRET")
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)
