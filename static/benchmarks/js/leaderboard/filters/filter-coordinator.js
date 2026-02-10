@@ -607,6 +607,24 @@ function resetAllFilters() {
       }
     }
   }
+  if (ranges.ceiling_ranges?.max) {
+    document.getElementById('ceilingMin').value = 0;
+    document.getElementById('ceilingMax').value = ranges.ceiling_ranges.max;
+    const ceilingSliderContainer = document.querySelector('#ceilingMin')?.closest('.filter-group')?.querySelector('.slider-container');
+    if (ceilingSliderContainer) {
+      const minHandle = ceilingSliderContainer.querySelector('.handle-min');
+      const maxHandle = ceilingSliderContainer.querySelector('.handle-max');
+      const range = ceilingSliderContainer.querySelector('.slider-range');
+      if (minHandle && maxHandle && range) {
+        minHandle.style.left = '0%';
+        maxHandle.style.left = '100%';
+        range.style.left = '0%';
+        range.style.width = '100%';
+        minHandle.dataset.value = 0;
+        maxHandle.dataset.value = Math.round(ranges.ceiling_ranges.max * 100);
+      }
+    }
+  }
 
   // Reset wayback timestamp slider to full range
   if (ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
@@ -1170,12 +1188,22 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const hasStimuliFiltering = (stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax);
 
+  const ceilingMin = parseFloat(document.getElementById('ceilingMin')?.value || 0);
+  const ceilingMax = parseFloat(document.getElementById('ceilingMax')?.value || 1);
+
+  const ceilingContainer = document.querySelector('#ceilingMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const ceilingRangeMin = parseFloat(ceilingContainer?.dataset?.min || 0) / 100;
+  const ceilingRangeMax = parseFloat(ceilingContainer?.dataset?.max || 100) / 100;
+
+  const hasCeilingFiltering = (ceilingMin > ceilingRangeMin || ceilingMax < ceilingRangeMax);
+
   const hasBenchmarkMetadataFilters = (
     window.activeFilters.benchmark_regions.length > 0 ||
     window.activeFilters.benchmark_species.length > 0 ||
     window.activeFilters.benchmark_tasks.length > 0 ||
     window.activeFilters.public_data_only ||
-    hasStimuliFiltering
+    hasStimuliFiltering ||
+    hasCeilingFiltering
   );
 
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');

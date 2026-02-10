@@ -126,6 +126,26 @@ function initializeLeaderboardFromTemplate() {
         }
       }
     }
+    if (ranges.ceiling_ranges?.max) {
+      const ceilingMinEl = document.getElementById('ceilingMin');
+      const ceilingMaxEl = document.getElementById('ceilingMax');
+      if (ceilingMinEl) ceilingMinEl.max = ranges.ceiling_ranges.max;
+      if (ceilingMaxEl) {
+        ceilingMaxEl.max = ranges.ceiling_ranges.max;
+        ceilingMaxEl.value = ranges.ceiling_ranges.max;
+      }
+
+      if (ceilingMinEl) {
+        const ceilingSliderContainer = ceilingMinEl.closest('.filter-group')?.querySelector('.slider-container');
+        if (ceilingSliderContainer) {
+          ceilingSliderContainer.dataset.max = Math.round(ranges.ceiling_ranges.max * 100);
+          const maxHandle = ceilingSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = Math.round(ranges.ceiling_ranges.max * 100);
+          }
+        }
+      }
+    }
     // Initialize wayback timestamp filter if datetime_range data is available and feature is enabled
     if (window.LeaderboardConstants?.ENABLE_WAYBACK_SLIDER && ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
       const waybackSection = document.getElementById('waybackTimestampSection');
