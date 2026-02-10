@@ -244,9 +244,10 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
         f"*:{domain}:*",           # All keys containing this domain
         f"*cache_page*{domain}*",  # Page caches for this domain
         "*cache_page*",         # Django page caches
+        "*cache_header*",       # Django cache_page header entries (companion to cache_page body)
         "*compressor*",         # Django compressor caches
         "*django_compressor*",  # Django compressor alternative pattern
-        "cache_version_*",      # Cache version keys
+        "*cache_version*",      # Cache version keys (prefixed by django-redis KEY_PREFIX)
         "*leaderboard*",        # Leaderboard-specific caches
         "*index*",              # Index/profile caches
         "*models*",             # Model-related caches
