@@ -54,7 +54,14 @@ hosts_list.append("brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbea
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
 hosts_list.append("127.0.0.1")
+cloudfront_domain = os.getenv("CLOUDFRONT_DOMAIN")
+if cloudfront_domain:
+    hosts_list.append(cloudfront_domain)
 ALLOWED_HOSTS = hosts_list
+
+# CloudFront CDN configuration (only active when env vars are set on staging)
+CLOUDFRONT_DISTRIBUTION_ID = os.getenv("CLOUDFRONT_DISTRIBUTION_ID")
+CLOUDFRONT_ORIGIN_SECRET = os.getenv("CLOUDFRONT_ORIGIN_SECRET")
 
 # Allows E-mail use
 # After 6/1/22, Google removed login with username/password from "less secure apps" (i.e. Django)

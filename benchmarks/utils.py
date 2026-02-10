@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse, HttpRequest
+import boto3
 import time
 import pickle
 import gzip
@@ -37,7 +38,9 @@ def cache_page_for_public_only(timeout: int):
 
             if user_view and request.user.is_authenticated:
                 # Profile view - skip page cache, call view directly
-                return view_func(request, *args, **kwargs)
+                response = view_func(request, *args, **kwargs)
+                response['Cache-Control'] = 'private, no-store'
+                return response
             else:
                 # Public view - use cached version
                 return cached_view(request, *args, **kwargs)
@@ -316,6 +319,33 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
     }
 
 
+def invalidate_cloudfront_cache(distribution_id: str, domain: str) -> bool:
+    """
+    Create a CloudFront invalidation for leaderboard paths.
+    Only runs when CLOUDFRONT_DISTRIBUTION_ID is set (staging/production with CDN).
+    Returns True on success, False on failure.
+    """
+    try:
+        cf_client = boto3.client('cloudfront', region_name='us-east-1')
+        cf_client.create_invalidation(
+            DistributionId=distribution_id,
+            InvalidationBatch={
+                'Paths': {
+                    'Quantity': 2,
+                    'Items': [
+                        f'/{domain}/leaderboard/*',
+                        f'/static/*',
+                    ]
+                },
+                'CallerReference': f'{domain}-{int(time.time())}'
+            }
+        )
+        logger.info(f"CloudFront invalidation created for /{domain}/leaderboard/*")
+        return True
+    except Exception as e:
+        logger.error(f"CloudFront invalidation failed: {e}")
+        return False
+
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -373,9 +403,16 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     except Exception as e:
         logger.error(f"Error rebuilding cache: {e}")
         rebuild_success = False
-    
+
+    # Invalidate CloudFront edge cache if distribution is configured
+    cf_invalidated = False
+    if settings.CLOUDFRONT_DISTRIBUTION_ID:
+        cf_invalidated = invalidate_cloudfront_cache(
+            settings.CLOUDFRONT_DISTRIBUTION_ID, domain
+        )
+
     return JsonResponse({
-        "status": "success", 
+        "status": "success",
         "domain": result["domain"],
         "version": result["version"],
         "keys_deleted": result["keys_deleted"],
@@ -384,7 +421,8 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
         "preserved_sessions": result.get("preserved_sessions"),
         "preserved_key_samples": result["preserved_key_samples"],
         "rebuilt": rebuild_success,
-        "message": f"{result['message']}. " + 
+        "cloudfront_invalidated": cf_invalidated,
+        "message": f"{result['message']}. " +
                   ("Rebuilt public leaderboard cache." if rebuild_success else "Cache rebuild failed.")
     })
 
