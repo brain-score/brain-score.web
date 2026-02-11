@@ -4,105 +4,205 @@
 {% block banner %}
     <h1>Compare</h1>
     <p>
-        The comparison tool on this page enables you to compare the scores of computational models across
-        neural, behavioral, and engineering benchmarks. This facilitates new discoveries by highlighting connections
-        between e.g. model performance and their alignment with diverse aspects of brain and behavioral data.
-        Integrating models and benchmarks on Brain-Score is a key enabler of such discoveries,
-        and allows for new synergies at the intersection of brain and cognitive sciences and machine learning.
+        Compare benchmarks to discover relationships between model performance across different measures,
+        or compare models to see how two architectures differ across the full benchmark suite.
     </p>
 {% endblock %}
 
 {% block main_content %}
-    <div class="columns">
-        <div class="comparison column is-two-thirds">
-            <div class="controls-container columns">
-                <div class="xlabel-container searchable-dropdown column">
-                    <select id="xlabel">
-                        {% for benchmark in benchmarks %}
-                            <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                        {% endfor %}
-                    </select>
+    <script type="text/javascript">
+        var benchmark_domain_map = {{ benchmark_domain_map|safe }};
+    </script>
+
+    <div class="tabs is-boxed is-medium">
+        <ul>
+            <li id="tab-benchmarks" class="is-active"><a>Compare Benchmarks</a></li>
+            <li id="tab-models"><a>Compare Models</a></li>
+        </ul>
+    </div>
+
+    {# ==================== Tab 1: Compare Benchmarks ==================== #}
+    <div id="panel-benchmarks">
+        <div class="columns">
+            <div class="comparison column is-two-thirds">
+                <div class="controls-container columns">
+                    <div class="xlabel-container searchable-dropdown column">
+                        <select id="xlabel">
+                            {% for benchmark in benchmarks %}
+                                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <span id="vs" class="column is-narrow">vs</span>
+                    <div class="ylabel-container searchable-dropdown column">
+                        <select id="ylabel">
+                            {% for benchmark in benchmarks %}
+                                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                <span id="vs" class="column is-narrow">vs</span>
-                <div class="ylabel-container searchable-dropdown column">
-                    <select id="ylabel">
-                        {% for benchmark in benchmarks %}
-                            <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                        {% endfor %}
-                    </select>
+
+                <div id="comparison-scatter"></div>
+                <div class="download-container columns">
+                    <div class="column">
+                        <button id="downloadSVGButton" class="button">Download plot as SVG</button>
+                    </div>
+                    <div class="column is-narrow"></div>
+                    <div class="column has-text-right">
+                        <button id="downloadCSVButton" class="button">Download data as CSV</button>
+                    </div>
                 </div>
             </div>
 
-            <div id="comparison-scatter"></div>
-            <div class="download-container columns">
-                <div class="column">
-                    <button id="downloadSVGButton" class="button">Download plot as SVG</button>
-                </div>
-                <div class="column is-narrow"></div>
-                <div class="column has-text-right">
-                    <button id="downloadCSVButton" class="button">Download data as CSV</button>
-                </div>
-            </div>
-        </div>
+            <div class="column">
+                <p>1 dot = 1 model. Only including models where all scores are computed.</p>
+                <br/>
 
-        <div class="column">
-            <p>1 dot = 1 model. Only including models where all scores are computed.</p>
-            <br/>
-
-            <h6 class="subtitle subtitle-is-6">Examples of relationships discovered in the literature:</h6>
-            <div class="comparison_selector"
-                 data-benchmark-x="ImageNet-top1_v1" data-benchmark-y="MajajHong2015.IT-pls_v4">
-                <p class="" data-identifier="comparison_selector-imagenet_average">
-                    Object classification performance is correlated with brain alignment.
-                </p>
-                <div data-parent="comparison_selector-imagenet_average">
-                    Researchers found that the performance of computational models in
-                    classifying the object in an image (aka the popular Computer Vision ImageNet benchmark)
-                    is correlated with the alignment of the model to brain and behavioral data.
-                    This is true across different stages of the ventral stream
-                    and has been covered in several publications (e.g.,
-                    <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a> with a
-                    smaller image dataset,
-                    <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a> with
-                    ImageNet).
-                    This connection between machine learning and neuroscience desiderata implies a striking
-                    synergy between research in these two domains, as building better-performing models might also
-                    lead to better models of the brain.
+                <h6 class="subtitle subtitle-is-6">Examples of relationships discovered in the literature:</h6>
+                <div class="comparison_selector"
+                     data-benchmark-x="ImageNet-top1_v1" data-benchmark-y="MajajHong2015.IT-pls_v4">
+                    <p class="" data-identifier="comparison_selector-imagenet_average">
+                        Object classification performance is correlated with brain alignment.
+                    </p>
+                    <div data-parent="comparison_selector-imagenet_average">
+                        Researchers found that the performance of computational models in
+                        classifying the object in an image (aka the popular Computer Vision ImageNet benchmark)
+                        is correlated with the alignment of the model to brain and behavioral data.
+                        This is true across different stages of the ventral stream
+                        and has been covered in several publications (e.g.,
+                        <a href="https://www.pnas.org/doi/10.1073/pnas.1403112111">Yamins & Hong et al. 2014</a> with a
+                        smaller image dataset,
+                        <a href="https://www.biorxiv.org/content/10.1101/407007">Schrimpf & Kubilius et al. 2018</a> with
+                        ImageNet).
+                        This connection between machine learning and neuroscience desiderata implies a striking
+                        synergy between research in these two domains, as building better-performing models might also
+                        lead to better models of the brain.
+                    </div>
                 </div>
-            </div>
-            <div class="comparison_selector"
-                 data-benchmark-x="FreemanZiemba2013.V1-pls_v3" data-benchmark-y="ImageNet-C-top1_v0">
-                <p class="" data-identifier="comparison_selector-V1_robustness">
-                    Alignment to early visual cortex V1 is correlated with model robustness.
-                </p>
-                <div data-parent="comparison_selector-V1_robustness">
-                    The more similar model representations are to recordings from primary visual cortex V1,
-                    the more robust the output of the model is to perturbations in the input
-                    such as image distortions and adversarial attacks
-                    (<a href="https://proceedings.neurips.cc/paper/2020/hash/98b17f068d5d9b7668e19fb8ae470841-Abstract.html">
-                    Dapello & Marques et al. 2020</a>).
-                    This finding is based on Brain-Score V1 benchmarks with data from
-                    <a href="https://www.nature.com/articles/nn.3402">Freeman & Ziemba et al. 2013</a> as well as
-                    <a href="https://arxiv.org/abs/1903.12261">ImageNet-C</a>,
-                    and inspired the development of the VOneNet model.
+                <div class="comparison_selector"
+                     data-benchmark-x="FreemanZiemba2013.V1-pls_v3" data-benchmark-y="ImageNet-C-top1_v0">
+                    <p class="" data-identifier="comparison_selector-V1_robustness">
+                        Alignment to early visual cortex V1 is correlated with model robustness.
+                    </p>
+                    <div data-parent="comparison_selector-V1_robustness">
+                        The more similar model representations are to recordings from primary visual cortex V1,
+                        the more robust the output of the model is to perturbations in the input
+                        such as image distortions and adversarial attacks
+                        (<a href="https://proceedings.neurips.cc/paper/2020/hash/98b17f068d5d9b7668e19fb8ae470841-Abstract.html">
+                        Dapello & Marques et al. 2020</a>).
+                        This finding is based on Brain-Score V1 benchmarks with data from
+                        <a href="https://www.nature.com/articles/nn.3402">Freeman & Ziemba et al. 2013</a> as well as
+                        <a href="https://arxiv.org/abs/1903.12261">ImageNet-C</a>,
+                        and inspired the development of the VOneNet model.
+                    </div>
                 </div>
-            </div>
-            <div class="comparison_selector"
-                 data-benchmark-x="Marques2020_v0" data-benchmark-y="Rajalingham2018-i2n_v2">
-                <p class="" data-identifier="comparison_selector-V1_behavior">
-                    Models that exhibit more V1-like properties in early stages are more aligned to behavior.
-                </p>
-                <div data-parent="comparison_selector-V1_behavior">
-                    As we make models more aligned to a diverse set of properties that have been discovered
-                    in primary visual cortex V1 -- such as receptive field sizes, response selectivity,
-                    surround and texture modulation, -- these more brain-aligned models also produce more human-like
-                    behavioral choices on a match-to-sample task. The V1 properties here have been compiled by
-                    <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al.
-                        2021</a>
-                    from many classic neuroscience studies, and the behavioral data was collected by
-                    <a href="https://www.jneurosci.org/content/38/33/7255.short">Rajalingham et al. 2018</a>.
+                <div class="comparison_selector"
+                     data-benchmark-x="Marques2020_v0" data-benchmark-y="Rajalingham2018-i2n_v2">
+                    <p class="" data-identifier="comparison_selector-V1_behavior">
+                        Models that exhibit more V1-like properties in early stages are more aligned to behavior.
+                    </p>
+                    <div data-parent="comparison_selector-V1_behavior">
+                        As we make models more aligned to a diverse set of properties that have been discovered
+                        in primary visual cortex V1 -- such as receptive field sizes, response selectivity,
+                        surround and texture modulation, -- these more brain-aligned models also produce more human-like
+                        behavioral choices on a match-to-sample task. The V1 properties here have been compiled by
+                        <a href="https://www.biorxiv.org/content/10.1101/2021.03.01.433495v2.abstract">Marques et al.
+                            2021</a>
+                        from many classic neuroscience studies, and the behavioral data was collected by
+                        <a href="https://www.jneurosci.org/content/38/33/7255.short">Rajalingham et al. 2018</a>.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {# ==================== Tab 2: Compare Models ==================== #}
+    <div id="panel-models" style="display: none;">
+        <div class="columns">
+            <div class="column is-full">
+                <div class="model-compare-controls columns">
+                    <div class="column searchable-dropdown">
+                        <label class="label" for="model-x-select">Model A</label>
+                        <select id="model-x-select" style="width: 100%;"></select>
+                    </div>
+                    <span class="column is-narrow" style="align-self: center; font-weight: bold; font-size: 1.2em; padding-top: 2em;">vs</span>
+                    <div class="column searchable-dropdown">
+                        <label class="label" for="model-y-select">Model B</label>
+                        <select id="model-y-select" style="width: 100%;"></select>
+                    </div>
+                </div>
+
+                <div id="stats-summary" class="box" style="display: none;">
+                    <div class="columns is-multiline">
+                        <div class="column is-3">
+                            <p><strong>Pearson r:</strong> <span id="stat-pearson"></span></p>
+                        </div>
+                        <div class="column is-3">
+                            <p><strong>Spearman rho:</strong> <span id="stat-spearman"></span></p>
+                        </div>
+                        <div class="column is-3">
+                            <p><strong>R-squared:</strong> <span id="stat-r2"></span></p>
+                        </div>
+                        <div class="column is-3">
+                            <p><strong>n =</strong> <span id="stat-n"></span> benchmarks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3 class="subtitle is-5">Per-Benchmark Score Correlation</h3>
+                    <p class="help">1 dot = 1 benchmark. Hover for details. Only benchmarks with scores for both models are shown.</p>
+                    <div id="scatter-plot" style="width: 100%; height: 550px;"></div>
+                </div>
+
+                <div class="box">
+                    <h3 class="subtitle is-5">Top Benchmark Differences</h3>
+                    <div id="difference-bar-chart" style="width: 100%; height: 650px;"></div>
+                </div>
+
+                <div class="box">
+                    <h3 class="subtitle is-5">Mean Score by Domain</h3>
+                    <div id="domain-summary-chart" style="width: 100%; height: 400px;"></div>
+                </div>
+
+                <div class="download-container columns">
+                    <div class="column has-text-right">
+                        <button id="downloadModelCSVButton" class="button">Download data as CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var tabBenchmarks = document.getElementById('tab-benchmarks');
+        var tabModels = document.getElementById('tab-models');
+        var panelBenchmarks = document.getElementById('panel-benchmarks');
+        var panelModels = document.getElementById('panel-models');
+
+        tabBenchmarks.addEventListener('click', function() {
+            tabBenchmarks.classList.add('is-active');
+            tabModels.classList.remove('is-active');
+            panelBenchmarks.style.display = '';
+            panelModels.style.display = 'none';
+        });
+
+        tabModels.addEventListener('click', function() {
+            tabModels.classList.add('is-active');
+            tabBenchmarks.classList.remove('is-active');
+            panelModels.style.display = '';
+            panelBenchmarks.style.display = 'none';
+            // Trigger Plotly resize so charts render at correct width
+            if (typeof Plotly !== 'undefined') {
+                var ids = ['scatter-plot', 'difference-bar-chart', 'domain-summary-chart'];
+                for (var i = 0; i < ids.length; i++) {
+                    var el = document.getElementById(ids[i]);
+                    if (el && el.data) Plotly.Plots.resize(el);
+                }
+            }
+        });
+    })();
+    </script>
 {% endblock %}
