@@ -15,7 +15,7 @@ $(document).ready(function () {
         'Average Vision': '#17becf'
     };
 
-    var DOMAIN_ORDER = ['V1', 'V2', 'V4', 'IT', 'Neural', 'Behavioral', 'Engineering', 'Average Vision'];
+    var DOMAIN_ORDER = ['Average Vision', 'Neural', 'V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering'];
 
     // ---- Extract unique model names from comparison_data ----
     function extractModelNames(data) {
@@ -350,8 +350,22 @@ $(document).ready(function () {
         var layout = {
             xaxis: {title: 'Score Difference (' + nameA + ' minus ' + nameB + ')', zeroline: true},
             yaxis: {automargin: true, tickfont: {size: 10}},
-            margin: {l: 220, t: 10, r: 20, b: 50},
-            plot_bgcolor: 'white'
+            margin: {l: 220, t: 30, r: 20, b: 50},
+            plot_bgcolor: 'white',
+            annotations: [
+                {
+                    x: 0, y: 1.02, xref: 'paper', yref: 'paper',
+                    text: '<b>\u25C0 ' + nameB + ' scores higher</b>',
+                    showarrow: false, font: {size: 11, color: '#555'},
+                    xanchor: 'left'
+                },
+                {
+                    x: 1, y: 1.02, xref: 'paper', yref: 'paper',
+                    text: '<b>' + nameA + ' scores higher \u25B6</b>',
+                    showarrow: false, font: {size: 11, color: '#555'},
+                    xanchor: 'right'
+                }
+            ]
         };
 
         Plotly.newPlot('difference-bar-chart', [trace], layout, {responsive: true});
@@ -401,7 +415,7 @@ $(document).ready(function () {
             },
             name: nameA,
             type: 'bar',
-            marker: {color: '#2196F3', opacity: 0.85},
+            marker: {color: '#45C676', opacity: 0.85},
             text: domains.map(function (d) { return 'n=' + domainStats[d].scoresA.length; }),
             hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>%{text}<extra>' + nameA + '</extra>'
         };
@@ -416,7 +430,7 @@ $(document).ready(function () {
             },
             name: nameB,
             type: 'bar',
-            marker: {color: '#FF9800', opacity: 0.85},
+            marker: {color: '#47B7DE', opacity: 0.85},
             text: domains.map(function (d) { return 'n=' + domainStats[d].scoresB.length; }),
             hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>%{text}<extra>' + nameB + '</extra>'
         };
