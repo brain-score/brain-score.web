@@ -1,5 +1,8 @@
 // loading-animation.js
 const LoadingAnimation = {
+  // Set to true to disable the loading animation (for performance testing)
+  DISABLED: false,
+
   fallbackTimeout: null,
   _raf: null,
   _progress: 0,
@@ -9,6 +12,8 @@ const LoadingAnimation = {
   _isVisible: false,
 
   show() {
+    if (this.DISABLED) return;
+
     const overlay = document.getElementById('loading-overlay');
     if (!overlay || this._isVisible) return;
 

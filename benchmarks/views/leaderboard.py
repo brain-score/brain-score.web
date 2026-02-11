@@ -6,9 +6,8 @@ from decimal import Decimal, ROUND_HALF_UP
 
 import numpy as np
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 
-from ..utils import cache_get_context
+from ..utils import cache_get_context, cache_page_for_public_only
 from .index import get_context, get_datetime_range
 
 logger = logging.getLogger(__name__)
@@ -640,6 +639,7 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
+@cache_page_for_public_only(timeout=60 * 60 * 7 * 24)  # Cache public view for 7 days
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX
