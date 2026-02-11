@@ -513,7 +513,17 @@ $(document).ready(function () {
     });
 
     // ---- Initialize ----
+    var DEFAULT_MODEL_A = 'convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384';
+    var DEFAULT_MODEL_B = 'vit_large_patch14_clip_224:openai_ft_in1k';
+
     var modelNames = extractModelNames(comparison_data);
     initDropdowns(modelNames);
+
+    if (modelNames.indexOf(DEFAULT_MODEL_A) !== -1 && modelNames.indexOf(DEFAULT_MODEL_B) !== -1) {
+        $('#model-x-select').val(DEFAULT_MODEL_A).trigger('change.select2');
+        $('#model-y-select').val(DEFAULT_MODEL_B).trigger('change.select2');
+        updateAllCharts();
+    }
+
     $('#model-x-select, #model-y-select').on('change', updateAllCharts);
 });
