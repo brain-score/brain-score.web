@@ -36,6 +36,8 @@ function parseURLFilters() {
   window.activeFilters.max_score = parseFloatParam('max_score');
   window.activeFilters.min_stimuli_count = parseFloatParam('min_stimuli_count');
   window.activeFilters.max_stimuli_count = parseFloatParam('max_stimuli_count');
+  window.activeFilters.min_ceiling = parseFloatParam('min_ceiling');
+  window.activeFilters.max_ceiling = parseFloatParam('max_ceiling');
   const defaultMin = window.filterOptions?.datetime_range?.min_unix;
   const defaultMax = window.filterOptions?.datetime_range?.max_unix ?? Math.floor(Date.now() / 1000);
 
@@ -94,6 +96,8 @@ function applyFiltersToUI() {
   updateRangeInput('modelSizeMax', window.activeFilters.max_model_size);
   updateRangeInput('stimuliCountMin', window.activeFilters.min_stimuli_count);
   updateRangeInput('stimuliCountMax', window.activeFilters.max_stimuli_count);
+  updateRangeInput('ceilingMin', window.activeFilters.min_ceiling);
+  updateRangeInput('ceilingMax', window.activeFilters.max_ceiling);
 
   // Update range sliders
   if (typeof window.LeaderboardRangeFilters?.setRangeValues === 'function') {
@@ -113,6 +117,12 @@ function applyFiltersToUI() {
       const min = window.activeFilters.min_stimuli_count || 0;
       const max = window.activeFilters.max_stimuli_count || 1000;
       window.LeaderboardRangeFilters.setRangeValues('stimuliCountMin', min, max);
+    }
+
+    if (window.activeFilters.min_ceiling !== null || window.activeFilters.max_ceiling !== null) {
+      const min = (window.activeFilters.min_ceiling || 0) * 100;
+      const max = (window.activeFilters.max_ceiling || 1) * 100;
+      window.LeaderboardRangeFilters.setRangeValues('ceilingMin', min, max);
     }
 
     if (window.activeFilters.min_wayback_timestamp !== null || window.activeFilters.max_wayback_timestamp !== null) {
@@ -238,6 +248,8 @@ function updateURLFromFilters() {
   addRange('max_score');
   addRange('min_stimuli_count');
   addRange('max_stimuli_count');
+  addRange('min_ceiling');
+  addRange('max_ceiling');
   addRange('min_wayback_timestamp');
   addRange('max_wayback_timestamp');
 
@@ -294,7 +306,8 @@ function hasURLFilters() {
     'benchmark_regions', 'benchmark_species', 'benchmark_tasks',
     'public_data_only', 'runnable_only', 'excluded_benchmarks',
     'min_param_count', 'max_param_count', 'min_model_size', 'max_model_size',
-    'min_score', 'max_score', 'min_stimuli_count', 'max_stimuli_count'
+    'min_score', 'max_score', 'min_stimuli_count', 'max_stimuli_count',
+    'min_ceiling', 'max_ceiling'
   ];
 
   return filterParams.some(param => params.has(param));
