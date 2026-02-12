@@ -8,21 +8,17 @@ function initializeLeaderboardFromTemplate() {
     let rowData, columnDefs, benchmarkGroups, benchmarkTree, filterOptions;
 
     try {
-      rowData = JSON.parse(window.DJANGO_DATA.row_data);
-      columnDefs = JSON.parse(window.DJANGO_DATA.column_defs);
-      benchmarkGroups = JSON.parse(window.DJANGO_DATA.benchmark_groups);
-      benchmarkTree = JSON.parse(window.DJANGO_DATA.benchmark_tree);
-      filterOptions = JSON.parse(window.DJANGO_DATA.filter_options);
-      benchmarkMetadata = JSON.parse(window.DJANGO_DATA.benchmark_metadata);
-      benchmarkIds = JSON.parse(window.DJANGO_DATA.benchmark_ids);
+      // Data is now directly embedded as JS objects (no JSON.parse needed)
+      rowData = window.DJANGO_DATA.row_data;
+      columnDefs = window.DJANGO_DATA.column_defs;
+      benchmarkGroups = window.DJANGO_DATA.benchmark_groups;
+      benchmarkTree = window.DJANGO_DATA.benchmark_tree;
+      filterOptions = window.DJANGO_DATA.filter_options;
+      benchmarkMetadata = window.DJANGO_DATA.benchmark_metadata;
+      benchmarkIds = window.DJANGO_DATA.benchmark_ids;
 
       let modelMetadataMap, benchmarkMetadataMap;
-      try {
-        modelMetadataMap = JSON.parse(window.DJANGO_DATA.model_metadata_map);
-      } catch (e) {
-        console.warn('No model_metadata_map provided:', e);
-        modelMetadataMap = {};
-      }
+      modelMetadataMap = window.DJANGO_DATA.model_metadata_map || {};
       benchmarkMetadataMap = {};
       benchmarkMetadata.forEach(entry => {
         benchmarkMetadataMap[entry.identifier] = entry;
@@ -53,10 +49,10 @@ function initializeLeaderboardFromTemplate() {
     window.benchmarkMetadata = benchmarkMetadata;
 
     window.benchmarkIds = benchmarkIds;
-    window.benchmarkStimuliMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkStimuliMetaMap);
-    window.benchmarkDataMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkDataMetaMap);
-    window.benchmarkMetricMetaMap = JSON.parse(window.DJANGO_DATA.benchmarkMetricMetaMap);
-    window.benchmarkBibtexMap = JSON.parse(window.DJANGO_DATA.benchmark_bibtex_map);
+    window.benchmarkStimuliMetaMap = window.DJANGO_DATA.benchmarkStimuliMetaMap;
+    window.benchmarkDataMetaMap = window.DJANGO_DATA.benchmarkDataMetaMap;
+    window.benchmarkMetricMetaMap = window.DJANGO_DATA.benchmarkMetricMetaMap;
+    window.benchmarkBibtexMap = window.DJANGO_DATA.benchmark_bibtex_map;
 
     // Set up range sliders with correct max values
     const ranges = filterOptions || {};

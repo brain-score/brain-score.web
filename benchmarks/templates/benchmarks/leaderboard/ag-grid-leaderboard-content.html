@@ -295,22 +295,22 @@
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-{# Pass Django data to JavaScript #}
+{# Pass Django data to JavaScript - using |safe since data is already JSON-serialized #}
 <script>
   window.DJANGO_DATA = {
-    row_data: '{{ row_data|escapejs }}',
-    column_defs: '{{ column_defs|escapejs }}',
-    benchmark_groups: '{{ benchmark_groups|escapejs }}',
-    benchmark_tree: '{{ benchmark_tree|escapejs }}',
-    filter_options: '{{ filter_options|escapejs }}',
-    benchmark_metadata: '{{ benchmark_metadata|escapejs }}',
-    benchmark_ids: '{{ benchmark_ids|escapejs }}',
-    benchmark_bibtex_map: '{{ benchmark_bibtex_map|escapejs }}',
-    model_metadata_map: '{{ model_metadata_map|escapejs }}',
+    row_data: {{ row_data|safe }},
+    column_defs: {{ column_defs|safe }},
+    benchmark_groups: {{ benchmark_groups|safe }},
+    benchmark_tree: {{ benchmark_tree|safe }},
+    filter_options: {{ filter_options|safe }},
+    benchmark_metadata: {{ benchmark_metadata|safe }},
+    benchmark_ids: {{ benchmark_ids|safe }},
+    benchmark_bibtex_map: {{ benchmark_bibtex_map|safe }},
+    model_metadata_map: {{ model_metadata_map|safe }},
     domain: '{{ domain }}',
-    benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
-    benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
-    benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
+    benchmarkStimuliMetaMap: {{ benchmarkStimuliMetaMap|safe }},
+    benchmarkDataMetaMap: {{ benchmarkDataMetaMap|safe }},
+    benchmarkMetricMetaMap: {{ benchmarkMetricMetaMap|safe }}
   };
 </script>
 
