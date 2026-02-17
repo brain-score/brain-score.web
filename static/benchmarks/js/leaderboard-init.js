@@ -180,7 +180,8 @@ document.addEventListener('DOMContentLoaded', function() {
       let calculatedRanges = {
         max_param_count: 100,
         max_model_size: 1000,
-        max_stimuli_count: 1000
+        max_stimuli_count: 1000,
+        max_ceiling: 1.0
       };
       
       if (rowData && rowData.length > 0) {
@@ -224,13 +225,27 @@ document.addEventListener('DOMContentLoaded', function() {
           calculatedRanges.max_stimuli_count = Math.ceil(maxStimuliCount / 100) * 100 + 100;
         }
       }
-      
+
+      // Calculate max ceiling from benchmark metadata
+      if (window.benchmarkMetadata && window.benchmarkMetadata.length > 0) {
+        let maxCeiling = 0;
+        window.benchmarkMetadata.forEach(bm => {
+          if (bm.ceiling !== null && bm.ceiling !== undefined && bm.ceiling > maxCeiling) {
+            maxCeiling = bm.ceiling;
+          }
+        });
+        if (maxCeiling > 0) {
+          calculatedRanges.max_ceiling = Math.min(1.0, Math.ceil(maxCeiling * 20) / 20);
+        }
+      }
+
       // Use calculated ranges if filterOptions ranges are missing or seem wrong
       const ranges = filterOptions?.parameter_ranges || {};
       const finalRanges = {
         max_param_count: ranges.max_param_count || calculatedRanges.max_param_count,
         max_model_size: ranges.max_model_size || calculatedRanges.max_model_size,
-        max_stimuli_count: ranges.max_stimuli_count || calculatedRanges.max_stimuli_count
+        max_stimuli_count: ranges.max_stimuli_count || calculatedRanges.max_stimuli_count,
+        max_ceiling: filterOptions?.ceiling_ranges?.max || calculatedRanges.max_ceiling
       };
       
       // Update parameter count range
@@ -289,11 +304,29 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
+
+      // Update ceiling range
+      const ceilingMinEl = document.getElementById('ceilingMin');
+      const ceilingMaxEl = document.getElementById('ceilingMax');
+      if (ceilingMinEl && ceilingMaxEl) {
+        ceilingMinEl.max = finalRanges.max_ceiling;
+        ceilingMaxEl.max = finalRanges.max_ceiling;
+        ceilingMaxEl.value = finalRanges.max_ceiling;
+
+        const ceilingSliderContainer = ceilingMinEl.closest('.filter-group')?.querySelector('.slider-container');
+        if (ceilingSliderContainer) {
+          ceilingSliderContainer.dataset.max = Math.round(finalRanges.max_ceiling * 100);
+          const maxHandle = ceilingSliderContainer.querySelector('.handle-max');
+          if (maxHandle) {
+            maxHandle.dataset.value = Math.round(finalRanges.max_ceiling * 100);
+          }
+        }
+      }
     } catch (e) {
       console.error('Error parsing data:', e);
       throw new Error('Failed to parse required leaderboard data');
     }
-    
+
     // Initialize the grid
     initializeGrid(rowData, columnDefs, benchmarkGroups);
     

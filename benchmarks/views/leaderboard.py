@@ -159,6 +159,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'species': set(),
         'tasks': set(),
         'stimuli_ranges': {'min': float('inf'), 'max': 0},
+        'ceiling_ranges': {'min': float('inf'), 'max': 0},
         'public_data_available': set()
     }
 
@@ -188,6 +189,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                     stimuli['num_stimuli']
                 )
 
+        if benchmark.number_of_all_children == 0 and benchmark.ceiling and benchmark.ceiling != 'X':
+            try:
+                ceiling_val = float(benchmark.ceiling)
+                benchmark_metadata['ceiling_ranges']['min'] = min(
+                    benchmark_metadata['ceiling_ranges']['min'], ceiling_val)
+                benchmark_metadata['ceiling_ranges']['max'] = max(
+                    benchmark_metadata['ceiling_ranges']['max'], ceiling_val)
+            except (ValueError, TypeError):
+                pass
+
     benchmark_metadata_list = []
     for benchmark in context['benchmarks']:
         metadata_entry = {
@@ -196,7 +207,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'species': None,
             'task': None,
             'data_publicly_available': True,  # default
-            'num_stimuli': None
+            'num_stimuli': None,
+            'ceiling': None
         }
 
         # Extract data metadata
@@ -213,6 +225,13 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if hasattr(benchmark, 'benchmark_stimuli_meta') and benchmark.benchmark_stimuli_meta:
             stimuli = benchmark.benchmark_stimuli_meta
             metadata_entry['num_stimuli'] = stimuli.get('num_stimuli')
+
+        # Extract ceiling for leaf benchmarks
+        if benchmark.number_of_all_children == 0 and benchmark.ceiling and benchmark.ceiling != 'X':
+            try:
+                metadata_entry['ceiling'] = float(benchmark.ceiling)
+            except (ValueError, TypeError):
+                pass
 
         benchmark_metadata_list.append(metadata_entry)
 
@@ -526,6 +545,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'stimuli_ranges': {
             'min': 0,
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
+        },
+        'ceiling_ranges': {
+            'min': 0,
+            'max': min(1.0, round(benchmark_metadata['ceiling_ranges']['max'] + 0.05, 2))
+                   if benchmark_metadata['ceiling_ranges']['max'] > 0 else 1.0
         }
     }
 

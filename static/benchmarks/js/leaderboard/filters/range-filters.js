@@ -42,6 +42,7 @@ function initializeDualHandleSlider(container) {
   const sliderType = sliderGroup?.querySelector('#paramCountMin') ? 'paramCount' :
                      sliderGroup?.querySelector('#modelSizeMin') ? 'modelSize' :
                      sliderGroup?.querySelector('#stimuliCountMin') ? 'stimuliCount' :
+                     sliderGroup?.querySelector('#ceilingMin') ? 'ceilingValue' :
                      sliderGroup?.querySelector('#waybackDateMin') ? 'waybackTimestamp' : 'unknown';
 
   const minInput = sliderGroup?.querySelector('.range-input-min');
@@ -62,10 +63,7 @@ function initializeDualHandleSlider(container) {
     range.style.left = `${minPercent}%`;
     range.style.width = `${maxPercent - minPercent}%`;
 
-    // Update input fields
-    if (minInput) minInput.value = Math.round(minValue);
-    if (maxInput) maxInput.value = Math.round(maxValue);
-
+    // Update input fields based on slider type
     if (sliderType === 'waybackTimestamp') {
       // Convert Unix timestamps to date strings for date inputs
       if (minInput) {
@@ -76,6 +74,10 @@ function initializeDualHandleSlider(container) {
         const maxDate = new Date(maxValue * 1000);
         maxInput.value = maxDate.toISOString().split('T')[0];
       }
+    } else if (sliderType === 'ceilingValue') {
+      // Slider uses 0-100 internally, display as 0-1 floats
+      if (minInput) minInput.value = (minValue / 100).toFixed(2);
+      if (maxInput) maxInput.value = (maxValue / 100).toFixed(2);
     } else {
       // Standard numeric inputs
       if (minInput) minInput.value = Math.round(minValue);
@@ -101,8 +103,8 @@ function initializeDualHandleSlider(container) {
     // Apply filters with debouncing - but not during initial setup
     if (!skipDebounce) {
 
-      // If this is the stimuli count slider, also update benchmark filters
-      if (sliderType === 'stimuliCount') {
+      // If this is a benchmark property slider, also update benchmark filters
+      if (sliderType === 'stimuliCount' || sliderType === 'ceilingValue') {
         if (typeof window.LeaderboardBenchmarkFilters?.updateBenchmarkFilters === 'function') {
           window.LeaderboardBenchmarkFilters.updateBenchmarkFilters();
         }
@@ -212,6 +214,14 @@ function initializeDualHandleSlider(container) {
             updateSliderPosition();
             updateActiveFilters();
           }
+        } else if (sliderType === 'ceilingValue') {
+          const val = parseFloat(minInput.value);
+          if (!isNaN(val)) {
+            minValue = val * 100;
+            minHandle.dataset.value = minValue;
+            updateSliderPosition();
+            updateActiveFilters();
+          }
         } else {
           const ts = parseFloat(minInput.value);
           if (!isNaN(ts)) {
@@ -227,26 +237,36 @@ function initializeDualHandleSlider(container) {
 
   if (maxInput) {
     maxInput?.addEventListener('change', () => {
-    const ts = new Date(maxInput.value).getTime() / 1000;
-    if (!isNaN(ts)) {
-      // For wayback timestamp, ensure value doesn't exceed today's date
-      if (sliderType === 'waybackTimestamp') {
-        const today = new Date();
-        today.setHours(23, 59, 59, 999); // End of today
-        const todayTs = Math.floor(today.getTime() / 1000);
-        if (ts > todayTs) {
-          // Clamp to today's date
-          maxInput.value = today.toISOString().split('T')[0];
-          maxValue = todayTs;
+    if (sliderType === 'ceilingValue') {
+      const val = parseFloat(maxInput.value);
+      if (!isNaN(val)) {
+        maxValue = val * 100;
+        maxHandle.dataset.value = maxValue;
+        updateSliderPosition();
+        updateActiveFilters();
+      }
+    } else {
+      const ts = new Date(maxInput.value).getTime() / 1000;
+      if (!isNaN(ts)) {
+        // For wayback timestamp, ensure value doesn't exceed today's date
+        if (sliderType === 'waybackTimestamp') {
+          const today = new Date();
+          today.setHours(23, 59, 59, 999); // End of today
+          const todayTs = Math.floor(today.getTime() / 1000);
+          if (ts > todayTs) {
+            // Clamp to today's date
+            maxInput.value = today.toISOString().split('T')[0];
+            maxValue = todayTs;
+          } else {
+            maxValue = ts;
+          }
         } else {
           maxValue = ts;
         }
-      } else {
-        maxValue = ts;
+        maxHandle.dataset.value = maxValue;
+        updateSliderPosition();
+        updateActiveFilters();
       }
-      maxHandle.dataset.value = maxValue;
-      updateSliderPosition();
-      updateActiveFilters();
     }
     });
   }
@@ -273,6 +293,10 @@ function initializeDualHandleSlider(container) {
       minValue = isNaN(dateValue.getTime()) ? min : Math.floor(dateValue.getTime() / 1000);
       minHandle.dataset.value = minValue;
     }
+  } else if (sliderType === 'ceilingValue') {
+    // Ceiling input shows 0-1 floats, slider uses 0-100 internally
+    minValue = (parseFloat(minInput.value) || 0) * 100;
+    minHandle.dataset.value = minValue;
   } else {
     minValue = parseFloat(minInput.value) || min;
     minHandle.dataset.value = minValue;
@@ -283,6 +307,10 @@ function initializeDualHandleSlider(container) {
     // Convert date string to Unix timestamp
     const dateValue = new Date(maxInput.value);
     maxValue = isNaN(dateValue.getTime()) ? max : Math.floor(dateValue.getTime() / 1000);
+    maxHandle.dataset.value = maxValue;
+  } else if (sliderType === 'ceilingValue') {
+    // Ceiling input shows 0-1 floats, slider uses 0-100 internally
+    maxValue = (parseFloat(maxInput.value) || 1) * 100;
     maxHandle.dataset.value = maxValue;
   } else {
     maxValue = parseFloat(maxInput.value) || max;
@@ -335,6 +363,9 @@ function resetSliderUI() {
     } else if (sliderGroup?.querySelector('#stimuliCountMin') && ranges.stimuli_ranges?.max) {
       max = ranges.stimuli_ranges.max;
       container.dataset.max = max;
+    } else if (sliderGroup?.querySelector('#ceilingMin') && ranges.ceiling_ranges?.max) {
+      max = Math.round(ranges.ceiling_ranges.max * 100);
+      container.dataset.max = max;
     } else if (isWaybackTimestamp && ranges.datetime_range?.min_unix && ranges.datetime_range?.max_unix) {
       min = ranges.datetime_range.min_unix;
       max = ranges.datetime_range.max_unix;
@@ -386,6 +417,10 @@ function resetSliderUI() {
         maxInput.value = maxDateStr > todayStr ? todayStr : maxDateStr;
         maxInput.max = todayStr;
       }
+    } else if (sliderGroup?.querySelector('#ceilingMin')) {
+      // Ceiling: slider uses 0-100, display as 0-1 floats
+      if (minInput) minInput.value = (min / 100).toFixed(2);
+      if (maxInput) maxInput.value = (max / 100).toFixed(2);
     } else {
       // Standard numeric inputs
       if (minInput) minInput.value = min;
@@ -479,6 +514,10 @@ function setRangeValues(filterId, minVal, maxVal) {
         range.style.width = `${newMaxPercent - minPercent}%`;
       }
     }
+  } else if (sliderGroup?.querySelector('#ceilingMin')) {
+    // Ceiling: slider uses 0-100 internally, display as 0-1 floats
+    if (minInput) minInput.value = (minValue / 100).toFixed(2);
+    if (maxInput) maxInput.value = (maxValue / 100).toFixed(2);
   } else {
     // Standard numeric inputs
     if (minInput) minInput.value = Math.round(minValue);
