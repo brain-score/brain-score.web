@@ -1,4 +1,5 @@
 import logging
+import threading
 import numpy as np
 from django.http import Http404
 from django.shortcuts import render
@@ -9,6 +10,9 @@ from .leaderboard import get_ag_grid_context
 from ..models import FinalModelContext, BenchmarkMeta
 from time import time
 _logger = logging.getLogger(__name__)
+
+# Thread-local storage for benchmark lookup (used by template filters)
+_thread_locals = threading.local()
 
 # Precomputed color arrays matching JavaScript client-side logic
 REDGREEN_COLORS = [
@@ -326,6 +330,44 @@ def view(request, id: int, domain: str):
             except ValueError:
                 pass
 
+        # Build benchmark lookup map for template filters (keyed by versioned identifier)
+        benchmark_lookup = {}
+        for bench in context.get('benchmarks', []):
+            # Get parent identifier if parent exists
+            parent_id = None
+            if hasattr(bench, 'parent') and bench.parent:
+                if isinstance(bench.parent, dict):
+                    parent_id = bench.parent.get('identifier')
+                else:
+                    parent_id = getattr(bench.parent, 'identifier', None)
+
+            # Build combined meta from the three meta fields
+            meta = {}
+            data_meta = getattr(bench, 'benchmark_data_meta', None) or {}
+            stimuli_meta = getattr(bench, 'benchmark_stimuli_meta', None) or {}
+            if isinstance(data_meta, dict):
+                if data_meta.get('num_recording_sites'):
+                    meta['number_of_recording_sites'] = data_meta['num_recording_sites']
+                if data_meta.get('region'):
+                    meta['recording_sites'] = data_meta['region']
+                if data_meta.get('task'):
+                    meta['behavioral_task'] = data_meta['task']
+            if isinstance(stimuli_meta, dict):
+                if stimuli_meta.get('num_stimuli'):
+                    meta['number_of_stimuli'] = stimuli_meta['num_stimuli']
+
+            benchmark_lookup[bench.identifier] = {
+                'short_name': bench.short_name,
+                'version': bench.version,
+                'url': getattr(bench, 'benchmark_url', None),
+                'bibtex': getattr(bench, 'benchmark_bibtex', None),
+                'depth': bench.depth,
+                'number_of_all_children': bench.number_of_all_children,
+                'benchmark_type_id': bench.benchmark_type_id,
+                'parent_identifier': parent_id,
+                'meta': meta if meta else None,
+            }
+
         # Prepare the context for the template
         model_context = {
             'model': model,
@@ -342,8 +384,12 @@ def view(request, id: int, domain: str):
             'submitter_name': display_submitter(model_obj, user),
             'visual_degrees': model.visual_degrees,
             'layers': getattr(model, 'layers', None),
+            'benchmark_lookup': benchmark_lookup,
         }
         
+        # Set thread-local benchmark lookup for template filters
+        _thread_locals.benchmark_lookup = benchmark_lookup
+
         end_time = time()
         print(f"Total time taken to get model context: {end_time - start_time} seconds")
         return render(request, 'benchmarks/model.html', model_context)
@@ -436,62 +482,143 @@ def score_style(score_ceiled):
         return score_ceiled
 
 
-@register.filter
-def is_parent(benchmark):
-    """Check if benchmark has children in dictionary structure"""
-    if isinstance(benchmark, dict):
-        return benchmark.get('children') is not None and len(benchmark.get('children', [])) > 0
-    return hasattr(benchmark, 'children') and len(benchmark.children) > 0
+def _get_benchmark_data(score_row, field, default=None):
+    """
+    Helper to get benchmark field from score_row.
+    First tries score_row['benchmark'][field] (embedded data).
+    Falls back to thread-local benchmark_lookup using versioned_benchmark_identifier.
+    """
+    if isinstance(score_row, dict):
+        # Try embedded benchmark data first
+        benchmark = score_row.get('benchmark', {})
+        if field in benchmark and benchmark[field] is not None:
+            return benchmark[field]
+
+        # Fall back to thread-local lookup
+        versioned_id = score_row.get('versioned_benchmark_identifier')
+        if versioned_id:
+            lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+            benchmark_data = lookup.get(versioned_id, {})
+            return benchmark_data.get(field, default)
+
+    # Handle namedtuple/object case
+    if hasattr(score_row, 'benchmark'):
+        return getattr(score_row.benchmark, field, default)
+
+    return default
 
 
 @register.filter
-def should_hide(benchmark):
-    """Check if benchmark should be hidden based on depth and identifier"""
-    if isinstance(benchmark, dict):
-        return benchmark.get('depth', 0) >= 1 or benchmark.get('benchmark_type_id', '').startswith('engineering')
-    return benchmark.depth >= 1 or benchmark.benchmark_type_id.startswith('engineering')
+def is_parent(score_row_or_benchmark):
+    """Check if benchmark has children. Accepts score_row or benchmark dict."""
+    if isinstance(score_row_or_benchmark, dict):
+        # If it's a score_row dict, get the children count via lookup
+        versioned_id = score_row_or_benchmark.get('versioned_benchmark_identifier')
+        if versioned_id:
+            lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+            benchmark_data = lookup.get(versioned_id, {})
+            return benchmark_data.get('number_of_all_children', 0) > 0
+
+        # If it's a benchmark dict directly, check embedded children
+        children = score_row_or_benchmark.get('children')
+        if children is not None:
+            return len(children) > 0
+
+        # Fall back to lookup using identifier
+        identifier = score_row_or_benchmark.get('identifier')
+        if identifier:
+            lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+            benchmark_data = lookup.get(identifier, {})
+            return benchmark_data.get('number_of_all_children', 0) > 0
+        return False
+    return hasattr(score_row_or_benchmark, 'children') and len(score_row_or_benchmark.children) > 0
+
+
+@register.filter
+def should_hide(score_row_or_benchmark):
+    """Check if benchmark should be hidden based on depth and identifier. Accepts score_row or benchmark dict."""
+    if isinstance(score_row_or_benchmark, dict):
+        # If it's a score_row dict, get depth and type via lookup
+        versioned_id = score_row_or_benchmark.get('versioned_benchmark_identifier')
+        if versioned_id:
+            lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+            benchmark_data = lookup.get(versioned_id, {})
+            depth = benchmark_data.get('depth', 0)
+            benchmark_type_id = benchmark_data.get('benchmark_type_id', '')
+            return depth >= 1 or benchmark_type_id.startswith('engineering')
+
+        # If it's a benchmark dict directly
+        depth = score_row_or_benchmark.get('depth')
+        benchmark_type_id = score_row_or_benchmark.get('benchmark_type_id', '')
+
+        # Fall back to lookup if not embedded
+        if depth is None:
+            identifier = score_row_or_benchmark.get('identifier')
+            if identifier:
+                lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+                benchmark_data = lookup.get(identifier, {})
+                depth = benchmark_data.get('depth', 0)
+                benchmark_type_id = benchmark_data.get('benchmark_type_id', '')
+            else:
+                depth = 0
+
+        return depth >= 1 or benchmark_type_id.startswith('engineering')
+    return score_row_or_benchmark.depth >= 1 or score_row_or_benchmark.benchmark_type_id.startswith('engineering')
 
 
 @register.filter
 def get_benchmark_short_name(score_row):
     """Get benchmark short name from score row dictionary"""
-    if isinstance(score_row, dict):
-        return score_row.get('benchmark', {}).get('short_name', '')
-    return score_row.benchmark.short_name if hasattr(score_row, 'benchmark') else ''
+    return _get_benchmark_data(score_row, 'short_name', '')
 
 
 @register.filter
 def get_benchmark_version(score_row):
     """Get benchmark version from score row dictionary"""
-    return score_row.get('benchmark', {}).get('version')
+    return _get_benchmark_data(score_row, 'version')
 
 
 @register.filter
 def get_benchmark_url(score_row):
     """Get benchmark URL from score row dictionary"""
-    return score_row.get('benchmark', {}).get('url')
+    return _get_benchmark_data(score_row, 'url')
 
 
 @register.filter
 def get_benchmark_type_id(score_row):
     """Get benchmark type ID from score row dictionary"""
-    return score_row.get('benchmark', {}).get('benchmark_type_id')
+    return _get_benchmark_data(score_row, 'benchmark_type_id')
 
 
 @register.filter
 def get_benchmark_children_count(score_row):
     """Get number of children from score row dictionary"""
-    return score_row.get('benchmark', {}).get('number_of_all_children', 0)
+    return _get_benchmark_data(score_row, 'number_of_all_children', 0)
 
 
 @register.filter
 def scores_bibtex(scores):
+    """Get unique bibtex entries from scores, using thread-local benchmark lookup."""
     bibtexs = []
+    lookup = getattr(_thread_locals, 'benchmark_lookup', {})
+
     for score_row in scores:
         if isinstance(score_row, dict):
-            if score_row.get('score_ceiled') and score_row.get('benchmark', {}).get('bibtex'):
-                bibtex = score_row['benchmark']['bibtex'].strip()
-                bibtexs.append(bibtex)
+            if not score_row.get('score_ceiled'):
+                continue
+
+            # Try embedded bibtex first
+            bibtex = score_row.get('benchmark', {}).get('bibtex')
+
+            # Fall back to lookup
+            if not bibtex:
+                versioned_id = score_row.get('versioned_benchmark_identifier')
+                if versioned_id:
+                    benchmark_data = lookup.get(versioned_id, {})
+                    bibtex = benchmark_data.get('bibtex')
+
+            if bibtex:
+                bibtexs.append(bibtex.strip())
         else:  # namedtuple
             if hasattr(score_row, 'score_ceiled') and score_row.score_ceiled and \
                hasattr(score_row, 'benchmark') and hasattr(score_row.benchmark, 'benchmark_type') and \
@@ -499,7 +626,7 @@ def scores_bibtex(scores):
                 bibtex = score_row.benchmark.benchmark_type.reference.bibtex
                 bibtex = bibtex.strip().strip('﻿')
                 bibtexs.append(bibtex)
-    
+
     # filter unique, maintain order
     if bibtexs:
         _, idx = np.unique(bibtexs, return_index=True)
@@ -510,7 +637,7 @@ def scores_bibtex(scores):
 @register.filter
 def get_benchmark_depth(score_row):
     """Get benchmark depth from score row dictionary"""
-    return score_row.get('benchmark', {}).get('depth', 0)
+    return _get_benchmark_data(score_row, 'depth', 0)
 
 
 @register.filter
@@ -523,6 +650,28 @@ def get_score_color(score_row):
 def get_score_ceiled(score_row):
     """Get ceiled score from score row dictionary"""
     return score_row.get('score_ceiled', '')
+
+
+@register.filter
+def cap_score(value):
+    """
+    Cap a score value between 0 and 1 inclusive.
+    Handles string values like '.415' or '1.1' as well as floats.
+    Non-numeric values (like 'X' or '') are returned unchanged.
+    """
+    if value in ('', 'X', None):
+        return value
+    try:
+        num = float(value)
+        capped = max(0.0, min(1.0, num))
+        # Preserve the original formatting style (leading dot for < 1)
+        if capped < 1:
+            # Format to 3 decimal places, strip leading zero
+            return f'{capped:.3f}'.lstrip('0') or '0'
+        else:
+            return '1.0'
+    except (ValueError, TypeError):
+        return value
 
 
 @register.filter
@@ -570,3 +719,24 @@ def has_valid_score(score_row):
     """Check if the score row has a valid score (not X or empty)"""
     score = score_row.get('score_ceiled', '')
     return score and score != "X"
+
+
+@register.filter
+def get_benchmark_parent_identifier(score_row):
+    """Get parent benchmark identifier from score row dictionary"""
+    return _get_benchmark_data(score_row, 'parent_identifier')
+
+
+@register.filter
+def get_benchmark_meta(score_row):
+    """Get benchmark meta dict from score row dictionary"""
+    return _get_benchmark_data(score_row, 'meta')
+
+
+@register.filter
+def get_benchmark_meta_field(score_row, field):
+    """Get specific field from benchmark meta"""
+    meta = _get_benchmark_data(score_row, 'meta')
+    if meta and isinstance(meta, dict):
+        return meta.get(field)
+    return None

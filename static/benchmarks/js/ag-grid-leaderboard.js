@@ -127,7 +127,8 @@ ScoreCellRenderer.prototype.init = function(params) {
   let bg = '#e0e1e2';
 
   if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
-    display = Number(cellObj.value).toFixed(2);
+    // Value is pre-rounded by Python backend
+    display = String(cellObj.value);
 
     // Check if color is already set (e.g., blue from advanced filtering)
     // If so, use that color instead of recalculating
@@ -450,12 +451,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
-      // Ensure filtered score column starts hidden (clean initial state)
+      // Ensure filtered score column starts hidden and global score is sorted descending
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
-          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
+          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false, sort: 'desc' }
         ]
       });
 

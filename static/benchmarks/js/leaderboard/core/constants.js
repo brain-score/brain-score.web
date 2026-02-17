@@ -41,7 +41,7 @@ const FILTER_DEBOUNCE_DELAY = 300;
 const SLIDER_UPDATE_DELAY = 100;
 
 // Feature flags
-const ENABLE_WAYBACK_SLIDER = false;  // Set to true to restore wayback machine functionality
+const ENABLE_WAYBACK_SLIDER = true;  // Set to true to restore wayback machine functionality
 
 // URL parameter names
 const URL_PARAMS = {

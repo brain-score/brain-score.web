@@ -130,71 +130,50 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     const isWaybackActive = minTimestamp && maxTimestamp && !(minTimestamp <= fullRangeMin && maxTimestamp >= fullRangeMax);
     
     if (isWaybackActive && timestampFilteredData.length > 0) {
-      // Collect all benchmark IDs from the data
-      const allBenchmarkIds = new Set();
+      // Collect leaf benchmark IDs (only leaves have version_valid_from)
+      const allLeafBenchmarkIds = new Set();
       timestampFilteredData.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' && 
+          if (key !== 'id' && key !== 'metadata' && key !== 'filtered_score' &&
               row[key] && typeof row[key] === 'object' && row[key].value !== undefined) {
-            allBenchmarkIds.add(key);
+            if (row[key].version_valid_from !== undefined && row[key].version_valid_from !== null) {
+              allLeafBenchmarkIds.add(key);
+            }
           }
         });
       });
-      
-      // Check which benchmarks have all X values that were SET BY wayback filtering
-      // (not originally X values from model failures)
-      // Compare against filteredData (input to wayback filtering) to see what wayback changed
-      // This distinguishes between:
-      // 1. X values set by wayback filtering (should hide column and exclude from aggregation)
-      // 2. X values that were originally X (should NOT hide column, treat as 0 in aggregation)
-      allBenchmarkIds.forEach(benchmarkId => {
+
+      // Identify benchmarks where ALL models have 'X' after wayback filtering (benchmark didn't exist at that date)
+      allLeafBenchmarkIds.forEach(benchmarkId => {
         let hasAnyValues = false;
         let xCount = 0;
         let nonXCount = 0;
-        
-        // Iterate through ALL rows in filteredData (before wayback filtering) to ensure comprehensive check
+
         filteredData.forEach((beforeWaybackRow) => {
-          // Find the corresponding row in timestampFilteredData (after wayback filtering) by ID
           const waybackFilteredRow = timestampFilteredData.find(row => row.id === beforeWaybackRow.id);
-          if (!waybackFilteredRow) {
-            // Row was removed by wayback filtering (model removal) - skip it
-            // This happens when global score becomes X and model is removed
-            return;
-          }
-          
+          if (!waybackFilteredRow) return;
+
           const beforeWaybackValue = beforeWaybackRow[benchmarkId]?.value;
           const waybackFilteredValue = waybackFilteredRow[benchmarkId]?.value;
-          
-          // Skip rows where the benchmark doesn't exist or has no value before wayback filtering
+
           if (beforeWaybackValue === null || beforeWaybackValue === undefined || beforeWaybackValue === '') {
-            // Also check if wayback filtering set it to X (due to missing timestamp)
             if (waybackFilteredValue === 'X') {
-              // Wayback filtering set a missing value to X - this counts as wayback-set X
               hasAnyValues = true;
               xCount++;
             }
             return;
           }
-          
-          // We have a value before wayback filtering - check what wayback did to it
+
           hasAnyValues = true;
-          
-          // If the wayback-filtered value is X, count it
           if (waybackFilteredValue === 'X') {
             xCount++;
           } else {
-            // If wayback-filtered value is not X, then this benchmark shouldn't be hidden
             nonXCount++;
           }
         });
-        
-        // When wayback filtering is active, hide if ALL values are X (regardless of origin)
-        // The distinction between originally X and wayback-set X only matters when wayback is NOT active
-        // When wayback IS active, if all values are X, the column should be hidden
+
         const allValuesAreX = hasAnyValues && xCount > 0 && nonXCount === 0;
-        
         if (hasAnyValues && allValuesAreX) {
-          // All values are X - hide the column when wayback filtering is active
           window.waybackHiddenBenchmarks.add(benchmarkId);
         }
       });
@@ -220,28 +199,20 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
     finalData = applyGlobalScoreModelRemoval(finalData);
   }
 
-  // Recalculate colors for all benchmarks AFTER models are removed
-  // This ensures colors reflect the correct min/max ranges from the final filtered dataset
-  // Models with the same score will have the same color because min/max is calculated from the same dataset
-  // BUT: Skip benchmarks that have blue colors from advanced filtering (excluded children)
+  // Recalculate colors after filtering (skip benchmarks with blue colors from excluded children)
   if (typeof window.LeaderboardColorUtils?.recalculateColorsForBenchmark === 'function' && window.benchmarkTree) {
-    // Build hierarchy map if not already cached
     if (!window.cachedHierarchyMap && typeof window.buildHierarchyFromTree === 'function') {
       window.cachedHierarchyMap = window.buildHierarchyFromTree(window.benchmarkTree);
     }
     const hierarchyMap = window.cachedHierarchyMap || new Map();
 
-    // Identify benchmarks with blue colors from advanced filtering
-    // These are parent benchmarks with excluded children - we should NOT overwrite their blue colors
-    // This logic runs regardless of wayback filtering state
+    // Identify benchmarks with blue colors (parents with excluded children)
     const benchmarksWithBlueColors = new Set();
     const excludedBenchmarks = window.filteredOutBenchmarks || new Set();
 
     if (excludedBenchmarks.size > 0) {
-      // Get all benchmark IDs for hierarchy traversal
       const allBenchmarkIds = Array.from(hierarchyMap.keys());
 
-      // Find benchmarks with excluded children (these have blue colors from updateFilteredScores)
       allBenchmarkIds.forEach(benchmarkId => {
         const children = hierarchyMap.get(benchmarkId) || [];
         if (children.length > 0) {
@@ -249,7 +220,6 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
           if (hasExcludedChildren) {
             benchmarksWithBlueColors.add(benchmarkId);
 
-            // Also mark all ancestors as having blue colors
             function markAncestorsBlue(targetId) {
               allBenchmarkIds.forEach(parentId => {
                 const parentChildren = hierarchyMap.get(parentId) || [];
@@ -270,11 +240,9 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       }
     }
 
-    // Cache root parent lookups to avoid repeated hierarchy traversal
+    // Cache root parent lookups for hierarchy traversal
     if (!window.rootParentCache || window.rootParentCache.size === 0) {
       window.rootParentCache = new Map();
-
-      // Get all benchmark IDs
       const allBenchmarkIds = new Set();
       finalData.forEach(row => {
         Object.keys(row).forEach(key => {
@@ -287,7 +255,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       // Also include average_vision_v0
       allBenchmarkIds.add('average_vision_v0');
 
-      // Build reverse lookup map (child -> parent) for efficient traversal
+      // Build reverse lookup map (child -> parent)
       const childToParentMap = new Map();
       for (const [parentId, children] of hierarchyMap.entries()) {
         children.forEach(childId => {
@@ -295,26 +263,22 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
         });
       }
 
-      // Find root parent for each benchmark
       allBenchmarkIds.forEach(benchmarkId => {
         let rootParent = null;
         let currentId = benchmarkId;
         const visited = new Set();
 
-        // Traverse up the hierarchy using reverse lookup map
         while (currentId && !visited.has(currentId)) {
           visited.add(currentId);
           const parentId = childToParentMap.get(currentId);
-
           if (!parentId) {
-            // This is a root
             rootParent = currentId;
             break;
           }
           currentId = parentId;
         }
 
-        // Fallback: if we couldn't determine root parent, infer from benchmarkId
+        // Fallback: infer from benchmarkId
         if (!rootParent) {
           const checkId = benchmarkId.toLowerCase();
           if (checkId.includes('engineering')) {
@@ -340,9 +304,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
       });
     });
 
-    // Recalculate colors for each benchmark using the final filtered dataset
-    // This ensures colors reflect the correct min/max ranges after filtering
-    // BUT: Always skip benchmarks that have blue colors from excluded children
+    // Recalculate colors (skip benchmarks with blue colors from excluded children)
     benchmarkIds.forEach(benchmarkId => {
       if (!benchmarksWithBlueColors.has(benchmarkId)) {
         window.LeaderboardColorUtils.recalculateColorsForBenchmark(finalData, benchmarkId, hierarchyMap, window.rootParentCache);
@@ -409,25 +371,99 @@ function applyWaybackTimestampFilter(rowData) {
     return rowData; // No timestamp filtering active
   }
 
+  // Convert maxTimestamp (Unix seconds) to milliseconds for Date comparison
+  const waybackMs = maxTimestamp * 1000;
+
   const filteredWithValidModels = rowData.map(row => {
     const newRow = { ...row };
 
     Object.keys(row).forEach(key => {
-      if (row[key] && typeof row[key] === "object" && row[key].value !== undefined) {
-        const ts = row[key].timestamp;
+      const scoreObj = row[key];
+      if (!scoreObj || typeof scoreObj !== "object" || scoreObj.value === undefined) {
+        return;
+      }
 
-        if (!ts) {
-          newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
-        } else {
-          try {
-            const scoreTime = new Date(ts).getTime() / 1000; // Convert ISO string to Unix timestamp
-            if (scoreTime < minTimestamp || scoreTime > maxTimestamp) {
-              newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
+      // Step 1: Determine which version was active at wayback date
+      let activeVersionData = null;
+
+      // Check if this score has version timeline data (leaf benchmarks only)
+      if (scoreObj.version_valid_from !== undefined && scoreObj.version_valid_from !== null) {
+        const validFrom = new Date(scoreObj.version_valid_from).getTime();
+        const validTo = scoreObj.version_valid_to
+          ? new Date(scoreObj.version_valid_to).getTime()
+          : Infinity;
+
+        if (waybackMs >= validFrom && waybackMs < validTo) {
+          // Current version was active at wayback date
+          activeVersionData = scoreObj;
+        } else if (scoreObj.historical_versions) {
+          // Search historical versions for the one active at wayback date
+          for (const [ver, data] of Object.entries(scoreObj.historical_versions)) {
+            if (data.version_valid_from) {
+              const hvFrom = new Date(data.version_valid_from).getTime();
+              const hvTo = data.version_valid_to
+                ? new Date(data.version_valid_to).getTime()
+                : Infinity;
+
+              if (waybackMs >= hvFrom && waybackMs < hvTo) {
+                activeVersionData = data;
+                break;
+              }
             }
-          } catch (error) {
-            newRow[key] = { ...row[key], value: "X", color: "#E0E1E2" };
           }
         }
+
+        // Step 2: Swap data or mark as X based on version availability
+        if (!activeVersionData) {
+          // No version existed at this wayback date
+          newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2", waybackExcluded: true };
+          return;
+        }
+
+        // If we found a historical version, swap in its data
+        if (activeVersionData !== scoreObj) {
+          // Check if the historical version actually has score data
+          if (activeVersionData.value === null || activeVersionData.value === undefined) {
+            newRow[key] = { ...scoreObj, value: "X", color: "#E0E1E2", waybackExcluded: true };
+            return;
+          }
+
+          // Format historical version value for leaderboard display (2 decimal places)
+          // Historical values are raw floats, current values are pre-formatted strings
+          let formattedValue = activeVersionData.value;
+          if (typeof formattedValue === 'number') {
+            formattedValue = formattedValue.toFixed(2);
+          }
+
+          newRow[key] = {
+            ...scoreObj,
+            value: formattedValue,
+            score_raw: activeVersionData.score_raw,
+            timestamp: activeVersionData.timestamp,
+            // Keep original benchmark metadata but use historical score data
+          };
+        }
+
+        // Step 3: Check if the score existed at wayback date (timestamp filter)
+        // Only apply timestamp filtering to CURRENT version scores
+        // Historical versions are already validated by their version_valid_from/to range
+        if (activeVersionData === scoreObj) {
+          const ts = newRow[key].timestamp;
+          if (ts) {
+            try {
+              const scoreTime = new Date(ts).getTime();
+              if (scoreTime > waybackMs) {
+                // Score was submitted after wayback date
+                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
+              }
+            } catch (error) {
+              newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
+            }
+          }
+        }
+      } else {
+        // Parent benchmarks (no version timeline) - leave as-is for re-aggregation from children.
+        // Do not filter by timestamp; the timestamp is the child's submission time, not existence.
       }
     });
 
@@ -453,10 +489,21 @@ function applyGlobalScoreModelRemoval(rowData) {
     return rowData; // No wayback filtering active, don't remove any models
   }
 
-  const originalCount = rowData.length;
+  const waybackMs = maxTimestamp * 1000;
 
-  // Filter out models where average_vision_v0 is 'X'
+  // Filter out models that:
+  // 1. Were submitted after the wayback date (model didn't exist yet)
+  // 2. Have average_vision_v0 as 'X' (no valid scores at wayback date)
   const filteredData = rowData.filter(row => {
+    // Check if model was submitted after wayback date
+    if (row.submission_timestamp) {
+      const submissionTime = new Date(row.submission_timestamp).getTime();
+      if (submissionTime > waybackMs) {
+        return false; // Model didn't exist at wayback date
+      }
+    }
+
+    // Check if global score is X (no valid scores)
     const globalScore = row.average_vision_v0?.value;
     return globalScore !== 'X';
   });
@@ -557,6 +604,24 @@ function resetAllFilters() {
         range.style.width = '100%';
         minHandle.dataset.value = 0;
         maxHandle.dataset.value = ranges.stimuli_ranges.max;
+      }
+    }
+  }
+  if (ranges.ceiling_ranges?.max) {
+    document.getElementById('ceilingMin').value = 0;
+    document.getElementById('ceilingMax').value = ranges.ceiling_ranges.max;
+    const ceilingSliderContainer = document.querySelector('#ceilingMin')?.closest('.filter-group')?.querySelector('.slider-container');
+    if (ceilingSliderContainer) {
+      const minHandle = ceilingSliderContainer.querySelector('.handle-min');
+      const maxHandle = ceilingSliderContainer.querySelector('.handle-max');
+      const range = ceilingSliderContainer.querySelector('.slider-range');
+      if (minHandle && maxHandle && range) {
+        minHandle.style.left = '0%';
+        maxHandle.style.left = '100%';
+        range.style.left = '0%';
+        range.style.width = '100%';
+        minHandle.dataset.value = 0;
+        maxHandle.dataset.value = Math.round(ranges.ceiling_ranges.max * 100);
       }
     }
   }
@@ -722,6 +787,26 @@ function updateFilteredScores(rowData) {
     window.waybackHiddenBenchmarks.forEach(benchmarkId => {
       benchmarksToExcludeFromAggregation.add(benchmarkId);
     });
+
+    // Propagate exclusion upward through the hierarchy: if ALL children of a parent
+    // are excluded (user-filtered or wayback-hidden), the parent benchmark also didn't
+    // exist at the wayback date and should be excluded from its own parent's denominator.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      allBenchmarkIds.forEach(benchmarkId => {
+        if (benchmarksToExcludeFromAggregation.has(benchmarkId)) return;
+        const children = hierarchyMap.get(benchmarkId) || [];
+        if (children.length === 0) return;
+        const allChildrenExcluded = children.every(childId =>
+          excludedBenchmarks.has(childId) || benchmarksToExcludeFromAggregation.has(childId)
+        );
+        if (allChildrenExcluded) {
+          benchmarksToExcludeFromAggregation.add(benchmarkId);
+          changed = true;
+        }
+      });
+    }
   }
 
   // Then process each row for filtering
@@ -753,7 +838,7 @@ function updateFilteredScores(rowData) {
             if (benchmarksToExcludeFromAggregation.has(childId)) {
               return; // Exclude this benchmark entirely
             }
-            
+
             const childScore = row[childId].value;
             const hasValidScore = childScore !== null && childScore !== undefined &&
                                  childScore !== '' && childScore !== 'X' &&
@@ -793,6 +878,7 @@ function updateFilteredScores(rowData) {
 
           children.forEach(childId => {
             if (!excludedBenchmarks.has(childId) && row[childId]) {
+              if (benchmarksToExcludeFromAggregation.has(childId)) return;
               validChildrenCount++;
               const childScore = row[childId].value;
               if (childScore !== null && childScore !== undefined && childScore !== '' && childScore !== 'X') {
@@ -818,16 +904,42 @@ function updateFilteredScores(rowData) {
           const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
           row[benchmarkId] = {
             ...row[benchmarkId],
-            value: parseFloat(average.toFixed(2))
+            value: average.toFixed(2)
           };
         }
       }
     });
 
-    // Calculate global filtered score AND update average_vision_v0
+    // Calculate global filtered score AND conditionally update average_vision_v0
     const visionCategories = ['neural_vision_v0', 'behavior_vision_v0'];
     const categoryScores = [];
     let hasVisibleCategory = false;
+
+    // Check if any benchmarks are actually excluded or have reduced leaf counts
+    // If not, we should NOT recalculate average_vision_v0 - use Python's value
+    let anyChildExcluded = false;
+    let anyChildReduced = false;
+
+    visionCategories.forEach(category => {
+      if (excludedBenchmarks.has(category)) {
+        anyChildExcluded = true;
+      }
+      // Check if any leaf benchmarks under this category are excluded
+      allBenchmarkIds.forEach(benchmarkId => {
+        if (excludedBenchmarks.has(benchmarkId)) {
+          // Check if this benchmark is a descendant of the category
+          // For simplicity, check if it's in the benchmark tree under this category
+          anyChildExcluded = true;
+        }
+      });
+      // Check if leaf count is reduced
+      if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
+        const leafCount = window.getFilteredLeafCount(category);
+        if (leafCount === 0) {
+          anyChildReduced = true;
+        }
+      }
+    });
 
     visionCategories.forEach(category => {
       const isExcluded = excludedBenchmarks.has(category);
@@ -866,9 +978,12 @@ function updateFilteredScores(rowData) {
       }
     });
 
-    // Update average_vision_v0 (global score) to reflect the updated neural/behavior scores
-    // Only update if at least one category is visible. If neither is visible, leave it unchanged.
-    if (hasVisibleCategory) {
+    // Only recalculate if filters changed something; otherwise use Python's original value
+    // Always recalculate when wayback is active because neural/behavior scores have been
+    // re-aggregated from wayback-filtered children even if no benchmarks are fully excluded
+    const shouldRecalculateAverage = isWaybackActive || anyChildExcluded || anyChildReduced || excludedBenchmarks.size > 0 || benchmarksToExcludeFromAggregation.size > 0;
+
+    if (hasVisibleCategory && shouldRecalculateAverage) {
       if (categoryScores.length > 0) {
         // Check if both categories are X (both treated as 0, so average would be 0)
         // If so, check if model has all 0/X scores - if yes, set to 'X' to filter it out
@@ -876,7 +991,7 @@ function updateFilteredScores(rowData) {
         const behaviorScore = row.behavior_vision_v0?.value;
         const bothAreX = (neuralScore === 'X' || neuralScore === null || neuralScore === undefined || neuralScore === '') &&
                          (behaviorScore === 'X' || behaviorScore === null || behaviorScore === undefined || behaviorScore === '');
-        
+
         if (bothAreX && categoryScores.length === 2 && categoryScores.every(s => s === 0)) {
           // Both categories are X, check if model has all 0/X across all visible benchmarks
           let hasAnyValidNonZeroScore = false;
@@ -884,7 +999,7 @@ function updateFilteredScores(rowData) {
             if (excludedBenchmarks.has(benchmarkId)) return;
             if (benchmarksToExcludeFromAggregation.has(benchmarkId)) return;
             if (!row[benchmarkId]) return;
-            
+
             // Check if this benchmark is visible (not dropped out)
             let isBenchmarkVisible = true;
             if (window.getFilteredLeafCount && typeof window.getFilteredLeafCount === 'function') {
@@ -894,7 +1009,7 @@ function updateFilteredScores(rowData) {
               }
             }
             if (!isBenchmarkVisible) return;
-            
+
             const score = row[benchmarkId].value;
             if (score !== null && score !== undefined && score !== '' && score !== 'X') {
               const numVal = typeof score === 'string' ? parseFloat(score) : score;
@@ -915,12 +1030,12 @@ function updateFilteredScores(rowData) {
             return; // Skip the rest of the loop iteration
           }
         }
-        
-        // Normal case: calculate average
+
+        // Recalculate average since filters are active
         const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
         row.average_vision_v0 = {
           ...row.average_vision_v0,
-          value: parseFloat(globalAverage.toFixed(2))
+          value: globalAverage.toFixed(2)
         };
         row._tempFilteredScore = globalAverage;
       } else {
@@ -929,12 +1044,19 @@ function updateFilteredScores(rowData) {
         row._tempFilteredScore = null;
         // Don't update average_vision_v0 - leave it as-is when both categories are excluded
       }
+    } else if (hasVisibleCategory) {
+      // No recalculation needed - use original Python value for filtered score
+      const originalScore = row.average_vision_v0?.value;
+      if (originalScore !== null && originalScore !== undefined && originalScore !== '' && originalScore !== 'X') {
+        const numVal = typeof originalScore === 'string' ? parseFloat(originalScore) : originalScore;
+        row._tempFilteredScore = !isNaN(numVal) ? numVal : null;
+      } else {
+        row._tempFilteredScore = null;
+      }
     } else {
-      // Neither category is visible - filtered_score should be 'X'
+      // Neither category is visible - filtered_score should be null
       row._tempFilteredScore = null;
-      // Don't update average_vision_v0 - leave it as-is when neither category is visible
     }
-    // If neither category is visible, don't update average_vision_v0 (leave it as-is)
   });
 
   // Apply colors for recalculated benchmarks
@@ -1066,12 +1188,22 @@ function toggleFilteredScoreColumn(gridApi) {
 
   const hasStimuliFiltering = (stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax);
 
+  const ceilingMin = parseFloat(document.getElementById('ceilingMin')?.value || 0);
+  const ceilingMax = parseFloat(document.getElementById('ceilingMax')?.value || 1);
+
+  const ceilingContainer = document.querySelector('#ceilingMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const ceilingRangeMin = parseFloat(ceilingContainer?.dataset?.min || 0) / 100;
+  const ceilingRangeMax = parseFloat(ceilingContainer?.dataset?.max || 100) / 100;
+
+  const hasCeilingFiltering = (ceilingMin > ceilingRangeMin || ceilingMax < ceilingRangeMax);
+
   const hasBenchmarkMetadataFilters = (
     window.activeFilters.benchmark_regions.length > 0 ||
     window.activeFilters.benchmark_species.length > 0 ||
     window.activeFilters.benchmark_tasks.length > 0 ||
     window.activeFilters.public_data_only ||
-    hasStimuliFiltering
+    hasStimuliFiltering ||
+    hasCeilingFiltering
   );
 
   const uncheckedCheckboxes = document.querySelectorAll('#benchmarkFilterPanel input[type="checkbox"]:not(:checked)');

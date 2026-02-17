@@ -246,7 +246,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         state: [
           { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
-          { colId: 'average_vision_v0', hide: false }
+          { colId: 'average_vision_v0', hide: false, sort: 'desc' }
         ]
       });
       

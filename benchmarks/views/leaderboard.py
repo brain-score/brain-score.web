@@ -2,12 +2,12 @@ import json
 import logging
 from collections import defaultdict
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 import numpy as np
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 
-from ..utils import cache_get_context
+from ..utils import cache_get_context, cache_page_for_public_only
 from .index import get_context, get_datetime_range
 
 logger = logging.getLogger(__name__)
@@ -159,6 +159,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'species': set(),
         'tasks': set(),
         'stimuli_ranges': {'min': float('inf'), 'max': 0},
+        'ceiling_ranges': {'min': float('inf'), 'max': 0},
         'public_data_available': set()
     }
 
@@ -188,6 +189,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                     stimuli['num_stimuli']
                 )
 
+        if benchmark.number_of_all_children == 0 and benchmark.ceiling and benchmark.ceiling != 'X':
+            try:
+                ceiling_val = float(benchmark.ceiling)
+                benchmark_metadata['ceiling_ranges']['min'] = min(
+                    benchmark_metadata['ceiling_ranges']['min'], ceiling_val)
+                benchmark_metadata['ceiling_ranges']['max'] = max(
+                    benchmark_metadata['ceiling_ranges']['max'], ceiling_val)
+            except (ValueError, TypeError):
+                pass
+
     benchmark_metadata_list = []
     for benchmark in context['benchmarks']:
         metadata_entry = {
@@ -196,7 +207,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'species': None,
             'task': None,
             'data_publicly_available': True,  # default
-            'num_stimuli': None
+            'num_stimuli': None,
+            'ceiling': None
         }
 
         # Extract data metadata
@@ -213,6 +225,13 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         if hasattr(benchmark, 'benchmark_stimuli_meta') and benchmark.benchmark_stimuli_meta:
             stimuli = benchmark.benchmark_stimuli_meta
             metadata_entry['num_stimuli'] = stimuli.get('num_stimuli')
+
+        # Extract ceiling for leaf benchmarks
+        if benchmark.number_of_all_children == 0 and benchmark.ceiling and benchmark.ceiling != 'X':
+            try:
+                metadata_entry['ceiling'] = float(benchmark.ceiling)
+            except (ValueError, TypeError):
+                pass
 
         benchmark_metadata_list.append(metadata_entry)
 
@@ -235,7 +254,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'submitter': model.submitter.get('display_name') if model.submitter else None
             },
             'public': model.public,
-            'is_owner': is_owner
+            'is_owner': is_owner,
+            # Submission timestamp for wayback filtering (exclude models that didn't exist yet)
+            'submission_timestamp': model.timestamp.isoformat() if model.timestamp else None
         }
 
         # Process model metadata if available
@@ -341,11 +362,28 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             if not vid:
                 continue
 
+            # Round score to 2 decimal places for display
+            # This ensures consistency between ranking and display
+            raw_score = score.get('score_ceiled', 'X')
+
+            if raw_score and raw_score != 'X' and raw_score != '':
+                try:
+                    rounded = Decimal(str(raw_score)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    display_value = format(rounded, 'f')
+                except (ValueError, TypeError):
+                    display_value = raw_score
+            else:
+                display_value = raw_score
+
             # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
-                'value': score.get('score_ceiled', 'X'),
+                'value': display_value,
                 'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp')
+                'timestamp': score.get('end_timestamp'),
+                # Wayback machine: version timeline data
+                'version_valid_from': score.get('version_valid_from'),
+                'version_valid_to': score.get('version_valid_to'),
+                'historical_versions': score.get('historical_versions')
             }
         row_data.append(rd)
 
@@ -507,6 +545,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'stimuli_ranges': {
             'min': 0,
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
+        },
+        'ceiling_ranges': {
+            'min': 0,
+            'max': min(1.0, round(benchmark_metadata['ceiling_ranges']['max'] + 0.05, 2))
+                   if benchmark_metadata['ceiling_ranges']['max'] > 0 else 1.0
         }
     }
 
@@ -620,6 +663,7 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
+@cache_page_for_public_only(timeout=60 * 60 * 7 * 24)  # Cache public view for 7 days
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX

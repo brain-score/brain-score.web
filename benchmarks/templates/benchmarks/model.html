@@ -117,23 +117,23 @@
                 {% for score_row in model.scores %}
                     {% if score_row|has_valid_score %}
                         <div
-                                class="benchmark_child_{{ score_row.benchmark.depth }}
-                                    {% if not score_row.benchmark|is_parent %}
+                                class="benchmark_child_{{ score_row|get_benchmark_depth }}
+                                    {% if not score_row|is_parent %}
                                         box
                                     {% endif %}"
-                                {% if score_row.benchmark.parent %}
-                                data-parent="{{ score_row.benchmark.parent.identifier }}"
+                                {% if score_row|get_benchmark_parent_identifier %}
+                                data-parent="{{ score_row|get_benchmark_parent_identifier }}"
                                 {% endif %}
                         >
                             <table class="benchmarks">
                                 <tr class="list_entry">
                                     {# score #}
-                                    <td {% if score_row.error %}title="score: {{ score_row.score_ceiled }} ± {{ score_row.error }}"{% endif %}
+                                    <td {% if score_row.error %}title="score: {{ score_row.score_ceiled|cap_score }} ± {{ score_row.error }}"{% endif %}
                                         data-benchmark="{{ score_row.versioned_benchmark_identifier }}"
                                         data-parent="{{ benchmark_parents|get_parent_item:score_row.versioned_benchmark_identifier }}"
-                                        class="score_cell displaySquare depth_{{ score_row.benchmark.depth }} clicker"
+                                        class="score_cell displaySquare depth_{{ score_row|get_benchmark_depth }} clicker"
                                         style="{{ score_row.color }}; ">
-                                        {{ score_row.score_ceiled }}
+                                        {{ score_row.score_ceiled|cap_score }}
                                     </td>
                                     {# benchmark general info #}
                                     <td class="benchmark_info depth_{{ score_row|get_benchmark_depth }}">
@@ -156,10 +156,10 @@
                                         {% endif %}
                                         <br/>
                                         {# line 2 #}
-                                        {% if score_row.benchmark|is_parent %}
+                                        {% if score_row|is_parent %}
                                             <span class="want_to_click collapsible_control is_collapsible"
                                                     {# collapse all benchmarks below 2 and below engineering by default #}
-                                                    {% if score_row.benchmark|should_hide %}
+                                                    {% if score_row|should_hide %}
                                                   data-initial="hidden"
                                                     {% endif %}
                                                   data-identifier="{{ score_row|get_benchmark_type_id }}"></span>
@@ -171,8 +171,8 @@
                                         <div class="bar_container">
                                             <div class="bar"
                                                  style="{{ score_row|get_score_color }};
-                                                         --score:{{ score_row|get_score_ceiled|score_style }}%;">
-                                                {{ score_row|get_score_ceiled }}
+                                                         --score:{{ score_row|get_score_ceiled|cap_score|score_style }}%;">
+                                                {{ score_row|get_score_ceiled|cap_score }}
                                             </div>
                                             <span class="label zero">0</span>
                                             <div title="ceiling" class="vertical_line ceiling"></div>
@@ -191,30 +191,32 @@
                                 <tr>
                                     <td></td>
                                     <td colspan="2">
-                                        {% if not score_row.benchmark|is_parent %}
+                                        {% if not score_row|is_parent %}
                                             <div class="benchmark_details">
-                                                {% if score_row.benchmark.meta %}
+                                                {% with score_row|get_benchmark_meta as meta %}
+                                                {% if meta %}
                                                     <div>
                                                             <span>
-                                                                {% if score_row.benchmark.meta.number_of_recording_sites %}
+                                                                {% if meta.number_of_recording_sites %}
                                                                     recordings from
-                                                                    {{ score_row.benchmark.meta.number_of_recording_sites }}
+                                                                    {{ meta.number_of_recording_sites }}
                                                                     sites in
-                                                                    {{ score_row.benchmark.meta.recording_sites }}
+                                                                    {{ meta.recording_sites }}
                                                                 {% endif %}
-                                                                {% if score_row.benchmark.meta.behavioral_task %}
-                                                                    {{ score_row.benchmark.meta.behavioral_task }} task
+                                                                {% if meta.behavioral_task %}
+                                                                    {{ meta.behavioral_task }} task
                                                                 {% endif %}
                                                             </span>
                                                         <br/>
-                                                        {% if score_row.benchmark.meta.number_of_stimuli %}
+                                                        {% if meta.number_of_stimuli %}
                                                             <span>
-                                                                    {{ score_row.benchmark.meta.number_of_stimuli }} images
+                                                                    {{ meta.number_of_stimuli }} images
                                                                 </span>
                                                             <br/>
                                                         {% endif %}
                                                     </div>
                                                 {% endif %}
+                                                {% endwith %}
                                                 {# image samples #}
                                                 <div class="samples_container is-overflow-wrap">
                                                     {% for sample in '0123456789'|make_list %}

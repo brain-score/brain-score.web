@@ -37,7 +37,7 @@
             class="display-square depth_{{ score_row.benchmark.depth }}"
             style="display: {{ not_shown_set|in_set:score_row.versioned_benchmark_identifier }}">
           <div style="{{ score_row.color }};">
-            {{ score_row.score_ceiled }}
+            {{ score_row.score_ceiled|cap_score }}
           </div>
         </td>
       {% endfor %}
