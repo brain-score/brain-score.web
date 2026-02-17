@@ -1,6 +1,6 @@
 ---
 title: Overhauling the Brain-Score Leaderboard
-date: 2025-08-21
+date: 2026-02-17
 author: Brain-Score Team
 category: Research, Engineering, New Features
 tags: leaderboard, neuroai, ag-grid, platform, benchmarking
