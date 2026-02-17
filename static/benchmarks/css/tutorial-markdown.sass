@@ -93,6 +93,182 @@
     margin-bottom: 2rem
     padding-left: 1.5rem
 
+// Tutorial Search Component
+.tutorial-search-container
+  margin-bottom: 1.5rem
+  padding-left: 1.5rem
+  position: relative
+
+.tutorial-search-box
+  position: relative
+  display: flex
+  align-items: center
+
+.tutorial-search-input
+  width: 100%
+  padding: 0.75rem 2.5rem 0.75rem 1rem
+  border: 2px solid #ddd
+  border-radius: 6px
+  font-size: 0.9rem
+  transition: border-color 0.2s, box-shadow 0.2s
+  background: white
+
+  &:focus
+    outline: none
+    border-color: $brainscore_blue
+    box-shadow: 0 0 0 3px rgba($brainscore_blue, 0.1)
+
+  &::placeholder
+    color: #999
+
+.tutorial-search-icon
+  position: absolute
+  right: 1rem
+  color: #999
+  pointer-events: none
+  font-size: 1rem
+
+.tutorial-search-results
+  position: absolute
+  top: 100%
+  left: 1.5rem
+  right: 0
+  margin-top: 0.5rem
+  background: white
+  border: 1px solid #ddd
+  border-radius: 6px
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+  max-height: 60vh
+  overflow-y: auto
+  z-index: 1000
+
+  // Custom scrollbar
+  &::-webkit-scrollbar
+    width: 6px
+
+  &::-webkit-scrollbar-track
+    background: #f1f1f1
+    border-radius: 3px
+
+  &::-webkit-scrollbar-thumb
+    background: #ccc
+    border-radius: 3px
+
+    &:hover
+      background: #aaa
+
+.tutorial-search-no-results
+  padding: 1.5rem
+  text-align: center
+  color: #666
+  font-size: 0.9rem
+
+.tutorial-search-result-group
+  border-bottom: 1px solid #eee
+
+  &:last-child
+    border-bottom: none
+
+.tutorial-search-result-tutorial
+  padding: 1rem 1rem 0.5rem 1rem
+  background: #f8f9fa
+  border-bottom: 1px solid #eee
+
+.tutorial-search-tutorial-link
+  display: block
+  font-weight: 600
+  font-size: 1rem
+  color: $brainscore_blue
+  text-decoration: none
+  margin-bottom: 0.25rem
+
+  &:hover
+    text-decoration: underline
+
+  mark
+    background: rgba(255, 235, 59, 0.4)
+    padding: 0 0.1rem
+    border-radius: 2px
+
+.tutorial-search-tutorial-desc
+  font-size: 0.85rem
+  color: #666
+  margin-top: 0.25rem
+
+.tutorial-search-result-matches
+  padding: 0.5rem 0
+
+.tutorial-search-result-item
+  display: flex
+  align-items: flex-start
+  padding: 0.75rem 1rem
+  text-decoration: none
+  color: #333
+  transition: background-color 0.15s
+  border-left: 3px solid transparent
+
+  &:hover, &.active
+    background: #f0f7ff
+    border-left-color: $brainscore_blue
+
+  &.tutorial-search-result-heading
+    font-weight: 500
+
+  &.tutorial-search-result-code
+    code
+      background: #f4f4f4
+      padding: 0.2rem 0.4rem
+      border-radius: 3px
+      font-family: 'Monaco', 'Consolas', 'Fira Code', monospace
+      font-size: 0.85em
+      color: #c7254e
+      display: inline-block
+      
+      mark
+        background: rgba(255, 235, 59, 0.6)
+        padding: 0 0.1rem
+        border-radius: 2px
+        color: #333
+
+.tutorial-search-result-icon
+  margin-right: 0.75rem
+  font-size: 1rem
+  flex-shrink: 0
+  margin-top: 0.1rem
+
+.tutorial-search-result-text
+  flex: 1
+  font-size: 0.9rem
+  line-height: 1.5
+
+  mark
+    background: rgba(255, 235, 59, 0.4)
+    padding: 0 0.1rem
+    border-radius: 2px
+    font-weight: 500
+
+// Search container when not in sidebar (e.g., on list page)
+.content .tutorial-search-container,
+main .tutorial-search-container,
+body > .tutorial-search-container
+  padding-left: 0
+  margin-bottom: 1.5rem
+  max-width: 500px
+
+  .tutorial-search-results
+    left: 0
+    right: 0
+
+// Responsive: Hide search on very small screens or move to top
+@media (max-width: 768px)
+  .tutorial-search-container
+    padding-left: 0
+    margin-bottom: 1rem
+
+  .tutorial-search-results
+    left: 0
+    right: 0
+
   .sidebar-header
     font-weight: bold
     font-size: 1rem
