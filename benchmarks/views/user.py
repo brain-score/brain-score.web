@@ -313,6 +313,9 @@ class Upload(View):
 
             if plugin == 'too_many_identifiers':
                 return render(request, 'benchmarks/invalid_zip.html', {'error': identifier, "domain": self.domain})
+            
+            if plugin == 'invalid_identifier':
+                return render(request, 'benchmarks/invalid_zip.html', {'error': identifier, "domain": self.domain})
 
             # ensure the user is not accidentally submitting the tutorial model
             page = "tutorial" if identifier == "resnet50_tutorial" else "already"
@@ -338,7 +341,7 @@ class Upload(View):
         jenkins_url = "http://www.brain-score-jenkins.com:8080"
         auth = get_secret("brainscore-website_jenkins_access_aws")
         auth = (auth['user'], auth['password'])
-        request_url = f"{jenkins_url}/job/create_github_pr/buildWithParameters" \
+        request_url = f"{jenkins_url}/job/web/job/create_github_pr/buildWithParameters" \
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
@@ -367,6 +370,12 @@ def is_submission_original_and_under_plugin_limit(file, submitter: User) -> Tupl
 
         # grab identifiers from inits of all plugins
         plugin_identifiers = extract_identifiers(archive)
+        
+        # validate that no identifiers contain hyphens
+        hyphen_valid, hyphen_error = validate_identifiers_no_hyphens(plugin_identifiers)
+        if not hyphen_valid:
+            return False, ["invalid_identifier", hyphen_error]
+        
         under_plugin_limit = under_identifier_limit(plugin_identifiers)
         if not under_plugin_limit:
             return False, ["too_many_identifiers",
@@ -427,6 +436,11 @@ def validate_zip(file: InMemoryUploadedFile) -> Tuple[bool, str]:
         for item in namelist:
             if ' ' in item.filename:
                 return False, f"File '{item.filename}' contains spaces. Please remove spaces from all file names."
+
+            # Check for metadata files
+            filename = item.filename.lower()
+            if filename.endswith('metadata.yaml') or filename.endswith('metadata.yml'):
+                return False, f"We currently do not support user-contributed metadata files. Please remove the metadata.yaml/metadata.yml files from your submission. Brain-Score will populate metadata fields for you."
 
         root = namelist[0]
         has_plugin, submitted_plugins = plugins_exist(namelist)
@@ -546,6 +560,21 @@ def extract_identifiers(zip_ref):
                         identifiers[plugin].update(matches)
 
     return identifiers
+
+
+def validate_identifiers_no_hyphens(identifier_dict):
+    """
+    Validates that no identifiers contain hyphens, which will cause scoring issues.
+    
+    :param identifier_dict: Dictionary with plugin types as keys and sets of identifiers as values
+    :return: Tuple of (is_valid, error_message)
+    """
+    for plugin, identifiers in identifier_dict.items():
+        for identifier in identifiers:
+            if '-' in identifier:
+                return False, f"Model name '{identifier}' in {plugin} plugin contains hyphens. Please use underscores instead of hyphens in model names."
+    
+    return True, ""
 
 
 def under_identifier_limit(identifier_dict):
@@ -826,7 +855,41 @@ class PublicAjax(View):
         verify_user_model_access(user=request.user, model=model)
         model.public = public
         model.save(update_fields=['public'])
+        
         return JsonResponse("success", safe=False)
+
+
+def trigger_leaderboard_refresh():
+    """
+    Trigger the Jenkins "Refresh Leaderboard" job with dev parameter
+    """
+    try:
+        env = os.getenv("CACHE_ENV", "") 
+        database = "prod" if env == "production" else "dev"
+        auth = get_secret("jenkins_url")
+        jenkins_url = auth["url"]
+        auth = get_secret("cache_refresh_url")
+        refresh_url = auth["url"]
+        request_url = f"{jenkins_url}{refresh_url}{database}"
+        auth = get_secret("brainscore-website_jenkins_access_aws")
+        auth = (auth['user'], auth['password'])
+        _logger.debug(f"Triggering leaderboard refresh: {request_url}")
+        
+        response = requests.post(request_url, auth=auth)
+        response.raise_for_status()
+        _logger.debug("Leaderboard refresh job triggered successfully")
+    except Exception as e:
+        _logger.error(f"Failed to trigger leaderboard refresh: {e}")
+
+
+class RefreshLeaderboardAjax(View):
+    """Explicit endpoint to trigger leaderboard refresh Jenkins job on demand."""
+    def post(self, request):
+        try:
+            trigger_leaderboard_refresh()
+            return JsonResponse({"status": "ok"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 def verify_user_model_access(user, model):

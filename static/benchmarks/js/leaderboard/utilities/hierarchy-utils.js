@@ -31,16 +31,44 @@ function getFilteredLeafCount(parentField) {
       }
     });
     
-    // Count how many are NOT excluded
-    const count = Array.from(allLeafIds).filter(leafId => !excludedBenchmarks.has(leafId)).length;
+    // Count how many are NOT excluded (by benchmark tree) AND not hidden by wayback filtering
+    const count = Array.from(allLeafIds).filter(leafId => {
+      // Exclude if in filteredOutBenchmarks
+      if (excludedBenchmarks.has(leafId)) {
+        return false;
+      }
+      
+      // Also exclude if hidden by wayback filtering
+      if (typeof window.LeaderboardFilterCoordinator?.isColumnHiddenByWaybackFiltering === 'function') {
+        if (window.LeaderboardFilterCoordinator.isColumnHiddenByWaybackFiltering(leafId)) {
+          return false;
+        }
+      }
+      
+      return true;
+    }).length;
     return count;
   }
   
   // For specific categories, get direct leaf descendants
   const leafDescendants = getAllLeafDescendants(parentField, hierarchyMap);
   
-  // Count how many are NOT excluded
-  const count = leafDescendants.filter(leafId => !excludedBenchmarks.has(leafId)).length;
+  // Count how many are NOT excluded (by benchmark tree) AND not hidden by wayback filtering
+  const count = leafDescendants.filter(leafId => {
+    // Exclude if in filteredOutBenchmarks
+    if (excludedBenchmarks.has(leafId)) {
+      return false;
+    }
+    
+    // Also exclude if hidden by wayback filtering
+    if (typeof window.LeaderboardFilterCoordinator?.isColumnHiddenByWaybackFiltering === 'function') {
+      if (window.LeaderboardFilterCoordinator.isColumnHiddenByWaybackFiltering(leafId)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }).length;
   
   return count;
 }
@@ -66,16 +94,6 @@ function getAllLeafDescendants(benchmarkId, hierarchyMap) {
 
 // Build hierarchy map from benchmark tree
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-  console.log('🔧 buildHierarchyFromTree called with:', {
-    treeLength: tree?.length,
-    mapSize: hierarchyMap.size,
-    firstNodes: tree?.slice(0, 3)?.map(node => ({
-      id: node.id,
-      identifier: node.identifier,
-      name: node.name,
-      childrenCount: node.children?.length || 0
-    }))
-  });
   
   tree.forEach((node, index) => {
     // More comprehensive property checking

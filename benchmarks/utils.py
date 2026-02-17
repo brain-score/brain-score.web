@@ -8,6 +8,7 @@ from django.core.cache import caches, cache as default_cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.cache import cache_page
 from django.http import JsonResponse, HttpRequest
 import time
 import pickle
@@ -15,6 +16,34 @@ import gzip
 import os
 
 logger = logging.getLogger(__name__)
+
+
+def cache_page_for_public_only(timeout: int):
+    """
+    Cache decorator that only caches public leaderboard requests.
+    Profile views (user_view=true) bypass the cache entirely.
+
+    Args:
+        timeout: Cache timeout in seconds
+    """
+    def decorator(view_func):
+        # Pre-create the cached version
+        cached_view = cache_page(timeout)(view_func)
+
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            # Check if this is a user-specific view
+            user_view = request.GET.get('user_view', 'false').lower() == 'true'
+
+            if user_view and request.user.is_authenticated:
+                # Profile view - skip page cache, call view directly
+                return view_func(request, *args, **kwargs)
+            else:
+                # Public view - use cached version
+                return cached_view(request, *args, **kwargs)
+
+        return wrapper
+    return decorator
 
 # Compression utilities for cache
 def compress_data(data: Any) -> bytes:
@@ -52,7 +81,8 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             benchmark_filter: Optional[str] = None,
             model_filter: Optional[str] = None,
             show_public: bool = False,
-            force_user_cache: bool = False
+            force_user_cache: bool = False,
+            **kwargs  # Accept any additional parameters
         ) -> Dict[str, Any]:
             """
             Wrapper function that implements the caching logic.
@@ -99,7 +129,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             else:
                 # (CASE 3: No caching) Neither public nor user-specific
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                          model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
+                          model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             
             # Add filters to key prefix
             if benchmark_filter:
@@ -145,7 +175,7 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             logger.error(f"Cache miss for key: {cache_key}")
             func_start = time.time()
             result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
-                        model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache)
+                        model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             func_end = time.time()
             logger.error(f"Context execution took {func_end - func_start:.3f}s")
             
@@ -214,36 +244,64 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
         f"*:{domain}:*",           # All keys containing this domain
         f"*cache_page*{domain}*",  # Page caches for this domain
         "*cache_page*",         # Django page caches
+        "*cache_header*",       # Django cache_page header entries (companion to cache_page body)
         "*compressor*",         # Django compressor caches
         "*django_compressor*",  # Django compressor alternative pattern
-        "cache_version_*",      # Cache version keys
+        "*cache_version*",      # Cache version keys (prefixed by django-redis KEY_PREFIX)
         "*leaderboard*",        # Leaderboard-specific caches
         "*index*",              # Index/profile caches
         "*models*",             # Model-related caches
         "*compare*",            # Comparison caches
+        f"*:user:{domain}:*",      # User-specific caches for this domain
+        f"*user_*:{domain}:*",     # Alternative user cache format
+        f"*:{domain}:*:user_*",    # User caches with domain prefix
     ] 
 
-    # Clear cache keys
+    # Clear cache keys and track preserved ones
     deleted_count = 0
     preserved_sessions = 0
+    preserved_keys = []
     total_keys = len(list(client.scan_iter(match="*", count=1000)))
 
+    # First, collect all keys that match our patterns
+    matching_keys = set()
     for pattern in cache_patterns:
         for key in client.scan_iter(match=pattern, count=100):
             key_str = key.decode('utf-8') if isinstance(key, bytes) else str(key)
+            matching_keys.add(key_str)
 
-            # Preserve sessions if requested
-            if preserve_sessions and ('session' in key_str.lower() or key_str.startswith('django.contrib.sessions')):
-                preserved_sessions += 1
-                continue
+    # Process each matching key
+    for key_str in matching_keys:
+        # Preserve sessions if requested
+        if preserve_sessions and ('session' in key_str.lower() or key_str.startswith('django.contrib.sessions')):
+            preserved_sessions += 1
+            # Add preserved key
+            preserved_keys.append(f"SESSION: {key_str}")
+            continue
 
-            try:
-                client.delete(key)
-                deleted_count += 1
-            except Exception as e:
-                logger.warning(f"Error deleting cache key {key}: {e}")
+        try:
+            # Delete key that is not supposed to be preserved
+            client.delete(key_str)
+            deleted_count += 1
+        except Exception as e:
+            logger.warning(f"Error deleting cache key {key_str}: {e}")
+            preserved_keys.append(f"ERROR: {key_str}")
 
-    logger.info(f"Deleted {deleted_count} cache keys for domain '{domain}'")
+    # Find keys that weren't matched by any pattern (these are the "other" preserved keys)
+    # We now record this so we can explore any stray keys that are not being cleared.
+    all_keys = set()
+    for key in client.scan_iter(match="*", count=1000):
+        key_str = key.decode('utf-8') if isinstance(key, bytes) else str(key)
+        all_keys.add(key_str)
+    
+    unmatched_keys = all_keys - matching_keys
+    for key_str in unmatched_keys:
+        if not ('session' in key_str.lower() or key_str.startswith('django.contrib.sessions')):
+            preserved_keys.append(f"UNMATCHED: {key_str}")
+
+    logger.info(f"Deleted {deleted_count} cache keys for domain '{domain}' (including user-specific caches)")
+    if preserved_keys:
+        logger.info(f"Preserved keys: {preserved_keys[:10]}")  # Log first 10
     
     return {
         "status": "success",
@@ -253,7 +311,8 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
         "total_keys": total_keys,
         "preserved_keys": total_keys - deleted_count,
         "preserved_sessions": preserved_sessions if preserve_sessions else None,
-        "message": f"Cleared {deleted_count} cache keys" + 
+        "preserved_key_samples": preserved_keys[:10],  # Return first 10 preserved keys
+        "message": f"Cleared {deleted_count} cache keys including user-specific caches" + 
                   (f", preserved {preserved_sessions} sessions" if preserve_sessions and preserved_sessions > 0 else "")
     }
 
@@ -299,7 +358,7 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     # Check if preserve_sessions parameter is provided (default to True for safety)
     preserve_sessions = request.GET.get('preserve_sessions', 'true').lower() == 'true'
     
-    # Clear cache
+    # Clear cache (now includes user-specific caches by default)
     result = invalidate_domain_cache(domain=domain, preserve_sessions=preserve_sessions)
     
     if result["status"] != "success":
@@ -321,8 +380,10 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
         "domain": result["domain"],
         "version": result["version"],
         "keys_deleted": result["keys_deleted"],
+        "total_keys": result["total_keys"],
         "preserved_keys": result["preserved_keys"],
         "preserved_sessions": result.get("preserved_sessions"),
+        "preserved_key_samples": result["preserved_key_samples"],
         "rebuilt": rebuild_success,
         "message": f"{result['message']}. " + 
                   ("Rebuilt public leaderboard cache." if rebuild_success else "Cache rebuild failed.")

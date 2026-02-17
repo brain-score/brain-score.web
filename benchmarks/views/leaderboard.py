@@ -1,13 +1,15 @@
 import json
 import logging
-import numpy as np
 from collections import defaultdict
+from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
+
+import numpy as np
 from django.shortcuts import render
-from .index import get_context
-from django.views.decorators.cache import cache_page
-from ..utils import cache_get_context
-from django.views.decorators.cache import cache_page
-from django.db.models import Model
+
+from ..utils import cache_get_context, cache_page_for_public_only
+from .index import get_context, get_datetime_range
+
 logger = logging.getLogger(__name__)
 
 def json_serializable(obj):
@@ -105,14 +107,40 @@ def round_up_aesthetically(value):
         return ((int(value) // power) + 1) * power
 
 
+def build_benchmark_bibtex_map(benchmarks):
+    """
+    Create a minimal map of benchmark IDs to citation data for frontend use.
+    Replaces full benchmark objects that were stored in each score (reducing payload size by ~80%).
+    Only includes leaf benchmarks (those with actual scores/bibtex).
+    """
+    bibtex_map = {}
+    for benchmark in benchmarks:
+        # Only include leaf benchmarks with bibtex
+        if benchmark.number_of_all_children == 0:
+            if hasattr(benchmark, 'benchmark_bibtex') and benchmark.benchmark_bibtex:
+                bibtex_map[benchmark.identifier] = {
+                    'bibtex': benchmark.benchmark_bibtex,
+                    'benchmark_type_id': benchmark.identifier.rsplit('_v', 1)[0] if '_v' in benchmark.identifier else benchmark.identifier
+                }
+    return bibtex_map
+
+
 @cache_get_context(timeout=7 *24 * 60 * 60, key_prefix="leaderboard", use_compression=True)
-def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
+def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False, is_profile_view=False):
     """
     Get processed context data for AG Grid leaderboard.
     This function handles all the expensive data processing and is cached.
     """
     # Get the base context (with user context via decorator)
     context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
+
+    # DEBUG: Check how many models we got
+    models = context.get('models', [])
+    logger.warning(f"DEBUG get_ag_grid_context: got {len(models)} models from get_context")
+    if models:
+        logger.warning(f"DEBUG get_ag_grid_context: first model has {len(models[0].scores) if hasattr(models[0], 'scores') and models[0].scores else 0} scores")
+        if hasattr(models[0], 'scores') and models[0].scores and len(models[0].scores) > 0:
+            logger.warning(f"DEBUG get_ag_grid_context: first score keys: {list(models[0].scores[0].keys())}")
 
     # Extract model metadata for filters
     model_metadata = {
@@ -191,6 +219,12 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
+        # Check if user is the owner of this model
+        is_owner = False
+        if user and not user.is_superuser:
+            model_user_id = model.user.get('id') if isinstance(model.user, dict) else getattr(model.user, 'id', None)
+            is_owner = (model_user_id == user.id) if model_user_id else False
+
         # base fields
         rd = {
             'id': model.model_id,
@@ -199,7 +233,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'id': model.model_id,
                 'name': model.name,
                 'submitter': model.submitter.get('display_name') if model.submitter else None
-            }
+            },
+            'public': model.public,
+            'is_owner': is_owner,
+            # Submission timestamp for wayback filtering (exclude models that didn't exist yet)
+            'submission_timestamp': model.timestamp.isoformat() if model.timestamp else None
         }
 
         # Process model metadata if available
@@ -304,23 +342,29 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             # fallback for missing IDs
             if not vid:
                 continue
-            # Extract only essential benchmark fields for citation functionality
-            benchmark_info = score.get('benchmark', {})
-            minimal_benchmark = {}
-            if benchmark_info.get('bibtex'):
-                minimal_benchmark = {
-                    'bibtex': benchmark_info.get('bibtex'),
-                    'benchmark_type_id': benchmark_info.get('benchmark_type_id', '')
-                }
-            
+
+            # Round score to 2 decimal places for display
+            # This ensures consistency between ranking and display
+            raw_score = score.get('score_ceiled', 'X')
+
+            if raw_score and raw_score != 'X' and raw_score != '':
+                try:
+                    rounded = Decimal(str(raw_score)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    display_value = format(rounded, 'f')
+                except (ValueError, TypeError):
+                    display_value = raw_score
+            else:
+                display_value = raw_score
+
+            # Store only the score data - benchmark citation data moved to separate map
             rd[vid] = {
-                'value': score.get('score_ceiled', 'X'),
-                'raw': score.get('score_raw'),
-                'error': score.get('error'),
-                'color': score.get('color'),
+                'value': display_value,
                 'complete': score.get('is_complete', True),
-                # Include minimal benchmark info only when needed for citations
-                'benchmark': minimal_benchmark if minimal_benchmark else None
+                'timestamp': score.get('end_timestamp'),
+                # Wayback machine: version timeline data
+                'version_valid_from': score.get('version_valid_from'),
+                'version_valid_to': score.get('version_valid_to'),
+                'historical_versions': score.get('historical_versions')
             }
         row_data.append(rd)
 
@@ -331,12 +375,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         {'field': 'rank',
          'headerName': 'Rank',
          'pinned': 'left',
+         'lockPosition': True,
+         'suppressMovable': True,
          'width': 100,
          'filter': False
          },
         {'field': 'model',
          'headerName': 'Model',
          'pinned': 'left',
+         'lockPosition': True,
+         'suppressMovable': True,
          'width': 400,
          'minWidth': 180,
          'resizable': True,
@@ -345,6 +393,40 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
          'getQuickFilterText': 'function(params) { return params.value?.name || ""; }'
          }
     ]
+
+    # Add public/private toggle column for authenticated users in profile view only
+    # Only show on profile pages, not main leaderboard
+    if is_profile_view and user and not user.is_superuser:
+        public_toggle_column = {
+            'field': 'public_toggle',
+            'headerName': 'Public',
+            'pinned': 'left',
+            'width': 80,
+            'filter': False,
+            'sortable': False,
+            'cellRenderer': 'publicToggleCellRenderer',
+            'headerClass': 'text-center'
+        }
+        column_defs.append(public_toggle_column)
+
+    # Build benchmark ID -> root parent mapping for color palette selection
+    benchmark_root_parent_map = {}
+
+    def find_root_parent(benchmark):
+        """Find the root parent (top-level category) for a benchmark."""
+        current = benchmark
+        while current.parent:
+            parent_id = current.parent['identifier']
+            parent_obj = next((b for b in context['benchmarks'] if b.identifier == parent_id), None)
+            if parent_obj:
+                current = parent_obj
+            else:
+                break
+        return current.identifier
+
+    # Build the mapping for all benchmarks
+    for b in context['benchmarks']:
+        benchmark_root_parent_map[b.identifier] = find_root_parent(b)
 
     # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
@@ -358,7 +440,11 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'hide': False,
             'sortable': True,
             'width': 150,
-            'context': {'parentField': None, 'benchmarkId': field}
+            'context': {
+                'parentField': None,
+                'benchmarkId': field,
+                'rootParent': benchmark_root_parent_map.get(field)
+            }
         })
 
     # All other groupings (version==0 & has parent) hidden initially
@@ -377,7 +463,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'width': 150,
             'context': {
                 'parentField': parent_field,
-                'benchmarkId': field
+                'benchmarkId': field,
+                'rootParent': benchmark_root_parent_map.get(field)
             }
         })
 
@@ -405,7 +492,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'cellRenderer': 'scoreCellRenderer',
             'hide': True,
             'sortable': True,
-            'context': {'parentField': parent_field}
+            'context': {
+                'parentField': parent_field,
+                'rootParent': benchmark_root_parent_map.get(field)
+            }
         })
 
     # Convert filter metadata to frontend-friendly format
@@ -438,6 +528,19 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'max': round_up_aesthetically(benchmark_metadata['stimuli_ranges']['max']) if benchmark_metadata['stimuli_ranges']['max'] > 0 else 1000
         }
     }
+
+    # Compute datetime range for wayback timestamp filter
+    datetime_range = get_datetime_range(domain=domain)
+    if datetime_range:
+        # Parse the timestamps to get Unix timestamps for the slider
+        min_timestamp = datetime.fromisoformat(datetime_range['min'])
+        max_timestamp = datetime.fromisoformat(datetime_range['max'])
+        filter_options['datetime_range'] = {
+            'min': datetime_range['min'],
+            'max': datetime_range['max'],
+            'min_unix': int(min_timestamp.timestamp()),
+            'max_unix': int(max_timestamp.timestamp())
+        }
 
     # 4) Attach JSON-serialized data to template context
     stimuli_map = {}
@@ -479,7 +582,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
     filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
     context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
-    
+
+    # Create benchmark bibtex map for citation export
+    context['benchmark_bibtex_map'] = json.dumps(build_benchmark_bibtex_map(context['benchmarks']))
+
     # Create simple benchmark ID mapping for frontend navigation links
     benchmark_ids = {}
     for benchmark in context['benchmarks']:
@@ -496,16 +602,17 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_metadata': context['benchmark_metadata'],
         'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
+        'benchmark_bibtex_map': context['benchmark_bibtex_map'],
         # Removed benchmarkMetaMap for simplicity
         'benchmarkStimuliMetaMap': context['benchmarkStimuliMetaMap'],
         'benchmarkDataMetaMap': context['benchmarkDataMetaMap'],
         'benchmarkMetricMetaMap': context['benchmarkMetricMetaMap'],
         'model_metadata_map': context['model_metadata_map'],
-        
+
         # Essential metadata
         'domain': context['domain'],
         'has_user': context.get('has_user', False),
-        
+
         # Citation info
         'citation_general_url': context.get('citation_general_url', ''),
         'citation_general_title': context.get('citation_general_title', ''),
@@ -513,7 +620,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_url': context.get('citation_domain_url', ''),
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
-        
+
         # Compare tab data
         'comparison_data': context.get('comparison_data', '[]'),
     }
@@ -532,7 +639,7 @@ def ag_grid_leaderboard_shell(request, domain: str):
     }
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-shell.html', context)
 
-@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
+@cache_page_for_public_only(timeout=60 * 60 * 7 * 24)  # Cache public view for 7 days
 def ag_grid_leaderboard_content(request, domain: str):
     """
     Heavy content view that returns just the leaderboard content via AJAX
@@ -540,7 +647,7 @@ def ag_grid_leaderboard_content(request, domain: str):
     """
     # Check if this is a user-specific view request
     user_view = request.GET.get('user_view', 'false').lower() == 'true'
-    
+
     if user_view and request.user.is_authenticated:
         # Profile view - check include_public parameter
         user = request.user
@@ -555,14 +662,15 @@ def ag_grid_leaderboard_content(request, domain: str):
         show_public = True
         include_public = True
         cache_suffix = "public"
-    
+
     # For profile views, force user-specific caching to prevent cache collision
     force_user_cache = user_view and user is not None
-    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
-    
+    context = get_ag_grid_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache, is_profile_view=user_view)
+
     # Add template-specific flags (these don't need caching as they're lightweight)
     context['include_public'] = include_public
     context['has_user'] = user is not None
-    
+    context['is_profile_view'] = user_view  # Flag to indicate if this is a profile view
+
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)

@@ -6,7 +6,6 @@
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
-  <link rel="stylesheet" href="{% static 'benchmarks/css/main.css' %}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
 {% endblock %}
 
@@ -39,7 +38,7 @@
             </div>
             <br>
         <p class="benefits_info is-size-5-mobile">
-            Submit new {{ domain }} plugins <a href="{{ request.build_absolute_uri }}submit">here</a>.
+            Submit new {{ domain }} plugins <a href="/profile/{{ domain }}/submit/">here</a>.
         </p>
 
         </form>

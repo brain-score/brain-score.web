@@ -90,6 +90,49 @@ FROM brainscore_benchmarkinstance bi
 GROUP BY bi.benchmark_type_id;
 
 -- ********************************************************************************
+-- STEP 3.5: Version Timeline for Wayback Machine
+-- "mv_version_timeline" tracks when each benchmark version was "active"
+-- by inferring from the first score submission for each version.
+-- Used by wayback functionality to determine which version was current at any date.
+-- ********************************************************************************
+DROP MATERIALIZED VIEW IF EXISTS mv_version_timeline CASCADE;
+CREATE MATERIALIZED VIEW mv_version_timeline AS
+WITH version_first_score AS (
+  -- Find the earliest score timestamp for each benchmark version
+  SELECT
+    bi.id AS instance_id,
+    bi.benchmark_type_id,
+    bi.version,
+    MIN(s.end_timestamp) AS first_score_at
+  FROM brainscore_benchmarkinstance bi
+  LEFT JOIN brainscore_score s ON s.benchmark_id = bi.id
+  GROUP BY bi.id, bi.benchmark_type_id, bi.version
+),
+version_periods AS (
+  -- Calculate valid_from and valid_to using window function
+  -- valid_from = when this version first received a score
+  -- valid_to = when the next version first received a score (NULL if current)
+  SELECT
+    instance_id,
+    benchmark_type_id,
+    version,
+    first_score_at AS valid_from,
+    LEAD(first_score_at) OVER (
+      PARTITION BY benchmark_type_id
+      ORDER BY version
+    ) AS valid_to
+  FROM version_first_score
+)
+SELECT
+  instance_id,
+  benchmark_type_id,
+  version,
+  valid_from,
+  valid_to,
+  CASE WHEN valid_to IS NULL THEN true ELSE false END AS is_current
+FROM version_periods;
+
+-- ********************************************************************************
 -- STEP 4: Mark Each Benchmark as Leaf (has no children) or Parent
 -- "mv_leaf_status" is joined to distinguish leaf vs. parent.
 -- ********************************************************************************
@@ -306,9 +349,16 @@ SELECT
   fbc.version,
   fbc.overall_order,
   s.score_raw,
-  s.score_ceiled,
+  -- Cap score_ceiled between 0 and 1 inclusive
+  CASE
+    WHEN s.score_ceiled IS NULL THEN NULL
+    WHEN s.score_ceiled::text ILIKE 'nan' THEN s.score_ceiled
+    ELSE GREATEST(LEAST(s.score_ceiled::numeric, 1), 0)
+  END AS score_ceiled,
   s.error,
   s.comment,
+  s.start_timestamp,
+  s.end_timestamp,
   CASE WHEN s.score_raw IS NOT NULL THEN TRUE ELSE FALSE END AS is_complete
 FROM
   -- All models
@@ -358,6 +408,8 @@ SELECT
   END AS score_ceiled,
   bs.error,
   bs.comment,
+  bs.start_timestamp,
+  bs.end_timestamp,
   bs.is_complete
 FROM mv_base_scores bs
 JOIN mv_final_benchmark_context fbt
@@ -385,6 +437,8 @@ CREATE TABLE final_agg_scores (
   root_parent       text,
   error             numeric,
   comment           text,
+  start_timestamp   timestamp,
+  end_timestamp     timestamp,
   is_leaf           boolean
 );
 
@@ -406,7 +460,7 @@ BEGIN
   -- Only proceed if we have data (should always be true)
   IF max_depth > 0 THEN
     -- Insert leaf scores.
-    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, is_leaf)
+    INSERT INTO final_agg_scores (score_id, benchmark, benchmark_id, model_id, score_raw, score_ceiled, depth, sort_path, root_parent, error, comment, start_timestamp, end_timestamp, is_leaf)
     SELECT
       bs.id,
       t.identifier,
@@ -419,6 +473,8 @@ BEGIN
       t.root_parent,
       bs.error,
       bs.comment,
+      bs.start_timestamp,
+      bs.end_timestamp,
       TRUE    -- sets is_leaf= true
     FROM mv_benchmark_tree t
     JOIN mv_leaf_status ls ON t.identifier = ls.benchmark_identifier
@@ -428,7 +484,7 @@ BEGIN
 
     -- Loop from max_depth-1 down to 0 (i.e., roll up scores to compute parents)
     FOR d IN REVERSE max_depth-1 .. 0 LOOP
-      INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, is_leaf)
+      INSERT INTO final_agg_scores (benchmark, model_id, score_raw, score_ceiled, depth, sort_path, start_timestamp, end_timestamp, is_leaf)
       SELECT
         p.identifier AS benchmark,
         s.model_id,
@@ -458,6 +514,9 @@ BEGIN
 
         p.depth,
         p.sort_path,
+        -- For parent nodes, use earliest start_timestamp and latest end_timestamp from children
+        MIN(s.start_timestamp) AS start_timestamp,
+        MAX(s.end_timestamp) AS end_timestamp,
         FALSE -- sets parent nodes to is_leaf = false
       FROM mv_benchmark_tree p
       JOIN mv_benchmark_children bc ON p.identifier = bc.parent_id
@@ -598,6 +657,8 @@ SELECT
   fa.is_leaf,
   fa.error,
   fa.comment,
+  fa.start_timestamp,
+  fa.end_timestamp,
   m.visual_degrees,
   m.id           AS model_pk,
   m.name         AS model_name,
@@ -898,6 +959,8 @@ SELECT
   b.is_leaf,
   b.error,
   b.comment,
+  b.start_timestamp,
+  b.end_timestamp,
   b.visual_degrees,
   b.model_pk,
   b.model_name,
@@ -969,13 +1032,22 @@ WITH score_with_value AS (
             WHEN ms.is_leaf THEN b.score_raw
             ELSE ms.score_raw
         END AS score_raw_value,
-        to_jsonb(bm) AS meta
+        to_jsonb(bm) AS meta,
+        -- Version timeline data for wayback machine
+        vt.valid_from AS version_valid_from,
+        vt.valid_to AS version_valid_to,
+        vt.is_current AS version_is_current
     FROM mv_model_scores_enriched ms
     LEFT JOIN mv_base_scores_fixed_engineering b
            ON b.benchmark_id = ms.benchmark_id
           AND b.model_id     = ms.model_id
     LEFT JOIN brainscore_benchmarkmeta bm
            ON bm.id = ms.meta_id
+    -- Join version timeline for leaf benchmarks (parents don't have versions)
+    LEFT JOIN mv_version_timeline vt
+           ON vt.benchmark_type_id = ms.benchmark_identifier
+          AND vt.version = ms.version
+          AND ms.is_leaf = TRUE
     -- SUGGESTION: This isn't necessary however is a catch if we have overlapping identifiers between domains.
     WHERE ms.benchmark_domain = ms.model_domain
 ),
@@ -989,54 +1061,58 @@ score_json AS (
         model_id,
         jsonb_agg(
             jsonb_build_object(
-                'benchmark', jsonb_build_object(
-                    'id',                benchmark_id,
-                    'benchmark_type_id', benchmark_identifier,
-                    'version',           version,
-                    'ceiling',           ceiling,
-                    'ceiling_error',     ceiling_error,
-                    'meta_id',           meta_id,
-                    'children',          children,
-                    'parent',            parent,
-                    'root_parent',       root_parent,
-                    'depth',             depth,
-                    'number_of_all_children', number_of_all_children,
-                    'overall_order',     overall_order,
-                    'identifier',        benchmark_identifier || '_v' || version,
-                    'short_name',        short_name,
-                    'author',            benchmark_author,
-                    'year',              benchmark_year,
-                    'url',               benchmark_url,
-                    'reference_identifier', benchmark_reference_identifier,
-                    'bibtex',            benchmark_bibtex,
-                    'meta',              meta
-                ),
+                -- Flat benchmark_type_id (optimized structure from master)
+                'benchmark_type_id', benchmark_identifier,
                 'versioned_benchmark_identifier', benchmark_identifier || '_v' || version,
-                'score_raw', score_raw_value,
-                'score_ceiled_raw', score_ceiled_value,
                 'score_ceiled',
                   CASE
                     WHEN score_ceiled_value IS NULL THEN ''
                     WHEN score_ceiled_value::text ILIKE 'nan' THEN 'X'
                     WHEN score_ceiled_value >= 1
                         THEN TO_CHAR( round(score_ceiled_value::numeric, 1)   -- 1.27 → 1.3
-                                    , 'FM0.0')                               -- always “#.0”
-                    -- FM0.000 determines the formatting of text
-                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(score_ceiled_value, 'FM0.000'))
-                    ELSE TO_CHAR(score_ceiled_value, 'FM0.000')
+                                    , 'FM0.0')                               -- always "#.0"
+                    -- Store 3 decimal places for detail pages (compare, model card, benchmark)
+                    -- Leaderboard JS formats to 2 decimals at display time via toFixed(2)
+                    WHEN score_ceiled_value < 1 THEN TRIM(LEADING '0' FROM TO_CHAR(ROUND(score_ceiled_value::numeric, 3), 'FM0.000'))
+                    ELSE TO_CHAR(ROUND(score_ceiled_value::numeric, 3), 'FM0.000')
                   END,
                 'error', error,
-                'comment', comment,
-                'visual_degrees', visual_degrees,
-                'color', color,
-                'median', median_score,
-                'best', best_score,
-                'rank', benchmark_rank,
-                'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END
+                'end_timestamp', end_timestamp,
+                'is_complete', CASE WHEN score_ceiled_value IS NULL THEN 0 ELSE 1 END,
+                -- Wayback machine: version timeline data (from wayback branch)
+                'version_valid_from', version_valid_from,
+                'version_valid_to', version_valid_to,
+                'version_is_current', version_is_current,
+                -- Wayback machine: historical versions (scores from older benchmark versions)
+                'historical_versions', (
+                    SELECT jsonb_object_agg(
+                        hv.version::text,
+                        jsonb_build_object(
+                            'value', CASE
+                                WHEN swv.root_parent ILIKE '%engineering%' THEN hs.score_raw
+                                ELSE hs.score_ceiled
+                            END,
+                            'score_raw', hs.score_raw,
+                            'timestamp', hs.end_timestamp,
+                            'version', hv.version,
+                            'version_valid_from', hvt.valid_from,
+                            'version_valid_to', hvt.valid_to
+                        )
+                    )
+                    FROM brainscore_benchmarkinstance hv
+                    JOIN brainscore_score hs
+                        ON hs.benchmark_id = hv.id
+                        AND hs.model_id = swv.model_id
+                    JOIN mv_version_timeline hvt
+                        ON hvt.instance_id = hv.id
+                    WHERE hv.benchmark_type_id = swv.benchmark_identifier
+                        AND hv.version < swv.version
+                        AND swv.is_leaf = TRUE
+                )
             )
             ORDER BY overall_order
         ) AS scores
-    FROM score_with_value
+    FROM score_with_value swv
     GROUP BY model_id
 )
 SELECT
@@ -1283,6 +1359,7 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_benchmark_tree;
     REFRESH MATERIALIZED VIEW mv_benchmark_children;
     REFRESH MATERIALIZED VIEW mv_latest_benchmark_instance;
+    REFRESH MATERIALIZED VIEW mv_version_timeline;
     REFRESH MATERIALIZED VIEW mv_leaf_status;
     REFRESH MATERIALIZED VIEW mv_final_benchmark_context;
 

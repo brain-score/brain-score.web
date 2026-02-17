@@ -1,5 +1,6 @@
 import json
 import logging
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Union, List, Dict, Any, Tuple
 from django.contrib.auth.models import User
 from django.utils.functional import wraps
@@ -14,6 +15,7 @@ from django.views.decorators.cache import cache_page
 
 from benchmarks.models import Score, FinalBenchmarkContext, FinalModelContext, Reference
 from ..utils import cache_get_context
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -34,21 +36,36 @@ color_suffix = '_color'
 color_None = '#e0e1e2'
 
 
+def get_datetime_range(models=None, domain="vision"):
+    """
+    Return the datetime range for the Wayback slider without iterating through all models.
+    - min: Hardcoded to the earliest score timestamp (Aug 27, 2020)
+    - max: Today's date (scores are always in the past)
+    """
+    from datetime import timezone
+    
+    # Earliest score timestamp in the database (fixed, never changes)
+    min_date = datetime(2020, 8, 27, tzinfo=timezone.utc)
+    
+    # Max is always today (scores can't be in the future)
+    max_date = datetime.now(timezone.utc)
+    
+    return {
+        "min": min_date.isoformat(),
+        "max": max_date.isoformat(),
+    }
 
 def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-# Cache the leaderboard HTML page
-# Server-side HTML caching until leaderboard views are introduced.
-@cache_page(7 * 24 * 60 * 60, key_prefix="cache_page")
 def view(request, domain: str):
     # Get the authenticated user if any
     user = request.user if request.user.is_authenticated else None
-    
+
     # Get the appropriate context based on user authentication
     leaderboard_context = get_context(user=user, domain=domain, show_public=True)
-   
+
     return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
 
 # Maintain 24-hr cache for leaderboard view
@@ -56,7 +73,7 @@ def view(request, domain: str):
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
     # ------------------------------------------------------------------
     # 1) QUERY MATERIALIZED VIEWS
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     if benchmark_filter:
         benchmarks = list(benchmark_filter(FinalBenchmarkContext.objects.filter(domain=domain)).order_by('overall_order'))
     else:
@@ -65,11 +82,12 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain).order_by('overall_order'))
         else:
             benchmarks = list(FinalBenchmarkContext.objects.filter(domain=domain, visible=True).order_by('overall_order'))
-    
+
     # Build model query based on user permissions
-    # Necessary to wrap query in function to allow caching of query results. 
+    # Necessary to wrap query in function to allow caching of query results.
     # For now, it is disabled. Provided minimal performance gains.
     all_model_data = get_base_model_query(domain)
+    _logger.warning(f"DEBUG get_context: get_base_model_query returned {all_model_data.count()} models")
 
     if user is None:
         # Public view - only show public models
@@ -87,24 +105,27 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
                 Q(public=True) | Q(user_id=user.id) | Q(owner__id=user.id)
             )
         else:
-            models = all_model_data.filter(Q(user_id=user.id))
+            models = all_model_data.filter(Q(user_id=user.id) | Q(owner__id=user.id))
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)
+    _logger.warning(f"DEBUG get_context: after permission filters, got {len(models)} models")
 
     # Apply any additional model filters
     if model_filter:
-        model_query = list(model_filter(models))
-       
+        models = list(model_filter(models))
+
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
+    _logger.warning(f"DEBUG get_context: before filter_and_rank_models, got {len(models)} models")
     model_rows_reranked = filter_and_rank_models(models, domain)
+    _logger.warning(f"DEBUG get_context: after filter_and_rank_models, got {len(model_rows_reranked)} models")
 
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED
     # Materialized views for some of these exist, but simple list comprehension was fast enough.
     # If model list grows, consider using the materialized views.
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     # Identify leaf benchmarks (actual runnable benchmarks and not parents)
     benchmark_names = [b.identifier for b in benchmarks if b.number_of_all_children == 0]
     # Identify parents and map children to parents
@@ -121,18 +142,21 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         if bench.depth > BASE_DEPTH
         or (ENGINEERING_ROOT not in bench.identifier
             and ENGINEERING_ROOT in bench.root_parent)
-    }
-    
+    }   
+
     # Add submittable benchmarks for authenticated users
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
-    
+
     # Build CSV data and comparison data
     # Combined to a single pass through models to avoid redundant calculations.
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
-    
+    # PERF: Commented out - builds DataFrames that are not currently used by any view/template.
+    # Takes ~1.7s due to 52k individual pd.to_datetime calls. Re-enable when wayback feature needs this.
+    # model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
+
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
-    # ------------------------------------------------------------------ 
+    # ------------------------------------------------------------------
     context = {
         'domain': domain,
         'models': model_rows_reranked,
@@ -157,8 +181,8 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             '  url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n'
             '}'
         ),
-    }
-    
+    }   
+
     # Add domain-specific citation information
     if domain == "vision":
         context.update({
@@ -195,8 +219,11 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             'citation_domain_title': '',
             'citation_domain_bibtex': ''
         })
-    
+
     context['csv_downloadable'] = csv_data
+    # PERF: Commented out - not currently used by any view/template
+    # context['model_leaf_benchmark_scores_df'] = model_score_df
+    # context['model_leaf_benchmark_timestamps_df'] = model_timestamp_df
     return context
 
 
@@ -212,9 +239,9 @@ def filter_and_rank_models(models, domain: str = "vision"):
     for model in models:
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score.get("benchmark", {}).get("benchmark_type_id")
+                benchmark_id = score.get("benchmark_type_id")
                 if benchmark_id == f"average_{domain}":
-                    val = score.get("score_ceiled", score.get("score_ceiled"))
+                    val = score.get("score_ceiled")
                     if val is None or val == "":
                         # Exclude models with None or empty string
                         break
@@ -223,9 +250,13 @@ def filter_and_rank_models(models, domain: str = "vision"):
                         model_scores.append((model, None, True))
                         break
                     try:
-                        val_float = round(float(val), 2)
+                        # Use ROUND_HALF_UP for consistent rounding
+                        # Round to 2 decimal places to match display precision
+                        val_str = str(val) if not isinstance(val, str) else val
+                        val_decimal = Decimal(val_str).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                        val_float = float(val_decimal)
                         model_scores.append((model, val_float, False))
-                    except Exception:
+                    except (ValueError, TypeError):
                         # Exclude models with non-numeric, non-"X" values
                         break
                     break
@@ -244,12 +275,12 @@ def filter_and_rank_models(models, domain: str = "vision"):
     current_rank = 1
     previous_score = None
     tied_count = 0
-    
+
     for i, (model, score, is_x) in enumerate(model_scores):
         if is_x:
             # All "X" get the same rank (after all valids)
             break
-            
+
         if i == 0 or score != previous_score:
             # If we had a tie, increment rank by the number of tied models
             if tied_count > 0:
@@ -260,7 +291,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
             # This is a tie, use the same rank as the previous model
             tied_count += 1
             rank_map[model.model_id] = rank_map[model_scores[i-1][0].model_id]
-            
+
         previous_score = score
 
     # Assign the same rank to all "X" (after all valids)
@@ -299,11 +330,11 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
     """
     # Pre-compute benchmark names set
     benchmark_names = {benchmark.benchmark_type_id for benchmark in benchmarks}
-    
+
     # Initialize lists of dictionaries to store data
     records = []  # For CSV download
     comparison_data = []  # For comparison page
-    
+
     # Single pass through models
     for model in models:
         # Initialize both data structures for this model
@@ -314,34 +345,116 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
         model_data = {
             "model": model.name
         }
-        
+
         # Process all scores for this model
         if model.scores is not None:
             for score in model.scores:
-                benchmark_id = score["benchmark"]["benchmark_type_id"]
+                benchmark_id = score["benchmark_type_id"]
                 versioned_benchmark_id = score["versioned_benchmark_identifier"]
                 # Add to scores dataframe if it's a relevant benchmark
                 if benchmark_id in benchmark_names:
                     record[benchmark_id] = score["score_ceiled"]
-            
+
                 model_data.update({
                     f"{versioned_benchmark_id}-score": score['score_ceiled'],
-                    f"{versioned_benchmark_id}-error": score['error'],
+                    f"{versioned_benchmark_id}-error": score.get('error', None),
                     f"{versioned_benchmark_id}-is_complete": score['is_complete']
                 })
-        
+
             # Add to both result sets
             records.append(record)
             comparison_data.append(model_data)
-    
+
     # Create DataFrame and convert to CSV
     csv_data = "No models submitted yet."
     if records:
         df = pd.DataFrame.from_records(records)
         df.set_index('model_name', inplace=True)
         csv_data = df.to_csv(index=True)
-    
+
     return csv_data, comparison_data
+
+def _extract_score_value(score: Dict[str, Any]) -> Union[float, None]:
+    """
+    Helper function to normalize per-benchmark score values to floats so they can be aggregated reliably.
+    """
+    if not score:
+        return None
+
+    score_ceiled = score.get("score_ceiled")
+    if score_ceiled in (None, "X"):
+        return None
+    try:
+        return float(score_ceiled)
+    except (TypeError, ValueError):
+        return None
+
+
+
+def _parse_end_timestamp(raw_timestamp: Any) -> pd.Timestamp:
+    """
+    Helper function to convert stored timestamp strings into pandas Timestamps, coercing invalid values to NaT.
+    """
+    if not raw_timestamp:
+        return pd.NaT
+    try:
+        return pd.to_datetime(raw_timestamp)
+    except Exception:
+        return pd.NaT
+
+
+def build_model_benchmark_frames(
+    benchmarks: List[FinalBenchmarkContext],
+    models: List[FinalModelContext]
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Creates 2 DataFrames (model_id x leaf benchmarks) for scores and end timestamps.
+    """
+    #score_df: rows are model_id, columns are leaf benchmark IDs, values are floats (or NaN)
+    #timestamp_df: rows are model_id, columns are leaf benchmark IDs, values are pandas Timestamps (or NaT)
+    leaf_benchmark_ids = []
+    for bench in benchmarks:
+        if bench.number_of_all_children == 0:
+            leaf_benchmark_ids.append(bench.benchmark_type_id)
+    leaf_benchmark_set = set(leaf_benchmark_ids)
+
+    score_rows: List[Dict[str, Any]] = []
+    timestamp_rows: List[Dict[str, Any]] = []
+
+    for model in models:
+        score_entry = {"model_id": model.model_id}
+        timestamp_entry = {"model_id": model.model_id}
+
+        if model.scores:
+            for score in model.scores:
+                versioned_id = score.get("versioned_benchmark_identifier", "")
+                # Strip version suffix to get benchmark_type_id
+                benchmark_id = versioned_id.rsplit("_v", 1)[0] if "_v" in versioned_id else versioned_id
+                if benchmark_id not in leaf_benchmark_set:
+                    continue
+
+                score_entry[benchmark_id] = _extract_score_value(score)
+                timestamp_entry[benchmark_id] = _parse_end_timestamp(score.get("end_timestamp"))
+
+        score_rows.append(score_entry)
+        timestamp_rows.append(timestamp_entry)
+
+    # Initialize DataFrames with empty index
+    if score_rows:
+        score_df = pd.DataFrame(score_rows).set_index("model_id")
+    else:
+        score_df = pd.DataFrame(index=pd.Index([], name="model_id"))
+
+    if timestamp_rows:
+        timestamp_df = pd.DataFrame(timestamp_rows).set_index("model_id")
+    else:
+        timestamp_df = pd.DataFrame(index=pd.Index([], name="model_id"))
+
+    # Reindex to ensure all leaf benchmarks are included
+    score_df = score_df.reindex(columns=leaf_benchmark_ids)
+    timestamp_df = timestamp_df.reindex(columns=leaf_benchmark_ids)
+
+    return score_df, timestamp_df
 
 # Resubmissions are currently not supported. Retaining for future use.
 def _collect_submittable_benchmarks(benchmarks: List[FinalBenchmarkContext], user: User) -> Dict:
@@ -377,7 +490,7 @@ def represent(value):
         return ""
     elif value == "NaN":
         return "X"
-    
+
 def normalize_value(value, min_value, max_value):
     normalized_value = (value - min_value) / (max_value - min_value)
     return .7 * normalized_value  # scale down to avoid extremely green colors
@@ -499,7 +612,7 @@ def get_parent_item(dictionary, key):
 def format_score(score):
     try:
         return f"{score:.3f}"
-    except:  # e.g. 'X'
+    except (TypeError, ValueError):  # e.g. 'X' or non-numeric values
         return score
 
 

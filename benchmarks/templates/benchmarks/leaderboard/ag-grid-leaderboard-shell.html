@@ -1,12 +1,13 @@
 {% extends 'benchmarks/components/app-view.html' %}
 {% load static %}
 
+{% block page_title %}Brain-Score - Leaderboard{% endblock %}
+
 {% block table_library_dependencies %}
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
-  <link rel="stylesheet" href="{% static 'benchmarks/css/main.css' %}">
 {% endblock %}
 
 {% block banner %}
@@ -19,19 +20,18 @@
     <!-- Content will be loaded here via AJAX -->
   </div>
 
-  <!-- Load external dependencies first -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
-  <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
-  <script src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
-  <script src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+  <!-- External dependencies (deferred to avoid blocking main thread) -->
+  <!-- jQuery and jszip already loaded via base.html -->
+  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+  <script defer src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-driver/tour-config-loader.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-configs/tour-helpers.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
+  <script defer src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
 
   <!-- Progressive loading script -->
   <script src="{% static 'benchmarks/js/progressive-loader.js' %}"></script>

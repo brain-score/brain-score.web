@@ -1,0 +1,1317 @@
+---
+title: Neural Benchmarks
+description: Creating benchmarks that compare model activations to neural recordings
+order: 3
+category: benchmarks
+---
+
+# Neural Benchmarks
+
+Neural benchmarks evaluate whether artificial neural networks develop internal representations similar to those found in biological brains. Rather than just matching behavioral outputs, these benchmarks ask the question: **does the model process information the way the brain does?**
+
+By comparing model activations to neural recordings (fMRI, electrophysiology, EEG, etc.), we can assess whether a model has learned representations that are fundamentally "brain-like." Models that accurately predict neural activity across brain regions provide evidence that they may have discovered similar computational solutions to the ones evolution found.
+
+**Prerequisites**: Complete [Data Packaging](/tutorials/benchmarks/data-packaging/) first — you need a registered `NeuroidAssembly`.
+
+**Time**: ~20 minutes to implement a standard benchmark.
+
+---
+
+## Quick Start: Minimal Template
+
+Copy this template and modify for your data:
+
+```python
+# vision/brainscore_vision/benchmarks/yourbenchmark/__init__.py
+from brainscore_vision import benchmark_registry
+from .benchmark import YourBenchmarkIT
+
+benchmark_registry['YourBenchmark.IT-pls'] = YourBenchmarkIT
+```
+
+```python
+# vision/brainscore_vision/benchmarks/yourbenchmark/benchmark.py
+from brainscore_vision import load_dataset, load_metric, load_ceiling
+from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark
+
+
+BIBTEX = """@article{YourName2024, ...}"""
+
+def YourBenchmarkIT():
+    # Load your registered data
+    assembly = load_dataset('YourDataset')
+    assembly_repetition = load_dataset('YourDataset')  # Keep repetitions for ceiling
+    
+    # Average repetitions for model comparison
+    assembly = assembly.mean(dim='repetition')
+    
+    return NeuralBenchmark(
+        identifier='YourBenchmark.IT-pls',
+        version=1,
+        assembly=assembly,
+        similarity_metric=load_metric('pls'),
+        visual_degrees=8,  # From your experiment
+        number_of_trials=50,
+        ceiling_func=lambda: load_ceiling('internal_consistency')(assembly_repetition),
+        parent='IT',  # Or 'V1', 'V2', 'V4'
+        bibtex=BIBTEX
+    )
+```
+
+That's it for a standard neural benchmark. See [Registration](#registration) and [Testing](#testing-your-benchmark) below.
+
+---
+
+## Neural Benchmark Checklist
+
+Before submitting your neural benchmark:
+
+- [ ] Uses `NeuroidAssembly` with correct dimensions (`presentation × neuroid × time_bin`)
+- [ ] Loads data with `average_repetitions=True` for model comparison
+- [ ] Loads data with `average_repetitions=False` for ceiling calculation
+- [ ] Uses internal consistency ceiling (split-half reliability)
+- [ ] Specifies correct `visual_degrees` from original experiment
+- [ ] Includes proper `bibtex` citation
+- [ ] Tests verify expected scores for known models
+- [ ] Uses `bound_score()` to clamp scores between [0, 1]
+
+---
+
+## Which Pattern Should I Use?
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Do you have standard neural recordings (electrophysiology/fMRI)?           │
+│  ├── YES → Use NeuralBenchmark (Quick Start above)                          │
+│  │         Examples: MajajHong2015, FreemanZiemba2013                       │
+│  │                                                                          │
+│  └── NO → What's special about your data?                                   │
+│      │                                                                      │
+│      ├── Separate train/test splits?                                        │
+│      │   └── Use TrainTestNeuralBenchmark                                   │
+│      │       Example: Papale2025                                            │
+│      │                                                                      │
+│      ├── Temporal dynamics / multiple time bins?                            │
+│      │   └── Use BenchmarkBase with custom __call__                         │
+│      │       Example: Kar2019                                               │
+│      │                                                                      │
+│      ├── RSA / representational similarity?                                 │
+│      │   └── Use BenchmarkBase with RDM metric                              │
+│      │       Example: Coggan2024_fMRI                                       │
+│      │                                                                      │
+│      └── Neuronal properties (tuning curves, receptive fields)?             │
+│          └── Use PropertiesBenchmark                                        │
+│              Example: Marques2020                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tutorial Overview
+
+This tutorial covers everything you need to build a neural benchmark:
+
+1. **Class hierarchy** — Understanding `NeuralBenchmark` and when to use alternatives
+2. **Full examples** — Annotated code from MajajHong2015, Kar2019, Papale2025, and Coggan2024
+3. **Design patterns** — Using coordinates, repetitions, time bins, and regions effectively
+4. **Metrics** — Choosing between PLS, Ridge, CKA, RDM, and others
+5. **Registration & testing** — Getting your benchmark into Brain-Score
+
+---
+
+## Example Benchmarks
+
+| Benchmark | Description | Brain Region | Key Features |
+|-----------|-------------|--------------|--------------|
+| `MajajHong2015` | Monkey electrophysiology: object recognition | V4, IT | PLS metric, 8° visual degrees, 50 trials |
+| `Kar2019` | IT responses with object solution times | IT | Temporal dynamics, OST metric |
+| `Papale2025` | Monkey electrophysiology: extensive spiking data | V1, V2, V4, IT | Train/test split, reliability filtering |
+| `Coggan2024_fMRI` | Human fMRI: amodal completion | V1, V2, V4, IT | RSA/RDM metric, 9° visual degrees |
+
+**Key Characteristics**:
+- Use `NeuroidAssembly` data structures
+- Employ regression-based metrics (PLS, Ridge) or similarity metrics (RSA)
+- Support temporal dynamics
+- Compare across brain regions (V1, V2, V4, IT)
+
+---
+
+## Inheritance Structure
+
+Neural benchmarks use the `NeuralBenchmark` helper class, which is part of a three-level hierarchy:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Benchmark (ABC)                                                    │
+│  ├── Abstract interface defining required methods                   │
+│  ├── __call__(candidate) → Score                                    │
+│  ├── identifier, ceiling, version, bibtex properties                │
+│  └── Located: brainscore_vision.benchmarks.Benchmark                │
+├─────────────────────────────────────────────────────────────────────┤
+│  BenchmarkBase(Benchmark)                                           │
+│  ├── Helper class implementing standard functions                   │
+│  ├── Automatic ceiling caching                                      │
+│  ├── Version and metadata management                                │
+│  └── Located: brainscore_vision.benchmarks.BenchmarkBase            │
+├─────────────────────────────────────────────────────────────────────┤
+│  NeuralBenchmark(BenchmarkBase)                                     │
+│  ├── Specialized for neural recording comparisons                   │
+│  ├── Handles: start_recording(), place_on_screen(), time bins       │
+│  ├── Built-in explained_variance ceiling normalization              │
+│  └── Located: brainscore_vision.benchmark_helpers.neural_common     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## What NeuralBenchmark Provides
+
+When you use the `NeuralBenchmark` helper class, you get these features automatically:
+
+- Calls `candidate.start_recording(region, time_bins)` to set up neural recording
+- Scales stimuli to model's visual field via `place_on_screen()`
+- Squeezes single time bins for static benchmarks
+- Normalizes scores using `explained_variance(raw_score, ceiling)`
+
+**Key insight**: You don't need to implement `__call__`, call `look_at`, or load a stimulus set—`NeuralBenchmark` handles all of that internally.
+
+**NeuralBenchmark Parameters**:
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `identifier` | Yes | Unique name following `AuthorYear.region-metric` convention (e.g., `MajajHong2015.IT-pls`) |
+| `version` | Yes | Integer version number; increment when changes affect scores |
+| `assembly` | Yes | `NeuroidAssembly` with biological recordings (typically averaged repetitions) |
+| `similarity_metric` | Yes | Metric for comparing model to brain (e.g., `pls`, `ridge`) |
+| `visual_degrees` | Yes | Stimulus size in degrees of visual angle from original experiment |
+| `number_of_trials` | Yes | Number of stimulus presentations per image |
+| `ceiling_func` | Yes | Function returning maximum achievable `Score` (uses non-averaged data) |
+| `parent` | Yes | Position in leaderboard hierarchy (`V1`, `V2`, `V4`, `IT`, or custom) |
+| `bibtex` | Yes | Citation for the original neuroscience paper |
+| `timebins` | No | Time windows for temporal analysis; defaults to `[(70, 170)]` ms |
+
+---
+
+## Example 1: MajajHong2015
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
+Here's the complete structure of a neural benchmark using `NeuralBenchmark`:
+
+```python
+from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark
+from brainscore_vision import load_metric, load_ceiling
+
+def _DicarloMajajHong2015Region(region: str, access: str, identifier_metric_suffix: str,
+                                similarity_metric: Metric, ceiler: Ceiling):
+    # Load data WITH individual repetitions (for ceiling calculation)
+    assembly_repetition = load_assembly(average_repetitions=False, region=region)
+    # Load data with repetitions AVERAGED (for model comparison)
+    assembly = load_assembly(average_repetitions=True, region=region)
+    
+    return NeuralBenchmark(
+        # Unique identifier: <dataset>.<region>-<metric> (e.g., "MajajHong2015.IT-pls")
+        identifier=f'MajajHong2015.{region}-{identifier_metric_suffix}',
+        
+        # Version number: increment when benchmark changes would affect scores
+        version=3,
+        
+        # Neural data assembly: the biological recordings to compare against
+        # Uses averaged repetitions for cleaner model-to-brain comparison
+        assembly=assembly,
+        
+        # Metric for comparing model activations to neural recordings
+        # Typically PLS regression for neural benchmarks
+        similarity_metric=similarity_metric,
+        
+        # Size of stimuli in degrees of visual angle (as shown in original experiment)
+        # Models must scale their input to match this visual field size
+        visual_degrees=8,
+        
+        # Number of stimulus presentations per image in the original experiment
+        # Supports stochastic models; deterministic models return same output each trial
+        number_of_trials=50,
+        
+        # Function to compute the data ceiling (maximum achievable score)
+        # Uses NON-averaged data to estimate noise/reliability via split-half
+        ceiling_func=lambda: ceiler(assembly_repetition),
+        
+        # Parent category in benchmark hierarchy (V1, V2, V4, IT, or behavior)
+        # Determines where this benchmark appears in the leaderboard tree
+        parent=region,
+        
+        # BibTeX citation for the original neuroscience paper
+        bibtex=BIBTEX
+    )
+
+
+# Factory function that creates the benchmark
+def DicarloMajajHong2015ITPLS():
+    ceiler = load_ceiling('internal_consistency')
+    return _DicarloMajajHong2015Region(
+        region='IT',
+        access='public', 
+        identifier_metric_suffix='pls',
+        similarity_metric=load_metric('pls'),
+        ceiler=ceiler
+    )
+```
+
+</details>
+
+---
+
+## Example 2: Kar2019 (Custom Temporal Benchmark)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
+When you need custom `__call__` logic (e.g., temporal dynamics), inherit from `BenchmarkBase` directly:
+
+```python
+from brainscore_core import Score
+from brainscore_vision import load_dataset, load_metric
+from brainscore_vision.benchmarks import BenchmarkBase, ceil_score
+from brainscore_vision.benchmark_helpers.screen import place_on_screen
+
+# Time bins: 10ms windows from 70-250ms (captures temporal dynamics)
+TIME_BINS = [(t, t + 10) for t in range(70, 250, 10)]
+
+class DicarloKar2019OST(BenchmarkBase):
+    def __init__(self):
+        # Ceiling computed offline (not split-half, custom calculation)
+        ceiling = Score(.79)
+        
+        super().__init__(
+            identifier='Kar2019-ost',
+            version=2,
+            ceiling_func=lambda: ceiling,
+            parent='IT',
+            bibtex=BIBTEX
+        )
+        
+        # Load data and metric in __init__
+        self._assembly = load_dataset('Kar2019')
+        self._similarity_metric = load_metric('ost')  # Object Solution Time metric
+        self._visual_degrees = 8
+        self._time_bins = TIME_BINS
+
+    def __call__(self, candidate):
+        # Start temporal recording (multiple time bins)
+        candidate.start_recording('IT', time_bins=self._time_bins)
+        
+        # Scale stimuli to model's visual field
+        stimulus_set = place_on_screen(
+            self._assembly.stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees
+        )
+        
+        # Quick check: reject static models that can't predict temporal dynamics
+        check_recordings = candidate.look_at(stimulus_set[:1], number_of_trials=44)
+        if not temporally_varying(check_recordings):
+            return Score(np.nan)  # Early exit for incompatible models
+        
+        # Full evaluation
+        recordings = candidate.look_at(stimulus_set, number_of_trials=44)
+        score = self._similarity_metric(recordings, self._assembly)
+        return ceil_score(score, self.ceiling)
+```
+
+**Why use BenchmarkBase here?** The OST metric requires custom temporal handling and early rejection of static models—logic that doesn't fit `NeuralBenchmark`'s standard flow.
+
+</details>
+
+---
+
+## Example 3: Papale2025 (Train/Test Split)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
+For benchmarks with separate training and test sets, use `TrainTestNeuralBenchmark`:
+
+```python
+from brainscore_vision import load_dataset, load_metric
+from brainscore_vision.benchmark_helpers.neural_common import (
+    TrainTestNeuralBenchmark, average_repetition, filter_reliable_neuroids
+)
+from brainscore_vision.utils import LazyLoad
+
+VISUAL_DEGREES = 18  # Large field of view (monkey viewing distance)
+RELIABILITY_THRESHOLD = 0.3  # Filter out unreliable neurons
+
+def _Papale2025(region, similarity_metric, identifier_metric_suffix):
+    # LazyLoad defers S3 fetching until data is actually needed
+    train_assembly = LazyLoad(lambda: load_assembly(region, split='train', average_repetitions=False))
+    test_assembly = LazyLoad(lambda: load_assembly(region, split='test', average_repetitions=True))
+    test_assembly_repetition = LazyLoad(lambda: load_assembly(region, split='test', average_repetitions=False))
+    
+    return TrainTestNeuralBenchmark(
+        identifier=f'Papale2025.{region}-{identifier_metric_suffix}',
+        version=2,
+        
+        # Separate train and test assemblies
+        train_assembly=train_assembly,
+        test_assembly=test_assembly,
+        
+        similarity_metric=similarity_metric,
+        ceiling_func=lambda: load_metric('internal_consistency')(test_assembly_repetition),
+        visual_degrees=VISUAL_DEGREES,
+        number_of_trials=1,
+        parent=region,
+        bibtex=BIBTEX
+    )
+
+def load_assembly(region, split, average_repetitions):
+    assembly = load_dataset(f'Papale2025_{split}')
+    
+    # Filter neurons by reliability (remove noisy recordings)
+    assembly = filter_reliable_neuroids(assembly, RELIABILITY_THRESHOLD, 'reliability')
+    
+    assembly = assembly.sel(region=region)
+    if average_repetitions:
+        assembly = average_repetition(assembly)
+    return assembly
+```
+
+**Key features**: `TrainTestNeuralBenchmark` handles train/test splits; `LazyLoad` defers expensive S3 fetches; `filter_reliable_neuroids` removes noisy neurons.
+
+</details>
+
+---
+
+## Example 4: Coggan2024_fMRI (RSA/RDM Metric)
+
+<details>
+<summary><strong>Click to expand example</strong></summary>
+
+For fMRI with representational similarity analysis, create a custom benchmark class:
+
+```python
+from brainscore_vision import load_dataset
+from brainscore_vision.benchmarks import BenchmarkBase
+from brainscore_vision.benchmark_helpers.screen import place_on_screen
+
+class Coggan2024_fMRI_Benchmark(BenchmarkBase):
+    def __init__(self, identifier, assembly, ceiling_func, visual_degrees, **kwargs):
+        super().__init__(identifier=identifier, ceiling_func=ceiling_func, **kwargs)
+        self._assembly = assembly  # Pre-computed human RSM (not raw fMRI)
+        self._visual_degrees = visual_degrees
+        self.region = np.unique(assembly['region'])[0]
+
+    def __call__(self, candidate):
+        # Scale stimuli
+        stimulus_set = place_on_screen(
+            self._assembly.stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=self._visual_degrees
+        )
+        
+        # Get model activations
+        candidate.start_recording(self.region, time_bins=[(0, 250)])
+        source_assembly = candidate.look_at(stimulus_set, number_of_trials=1)
+        
+        # Compute RSM (Representational Similarity Matrix) from model
+        source_rsm = RSA(source_assembly)
+        
+        # Compare model RSM to human fMRI RSM
+        raw_score = get_score(source_rsm, self._assembly)
+        ceiling = self._ceiling_func(self._assembly)
+        return ceiler(raw_score, ceiling)
+
+
+def _Coggan2024_Region(region: str):
+    assembly = load_dataset('Coggan2024_fMRI')
+    assembly = assembly.sel(region=region)
+    
+    return Coggan2024_fMRI_Benchmark(
+        identifier=f'tong.Coggan2024_fMRI.{region}-rdm',
+        version=1,
+        assembly=assembly,
+        visual_degrees=9,
+        ceiling_func=get_ceiling,
+        parent=region,
+        bibtex=BIBTEX
+    )
+```
+
+**Key difference**: fMRI benchmarks often store pre-computed RSMs rather than raw voxel responses, then compare model RSMs to human RSMs using correlation.
+
+</details>
+
+---
+
+## Benchmark Pattern Summary
+
+| Benchmark | Base Class | When to Use |
+|-----------|------------|-------------|
+| MajajHong2015 | `NeuralBenchmark` | Standard neural predictivity with PLS/Ridge |
+| Kar2019 | `BenchmarkBase` | Custom temporal dynamics, early rejection |
+| Papale2025 | `TrainTestNeuralBenchmark` | Explicit train/test splits |
+| Coggan2024_fMRI | Custom subclass | RSA/RDM, pre-computed representations |
+
+---
+
+## Neural Benchmark Call Flow
+
+<details>
+<summary><strong>Click to expand: High-level call flow (Steps 1-4)</strong></summary>
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  USER CODE                                                                   │
+│                                                                              │
+│  score = brainscore_vision.score('alexnet', 'MajajHong2015.IT-pls')          │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 1: score() in brainscore_vision/__init__.py                            │
+│                                                                              │
+│  def score(model_identifier, benchmark_identifier):                          │
+│      model = load_model(model_identifier)                                    │
+│      benchmark = load_benchmark(benchmark_identifier)                        │
+│      score = benchmark(model)                                                │
+│      return score                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 2: load_benchmark() finds the plugin                                   │
+│                                                                              │
+│  1. Searches ALL __init__.py files in brainscore_vision/benchmarks/          │
+│  2. Looks for: benchmark_registry['MajajHong2015.IT-pls']                    │
+│  3. Finds match in: benchmarks/majajhong2015/__init__.py                     │
+│  4. Imports the module and calls the factory function                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 3: Plugin __init__.py executes                                         │
+│                                                                              │
+│  # benchmarks/majajhong2015/__init__.py                                      │
+│  from brainscore_vision import benchmark_registry                            │
+│  from .benchmark import DicarloMajajHong2015ITPLS                            │
+│                                                                              │
+│  benchmark_registry['MajajHong2015.IT-pls'] = DicarloMajajHong2015ITPLS      │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  STEP 4: Benchmark instance created, __call__ executed                       │
+│                                                                              │
+│  benchmark = NeuralBenchmark(...)  # Instance created with all parameters    │
+│  score = benchmark(model)          # __call__ runs the evaluation            │
+│  return score                      # Ceiling-normalized Score returned       │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+</details>
+<br>
+<details>
+<summary><strong>Click to expand: What happens inside benchmark(model) — Step 4 in detail</strong></summary>
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  INSIDE NeuralBenchmark.__call__(candidate)                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STEP 4a: Configure the model for recording                                  │
+│                                                                              │
+│  candidate.start_recording('IT', time_bins=[(70, 170)])                      │
+│      │                                                                       │
+│      └──→ "record from IT-mapped layers, return 70-170ms bin"                │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STEP 4b: Scale stimuli to model's visual field                              │
+│                                                                              │
+│  stimulus_set = place_on_screen(                                             │
+│      assembly.stimulus_set,           # Original images                      │
+│      target_visual_degrees=model.visual_degrees(),  # e.g., 8°               │
+│      source_visual_degrees=8          # Original experiment's visual degrees │
+│  )                                                                           │
+│      │                                                                       │
+│      └──→ Images resized/padded so they are at the same visual angle         │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STEP 4c: Present stimuli and extract activations                            │
+│                                                                              │
+│  source_assembly = candidate.look_at(stimulus_set, number_of_trials=50)      │
+│      │                                                                       │
+│      │  ┌─────────────────────────────────────────────────────────────┐      │
+│      │  │  INSIDE look_at() — for each image batch:                   │      │
+│      │  │                                                             │      │
+│      │  │  1. Load images from stimulus_paths                         │      │
+│      │  │  2. Preprocess: resize, normalize, convert to tensor        │      │
+│      │  │  3. Forward pass through neural network                     │      │
+│      │  │  4. Hooks capture activations at target layer (e.g. layer4) │      │
+│      │  │  5. Flatten: (batch, C, H, W) → (batch, C*H*W neuroids)     │      │
+│      │  │  6. Store in NeuroidAssembly with stimulus_id coordinates   │      │
+│      │  └─────────────────────────────────────────────────────────────┘      │
+│      │                                                                       │
+│      └──→ Returns NeuroidAssembly: (presentations × neuroids × time_bins)    │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STEP 4d: Compare model activations to biological recordings                 │
+│                                                                              │
+│  raw_score = similarity_metric(source_assembly, self._assembly)              │
+│      │                                                                       │
+│      │  ┌──────────────────────────────────────────────────────────────┐     │
+│      │  │  INSIDE PLS metric:                                          │     │
+│      │  │                                                              │     │
+│      │  │  1. Align by stimulus_id (same presentation order)           │     │
+│      │  │  2. Cross-validation split (stratify by object_name)         │     │
+│      │  │  3. For each fold:                                           │     │
+│      │  │     a. Fit PLS: model_activations → neural_data              │     │
+│      │  │     b. Predict on held-out stimuli                           │     │
+│      │  │     c. Pearson correlation per neuroid                       │     │
+│      │  │  4. Average correlations across folds and neuroids           │     │
+│      │  └──────────────────────────────────────────────────────────────┘     │
+│      │                                                                       │
+│      └──→ Returns Score (e.g., 0.65) with metadata                           │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STEP 4e: Normalize by ceiling (explained variance)                          │
+│                                                                              │
+│  ceiled_score = explained_variance(raw_score, self.ceiling)                  │
+│      │                                                                       │
+│      │  Formula: ceiled_score = raw_score² / ceiling                         │
+│      │                                                                       │
+│      │  Example: raw_score=0.65, ceiling=0.82                                │
+│      │           ceiled_score = 0.65² / 0.82 ≈ 0.515                         │
+│      │                                                                       │
+│      └──→ Returns final Score between 0 and 1                                │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+</details>
+
+<br> 
+
+> ⚠️ **Critical**: There is a pervasive misconception in neural encoding that because Split-Half Consistency is calculated using a Pearson correlation (r), the resulting Reliability coefficient must also be treated as a raw unit (r) that requires squaring to become variance.
+>However, Classical Test Theory defines Reliability (after Spearman-Brown correction) as the ratio of True Score Variance to Total Variance:
+$$
+\text{Reliability} = \frac{\text{Var(True)}}{\text{Var(Total)}}
+$$
+>Therefore, the Reliability coefficient *is already* a measure of explainable variance (r²). 
+>As a result, the ceiled score calculation is r_model² / reliability
+
+>Reference: See ["How Much Variance Does Your Model Explain? A Clarifying Note on the Use of Split-Half Reliability for Computing Noise Ceilings" (Van Bree, Styrnal & Hebart)](https://osf.io/preprints/psyarxiv/gjk45).
+
+---
+
+## The Internal Consistency Ceiling
+
+For neural benchmarks, the ceiling is typically computed using `internal_consistency`:
+
+```python
+from brainscore_vision import load_ceiling
+
+ceiler = load_ceiling('internal_consistency')
+benchmark = _DicarloMajajHong2015Region(
+    region='IT',
+    access='public', 
+    identifier_metric_suffix='pls',
+    similarity_metric=load_metric('pls'),
+    ceiler=ceiler
+)
+```
+
+**The ceiling** answers: "How well can we predict one half of the biological data from the other half?" It represents the **limit of the true signal** inside the noisy date.
+
+This sets the upper bound for any model—if the biological data is only **80% reliable** (80% signal, 20% noise), a model that explains **80%** of the variance is actually "perfect."
+
+___
+
+Since every dataset has a different amount of noise, we cannot compare raw correlations directly. We normalize the raw score by the ceiling so we can compare a model's performance across different datasets:
+
+$$
+\text{Normalized Ceiled Score} = \frac{\text{What the Model Explained (Raw Score)}}{\text{What was Theoretically Possible to Explain (Ceiling)}}
+$$
+
+---
+
+## Common Neural Metrics
+
+Brain-Score provides several metrics for comparing model representations to neural data. Each has different strengths:
+
+### Metric Comparison Table
+
+| Metric | Registry Key | What It Measures | When to Use |
+|--------|-------------|------------------|-------------|
+| **PLS Regression** | `pls` | Linear mapping from model → neural responses | **Default choice**. Handles high-dimensional data well |
+| **Ridge Regression** | `ridge` | Regularized linear mapping | Explicit regularization control; interpretable |
+| **RidgeCV** | `ridgecv_split` | Auto-regularized linear mapping | Auto-tunes regularization strength |
+| **Linear Regression** | `linear_predictivity` | Unregularized linear mapping | Small datasets; risk of overfitting |
+| **Neuron-to-Neuron** | `neuron_to_neuron` | Best single model unit per neuron | Interpretable 1:1 unit correspondences |
+| **CKA** | `cka` | Representational geometry alignment | Comparing representational structure |
+| **RDM** | `rdm` | Stimulus similarity structure correlation | Classic RSA; stimulus similarity structures |
+
+> ⚠️ **Note**: All paths below are relative to `brainscore_vision/metrics/` in the vision repository.
+
+### Regression-Based Metrics (Encoding Models)
+
+The most common approach uses regression to learn a mapping from model activations to neural responses:
+
+#### PLS Regression (Default)
+
+**Partial Least Squares** is the standard metric for neural benchmarks:
+
+```python
+# Located: metrics/regression_correlation/metric.py
+
+class CrossRegressedCorrelation(Metric):
+    def __call__(self, source: DataAssembly, target: DataAssembly) -> Score:
+        # Cross-validation handles train/test splits
+        return self.cross_validation(source, target, apply=self.apply, aggregate=self.aggregate)
+
+    def apply(self, source_train, target_train, source_test, target_test):
+        # 1. Fit PLS: model_activations → neural_data (training set)
+        self.regression.fit(source_train, target_train)
+        
+        # 2. Predict neural data from model activations (test set)
+        prediction = self.regression.predict(source_test)
+        
+        # 3. Correlate predictions with actual neural data
+        score = self.correlation(prediction, target_test)
+        return score
+
+    def aggregate(self, scores):
+        # Median correlation across neuroids (robust to outliers)
+        return scores.median(dim='neuroid')
+```
+
+**Why PLS?** PLS handles high-dimensional model activations (often thousands of units) mapping to neural responses. It finds latent components that maximize covariance between model and brain, providing robust predictions even when model dimensions >> stimuli.
+
+#### Ridge Regression
+
+**Ridge** adds L2 regularization to prevent overfitting:
+
+```python
+# Located: metrics/regression_correlation/metric.py
+
+# Standard Ridge (fixed alpha=1)
+metric = load_metric('ridge')
+
+# RidgeCV (auto-tunes regularization)
+metric = load_metric('ridgecv_split')  # For pre-split train/test data
+```
+
+**When to use Ridge over PLS:**
+- When you want explicit control over regularization strength
+- When interpretability of weights matters
+- RidgeCV is ideal when you don't know the optimal regularization strength
+
+#### Neuron-to-Neuron Matching
+
+Finds the **best single model unit** for each biological neuron:
+
+```python
+# Located: metrics/regression_correlation/metric.py
+
+metric = load_metric('neuron_to_neuron')
+```
+
+**When to use:** When you want interpretable 1:1 correspondences, or testing whether individual model units behave like individual neurons.
+
+### Representational Similarity Metrics
+
+These metrics compare the **geometry** of representations rather than predicting neural responses directly:
+
+#### RDM (Representational Dissimilarity Matrix)
+
+Classic **Representational Similarity Analysis (RSA)**:
+
+```python
+# Located: metrics/rdm/metric.py
+
+metric = load_metric('rdm')      # Single comparison
+metric = load_metric('rdm_cv')   # Cross-validated
+```
+
+**How it works:**
+1. Compute pairwise distances between stimulus responses (for both model and brain)
+2. Compare the resulting distance matrices with Spearman correlation
+
+**When to use:**
+- Comparing representational structure independent of linear transforms
+- When you care about which stimuli are represented similarly vs. differently
+- Classic RSA paradigms
+
+#### CKA (Centered Kernel Alignment)
+
+Measures similarity of representational geometry:
+
+```python
+# Located: metrics/cka/metric.py
+
+metric = load_metric('cka')      # Single comparison
+metric = load_metric('cka_cv')   # Cross-validated
+```
+
+**When to use:**
+- Comparing overall representational geometry
+- Invariant to orthogonal transformations and isotropic scaling
+- Good for comparing layers across different architectures
+
+### Choosing the Right Metric
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Decision Guide: Which Metric Should I Use?                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Q: Do you want to predict neural responses from model activations?         │
+│  ├── YES → Use regression-based metrics                                     │
+│  │   ├── Default: PLS (handles high dimensions well)                        │
+│  │   ├── Want regularization control? → Ridge                               │
+│  │   └── Want 1:1 unit matching? → Neuron-to-Neuron                         │
+│  │                                                                          │
+│  └── NO → Use representational similarity metrics                           │
+│      ├── Classic RSA paradigm? → RDM                                        │
+│      └── Comparing representational geometry? → CKA                         │
+│                                                                             │
+│  Most Brain-Score neural benchmarks use: pls (default) or ridge             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cross-Validation vs. Fixed Split
+
+Each metric comes in two variants:
+
+| Suffix | Example | Use Case |
+|--------|---------|----------|
+| `_cv` | `pls_cv`, `ridge_cv` | **Default**. Cross-validates on a single dataset |
+| `_split` | `pls_split`, `ridge_split` | Use with pre-defined train/test splits |
+
+```python
+# Cross-validation (most common): metric handles splitting
+metric = load_metric('pls')  # Alias for 'pls_cv'
+
+# Fixed split: you provide separate train and test data
+metric = load_metric('pls_split')
+score = metric(source_train, source_test, target_train, target_test)
+```
+
+### Temporal Metrics
+
+For time-resolved neural data, use the `spantime_` prefix:
+
+```python
+metric = load_metric('spantime_pls')    # PLS across time bins
+metric = load_metric('spantime_ridge')  # Ridge across time bins
+```
+
+These treat time as a sample dimension, pooling across time bins when fitting the regression.
+
+
+> ⚠️ **Note**: Feel free to implement your own metric plugin.
+
+---
+
+## Design Decisions in Neural Benchmarks
+
+Different benchmarks use coordinates strategically to ask specific scientific questions. Understanding these patterns helps you design benchmarks that capture what you want to measure.
+
+#### Using Repetitions for Ceiling Computation
+
+**The pattern**: Load data twice—once with repetitions averaged (for model comparison), once with repetitions kept (for ceiling).
+
+```python
+# From MajajHong2015
+assembly = load_assembly(average_repetitions=True, region='IT')      # For metric
+assembly_repetition = load_assembly(average_repetitions=False, region='IT')  # For ceiling
+
+ceiling_func = lambda: ceiler(assembly_repetition)  # Split-half uses repetitions
+```
+
+**Why?** The ceiling measures how consistent the biological data is with itself. If a neuron responds differently across repetitions of the same stimulus, that variability sets an upper limit on predictability. You need the individual repetitions to compute this split-half reliability.
+
+#### Using Coordinates for Stratified Cross-Validation
+
+**The pattern**: Pass a `stratification_coord` to ensure balanced sampling across stimulus categories.
+
+```python
+# From FreemanZiemba2013
+similarity_metric = load_metric('pls', crossvalidation_kwargs=dict(
+    stratification_coord='texture_type'  # Balance texture vs. noise images
+))
+```
+
+**Why?** If your dataset has distinct stimulus categories (textures vs. noise, objects vs. scenes, etc.), random splits might accidentally put all of one category in training. Stratification ensures each fold has balanced representation, giving more reliable score estimates.
+
+| Benchmark | Stratification Coord | Purpose |
+|-----------|---------------------|---------|
+| FreemanZiemba2013 | `texture_type` | Balance texture and spectrally-matched noise images |
+| MajajHong2015 | `object_name` | Balance across object categories |
+| Custom | `image_category`, `difficulty`, etc. | Balance any relevant experimental condition |
+
+#### Using Time Bins for Temporal Dynamics
+
+**The pattern**: Define multiple time bins to capture how representations evolve over time.
+
+```python
+# From Kar2019 - Object Solution Times
+TIME_BINS = [(time_bin_start, time_bin_start + 10) 
+             for time_bin_start in range(70, 250, 10)]  # 70-250ms in 10ms steps
+
+candidate.start_recording('IT', time_bins=TIME_BINS)
+```
+
+**Why?** Some scientific questions require temporal resolution:
+- **Kar2019**: Tests whether models predict *when* object identity emerges (recurrent processing)
+- **Static benchmarks**: Use single bin `[(70, 170)]` for overall response
+
+```python
+# Static benchmark (default)
+TIME_BINS = [(70, 170)]  # Single 100ms window
+
+# Temporal benchmark
+TIME_BINS = [(t, t+10) for t in range(70, 250, 10)]  # 18 time bins × 10ms each
+```
+
+#### Using Region Coordinates to Slice Data
+
+**The pattern**: Filter assembly by brain region to create region-specific benchmarks from a single dataset.
+
+```python
+# From MajajHong2015 - separate V4 and IT benchmarks
+def load_assembly(region: str, average_repetitions: bool):
+    assembly = load_dataset('MajajHong2015')
+    assembly = assembly.sel(neuroid=assembly['region'] == region)  # Filter by region
+    if average_repetitions:
+        assembly = assembly.mean(dim='repetition')
+    return assembly
+
+# Creates separate benchmarks
+benchmark_IT = NeuralBenchmark(identifier='MajajHong2015.IT-pls', ...)
+benchmark_V4 = NeuralBenchmark(identifier='MajajHong2015.V4-pls', ...)
+```
+
+**Why?** Different brain regions have different computational roles. By slicing the same dataset, you can ask: "How well does the model predict V4 vs. IT?" without packaging separate datasets.
+
+#### Using Stimulus Coordinates for Specialized Analyses
+
+**The pattern**: Use stimulus metadata coordinates to compute neuronal properties or specialized metrics.
+
+```python
+# From FreemanZiemba2013 - Texture Modulation properties
+def freemanziemba2013_properties(responses, baseline):
+    # Uses 'type', 'family', 'sample' coordinates to organize responses
+    responses = responses.sortby(['type', 'family', 'sample'])
+    
+    type = np.array(sorted(set(responses.type.values)))    # texture vs. noise
+    family = np.array(sorted(set(responses.family.values)))  # texture family
+    sample = np.array(sorted(set(responses.sample.values)))  # specific sample
+    
+    # Reshape using coordinate structure
+    responses = responses.values.reshape(n_neuroids, len(type), len(family), len(sample))
+    
+    # Compute texture modulation index from structured data
+    texture_modulation_index = calc_texture_modulation(responses[:, 1], responses[:, 0])
+```
+
+**Why?** Rich coordinate metadata enables complex analyses beyond simple predictivity. The FreemanZiemba2013 benchmark computes texture modulation indices by leveraging the experimental structure encoded in coordinates.
+
+<br>
+
+> **Key Insight**: The coordinates you include in your `NeuroidAssembly` during data packaging can determine what scientific questions your benchmark can answer. Plan your coordinates based on what you want to measure.
+
+---
+
+## Implementation Patterns
+
+### Pattern 1: NeuralBenchmark (Recommended)
+
+**When to use**: Standard neural predictivity with PLS/Ridge regression metrics.
+
+```python
+from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark
+
+def DicarloMajajHong2015ITPLS():
+    assembly = load_assembly(average_repetitions=True, region='IT')
+    assembly_repetition = load_assembly(average_repetitions=False, region='IT')
+    
+    return NeuralBenchmark(
+        identifier='MajajHong2015.IT-pls',
+        assembly=assembly,
+        similarity_metric=load_metric('pls'),
+        visual_degrees=8,
+        number_of_trials=50,
+        ceiling_func=lambda: ceiler(assembly_repetition),
+        parent='IT',
+        bibtex=BIBTEX
+    )
+```
+
+---
+
+### Pattern 2: PropertiesBenchmark
+
+**When to use**: Comparing neuronal properties like tuning curves, receptive field sizes, surround suppression.
+
+```python
+from brainscore_vision.benchmark_helpers.properties_common import PropertiesBenchmark
+
+def MarquesCavanaugh2002V1SurroundSuppressionIndex():
+    assembly = load_dataset('Cavanaugh2002a')
+    similarity_metric = load_metric('ks_similarity', property_name='surround_suppression_index')
+    
+    return PropertiesBenchmark(
+        identifier='Marques2020_Cavanaugh2002-surround_suppression_index',
+        assembly=assembly,
+        neuronal_property=cavanaugh2002_properties,
+        similarity_metric=similarity_metric,
+        timebins=[(70, 170)],
+        ceiling_func=NeuronalPropertyCeiling(similarity_metric),
+        parent='V1-surround_modulation',
+        bibtex=BIBTEX
+    )
+```
+
+---
+
+### Pattern 3: BenchmarkBase (Custom Logic)
+
+**When to use**: Custom preprocessing, RSA metrics, non-standard analysis.
+
+```python
+from brainscore_vision.benchmarks import BenchmarkBase
+
+class _Bracci2019RSA(BenchmarkBase):
+    def __init__(self, region):
+        self._stimulus_set = load_stimulus_set('Bracci2019')
+        self._human_assembly = load_dataset('Bracci2019')
+        self._metric = load_metric('rdm')
+        
+        super().__init__(
+            identifier=f'Bracci2019.{region}-rdm',
+            version=1,
+            ceiling_func=lambda: 1,
+            parent='Bracci2019',
+            bibtex=BIBTEX
+        )
+    
+    def __call__(self, candidate: BrainModel):
+        # 1. Start recording
+        candidate.start_recording(self._region, [(70, 170)])
+        
+        # 2. Scale stimuli
+        stimulus_set = place_on_screen(
+            self._stimulus_set,
+            target_visual_degrees=candidate.visual_degrees(),
+            source_visual_degrees=8
+        )
+        
+        # 3. Get model activations
+        dnn_assembly = candidate.look_at(stimulus_set, number_of_trials=1)
+        
+        # 4. Custom preprocessing and comparison
+        ceiling = self._get_human_ceiling(self._human_assembly)
+        similarity = self._metric(dnn_assembly, self._human_assembly)
+        
+        score = Score(similarity / ceiling)
+        score.attrs['raw'] = similarity
+        score.attrs['ceiling'] = ceiling
+        
+        return score
+```
+
+---
+
+## Pattern Comparison
+
+| Aspect | NeuralBenchmark | PropertiesBenchmark | BenchmarkBase |
+|--------|-----------------|---------------------|---------------|
+| **Abstraction** | High | Medium | Low (full control) |
+| **Implements `__call__`** | No (inherited) | No (inherited) | **Yes (required)** |
+| **Calls `look_at`** | No (automatic) | No (automatic) | **Yes (explicit)** |
+| **Custom preprocessing** | No | Limited | **Yes** |
+| **Use case** | Standard neural | Neuronal properties | RSA, custom |
+| **Examples** | MajajHong2015 | Marques2020 | Bracci2019 |
+
+---
+
+## Implementing Your Own Neural Benchmark
+
+```python
+from brainscore_vision import load_dataset, load_metric, load_ceiling
+from brainscore_vision.benchmark_helpers.neural_common import NeuralBenchmark, average_repetition
+from brainscore_core.metrics import Score
+
+BIBTEX = """
+@article{author2024,
+  title={Your Paper Title},
+  author={Author, A.},
+  journal={Journal},
+  year={2024}
+}
+"""
+
+# Constants from your experiment
+VISUAL_DEGREES = 8      # Stimulus size in degrees of visual angle
+NUMBER_OF_TRIALS = 50   # Number of presentations per image
+
+
+def load_assembly(region: str, average_repetitions: bool = True):
+    """Load neural data, optionally averaging across repetitions."""
+    assembly = load_dataset('MyExperiment2024')
+    
+    # Filter by brain region
+    assembly = assembly.sel(neuroid=assembly['region'] == region)
+    
+    # Average repetitions for model comparison (keep for ceiling)
+    if average_repetitions:
+        assembly = average_repetition(assembly)
+    
+    return assembly
+
+
+def MyExperiment2024ITPLS():
+    """
+    IT cortex benchmark using PLS regression.
+    
+    Returns a NeuralBenchmark that compares model activations
+    to IT neural responses using partial least squares.
+    """
+    # Load averaged data for metric computation
+    assembly = load_assembly(region='IT', average_repetitions=True)
+    
+    # Load non-averaged data for ceiling (needs repetitions for split-half)
+    assembly_repetition = load_assembly(region='IT', average_repetitions=False)
+    
+    # Internal consistency ceiling
+    ceiler = load_ceiling('internal_consistency')
+    
+    return NeuralBenchmark(
+        identifier='MyExperiment2024.IT-pls',
+        version=1,
+        assembly=assembly,
+        similarity_metric=load_metric('pls'),
+        visual_degrees=VISUAL_DEGREES,
+        number_of_trials=NUMBER_OF_TRIALS,
+        ceiling_func=lambda: ceiler(assembly_repetition),
+        parent='IT',
+        bibtex=BIBTEX
+    )
+
+
+def MyExperiment2024V4PLS():
+    """V4 cortex benchmark using PLS regression."""
+    assembly = load_assembly(region='V4', average_repetitions=True)
+    assembly_repetition = load_assembly(region='V4', average_repetitions=False)
+    ceiler = load_ceiling('internal_consistency')
+    
+    return NeuralBenchmark(
+        identifier='MyExperiment2024.V4-pls',
+        version=1,
+        assembly=assembly,
+        similarity_metric=load_metric('pls'),
+        visual_degrees=VISUAL_DEGREES,
+        number_of_trials=NUMBER_OF_TRIALS,
+        ceiling_func=lambda: ceiler(assembly_repetition),
+        parent='V4',
+        bibtex=BIBTEX
+    )
+```
+
+---
+
+## Key Differences from Behavioral Benchmarks
+
+| Aspect | Neural Benchmark | Behavioral Benchmark |
+|--------|------------------|---------------------|
+| Helper class | `NeuralBenchmark` | None (use `BenchmarkBase`) |
+| Model setup | `start_recording(region, time_bins)` | `start_task(task, fitting_stimuli)` |
+| Output | `NeuroidAssembly` (activations) | `BehavioralAssembly` (choices) |
+| Fitting data | Not needed | Usually required |
+| Implement `__call__` | No (inherited) | **Yes (required)** |
+
+---
+
+## Benchmark Hierarchy
+
+The `parent` parameter determines where your benchmark appears in the leaderboard:
+
+| Parent Value | Leaderboard Position |
+|--------------|---------------------|
+| `'V1'`, `'V2'`, `'V4'`, `'IT'` | Under existing brain region |
+| `'behavior'` | Under behavioral benchmarks |
+
+**Pre-defined categories** (`V1`, `V2`, `V4`, `IT`, `behavior`) are registered in the Brain-Score database. Your benchmark's `parent` links to one of these existing categories.
+
+**Examples from existing benchmarks:**
+
+```python
+# MajajHong2015 - region-based parent (V4 or IT)
+NeuralBenchmark(
+    identifier=f'MajajHong2015.{region}-pls',
+    parent=region,  # 'V4' or 'IT'
+    ...
+)
+
+# Kar2019 - IT cortex benchmark
+super().__init__(
+    identifier='Kar2019-ost',
+    parent='IT',
+    ...
+)
+
+# Papale2025 - human fMRI regions
+NeuralBenchmark(
+    identifier=f'Papale2025.{region}-{metric}',
+    parent=region,  # 'V1', 'V2', 'V4', 'IT'
+    ...
+)
+
+# Coggan2024_fMRI - also region-based
+NeuralBenchmark(
+    identifier=f'Coggan2024.fMRI.{region}-{metric}',
+    parent=region,
+    ...
+)
+```
+
+The website automatically aggregates scores from benchmarks sharing the same `parent`.
+
+---
+
+## Registration
+
+Register your benchmark in `__init__.py`:
+
+```python
+# vision/brainscore_vision/benchmarks/majajhong2015/__init__.py
+
+from brainscore_vision import benchmark_registry
+from .benchmark import (
+    DicarloMajajHong2015V4PLS,
+    DicarloMajajHong2015ITPLS,
+    MajajHongV4PublicBenchmark,
+    MajajHongITPublicBenchmark,
+)
+
+# Register each benchmark variant
+benchmark_registry['MajajHong2015.V4-pls'] = DicarloMajajHong2015V4PLS
+benchmark_registry['MajajHong2015.IT-pls'] = DicarloMajajHong2015ITPLS
+benchmark_registry['MajajHong2015.V4.public-pls'] = MajajHongV4PublicBenchmark
+benchmark_registry['MajajHong2015.IT.public-pls'] = MajajHongITPublicBenchmark
+```
+
+> **Note**: Each factory function is registered directly. Brain-Score calls the function when the benchmark is loaded, creating a fresh instance each time.
+
+---
+
+## Plugin Directory Structure
+
+```
+vision/brainscore_vision/benchmarks/majajhong2015/
+├── __init__.py          # Registration (imports from benchmark.py)
+├── benchmark.py         # Benchmark implementation (factory functions)
+├── test.py              # Unit tests
+└── requirements.txt     # Dependencies (optional)
+```
+
+---
+
+## Testing Your Benchmark
+
+Every benchmark should include tests to verify it loads and produces expected scores:
+
+```python
+# vision/brainscore_vision/benchmarks/majajhong2015/test.py
+
+import pytest
+from brainscore_vision import load_benchmark, load_model
+
+@pytest.mark.parametrize("benchmark, expected", [
+    ('MajajHong2015.V4-pls', approx(0.89, abs=0.01)),
+    ('MajajHong2015.IT-pls', approx(0.82, abs=0.01)),
+])
+def test_MajajHong2015(benchmark, expected):
+    # Load precomputed features to speed up testing
+    filepath = Path(__file__).parent / 'alexnet-majaj2015.private-features.12.nc'
+    benchmark = load_benchmark(benchmark)
+    
+    # Run with precomputed features instead of full model
+    score = run_test(benchmark=benchmark, precomputed_features_filepath=filepath)
+    
+    assert score == expected
+```
+
+**Testing approaches**:
+- **Precomputed features**: Store model activations to speed up tests (as shown above)
+- **Quick smoke test**: Just verify benchmark loads without running full evaluation
+- **Known score regression**: Document expected scores to catch breaking changes
+
+---
+
+## Common Issues and Solutions
+
+#### Problem: "Ceiling is greater than 1"
+
+The ceiling calculation may be returning raw correlation values instead of proper ceiling estimates.
+
+```python
+# Solution: Ensure ceiling_func uses non-averaged data with split-half
+ceiling_func=lambda: ceiler(assembly_repetition)  # NOT assembly (averaged)
+```
+
+#### Problem: "Score is negative"
+
+Negative scores usually indicate stimulus alignment issues between model and biological data.
+
+```python
+# Solution: Check stimulus_id alignment
+model_ids = set(model_assembly['stimulus_id'].values)
+bio_ids = set(biological_assembly['stimulus_id'].values)
+assert model_ids == bio_ids, f"Mismatched IDs: {model_ids ^ bio_ids}"
+```
+
+#### Problem: "Model activations shape mismatch"
+
+The model's layer output doesn't match expected dimensions.
+
+```python
+# Solution: Verify the region-to-layer mapping
+# Check that model.start_recording() is using correct layer
+candidate.start_recording('IT', time_bins=[(70, 170)])
+# Ensure your model's layer map includes 'IT' → appropriate layer
+```
+
+#### Problem: "Time bins not found"
+
+Assembly missing temporal dimension required by the benchmark.
+
+```python
+# Solution: Ensure assembly has time_bin dimension
+assert 'time_bin' in assembly.dims or len(assembly.dims) == 2
+# For static benchmarks, NeuralBenchmark squeezes single time bins automatically
+```
+
+#### Problem: "PLS regression fails to converge"
+
+Too few samples or too many features for regression.
+
+```python
+# Solution: Check data dimensions
+print(f"Samples: {len(assembly['presentation'])}, Features: {len(assembly['neuroid'])}")
+# PLS needs samples > features; consider using Ridge for high-dimensional data
+```
+
+
+
+---
+
+## Next Steps
+
+- **[Behavioral Benchmarks](/tutorials/benchmarks/behavioral-benchmarks/)** — Create benchmarks for behavioral data
+- **[Vision vs Language](/tutorials/benchmarks/vision-vs-language/)** — Differences between vision and language benchmarks
+

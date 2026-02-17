@@ -3,7 +3,7 @@ from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
 from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard, report_issue, blog
+    content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
 from .utils import show_token, refresh_cache
 
 
@@ -37,6 +37,7 @@ non_domain_urls = [
     # central profile page, constant across all Brain-Score domains
     path('profile/', user.ProfileAccount.as_view(), name='default-profile'),
     path('profile/public-ajax/', user.PublicAjax.as_view(), name='PublicAjax'),
+    path('profile/refresh-leaderboard/', user.RefreshLeaderboardAjax.as_view(), name='RefreshLeaderboardAjax'),
     path('profile/submit/', user.Upload.as_view(domain="vision"), name=f'vision-submit'),
     path('profile/resubmit/', partial(user.resubmit, domain="vision"), name='vision-resubmit'),
     path('profile/logout/', user.Logout.as_view(domain="vision"), name='vision-logout'),
@@ -67,6 +68,9 @@ non_domain_urls = [
     path('tutorials/benchmarks/create_benchmark',
          user.Tutorials.as_view(plugin="benchmarks", tutorial_type="create_benchmark"),
          name='benchmark-create-benchmark'),
+    # - new markdown-based benchmark tutorials
+    path('tutorials/benchmarks/<slug:slug>/', tutorials.benchmark_tutorial_detail,
+         name='benchmark-tutorial-detail'),
     # - brain model explanation
     path('brain_model', brain_model.view, name='brain-model'),
 
@@ -95,7 +99,7 @@ all_domain_urls = [non_domain_urls]
 
 for domain in supported_domains:
     domain_urls = [
-        path(f'{domain}/', partial(index, domain=domain), name='index'),
+        path(f'{domain}/', RedirectView.as_view(url=f'/{domain}/leaderboard/', permanent=False), name='index'),
         path(f'{domain}/leaderboard/', partial(leaderboard.ag_grid_leaderboard_shell, domain=domain),
              name=f'{domain}-leaderboard'),
         path(f'{domain}/leaderboard/content/', partial(leaderboard.ag_grid_leaderboard_content, domain=domain),

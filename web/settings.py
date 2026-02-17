@@ -109,6 +109,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'benchmarks.context_processors.common_variables',
+                'benchmarks.context_processors.domain_processor',
+                'benchmarks.context_processors.benchmark_tutorials',
             ],
         },
     },
@@ -235,7 +237,11 @@ def get_cache_config():
             scheme = "rediss"
 
         timeout = 7*24*3600 if env == "staging" else 30*24*3600
-        prefix = f"brainscore:{env}"
+        
+        # CACHE_INSTANCE_ID allows multiple instances (e.g., staging) to use same Redis without conflicts
+        instance_id = os.getenv("CACHE_INSTANCE_ID", "")
+        prefix = f"brainscore:{env}:{instance_id}" if instance_id else f"brainscore:{env}"
+        
         redis_cfg = {
                 'BACKEND': 'django_redis.cache.RedisCache',
                 'LOCATION': f"rediss://{host}:{port}/0",
@@ -257,7 +263,8 @@ def get_cache_config():
                 'VERSION': 1,
             }
     
-        print(f"[CACHE] environment={env} → using {redis_cfg['BACKEND']} @ {redis_cfg['LOCATION']}")
+        instance_info = f" (instance: {instance_id})" if instance_id else ""
+        print(f"[CACHE] environment={env}{instance_info} → using {redis_cfg['BACKEND']} @ {redis_cfg['LOCATION']}, prefix={prefix}")
         return {'default': redis_cfg, 'redis': redis_cfg}
 
     # 3) Fallback

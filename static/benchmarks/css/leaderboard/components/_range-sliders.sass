@@ -9,20 +9,26 @@
   justify-content: space-between
   align-items: center
   margin-bottom: 12px
+  min-width: 0 // Allow flex shrinking
+  gap: 8px // Add gap for spacing when wrapping
 
   label
     margin-bottom: 0
-    flex-shrink: 0
+    flex-shrink: 1 // Allow label to shrink if needed
+    min-width: 0 // Allow text wrapping
+    overflow-wrap: break-word
 
   .range-values
     display: flex
     align-items: center
     gap: 8px
-    flex-shrink: 0
+    flex-shrink: 1 // Allow shrinking to prevent overflow
+    min-width: 0 // Allow flex shrinking
+    max-width: 100% // Prevent overflow
 
     .range-input-min,
     .range-input-max
-      width: 60px
+      width: 95px
       padding: 4px 6px
       border: 1px solid #ced4da
       border-radius: 4px
@@ -97,15 +103,22 @@
     align-items: center
     gap: 8px
     margin-bottom: 20px
+    min-width: 0 // Allow flex shrinking
+    max-width: 100% // Prevent overflow
+    flex-wrap: wrap // Allow wrapping on very narrow screens
 
     .range-input-min,
     .range-input-max
       width: 70px
+      min-width: 60px // Minimum usable width
+      max-width: 100% // Prevent overflow
       padding: 6px 8px
       border: 1px solid #ced4da
       border-radius: 4px
       font-size: 0.9rem
       text-align: center
+      box-sizing: border-box // Ensure padding is included in width
+      flex-shrink: 1 // Allow shrinking if needed
 
       &:focus
         outline: none
@@ -128,9 +141,9 @@
   .slider-container
     position: relative
     height: 40px
-    width: calc(100% - 22px)
-    margin: 8px 11px 0 11px
+    width: 100%
     cursor: pointer
+    margin-top: 8px
 
     .slider-track
       position: absolute
@@ -197,3 +210,38 @@
         top: 50%
         left: 50%
         transform: translate(-50%, -50%)
+
+      // Disabled handle styling for wayback timestamp min handle
+      &.handle-disabled
+        cursor: not-allowed !important
+        opacity: 0.6
+        background: #e9ecef
+        border-color: #ced4da
+
+        &:hover
+          transform: translate(-50%, -50%) scale(1)
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+
+        &:active
+          transform: translate(-50%, -50%) scale(1)
+          cursor: not-allowed !important
+
+// ======================
+// WAYBACK TIMESTAMP SPECIFIC STYLES
+// ======================
+#waybackTimestampFilter
+  .range-input-min,
+  .range-input-max
+    width: 120px !important
+    min-width: 80px !important // Minimum usable width for dates
+    max-width: 100% !important // Prevent overflow
+    padding: 6px 8px !important
+    font-size: 0.9rem !important
+    box-sizing: border-box !important // Ensure padding is included
+    flex-shrink: 1 !important // Allow shrinking if needed
+
+  // Disabled min input styling
+  .range-input-min:disabled
+    background-color: #f8f9fa
+    cursor: not-allowed
+    opacity: 0.6

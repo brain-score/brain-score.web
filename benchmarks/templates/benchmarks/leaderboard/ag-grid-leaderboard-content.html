@@ -2,8 +2,7 @@
 
 <!-- This template contains just the heavy leaderboard content -->
 
-<!-- Ensure CSS is loaded in content template -->
-<link rel="stylesheet" href="{% static 'benchmarks/css/main.css' %}">
+<!-- CSS is loaded by the base template -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
 <div class="leaderboard-header">
   <!-- banner & icon… -->
@@ -29,11 +28,11 @@
       <span class="text-wrapper">Advanced Filters</span>
     </button>
   {% endif %}
-  
+
   <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard data and plugin metadata">
     <i class="fa-solid fa-download"></i>  Export
   </button>
-  
+
   {% if domain == "vision" %}
   <button id="tutorialBtn" style="margin-left: 8px;" title="Interactive walkthrough of the leaderboard">
     <i class="fa-solid fa-info"></i>
@@ -46,8 +45,13 @@
 
 <div id="leaderboardGrid"
      class="ag-theme-alpine"
-     style="width:100%;height:calc(100vh - 300px);min-height:500px;overflow-x:auto;">
+     style="width:100%;height:1500px;min-height:500px;overflow-x:auto;">
 </div>
+{% if has_user %}
+<div style="margin-top: 12px; display: flex; justify-content: flex-start;">
+  <button id="applyPublicChangesBtn" class="button button-primary" title="Apply public/private changes and refresh leaderboard">Apply Changes</button>
+</div>
+{% endif %}
 
 <div id="advancedFiltersPanel" class="advanced-filters hidden">
   <div class="filters-container">
@@ -62,8 +66,28 @@
           <a href="#" id="resetBenchmarksLink" class="reset-link">Reset</a>
         </div>
       </div>
-      <div class="filter-column-content">
-        <div id="benchmarkFilterPanel"></div>
+      <div id="benchmarkFilterPanel"></div>
+      
+      <!-- Wayback Timestamp Section -->
+      <div class="metadata-section" id="waybackTimestampSection" style="display: none; margin-top: 20px;">
+        <div class="filter-group" id="waybackTimestampFilter">
+          <div class="filter-header">
+            <label>Wayback Machine</label>
+            <div class="range-values">
+              <input type="date" class="range-input-min" id="waybackDateMin">
+              <span class="range-separator">to</span>
+              <input type="date" class="range-input-max" id="waybackDateMax">
+            </div>
+          </div>
+          <div class="range-filter dual-handle">
+            <div class="slider-container" data-min="0" data-max="2000000000">
+              <div class="slider-track"></div>
+              <div class="slider-range"></div>
+              <div class="slider-handle handle-min" data-value="0"></div>
+              <div class="slider-handle handle-max" data-value="2000000000"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -72,9 +96,8 @@
       <div class="filter-column-header">
         <h4>Model Properties</h4>
       </div>
-      <div class="filter-column-content">
 
-        <div class="filter-group">
+      <div class="filter-group">
         <label>Architecture</label>
         <div class="filter-dropdown" id="architectureFilter">
           <input type="text" placeholder="Select architecture..." class="filter-input">
@@ -131,7 +154,6 @@
           </div>
         </div>
       </div>
-      </div>
     </div>
 
     <!-- Right column: Benchmark Properties -->
@@ -139,9 +161,8 @@
       <div class="filter-column-header">
         <h4>Benchmark Properties</h4>
       </div>
-      <div class="filter-column-content">
 
-        <!-- Public Data Only -->
+      <!-- Public Data Only -->
       <div class="filter-group">
           <label class="checkbox-label">
             <input type="checkbox" id="publicDataFilter">
@@ -216,7 +237,6 @@
           </div>
         </div>
       </div>
-      </div>
     </div>
   </div>
 
@@ -247,26 +267,28 @@
 {% endif %}
 
 <script src="{% static 'benchmarks/js/leaderboard/utilities/hierarchy-utils.js' %}"></script>
+<script src="{% static 'benchmarks/js/leaderboard/utilities/color-utils.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/csv-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/export/citation-export.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-{# Pass Django data to JavaScript #}
+{# Pass Django data to JavaScript - using |safe since data is already JSON-serialized #}
 <script>
   window.DJANGO_DATA = {
-    row_data: '{{ row_data|escapejs }}',
-    column_defs: '{{ column_defs|escapejs }}',
-    benchmark_groups: '{{ benchmark_groups|escapejs }}',
-    benchmark_tree: '{{ benchmark_tree|escapejs }}',
-    filter_options: '{{ filter_options|escapejs }}',
-    benchmark_metadata: '{{ benchmark_metadata|escapejs }}',
-    benchmark_ids: '{{ benchmark_ids|escapejs }}',
-    model_metadata_map: '{{ model_metadata_map|escapejs }}',
+    row_data: {{ row_data|safe }},
+    column_defs: {{ column_defs|safe }},
+    benchmark_groups: {{ benchmark_groups|safe }},
+    benchmark_tree: {{ benchmark_tree|safe }},
+    filter_options: {{ filter_options|safe }},
+    benchmark_metadata: {{ benchmark_metadata|safe }},
+    benchmark_ids: {{ benchmark_ids|safe }},
+    benchmark_bibtex_map: {{ benchmark_bibtex_map|safe }},
+    model_metadata_map: {{ model_metadata_map|safe }},
     domain: '{{ domain }}',
-    benchmarkStimuliMetaMap: '{{ benchmarkStimuliMetaMap|escapejs }}',
-    benchmarkDataMetaMap: '{{ benchmarkDataMetaMap|escapejs }}',
-    benchmarkMetricMetaMap: '{{ benchmarkMetricMetaMap|escapejs }}'
+    benchmarkStimuliMetaMap: {{ benchmarkStimuliMetaMap|safe }},
+    benchmarkDataMetaMap: {{ benchmarkDataMetaMap|safe }},
+    benchmarkMetricMetaMap: {{ benchmarkMetricMetaMap|safe }}
   };
 </script>
 
@@ -281,4 +303,5 @@
     ProfileToggleModule.initializeToggle();
   }
 </script>
+<script src="{% static 'benchmarks/js/refresh_leaderboard.js' %}"></script>
 {% endif %}

@@ -44,17 +44,15 @@ class BlogPost:
     
     @property
     def reading_time(self):
-        # Estimate reading time (250 words per minute) using raw content
-        # Strip HTML tags for word count
-        import re
+        """Estimate reading time at 200 words per minute."""
+        # Strip HTML tags for accurate word count
         text_content = re.sub(r'<[^>]+>', '', self.content)
         word_count = len(text_content.split())
-        return max(1, round(word_count / 100))
+        return max(1, round(word_count / 200))
     
     @property
     def content_text(self):
-        # Return plain text version for searching
-        import re
+        """Return plain text version for searching."""
         return re.sub(r'<[^>]+>', '', self.content)
 
 
@@ -109,7 +107,6 @@ def get_categories():
     return sorted(categories)
 
 
-@cache_page(60 * 15)  # Cache for 15 minutes
 def blog_list(request):
     """Display list of blog posts with filtering"""
     posts = load_blog_posts()

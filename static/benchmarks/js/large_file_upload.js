@@ -18,22 +18,22 @@ import {
 import { uploadFileWithPresignedPost } from './presigned_post.js';
 import { validateZipContents } from './validate_lfu.js';
 
-document.getElementById('upload-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+const uploadForm = document.getElementById('upload-form');
+if (uploadForm) {
+    uploadForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
 
-    const fileInput = document.getElementById('fileInput');
-    if (!fileInput.files.length) {
-        alert("Please select a file to upload.");
-        return;
-    }
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) {
+            alert("Please select a file to upload.");
+            return;
+        }
 
     const file = fileInput.files[0];
     const fileName = file.name;
     const fileType = file.type || "application/octet-stream";
     const pluginType = document.getElementById('bucketChoice').value;
     const domain = document.getElementById('bucketChoiceDomain').value;
-
-    console.log("File selected:", fileName, "| Type:", fileType);
 
     // Extension check
     const extFromName = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
@@ -65,4 +65,5 @@ document.getElementById('upload-form').addEventListener('submit', async function
         }
         uploadFileWithPresignedPost(file, fileName, fileType, domain, pluginType);
     });
-});
+    });
+}

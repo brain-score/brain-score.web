@@ -33,7 +33,8 @@ ModelCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'model-cell';
   const a = document.createElement('a');
-  a.href = `/model/vision/${params.value.id}`;
+  const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+  a.href = `/model/${domain}/${params.value.id}`;
   a.textContent = params.value.name;
   this.eGui.appendChild(a);
 
@@ -83,8 +84,9 @@ function createRunnableStatusColumn() {
     headerName: '',
     field: 'runnable_status',
     colId: 'runnable_status',
-    pinned: 'left',
-    width: 80,
+    lockPosition: true,
+    suppressMovable: true,
+    width: 60,
     cellRenderer: 'runnableStatusCellRenderer',
     sortable: true,
     filter: false,
@@ -117,27 +119,51 @@ function modelComparator(a, b) {
 // ScoreCellRenderer
 function ScoreCellRenderer() {}
 ScoreCellRenderer.prototype.init = function(params) {
-  // grab the raw object off row
   const field = params.colDef.field;
   const cellObj = params.data[field] || {};
 
-  // now unwrap
   let display = 'X';
-  if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
-    display = Number(cellObj.value).toFixed(2);
-  }
   const CELL_ALPHA = 0.85;
   let bg = '#e0e1e2';
-  if (cellObj.color) {
-    const m = cellObj.color.match(/rgba?\([^)]*\)/);
-    if (m) {
-      const colorStr = m[0];
-      if (colorStr.startsWith('rgba(')) {
-        bg = colorStr.replace(/,\s*[\d.]+\)$/, `, ${CELL_ALPHA})`);
-      } else if (colorStr.startsWith('rgb(')) {
-        bg = colorStr.replace('rgb(', 'rgba(').replace(')', `, ${CELL_ALPHA})`);
-      } else {
-        bg = colorStr;
+
+  if (cellObj.value != null && cellObj.value !== '' && !isNaN(Number(cellObj.value))) {
+    // Value is pre-rounded by Python backend
+    display = String(cellObj.value);
+
+    // Check if color is already set (e.g., blue from advanced filtering)
+    // If so, use that color instead of recalculating
+    if (cellObj.color) {
+      bg = cellObj.color;
+    } else {
+      // Compute color client-side using existing color-utils.js function
+      const benchmarkId = field;
+      const stats = window.benchmarkStats && window.benchmarkStats[benchmarkId];
+
+      if (stats && window.LeaderboardColorUtils?.calculateRepresentativeColor) {
+        // Get root parent for color palette selection (engineering vs. non-engineering)
+        const rootParent = params.colDef.context?.rootParent || null;
+
+        // Calculate color using existing function
+        const colorCss = window.LeaderboardColorUtils.calculateRepresentativeColor(
+          parseFloat(cellObj.value),
+          stats.min,
+          stats.max,
+          rootParent
+        );
+
+        // Extract rgba value from CSS string (format: "background-color: rgb(...); background-color: rgba(...);")
+        const rgbaMatch = colorCss.match(/rgba?\([^)]*\)/g);
+        if (rgbaMatch && rgbaMatch.length > 0) {
+          // Use the last match (rgba with alpha channel)
+          const colorStr = rgbaMatch[rgbaMatch.length - 1];
+          if (colorStr.startsWith('rgba(')) {
+            bg = colorStr.replace(/,\s*[\d.]+\)$/, `, ${CELL_ALPHA})`);
+          } else if (colorStr.startsWith('rgb(')) {
+            bg = colorStr.replace('rgb(', 'rgba(').replace(')', `, ${CELL_ALPHA})`);
+          } else {
+            bg = colorStr;
+          }
+        }
       }
     }
   }
@@ -249,6 +275,14 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   // Initialize filtered scores (will be all the same as global initially)
   updateFilteredScores(rowData);
 
+  // Compute benchmark min/max stats for client-side color computation
+  if (window.LeaderboardColorUtils?.computeBenchmarkMinMax) {
+    window.benchmarkStats = window.LeaderboardColorUtils.computeBenchmarkMinMax(rowData, columnDefs);
+  } else {
+    console.warn('LeaderboardColorUtils.computeBenchmarkMinMax not available - colors may not display correctly');
+    window.benchmarkStats = {};
+  }
+
   columnDefs.forEach(col => {
     col.colId = col.field;
 
@@ -308,7 +342,8 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     field: 'filtered_score',
     colId: 'filtered_score',
     hide: true,  // start hidden
-    pinned: 'left',
+    lockPosition: true,
+    suppressMovable: true,
     width: 150,
     cellRenderer: 'scoreCellRenderer',
     cellDataType: 'object',
@@ -335,11 +370,31 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   };
 
-  // Insert columns after the model column
+  // Extract rank and model columns, then reconstruct with correct order: Rank, Model, Status
+  const rankColumnIndex = columnDefs.findIndex(col => col.field === 'rank');
   const modelColumnIndex = columnDefs.findIndex(col => col.field === 'model');
-  if (modelColumnIndex !== -1) {
-    columnDefs.splice(modelColumnIndex + 1, 0, runnableStatusColumn, filteredScoreColumn);
+  
+  // Remove rank and model from their current positions (remove higher index first to preserve indices)
+  let rankColumn = null;
+  let modelColumn = null;
+  
+  if (rankColumnIndex !== -1 && modelColumnIndex !== -1) {
+    // Remove in reverse order of indices to preserve positions
+    if (rankColumnIndex > modelColumnIndex) {
+      rankColumn = columnDefs.splice(rankColumnIndex, 1)[0];
+      modelColumn = columnDefs.splice(modelColumnIndex, 1)[0];
+    } else {
+      modelColumn = columnDefs.splice(modelColumnIndex, 1)[0];
+      rankColumn = columnDefs.splice(rankColumnIndex, 1)[0];
+    }
+    
+    // Insert pinned columns at the beginning in correct order: Rank, Model, Status, Filtered Score
+    columnDefs.unshift(filteredScoreColumn);
+    columnDefs.unshift(runnableStatusColumn);
+    columnDefs.unshift(modelColumn);
+    columnDefs.unshift(rankColumn);
   } else {
+    // Fallback: just append the new columns
     columnDefs.push(runnableStatusColumn, filteredScoreColumn);
   }
 
@@ -356,6 +411,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
 
       // Runnable status functionality
       runnableStatusCellRenderer: RunnableStatusCellRenderer,
+      
+      // Public toggle functionality
+      publicToggleCellRenderer: window.LeaderboardRenderers?.PublicToggleCellRenderer,
 
       // Header components will be loaded from modular files
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
@@ -393,12 +451,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set initial column visibility state
       setInitialColumnState();
 
-      // Ensure filtered score column starts hidden (clean initial state)
+      // Ensure filtered score column starts hidden and global score is sorted descending
       params.api.applyColumnState({
         state: [
           { colId: 'runnable_status', hide: false },
           { colId: 'filtered_score', hide: true },
-          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false }
+          { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false, sort: 'desc' }
         ]
       });
 
@@ -429,12 +487,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   if (window.agGrid && typeof agGrid.createGrid === 'function') {
     gridApi = agGrid.createGrid(eGridDiv, gridOptions);
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (createGrid):', !!gridApi);
   } else if (window.agGrid && typeof agGrid.Grid === 'function') {
     const grid = new agGrid.Grid(eGridDiv, gridOptions);
     gridApi = gridOptions.api;
     window.globalGridApi = gridApi;
-    console.log('Grid API initialized (Grid constructor):', !!gridApi);
   } else {
     console.error('AG Grid not found on window.agGrid');
   }

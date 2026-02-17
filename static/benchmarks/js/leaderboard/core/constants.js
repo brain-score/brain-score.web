@@ -40,6 +40,9 @@ const SORT_CLICK_AREA = 0.2; // 20% of header for sorting
 const FILTER_DEBOUNCE_DELAY = 300;
 const SLIDER_UPDATE_DELAY = 100;
 
+// Feature flags
+const ENABLE_WAYBACK_SLIDER = true;  // Set to true to restore wayback machine functionality
+
 // URL parameter names
 const URL_PARAMS = {
   ARCHITECTURE: 'architecture',
@@ -68,5 +71,6 @@ window.LeaderboardConstants = {
   SORT_CLICK_AREA,
   FILTER_DEBOUNCE_DELAY,
   SLIDER_UPDATE_DELAY,
-  URL_PARAMS
+  URL_PARAMS,
+  ENABLE_WAYBACK_SLIDER
 };
