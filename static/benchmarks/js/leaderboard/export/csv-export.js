@@ -13,10 +13,11 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   const waybackHiddenBenchmarks = window.waybackHiddenBenchmarks || new Set();
   const allExcludedBenchmarks = new Set([...excludedBenchmarks, ...waybackHiddenBenchmarks]);
 
-  // Fixed columns
-  const fixedOrder = ['rank', 'model', 'filtered_score', 'average_vision_v0'];
+  // Fixed columns (model_id added for database cross-referencing)
+  const fixedOrder = ['rank', 'model', 'model_id', 'filtered_score', 'average_vision_v0'];
+  // model_id is derived from row data, not a real column, so always include it
   const fixedColumns = fixedOrder.filter(id =>
-    allColumns.some(col => col.colId === id)
+    id === 'model_id' || allColumns.some(col => col.colId === id)
   );
 
   // Collect benchmark columns in BFS order, excluding filtered-out ones and wayback-hidden ones
@@ -38,6 +39,8 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   // Build leaderboard CSV manually
   const rows = [];
   const headerRow = columnKeys.map(id => {
+    // Special case for model_id which is derived, not a real column
+    if (id === 'model_id') return '"Model ID"';
     const col = allColumns.find(c => c.colId === id);
     return `"${col?.headerName || id}"`;
   }).join(',');
@@ -99,6 +102,7 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     const row = columnKeys.map(colId => {
       const val = node.data?.[colId];
       if (colId === 'model') return `"${val?.name || ''}"`;
+      if (colId === 'model_id') return `"${node.data?.id || node.data?.model?.id || ''}"`;
       if (colId === 'submitter') return `"${val?.submitter || ''}"`;
       if (typeof val === 'object' && val !== null && 'value' in val)
         return val.value === 'X' ? '' : `"${val.value}"`;
@@ -108,12 +112,13 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   });
   const leaderboardCsv = rows.join('\n');
 
-  // Create plugins CSV
-  const pluginRows = [['plugin_name', 'plugin_type', 'metadata']];
+  // Create plugins CSV (includes model_id for database cross-referencing)
+  const pluginRows = [['plugin_name', 'plugin_type', 'model_id', 'metadata']];
 
   // Add model rows
   window.globalGridApi.forEachNodeAfterFilter(node => {
     const modelName = node.data?.model?.name;
+    const modelId = node.data?.id || node.data?.model?.id || '';
     if (!modelName) return;
     // grab per‐model metadata from the map we created
     const meta = window.modelMetadataMap[modelName] || node.data.metadata || {};
@@ -122,6 +127,7 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     pluginRows.push([
       modelName,
       'model',
+      modelId,
       modelCell
     ]);
   });
@@ -147,7 +153,7 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     const metricMeta  = (window.benchmarkMetricMetaMap  || {})[id] || {};
     const combined    = { Stimuli: stimuliMeta, Data: dataMeta, Metric: metricMeta };
     const jsonStr     = JSON.stringify(combined).replace(/"/g,'""');
-    pluginRows.push([ id, 'benchmark', `"${jsonStr}"` ]);
+    pluginRows.push([ id, 'benchmark', '', `"${jsonStr}"` ]);  // empty model_id for benchmarks
   });
 
   const pluginCsv = pluginRows
