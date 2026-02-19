@@ -8,6 +8,7 @@ from django.core.cache import caches, cache as default_cache
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.cache import cache_page
 from django.http import JsonResponse, HttpRequest
 import time
 import pickle
@@ -15,6 +16,34 @@ import gzip
 import os
 
 logger = logging.getLogger(__name__)
+
+
+def cache_page_for_public_only(timeout: int):
+    """
+    Cache decorator that only caches public leaderboard requests.
+    Profile views (user_view=true) bypass the cache entirely.
+
+    Args:
+        timeout: Cache timeout in seconds
+    """
+    def decorator(view_func):
+        # Pre-create the cached version
+        cached_view = cache_page(timeout)(view_func)
+
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            # Check if this is a user-specific view
+            user_view = request.GET.get('user_view', 'false').lower() == 'true'
+
+            if user_view and request.user.is_authenticated:
+                # Profile view - skip page cache, call view directly
+                return view_func(request, *args, **kwargs)
+            else:
+                # Public view - use cached version
+                return cached_view(request, *args, **kwargs)
+
+        return wrapper
+    return decorator
 
 # Compression utilities for cache
 def compress_data(data: Any) -> bytes:
@@ -215,9 +244,10 @@ def invalidate_domain_cache(domain: str = "vision", preserve_sessions: bool = Tr
         f"*:{domain}:*",           # All keys containing this domain
         f"*cache_page*{domain}*",  # Page caches for this domain
         "*cache_page*",         # Django page caches
+        "*cache_header*",       # Django cache_page header entries (companion to cache_page body)
         "*compressor*",         # Django compressor caches
         "*django_compressor*",  # Django compressor alternative pattern
-        "cache_version_*",      # Cache version keys
+        "*cache_version*",      # Cache version keys (prefixed by django-redis KEY_PREFIX)
         "*leaderboard*",        # Leaderboard-specific caches
         "*index*",              # Index/profile caches
         "*models*",             # Model-related caches
