@@ -221,7 +221,9 @@ class Model(models.Model):
     class Group:
         REFERENCE = 'reference'
         TOP10_2024 = 'top10_2024'
-        BASE = 'base'
+        BEST_NEURAL = 'best_neural'
+        BEST_BEHAVIORAL = 'best_behavioral'
+        GLOBAL_SCORE = 'global_score'
 
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)

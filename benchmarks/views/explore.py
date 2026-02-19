@@ -6,7 +6,13 @@ from benchmarks.models import Model, BenchmarkInstance
 def view(request, domain):
     base_query = Model.objects.filter(domain=domain, public=True)
 
-    representative_groups = [Model.Group.REFERENCE, Model.Group.TOP10_2024, Model.Group.BASE]
+    representative_groups = [
+        Model.Group.REFERENCE,
+        Model.Group.TOP10_2024,
+        Model.Group.BEST_NEURAL,
+        Model.Group.BEST_BEHAVIORAL,
+        Model.Group.GLOBAL_SCORE,
+    ]
 
     representative_models = (base_query
                              .filter(group__in=representative_groups)
