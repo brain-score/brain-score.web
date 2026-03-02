@@ -13,8 +13,8 @@ function setInitialColumnState() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Always show model, rank, runnable_status
-    if (['model', 'rank', 'runnable_status'].includes(colId)) {
+    // Always show model, rank, group_status
+    if (['model', 'rank', 'group_status'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
     }
@@ -121,10 +121,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   });
 
-  // Add the runnable status column
-  const runnableStatusColumn = window.LeaderboardRenderers?.createRunnableStatusColumn ? 
-    window.LeaderboardRenderers.createRunnableStatusColumn() : 
-    { headerName: 'Status', field: 'status', width: 80 };
+  // Add the group status column
+  const groupStatusColumn = window.LeaderboardRenderers?.createGroupStatusColumn ?
+    window.LeaderboardRenderers.createGroupStatusColumn() :
+    { headerName: 'Group', field: 'group_status', width: 80 };
 
   // Add the filtered score column
   const filteredScoreColumn = {
@@ -180,12 +180,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     
     // Insert pinned columns at the beginning in correct order: Rank, Model, Status, Filtered Score
     columnDefs.unshift(filteredScoreColumn);
-    columnDefs.unshift(runnableStatusColumn);
+    columnDefs.unshift(groupStatusColumn);
     columnDefs.unshift(modelColumn);
     columnDefs.unshift(rankColumn);
   } else {
     // Fallback: just append the new columns
-    columnDefs.push(runnableStatusColumn, filteredScoreColumn);
+    columnDefs.push(groupStatusColumn, filteredScoreColumn);
   }
 
   const gridOptions = {
@@ -197,7 +197,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     components: {
       modelCellRenderer: window.LeaderboardRenderers?.ModelCellRenderer,
       scoreCellRenderer: window.LeaderboardRenderers?.ScoreCellRenderer,
-      runnableStatusCellRenderer: window.LeaderboardRenderers?.RunnableStatusCellRenderer,
+      groupStatusCellRenderer: window.LeaderboardRenderers?.GroupStatusCellRenderer,
       publicToggleCellRenderer: window.LeaderboardRenderers?.PublicToggleCellRenderer,
       expandableHeaderComponent: window.LeaderboardHeaderComponents?.ExpandableHeaderComponent,
       leafComponent: window.LeaderboardHeaderComponents?.LeafHeaderComponent,
@@ -244,7 +244,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Set column visibility
       params.api.applyColumnState({
         state: [
-          { colId: 'runnable_status', hide: false },
+          { colId: 'group_status', hide: false },
           { colId: 'filtered_score', hide: true },
           { colId: 'average_vision_v0', hide: false, sort: 'desc' }
         ]
