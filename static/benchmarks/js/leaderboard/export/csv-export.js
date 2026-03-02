@@ -34,7 +34,7 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
     queue.push(...children);
   }
 
-  const columnKeys = [...fixedColumns, ...benchmarkColumns].filter(id => id !== 'runnable_status');
+  const columnKeys = [...fixedColumns, ...benchmarkColumns].filter(id => id !== 'group_status');
 
   // Build leaderboard CSV manually
   const rows = [];
