@@ -292,4 +292,27 @@ model.look_at(...)</pre>
         </div>
     </section>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
+    <script>
+    document.getElementById('berg-link').addEventListener('click', function() {
+        gtag('event', 'click', {
+            event_category: 'BERG',
+            event_label: 'main_link',
+            transport_type: 'beacon'
+        });
+    });
+    document.addEventListener('click', function(e) {
+        var link = e.target.closest('.tooltip-multiline a');
+        if (!link) return;
+        var href = link.getAttribute('href');
+        var label = 'unknown';
+        if (href.indexOf('gifale95.github.io/BERG') !== -1) label = 'tooltip_berg';
+        else if (href.indexOf('readthedocs') !== -1) label = 'tooltip_documentation';
+        else if (href.indexOf('drive.google.com') !== -1) label = 'tooltip_tutorial';
+        gtag('event', 'click', {
+            event_category: 'BERG',
+            event_label: label,
+            transport_type: 'beacon'
+        });
+    });
+    </script>
 {% endblock %}
