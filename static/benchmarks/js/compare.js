@@ -36,9 +36,44 @@ $(document).ready(function () {
         .attr("height", outerHeight)
         .attr("fill", "white");
 
+    function getFilteredComparisonData() {
+        if (!window.CompareFilters) return comparison_data;
+        const filters = window.CompareFilters.getFilterState();
+
+        let data = comparison_data;
+
+        if (filters.isWaybackActive) {
+            const maxMs = filters.maxTimestamp * 1000;
+            data = data.map(function (row) {
+                const newRow = {};
+                const keys = Object.keys(row);
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    newRow[key] = row[key];
+
+                    if (key.endsWith('-score')) {
+                        const benchId = key.replace(/-score$/, '');
+                        const tsKey = benchId + '-timestamp';
+                        const ts = row[tsKey];
+                        if (ts) {
+                            const scoreDate = new Date(ts).getTime();
+                            if (scoreDate > maxMs) {
+                                newRow[key] = '';
+                                newRow[benchId + '-is_complete'] = 0;
+                            }
+                        }
+                    }
+                }
+                return newRow;
+            });
+        }
+
+        return data;
+    }
+
     function getDeduplicatedValues() {
         // Filter data to guard against empty "" or "X" scores turning into NaNs
-        const filtered_data = comparison_data.filter(row =>
+        const filtered_data = getFilteredComparisonData().filter(row =>
             row[xKey.replace('-score', '-is_complete')] == 1 && row[xKey].length > 0 && !isNaN(row[xKey]) &&
             row[yKey.replace('-score', '-is_complete')] == 1 && row[yKey].length > 0 && !isNaN(row[yKey]));
 
@@ -396,4 +431,37 @@ $(document).ready(function () {
         updatePlot();
     });
     $(".comparison_selector").children('div').hide(); // hide all initially -- do here so that non-js still works
+
+    // Filter integration: update benchmark dropdowns and re-render on filter change
+    function updateBenchmarkDropdowns(excludedBenchmarks) {
+        [xlabel_selector, ylabel_selector].forEach(function (sel) {
+            const $select = $(sel);
+            const currentVal = $select.val();
+
+            $select.find('option').each(function () {
+                const optionVal = $(this).val();
+                if (excludedBenchmarks.hasOwnProperty(optionVal)) {
+                    $(this).prop('disabled', true);
+                } else {
+                    $(this).prop('disabled', false);
+                }
+            });
+
+            if (excludedBenchmarks.hasOwnProperty(currentVal)) {
+                const firstEnabled = $select.find('option:not(:disabled)').first().val();
+                if (firstEnabled) {
+                    $select.val(firstEnabled).trigger('change');
+                }
+            }
+        });
+    }
+
+    setTimeout(function () {
+        if (window.CompareFilters) {
+            window.CompareFilters.onFilterChange(function (filterState) {
+                updateBenchmarkDropdowns(filterState.excludedBenchmarks);
+                updatePlot();
+            });
+        }
+    }, 0);
 });

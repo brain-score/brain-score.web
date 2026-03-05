@@ -61,12 +61,47 @@ $(document).ready(function () {
         return name;
     }
 
+    // ---- Get filtered comparison data (wayback timestamp filtering) ----
+    function getFilteredComparisonData() {
+        if (!window.CompareFilters) return comparison_data;
+        var filters = window.CompareFilters.getFilterState();
+
+        if (!filters.isWaybackActive) return comparison_data;
+
+        var maxMs = filters.maxTimestamp * 1000;
+        return comparison_data.map(function (row) {
+            var newRow = {};
+            var keys = Object.keys(row);
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                newRow[key] = row[key];
+
+                if (key.match(/-score$/)) {
+                    var benchId = key.replace(/-score$/, '');
+                    var tsKey = benchId + '-timestamp';
+                    var ts = row[tsKey];
+                    if (ts && new Date(ts).getTime() > maxMs) {
+                        newRow[key] = '';
+                        newRow[benchId + '-is_complete'] = 0;
+                    }
+                }
+            }
+            return newRow;
+        });
+    }
+
     // ---- Get benchmarks with valid scores for both models ----
     function getCommonBenchmarks(nameA, nameB) {
+        var data = getFilteredComparisonData();
+        var excludedBenchmarks = {};
+        if (window.CompareFilters) {
+            excludedBenchmarks = window.CompareFilters.getFilterState().excludedBenchmarks;
+        }
+
         var rowA = null, rowB = null;
-        for (var i = 0; i < comparison_data.length; i++) {
-            if (comparison_data[i].model === nameA) rowA = comparison_data[i];
-            if (comparison_data[i].model === nameB) rowB = comparison_data[i];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].model === nameA) rowA = data[i];
+            if (data[i].model === nameB) rowB = data[i];
             if (rowA && rowB) break;
         }
         if (!rowA || !rowB) return [];
@@ -78,6 +113,9 @@ $(document).ready(function () {
             if (!key.match(/-score$/)) continue;
 
             var benchId = key.replace(/-score$/, '');
+
+            if (excludedBenchmarks.hasOwnProperty(benchId)) continue;
+
             var completeKey = benchId + '-is_complete';
 
             if (rowA[completeKey] != 1 || rowB[completeKey] != 1) continue;
@@ -526,4 +564,13 @@ $(document).ready(function () {
     }
 
     $('#model-x-select, #model-y-select').on('change', updateAllCharts);
+
+    // Filter integration: re-render charts when filters change
+    setTimeout(function () {
+        if (window.CompareFilters) {
+            window.CompareFilters.onFilterChange(function () {
+                updateAllCharts();
+            });
+        }
+    }, 0);
 });

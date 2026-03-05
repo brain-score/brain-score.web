@@ -1,0 +1,162 @@
+// Compare page filter panel (wayback slider + benchmark tree)
+
+.compare-filters
+  padding: 16px 20px
+  background: #f8f9fa
+  border: 1px solid #e9ecef
+  border-radius: 8px
+  margin-bottom: 1rem
+
+  .compare-filters-container
+    display: flex
+    gap: 24px
+    align-items: flex-start
+
+    @media (max-width: 768px)
+      flex-direction: column
+
+  .compare-filter-section
+    flex: 1
+    min-width: 0
+
+    &.compare-benchmark-tree-section
+      #compareBenchmarkTreePanel
+        max-height: 300px
+        overflow-y: auto
+        padding: 6px
+        border: 1px solid #e0e0e0
+        border-radius: 6px
+        background: #fff
+
+    .label.is-small
+      font-weight: 600
+      color: #495057
+      margin-bottom: 8px
+
+  .compare-tree-header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 4px
+
+    .compare-reset-link
+      font-size: 0.8rem
+      color: $brainscore_green
+      text-decoration: none
+      font-weight: 500
+
+      &:hover
+        text-decoration: underline
+
+  // Wayback slider
+  .compare-filter-header
+    display: flex
+    align-items: center
+    gap: 8px
+    margin-bottom: 10px
+
+    .compare-date-input
+      width: 150px
+      padding: 4px 8px
+      border: 1px solid #ced4da
+      border-radius: 4px
+      font-size: 0.85rem
+
+      &:focus
+        outline: none
+        border-color: $brainscore_green
+
+    .help
+      font-size: 0.75rem
+      color: #888
+
+  .compare-slider-container
+    position: relative
+    height: 36px
+    width: 100%
+    cursor: pointer
+
+    .slider-track
+      position: absolute
+      width: 100%
+      height: 5px
+      background: #e9ecef
+      border-radius: 3px
+      top: 50%
+      transform: translateY(-50%)
+
+    .slider-range
+      position: absolute
+      height: 5px
+      background: linear-gradient(135deg, $brainscore_green 0%, $brainscore_blue 100%)
+      border-radius: 3px
+      top: 50%
+      transform: translateY(-50%)
+      pointer-events: none
+
+    .slider-handle
+      position: absolute
+      width: 18px
+      height: 18px
+      border-radius: 50%
+      background: white
+      border: 2px solid $brainscore_green
+      top: 50%
+      transform: translate(-50%, -50%)
+      cursor: grab
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2)
+      z-index: 2
+
+      &:hover
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3)
+        transform: translate(-50%, -50%) scale(1.1)
+
+      &:active
+        cursor: grabbing
+
+  // Benchmark tree
+  .compare-benchmark-tree
+    list-style: none
+    padding-left: 0.6rem
+    margin: 0
+
+    input[type="checkbox"]
+      accent-color: $brainscore_green
+      margin-right: 3px
+      vertical-align: middle
+
+  .compare-bm-node
+    margin: 1px 0
+    padding-left: 0.5rem
+    border-left: 1px solid #ddd
+
+    &.collapsed > ul
+      display: none
+
+  .compare-bm-header
+    display: flex
+    align-items: center
+    gap: 2px
+    padding: 1px 0
+
+    label
+      font-size: 0.82rem
+      cursor: pointer
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+
+  .compare-bm-toggle
+    width: 0.8rem
+    display: inline-block
+    font-family: monospace
+    color: #888
+    cursor: pointer
+    user-select: none
+    font-size: 0.75rem
+    flex-shrink: 0
+
+// Filter toggle badge
+#compare-active-filter-count
+  margin-left: 6px
+  font-size: 0.75rem

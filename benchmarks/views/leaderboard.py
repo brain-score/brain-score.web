@@ -59,23 +59,28 @@ def normalize_id(identifier):
     return identifier.split('_v')[0] if identifier else None
 
 
-def build_benchmark_tree(benchmarks, parent_id=None):
+def build_benchmark_tree(benchmarks, parent_id=None, _seen=None):
+    if _seen is None:
+        _seen = set()
     tree = []
 
     for b in benchmarks:
         b_identifier = get_attr(b, 'identifier')
+        if b_identifier in _seen:
+            continue
         b_short_name = get_attr(b, 'short_name')
         b_parent = get_attr(b, 'parent')
 
         b_parent_id = get_attr(b_parent, 'identifier') if b_parent else None
 
         if normalize_id(b_parent_id) == normalize_id(parent_id):
+            _seen.add(b_identifier)
             node = {
                 'id': b_identifier,
                 'label': b_short_name
             }
 
-            children = build_benchmark_tree(benchmarks, parent_id=b_identifier)
+            children = build_benchmark_tree(benchmarks, parent_id=b_identifier, _seen=_seen)
             if children:
                 node['children'] = children
 

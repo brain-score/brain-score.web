@@ -12,7 +12,43 @@
 {% block main_content %}
     <script type="text/javascript">
         var benchmark_domain_map = {{ benchmark_domain_map|safe }};
+        var compare_benchmark_tree = {{ benchmark_tree|safe }};
+        var compare_datetime_range = {{ datetime_range|safe }};
     </script>
+
+    {# ==================== Shared Filter Panel ==================== #}
+    <div style="margin-bottom: 0.5rem;">
+        <button id="toggleCompareFilters" class="button is-small is-outlined">
+            <span class="icon"><i class="fas fa-filter"></i></span>
+            <span>Filters</span>
+        </button>
+        <span id="compare-active-filter-count" class="tag is-info is-light" style="display: none;"></span>
+    </div>
+
+    <div id="compare-filters-panel" class="compare-filters" style="display: none;">
+        <div class="compare-filters-container">
+            <div class="compare-filter-section">
+                <label class="label is-small">Wayback Machine</label>
+                <div class="compare-filter-header">
+                    <input type="date" class="compare-date-input" id="compareWaybackDate">
+                    <span class="help">Show scores submitted before this date</span>
+                </div>
+                <div class="compare-slider-container" id="compareWaybackSlider">
+                    <div class="slider-track"></div>
+                    <div class="slider-range"></div>
+                    <div class="slider-handle handle-max" data-value="0"></div>
+                </div>
+            </div>
+
+            <div class="compare-filter-section compare-benchmark-tree-section">
+                <div class="compare-tree-header">
+                    <label class="label is-small">Included Benchmarks</label>
+                    <a href="#" id="resetBenchmarkTree" class="compare-reset-link">Reset</a>
+                </div>
+                <div id="compareBenchmarkTreePanel"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="tabs is-boxed is-medium">
         <ul>
