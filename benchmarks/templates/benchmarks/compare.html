@@ -12,6 +12,8 @@
 {% block main_content %}
     <script type="text/javascript">
         var benchmark_domain_map = {{ benchmark_domain_map|safe }};
+        var model_metadata = {{ model_metadata|safe }};
+        var benchmark_url_map = {{ benchmark_url_map|safe }};
     </script>
 
     <div class="tabs is-boxed is-medium">
@@ -133,27 +135,32 @@
                     </div>
                 </div>
 
-                <div id="stats-summary" class="box" style="display: none;">
-                    <div class="columns is-multiline">
-                        <div class="column is-3">
-                            <p><strong>Pearson r:</strong> <span id="stat-pearson"></span></p>
+                <div class="columns" id="model-cards-row" style="display: none;">
+                    <div class="column is-half">
+                        <div class="box" id="model-card-a" style="padding: 0.75rem;">
+                            <p class="has-text-weight-bold" id="card-a-name"></p>
+                            <p class="is-size-7"><span id="card-a-rank"></span></p>
+                            <p class="is-size-7">Contributor: <span id="card-a-contributor"></span></p>
+                            <p class="is-size-7"><a id="card-a-link" href="#">View model page</a></p>
                         </div>
-                        <div class="column is-3">
-                            <p><strong>Spearman rho:</strong> <span id="stat-spearman"></span></p>
-                        </div>
-                        <div class="column is-3">
-                            <p><strong>R-squared:</strong> <span id="stat-r2"></span></p>
-                        </div>
-                        <div class="column is-3">
-                            <p><strong>n =</strong> <span id="stat-n"></span> benchmarks</p>
+                    </div>
+                    <div class="column is-half">
+                        <div class="box" id="model-card-b" style="padding: 0.75rem;">
+                            <p class="has-text-weight-bold" id="card-b-name"></p>
+                            <p class="is-size-7"><span id="card-b-rank"></span></p>
+                            <p class="is-size-7">Contributor: <span id="card-b-contributor"></span></p>
+                            <p class="is-size-7"><a id="card-b-link" href="#">View model page</a></p>
                         </div>
                     </div>
                 </div>
 
                 <div class="box">
                     <h3 class="subtitle is-5">Per-Benchmark Score Correlation</h3>
-                    <p class="help">1 dot = 1 benchmark. Hover for details. Only benchmarks with scores for both models are shown.</p>
-                    <div id="scatter-plot" style="width: 100%; height: 550px;"></div>
+                    <p class="help">1 dot = 1 benchmark. Hover for details, click to visit benchmark page. Legend: click to hide a group, double-click to focus it. Only benchmarks with scores for both models are shown.</p>
+                    <div style="display: flex; justify-content: center; align-items: flex-start;">
+                        <div id="scatter-plot"></div>
+                        <div id="scatter-legend" style="padding: 1em 0 0 1.5em;"></div>
+                    </div>
                 </div>
 
                 <div class="box">
@@ -162,7 +169,7 @@
                 </div>
 
                 <div class="box">
-                    <h3 class="subtitle is-5">Mean Score by Domain</h3>
+                    <h3 class="subtitle is-5">Score Distribution by Domain</h3>
                     <div id="domain-summary-chart" style="width: 100%; height: 400px;"></div>
                 </div>
 
@@ -196,7 +203,7 @@
             panelBenchmarks.style.display = 'none';
             // Trigger Plotly resize so charts render at correct width
             if (typeof Plotly !== 'undefined') {
-                var ids = ['scatter-plot', 'difference-bar-chart', 'domain-summary-chart'];
+                var ids = ['difference-bar-chart', 'domain-summary-chart'];
                 for (var i = 0; i < ids.length; i++) {
                     var el = document.getElementById(ids[i]);
                     if (el && el.data) Plotly.Plots.resize(el);

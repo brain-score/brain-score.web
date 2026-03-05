@@ -1,7 +1,7 @@
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
-from benchmarks.models import FinalBenchmarkContext
+from benchmarks.models import FinalBenchmarkContext, FinalModelContext
 
 _logger = logging.getLogger(__name__)
 
@@ -63,3 +63,31 @@ def _walk_parent_chain(
             break
 
     return None
+
+
+def _build_model_metadata(
+    models: List[FinalModelContext], domain: str
+) -> Dict[str, Dict[str, Any]]:
+    """Map model name -> {rank, model_id, contributor, url} for the model info cards."""
+    metadata: Dict[str, Dict[str, Any]] = {}
+    for model in models:
+        user = model.user if isinstance(model.user, dict) else {}
+        contributor = user.get("display_name", "")
+        metadata[model.name] = {
+            "rank": getattr(model, "rank", None),
+            "model_id": model.model_id,
+            "contributor": contributor,
+            "url": f"/model/{domain}/{model.model_id}",
+        }
+    return metadata
+
+
+def _build_benchmark_url_map(
+    benchmarks: List[FinalBenchmarkContext], domain: str
+) -> Dict[str, str]:
+    """Map versioned benchmark identifier -> detail page URL."""
+    url_map: Dict[str, str] = {}
+    for bench in benchmarks:
+        if bench.benchmark_id is not None:
+            url_map[bench.identifier] = f"/benchmark/{domain}/{bench.benchmark_id}"
+    return url_map

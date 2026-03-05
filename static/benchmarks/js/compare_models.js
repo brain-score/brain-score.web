@@ -4,6 +4,11 @@ $(document).ready(function () {
         return;
     }
 
+    // Capture compare-benchmarks D3 SVG dimensions (panel is visible at load time)
+    var refSvg = document.querySelector('#comparison-scatter svg');
+    var REF_WIDTH = refSvg ? parseInt(refSvg.getAttribute('width')) : null;
+    var REF_HEIGHT = refSvg ? parseInt(refSvg.getAttribute('height')) : null;
+
     var DOMAIN_COLORS = {
         'V1': '#e41a1c',
         'V2': '#ff7f00',
@@ -15,7 +20,24 @@ $(document).ready(function () {
         'Average Vision': '#17becf'
     };
 
-    var DOMAIN_ORDER = ['Average Vision', 'Neural', 'V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering'];
+    // Domains shown by default (others start hidden via legendonly)
+    var DEFAULT_VISIBLE = {'V1': true, 'V2': true, 'V4': true, 'IT': true, 'Behavioral': true};
+    var DOMAIN_ORDER = ['V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering', 'Neural', 'Average Vision'];
+
+    // Shared font to match compare-benchmarks (D3) tab
+    var PLOT_FONT = {family: "'Open Sans', Arial, sans-serif", size: 14, color: 'black'};
+
+    // Consistent logo size: 120x28 px (same as D3 chart)
+    var LOGO_PX = {w: 120, h: 28};
+
+    function logoSize(plotWidth, plotHeight, margins) {
+        var areaW = plotWidth - (margins.l || 0) - (margins.r || 0);
+        var areaH = plotHeight - (margins.t || 0) - (margins.b || 0);
+        return {
+            sizex: LOGO_PX.w / areaW,
+            sizey: LOGO_PX.h / areaH
+        };
+    }
 
     // ---- Extract unique model names from comparison_data ----
     function extractModelNames(data) {
@@ -28,14 +50,49 @@ $(document).ready(function () {
         return names.sort();
     }
 
-    // ---- Initialize Select2 dropdowns ----
+    // ---- Fuzzy matcher for Select2 ----
+    function fuzzyMatcher(params, data) {
+        if ($.trim(params.term) === '') {
+            return data;
+        }
+        if (typeof data.text === 'undefined') {
+            return null;
+        }
+        // Normalize both query and option: lowercase, strip spaces/hyphens/underscores
+        var normalize = function (s) {
+            return s.toLowerCase().replace(/[\s\-_:.]/g, '');
+        };
+        var query = normalize(params.term);
+        var text = normalize(data.text);
+
+        if (text.indexOf(query) > -1) {
+            return $.extend({}, data, true);
+        }
+
+        // Also try matching each query token independently
+        var tokens = params.term.toLowerCase().split(/[\s]+/);
+        var textLower = data.text.toLowerCase();
+        var allMatch = true;
+        for (var i = 0; i < tokens.length; i++) {
+            if (tokens[i] && textLower.indexOf(tokens[i]) === -1 && text.indexOf(tokens[i].replace(/[\s\-_:.]/g, '')) === -1) {
+                allMatch = false;
+                break;
+            }
+        }
+        if (allMatch) {
+            return $.extend({}, data, true);
+        }
+
+        return null;
+    }
+
+    // ---- Initialize Select2 dropdowns with fuzzy search ----
     function initDropdowns(modelNames) {
         var selA = $('#model-x-select');
         var selB = $('#model-y-select');
         selA.empty();
         selB.empty();
 
-        // Add empty placeholder option
         selA.append(new Option('', '', true, true));
         selB.append(new Option('', '', true, true));
 
@@ -44,8 +101,8 @@ $(document).ready(function () {
             selB.append(new Option(modelNames[i], modelNames[i], false, false));
         }
 
-        selA.select2({placeholder: 'Select Model A', allowClear: true});
-        selB.select2({placeholder: 'Select Model B', allowClear: true});
+        selA.select2({placeholder: 'Select Model A', allowClear: true, matcher: fuzzyMatcher});
+        selB.select2({placeholder: 'Select Model B', allowClear: true, matcher: fuzzyMatcher});
     }
 
     // ---- Shorten benchmark name for display ----
@@ -187,17 +244,45 @@ $(document).ready(function () {
     }
 
     function formatPValue(p) {
-        if (p < 0.001) return ' (p < 0.001)';
-        return ' (p = ' + p.toFixed(3) + ')';
+        if (p < 0.01) return p.toExponential(1).replace(/^(\d)\.?\d*e/, '$1e');
+        return p.toFixed(2);
     }
 
-    // ---- Update stats summary bar ----
-    function updateStatsSummary(stats) {
-        $('#stat-pearson').text(stats.pearsonR.toFixed(3) + formatPValue(stats.pearsonP));
-        $('#stat-spearman').text(stats.spearmanRho.toFixed(3) + formatPValue(stats.spearmanP));
-        $('#stat-r2').text(stats.r2.toFixed(3));
-        $('#stat-n').text(stats.n);
-        $('#stats-summary').show();
+    // ---- Update model info cards ----
+    function updateModelCards(nameA, nameB) {
+        var metaA = (typeof model_metadata !== 'undefined') ? model_metadata[nameA] : null;
+        var metaB = (typeof model_metadata !== 'undefined') ? model_metadata[nameB] : null;
+
+        if (!nameA || !nameB) {
+            $('#model-cards-row').hide();
+            return;
+        }
+
+        if (metaA) {
+            $('#card-a-name').text(nameA);
+            $('#card-a-rank').text(metaA.rank != null ? 'Rank #' + metaA.rank : '');
+            $('#card-a-contributor').text(metaA.contributor || 'Unknown');
+            $('#card-a-link').attr('href', metaA.url || '#');
+        } else {
+            $('#card-a-name').text(nameA);
+            $('#card-a-rank').text('');
+            $('#card-a-contributor').text('Unknown');
+            $('#card-a-link').attr('href', '#');
+        }
+
+        if (metaB) {
+            $('#card-b-name').text(nameB);
+            $('#card-b-rank').text(metaB.rank != null ? 'Rank #' + metaB.rank : '');
+            $('#card-b-contributor').text(metaB.contributor || 'Unknown');
+            $('#card-b-link').attr('href', metaB.url || '#');
+        } else {
+            $('#card-b-name').text(nameB);
+            $('#card-b-rank').text('');
+            $('#card-b-contributor').text('Unknown');
+            $('#card-b-link').attr('href', '#');
+        }
+
+        $('#model-cards-row').show();
     }
 
     // ---- Chart 1: Scatter Plot ----
@@ -232,7 +317,7 @@ $(document).ready(function () {
             mode: 'lines',
             type: 'scatter',
             name: 'Regression',
-            line: {color: '#333333', width: 1.5},
+            line: {color: 'lightgrey', width: 2, dash: 'dash'},
             hoverinfo: 'skip',
             showlegend: false
         });
@@ -243,12 +328,13 @@ $(document).ready(function () {
             var points = byDomain[domain];
             if (!points || points.length === 0) continue;
 
+            var isDefault = DEFAULT_VISIBLE[domain] === true;
             traces.push({
                 x: points.map(function (p) { return p.scoreA; }),
                 y: points.map(function (p) { return p.scoreB; }),
                 customdata: points.map(function (p) {
                     return [p.shortName, p.scoreA.toFixed(3), p.scoreB.toFixed(3),
-                            (p.diff >= 0 ? '+' : '') + p.diff.toFixed(3)];
+                            (p.diff >= 0 ? '+' : '') + p.diff.toFixed(3), p.benchId];
                 }),
                 hovertemplate:
                     '<b>%{customdata[0]}</b><br>' +
@@ -259,10 +345,11 @@ $(document).ready(function () {
                 mode: 'markers',
                 type: 'scatter',
                 name: domain,
+                visible: isDefault ? true : 'legendonly',
                 marker: {
                     color: DOMAIN_COLORS[domain] || '#333',
                     size: 8,
-                    opacity: 0.8,
+                    opacity: 0.5,
                     line: {color: 'white', width: 0.5}
                 }
             });
@@ -279,7 +366,7 @@ $(document).ready(function () {
                 y: points.map(function (p) { return p.scoreB; }),
                 customdata: points.map(function (p) {
                     return [p.shortName, p.scoreA.toFixed(3), p.scoreB.toFixed(3),
-                            (p.diff >= 0 ? '+' : '') + p.diff.toFixed(3)];
+                            (p.diff >= 0 ? '+' : '') + p.diff.toFixed(3), p.benchId];
                 }),
                 hovertemplate:
                     '<b>%{customdata[0]}</b><br>' +
@@ -290,32 +377,117 @@ $(document).ready(function () {
                 mode: 'markers',
                 type: 'scatter',
                 name: domain,
-                marker: {color: '#999', size: 8, opacity: 0.8}
+                visible: 'legendonly',
+                marker: {color: '#999', size: 8, opacity: 0.5}
             });
         }
 
+        // Stats annotation text matching compare-benchmarks style
+        var statsText = 'Pearson R: ' + stats.pearsonR.toFixed(2) +
+            '    R\u00B2: ' + stats.r2.toFixed(2) +
+            '    p-value: ' + formatPValue(stats.pearsonP) +
+            '    n=' + stats.n + ' benchmarks';
+
+        // Use exact same dimensions as the compare-benchmarks D3 chart
+        var chartWidth = REF_WIDTH || 600;
+        var chartHeight = REF_HEIGHT || Math.round(chartWidth * 2 / 3);
+
+        var scatterMargins = {t: 40, r: 20, l: 60, b: 50};
+        var scatterLogo = logoSize(chartWidth, chartHeight, scatterMargins);
+
         var layout = {
-            xaxis: {title: nameA, range: [-0.05, 1.05], constrain: 'domain'},
-            yaxis: {title: nameB, range: [-0.05, 1.05], scaleanchor: 'x'},
+            font: PLOT_FONT,
+            width: chartWidth,
+            height: chartHeight,
+            xaxis: {title: {text: nameA, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
+            yaxis: {title: {text: nameB, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
             hovermode: 'closest',
-            legend: {x: 0.98, y: 0.02, xanchor: 'right', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,0.9)'},
-            margin: {t: 10, r: 20},
+            showlegend: false,
+            margin: scatterMargins,
             plot_bgcolor: 'white',
             annotations: [{
-                x: 0.02, y: 0.98, xref: 'paper', yref: 'paper',
-                text: 'Pearson r = ' + stats.pearsonR.toFixed(3) +
-                      '<br>Spearman rho = ' + stats.spearmanRho.toFixed(3) +
-                      '<br>n = ' + stats.n + ' benchmarks',
+                x: 0.5, y: 1, xref: 'paper', yref: 'paper',
+                text: statsText,
                 showarrow: false,
-                font: {family: 'monospace', size: 11},
-                align: 'left',
-                bgcolor: 'rgba(255,255,255,0.85)',
-                bordercolor: '#cccccc', borderwidth: 1, borderpad: 6,
-                xanchor: 'left', yanchor: 'top'
+                font: {size: 14, family: PLOT_FONT.family, color: 'black'},
+                align: 'center',
+                xanchor: 'center', yanchor: 'bottom'
+            }],
+            images: [{
+                source: logo_url,
+                xref: 'paper', yref: 'paper',
+                x: 0.98, y: 0.08,
+                sizex: scatterLogo.sizex, sizey: scatterLogo.sizey,
+                xanchor: 'right', yanchor: 'bottom',
+                layer: 'above'
             }]
         };
 
-        Plotly.newPlot('scatter-plot', traces, layout, {responsive: true});
+        Plotly.newPlot('scatter-plot', traces, layout);
+
+        // Build HTML legend in the sidebar
+        var legendEl = document.getElementById('scatter-legend');
+        var plotDiv = document.getElementById('scatter-plot');
+        if (legendEl) {
+            var html = '';
+            for (var ti = 0; ti < traces.length; ti++) {
+                var tr = traces[ti];
+                if (!tr.name || tr.showlegend === false) continue;
+                var vis = tr.visible === 'legendonly' ? 0.4 : 1.0;
+                var mColor = (tr.marker && tr.marker.color) || '#999';
+                html += '<div class="scatter-legend-item" data-trace-idx="' + ti + '" '
+                    + 'style="cursor:pointer;padding:3px 0;opacity:' + vis + ';">'
+                    + '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
+                    + 'background:' + mColor + ';margin-right:6px;vertical-align:middle;"></span>'
+                    + '<span style="font-size:13px;font-family:' + PLOT_FONT.family + ';vertical-align:middle;">'
+                    + tr.name + '</span></div>';
+            }
+            legendEl.innerHTML = html;
+
+            // Click to toggle, double-click to focus
+            legendEl.querySelectorAll('.scatter-legend-item').forEach(function (item) {
+                var idx = parseInt(item.getAttribute('data-trace-idx'));
+                var clickTimer = null;
+                item.addEventListener('click', function (e) {
+                    if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+                    clickTimer = setTimeout(function () {
+                        clickTimer = null;
+                        var curVis = plotDiv.data[idx].visible;
+                        var newVis = (curVis === 'legendonly') ? true : 'legendonly';
+                        Plotly.restyle(plotDiv, {visible: newVis}, [idx]);
+                        item.style.opacity = newVis === 'legendonly' ? '0.4' : '1';
+                    }, 300);
+                });
+                item.addEventListener('dblclick', function (e) {
+                    // Focus: show only this trace, hide all others
+                    var allVis = [];
+                    var allIdx = [];
+                    for (var j = 0; j < plotDiv.data.length; j++) {
+                        if (plotDiv.data[j].showlegend === false) continue;
+                        allVis.push(j === idx ? true : 'legendonly');
+                        allIdx.push(j);
+                    }
+                    Plotly.restyle(plotDiv, {visible: allVis}, allIdx);
+                    legendEl.querySelectorAll('.scatter-legend-item').forEach(function (li) {
+                        li.style.opacity = parseInt(li.getAttribute('data-trace-idx')) === idx ? '1' : '0.4';
+                    });
+                });
+            });
+        }
+
+        // Click handler: navigate to benchmark page
+        document.getElementById('scatter-plot').on('plotly_click', function (eventData) {
+            if (eventData && eventData.points && eventData.points.length > 0) {
+                var pt = eventData.points[0];
+                if (pt.customdata && pt.customdata[4]) {
+                    var benchId = pt.customdata[4];
+                    var url = (typeof benchmark_url_map !== 'undefined') ? benchmark_url_map[benchId] : null;
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                }
+            }
+        });
     }
 
     // ---- Chart 2: Difference Bar Chart ----
@@ -337,7 +509,7 @@ $(document).ready(function () {
             },
             customdata: sorted.map(function (d) {
                 return [d.shortName, d.scoreA.toFixed(3), d.scoreB.toFixed(3),
-                        (d.diff >= 0 ? '+' : '') + d.diff.toFixed(3), d.domain];
+                        (d.diff >= 0 ? '+' : '') + d.diff.toFixed(3), d.domain, d.benchId];
             }),
             hovertemplate:
                 '<b>%{customdata[0]}</b> (%{customdata[4]})<br>' +
@@ -347,104 +519,152 @@ $(document).ready(function () {
                 '<extra></extra>'
         };
 
+        var barMargins = {l: 220, t: 50, r: 20, b: 50};
+        var barEl = document.getElementById('difference-bar-chart');
+        var barLogo = logoSize(barEl.offsetWidth || 800, 650, barMargins);
+
         var layout = {
-            xaxis: {title: 'Score Difference (' + nameA + ' minus ' + nameB + ')', zeroline: true},
+            font: PLOT_FONT,
+            xaxis: {title: {text: 'Score Difference (' + nameA + ' minus ' + nameB + ')', font: {size: 14}}, zeroline: true, tickfont: {size: 12}},
             yaxis: {automargin: true, tickfont: {size: 10}},
-            margin: {l: 220, t: 30, r: 20, b: 50},
+            margin: barMargins,
             plot_bgcolor: 'white',
             annotations: [
                 {
-                    x: 0, y: 1.02, xref: 'paper', yref: 'paper',
+                    x: 0, y: 1.05, xref: 'paper', yref: 'paper',
                     text: '<b>\u25C0 ' + nameB + ' scores higher</b>',
                     showarrow: false, font: {size: 11, color: '#555'},
                     xanchor: 'left'
                 },
                 {
-                    x: 1, y: 1.02, xref: 'paper', yref: 'paper',
+                    x: 1, y: 1.05, xref: 'paper', yref: 'paper',
                     text: '<b>' + nameA + ' scores higher \u25B6</b>',
                     showarrow: false, font: {size: 11, color: '#555'},
                     xanchor: 'right'
                 }
-            ]
+            ],
+            images: [{
+                source: logo_url,
+                xref: 'paper', yref: 'paper',
+                x: 1, y: 0,
+                sizex: barLogo.sizex, sizey: barLogo.sizey,
+                xanchor: 'right', yanchor: 'bottom',
+                layer: 'above'
+            }]
         };
 
         Plotly.newPlot('difference-bar-chart', [trace], layout, {responsive: true});
+
+        // Click handler: navigate to benchmark page
+        document.getElementById('difference-bar-chart').on('plotly_click', function (eventData) {
+            if (eventData && eventData.points && eventData.points.length > 0) {
+                var pt = eventData.points[0];
+                if (pt.customdata && pt.customdata[5]) {
+                    var benchId = pt.customdata[5];
+                    var url = (typeof benchmark_url_map !== 'undefined') ? benchmark_url_map[benchId] : null;
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                }
+            }
+        });
     }
 
-    // ---- Chart 3: Domain Summary ----
+    // ---- Chart 3: Domain Summary (split violin plot) ----
     function renderDomainSummary(data, nameA, nameB) {
         var domainStats = {};
         for (var i = 0; i < data.length; i++) {
             var d = data[i];
             if (!domainStats[d.domain]) {
-                domainStats[d.domain] = {scoresA: [], scoresB: []};
+                domainStats[d.domain] = {scoresA: [], scoresB: [], names: []};
             }
             domainStats[d.domain].scoresA.push(d.scoreA);
             domainStats[d.domain].scoresB.push(d.scoreB);
+            domainStats[d.domain].names.push(d.shortName);
         }
 
-        // Sort domains by canonical order
-        var domains = Object.keys(domainStats).sort(function (a, b) {
-            var idxA = DOMAIN_ORDER.indexOf(a);
-            var idxB = DOMAIN_ORDER.indexOf(b);
-            if (idxA === -1) idxA = 99;
-            if (idxB === -1) idxB = 99;
-            return idxA - idxB;
-        });
-
-        function mean(arr) {
-            var s = 0;
-            for (var i = 0; i < arr.length; i++) s += arr[i];
-            return s / arr.length;
+        // Only show default-visible domains
+        var domains = [];
+        for (var di = 0; di < DOMAIN_ORDER.length; di++) {
+            var dom = DOMAIN_ORDER[di];
+            if (DEFAULT_VISIBLE[dom] && domainStats[dom]) {
+                domains.push(dom);
+            }
         }
 
-        function std(arr) {
-            var m = mean(arr);
-            var s = 0;
-            for (var i = 0; i < arr.length; i++) s += (arr[i] - m) * (arr[i] - m);
-            return Math.sqrt(s / arr.length);
+        var traces = [];
+
+        // Split violin: Model A on the negative (left) side, Model B on the positive (right) side
+        for (var di = 0; di < domains.length; di++) {
+            var dom = domains[di];
+            var ds = domainStats[dom];
+
+            traces.push({
+                y: ds.scoresA,
+                x: ds.scoresA.map(function () { return dom; }),
+                text: ds.names,
+                type: 'violin',
+                name: nameA,
+                legendgroup: nameA,
+                showlegend: di === 0,
+                side: 'negative',
+                line: {color: '#45C676'},
+                fillcolor: 'rgba(69,198,118,0.35)',
+                meanline: {visible: true},
+                points: 'all',
+                jitter: 0.05,
+                pointpos: -0.6,
+                marker: {color: '#45C676', size: 4, opacity: 0.6},
+                scalemode: 'width',
+                width: 0.7,
+                hovertemplate: '<b>%{text}</b><br>Score: %{y:.3f}<extra>' + nameA + '</extra>'
+            });
+
+            traces.push({
+                y: ds.scoresB,
+                x: ds.scoresB.map(function () { return dom; }),
+                text: ds.names,
+                type: 'violin',
+                name: nameB,
+                legendgroup: nameB,
+                showlegend: di === 0,
+                side: 'positive',
+                line: {color: '#47B7DE'},
+                fillcolor: 'rgba(71,183,222,0.35)',
+                meanline: {visible: true},
+                points: 'all',
+                jitter: 0.05,
+                pointpos: 0.6,
+                marker: {color: '#47B7DE', size: 4, opacity: 0.6},
+                scalemode: 'width',
+                width: 0.7,
+                hovertemplate: '<b>%{text}</b><br>Score: %{y:.3f}<extra>' + nameB + '</extra>'
+            });
         }
 
-        var traceA = {
-            x: domains,
-            y: domains.map(function (d) { return mean(domainStats[d].scoresA); }),
-            error_y: {
-                type: 'data',
-                array: domains.map(function (d) { return std(domainStats[d].scoresA); }),
-                visible: true
-            },
-            name: nameA,
-            type: 'bar',
-            marker: {color: '#45C676', opacity: 0.85},
-            text: domains.map(function (d) { return 'n=' + domainStats[d].scoresA.length; }),
-            hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>%{text}<extra>' + nameA + '</extra>'
-        };
-
-        var traceB = {
-            x: domains,
-            y: domains.map(function (d) { return mean(domainStats[d].scoresB); }),
-            error_y: {
-                type: 'data',
-                array: domains.map(function (d) { return std(domainStats[d].scoresB); }),
-                visible: true
-            },
-            name: nameB,
-            type: 'bar',
-            marker: {color: '#47B7DE', opacity: 0.85},
-            text: domains.map(function (d) { return 'n=' + domainStats[d].scoresB.length; }),
-            hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>%{text}<extra>' + nameB + '</extra>'
-        };
+        var violinMargins = {t: 35, r: 20, l: 80, b: 50};
+        var violinEl = document.getElementById('domain-summary-chart');
+        var violinLogo = logoSize(violinEl.offsetWidth || 700, 400, violinMargins);
 
         var layout = {
-            barmode: 'group',
-            yaxis: {title: 'Mean Score', range: [0, 1.1]},
-            xaxis: {title: ''},
+            font: PLOT_FONT,
+            violinmode: 'overlay',
+            yaxis: {title: {text: 'Score', font: {size: 14}}, range: [0, 1.05], tickfont: {size: 12}},
+            xaxis: {title: '', tickfont: {size: 12}},
             legend: {orientation: 'h', y: -0.15},
-            margin: {t: 10, r: 20},
-            plot_bgcolor: 'white'
+            margin: violinMargins,
+            plot_bgcolor: 'white',
+            images: [{
+                source: logo_url,
+                xref: 'paper', yref: 'paper',
+                x: 1, y: 0,
+                sizex: violinLogo.sizex, sizey: violinLogo.sizey,
+                xanchor: 'right', yanchor: 'bottom',
+                layer: 'above'
+            }]
         };
 
-        Plotly.newPlot('domain-summary-chart', [traceA, traceB], layout, {responsive: true});
+        Plotly.newPlot('domain-summary-chart', traces, layout, {responsive: true});
     }
 
     // ---- Main orchestrator ----
@@ -452,8 +672,9 @@ $(document).ready(function () {
         var nameA = $('#model-x-select').val();
         var nameB = $('#model-y-select').val();
 
+        updateModelCards(nameA, nameB);
+
         if (!nameA || !nameB || nameA === nameB) {
-            $('#stats-summary').hide();
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
@@ -462,7 +683,6 @@ $(document).ready(function () {
 
         var data = getCommonBenchmarks(nameA, nameB);
         if (data.length < 3) {
-            $('#stats-summary').hide();
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
@@ -470,7 +690,6 @@ $(document).ready(function () {
         }
 
         var stats = computeStatistics(data);
-        updateStatsSummary(stats);
         renderScatterPlot(data, stats, nameA, nameB);
         renderDifferenceChart(data, nameA, nameB);
         renderDomainSummary(data, nameA, nameB);
