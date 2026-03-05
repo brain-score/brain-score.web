@@ -263,6 +263,15 @@ model.look_at(...)</pre>
                             <i class="fa-brands fa-github"></i> Code examples
                         </a>
                     </div>
+                    <div class="block">
+                        <a href="https://gifale95.github.io/BERG/"
+                           target="_blank"
+                           id="berg-link"
+                           data-tooltip-html="{% if model.domain == 'vision' %}Through the &lt;a href='https://gifale95.github.io/BERG/' target='_blank'&gt;Brain Encoding Response Generator (BERG)&lt;/a&gt; you can easily generate neural responses to images of your choice using any BrainScore vision model. For more information on how to use BERG, see the &lt;a href='https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_vision.html' target='_blank'&gt;documentation&lt;/a&gt; and &lt;a href='https://drive.google.com/file/d/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17/view?usp=sharing' target='_blank'&gt;tutorial&lt;/a&gt;.{% else %}Through the &lt;a href='https://gifale95.github.io/BERG/' target='_blank'&gt;Brain Encoding Response Generator (BERG)&lt;/a&gt; you can easily generate neural responses to text sentences of your choice using any BrainScore language model. For more information on how to use BERG, see the &lt;a href='https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html' target='_blank'&gt;documentation&lt;/a&gt; and &lt;a href='https://drive.google.com/file/d/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17/view?usp=sharing' target='_blank'&gt;tutorial&lt;/a&gt;.{% endif %}"
+                           data-tooltip-position="top">
+                            <i class="fa-solid fa-brain"></i> Brain Encoding Response Generator
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,4 +291,5 @@ model.look_at(...)</pre>
             </div>
         </div>
     </section>
+    <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
 {% endblock %}
