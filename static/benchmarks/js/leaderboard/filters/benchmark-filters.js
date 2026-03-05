@@ -12,6 +12,11 @@ function updateBenchmarkFilters() {
   window.activeFilters.min_stimuli_count = stimuliMin;
   window.activeFilters.max_stimuli_count = stimuliMax;
 
+  const ceilingMin = parseFloat(document.getElementById('ceilingMin')?.value || 0);
+  const ceilingMax = parseFloat(document.getElementById('ceilingMax')?.value || 1);
+  window.activeFilters.min_ceiling = ceilingMin;
+  window.activeFilters.max_ceiling = ceilingMax;
+
   if (!window.filteredOutBenchmarks) window.filteredOutBenchmarks = new Set();
 
   window.filteredOutBenchmarks.clear();
@@ -78,14 +83,23 @@ function addBenchmarksFilteredByMetadata() {
   
   const stimuliMin = parseInt(document.getElementById('stimuliCountMin')?.value || 0);
   const stimuliMax = parseInt(document.getElementById('stimuliCountMax')?.value || 1000);
-  
+
   // Get the actual range limits to detect if stimuli filter is at full range
   const stimuliContainer = document.querySelector('#stimuliCountMin')?.closest('.filter-group')?.querySelector('.slider-container');
   const stimuliRangeMin = parseInt(stimuliContainer?.dataset?.min || 0);
   const stimuliRangeMax = parseInt(stimuliContainer?.dataset?.max || 1000);
-  
+
   // Check if stimuli filter is effectively disabled (at full range)
   const isStimuliFilterActive = stimuliMin > stimuliRangeMin || stimuliMax < stimuliRangeMax;
+
+  const ceilingMin = parseFloat(document.getElementById('ceilingMin')?.value || 0);
+  const ceilingMax = parseFloat(document.getElementById('ceilingMax')?.value || 1);
+
+  const ceilingContainer = document.querySelector('#ceilingMin')?.closest('.filter-group')?.querySelector('.slider-container');
+  const ceilingRangeMin = parseFloat(ceilingContainer?.dataset?.min || 0) / 100;
+  const ceilingRangeMax = parseFloat(ceilingContainer?.dataset?.max || 100) / 100;
+
+  const isCeilingFilterActive = ceilingMin > ceilingRangeMin || ceilingMax < ceilingRangeMax;
 
   // Check if any metadata filters are active
   const hasMetadataFilters = (
@@ -93,7 +107,8 @@ function addBenchmarksFilteredByMetadata() {
     window.activeFilters.benchmark_species.length > 0 ||
     window.activeFilters.benchmark_tasks.length > 0 ||
     window.activeFilters.public_data_only ||
-    isStimuliFilterActive
+    isStimuliFilterActive ||
+    isCeilingFilterActive
   );
 
   // Don't preserve any manual unchecks - let metadata filtering completely control the tree
@@ -149,6 +164,13 @@ function addBenchmarksFilteredByMetadata() {
       // Only apply stimuli count filter to leaf benchmarks
       if (isStimuliFilterActive && benchmark.num_stimuli !== null && benchmark.num_stimuli !== undefined) {
         if (benchmark.num_stimuli < stimuliMin || benchmark.num_stimuli > stimuliMax) {
+          shouldExclude = true;
+        }
+      }
+
+      // Only apply ceiling filter to leaf benchmarks
+      if (isCeilingFilterActive && benchmark.ceiling !== null && benchmark.ceiling !== undefined) {
+        if (benchmark.ceiling < ceilingMin || benchmark.ceiling > ceilingMax) {
           shouldExclude = true;
         }
       }
