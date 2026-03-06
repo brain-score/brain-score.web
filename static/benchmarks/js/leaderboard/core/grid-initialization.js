@@ -254,17 +254,16 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       resizeGridToViewport();
       window.addEventListener('resize', resizeGridToViewport);
 
-      // Sync top scrollbar with AG Grid's horizontal scroll
-      initTopScrollbar();
-
-      // Complete loading animation when grid is fully rendered
+      // Complete loading animation when grid is fully rendered,
+      // then init the top scrollbar once AG Grid has settled.
       setTimeout(() => {
         if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
           LoadingAnimation.complete();
         } else if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.hide) {
           LoadingAnimation.hide();
         }
-      }, 10);
+        initTopScrollbar();
+      }, 100);
     }
   };
 
@@ -350,10 +349,17 @@ function initTopScrollbar(attempt) {
   });
 
   // Re-sync widths when columns change (expand/collapse)
-  var observer = new MutationObserver(syncWidths);
-  observer.observe(agScrollContainer, { attributes: true, childList: true, subtree: true });
+  var mutObs = new MutationObserver(syncWidths);
+  mutObs.observe(agScrollContainer, { attributes: true, childList: true, subtree: true });
+
+  // Re-sync when the grid itself resizes (sidebar toggle, window resize, etc.)
+  var resizeObs = new ResizeObserver(syncWidths);
+  resizeObs.observe(gridEl);
 
   window.addEventListener('resize', syncWidths);
+
+  // Expose syncWidths so resizeGridToViewport can re-sync after layout changes
+  window._topScrollbarSyncWidths = syncWidths;
 }
 
 // Size the grid to fill the remaining viewport height
@@ -363,6 +369,11 @@ function resizeGridToViewport() {
   var top = grid.getBoundingClientRect().top;
   var available = window.innerHeight - top - 16;
   grid.style.height = Math.max(400, available) + 'px';
+
+  // Re-sync top scrollbar after grid resize settles
+  if (window._topScrollbarSyncWidths) {
+    requestAnimationFrame(window._topScrollbarSyncWidths);
+  }
 }
 
 // Export functions for use by other modules
