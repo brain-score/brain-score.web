@@ -368,7 +368,22 @@ function resizeGridToViewport() {
   if (!grid) return;
   var top = grid.getBoundingClientRect().top;
   var available = window.innerHeight - top - 16;
-  grid.style.height = Math.max(400, available) + 'px';
+  var height = Math.max(400, available);
+  grid.style.height = height + 'px';
+
+  // Match filters panel height to grid in sidebar mode
+  var container = grid.closest('.leaderboard-container');
+  if (container && container.classList.contains('sidebar-mode')) {
+    var panel = document.getElementById('advancedFiltersPanel');
+    if (panel) {
+      panel.style.maxHeight = height + 'px';
+    }
+  }
+
+  // Tell AG Grid to recalculate after container height change
+  if (window.globalGridApi) {
+    window.globalGridApi.resetRowHeights();
+  }
 
   // Re-sync top scrollbar after grid resize settles
   if (window._topScrollbarSyncWidths) {
