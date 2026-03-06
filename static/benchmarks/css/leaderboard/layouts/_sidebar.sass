@@ -17,6 +17,9 @@
     grid-template-columns: 1fr
     grid-template-rows: auto auto auto auto 1fr
 
+    #advancedFiltersPanel
+      display: none !important
+
   .leaderboard-header
     grid-area: header
 
@@ -35,18 +38,14 @@
   #advancedFiltersPanel
     grid-area: filters
     align-self: stretch
-    display: flex
+    display: flex !important
     flex-direction: column
-    overflow: hidden
+    overflow: hidden !important
     padding: 1rem
     background: #f8f9fa
     border-left: 1px solid #ddd
     margin: 0
     border-radius: 8px 0 0 8px
-
-    // Hide when filters are hidden
-    .leaderboard-container.sidebar-mode.filters-hidden &
-      display: none !important
 
     // Stack filter columns vertically and make scrollable
     .filters-container

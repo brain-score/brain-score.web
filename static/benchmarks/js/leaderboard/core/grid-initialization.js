@@ -373,10 +373,12 @@ function resizeGridToViewport() {
 
   // Match filters panel height to grid in sidebar mode
   var container = grid.closest('.leaderboard-container');
-  if (container && container.classList.contains('sidebar-mode')) {
-    var panel = document.getElementById('advancedFiltersPanel');
-    if (panel) {
+  var panel = document.getElementById('advancedFiltersPanel');
+  if (panel) {
+    if (container && container.classList.contains('sidebar-mode')) {
       panel.style.maxHeight = height + 'px';
+    } else {
+      panel.style.maxHeight = '';
     }
   }
 
@@ -386,9 +388,16 @@ function resizeGridToViewport() {
   }
 
   // Re-sync top scrollbar after grid resize settles
-  if (window._topScrollbarSyncWidths) {
-    requestAnimationFrame(window._topScrollbarSyncWidths);
-  }
+  // Use double-rAF to ensure AG Grid has finished its layout pass
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      if (window._topScrollbarSyncWidths) {
+        window._topScrollbarSyncWidths();
+      } else {
+        initTopScrollbar();
+      }
+    });
+  });
 }
 
 // Export functions for use by other modules
