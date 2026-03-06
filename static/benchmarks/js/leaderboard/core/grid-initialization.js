@@ -238,9 +238,9 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     onGridReady: params => {
       window.globalGridApi = params.api;
       params.api.resetRowHeights();
-      
+
       setInitialColumnState();
-      
+
       // Set column visibility
       params.api.applyColumnState({
         state: [
@@ -249,7 +249,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
           { colId: 'average_vision_v0', hide: false, sort: 'desc' }
         ]
       });
-      
+
+      // Sync top scrollbar with AG Grid's horizontal scroll
+      initTopScrollbar();
+
       // Complete loading animation when grid is fully rendered
       setTimeout(() => {
         if (typeof LoadingAnimation !== 'undefined' && LoadingAnimation.complete) {
@@ -284,6 +287,61 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
   if (typeof window.LeaderboardSearch?.setupSearchHandlers === 'function') {
     window.LeaderboardSearch.setupSearchHandlers();
   }
+}
+
+// Sync a top scrollbar div with AG Grid's internal horizontal scroll.
+// AG Grid uses .ag-center-cols-viewport as the actual scrollable column area.
+// Retry until the grid DOM is fully rendered.
+function initTopScrollbar(attempt) {
+  attempt = attempt || 0;
+
+  const topScrollbar = document.getElementById('topScrollbar');
+  const topScrollbarInner = document.getElementById('topScrollbarInner');
+  if (!topScrollbar || !topScrollbarInner) return;
+
+  const gridEl = document.getElementById('leaderboardGrid');
+  if (!gridEl) return;
+
+  // ag-center-cols-viewport is the element that actually scrolls the columns
+  const colsViewport = gridEl.querySelector('.ag-center-cols-viewport');
+
+  if (!colsViewport) {
+    if (attempt < 20) {
+      setTimeout(function () { initTopScrollbar(attempt + 1); }, 200);
+    }
+    return;
+  }
+
+  let syncing = false;
+
+  function syncWidths() {
+    var scrollWidth = colsViewport.scrollWidth;
+    var clientWidth = colsViewport.clientWidth;
+    topScrollbarInner.style.width = scrollWidth + 'px';
+    topScrollbar.style.display = scrollWidth > clientWidth ? '' : 'none';
+  }
+
+  syncWidths();
+
+  topScrollbar.addEventListener('scroll', function () {
+    if (syncing) return;
+    syncing = true;
+    colsViewport.scrollLeft = topScrollbar.scrollLeft;
+    requestAnimationFrame(function () { syncing = false; });
+  });
+
+  colsViewport.addEventListener('scroll', function () {
+    if (syncing) return;
+    syncing = true;
+    topScrollbar.scrollLeft = colsViewport.scrollLeft;
+    requestAnimationFrame(function () { syncing = false; });
+  });
+
+  // Re-sync widths when columns change (expand/collapse)
+  var observer = new MutationObserver(syncWidths);
+  observer.observe(colsViewport, { attributes: true, childList: true, subtree: true });
+
+  window.addEventListener('resize', syncWidths);
 }
 
 // Export functions for use by other modules
