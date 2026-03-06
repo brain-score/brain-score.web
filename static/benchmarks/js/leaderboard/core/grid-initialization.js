@@ -250,6 +250,10 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         ]
       });
 
+      // Fit grid to remaining viewport height
+      resizeGridToViewport();
+      window.addEventListener('resize', resizeGridToViewport);
+
       // Sync top scrollbar with AG Grid's horizontal scroll
       initTopScrollbar();
 
@@ -350,6 +354,15 @@ function initTopScrollbar(attempt) {
   observer.observe(agScrollContainer, { attributes: true, childList: true, subtree: true });
 
   window.addEventListener('resize', syncWidths);
+}
+
+// Size the grid to fill the remaining viewport height
+function resizeGridToViewport() {
+  var grid = document.getElementById('leaderboardGrid');
+  if (!grid) return;
+  var top = grid.getBoundingClientRect().top;
+  var available = window.innerHeight - top - 16;
+  grid.style.height = Math.max(400, available) + 'px';
 }
 
 // Export functions for use by other modules
