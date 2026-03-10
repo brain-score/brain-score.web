@@ -7,6 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import numpy as np
 from django.shortcuts import render
 
+from ..models import Model
 from ..utils import cache_get_context, cache_page_for_public_only
 from .index import get_context, get_datetime_range
 
@@ -235,6 +236,12 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
         benchmark_metadata_list.append(metadata_entry)
 
+    # Build a lookup for model group membership (group field lives on brainscore_model)
+    model_ids = [m.model_id for m in context['models']]
+    group_lookup = dict(
+        Model.objects.filter(id__in=model_ids).values_list('id', 'group')
+    )
+
     # Build `row_data` from materialized-view models WITH metadata
     row_data = []
     for model in context['models']:
@@ -273,7 +280,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'model_size_mb': meta.get('model_size_mb', 0),
                 'runnable': meta.get('runnable', False),
                 'training_dataset': meta.get('training_dataset', ''),
-                'task_specialization': meta.get('task_specialization', '')
+                'task_specialization': meta.get('task_specialization', ''),
+                'group': group_lookup.get(model.model_id)
             }
 
             # Collect values for filter options
@@ -349,7 +357,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'model_size_mb': 0,
                 'runnable': False,
                 'training_dataset': '',
-                'task_specialization': ''
+                'task_specialization': '',
+                'group': group_lookup.get(model.model_id)
             }
 
         # Add metadata to row data
