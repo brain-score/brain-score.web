@@ -4,7 +4,7 @@ import zipfile
 import re
 import uuid
 from typing import Tuple, Union, List
-from io import TextIOWrapper
+from io import BytesIO, TextIOWrapper
 import boto3
 import requests
 from botocore.exceptions import ClientError
@@ -290,14 +290,19 @@ class Upload(View):
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
         form = UploadFileForm()
+        if self.domain == 'language':
+            form.fields['model_size'].required = True
         return render(request, 'benchmarks/upload.html',
                       {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
     def post(self, request):
         assert self.domain is not None
         form = UploadFileForm(request.POST, request.FILES)
+        if self.domain == 'language':
+            form.fields['model_size'].required = True
         if not form.is_valid():
-            return HttpResponse("Form is invalid", status=400)
+            return render(request, 'benchmarks/upload.html',
+                          {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
         user_instance = User.objects.get_by_natural_key(request.user.email)
 
@@ -323,16 +328,18 @@ class Upload(View):
             return render(request, f'benchmarks/{page}_submitted.html',
                           {'plugin': plugin, 'identifier': identifier, "domain": self.domain})
 
+        model_size = request.POST.get('model_size', '') if self.domain == 'language' else ''
+
         json_info = {
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
             "user_id": user_instance.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
-            "domain": self.domain
+            "domain": self.domain,
+            "model_size": model_size,
         }
 
-        with open('result.json', 'w') as fp:
-            json.dump(json_info, fp)
+        config_bytes = json.dumps(json_info).encode('utf-8')
 
         _logger.debug(request.user.get_full_name())
         _logger.debug(f"request user: {request.user.get_full_name()}")
@@ -345,7 +352,10 @@ class Upload(View):
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
-        params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
+        params = {
+            "submission.zip": request.FILES['zip_file'],
+            'submission.config': ('submission.config', BytesIO(config_bytes)),
+        }
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 
