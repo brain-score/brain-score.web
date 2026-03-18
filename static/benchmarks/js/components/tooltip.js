@@ -17,6 +17,7 @@
  * @param {string} options.position - Tooltip position: 'top', 'bottom', 'left', 'right' (default: 'top')
  * @param {number} options.duration - Auto-hide duration in ms (default: 2500)
  * @param {number} options.offset - Distance from element in pixels (default: 10)
+ * @param {boolean} options.html - If true, render message as HTML instead of plain text (default: false)
  * @returns {Object|null} Object with `element` and `remove()` method, or null if element is invalid
  */
 function createTooltip(element, message, options = {}) {
@@ -24,7 +25,8 @@ function createTooltip(element, message, options = {}) {
     type = 'info',
     position = 'top',
     duration = 2500,
-    offset = 10
+    offset = 10,
+    html = false
   } = options;
   
   if (!element) return null;
@@ -41,7 +43,12 @@ function createTooltip(element, message, options = {}) {
   if (position !== 'top') {
     tooltip.classList.add(`tooltip-${position}`);
   }
-  tooltip.textContent = message;
+  if (html) {
+    tooltip.innerHTML = message;
+    tooltip.classList.add('tooltip-multiline');
+  } else {
+    tooltip.textContent = message;
+  }
   
   // Position tooltip
   const rect = element.getBoundingClientRect();
@@ -109,22 +116,40 @@ function showTooltip(elementId, message, type = 'info') {
  */
 function addHoverTooltip(element, message, options = {}) {
   if (!element) return;
-  
+
   let currentTooltip = null;
-  
-  element.addEventListener('mouseenter', () => {
-    currentTooltip = createTooltip(element, message, {
-      ...options,
-      duration: 999999 // Don't auto-hide on hover
-    });
-  });
-  
-  element.addEventListener('mouseleave', () => {
-    if (currentTooltip) {
-      currentTooltip.remove();
-      currentTooltip = null;
+  let hideTimeout = null;
+
+  function show() {
+    if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+    if (!currentTooltip) {
+      currentTooltip = createTooltip(element, message, {
+        ...options,
+        duration: 999999
+      });
+      if (currentTooltip && options.html) {
+        currentTooltip.element.addEventListener('mouseenter', function() {
+          if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+        });
+        currentTooltip.element.addEventListener('mouseleave', function() {
+          hide();
+        });
+      }
     }
-  });
+  }
+
+  function hide() {
+    var delay = options.html ? 200 : 0;
+    hideTimeout = setTimeout(function() {
+      if (currentTooltip) {
+        currentTooltip.remove();
+        currentTooltip = null;
+      }
+    }, delay);
+  }
+
+  element.addEventListener('mouseenter', show);
+  element.addEventListener('mouseleave', hide);
 }
 
 /**
@@ -136,8 +161,15 @@ function initializeDataTooltips() {
     const message = element.getAttribute('data-tooltip');
     const type = element.getAttribute('data-tooltip-type') || 'info';
     const position = element.getAttribute('data-tooltip-position') || 'top';
-    
+
     addHoverTooltip(element, message, { type, position });
+  });
+  document.querySelectorAll('[data-tooltip-html]').forEach(element => {
+    const message = element.getAttribute('data-tooltip-html');
+    const type = element.getAttribute('data-tooltip-type') || 'info';
+    const position = element.getAttribute('data-tooltip-position') || 'bottom';
+
+    addHoverTooltip(element, message, { type, position, html: true });
   });
 }
 
