@@ -67,6 +67,22 @@
     &::after
       border-top-color: #333
 
+  // Multi-line tooltip (for HTML content)
+  &.tooltip-multiline
+    white-space: normal
+    max-width: 400px
+    text-align: left
+    line-height: 1.5
+    padding: 12px 16px
+    pointer-events: auto
+
+    a
+      color: #90cdf4
+      text-decoration: underline
+
+      &:hover
+        color: white
+
 // Tooltip fade-in animation
 @keyframes tooltipFadeIn
   from

@@ -10,7 +10,7 @@ $(document).ready(function () {
         return;
     }
 
-    const margin = {top: 0, right: 0, bottom: 40, left: 60},
+    const margin = {top: 25, right: 0, bottom: 40, left: 60},
         outerWidth = $(container_selector).width(),
         outerHeight = $(container_selector).width() * 2 / 3,
         width = outerWidth - margin.left - margin.right,
@@ -209,10 +209,20 @@ $(document).ready(function () {
             .attr("y", 35)
             .style("text-anchor", "middle")
             .style("fill", "black")
+            .style("font-size", "14px")
+            .style("font-family", "'Open Sans', Arial, sans-serif")
+            .style("font-weight", "400")
             .text(xName);
 
         svg.selectAll(".x.axis text")
-            .style("fill", "black");
+            .style("fill", "black")
+            .style("font-family", "'Open Sans', Arial, sans-serif")
+            .style("font-weight", "400")
+            .style("font-size", "12px");
+
+        // Restore axis label size (selectAll above set ticks to 12px)
+        svg.select(".x.axis .label")
+            .style("font-size", "14px");
 
         g.append("g")
             .classed("y axis", true)
@@ -225,48 +235,40 @@ $(document).ready(function () {
             .attr("dy", ".71em")
             .style("text-anchor", "middle")
             .style("fill", "black")
-            .text(yName);  // Use the human-readable yName here
+            .style("font-size", "14px")
+            .style("font-family", "'Open Sans', Arial, sans-serif")
+            .style("font-weight", "400")
+            .text(yName);
 
         svg.selectAll(".y.axis text")
-            .style("fill", "black");
+            .style("fill", "black")
+            .style("font-family", "'Open Sans', Arial, sans-serif")
+            .style("font-weight", "400")
+            .style("font-size", "12px");
 
-        // Correlation plotting -- position towards the top, horizontally next to each other
-        g.append("text")
-            .attr("class", "correlation-text")
-            .attr("x", 150)
-            .attr("y", 20)
-            .attr("fill", "black")
-            .style("font-size", "16px")
-            .text("Pearson R: " + correlation.toFixed(2));
+        svg.select(".y.axis .label")
+            .style("font-size", "14px");
 
-        g.append("text")
-            .attr("class", "r2-text")
-            .attr("x", 280)
-            .attr("y", 20)
-            .attr("fill", "black")
-            .style("font-size", "16px")
-            .text("R²: " + rSquared.toFixed(2));
-
-        g.append("text")
-            .attr("class", "r2-text")
-            .attr("x", 355)
-            .attr("y", 20)
-            .attr("fill", "black")
-            .style("font-size", "16px")
-            .text(() => {
-                // Format p-value conditionally
-                return pValue >= 0.01
-                    ? `p-value: ${pValue.toFixed(2)}`  // Show two decimal places
-                    : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1 × 10^')}`; // Exponential format with 1 digit
-            });
+        // Correlation stats -- centered above the plot
+        var statsFont = "'Open Sans', Arial, sans-serif";
+        var pValueStr = pValue >= 0.01
+            ? `p-value: ${pValue.toFixed(2)}`
+            : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1e')}`;
+        var statsText = "Pearson R: " + correlation.toFixed(2)
+            + "    R\u00B2: " + rSquared.toFixed(2)
+            + "    " + pValueStr
+            + "    n=" + filtered_data.length + " models";
 
         g.append("text")
-            .attr("class", "r2-text")
-            .attr("x", 500)
-            .attr("y", 20)
+            .attr("class", "stats-text")
+            .attr("x", width / 2)
+            .attr("y", -8)
             .attr("fill", "black")
-            .style("font-size", "16px")
-            .text("n=" + filtered_data.length + " models");
+            .style("font-size", "14px")
+            .style("font-family", statsFont)
+            .style("font-weight", "400")
+            .style("text-anchor", "middle")
+            .text(statsText);
 
         // plot regression line
         g.append("line")
@@ -295,10 +297,10 @@ $(document).ready(function () {
             .on("mouseover", tip.show)
             .on("mouseout", tip.hide);
 
-        // add Brain-Score logo
+        // add Brain-Score logo (bottom-right corner)
         g.append("svg:image")
-            .attr('x', 5)
-            .attr('y', 0)
+            .attr('x', width - 125)
+            .attr('y', height - 33)
             .attr('width', 120)
             .attr('height', 28)
             .attr("xlink:href", logo_url);
