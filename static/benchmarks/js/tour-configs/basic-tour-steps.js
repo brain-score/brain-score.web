@@ -24,10 +24,10 @@ window.tourConfigs.defaultTour = {
       }
     },
     {
-      element: '.ag-cell[col-id="runnable_status"]',
+      element: '.ag-cell[col-id="group_status"]',
       popover: {
-        title: 'Model Status',
-        description: 'Models become deprecated over time. Green status indicates the model has been recently tested and is runnable. Red status indicates the model has confirmed to be not longer runnable. Grey status indicates the model has not been tested in a while.',
+        title: 'Model Group',
+        description: 'Blue indicates a curated model that is part of a benchmark group (e.g., reference, top-10). Grey indicates a community-submitted model. The small circle next to the model name shows runnable status: green = runnable, red = issues, grey = unknown.',
         position: 'right'
       }
     },
