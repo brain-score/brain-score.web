@@ -218,12 +218,23 @@
                                                 {% endif %}
                                                 {% endwith %}
                                                 {# image samples #}
-                                                <div class="samples_container is-overflow-wrap">
+                                                <div class="samples_container is-overflow-wrap"
+                                                     id="samples-{{ score_row.versioned_benchmark_identifier }}">
                                                     {% for sample in '0123456789'|make_list %}
                                                         <img class="stimulus_sample"
                                                              src="/static/benchmarks/img/benchmark_samples/{{ score_row.versioned_benchmark_identifier }}/{{ sample }}.png"
-                                                             alt="sample {{ sample }}"/>
+                                                             alt="sample {{ sample }}"
+                                                             onerror="this.style.display='none'; this.dataset.failed='true';
+                                                                      var container = this.parentElement;
+                                                                      var all = container.querySelectorAll('.stimulus_sample');
+                                                                      var failed = container.querySelectorAll('.stimulus_sample[data-failed=true]');
+                                                                      if(failed.length === all.length) {
+                                                                          container.querySelector('.samples-unavailable').style.display='block';
+                                                                      }"/>
                                                     {% endfor %}
+                                                    <p class="samples-unavailable" style="display:none; color:#888;">
+                                                        Sample images cannot be displayed publicly for this benchmark.
+                                                    </p>
                                                 </div>
                                             </div>
                                         {% endif %}

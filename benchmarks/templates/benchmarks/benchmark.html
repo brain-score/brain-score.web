@@ -106,12 +106,20 @@
     {# image samples #}
     <div class="box">
         <h3 id="scores" class="title is-3">Sample stimuli</h3>
-        <div class="content samples_container is-overflow-wrap">
+        <div class="content samples_container is-overflow-wrap" id="samples-container">
             {% for sample in '0123456789'|make_list %}
                 <img class="stimulus_sample"
                      src="/static/benchmarks/img/benchmark_samples/{{ versioned_benchmark_identifier }}/{{ sample }}.png"
-                     alt="sample {{ sample }}"/>
+                     alt="sample {{ sample }}"
+                     onerror="this.style.display='none'; this.dataset.failed='true';
+                              if(document.querySelectorAll('.stimulus_sample[data-failed=true]').length
+                                 === document.querySelectorAll('.stimulus_sample').length) {
+                                  document.getElementById('samples-unavailable').style.display='block';
+                              }"/>
             {% endfor %}
+            <p id="samples-unavailable" style="display:none; color:#888;">
+                Sample images cannot be displayed publicly for this benchmark.
+            </p>
         </div>
     </div>
 
