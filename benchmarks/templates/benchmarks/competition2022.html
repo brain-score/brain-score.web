@@ -221,7 +221,8 @@
                 <img class="stimulus_sample"
                      src="/static/benchmarks/img/benchmark_samples/{{ stimulus_sample.path }}"
                      title="from benchmark {{ stimulus_sample.benchmark_identifier }}"
-                     alt="sample {{ stimulus_sample.path }}"/>
+                     alt="sample {{ stimulus_sample.path }}"
+                     onerror="this.style.display='none';"/>
             {% endfor %}
         </div>
         <br/>
