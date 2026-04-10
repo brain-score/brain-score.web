@@ -207,7 +207,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'region': None,
             'species': None,
             'task': None,
-            'data_publicly_available': True,  # default
+            'data_publicly_available': False,  # default: private unless explicitly public
             'num_stimuli': None,
             'ceiling': None
         }
@@ -219,7 +219,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
                 'region': data.get('region'),
                 'species': data.get('species'),
                 'task': data.get('task'),
-                'data_publicly_available': data.get('data_publicly_available', True)
+                'data_publicly_available': data.get('data_publicly_available', False)
             })
 
         # Extract stimuli metadata

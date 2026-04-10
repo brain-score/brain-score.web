@@ -156,7 +156,7 @@ function addBenchmarksFilteredByMetadata() {
       }
 
       if (window.activeFilters.public_data_only) {
-        if (benchmark.data_publicly_available === false) {
+        if (benchmark.data_publicly_available !== true) {
           shouldExclude = true;
         }
       }

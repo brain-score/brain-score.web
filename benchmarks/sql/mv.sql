@@ -249,7 +249,7 @@ jsonb_build_object(
     'num_subjects', bdm.num_subjects,
     'pre_processing', bdm.pre_processing,
     'brainscore_link', bdm.brainscore_link,
-    'data_publicly_available', bdm.data_publicly_available,
+    'data_publicly_available', COALESCE(bdm.data_publicly_available, false),
     'extra_notes', bdm.extra_notes
   ) AS benchmark_data_meta,
   jsonb_build_object(

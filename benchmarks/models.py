@@ -153,7 +153,7 @@ class BenchmarkDataMeta(models.Model):
     pre_processing = models.CharField(max_length=100, null=True, default=None)
     brainscore_link = models.CharField(max_length=200, null=True, default=None)
     extra_notes = models.CharField(max_length=1000, null=True, default=None)
-    data_publicly_available = models.BooleanField(default=True, null=False)
+    data_publicly_available = models.BooleanField(default=False, null=False)
 
     class Meta:
         db_table = 'brainscore_benchmark_data_meta'
