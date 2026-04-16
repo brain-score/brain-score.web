@@ -43,13 +43,13 @@ def get_datetime_range(models=None, domain="vision"):
     - max: Today's date (scores are always in the past)
     """
     from datetime import timezone
-    
+
     # Earliest score timestamp in the database (fixed, never changes)
     min_date = datetime(2020, 8, 27, tzinfo=timezone.utc)
-    
+
     # Max is always today (scores can't be in the future)
     max_date = datetime.now(timezone.utc)
-    
+
     return {
         "min": min_date.isoformat(),
         "max": max_date.isoformat(),
@@ -132,7 +132,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     benchmark_parents = {
         bench.identifier: (f"{bench.parent['identifier']}_v0" if bench.parent and 'identifier' in bench.parent else None)
         for bench in benchmarks
-    }   
+    }
     # Identify uniform parents (parents that are the same for all children)
     uniform_parents = set(benchmark_parents.values())
     # Identify benchmarks that should not be shown (depth > BASE_DEPTH or engineering root in root_parent)
@@ -142,7 +142,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         if bench.depth > BASE_DEPTH
         or (ENGINEERING_ROOT not in bench.identifier
             and ENGINEERING_ROOT in bench.root_parent)
-    }   
+    }
 
     # Add submittable benchmarks for authenticated users
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
@@ -152,7 +152,9 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
     # PERF: Commented out - builds DataFrames that are not currently used by any view/template.
     # Takes ~1.7s due to 52k individual pd.to_datetime calls. Re-enable when wayback feature needs this.
-    # model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
+    model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
+    model_score_df.to_csv("score_df.csv")
+    model_timestamp_df.to_csv("timestamp_df.csv")
 
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
@@ -181,7 +183,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             '  url={https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X}\n'
             '}'
         ),
-    }   
+    }
 
     # Add domain-specific citation information
     if domain == "vision":
@@ -308,7 +310,7 @@ def filter_and_rank_models(models, domain: str = "vision"):
     return ranked_models
 
 
-def _build_model_data(benchmarks: List[FinalBenchmarkContext], 
+def _build_model_data(benchmarks: List[FinalBenchmarkContext],
                       models: List[FinalModelContext]
                       ) -> Tuple[Union[str, pd.DataFrame], List[Dict[str, Any]]]:
     """
@@ -504,7 +506,7 @@ def normalize_alpha(value, min_value, max_value):
     return float(result)
 
 def representative_color(value, min_value=None, max_value=None, colors=colors_redgreen):
-    if not isinstance(value, (int, float)):    
+    if not isinstance(value, (int, float)):     
         return f"background-color: {color_None}"
     if np.isnan(value):
         return f"background-color: {color_None}"
@@ -538,7 +540,7 @@ def get_visibility(model, user):
     # Handles private competition models:
     if (not model.public) and (model.competition is not None):
         # Model is a private competition model, and user is logged in (or superuser)
-        if (user is not None) and (user.is_superuser or 
+        if (user is not None) and (user.is_superuser or
                                   (isinstance(model.user, dict) and model.user.get('id') == user.id) or
                                   (hasattr(model.user, 'id') and model.user.id == user.id)):
             return "private_owner"

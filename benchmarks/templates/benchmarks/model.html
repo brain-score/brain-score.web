@@ -103,6 +103,140 @@
     </div>
 {% endblock %}
 
+{% block main_content %}
+  {{ block.super }}
+
+  {# Score / Rank trend over time — full width with tabs #}
+  <div class="columns">
+    <div class="column">
+      <div class="box">
+        <div class="card-content">
+          <p class="subtitle is-5">Average_vision over time</p>
+          <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it — use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
+          {% if score_trend_plot_json or rank_trend_plot_json %}
+          <div class="tabs is-boxed" id="trend-tabs">
+            <ul>
+              <li class="{% if score_trend_plot_json %}is-active{% endif %}" data-tab="scores">
+                <a href="#" class="js-trend-tab" data-tab="scores" role="button">Scores</a>
+              </li>
+              <li class="{% if not score_trend_plot_json and rank_trend_plot_json %}is-active{% endif %}" data-tab="rankings">
+                <a href="#" class="js-trend-tab" data-tab="rankings" role="button">Rankings</a>
+              </li>
+            </ul>
+          </div>
+          <style>
+            .trend-attribution-panel {
+              border-left: 3px solid #3273dc;
+              background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
+              border-radius: 0 6px 6px 0;
+              padding: 1rem 1rem 1rem 1.1rem;
+              height: 100%;
+              min-height: 200px;
+            }
+            .trend-attribution-panel .trend-attribution-title {
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 0.06em;
+              color: #69748c;
+              margin-bottom: 0.6rem;
+              font-weight: 600;
+            }
+            .trend-attribution-panel .trend-attribution-sub {
+              font-size: 0.72rem;
+              color: #7a869a;
+              margin-bottom: 0.5rem;
+            }
+            .trend-attribution-panel ul {
+              margin: 0;
+              padding-left: 1.1rem;
+              font-size: 0.88rem;
+              line-height: 1.45;
+              color: #363636;
+            }
+            .trend-attribution-panel li:not(:last-child) {
+              margin-bottom: 0.5rem;
+            }
+            .trend-reason-hold {
+              display: none;
+              border: 1px solid #b8d4f0;
+              background: #eef5fc;
+              border-radius: 6px;
+              padding: 0.45rem 0.6rem;
+              margin-bottom: 0.65rem;
+            }
+            .trend-reason-hold.is-active {
+              display: block;
+            }
+            .trend-attribution-panel.trend-attribution-panel--pinned {
+              border-left-color: #2366d1;
+              box-shadow: inset 3px 0 0 0 #2366d1;
+            }
+            @media screen and (max-width: 768px) {
+              .trend-attribution-panel {
+                border-left: none;
+                border-top: 3px solid #3273dc;
+                border-radius: 0 0 6px 6px;
+                margin-top: 0.75rem;
+              }
+            }
+          </style>
+          <div id="trend-tab-scores" class="trend-tab-panel" style="{% if not score_trend_plot_json %}display:none;{% endif %}">
+            {% if score_trend_plot_json %}
+            <div class="columns is-variable is-2 is-desktop is-align-items-stretch">
+              <div class="column is-12-mobile is-9-desktop">
+                <div id="model-score-trend-plot" class="plotly-graph-div" style="height:400px; width:100%; min-height:200px;"></div>
+              </div>
+              <div class="column is-12-mobile is-3-desktop">
+                <aside class="trend-attribution-panel" aria-label="Why the score changed" id="model-score-attribution-aside">
+                  <div class="trend-attribution-title">Why this line moves</div>
+                  <p class="trend-attribution-sub" id="model-score-attribution-hint">Summary — hover a point for month-to-month detail.</p>
+                  <ul id="model-score-attribution-list">
+                    {% for line in score_trend_sidebar_lines %}
+                    <li>{{ line }}</li>
+                    {% endfor %}
+                  </ul>
+                </aside>
+              </div>
+            </div>
+            {{ score_trend_plot_json|json_script:"model-score-trend-plot-data" }}
+            {% else %}
+            <p class="help">Score trend is not available for this model.</p>
+            {% endif %}
+          </div>
+          {# When both tabs exist, rank panel starts hidden: JS must defer hover wiring until Rankings is shown (see data-defer-rank-hover). #}
+          <div id="trend-tab-rankings" class="trend-tab-panel" data-defer-rank-hover="{% if score_trend_plot_json and rank_trend_plot_json %}true{% else %}false{% endif %}" style="{% if score_trend_plot_json or not rank_trend_plot_json %}display:none;{% endif %}">
+            {% if rank_trend_plot_json %}
+            <div class="columns is-variable is-2 is-desktop is-align-items-stretch">
+              <div class="column is-12-mobile is-9-desktop">
+                <div id="model-rank-trend-plot" class="plotly-graph-div" style="height:400px; width:100%; min-height:200px;"></div>
+              </div>
+              <div class="column is-12-mobile is-3-desktop">
+                <aside class="trend-attribution-panel" aria-label="Why the rank changed" id="model-rank-attribution-aside">
+                  <div class="trend-attribution-title">Why this line moves</div>
+                  <p class="trend-attribution-sub" id="model-rank-attribution-hint">Summary — hover a point for month-to-month detail.</p>
+                  <ul id="model-rank-attribution-list">
+                    {% for line in rank_trend_sidebar_lines %}
+                    <li>{{ line }}</li>
+                    {% endfor %}
+                  </ul>
+                </aside>
+              </div>
+            </div>
+            {{ rank_trend_plot_json|json_script:"model-rank-trend-plot-data" }}
+            {% else %}
+            <p class="help">Rank trend is not available for this model.</p>
+            {% endif %}
+          </div>
+          <script src="https://cdn.plot.ly/plotly-3.3.0.min.js" integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+          <script src="{% static 'benchmarks/js/model-score-trend.js' %}"></script>
+          {% else %}
+          <p class="help">Score trend is shown when this model has vision benchmark scores with timestamps.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {# Center content #}
 {% block content %}

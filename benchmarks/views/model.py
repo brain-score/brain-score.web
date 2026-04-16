@@ -1,6 +1,11 @@
+import json
 import logging
+import os
 import threading
+from datetime import date
 import numpy as np
+import pandas as pd
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
 from django.template.defaulttags import register
@@ -46,6 +51,798 @@ GRAY_COLORS = [
 COLOR_NONE = '#e0e1e2'
 GAMMA = 0.5
 
+_MONTH_BENCHMARK_EDGES = None
+
+
+def _load_month_benchmark_edges():
+    """Maps 'YYYY-MM|YYYY-MM' -> list of leaf benchmark ids newly eligible."""
+    global _MONTH_BENCHMARK_EDGES
+    if _MONTH_BENCHMARK_EDGES is not None:
+        return _MONTH_BENCHMARK_EDGES
+    path = os.path.join(os.path.dirname(__file__), 'month_benchmark_edges.json')
+    if not os.path.isfile(path):
+        _MONTH_BENCHMARK_EDGES = {}
+        return _MONTH_BENCHMARK_EDGES
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            _MONTH_BENCHMARK_EDGES = json.load(f).get('edges', {})
+    except Exception:
+        _MONTH_BENCHMARK_EDGES = {}
+    return _MONTH_BENCHMARK_EDGES
+
+
+def _date_to_month_key(date_str):
+    try:
+        return pd.Timestamp(date_str).strftime('%Y-%m')
+    except Exception:
+        s = str(date_str)
+        return s[:7] if len(s) >= 7 else s
+
+
+def _fmt_model_id(mid):
+    try:
+        f = float(mid)
+        if f == int(f):
+            return str(int(f))
+    except (TypeError, ValueError):
+        pass
+    return str(mid)
+
+
+def _rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2, rank_df, wide_scores):
+    """
+    List sidebar lines naming other models involved in a month-to-month rank change.
+    Mirrors aggregate_scores.ipynb analyze_rank_change (without per-benchmark result_df).
+    rank_change = rank2 - rank1 (positive => worse / moved down the leaderboard).
+    """
+    lines = []
+    if ym_prev not in rank_df.columns or ym_curr not in rank_df.columns:
+        return lines
+
+    rank_change = rank2 - rank1
+    focal = str(model_id)
+
+    ranks_t1 = rank_df.set_index('model_id')[ym_prev]
+    ranks_t2 = rank_df.set_index('model_id')[ym_curr]
+    sc1 = wide_scores.set_index('model_id')[ym_prev]
+    sc2 = wide_scores.set_index('model_id')[ym_curr]
+
+    def is_other(om):
+        return str(om) != focal
+
+    if rank_change > 0:
+        passed_by = []
+        for other_model in ranks_t1.index:
+            if not is_other(other_model):
+                continue
+            other_rank1 = ranks_t1[other_model]
+            other_rank2 = ranks_t2[other_model]
+            if pd.notna(other_rank1) and pd.notna(other_rank2):
+                or1 = int(other_rank1)
+                or2 = int(other_rank2)
+                if (or1 > rank1 and or2 <= rank2) or (or1 >= rank1 and or2 < rank2):
+                    s1, s2 = sc1.get(other_model), sc2.get(other_model)
+                    dsc = ''
+                    if pd.notna(s1) and pd.notna(s2):
+                        dsc = f', aggregate score {float(s1):.4f} → {float(s2):.4f}'
+                    passed_by.append((or2, f'• Model {_fmt_model_id(other_model)}: rank {or1} → {or2}{dsc}'))
+        if passed_by:
+            passed_by.sort(key=lambda x: x[0])
+            lines.append(f'Models that moved ahead of this model ({len(passed_by)}):')
+            cap = 10
+            for _, txt in passed_by[:cap]:
+                lines.append(txt)
+            if len(passed_by) > cap:
+                lines.append(f'… and {len(passed_by) - cap} more.')
+
+    if rank_change < 0:
+        passed = []
+        for other_model in ranks_t1.index:
+            if not is_other(other_model):
+                continue
+            other_rank1 = ranks_t1[other_model]
+            other_rank2 = ranks_t2[other_model]
+            if pd.notna(other_rank1) and pd.notna(other_rank2):
+                or1 = int(other_rank1)
+                or2 = int(other_rank2)
+                if (or1 < rank1 and or2 >= rank2) or (or1 <= rank1 and or2 > rank2):
+                    s1, s2 = sc1.get(other_model), sc2.get(other_model)
+                    dsc = ''
+                    if pd.notna(s1) and pd.notna(s2):
+                        dsc = f', aggregate score {float(s1):.4f} → {float(s2):.4f}'
+                    passed.append((or2, f'• Model {_fmt_model_id(other_model)}: rank {or1} → {or2}{dsc}'))
+        if passed:
+            passed.sort(key=lambda x: x[0])
+            lines.append(f'Models you moved past ({len(passed)}):')
+            cap = 10
+            for _, txt in passed[:cap]:
+                lines.append(txt)
+            if len(passed) > cap:
+                lines.append(f'… and {len(passed) - cap} more.')
+
+    new_models = []
+    for other_model in ranks_t2.index:
+        if not is_other(other_model):
+            continue
+        prev_r = ranks_t1.get(other_model, np.nan)
+        curr_r = ranks_t2[other_model]
+        if pd.isna(prev_r) and pd.notna(curr_r):
+            new_models.append({
+                'mid': other_model,
+                'rank2': int(curr_r),
+                'score2': sc2.get(other_model),
+            })
+    if new_models:
+        better_new = [m for m in new_models if m['rank2'] < rank2]
+        if better_new:
+            better_new.sort(key=lambda x: x['rank2'])
+            lines.append(f'New entries ranked above you ({len(better_new)}):')
+            cap = 8
+            for m in better_new[:cap]:
+                sc = m['score2']
+                sx = f', score {float(sc):.4f}' if pd.notna(sc) else ''
+                lines.append(f"• Model {_fmt_model_id(m['mid'])}: rank {m['rank2']}{sx}")
+            if len(better_new) > cap:
+                lines.append(f'… and {len(better_new) - cap} more.')
+
+    exited = []
+    for other_model in ranks_t1.index:
+        if not is_other(other_model):
+            continue
+        prev_r = ranks_t1[other_model]
+        curr_r = ranks_t2.get(other_model, np.nan)
+        if pd.notna(prev_r) and pd.isna(curr_r):
+            exited.append({'mid': other_model, 'rank1': int(prev_r)})
+    if exited:
+        worse_exited = [m for m in exited if m['rank1'] > rank1]
+        if worse_exited:
+            lines.append(f'Models that left the pool (previously ranked below you; {len(worse_exited)}):')
+            cap = 8
+            for m in worse_exited[:cap]:
+                lines.append(f"• Model {_fmt_model_id(m['mid'])}: was rank {m['rank1']}")
+            if len(worse_exited) > cap:
+                lines.append(f'… and {len(worse_exited) - cap} more.')
+
+    return lines
+
+
+def _overall_trend_lines(dates, values, kind):
+    """Summary from first to last point (default sidebar + 'no change' branch)."""
+    if not dates or not values:
+        return ['No trend data.']
+    n = len(dates)
+    if kind == 'score':
+        return [
+            f'Whole series: {n} point(s), {values[0]:.4f} → {values[-1]:.4f}.',
+            f'Net change (first → last): {(values[-1] - values[0]):+.4f}.',
+            'Hover a point to compare it to the previous month.',
+        ]
+    r0 = int(round(float(values[0])))
+    r1 = int(round(float(values[-1])))
+    return [
+        f'Whole series: {n} point(s), rank {r0} → {r1}.',
+        f'Net movement (first → last): {r0 - r1:+d} (positive means improved).',
+        'Hover a point to compare it to the previous month.',
+    ]
+
+
+def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, rank_explain=None):
+    """Narrative for hover at index i vs previous point; uses benchmark-edge map when value changes."""
+    if i == 0:
+        if kind == 'score':
+            head = [
+                f'First point ({_date_to_month_key(dates[0])}): score {values[0]:.4f}.',
+                'There is no prior month on this chart.',
+            ]
+        else:
+            head = [
+                f'First point ({_date_to_month_key(dates[0])}): rank {int(round(float(values[0])))}.',
+                'There is no prior month on this chart.',
+            ]
+        return head + overall_lines
+
+    ym_prev = _date_to_month_key(dates[i - 1])
+    ym_curr = _date_to_month_key(dates[i])
+    edge_key = f'{ym_prev}|{ym_curr}'
+    added = edges_map.get(edge_key, [])
+
+    if kind == 'score':
+        prev_v, curr_v = values[i - 1], values[i]
+        delta = curr_v - prev_v
+        unchanged = abs(delta) < 1e-9
+        head = [
+            f'vs prior month ({ym_prev}): {prev_v:.4f} → {ym_curr}: {curr_v:.4f}.',
+        ]
+    else:
+        prev_v = int(round(float(values[i - 1])))
+        curr_v = int(round(float(values[i])))
+        delta = curr_v - prev_v
+        unchanged = delta == 0
+        head = [
+            f'vs prior month ({ym_prev}): rank {prev_v} → {ym_curr}: rank {curr_v}.',
+        ]
+
+    if unchanged:
+        return head + ['No change from the previous point. Overall movement:'] + overall_lines
+
+    if kind == 'score':
+        mid = [f'Change from previous point: {delta:+.4f}.']
+    else:
+        if delta < 0:
+            mid = [f'Rank change vs prior month: {delta:+d} (negative = improved).']
+        else:
+            mid = [f'Rank change vs prior month: {delta:+d} (positive = moved down).']
+
+    out = head + mid
+    model_lines = []
+    if kind == 'rank' and rank_explain is not None:
+        ws = rank_explain.get('wide_scores')
+        rdf = rank_explain.get('rank_df')
+        mid_model = rank_explain.get('model_id')
+        if ws is not None and rdf is not None and mid_model is not None:
+            cols = [c for c in ws.columns if c != 'model_id']
+            if ym_prev in cols and ym_curr in cols:
+                model_lines = _rank_transition_model_lines(
+                    mid_model, ym_prev, ym_curr, prev_v, curr_v, rdf, ws
+                )
+    if model_lines:
+        out.extend(model_lines)
+
+    if added:
+        out.append('New leaf benchmarks counted in the aggregate this month (vs. prior month):')
+        cap = 12
+        for b in added[:cap]:
+            out.append(f'• {b}')
+        if len(added) > cap:
+            out.append(f'… and {len(added) - cap} more.')
+    else:
+        if kind == 'score':
+            out.append(
+                'No new leaf benchmarks between these months; the shift is likely from updated scores, '
+                're-aggregation, or other models in the public pool.'
+            )
+        elif not model_lines:
+            out.append(
+                'No new leaf benchmarks between these months; the shift is likely from updated scores, '
+                're-aggregation, or other models in the public pool.'
+            )
+        else:
+            out.append(
+                'No new leaf benchmarks between these months; remaining movement is from aggregate score updates.'
+            )
+    return out
+
+
+def _build_trend_meta(dates, values, kind, edges_map, extra_default_lines=None, rank_explain=None):
+    """
+    Client reads trendMeta: defaultLines when idle; points[i].lines on hover.
+    kind: 'score' or 'rank'.
+    """
+    base_overall = _overall_trend_lines(dates, values, kind)
+    default_lines = base_overall + list(extra_default_lines or [])
+    points = []
+    re = rank_explain if kind == 'rank' else None
+    for i in range(len(dates)):
+        points.append({
+            'lines': _point_attribution_lines(i, dates, values, kind, edges_map, base_overall, rank_explain=re),
+        })
+    list_el = 'model-score-attribution-list' if kind == 'score' else 'model-rank-attribution-list'
+    return {
+        'kind': kind,
+        'attributionListId': list_el,
+        'defaultLines': default_lines,
+        'points': points,
+    }
+
+
+def _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=None):
+    """Build Plotly JSON for score trend. Fixed range, no pan/zoom. Optional shaded band for forward-filled months."""
+    y_min = min(scores)
+    y_max = max(scores)
+    padding = max(0.05, (y_max - y_min) * 0.1) if y_max > y_min else 0.05
+    y_range = [max(0, y_min - padding), min(1, y_max + padding)]
+    shapes = []
+    if shade_region and len(shade_region) == 2:
+        x0, x1 = shade_region
+        shapes.append({
+            'type': 'rect',
+            'xref': 'x',
+            'yref': 'paper',
+            'x0': x0,
+            'x1': x1,
+            'y0': 0,
+            'y1': 1,
+            'fillcolor': 'rgba(50, 115, 220, 0.06)',
+            'line': {'width': 0},
+            'layer': 'below',
+        })
+    shapes.append({
+        'type': 'line',
+        'xref': 'x',
+        'yref': 'paper',
+        'x0': dates[-1],
+        'x1': dates[-1],
+        'y0': 0,
+        'y1': 1,
+        'line': {'color': 'rgba(72, 72, 72, 0.35)', 'width': 1, 'dash': 'dot'},
+        'layer': 'below',
+    })
+    annotations = [
+        {
+            'x': dates[-1],
+            'y': scores[-1],
+            'text': 'Latest',
+            'showarrow': True,
+            'arrowhead': 2,
+            'arrowsize': 0.6,
+            'arrowwidth': 1,
+            'arrowcolor': '#3273dc',
+            'ax': 0,
+            'ay': -36,
+            'bgcolor': 'rgba(255, 255, 255, 0.92)',
+            'bordercolor': '#3273dc',
+            'borderwidth': 1,
+            'font': {'size': 11, 'color': '#363636'},
+        },
+    ]
+    if len(dates) > 1:
+        annotations.append({
+            'x': dates[0],
+            'y': scores[0],
+            'text': 'Start',
+            'showarrow': True,
+            'arrowhead': 2,
+            'arrowsize': 0.5,
+            'arrowwidth': 1,
+            'arrowcolor': '#7a7a7a',
+            'ax': 0,
+            'ay': 32,
+            'bgcolor': 'rgba(255, 255, 255, 0.9)',
+            'bordercolor': '#dbdbdb',
+            'borderwidth': 1,
+            'font': {'size': 10, 'color': '#4a4a4a'},
+        })
+    score_cd = [[i] for i in range(len(dates))]
+    return {
+        'data': [{
+            'x': dates,
+            'y': scores,
+            'type': 'scatter',
+            'mode': 'lines',
+            'hoveron': 'points',
+            'name': 'average_vision',
+            'customdata': score_cd,
+            'line': {
+                'color': '#3273dc',
+                'width': 2.5,
+                'shape': 'spline',
+                'smoothing': 1.3,
+            },
+            'hovertemplate': '<b>%{x|%d %b %Y}</b><br>Score: %{y:.4f}<extra></extra>',
+        }],
+        'layout': {
+            'height': 400,
+            'autosize': True,
+            'paper_bgcolor': '#ffffff',
+            'plot_bgcolor': '#fafafa',
+            'margin': {'t': 24, 'r': 16, 'b': 48, 'l': 56},
+            'shapes': shapes,
+            'annotations': annotations,
+            'hovermode': 'closest',
+            # Plotly 3 default template can re-enable grids; turn off explicitly.
+            'template': {
+                'layout': {
+                    'xaxis': {
+                        'showgrid': False,
+                        'zeroline': False,
+                        'minor': {'showgrid': False},
+                    },
+                    'yaxis': {
+                        'showgrid': False,
+                        'zeroline': False,
+                        'minor': {'showgrid': False},
+                    },
+                },
+            },
+            'xaxis': {
+                'title': {'text': 'Date', 'font': {'size': 12}},
+                'type': 'date',
+                'tickformat': '%b %Y',
+                'fixedrange': True,
+                'autorange': False,
+                'range': [range_start, range_end],
+                'showgrid': False,
+                'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)',
+                'minor': {'showgrid': False},
+                'showline': True,
+                'linecolor': '#dbdbdb',
+                'mirror': False,
+            },
+            'yaxis': {
+                'title': {'text': 'Score', 'font': {'size': 12}},
+                'fixedrange': True,
+                'autorange': False,
+                'range': [round(y_range[0], 6), round(y_range[1], 6)],
+                'showgrid': False,
+                'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)',
+                'minor': {'showgrid': False},
+                'showline': True,
+                'linecolor': '#dbdbdb',
+            },
+            'showlegend': False,
+        },
+        'config': {
+            'responsive': True,
+            'displayModeBar': True,
+            'scrollZoom': False,
+            'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+        },
+    }
+
+
+def _build_rank_trend_plot_json(dates, ranks, range_start, range_end, shade_region=None):
+    """Build Plotly JSON for rank trend. Rank 1 = best (shown at top via reversed Y)."""
+    valid = [r for r in ranks if r is not None and (not isinstance(r, float) or not np.isnan(r))]
+    if not valid:
+        valid = [1]
+    rank_max = max(valid)
+    rank_min = min(valid)
+    padding = max(1, (rank_max - rank_min) * 0.1) if rank_max > rank_min else 1
+    y_range = [rank_max + padding, max(1, rank_min - padding)]
+    shapes = []
+    if shade_region and len(shade_region) == 2:
+        x0, x1 = shade_region
+        shapes.append({
+            'type': 'rect',
+            'xref': 'x',
+            'yref': 'paper',
+            'x0': x0,
+            'x1': x1,
+            'y0': 0,
+            'y1': 1,
+            'fillcolor': 'rgba(50, 115, 220, 0.06)',
+            'line': {'width': 0},
+            'layer': 'below',
+        })
+    shapes.append({
+        'type': 'line',
+        'xref': 'x',
+        'yref': 'paper',
+        'x0': dates[-1],
+        'x1': dates[-1],
+        'y0': 0,
+        'y1': 1,
+        'line': {'color': 'rgba(72, 72, 72, 0.35)', 'width': 1, 'dash': 'dot'},
+        'layer': 'below',
+    })
+    annotations = [
+        {
+            'x': dates[-1],
+            'y': ranks[-1],
+            'text': 'Latest',
+            'showarrow': True,
+            'arrowhead': 2,
+            'arrowsize': 0.6,
+            'arrowwidth': 1,
+            'arrowcolor': '#3273dc',
+            'ax': 0,
+            'ay': -36,
+            'bgcolor': 'rgba(255, 255, 255, 0.92)',
+            'bordercolor': '#3273dc',
+            'borderwidth': 1,
+            'font': {'size': 11, 'color': '#363636'},
+        },
+    ]
+    if len(dates) > 1:
+        annotations.append({
+            'x': dates[0],
+            'y': ranks[0],
+            'text': 'Start',
+            'showarrow': True,
+            'arrowhead': 2,
+            'arrowsize': 0.5,
+            'arrowwidth': 1,
+            'arrowcolor': '#7a7a7a',
+            'ax': 0,
+            'ay': 32,
+            'bgcolor': 'rgba(255, 255, 255, 0.9)',
+            'bordercolor': '#dbdbdb',
+            'borderwidth': 1,
+            'font': {'size': 10, 'color': '#4a4a4a'},
+        })
+    rank_custom = [[i] for i in range(len(dates))]
+    return {
+        'data': [{
+            'x': dates,
+            'y': ranks,
+            'type': 'scatter',
+            'mode': 'lines',
+            'hoveron': 'points',
+            'name': 'rank',
+            'customdata': rank_custom,
+            'line': {
+                'color': '#3273dc',
+                'width': 2.5,
+                'shape': 'spline',
+                'smoothing': 1.3,
+            },
+            'hovertemplate': '<b>%{x|%d %b %Y}</b><br>Rank: %{y:.0f}<extra></extra>',
+        }],
+        'layout': {
+            'height': 400,
+            'autosize': True,
+            'paper_bgcolor': '#ffffff',
+            'plot_bgcolor': '#fafafa',
+            'margin': {'t': 24, 'r': 16, 'b': 48, 'l': 56},
+            'shapes': shapes,
+            'annotations': annotations,
+            'hovermode': 'closest',
+            'template': {
+                'layout': {
+                    'xaxis': {
+                        'showgrid': False,
+                        'zeroline': False,
+                        'minor': {'showgrid': False},
+                    },
+                    'yaxis': {
+                        'showgrid': False,
+                        'zeroline': False,
+                        'minor': {'showgrid': False},
+                    },
+                },
+            },
+            'xaxis': {
+                'title': {'text': 'Date', 'font': {'size': 12}},
+                'type': 'date',
+                'tickformat': '%b %Y',
+                'fixedrange': True,
+                'autorange': False,
+                'range': [range_start, range_end],
+                'showgrid': False,
+                'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)',
+                'minor': {'showgrid': False},
+                'showline': True,
+                'linecolor': '#dbdbdb',
+            },
+            'yaxis': {
+                'title': {'text': 'Rank (1 = best)', 'font': {'size': 12}},
+                'fixedrange': True,
+                'autorange': False,
+                'range': [round(y_range[0], 2), round(y_range[1], 2)],
+                'showgrid': False,
+                'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)',
+                'minor': {'showgrid': False},
+                'showline': True,
+                'linecolor': '#dbdbdb',
+            },
+            'showlegend': False,
+        },
+        'config': {
+            'responsive': True,
+            'displayModeBar': True,
+            'scrollZoom': False,
+            'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+        },
+    }
+
+
+def _monthly_dates_until_today(last_date_str):
+    """Yield month-end date strings from the month after last_date_str through current month, then today if later."""
+    last_ts = pd.Timestamp(last_date_str)
+    today_ts = pd.Timestamp(date.today())
+    out = []
+    cur = last_ts + pd.offsets.MonthBegin(1)  # first day of next month
+    while cur <= today_ts:
+        month_end_ts = cur + pd.offsets.MonthEnd(0)
+        if month_end_ts > today_ts:
+            out.append(today_ts.strftime('%Y-%m-%d'))
+            break
+        out.append(month_end_ts.strftime('%Y-%m-%d'))
+        cur = cur + pd.offsets.MonthBegin(1)
+    if not out and last_ts < today_ts:
+        out.append(today_ts.strftime('%Y-%m-%d'))
+    return out
+
+
+def _wide_scores_and_rank_df(df, month_cols):
+    """Replace 0 with NaN, round scores; compute public rank per month (1 = best, ties skip)."""
+    wide_scores = df[['model_id'] + month_cols].copy()
+    for col in month_cols:
+        wide_scores[col] = wide_scores[col].replace(0.0, np.nan).round(2)
+    rank_df = wide_scores[['model_id']].copy()
+    for col in month_cols:
+        scores = wide_scores[col]
+        ranks = scores.rank(method='min', ascending=False, na_option='keep')
+        unique_ranks = sorted(ranks.dropna().unique())
+        rank_mapping = {}
+        current_rank = 1
+        for rank_val in unique_ranks:
+            num_tied = (ranks == rank_val).sum()
+            rank_mapping[rank_val] = current_rank
+            current_rank += num_tied
+        rank_df[col] = ranks.map(rank_mapping)
+    return wide_scores, rank_df
+
+
+def _load_score_trend_from_aggregated_csv(model_id):
+    """
+    Load all_aggregated_scores.csv and build score trend for one model.
+    CSV has model_id + month columns (YYYY-MM). Returns plot JSON or None.
+    """
+    path = os.path.join(os.path.dirname(__file__), 'all_aggregated_scores.csv')
+    if not os.path.isfile(path):
+        return None
+    try:
+        df = pd.read_csv(path)
+        if 'model_id' not in df.columns or df.empty:
+            return None
+        # Match model_id (CSV may have int or str)
+        row = df.loc[df['model_id'].astype(str) == str(model_id)]
+        if row.empty:
+            return None
+        # Month columns are everything except model_id
+        month_cols = [c for c in df.columns if c != 'model_id']
+        if not month_cols:
+            return None
+        series = row[month_cols].iloc[0]
+        valid = series.dropna()
+        if valid.empty:
+            return None
+        # Skip leading zeros (same as current logic)
+        start_idx = next((i for i, v in enumerate(valid.values) if v > 0), 0)
+        series = valid.iloc[start_idx:]
+        if series.empty:
+            return None
+        # Column names are YYYY-MM -> use month-end for date axis
+        dates = []
+        for col in series.index:
+            try:
+                ts = pd.Timestamp(str(col) + '-01') + pd.offsets.MonthEnd(0)
+                dates.append(ts.strftime('%Y-%m-%d'))
+            except Exception:
+                dates.append(str(col))
+        scores = [round(float(v), 6) for v in series.values]
+        if not dates or not scores:
+            return None
+        # Extend with monthly dots to current day (one point per month so the line has monthly dots)
+        today_str = date.today().strftime('%Y-%m-%d')
+        shade_region = None
+        if dates[-1] < today_str:
+            extra_dates = _monthly_dates_until_today(dates[-1])
+            if extra_dates:
+                shade_region = (extra_dates[0], today_str)
+                dates = list(dates) + extra_dates
+                scores = list(scores) + [scores[-1]] * len(extra_dates)
+        # X-axis: start from first month in CSV, end at current day
+        try:
+            first_ts = pd.Timestamp(str(month_cols[0]) + '-01') + pd.offsets.MonthEnd(0)
+            range_start = first_ts.strftime('%Y-%m-%d')
+            range_end = today_str
+        except Exception:
+            range_start = dates[0]
+            range_end = today_str
+        extra_default = []
+        if shade_region:
+            extra_default.append(
+                'Shaded band: months extended to today using the last known aggregate (flat carry-forward).'
+            )
+        edges = _load_month_benchmark_edges()
+        plot_json = _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=shade_region)
+        plot_json['trendMeta'] = _build_trend_meta(dates, scores, 'score', edges, extra_default_lines=extra_default)
+        return plot_json
+    except Exception:
+        return None
+
+
+def _load_and_build_score_trend(model_id, benchmarks, models, domain):
+    """
+    Build model's average_vision score trend for the plot from all_aggregated_scores.csv.
+    Single CSV read, no re-aggregation. Plot JSON includes trendMeta for hover attribution.
+    """
+    try:
+        if domain != 'vision':
+            return None
+        return _load_score_trend_from_aggregated_csv(model_id)
+    except Exception:
+        return None
+
+
+def _load_rank_trend_from_aggregated_csv(model_id):
+    """
+    Load all_aggregated_scores.csv, compute per-month ranks (same logic as aggregate_scores.ipynb),
+    and build rank trend plot for one model. Uses same CSV as score trend so no extra heavy work.
+    Returns plot JSON or None.
+    """
+    path = os.path.join(os.path.dirname(__file__), 'all_aggregated_scores.csv')
+    if not os.path.isfile(path):
+        return None
+    try:
+        df = pd.read_csv(path)
+        if 'model_id' not in df.columns or df.empty:
+            return None
+        month_cols = [c for c in df.columns if c != 'model_id']
+        if not month_cols:
+            return None
+        # Match model
+        row = df.loc[df['model_id'].astype(str) == str(model_id)]
+        if row.empty:
+            return None
+        wide_scores, rank_df = _wide_scores_and_rank_df(df, month_cols)
+        # Extract this model's rank series
+        model_idx = row.index[0]
+        series = rank_df.loc[model_idx, month_cols]
+        valid = series.dropna()
+        if valid.empty:
+            return None
+        # Only include months where we have a rank (same idea as score: skip leading invalid if desired; here we have ranks)
+        dates = []
+        ranks_out = []
+        for col in valid.index:
+            try:
+                ts = pd.Timestamp(str(col) + '-01') + pd.offsets.MonthEnd(0)
+                dates.append(ts.strftime('%Y-%m-%d'))
+            except Exception:
+                dates.append(str(col))
+            r = valid[col]
+            ranks_out.append(int(r) if pd.notna(r) and not (isinstance(r, float) and np.isnan(r)) else None)
+        # Filter out None if any
+        pairs = [(d, r) for d, r in zip(dates, ranks_out) if r is not None]
+        if not pairs:
+            return None
+        dates, ranks_out = zip(*pairs)
+        dates = list(dates)
+        ranks_out = list(ranks_out)
+        # Extend with monthly dots to current day (one point per month, same as scores)
+        today_str = date.today().strftime('%Y-%m-%d')
+        shade_region = None
+        if dates[-1] < today_str:
+            extra_dates = _monthly_dates_until_today(dates[-1])
+            if extra_dates:
+                shade_region = (extra_dates[0], today_str)
+                dates = dates + extra_dates
+                ranks_out = ranks_out + [ranks_out[-1]] * len(extra_dates)
+        try:
+            first_ts = pd.Timestamp(str(month_cols[0]) + '-01') + pd.offsets.MonthEnd(0)
+            range_start = first_ts.strftime('%Y-%m-%d')
+            range_end = today_str
+        except Exception:
+            range_start = dates[0]
+            range_end = today_str
+        extra_default = []
+        if shade_region:
+            extra_default.append(
+                'Shaded band: months extended to today using the last known rank (flat carry-forward).'
+            )
+        edges = _load_month_benchmark_edges()
+        plot_json = _build_rank_trend_plot_json(dates, ranks_out, range_start, range_end, shade_region=shade_region)
+        plot_json['trendMeta'] = _build_trend_meta(
+            dates,
+            ranks_out,
+            'rank',
+            edges,
+            extra_default_lines=extra_default,
+            rank_explain={
+                'model_id': model_id,
+                'rank_df': rank_df,
+                'wide_scores': wide_scores,
+            },
+        )
+        return plot_json
+    except Exception:
+        return None
+
+def _load_and_build_rank_trend(model_id, domain):
+    """Build rank-over-time trend from all_aggregated_scores.csv. Plot JSON includes trendMeta."""
+    try:
+        if domain != 'vision':
+            return None
+        return _load_rank_trend_from_aggregated_csv(model_id)
+    except Exception:
+        return None
 
 def enrich_model_scores_with_benchmarks(model, benchmarks):
     """
@@ -258,11 +1055,10 @@ def view(request, id: int, domain: str):
     start_time = time()
     # Check if user is logged in
     user = request.user if request.user.is_authenticated else None
-    
+
     # Try to get model object
     try:
         model_obj = FinalModelContext.objects.get(model_id=id, domain=domain)
-        
         # Check if user has permission to view this model
         if not model_obj.public:
             if not user:
@@ -277,10 +1073,8 @@ def view(request, id: int, domain: str):
 
         # Get context for model cards - always use global public context for consistent ranking
         context = get_context(user=None, domain=domain, show_public=True)
-        
         # The public models are now cached within the user context
         public_models = context.get('public_models', context['models']) if user else context['models']
-        
         # Determine if submission details should be visible (in most/possible all cases, owner == submitter, and therefore, this can be condensed)
         is_owner = False
         if user and model_obj.user:
@@ -288,19 +1082,15 @@ def view(request, id: int, domain: str):
                 is_owner = user.id == model_obj.user.get('id')
             else:
                 is_owner = user.id == model_obj.user.id
-        
         is_submitter = False
         if user and model_obj.submitter:
             if isinstance(model_obj.submitter, dict):
                 is_submitter = user.id == model_obj.submitter.get('id')
             else:
                 is_submitter = user.id == model_obj.submitter.id
-        
         submission_details_visible = user and (user.is_superuser or is_owner or is_submitter)
-        
         # Get the visibility level for this model
         visibility = get_visibility(model_obj, user)
-        
         # Try to find the model in the context
         filtered_models = [model for model in context['models'] if model.model_id == id]
 
@@ -367,6 +1157,15 @@ def view(request, id: int, domain: str):
                 'parent_identifier': parent_id,
                 'meta': meta if meta else None,
             }
+        # Score / rank trend plots (trendMeta for sidebar lives inside plot JSON)
+        score_trend_plot_json = _load_and_build_score_trend(
+            model.model_id, context['benchmarks'], context['models'], domain
+        )
+        rank_trend_plot_json = _load_and_build_rank_trend(model.model_id, domain)
+        _score_tm = (score_trend_plot_json or {}).get('trendMeta') or {}
+        _rank_tm = (rank_trend_plot_json or {}).get('trendMeta') or {}
+        score_trend_sidebar_lines = _score_tm.get('defaultLines') or []
+        rank_trend_sidebar_lines = _rank_tm.get('defaultLines') or []
 
         # Prepare the context for the template
         model_context = {
@@ -385,15 +1184,17 @@ def view(request, id: int, domain: str):
             'visual_degrees': model.visual_degrees,
             'layers': getattr(model, 'layers', None),
             'benchmark_lookup': benchmark_lookup,
+            'score_trend_plot_json': score_trend_plot_json,
+            'rank_trend_plot_json': rank_trend_plot_json,
+            'score_trend_sidebar_lines': score_trend_sidebar_lines,
+            'rank_trend_sidebar_lines': rank_trend_sidebar_lines,
         }
-        
         # Set thread-local benchmark lookup for template filters
         _thread_locals.benchmark_lookup = benchmark_lookup
 
         end_time = time()
         print(f"Total time taken to get model context: {end_time - start_time} seconds")
         return render(request, 'benchmarks/model.html', model_context)
-        
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
 
@@ -406,7 +1207,6 @@ def add_benchmark_rankings(model, reference_context):
     """
     # Get all public models for comparison
     public_models = [m for m in reference_context['models'] if getattr(m, 'public', True)]
-    
     # Pre-compute scores for each benchmark to avoid repeated lookups
     benchmark_scores = {}
     for other_model in public_models + [model]:
@@ -428,16 +1228,13 @@ def add_benchmark_rankings(model, reference_context):
                 benchmark_scores[versioned_id].append(score_float)
             except (ValueError, TypeError):
                 continue
-    
     # Process scores
     for score in model.scores:
         if not isinstance(score, dict):
             continue
-            
         versioned_benchmark_id = score.get('versioned_benchmark_identifier')
         if not versioned_benchmark_id:
             continue
-        
         # If score is invalid, set rank to be same as invalid score
         # i.e., if score is empty, rank is empty. If score is "X", rank is "X", if score is nan, rank is nan
         # Allows us to preserve invalid state in the rank and avoid casting invalid score to float
@@ -445,7 +1242,6 @@ def add_benchmark_rankings(model, reference_context):
         if score_ceiled in ('', 'X', None):
             score['rank'] = score_ceiled
             continue
-            
         try:
             score_value = float(score_ceiled)
             all_scores = benchmark_scores.get(versioned_benchmark_id, [])
@@ -696,22 +1492,18 @@ def order_layers(layers_dict):
     """Order layers in the specific sequence: V1, V2, V4, IT"""
     if not layers_dict:
         return []
-        
     # Define the desired order
     desired_order = ['V1', 'V2', 'V4', 'IT']
     # Create a list to store ordered items
     ordered_items = []
-    
     # First add items in the desired order
     for key in desired_order:
         if key in layers_dict:
             ordered_items.append((key, layers_dict[key]))
-    
     # Then add any remaining items that weren't in the desired order
     for key, value in layers_dict.items():
         if key not in desired_order:
             ordered_items.append((key, value))
-            
     return ordered_items
 
 @register.filter
