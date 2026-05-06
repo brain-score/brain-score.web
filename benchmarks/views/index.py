@@ -152,9 +152,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
     # PERF: Commented out - builds DataFrames that are not currently used by any view/template.
     # Takes ~1.7s due to 52k individual pd.to_datetime calls. Re-enable when wayback feature needs this.
-    model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
-    model_score_df.to_csv("score_df.csv")
-    model_timestamp_df.to_csv("timestamp_df.csv")
+    # model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
 
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT

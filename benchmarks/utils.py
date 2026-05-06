@@ -390,6 +390,59 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
     })
 
 
+# Process-local lock so concurrent triggers don't both kick off recompute.
+_score_trends_lock = __import__('threading').Lock()
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def refresh_score_trends(request: HttpRequest, domain: str = "vision") -> JsonResponse:
+    """Token-gated trigger for the ``recompute_score_trends`` management command.
+
+    Runs the command in a daemon thread so the request returns immediately.
+    Reuses ``settings.CACHE_REFRESH_TOKEN`` (the same token as ``refresh_cache``).
+
+    Usage:
+        POST /benchmarks/refresh_score_trends/vision/?token=...&mode=latest
+        POST /benchmarks/refresh_score_trends/vision/?token=...&mode=backfill&since=2024-01
+    """
+    if request.GET.get('token') != settings.CACHE_REFRESH_TOKEN:
+        logger.warning(f"Invalid token attempt for score-trend refresh: {domain}")
+        return JsonResponse({"status": "error", "message": "Invalid authentication token"}, status=403)
+
+    mode = request.GET.get('mode', 'latest')
+    if mode not in ('latest', 'backfill'):
+        return JsonResponse({"status": "error", "message": f"invalid mode={mode}"}, status=400)
+    since = request.GET.get('since')
+
+    if not _score_trends_lock.acquire(blocking=False):
+        return JsonResponse({"status": "already_running", "domain": domain}, status=409)
+
+    def _run():
+        try:
+            from django.core.management import call_command
+            kwargs = {'domain': domain, 'mode': mode}
+            if since:
+                kwargs['since'] = since
+            logger.info(f"recompute_score_trends start domain={domain} mode={mode} since={since}")
+            call_command('recompute_score_trends', **kwargs)
+            logger.info(f"recompute_score_trends done domain={domain}")
+        except Exception:
+            logger.exception("recompute_score_trends failed")
+        finally:
+            _score_trends_lock.release()
+
+    import threading
+    threading.Thread(target=_run, daemon=True).start()
+
+    return JsonResponse({
+        "status": "started",
+        "domain": domain,
+        "mode": mode,
+        "since": since,
+    }, status=202)
+
+
 def trigger_recache(domain: str = "vision", rebuild: bool = True, base_url: str = "http://localhost:8000") -> dict:
     """
     Trigger cache refresh via code. Not used in production.

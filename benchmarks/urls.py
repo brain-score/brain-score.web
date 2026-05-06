@@ -4,7 +4,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from .views import index, user, model, competition2022, competition2024, compare, community, \
     release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
-from .utils import show_token, refresh_cache
+from .utils import show_token, refresh_cache, refresh_score_trends
 
 
 # all currently supported Brain-Score domains:
@@ -84,6 +84,7 @@ non_domain_urls = [
 
     # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
+    path('refresh_score_trends/<str:domain>/', refresh_score_trends, name='refresh_score_trends'),
     
     # Report issue endpoint
     path('report-issue/', report_issue.report_issue_view, name='report_issue'),

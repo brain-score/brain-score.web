@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 import threading
 from datetime import date
 import numpy as np
@@ -12,7 +10,7 @@ from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
 from .leaderboard import get_ag_grid_context
-from ..models import FinalModelContext, BenchmarkMeta
+from ..models import FinalModelContext, BenchmarkMeta, ModelMonthlyAggregate, MonthBenchmarkEdge, Model
 from time import time
 _logger = logging.getLogger(__name__)
 
@@ -51,24 +49,71 @@ GRAY_COLORS = [
 COLOR_NONE = '#e0e1e2'
 GAMMA = 0.5
 
-_MONTH_BENCHMARK_EDGES = None
+# Module-level snapshot caches. Keyed on (domain, max-month) so a recompute that
+# moves the latest month forward causes natural cache misses across workers.
+_TREND_CACHE = {}
+_TREND_CACHE_LOCK = threading.Lock()
 
 
-def _load_month_benchmark_edges():
+def _trend_cache_key(domain):
+    """Latest month present in ``ModelMonthlyAggregate`` for the domain (cache key seed)."""
+    return (ModelMonthlyAggregate.objects
+            .filter(domain=domain)
+            .order_by('-month')
+            .values_list('month', flat=True)
+            .first())
+
+
+def _trend_cache_get(kind, domain):
+    max_month = _trend_cache_key(domain)
+    return _TREND_CACHE.get((kind, domain, max_month)), max_month
+
+
+def _trend_cache_put(kind, domain, max_month, value):
+    with _TREND_CACHE_LOCK:
+        # Drop any prior entries for this (kind, domain) so the dict stays bounded.
+        for k in list(_TREND_CACHE):
+            if k[0] == kind and k[1] == domain:
+                del _TREND_CACHE[k]
+        _TREND_CACHE[(kind, domain, max_month)] = value
+
+
+def _load_month_benchmark_edges(domain='vision'):
     """Maps 'YYYY-MM|YYYY-MM' -> list of leaf benchmark ids newly eligible."""
-    global _MONTH_BENCHMARK_EDGES
-    if _MONTH_BENCHMARK_EDGES is not None:
-        return _MONTH_BENCHMARK_EDGES
-    path = os.path.join(os.path.dirname(__file__), 'month_benchmark_edges.json')
-    if not os.path.isfile(path):
-        _MONTH_BENCHMARK_EDGES = {}
-        return _MONTH_BENCHMARK_EDGES
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            _MONTH_BENCHMARK_EDGES = json.load(f).get('edges', {})
-    except Exception:
-        _MONTH_BENCHMARK_EDGES = {}
-    return _MONTH_BENCHMARK_EDGES
+    cached, max_month = _trend_cache_get('edges', domain)
+    if cached is not None:
+        return cached
+    rows = MonthBenchmarkEdge.objects.filter(domain=domain).values(
+        'month_prev', 'month_curr', 'leaf_benchmarks',
+    )
+    edges = {f"{r['month_prev']}|{r['month_curr']}": list(r['leaf_benchmarks'] or []) for r in rows}
+    _trend_cache_put('edges', domain, max_month, edges)
+    return edges
+
+
+def _load_all_months(domain):
+    """All months that exist in ModelMonthlyAggregate for the domain, ordered ascending."""
+    return sorted({m for m in ModelMonthlyAggregate.objects
+                   .filter(domain=domain)
+                   .values_list('month', flat=True).distinct()})
+
+
+def _load_public_wide_scores(domain):
+    """Wide scores frame (model_id col + one column per 'YYYY-MM' month) for *public* models only."""
+    cached, max_month = _trend_cache_get('public_wide', domain)
+    if cached is not None:
+        return cached.copy(), max_month
+    qs = (ModelMonthlyAggregate.objects
+          .filter(domain=domain, model__public=True)
+          .values('model_id', 'month', 'score'))
+    df = pd.DataFrame(list(qs))
+    if df.empty:
+        wide = pd.DataFrame(columns=['model_id'])
+    else:
+        wide = df.pivot(index='model_id', columns='month', values='score').reset_index()
+        wide.columns.name = None
+    _trend_cache_put('public_wide', domain, max_month, wide)
+    return wide.copy(), max_month
 
 
 def _date_to_month_key(date_str):
@@ -668,31 +713,26 @@ def _wide_scores_and_rank_df(df, month_cols):
     return wide_scores, rank_df
 
 
-def _load_score_trend_from_aggregated_csv(model_id):
-    """
-    Load all_aggregated_scores.csv and build score trend for one model.
-    CSV has model_id + month columns (YYYY-MM). Returns plot JSON or None.
-    """
-    path = os.path.join(os.path.dirname(__file__), 'all_aggregated_scores.csv')
-    if not os.path.isfile(path):
-        return None
+def _load_score_trend_from_db(model_id, domain):
+    """Build score trend for one model from ``ModelMonthlyAggregate``. Returns plot JSON or None."""
     try:
-        df = pd.read_csv(path)
-        if 'model_id' not in df.columns or df.empty:
+        rows = list(ModelMonthlyAggregate.objects
+                    .filter(model_id=model_id, domain=domain)
+                    .order_by('month')
+                    .values('month', 'score'))
+        if not rows:
             return None
-        # Match model_id (CSV may have int or str)
-        row = df.loc[df['model_id'].astype(str) == str(model_id)]
-        if row.empty:
-            return None
-        # Month columns are everything except model_id
-        month_cols = [c for c in df.columns if c != 'model_id']
+        month_cols = _load_all_months(domain)
         if not month_cols:
             return None
-        series = row[month_cols].iloc[0]
+        series = pd.Series(
+            {r['month']: r['score'] for r in rows},
+            dtype='float64',
+        )
         valid = series.dropna()
         if valid.empty:
             return None
-        # Skip leading zeros (same as current logic)
+        # Skip leading zeros (same as the previous CSV-backed logic).
         start_idx = next((i for i, v in enumerate(valid.values) if v > 0), 0)
         series = valid.iloc[start_idx:]
         if series.empty:
@@ -730,49 +770,56 @@ def _load_score_trend_from_aggregated_csv(model_id):
             extra_default.append(
                 'Shaded band: months extended to today using the last known aggregate (flat carry-forward).'
             )
-        edges = _load_month_benchmark_edges()
+        edges = _load_month_benchmark_edges(domain)
         plot_json = _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=shade_region)
         plot_json['trendMeta'] = _build_trend_meta(dates, scores, 'score', edges, extra_default_lines=extra_default)
         return plot_json
     except Exception:
+        _logger.exception('score trend build failed for model %s domain %s', model_id, domain)
         return None
 
 
 def _load_and_build_score_trend(model_id, benchmarks, models, domain):
-    """
-    Build model's average_vision score trend for the plot from all_aggregated_scores.csv.
-    Single CSV read, no re-aggregation. Plot JSON includes trendMeta for hover attribution.
-    """
+    """Build model's average_<domain> score trend from ``ModelMonthlyAggregate``."""
     try:
         if domain != 'vision':
             return None
-        return _load_score_trend_from_aggregated_csv(model_id)
+        return _load_score_trend_from_db(model_id, domain)
     except Exception:
+        _logger.exception('score trend wrapper failed for model %s domain %s', model_id, domain)
         return None
 
 
-def _load_rank_trend_from_aggregated_csv(model_id):
+def _load_rank_trend_from_db(model_id, domain, focal_is_public):
+    """Compute per-month ranks against the public model pool.
+
+    Private focal models are temporarily added to the public-only frame so they get a
+    rank against the public pool, but never appear as named entries in another model's
+    rank-transition sidebar (the focal-exclusion in ``_rank_transition_model_lines``
+    handles that, and other private models are simply not in the frame).
     """
-    Load all_aggregated_scores.csv, compute per-month ranks (same logic as aggregate_scores.ipynb),
-    and build rank trend plot for one model. Uses same CSV as score trend so no extra heavy work.
-    Returns plot JSON or None.
-    """
-    path = os.path.join(os.path.dirname(__file__), 'all_aggregated_scores.csv')
-    if not os.path.isfile(path):
-        return None
     try:
-        df = pd.read_csv(path)
-        if 'model_id' not in df.columns or df.empty:
-            return None
-        month_cols = [c for c in df.columns if c != 'model_id']
+        public_wide, _max_month = _load_public_wide_scores(domain)
+        month_cols = [c for c in public_wide.columns if c != 'model_id']
         if not month_cols:
             return None
-        # Match model
+        df = public_wide
+        if not focal_is_public:
+            focal_rows = list(ModelMonthlyAggregate.objects
+                              .filter(model_id=model_id, domain=domain)
+                              .values('month', 'score'))
+            if not focal_rows:
+                return None
+            focal = {'model_id': model_id}
+            focal.update({m: None for m in month_cols})
+            for r in focal_rows:
+                if r['month'] in focal:
+                    focal[r['month']] = r['score']
+            df = pd.concat([public_wide, pd.DataFrame([focal])], ignore_index=True)
         row = df.loc[df['model_id'].astype(str) == str(model_id)]
         if row.empty:
             return None
         wide_scores, rank_df = _wide_scores_and_rank_df(df, month_cols)
-        # Extract this model's rank series
         model_idx = row.index[0]
         series = rank_df.loc[model_idx, month_cols]
         valid = series.dropna()
@@ -817,7 +864,7 @@ def _load_rank_trend_from_aggregated_csv(model_id):
             extra_default.append(
                 'Shaded band: months extended to today using the last known rank (flat carry-forward).'
             )
-        edges = _load_month_benchmark_edges()
+        edges = _load_month_benchmark_edges(domain)
         plot_json = _build_rank_trend_plot_json(dates, ranks_out, range_start, range_end, shade_region=shade_region)
         plot_json['trendMeta'] = _build_trend_meta(
             dates,
@@ -833,15 +880,17 @@ def _load_rank_trend_from_aggregated_csv(model_id):
         )
         return plot_json
     except Exception:
+        _logger.exception('rank trend build failed for model %s domain %s', model_id, domain)
         return None
 
-def _load_and_build_rank_trend(model_id, domain):
-    """Build rank-over-time trend from all_aggregated_scores.csv. Plot JSON includes trendMeta."""
+def _load_and_build_rank_trend(model_id, domain, focal_is_public=True):
+    """Build rank-over-time trend from ``ModelMonthlyAggregate``. Plot JSON includes trendMeta."""
     try:
         if domain != 'vision':
             return None
-        return _load_rank_trend_from_aggregated_csv(model_id)
+        return _load_rank_trend_from_db(model_id, domain, focal_is_public)
     except Exception:
+        _logger.exception('rank trend wrapper failed for model %s domain %s', model_id, domain)
         return None
 
 def enrich_model_scores_with_benchmarks(model, benchmarks):
@@ -1161,7 +1210,9 @@ def view(request, id: int, domain: str):
         score_trend_plot_json = _load_and_build_score_trend(
             model.model_id, context['benchmarks'], context['models'], domain
         )
-        rank_trend_plot_json = _load_and_build_rank_trend(model.model_id, domain)
+        rank_trend_plot_json = _load_and_build_rank_trend(
+            model.model_id, domain, focal_is_public=bool(getattr(model_obj, 'public', False)),
+        )
         _score_tm = (score_trend_plot_json or {}).get('trendMeta') or {}
         _rank_tm = (rank_trend_plot_json or {}).get('trendMeta') or {}
         score_trend_sidebar_lines = _score_tm.get('defaultLines') or []
@@ -1192,8 +1243,7 @@ def view(request, id: int, domain: str):
         # Set thread-local benchmark lookup for template filters
         _thread_locals.benchmark_lookup = benchmark_lookup
 
-        end_time = time()
-        print(f"Total time taken to get model context: {end_time - start_time} seconds")
+        _logger.debug("model context build time: %.3fs", time() - start_time)
         return render(request, 'benchmarks/model.html', model_context)
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
