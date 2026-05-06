@@ -1,15 +1,36 @@
 // Cell renderers for leaderboard grid
 
-// ModelCellRenderer - displays model name with link and submitter info
+// ModelCellRenderer - displays model name with link, inline runnable icon, and submitter info
 function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'model-cell';
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'model-name-row';
+
   const a = document.createElement('a');
   const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
   a.href = `/model/${domain}/${params.value.id}`;
   a.textContent = params.value.name;
-  this.eGui.appendChild(a);
+  nameRow.appendChild(a);
+
+  const runnable = params.data?.metadata?.runnable;
+  const runnableIcon = document.createElement('span');
+  runnableIcon.className = 'runnable-inline-icon';
+  if (runnable === true) {
+    runnableIcon.classList.add('runnable-inline-green');
+    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.FUNCTIONAL;
+  } else if (runnable === false) {
+    runnableIcon.classList.add('runnable-inline-red');
+    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.ISSUES;
+  } else {
+    runnableIcon.classList.add('runnable-inline-grey');
+    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.UNKNOWN;
+  }
+  nameRow.appendChild(runnableIcon);
+
+  this.eGui.appendChild(nameRow);
 
   if (params.value.submitter) {
     const contributor = document.createElement('div');
@@ -22,27 +43,25 @@ ModelCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
 
-// RunnableStatusCellRenderer - displays colored status circles
-function RunnableStatusCellRenderer() {}
-RunnableStatusCellRenderer.prototype.init = function(params) {
+// GroupStatusCellRenderer - displays colored circle for group membership
+function GroupStatusCellRenderer() {}
+GroupStatusCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
-  this.eGui.className = 'runnable-status-cell';
-  
-  const runnable = params.data?.metadata?.runnable;
+  this.eGui.className = 'group-status-cell';
+
+  const group = params.data?.metadata?.group;
   const statusIcon = document.createElement('div');
-  statusIcon.className = 'runnable-status-icon';
-  
-  if (runnable === true) {
-    statusIcon.classList.add(window.LeaderboardConstants.RUNNABLE_STATUS.FUNCTIONAL);
-  } else if (runnable === false) {
-    statusIcon.classList.add(window.LeaderboardConstants.RUNNABLE_STATUS.ISSUES);
+  statusIcon.className = 'group-status-icon';
+
+  if (group) {
+    statusIcon.classList.add(window.LeaderboardConstants.GROUP_STATUS.MEMBER);
   } else {
-    statusIcon.classList.add(window.LeaderboardConstants.RUNNABLE_STATUS.UNKNOWN);
+    statusIcon.classList.add(window.LeaderboardConstants.GROUP_STATUS.NON_MEMBER);
   }
-  
+
   this.eGui.appendChild(statusIcon);
 };
-RunnableStatusCellRenderer.prototype.getGui = function() {
+GroupStatusCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
 
@@ -110,36 +129,31 @@ ScoreCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
 
-// Helper function to create runnable status column definition
-function createRunnableStatusColumn() {
+// Helper function to create group status column definition
+function createGroupStatusColumn() {
   return {
     headerName: '',
-    field: 'runnable_status',
-    colId: 'runnable_status',
+    field: 'group_status',
+    colId: 'group_status',
     lockPosition: true,
     suppressMovable: true,
-    width: window.LeaderboardConstants.COLUMN_WIDTHS.RUNNABLE_STATUS,
-    cellRenderer: 'runnableStatusCellRenderer',
+    width: window.LeaderboardConstants.COLUMN_WIDTHS.GROUP_STATUS,
+    cellRenderer: 'groupStatusCellRenderer',
     sortable: true,
     filter: false,
     headerClass: 'centered-header',
     valueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      return runnable === true ? 
-        window.LeaderboardConstants.RUNNABLE_SORT_VALUES.FUNCTIONAL : 
-        runnable === false ? 
-          window.LeaderboardConstants.RUNNABLE_SORT_VALUES.ISSUES : 
-          window.LeaderboardConstants.RUNNABLE_SORT_VALUES.UNKNOWN;
+      const group = params.data?.metadata?.group;
+      return group ?
+        window.LeaderboardConstants.GROUP_SORT_VALUES.MEMBER :
+        window.LeaderboardConstants.GROUP_SORT_VALUES.NON_MEMBER;
     },
     tooltipValueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      if (runnable === true) {
-        return window.LeaderboardConstants.RUNNABLE_TOOLTIPS.FUNCTIONAL;
-      } else if (runnable === false) {
-        return window.LeaderboardConstants.RUNNABLE_TOOLTIPS.ISSUES;
-      } else {
-        return window.LeaderboardConstants.RUNNABLE_TOOLTIPS.UNKNOWN;
+      const group = params.data?.metadata?.group;
+      if (group) {
+        return window.LeaderboardConstants.GROUP_TOOLTIPS.MEMBER;
       }
+      return window.LeaderboardConstants.GROUP_TOOLTIPS.NON_MEMBER;
     }
   };
 }
@@ -275,9 +289,9 @@ function modelComparator(a, b) {
 // Export functions for use by other modules
 window.LeaderboardRenderers = {
   ModelCellRenderer,
-  RunnableStatusCellRenderer,
+  GroupStatusCellRenderer,
   ScoreCellRenderer,
   PublicToggleCellRenderer,
-  createRunnableStatusColumn,
+  createGroupStatusColumn,
   modelComparator
 };

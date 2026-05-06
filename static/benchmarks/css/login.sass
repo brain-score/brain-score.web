@@ -9,6 +9,7 @@ $brainscore_blue: #47B7DE
   border-radius: 40px
   background-size: cover
   background-repeat: no-repeat
+  background-position: center
 
 .container.login::before
   content: ""
@@ -83,10 +84,10 @@ p.create-account, p.create-account a
     margin-left: 20px
 
 
-// FHD
+// FHD - keep brain background centered at all viewport sizes
 @media (max-width: 1407px)
    .container.login
-    background-position-x: -150px
+    background-position: center
 
 //wrong password error message effect:
 @keyframes fadeOut

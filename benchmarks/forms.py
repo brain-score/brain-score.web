@@ -67,6 +67,15 @@ class UploadPlaceHolder(forms.Form):
     config_file = forms.FileField(help_text='Required')
 
 
+MODEL_SIZE_CHOICES = [
+    ('', 'Select model size...'),
+    ('small', 'Small (< 3B params)'),
+    ('medium', 'Medium (3–13B params)'),
+    ('large', 'Large (13–50B params)'),
+    ('xlarge', 'XLarge (50–120B params)'),
+]
+
+
 class UploadFileForm(forms.Form):
     zip_file = forms.FileField(label="", help_text='Required')
     public = forms.BooleanField(
@@ -76,6 +85,13 @@ class UploadFileForm(forms.Form):
         widget=ToggleSwitchWidget(),
         help_text='Toggle if you want the results of your submitted models included in the '
                   'public ranking.',
+    )
+    model_size = forms.ChoiceField(
+        label='Model Size:',
+        choices=MODEL_SIZE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'style': 'width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;'}),
+        help_text='Approximate parameter count of your model.',
     )
 
     class Meta:

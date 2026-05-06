@@ -25,7 +25,24 @@
                 {% csrf_token %}
 
                 {% for field in form %}
-                    {% if field.name == 'public' %}
+                    {% if field.name == 'model_size' %}
+                        {% if domain == 'language' %}
+                        <div class="special" style="margin-top: 20px;">
+                            {{ field.label_tag }} <span style="color: #e74c3c; font-weight: bold;">*</span>
+                            {{ field }}
+                            <small style="color: #6b7280; font-size: 11px; margin-top: 4px; display: block;">
+                                Required — select the approximate parameter count of your model.
+                                <span id="model-size-info-icon" style="position: relative; cursor: help; border-bottom: 1px dotted #6b7280;" title="16-bit or lower quantization is required for models with more than 50B parameters. Brain-Score is currently limited to models under 130B parameters. If you have a larger model you would like scored, please contact the team." onclick="var tip=document.getElementById('model-size-tooltip'); tip.style.display = tip.style.display === 'block' ? 'none' : 'block';">ⓘ</span>
+                                <span id="model-size-tooltip" style="display: none; margin-top: 6px; padding: 8px 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; color: #333; line-height: 1.4;">
+                                    16-bit or lower quantization is required for models with more than 50B parameters. Brain-Score is currently limited to models under 130B parameters. If you have a larger model you would like scored, please contact the team.
+                                </span>
+                            </small>
+                            {% for error in field.errors %}
+                                <p style="color: red">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    {% elif field.name == 'public' %}
                     <div class="special" style="margin-top: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
                         {{ field.label_tag }}{{ field }}
                     </div>

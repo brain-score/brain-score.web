@@ -232,8 +232,8 @@ function updateColumnVisibility() {
   allColumns.forEach(column => {
     const colId = column.getColId();
 
-    // Skip non-benchmark columns (including runnable status)
-    if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
+    // Skip non-benchmark columns (including group status)
+    if (['model', 'rank', 'group_status', 'filtered_score'].includes(colId)) {
       return;
     }
 

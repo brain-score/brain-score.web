@@ -218,6 +218,13 @@ class Submission(models.Model):
 
 
 class Model(models.Model):
+    class Group:
+        REFERENCE = 'reference'
+        TOP10_2024 = 'top10_2024'
+        BEST_NEURAL = 'best_neural'
+        BEST_BEHAVIORAL = 'best_behavioral'
+        GLOBAL_SCORE = 'global_score'
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -227,6 +234,7 @@ class Model(models.Model):
     public = models.BooleanField(default=False)
     competition = models.CharField(max_length=200, default=None, null=True)
     domain = models.CharField(max_length=200, default="vision")
+    group = models.CharField(max_length=50, default=None, null=True)
 
     def __repr__(self):
         return generic_repr(self)

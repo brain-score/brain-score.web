@@ -209,7 +209,7 @@ function computeBenchmarkMinMax(rowData, columnDefs) {
 
   // Get all benchmark column IDs (exclude rank, model, etc.)
   const benchmarkIds = columnDefs
-    .filter(col => col.field !== 'rank' && col.field !== 'model' && col.field !== 'runnable_status' && col.field !== 'filtered_score' && col.field !== 'public_toggle')
+    .filter(col => col.field !== 'rank' && col.field !== 'model' && col.field !== 'group_status' && col.field !== 'filtered_score' && col.field !== 'public_toggle')
     .map(col => col.field);
 
   benchmarkIds.forEach(benchmarkId => {

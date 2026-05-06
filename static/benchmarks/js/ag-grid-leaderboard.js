@@ -32,11 +32,32 @@ function ModelCellRenderer() {}
 ModelCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
   this.eGui.className = 'model-cell';
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'model-name-row';
+
   const a = document.createElement('a');
   const domain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
   a.href = `/model/${domain}/${params.value.id}`;
   a.textContent = params.value.name;
-  this.eGui.appendChild(a);
+  nameRow.appendChild(a);
+
+  const runnable = params.data?.metadata?.runnable;
+  const runnableIcon = document.createElement('span');
+  runnableIcon.className = 'runnable-inline-icon';
+  if (runnable === true) {
+    runnableIcon.classList.add('runnable-inline-green');
+    runnableIcon.title = 'Model code is functional and runnable';
+  } else if (runnable === false) {
+    runnableIcon.classList.add('runnable-inline-red');
+    runnableIcon.title = 'Model code has known issues or is non-functional';
+  } else {
+    runnableIcon.classList.add('runnable-inline-grey');
+    runnableIcon.title = 'Model code status unknown';
+  }
+  nameRow.appendChild(runnableIcon);
+
+  this.eGui.appendChild(nameRow);
 
   // add submitter
   if (params.value.submitter) {
@@ -51,59 +72,54 @@ ModelCellRenderer.prototype.getGui = function() {
 };
 
 // =====================================
-// RUNNABLE STATUS FUNCTIONALITY
+// GROUP STATUS FUNCTIONALITY
 // =====================================
 
-// RunnableStatusCellRenderer - displays colored status circles with tooltips
-function RunnableStatusCellRenderer() {}
-RunnableStatusCellRenderer.prototype.init = function(params) {
+// GroupStatusCellRenderer - displays colored circle for group membership
+function GroupStatusCellRenderer() {}
+GroupStatusCellRenderer.prototype.init = function(params) {
   this.eGui = document.createElement('div');
-  this.eGui.className = 'runnable-status-cell';
-  
-  const runnable = params.data?.metadata?.runnable;
+  this.eGui.className = 'group-status-cell';
+
+  const group = params.data?.metadata?.group;
   const statusIcon = document.createElement('div');
-  statusIcon.className = 'runnable-status-icon';
-  
-  if (runnable === true) {
-    statusIcon.classList.add('runnable-green');
-  } else if (runnable === false) {
-    statusIcon.classList.add('runnable-red');
+  statusIcon.className = 'group-status-icon';
+
+  if (group) {
+    statusIcon.classList.add('group-blue');
   } else {
-    statusIcon.classList.add('runnable-grey');
+    statusIcon.classList.add('group-grey');
   }
-  
+
   this.eGui.appendChild(statusIcon);
 };
-RunnableStatusCellRenderer.prototype.getGui = function() {
+GroupStatusCellRenderer.prototype.getGui = function() {
   return this.eGui;
 };
 
-// Helper function to create runnable status column definition
-function createRunnableStatusColumn() {
+// Helper function to create group status column definition
+function createGroupStatusColumn() {
   return {
     headerName: '',
-    field: 'runnable_status',
-    colId: 'runnable_status',
+    field: 'group_status',
+    colId: 'group_status',
     lockPosition: true,
     suppressMovable: true,
     width: 60,
-    cellRenderer: 'runnableStatusCellRenderer',
+    cellRenderer: 'groupStatusCellRenderer',
     sortable: true,
     filter: false,
     headerClass: 'centered-header',
     valueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      return runnable === true ? 2 : runnable === false ? 1 : 0; // For sorting: green > red > grey
+      const group = params.data?.metadata?.group;
+      return group ? 1 : 0;
     },
     tooltipValueGetter: params => {
-      const runnable = params.data?.metadata?.runnable;
-      if (runnable === true) {
-        return 'Model code is functional and runnable';
-      } else if (runnable === false) {
-        return 'Model code has known issues or is non-functional';
-      } else {
-        return 'Model code status unknown';
+      const group = params.data?.metadata?.group;
+      if (group) {
+        return 'Curated model (part of a benchmark group)';
       }
+      return 'Community-submitted model';
     }
   };
 }
@@ -333,8 +349,8 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     }
   });
 
-  // Add the runnable status column
-  const runnableStatusColumn = createRunnableStatusColumn();
+  // Add the group status column
+  const groupStatusColumn = createGroupStatusColumn();
 
   // Add the filtered score column
   const filteredScoreColumn = {
@@ -390,12 +406,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
     
     // Insert pinned columns at the beginning in correct order: Rank, Model, Status, Filtered Score
     columnDefs.unshift(filteredScoreColumn);
-    columnDefs.unshift(runnableStatusColumn);
+    columnDefs.unshift(groupStatusColumn);
     columnDefs.unshift(modelColumn);
     columnDefs.unshift(rankColumn);
   } else {
     // Fallback: just append the new columns
-    columnDefs.push(runnableStatusColumn, filteredScoreColumn);
+    columnDefs.push(groupStatusColumn, filteredScoreColumn);
   }
 
   const gridOptions = {
@@ -409,8 +425,8 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       modelCellRenderer: ModelCellRenderer,
       scoreCellRenderer: ScoreCellRenderer,
 
-      // Runnable status functionality
-      runnableStatusCellRenderer: RunnableStatusCellRenderer,
+      // Group status functionality
+      groupStatusCellRenderer: GroupStatusCellRenderer,
       
       // Public toggle functionality
       publicToggleCellRenderer: window.LeaderboardRenderers?.PublicToggleCellRenderer,
@@ -454,7 +470,7 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
       // Ensure filtered score column starts hidden and global score is sorted descending
       params.api.applyColumnState({
         state: [
-          { colId: 'runnable_status', hide: false },
+          { colId: 'group_status', hide: false },
           { colId: 'filtered_score', hide: true },
           { colId: `average_${(window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision'}_v0`, hide: false, sort: 'desc' }
         ]
@@ -537,8 +553,8 @@ function setInitialColumnState() {
   allColumns.forEach(column => {
     const colId = column.getColId();
     
-    // Always show these columns (including runnable status)
-    if (['model', 'rank', 'runnable_status', 'filtered_score'].includes(colId)) {
+    // Always show these columns (including group status)
+    if (['model', 'rank', 'group_status', 'filtered_score'].includes(colId)) {
       initialColumnState.push({ colId: colId, hide: false });
       return;
     }
