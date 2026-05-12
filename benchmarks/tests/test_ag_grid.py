@@ -1277,3 +1277,35 @@ class TestExtraFunctionality:
         assert actual_ranks == [str(r) for r in expected_ranks], f"Ranks: {actual_ranks}"
         assert actual_models == expected_models, f"Models: {actual_models}"
         assert actual_scores == expected_scores, f"Scores: {actual_scores}"
+
+    def test_search_is_persisted_in_url_with_logical_operators(self, page):
+        """
+        Verifies that typing into the search bar writes the query (including
+        OR/AND/NOT operators) to the URL `search` param, and that loading a URL
+        with that param restores the search input value on the new page.
+        """
+        # Reset filters to default
+        page.click('#advancedFilterBtn')
+        page.evaluate("resetAllFilters()")
+        page.wait_for_timeout(2000)
+
+        # Type a query containing all supported logical operators
+        query = "alexnet OR resnet AND NOT ferguson"
+        search_input = page.locator('#modelSearchInput')
+        search_input.fill(query)
+        page.wait_for_timeout(1000)
+
+        # URL should now carry the search verbatim (URLSearchParams encodes spaces as '+')
+        current_url = page.url
+        assert "search=" in current_url, f"`search` param missing from URL: {current_url}"
+        decoded = page.evaluate(
+            "new URLSearchParams(window.location.search).get('search')"
+        )
+        assert decoded == query, f"Round-trip query mismatch: got {decoded!r}"
+
+        # Load the same URL fresh; the search input should be restored.
+        page.goto(current_url)
+        page.wait_for_selector('.ag-root', timeout=60000)
+        page.wait_for_timeout(2000)
+        restored = page.locator('#modelSearchInput').input_value()
+        assert restored == query, f"Search not restored from URL: got {restored!r}"

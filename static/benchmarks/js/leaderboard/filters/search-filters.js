@@ -82,10 +82,15 @@ function setupSearchHandlers() {
       const searchText = this.value;
       // Parse search query with logical operators (OR, AND, NOT)
       window.currentSearchQuery = parseSearchQuery(searchText);
-      
+
       // Use external filter for logical search
       if (typeof window.globalGridApi.onFilterChanged === 'function') {
         window.globalGridApi.onFilterChanged();
+      }
+
+      // Persist search to URL so the leaderboard view is shareable
+      if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
+        window.LeaderboardURLState.updateURLFromFilters();
       }
     });
   }
@@ -100,6 +105,9 @@ function clearSearch() {
       window.globalGridApi.setFilterModel(null);
       window.globalGridApi.setGridOption('isExternalFilterPresent', () => false);
       window.globalGridApi.onFilterChanged();
+    }
+    if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
+      window.LeaderboardURLState.updateURLFromFilters();
     }
   }
 }
