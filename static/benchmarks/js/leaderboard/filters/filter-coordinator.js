@@ -450,21 +450,20 @@ function applyWaybackTimestampFilter(rowData) {
           };
         }
 
-        // Step 3: Check if the score existed at wayback date (timestamp filter)
-        // Only apply timestamp filtering to CURRENT version scores
-        // Historical versions are already validated by their version_valid_from/to range
-        if (activeVersionData === scoreObj) {
-          const ts = newRow[key].timestamp;
-          if (ts) {
-            try {
-              const scoreTime = new Date(ts).getTime();
-              if (scoreTime > waybackMs) {
-                // Score was submitted after wayback date
-                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
-              }
-            } catch (error) {
+        // Apply timestamp gate uniformly. ``version_valid_from`` only tracks
+        // when the benchmark version went live, not when *this model* was
+        // measured against it, so historical-version blocks must also be
+        // gated to avoid back-dating later measurements onto earlier wayback
+        // dates.
+        const ts = newRow[key].timestamp;
+        if (ts) {
+          try {
+            const scoreTime = new Date(ts).getTime();
+            if (scoreTime > waybackMs) {
               newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
             }
+          } catch (error) {
+            newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
           }
         }
       } else {

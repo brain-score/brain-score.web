@@ -74,6 +74,28 @@
         });
     }
 
+    /* Keep ``gd`` sized through window resizes AND container visibility
+       flips. A plot initialized while hidden caches a 0-width layout and
+       then disagrees with its sibling tab on width unless re-measured. */
+    function wireResponsiveResize(gd) {
+        if (!gd) return;
+        var resize = function () {
+            if (typeof Plotly === 'undefined') return;
+            if (!gd.isConnected || !gd.offsetWidth) return;
+            try {
+                // Plotly v3 sometimes ignores a bare Plots.resize; force a
+                // re-measurement via relayout(autosize).
+                Plotly.relayout(gd, {autosize: true});
+                Plotly.Plots.resize(gd);
+            } catch (e) { /* swallow */ }
+        };
+        window.addEventListener('resize', resize);
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(resize).observe(gd);
+        }
+        requestAnimationFrame(resize);
+    }
+
     function renderAttributionList(ulEl, lines) {
         if (!ulEl) return;
         ulEl.innerHTML = '';
@@ -287,7 +309,7 @@
                 '<span class="is-size-7 has-text-weight-semibold" style="line-height:1.35">Reason hold</span>' +
                 '<button type="button" class="button is-small is-light js-trend-reason-release">Release</button>' +
                 '</div>' +
-                '<p class="is-size-7 has-text-grey mb-0 mt-1">Pinned until you click Release or press Esc — hover does not change this text.</p>'
+                '<p class="is-size-7 has-text-grey mb-0 mt-1">Pinned until Release is clicked or Esc is pressed — hover does not change this text.</p>'
             );
             aside.insertBefore(holdBar, aside.firstChild);
             holdBar.querySelector('.js-trend-reason-release').addEventListener('click', function (e) {
@@ -378,7 +400,9 @@
                     scoreSpec.config || { responsive: true }
                 );
                 function attachScore() {
-                    wireTrendMeta(document.getElementById('model-score-trend-plot'), scoreSpec);
+                    var gd = document.getElementById('model-score-trend-plot');
+                    wireTrendMeta(gd, scoreSpec);
+                    wireResponsiveResize(gd);
                 }
                 if (scorePromise && typeof scorePromise.then === 'function') {
                     scorePromise.then(attachScore).catch(attachScore);
@@ -410,6 +434,7 @@
                  * so Plotly attaches hover after the plot is visible.
                  */
                 function attachRankHoverOnLoadIfNotDeferred() {
+                    wireResponsiveResize(document.getElementById('model-rank-trend-plot'));
                     if (shouldDeferRankHoverFromServer()) return;
                     if (window.__brainScoreRankHoverWired) return;
                     var gd = document.getElementById('model-rank-trend-plot');

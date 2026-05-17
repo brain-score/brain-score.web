@@ -152,32 +152,27 @@ def _load_tree_df(domain):
     return pd.DataFrame(rows)
 
 
-def _load_score_and_timestamp_dfs(domain):
+def _load_score_long(domain):
+    """Long-format Score rows: one row per measurement. Multiple rows per
+    ``(model_id, benchmark)`` are kept so ``_aggregate_for_month_fast`` can
+    pick the latest score with ``end_timestamp <= month_end`` -- a benchmark
+    re-scored after a past month's end must still surface its earlier value
+    in that month."""
     qs = (Score.objects
           .filter(benchmark__benchmark_type__domain=domain,
-                  benchmark__benchmark_type__visible=True)
+                  benchmark__benchmark_type__visible=True,
+                  end_timestamp__isnull=False,
+                  score_ceiled__isnull=False)
           .values('model_id',
                   'benchmark__benchmark_type__identifier',
                   'score_ceiled',
                   'end_timestamp'))
     df = pd.DataFrame(list(qs))
     if df.empty:
-        empty = pd.DataFrame().set_index(pd.Index([], name='model_id'))
-        return empty, empty
+        return df
     df.rename(columns={'benchmark__benchmark_type__identifier': 'benchmark'}, inplace=True)
-    # Drop placeholder rows (NULL end_timestamp) before deduplication. Multiple Score
-    # rows can exist per (model, benchmark_type) due to multiple BenchmarkInstance
-    # versions; older runs leave NULL-score, NULL-timestamp placeholders. Without this
-    # filter, sort_values puts NaT at the tail and keep='last' picks the placeholder
-    # over the real scored row, silently dropping the score from the aggregate
-    # (mv_final_model_context joins via BenchmarkInstance and isn't affected).
-    df = df.dropna(subset=['end_timestamp'])
-    df = df.sort_values('end_timestamp').drop_duplicates(['model_id', 'benchmark'], keep='last')
-    score_df = df.pivot(index='model_id', columns='benchmark', values='score_ceiled')
-    timestamp_df = df.pivot(index='model_id', columns='benchmark', values='end_timestamp')
-    for col in timestamp_df.columns:
-        timestamp_df[col] = pd.to_datetime(timestamp_df[col], errors='coerce', utc=True)
-    return score_df, timestamp_df
+    df['end_timestamp'] = pd.to_datetime(df['end_timestamp'], errors='coerce', utc=True)
+    return df.dropna(subset=['end_timestamp'])
 
 
 # ---------------------------------------------------------------------
@@ -235,23 +230,27 @@ def _depth_groups(tree_df):
 
 
 def _aggregate_for_month_fast(
-    score_df, timestamp_df, benchmark_cols, parent_child_map,
+    long_df, all_model_ids, parent_child_map,
     depth_groups, max_depth, month_end, agg_root,
 ):
-    """Returns ({model_id: agg_root_score}, leaf_set_present_at_month, per_model_coverage).
+    """Returns ``({model_id: agg_root_score}, leaf_set, per_model_coverage)`` for
+    the month ending at ``month_end``. Missing models in either dict are filled
+    with ``0.0`` / ``frozenset()`` so downstream callers see consistent keys."""
+    empty_scores = {mid: 0.0 for mid in all_model_ids}
+    empty_cov = {mid: frozenset() for mid in all_model_ids}
+    if long_df is None or long_df.empty:
+        return empty_scores, set(), empty_cov
 
-    ``per_model_coverage`` is ``{model_id: frozenset(leaf_ids)}`` -- the leaves
-    each model was scored on by ``month_end``. Used downstream to compute the
-    per-model coverage delta vs. prior month (drives the "you newly scored on
-    existing benchmarks" narrative).
-    """
-    cols = [c for c in benchmark_cols if c in timestamp_df.columns]
-    if not cols:
-        return {mid: 0.0 for mid in score_df.index}, set(), {mid: frozenset() for mid in score_df.index}
+    sub = long_df[long_df['end_timestamp'] <= pd.Timestamp(month_end)]
+    if sub.empty:
+        return empty_scores, set(), empty_cov
 
-    valid_mask = timestamp_df[cols].le(month_end)  # NaT comparisons are False -- safe
-    leaves_present = valid_mask.any(axis=0)
-    existing = {col for col in cols if bool(leaves_present.get(col, False))}
+    sub = sub.sort_values('end_timestamp').drop_duplicates(['model_id', 'benchmark'], keep='last')
+    score_df = sub.pivot(index='model_id', columns='benchmark', values='score_ceiled')
+    benchmark_cols = list(score_df.columns)
+
+    leaves_present = score_df.notna().any(axis=0)
+    existing = {col for col in benchmark_cols if bool(leaves_present.get(col, False))}
     for depth in range(max_depth, -1, -1):
         for ident in depth_groups.get(depth, []):
             if ident in existing:
@@ -261,10 +260,10 @@ def _aggregate_for_month_fast(
                     existing.add(ident)
                     break
 
-    leaf_existing = [c for c in cols if c in existing]
+    leaf_existing = [c for c in benchmark_cols if c in existing]
     if leaf_existing:
-        agg_df = score_df[leaf_existing].where(valid_mask[leaf_existing]).copy()
-        leaf_mask = valid_mask[leaf_existing]
+        agg_df = score_df[leaf_existing].copy()
+        leaf_mask = score_df[leaf_existing].notna()
         per_model_coverage = {
             mid: frozenset(leaf_mask.columns[leaf_mask.loc[mid].to_numpy()])
             for mid in leaf_mask.index
@@ -275,7 +274,7 @@ def _aggregate_for_month_fast(
 
     for depth in range(max_depth, -1, -1):
         for ident in depth_groups.get(depth, []):
-            if ident not in existing or ident in cols:
+            if ident not in existing or ident in benchmark_cols:
                 continue
             children = [c for c in parent_child_map.get(ident, []) if c in existing]
             children = [c for c in children if c in agg_df.columns]
@@ -283,10 +282,15 @@ def _aggregate_for_month_fast(
                 continue
             agg_df[ident] = agg_df[children].fillna(0).mean(axis=1)
 
-    leaf_set = {b for b in existing if b in cols}
+    leaf_set = {b for b in existing if b in benchmark_cols}
+    out_scores = dict(empty_scores)
+    out_coverage = dict(empty_cov)
     if agg_root in agg_df.columns:
-        return agg_df[agg_root].fillna(0.0).to_dict(), leaf_set, per_model_coverage
-    return {mid: 0.0 for mid in score_df.index}, leaf_set, per_model_coverage
+        for mid, val in agg_df[agg_root].fillna(0.0).items():
+            out_scores[mid] = float(val)
+    for mid, cov in per_model_coverage.items():
+        out_coverage[mid] = cov
+    return out_scores, leaf_set, out_coverage
 
 
 # ---------------------------------------------------------------------
@@ -319,18 +323,18 @@ class Command(BaseCommand):
         self.stdout.write('Loading tree and scores from DB...', ending=' ')
         self.stdout.flush()
         tree_df = _load_tree_df(domain)
-        score_df, timestamp_df = _load_score_and_timestamp_dfs(domain)
-        if score_df.empty:
+        long_df = _load_score_long(domain)
+        if long_df.empty:
             self.stdout.write(self.style.WARNING(f'\nNo scores for domain={domain}.'))
             return
-        benchmark_cols = score_df.columns.tolist()
+        all_model_ids = sorted(long_df['model_id'].unique().tolist())
         parent_child_map, _child_parent_map, _identifier_to_depth = build_tree_maps(tree_df)
         depth_groups = _depth_groups(tree_df)
         max_depth = int(tree_df['depth'].max())
         agg_root = f'average_{domain}'
         self.stdout.write(
-            f'loaded ({len(score_df)} models, {len(benchmark_cols)} leaf benchmarks, '
-            f'tree depth={max_depth}).'
+            f'loaded ({len(all_model_ids)} models, {long_df["benchmark"].nunique()} leaf benchmarks, '
+            f'{len(long_df)} score rows, tree depth={max_depth}).'
         )
 
         leaf_set_by_month = {}
@@ -341,7 +345,7 @@ class Command(BaseCommand):
         # against. Without this, mode='latest' would always emit empty deltas.
         boundary = (pd.Timestamp(months[0] + '-01') - pd.offsets.MonthBegin(1)).strftime('%Y-%m')
         _, b_leaves, b_coverage = _aggregate_for_month_fast(
-            score_df, timestamp_df, benchmark_cols, parent_child_map,
+            long_df, all_model_ids, parent_child_map,
             depth_groups, max_depth, _month_end_utc(boundary), agg_root,
         )
         leaf_set_by_month[boundary] = b_leaves
@@ -352,7 +356,7 @@ class Command(BaseCommand):
             t0 = datetime.now(timezone.utc)
             month_end = _month_end_utc(month_str)
             scores_by_model, leaf_set, coverage = _aggregate_for_month_fast(
-                score_df, timestamp_df, benchmark_cols, parent_child_map,
+                long_df, all_model_ids, parent_child_map,
                 depth_groups, max_depth, month_end, agg_root,
             )
             leaf_set_by_month[month_str] = leaf_set
@@ -396,11 +400,9 @@ class Command(BaseCommand):
                 )
         self.stdout.write('done.')
 
-        # Bust the view's in-process snapshot cache. Without this, workers keep
-        # serving the pre-recompute snapshot until ``max(month)`` advances --
-        # which doesn't happen on same-month reruns (the May 17 case).
-        # Per-process only: see ``clear_trend_cache`` docstring.
-        from benchmarks.views.model import clear_trend_cache
+        # Same-month reruns don't change ``max(month)``, so the snapshot cache
+        # wouldn't naturally invalidate without an explicit bust.
+        from benchmarks.views.model_trends import clear_trend_cache
         clear_trend_cache()
 
         self.stdout.write(self.style.SUCCESS(

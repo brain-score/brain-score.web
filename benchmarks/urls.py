@@ -114,6 +114,8 @@ for domain in supported_domains:
         path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
         path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
         path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
+        path(f'{domain}/compare/trend_pair/', partial(compare.trend_pair, domain=domain),
+             name=f'{domain}-compare-trend-pair'),
     ]
     all_domain_urls.append(domain_urls)
 

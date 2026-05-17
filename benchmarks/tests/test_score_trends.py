@@ -13,14 +13,15 @@ from django.test import RequestFactory
 
 from .test_views import BaseTestCase
 from benchmarks.management.commands.recompute_score_trends import (
-    _aggregate_for_month_fast, _depth_groups, _load_score_and_timestamp_dfs,
+    _aggregate_for_month_fast, _depth_groups, _load_score_long,
     aggregate_benchmarks, build_expected_benchmarks, build_tree_maps,
     filter_scores_for_month, initialize_leaf_scores, normalize_score,
 )
 from benchmarks.utils import refresh_score_trends
-from benchmarks.views import model as model_views
-from benchmarks.views.model import (
-    _rank_transition_model_lines, _wide_scores_and_rank_df, clear_trend_cache,
+from benchmarks.views import model_trends as model_views
+from benchmarks.views.model_trends import (
+    clear_trend_cache, load_and_build_comparison_trend,
+    rank_transition_model_lines, wide_scores_and_rank_df,
 )
 
 
@@ -95,76 +96,96 @@ class TestAggregationHelpers(BaseTestCase):
         self.assertEqual(set(filtered[2]), set())
 
     def test_wide_scores_matches_leaderboard_double_rounding(self):
-        """Trend-plot ranking must mirror the leaderboard's *double-rounding*:
-        the MV pre-rounds every score to 3dp (mv.sql:1076), then
-        ``_rank_models`` rounds to 2dp HALF_UP. A single 2dp HALF_UP on the
-        raw float disagrees on values like 0.3849... (lifted to 0.385 by the
-        MV's 3dp step, then to 0.39 by the leaderboard's 2dp step -- but
-        rounded directly to 0.38 by a one-shot 2dp). Regression: an earlier
-        single-pass HALF_UP caused the trend plot to rank effnetb1 at 38
-        while the leaderboard had it at 40."""
+        """Trend ranking must mirror the leaderboard's two-pass HALF_UP rounding
+        (3dp in the MV, then 2dp in ``_rank_models``). A one-shot 2dp on the raw
+        float would disagree on .xx5 boundary values like 0.3849..."""
         df = pd.DataFrame({
             'model_id': [1, 2, 3, 4],
-            # raw MMA floats; 0.3849 is the boundary case that desynced ranks
             '2026-05': [0.385, 0.395, 0.380, 0.3849052968509248],
         })
-        wide, _rank = _wide_scores_and_rank_df(df, ['2026-05'])
-        # 0.3849... -> 3dp 0.385 -> 2dp 0.39  (matches MV path)
-        # A one-shot 2dp HALF_UP would have left it at 0.38.
+        wide, _rank = wide_scores_and_rank_df(df, ['2026-05'])
+        # 0.3849... -> 3dp 0.385 -> 2dp 0.39 (matches MV); one-shot 2dp gives 0.38.
         self.assertAlmostEqual(float(wide.loc[wide.model_id == 4, '2026-05'].iloc[0]), 0.39)
-        # Sanity: clean boundary values still round as expected.
         self.assertAlmostEqual(float(wide.loc[wide.model_id == 1, '2026-05'].iloc[0]), 0.39)
         self.assertAlmostEqual(float(wide.loc[wide.model_id == 2, '2026-05'].iloc[0]), 0.40)
         self.assertAlmostEqual(float(wide.loc[wide.model_id == 3, '2026-05'].iloc[0]), 0.38)
 
-    def test_load_score_dfs_drops_null_timestamp_placeholders(self):
-        """Multiple Score rows per (model, benchmark_type) can exist (different
-        BenchmarkInstance versions); older runs leave NULL-score, NULL-timestamp
-        placeholders alongside the real scored row. Regression: a prior
-        ``sort_values + keep='last'`` was picking the placeholder over the real
-        score and silently dropping it from the aggregate (this caused trend-plot
-        scores to diverge from the leaderboard MV for affected models)."""
+    def test_load_score_long_drops_null_score_or_timestamp(self):
         fake_rows = [
-            # Two NULL placeholders + one real score for (model 1, benchmark X).
             {'model_id': 1, 'benchmark__benchmark_type__identifier': 'leaf_x',
              'score_ceiled': None, 'end_timestamp': None},
             {'model_id': 1, 'benchmark__benchmark_type__identifier': 'leaf_x',
              'score_ceiled': 0.7899, 'end_timestamp': pd.Timestamp('2026-03-25', tz='UTC')},
             {'model_id': 1, 'benchmark__benchmark_type__identifier': 'leaf_x',
-             'score_ceiled': None, 'end_timestamp': None},
+             'score_ceiled': None, 'end_timestamp': pd.Timestamp('2026-04-01', tz='UTC')},
         ]
 
         class _FakeQS:
             def filter(self, **_kw):
-                return self
+                # Mirror the real queryset's NOT-NULL guards so we exercise the same path.
+                return _FakeQS()
             def values(self, *_args):
-                return fake_rows
+                return [r for r in fake_rows
+                        if r['score_ceiled'] is not None and r['end_timestamp'] is not None]
 
         with patch('benchmarks.management.commands.recompute_score_trends.Score.objects', _FakeQS()):
-            score_df, ts_df = _load_score_and_timestamp_dfs('vision')
+            long_df = _load_score_long('vision')
 
-        self.assertAlmostEqual(float(score_df.loc[1, 'leaf_x']), 0.7899)
-        self.assertEqual(ts_df.loc[1, 'leaf_x'], pd.Timestamp('2026-03-25', tz='UTC'))
+        self.assertEqual(len(long_df), 1)
+        self.assertAlmostEqual(float(long_df.iloc[0]['score_ceiled']), 0.7899)
 
     def test_per_model_coverage_tracks_scored_leaves_at_month_end(self):
-        """``_aggregate_for_month_fast`` must return the exact leaves each model
-        was scored on by ``month_end``; this is the input to the per-model
-        coverage-completion delta written into ``ModelMonthlyAggregate``."""
+        """``coverage`` must list exactly the leaves each model was scored on
+        by ``month_end``; this feeds the per-model coverage-completion delta."""
         tree_df = _toy_tree()
-        score_df, timestamp_df = _toy_score_dfs()
         parent_child_map, _, _ = build_tree_maps(tree_df)
         depth_groups = _depth_groups(tree_df)
-        # By 2024-02-28 model 1 has been scored on leaf_x (Jan) and leaf_y (Feb);
-        # model 2 has nothing yet (its timestamps are March).
+        long_df = pd.DataFrame([
+            # By 2024-02-28 model 1 has been scored on leaf_x (Jan) and leaf_y (Feb);
+            # model 2 has nothing yet (its timestamps are March).
+            {'model_id': 1, 'benchmark': 'leaf_x', 'score_ceiled': 0.4,
+             'end_timestamp': pd.Timestamp('2024-01-15', tz='UTC')},
+            {'model_id': 1, 'benchmark': 'leaf_y', 'score_ceiled': 0.8,
+             'end_timestamp': pd.Timestamp('2024-02-15', tz='UTC')},
+            {'model_id': 2, 'benchmark': 'leaf_x', 'score_ceiled': 0.6,
+             'end_timestamp': pd.Timestamp('2024-03-20', tz='UTC')},
+            {'model_id': 2, 'benchmark': 'leaf_y', 'score_ceiled': 0.2,
+             'end_timestamp': pd.Timestamp('2024-03-20', tz='UTC')},
+        ])
         month_end = pd.Timestamp('2024-02-29', tz='UTC')
         _, leaf_set, coverage = _aggregate_for_month_fast(
-            score_df, timestamp_df, ['leaf_x', 'leaf_y'], parent_child_map,
+            long_df, [1, 2], parent_child_map,
             depth_groups, max_depth=2, month_end=month_end, agg_root='average_vision',
         )
         self.assertEqual(coverage[1], frozenset({'leaf_x', 'leaf_y'}))
         self.assertEqual(coverage[2], frozenset())
         # leaf_set is the *global* set (anyone scored), so leaf_y is in it.
         self.assertEqual(leaf_set, {'leaf_x', 'leaf_y'})
+
+    def test_per_month_picks_latest_score_within_window(self):
+        """A benchmark re-scored after ``month_end`` must still surface its
+        earlier value at that month; otherwise leaves silently drop out."""
+        tree_df = _toy_tree()
+        parent_child_map, _, _ = build_tree_maps(tree_df)
+        depth_groups = _depth_groups(tree_df)
+        long_df = pd.DataFrame([
+            {'model_id': 1, 'benchmark': 'leaf_x', 'score_ceiled': 0.9,
+             'end_timestamp': pd.Timestamp('2024-01-10', tz='UTC')},
+            # Replacement AFTER the month_end we test -- must NOT win.
+            {'model_id': 1, 'benchmark': 'leaf_x', 'score_ceiled': 0.2,
+             'end_timestamp': pd.Timestamp('2024-04-10', tz='UTC')},
+            {'model_id': 1, 'benchmark': 'leaf_y', 'score_ceiled': 0.5,
+             'end_timestamp': pd.Timestamp('2024-01-15', tz='UTC')},
+        ])
+        month_end = pd.Timestamp('2024-02-29', tz='UTC')
+        scores, leaf_set, coverage = _aggregate_for_month_fast(
+            long_df, [1], parent_child_map,
+            depth_groups, max_depth=2, month_end=month_end, agg_root='average_vision',
+        )
+        # average_vision should use leaf_x's January value 0.9, so (0.9 + 0.5)/2.
+        self.assertEqual(coverage[1], frozenset({'leaf_x', 'leaf_y'}))
+        self.assertEqual(leaf_set, {'leaf_x', 'leaf_y'})
+        self.assertAlmostEqual(scores[1], 0.7)
 
     def test_build_expected_propagates_leaves_to_root(self):
         tree_df = _toy_tree()
@@ -180,56 +201,169 @@ class TestAggregationHelpers(BaseTestCase):
         self.assertIn('average_vision', existing)
 
 
-class TestRankPrivacy(BaseTestCase):
-    """``_rank_transition_model_lines`` must never reference IDs not in the
-    supplied wide_scores frame -- which is how the view enforces public-only."""
+class TestRankNarrative(BaseTestCase):
+    """Count-only, third-person rank narrative."""
 
-    def test_rank_lines_only_reference_supplied_models(self):
-        wide_scores = pd.DataFrame({
-            'model_id': [1, 2, 3],
-            '2024-01': [0.5, 0.6, 0.4],
-            '2024-02': [0.5, 0.4, 0.6],  # model 2 dropped, model 3 climbed
-        })
-        _, rank_df = _wide_scores_and_rank_df(wide_scores, ['2024-01', '2024-02'])
-        # focal model 1 went from rank 2 -> rank 2 (tie hands)
-        # use focal model 2: rank 1 -> rank 3 (worsened)
-        lines = _rank_transition_model_lines(
+    @staticmethod
+    def _rank_df(rows, cols):
+        _, rank_df = wide_scores_and_rank_df(pd.DataFrame(rows), cols)
+        return rank_df
+
+    def test_rank_lines_summarise_counts_without_naming_models(self):
+        rank_df = self._rank_df(
+            {'model_id': [1, 2, 3], '2024-01': [0.5, 0.6, 0.4], '2024-02': [0.5, 0.4, 0.6]},
+            ['2024-01', '2024-02'],
+        )
+        # Focal model 2 went rank 1 -> 3; 2 other models beat it.
+        lines = rank_transition_model_lines(
             model_id=2, ym_prev='2024-01', ym_curr='2024-02',
-            rank1=1, rank2=3, rank_df=rank_df, wide_scores=wide_scores,
+            rank1=1, rank2=3, rank_df=rank_df,
         )
         joined = '\n'.join(lines)
-        # Must reference other supplied models only, never an ID outside the frame.
-        self.assertNotIn('#99', joined)
-        self.assertTrue('#1' in joined or '#3' in joined)  # at least one named
+        for needle in ('#1', '#3', '#99'):
+            self.assertNotIn(needle, joined)
+        self.assertEqual(len(lines), 1)
+        self.assertTrue(lines[0].startswith('Why this changed:'), lines[0])
+        self.assertIn('2 model(s) beat this model', lines[0])
+        self.assertNotIn(' you ', ' ' + lines[0].lower() + ' ')
+
+    def test_rank_lines_third_person_when_focal_improved(self):
+        rank_df = self._rank_df(
+            {'model_id': [1, 2, 3], '2024-01': [0.5, 0.4, 0.6], '2024-02': [0.4, 0.6, 0.5]},
+            ['2024-01', '2024-02'],
+        )
+        lines = rank_transition_model_lines(
+            model_id=2, ym_prev='2024-01', ym_curr='2024-02',
+            rank1=3, rank2=1, rank_df=rank_df,
+        )
+        self.assertTrue(lines and 'this model passed' in lines[0], lines)
 
     def test_clear_trend_cache_drops_all_entries(self):
-        """``recompute_score_trends`` relies on this to bust the in-process snapshot
-        after a same-month rerun (e.g. May 17 score updates) -- regressing this
-        means workers keep serving the pre-recompute plot until June begins."""
         model_views._TREND_CACHE[('public_wide', 'vision', '2026-05')] = 'sentinel'
         model_views._TREND_CACHE[('names', 'vision', '2026-05')] = 'sentinel'
         clear_trend_cache()
         self.assertEqual(model_views._TREND_CACHE, {})
 
     def test_headline_includes_coverage_completion_bit(self):
-        """When ``coverage_added_count`` is supplied, the ``Why this changed:``
-        headline must mention coverage completion -- this is the user-visible
-        signal that the model's aggregate moved because it newly got scored on
-        existing benchmarks (not because of new global benchmarks)."""
-        wide_scores = pd.DataFrame({
-            'model_id': [1, 2, 3],
-            '2024-01': [0.5, 0.6, 0.4],
-            '2024-02': [0.5, 0.4, 0.6],
-        })
-        _, rank_df = _wide_scores_and_rank_df(wide_scores, ['2024-01', '2024-02'])
-        lines = _rank_transition_model_lines(
+        rank_df = self._rank_df(
+            {'model_id': [1, 2, 3], '2024-01': [0.5, 0.6, 0.4], '2024-02': [0.5, 0.4, 0.6]},
+            ['2024-01', '2024-02'],
+        )
+        lines = rank_transition_model_lines(
             model_id=2, ym_prev='2024-01', ym_curr='2024-02',
-            rank1=1, rank2=3, rank_df=rank_df, wide_scores=wide_scores,
+            rank1=1, rank2=3, rank_df=rank_df,
             coverage_added_count=2,
         )
         headline = lines[0] if lines else ''
         self.assertTrue(headline.startswith('Why this changed:'), headline)
-        self.assertIn('newly scored on 2 existing benchmark(s)', headline)
+        self.assertIn('this model newly scored on 2 existing benchmark(s)', headline)
+
+
+class TestComparisonTrendNarrative(BaseTestCase):
+    """Hover narrative + default headline for the compare-page two-line trend."""
+
+    def _meta(self, kind, dates, va, vb, name_a='alpha', name_b='beta', **extras):
+        from benchmarks.views.model_trends import _build_comparison_trend_meta
+        return _build_comparison_trend_meta(dates, kind, va, vb, name_a, name_b, **extras)
+
+    def test_score_leader_call_out(self):
+        meta = self._meta('score', ['2026-04-30', '2026-05-31'],
+                          [0.50, 0.55], [0.30, 0.40])
+        lines = meta['points'][1]['lines']
+        self.assertIn('alpha = 0.5500, beta = 0.4000.', lines[0])
+        self.assertIn('alpha leads by 0.1500', lines[1])
+
+    def test_score_tied_says_tied(self):
+        meta = self._meta('score', ['2026-05-31'], [0.42], [0.42])
+        lines = meta['points'][0]['lines']
+        self.assertIn('alpha = 0.4200, beta = 0.4200.', lines[0])
+        self.assertIn('tied at this month', lines[1])
+
+    def test_handles_one_missing(self):
+        meta = self._meta('score', ['2026-05-31'], [None], [0.42])
+        lines = meta['points'][0]['lines']
+        self.assertIn('alpha had no data', lines[0])
+        self.assertIn('beta scored 0.4200', lines[0])
+
+    def test_rank_smaller_is_better(self):
+        meta = self._meta('rank', ['2026-05-31'], [3], [10])
+        lines = meta['points'][0]['lines']
+        self.assertIn('alpha = rank 3, beta = rank 10.', lines[0])
+        self.assertIn('alpha is 7 position(s) ahead of beta', lines[1])
+
+    def test_default_headline_summarises_endpoints(self):
+        meta = self._meta('score', ['2026-04-30', '2026-05-31'],
+                          [0.40, 0.50], [0.30, 0.45])
+        defaults = meta['defaultLines']
+        self.assertIn('alpha: 0.4000 → 0.5000 (+0.1000).', defaults)
+        self.assertIn('beta: 0.3000 → 0.4500 (+0.1500).', defaults)
+
+    def test_score_hover_lists_per_model_coverage(self):
+        meta = self._meta(
+            'score', ['2026-04-30', '2026-05-31'],
+            [0.40, 0.50], [0.30, 0.45],
+            coverage_a={'2026-05': ['Foo.IT', 'Foo.V1']},
+            coverage_b={'2026-05': ['Bar.IT']},
+        )
+        lines = meta['points'][1]['lines']
+        self.assertIn('alpha newly scored on 2 benchmark(s) this month:', lines)
+        self.assertIn('  • Foo.IT', lines)
+        self.assertIn('  • Foo.V1', lines)
+        self.assertIn('beta newly scored on 1 benchmark(s) this month:', lines)
+        self.assertIn('  • Bar.IT', lines)
+
+    def test_score_hover_states_no_coverage_change_when_empty(self):
+        meta = self._meta(
+            'score', ['2026-05-31'], [0.40], [0.42],
+            coverage_a={}, coverage_b={},
+        )
+        lines = meta['points'][0]['lines']
+        self.assertIn('Neither model added new benchmark scores this month.', lines)
+
+    def test_rank_hover_summarises_global_churn(self):
+        meta = self._meta(
+            'rank', ['2026-04-30', '2026-05-31'], [3, 5], [10, 4],
+            new_leaf_counts={'2026-05': 7},
+            new_model_counts={'2026-05': 12},
+        )
+        lines = meta['points'][1]['lines']
+        churn_line = next((l for l in lines if l.startswith('This month:')), '')
+        self.assertIn('7 new leaf benchmark(s) counted globally', churn_line)
+        self.assertIn('12 new model(s) entered the leaderboard', churn_line)
+
+    def test_rank_hover_says_no_churn_when_counts_zero(self):
+        meta = self._meta(
+            'rank', ['2026-05-31'], [3], [10],
+            new_leaf_counts={}, new_model_counts={},
+        )
+        lines = meta['points'][0]['lines']
+        self.assertIn('No new benchmarks or models added this month.', lines)
+
+
+class TestComparisonTrendEndpoint(BaseTestCase):
+    """``compare.trend_pair`` JSON endpoint."""
+
+    def setUp(self):
+        super().setUp()
+        self.factory = RequestFactory()
+
+    def _get(self, **params):
+        qs = '&'.join(f'{k}={v}' for k, v in params.items())
+        return self.factory.get(f'/vision/compare/trend_pair/?{qs}')
+
+    def test_rejects_non_integer_ids(self):
+        from benchmarks.views.compare import trend_pair
+        resp = trend_pair(self._get(mid_a='foo', mid_b='42'), domain='vision')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_same_model_returns_null_pair_without_aggregator(self):
+        from benchmarks.views.compare import trend_pair
+        with patch('benchmarks.views.compare.load_and_build_comparison_trend') as agg:
+            resp = trend_pair(self._get(mid_a='5', mid_b='5'), domain='vision')
+            self.assertEqual(resp.status_code, 200)
+            body = json.loads(resp.content)
+            self.assertEqual(body, {'score': None, 'rank': None})
+            agg.assert_not_called()
 
 
 class TestRefreshEndpoint(BaseTestCase):
