@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 import hashlib
 import logging
 import requests
+import threading
 from functools import wraps
 from django.core.cache import caches, cache as default_cache
 from django.conf import settings
@@ -391,7 +392,7 @@ def refresh_cache(request: HttpRequest, domain: str = "vision") -> JsonResponse:
 
 
 # Process-local lock so concurrent triggers don't both kick off recompute.
-_score_trends_lock = __import__('threading').Lock()
+_score_trends_lock = threading.Lock()
 
 
 @csrf_exempt
@@ -432,7 +433,6 @@ def refresh_score_trends(request: HttpRequest, domain: str = "vision") -> JsonRe
         finally:
             _score_trends_lock.release()
 
-    import threading
     threading.Thread(target=_run, daemon=True).start()
 
     return JsonResponse({

@@ -14,8 +14,7 @@ from django.test import RequestFactory
 from .test_views import BaseTestCase
 from benchmarks.management.commands.recompute_score_trends import (
     _aggregate_for_month_fast, _depth_groups, _load_score_long,
-    aggregate_benchmarks, build_expected_benchmarks, build_tree_maps,
-    filter_scores_for_month, initialize_leaf_scores, normalize_score,
+    build_parent_child_map,
 )
 from benchmarks.utils import refresh_score_trends
 from benchmarks.views import model_trends as model_views
@@ -41,59 +40,8 @@ def _toy_tree():
     ])
 
 
-def _toy_score_dfs():
-    score_df = pd.DataFrame({
-        'leaf_x': [0.4, 0.6],
-        'leaf_y': [0.8, 0.2],
-    }, index=pd.Index([1, 2], name='model_id'))
-    timestamp_df = pd.DataFrame({
-        'leaf_x': [pd.Timestamp('2024-01-15', tz='UTC'), pd.Timestamp('2024-03-20', tz='UTC')],
-        'leaf_y': [pd.Timestamp('2024-02-15', tz='UTC'), pd.Timestamp('2024-03-20', tz='UTC')],
-    }, index=pd.Index([1, 2], name='model_id'))
-    return score_df, timestamp_df
-
-
 class TestAggregationHelpers(BaseTestCase):
-    """Stand-alone unit tests for the notebook-ported aggregation logic."""
-
-    def test_normalize_score_handles_garbage(self):
-        self.assertEqual(normalize_score('X'), 0.0)
-        self.assertEqual(normalize_score('nan'), 0.0)
-        self.assertEqual(normalize_score(None), 0.0)
-        self.assertEqual(normalize_score(0.42), 0.42)
-
-    def test_aggregate_walks_tree_bottom_up(self):
-        tree_df = _toy_tree()
-        score_df, timestamp_df = _toy_score_dfs()
-        parent_child_map, _, _ = build_tree_maps(tree_df)
-        cutoff = pd.Timestamp('2024-04-01', tz='UTC')
-
-        filtered, _ = filter_scores_for_month(score_df, timestamp_df, ['leaf_x', 'leaf_y'], cutoff)
-        existing = build_expected_benchmarks(
-            ['leaf_x', 'leaf_y'], timestamp_df, tree_df,
-            parent_child_map, max_depth=2, month_end=cutoff,
-        )
-        agg = initialize_leaf_scores(score_df, ['leaf_x', 'leaf_y'], filtered)
-        agg = aggregate_benchmarks(
-            score_df, ['leaf_x', 'leaf_y'], tree_df, parent_child_map,
-            max_depth=2, existing_benchmarks=existing,
-            filtered_scores=filtered, aggregated=agg,
-        )
-        # mean(0.4, 0.8) and mean(0.6, 0.2)
-        self.assertAlmostEqual(agg[1]['group_a'], 0.6)
-        self.assertAlmostEqual(agg[1]['average_vision'], 0.6)
-        self.assertAlmostEqual(agg[2]['group_a'], 0.4)
-        self.assertAlmostEqual(agg[2]['average_vision'], 0.4)
-
-    def test_filter_scores_excludes_future_timestamps(self):
-        tree_df = _toy_tree()
-        score_df, timestamp_df = _toy_score_dfs()
-        parent_child_map, _, _ = build_tree_maps(tree_df)
-        cutoff = pd.Timestamp('2024-02-01', tz='UTC')  # before leaf_y for model 1
-        filtered, _ = filter_scores_for_month(score_df, timestamp_df, ['leaf_x', 'leaf_y'], cutoff)
-        # model 1 only has leaf_x by Feb; model 2 has nothing yet
-        self.assertEqual(set(filtered[1]), {'leaf_x'})
-        self.assertEqual(set(filtered[2]), set())
+    """Stand-alone unit tests for the score-trend aggregation pipeline."""
 
     def test_wide_scores_matches_leaderboard_double_rounding(self):
         """Trend ranking must mirror the leaderboard's two-pass HALF_UP rounding
@@ -138,7 +86,7 @@ class TestAggregationHelpers(BaseTestCase):
         """``coverage`` must list exactly the leaves each model was scored on
         by ``month_end``; this feeds the per-model coverage-completion delta."""
         tree_df = _toy_tree()
-        parent_child_map, _, _ = build_tree_maps(tree_df)
+        parent_child_map = build_parent_child_map(tree_df)
         depth_groups = _depth_groups(tree_df)
         long_df = pd.DataFrame([
             # By 2024-02-28 model 1 has been scored on leaf_x (Jan) and leaf_y (Feb);
@@ -166,7 +114,7 @@ class TestAggregationHelpers(BaseTestCase):
         """A benchmark re-scored after ``month_end`` must still surface its
         earlier value at that month; otherwise leaves silently drop out."""
         tree_df = _toy_tree()
-        parent_child_map, _, _ = build_tree_maps(tree_df)
+        parent_child_map = build_parent_child_map(tree_df)
         depth_groups = _depth_groups(tree_df)
         long_df = pd.DataFrame([
             {'model_id': 1, 'benchmark': 'leaf_x', 'score_ceiled': 0.9,
@@ -186,20 +134,6 @@ class TestAggregationHelpers(BaseTestCase):
         self.assertEqual(coverage[1], frozenset({'leaf_x', 'leaf_y'}))
         self.assertEqual(leaf_set, {'leaf_x', 'leaf_y'})
         self.assertAlmostEqual(scores[1], 0.7)
-
-    def test_build_expected_propagates_leaves_to_root(self):
-        tree_df = _toy_tree()
-        _, timestamp_df = _toy_score_dfs()
-        parent_child_map, _, _ = build_tree_maps(tree_df)
-        cutoff = pd.Timestamp('2024-04-01', tz='UTC')
-        existing = build_expected_benchmarks(
-            ['leaf_x', 'leaf_y'], timestamp_df, tree_df,
-            parent_child_map, max_depth=2, month_end=cutoff,
-        )
-        self.assertIn('leaf_x', existing)
-        self.assertIn('group_a', existing)
-        self.assertIn('average_vision', existing)
-
 
 class TestRankNarrative(BaseTestCase):
     """Count-only, third-person rank narrative."""
@@ -295,8 +229,8 @@ class TestComparisonTrendNarrative(BaseTestCase):
         meta = self._meta('score', ['2026-04-30', '2026-05-31'],
                           [0.40, 0.50], [0.30, 0.45])
         defaults = meta['defaultLines']
-        self.assertIn('alpha: 0.4000 → 0.5000 (+0.1000).', defaults)
-        self.assertIn('beta: 0.3000 → 0.4500 (+0.1500).', defaults)
+        self.assertIn('alpha: 0.4000 -> 0.5000 (+0.1000).', defaults)
+        self.assertIn('beta: 0.3000 -> 0.4500 (+0.1500).', defaults)
 
     def test_score_hover_lists_per_model_coverage(self):
         meta = self._meta(
@@ -307,10 +241,10 @@ class TestComparisonTrendNarrative(BaseTestCase):
         )
         lines = meta['points'][1]['lines']
         self.assertIn('alpha newly scored on 2 benchmark(s) this month:', lines)
-        self.assertIn('  • Foo.IT', lines)
-        self.assertIn('  • Foo.V1', lines)
+        self.assertIn('  - Foo.IT', lines)
+        self.assertIn('  - Foo.V1', lines)
         self.assertIn('beta newly scored on 1 benchmark(s) this month:', lines)
-        self.assertIn('  • Bar.IT', lines)
+        self.assertIn('  - Bar.IT', lines)
 
     def test_score_hover_states_no_coverage_change_when_empty(self):
         meta = self._meta(

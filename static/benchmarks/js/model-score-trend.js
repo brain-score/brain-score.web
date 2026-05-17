@@ -1,4 +1,11 @@
 (function () {
+    var H = window.BrainScoreTrendHover;
+    var renderAttributionList = H.renderAttributionList;
+    var eventTouchesPlot = H.eventTouchesPlot;
+    var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
+    var bindPlotlyHover = H.bindPlotlyHover;
+    var ensureHoldBar = H.ensureHoldBar;
+
     /** Set in initPlots when rank chart exists; used to wire hover after plot + tab are ready. */
     window.__brainScoreRankTrendSpec = null;
     window.__brainScoreRankPlotReady = null;
@@ -96,16 +103,6 @@
         requestAnimationFrame(resize);
     }
 
-    function renderAttributionList(ulEl, lines) {
-        if (!ulEl) return;
-        ulEl.innerHTML = '';
-        (lines || []).forEach(function (line) {
-            var li = document.createElement('li');
-            li.textContent = line;
-            ulEl.appendChild(li);
-        });
-    }
-
     function hoverPointsFromEvent(ev) {
         if (!ev) return null;
         if (ev.points && ev.points.length) return ev.points;
@@ -178,87 +175,6 @@
         return -1;
     }
 
-    function eventTouchesPlot(gd, e) {
-        if (!gd || !e || !e.target) return false;
-        if (typeof gd.contains === 'function' && gd.contains(e.target)) return true;
-        if (typeof e.composedPath === 'function') {
-            var path = e.composedPath();
-            for (var i = 0; i < path.length; i++) {
-                if (path[i] === gd) return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Map pointer X to nearest data index (margin-based + Plotly axis when available).
-     */
-    function nearestIndexFromMouseX(gd, spec, clientX) {
-        var xs = spec && spec.data && spec.data[0] && spec.data[0].x;
-        if (!xs || !xs.length || !gd) return -1;
-        var fullLayout = gd._fullLayout;
-        if (!fullLayout || !fullLayout.xaxis) return -1;
-        var xa = fullLayout.xaxis;
-        var bb = gd.getBoundingClientRect();
-        var m = fullLayout.margin || {};
-        var ml = typeof m.l === 'number' ? m.l : 80;
-        var mr = typeof m.r === 'number' ? m.r : 80;
-
-        var rel = NaN;
-        if (typeof xa._offset === 'number' && typeof xa._length === 'number' && xa._length > 0) {
-            var xpx = clientX - bb.left;
-            rel = (xpx - xa._offset) / xa._length;
-        }
-        if (!isFinite(rel)) {
-            var plotW = Math.max(1, bb.width - ml - mr);
-            rel = (clientX - bb.left - ml) / plotW;
-        }
-        rel = Math.max(0, Math.min(1, rel));
-
-        var range = xa._rl || xa.range;
-        if (!range || range.length < 2) return -1;
-        var t0 = +new Date(range[0]);
-        var t1 = +new Date(range[1]);
-        if (isNaN(t0) || isNaN(t1)) return -1;
-        var flip = t0 > t1;
-        if (flip) {
-            var swap = t0;
-            t0 = t1;
-            t1 = swap;
-            rel = 1 - rel;
-        }
-        var t = t0 + rel * (t1 - t0);
-
-        var best = -1;
-        var bestD = Infinity;
-        for (var i = 0; i < xs.length; i++) {
-            var xi = +new Date(xs[i]);
-            if (isNaN(xi)) continue;
-            var d = Math.abs(xi - t);
-            if (d < bestD) {
-                bestD = d;
-                best = i;
-            }
-        }
-        return best;
-    }
-
-    function bindPlotlyHover(gd, onHover, onUnhover) {
-        if (!gd) return;
-        /* Plotly 3 may deliver plotly_hover only via DOM or only via gd.on depending on build. */
-        gd.addEventListener('plotly_hover', function (e) {
-            var payload = e.detail && e.detail.points ? e.detail : e;
-            onHover(payload);
-        });
-        gd.addEventListener('plotly_unhover', function (e) {
-            onUnhover(e.detail && e.detail.points ? e.detail : e);
-        });
-        if (typeof gd.on === 'function') {
-            gd.on('plotly_hover', onHover);
-            gd.on('plotly_unhover', onUnhover);
-        }
-    }
-
     function wireTrendMeta(gd, spec) {
         var meta = spec && spec.trendMeta;
         if (!gd || !meta) return false;
@@ -300,23 +216,7 @@
             if (aside) aside.classList.add('trend-attribution-panel--pinned');
         }
 
-        if (aside) {
-            holdBar = document.createElement('div');
-            holdBar.className = 'trend-reason-hold';
-            holdBar.setAttribute('role', 'status');
-            holdBar.innerHTML = (
-                '<div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap" style="gap:0.35rem">' +
-                '<span class="is-size-7 has-text-weight-semibold" style="line-height:1.35">Reason hold</span>' +
-                '<button type="button" class="button is-small is-light js-trend-reason-release">Release</button>' +
-                '</div>' +
-                '<p class="is-size-7 has-text-grey mb-0 mt-1">Pinned until Release is clicked or Esc is pressed — hover does not change this text.</p>'
-            );
-            aside.insertBefore(holdBar, aside.firstChild);
-            holdBar.querySelector('.js-trend-reason-release').addEventListener('click', function (e) {
-                e.preventDefault();
-                clearPin();
-            });
-        }
+        holdBar = ensureHoldBar(aside, clearPin);
 
         function onKeydown(e) {
             if (e.key !== 'Escape' || pinnedIdx === null) return;
@@ -374,7 +274,7 @@
          */
         gd.addEventListener('pointerdown', pinAtPointer, true);
         gd.addEventListener('click', pinAtPointer, true);
-        /* Leave the whole tab panel (chart + sidebar), not just the plot — avoids clearing when reading the aside. */
+        /* Leave the whole tab panel (chart + sidebar), not just the plot -- avoids clearing when reading the aside. */
         var tabPanel = gd.closest('[id^="trend-tab-"]');
         if (tabPanel) {
             tabPanel.addEventListener('mouseleave', onPlotMouseLeave);
@@ -430,7 +330,7 @@
 
                 /**
                  * Only wire rank hover on first paint when the Rankings tab is the primary view
-                 * (rank-only model). If both tabs exist, defer=true: never wire here — must wire on tab click
+                 * (rank-only model). If both tabs exist, defer=true: never wire here -- must wire on tab click
                  * so Plotly attaches hover after the plot is visible.
                  */
                 function attachRankHoverOnLoadIfNotDeferred() {

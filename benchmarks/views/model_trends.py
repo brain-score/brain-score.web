@@ -15,6 +15,9 @@ _logger = logging.getLogger(__name__)
 _TREND_CACHE = {}
 _TREND_CACHE_LOCK = threading.Lock()
 
+# Hover list cap for new-leaf / coverage-completion bullets on the model card.
+_COVERAGE_BULLET_CAP = 12
+
 
 def _trend_cache_key(domain):
     return (ModelMonthlyAggregate.objects
@@ -95,10 +98,16 @@ def _load_model_names(domain):
 def _load_focal_coverage_deltas(model_id, domain):
     """``{'YYYY-MM': [leaf_ids]}`` of leaves the focal model newly scored on
     each month. Populated by ``recompute_score_trends``."""
+    kind = f'focal_coverage:{model_id}'
+    cached, max_month = _trend_cache_get(kind, domain)
+    if cached is not None:
+        return cached
     rows = (ModelMonthlyAggregate.objects
             .filter(model_id=model_id, domain=domain)
             .values_list('month', 'coverage_leaves_added_vs_prev'))
-    return {m: (leaves or []) for m, leaves in rows}
+    result = {m: (leaves or []) for m, leaves in rows}
+    _trend_cache_put(kind, domain, max_month, result)
+    return result
 
 
 def _load_new_models_by_month(domain):
@@ -121,7 +130,7 @@ def _load_new_models_by_month(domain):
 
 
 def _edges_counts_by_curr_month(edges_map):
-    return {key.split('|', 1)[1]: len(v or []) for key, v in edges_map.items() if '|' in key}
+    return {key.split('|', 1)[1]: len(v or []) for key, v in edges_map.items()}
 
 
 def _date_to_month_key(date_str):
@@ -199,15 +208,15 @@ def _overall_trend_lines(dates, values, kind):
     n = len(dates)
     if kind == 'score':
         return [
-            f'Whole series: {n} point(s), {values[0]:.4f} → {values[-1]:.4f}.',
-            f'Net change (first → last): {(values[-1] - values[0]):+.4f}.',
+            f'Whole series: {n} point(s), {values[0]:.4f} -> {values[-1]:.4f}.',
+            f'Net change (first -> last): {(values[-1] - values[0]):+.4f}.',
             'Hover a point to compare it to the previous month.',
         ]
     r0 = int(round(float(values[0])))
     r1 = int(round(float(values[-1])))
     return [
-        f'Whole series: {n} point(s), rank {r0} → {r1}.',
-        f'Net movement (first → last): {r0 - r1:+d} (positive means improved).',
+        f'Whole series: {n} point(s), rank {r0} -> {r1}.',
+        f'Net movement (first -> last): {r0 - r1:+d} (positive means improved).',
         'Hover a point to compare it to the previous month.',
     ]
 
@@ -238,7 +247,7 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
         delta = curr_v - prev_v
         unchanged = abs(delta) < 1e-9
         head = [
-            f'vs prior month ({ym_prev}): {prev_v:.4f} → {ym_curr}: {curr_v:.4f}.',
+            f'vs prior month ({ym_prev}): {prev_v:.4f} -> {ym_curr}: {curr_v:.4f}.',
         ]
     else:
         prev_v = int(round(float(values[i - 1])))
@@ -246,7 +255,7 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
         delta = curr_v - prev_v
         unchanged = delta == 0
         head = [
-            f'vs prior month ({ym_prev}): rank {prev_v} → {ym_curr}: rank {curr_v}.',
+            f'vs prior month ({ym_prev}): rank {prev_v} -> {ym_curr}: rank {curr_v}.',
         ]
 
     if unchanged:
@@ -283,19 +292,19 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
 
     if coverage_added:
         out.append(f'Existing benchmarks this model newly got scored on ({len(coverage_added)}):')
-        cap = 12
+        cap = _COVERAGE_BULLET_CAP
         for b in coverage_added[:cap]:
-            out.append(f'• {b}')
+            out.append(f'- {b}')
         if len(coverage_added) > cap:
-            out.append(f'… and {len(coverage_added) - cap} more.')
+            out.append(f'... and {len(coverage_added) - cap} more.')
 
     if added:
         out.append('New leaf benchmarks counted in the aggregate this month (vs. prior month):')
-        cap = 12
+        cap = _COVERAGE_BULLET_CAP
         for b in added[:cap]:
-            out.append(f'• {b}')
+            out.append(f'- {b}')
         if len(added) > cap:
-            out.append(f'… and {len(added) - cap} more.')
+            out.append(f'... and {len(added) - cap} more.')
     elif not coverage_added:
         if kind == 'score' or not model_lines:
             out.append(
@@ -328,300 +337,105 @@ def _build_trend_meta(dates, values, kind, edges_map, extra_default_lines=None, 
     }
 
 
-def _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=None):
-    """Plotly JSON for the single-model score trend."""
-    y_min = min(scores)
-    y_max = max(scores)
-    padding = max(0.05, (y_max - y_min) * 0.1) if y_max > y_min else 0.05
-    # No upper clamp: ceiling-near scores must not sit flush against the top edge.
-    y_range = [max(0, y_min - padding), y_max + padding]
+def _build_trend_plot_json(dates, ys, kind, range_start, range_end, shade_region=None):
+    """Plotly JSON for a single-model trend. ``kind`` is ``'score'`` or ``'rank'``;
+    rank reverses the y-axis so rank 1 sits at the top."""
+    if kind == 'score':
+        y_min, y_max = min(ys), max(ys)
+        padding = max(0.05, (y_max - y_min) * 0.1) if y_max > y_min else 0.05
+        # No upper clamp: ceiling-near scores must not sit flush against the top edge.
+        y_range = [max(0, y_min - padding), y_max + padding]
+        y_range_dp = 6
+        y_title = 'Score'
+        trace_name = 'average_vision'
+        hover_fmt = 'Score: %{y:.4f}'
+    else:
+        valid = [r for r in ys if r is not None and (not isinstance(r, float) or not np.isnan(r))]
+        if not valid:
+            valid = [1]
+        rank_max, rank_min = max(valid), min(valid)
+        padding = max(1, (rank_max - rank_min) * 0.1) if rank_max > rank_min else 1
+        # Reversed so rank 1 is at the top; no clamp at 1 keeps the top line off the edge.
+        y_range = [rank_max + padding, rank_min - padding]
+        y_range_dp = 2
+        y_title = 'Rank (1 = best)'
+        trace_name = 'rank'
+        hover_fmt = 'Rank: %{y:.0f}'
+
     range_start, range_end = _pad_date_range(range_start, range_end)
     shapes = []
     if shade_region and len(shade_region) == 2:
         x0, x1 = shade_region
         shapes.append({
-            'type': 'rect',
-            'xref': 'x',
-            'yref': 'paper',
-            'x0': x0,
-            'x1': x1,
-            'y0': 0,
-            'y1': 1,
+            'type': 'rect', 'xref': 'x', 'yref': 'paper',
+            'x0': x0, 'x1': x1, 'y0': 0, 'y1': 1,
             'fillcolor': 'rgba(50, 115, 220, 0.06)',
-            'line': {'width': 0},
-            'layer': 'below',
+            'line': {'width': 0}, 'layer': 'below',
         })
     shapes.append({
-        'type': 'line',
-        'xref': 'x',
-        'yref': 'paper',
-        'x0': dates[-1],
-        'x1': dates[-1],
-        'y0': 0,
-        'y1': 1,
+        'type': 'line', 'xref': 'x', 'yref': 'paper',
+        'x0': dates[-1], 'x1': dates[-1], 'y0': 0, 'y1': 1,
         'line': {'color': 'rgba(72, 72, 72, 0.35)', 'width': 1, 'dash': 'dot'},
         'layer': 'below',
     })
-    annotations = [
-        {
-            'x': dates[-1],
-            'y': scores[-1],
-            'text': 'Latest',
-            'showarrow': True,
-            'arrowhead': 2,
-            'arrowsize': 0.6,
-            'arrowwidth': 1,
-            'arrowcolor': '#3273dc',
-            'ax': 0,
-            'ay': -36,
-            'bgcolor': 'rgba(255, 255, 255, 0.92)',
-            'bordercolor': '#3273dc',
-            'borderwidth': 1,
-            'font': {'size': 11, 'color': '#363636'},
-        },
-    ]
+    annotations = [{
+        'x': dates[-1], 'y': ys[-1], 'text': 'Latest',
+        'showarrow': True, 'arrowhead': 2, 'arrowsize': 0.6, 'arrowwidth': 1,
+        'arrowcolor': '#3273dc', 'ax': 0, 'ay': -36,
+        'bgcolor': 'rgba(255, 255, 255, 0.92)',
+        'bordercolor': '#3273dc', 'borderwidth': 1,
+        'font': {'size': 11, 'color': '#363636'},
+    }]
     if len(dates) > 1:
         annotations.append({
-            'x': dates[0],
-            'y': scores[0],
-            'text': 'Start',
-            'showarrow': True,
-            'arrowhead': 2,
-            'arrowsize': 0.5,
-            'arrowwidth': 1,
-            'arrowcolor': '#7a7a7a',
-            'ax': 0,
-            'ay': 32,
+            'x': dates[0], 'y': ys[0], 'text': 'Start',
+            'showarrow': True, 'arrowhead': 2, 'arrowsize': 0.5, 'arrowwidth': 1,
+            'arrowcolor': '#7a7a7a', 'ax': 0, 'ay': 32,
             'bgcolor': 'rgba(255, 255, 255, 0.9)',
-            'bordercolor': '#dbdbdb',
-            'borderwidth': 1,
+            'bordercolor': '#dbdbdb', 'borderwidth': 1,
             'font': {'size': 10, 'color': '#4a4a4a'},
         })
-    score_cd = [[i] for i in range(len(dates))]
+    customdata = [[i] for i in range(len(dates))]
     return {
         'data': [{
-            'x': dates,
-            'y': scores,
-            'type': 'scatter',
-            'mode': 'lines',
-            'hoveron': 'points',
-            'name': 'average_vision',
-            'customdata': score_cd,
-            'line': {
-                'color': '#3273dc',
-                'width': 2.5,
-                'shape': 'spline',
-                'smoothing': 1.3,
-            },
-            'hovertemplate': '<b>%{x|%d %b %Y}</b><br>Score: %{y:.4f}<extra></extra>',
+            'x': dates, 'y': ys, 'type': 'scatter', 'mode': 'lines',
+            'hoveron': 'points', 'name': trace_name, 'customdata': customdata,
+            'line': {'color': '#3273dc', 'width': 2.5, 'shape': 'spline', 'smoothing': 1.3},
+            'hovertemplate': '<b>%{x|%d %b %Y}</b><br>' + hover_fmt + '<extra></extra>',
         }],
         'layout': {
-            'height': 400,
-            'autosize': True,
-            'paper_bgcolor': '#ffffff',
-            'plot_bgcolor': '#ffffff',
+            'height': 400, 'autosize': True,
+            'paper_bgcolor': '#ffffff', 'plot_bgcolor': '#ffffff',
             'margin': {'t': 8, 'r': 8, 'b': 44, 'l': 48},
-            'shapes': shapes,
-            'annotations': annotations,
-            'hovermode': 'closest',
+            'shapes': shapes, 'annotations': annotations, 'hovermode': 'closest',
             # Plotly 3's default template re-enables grids unless explicitly disabled.
             'template': {
                 'layout': {
-                    'xaxis': {
-                        'showgrid': False,
-                        'zeroline': False,
-                        'minor': {'showgrid': False},
-                    },
-                    'yaxis': {
-                        'showgrid': False,
-                        'zeroline': False,
-                        'minor': {'showgrid': False},
-                    },
+                    'xaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
+                    'yaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
                 },
             },
             'xaxis': {
                 'title': {'text': 'Date', 'font': {'size': 12}},
-                'type': 'date',
-                'tickformat': '%b %Y',
-                'fixedrange': True,
-                'autorange': False,
+                'type': 'date', 'tickformat': '%b %Y',
+                'fixedrange': True, 'autorange': False,
                 'range': [range_start, range_end],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
-                'mirror': False,
+                'showgrid': False, 'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
+                'showline': True, 'linecolor': '#dbdbdb',
             },
             'yaxis': {
-                'title': {'text': 'Score', 'font': {'size': 12}},
-                'fixedrange': True,
-                'autorange': False,
-                'range': [round(y_range[0], 6), round(y_range[1], 6)],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
+                'title': {'text': y_title, 'font': {'size': 12}},
+                'fixedrange': True, 'autorange': False,
+                'range': [round(y_range[0], y_range_dp), round(y_range[1], y_range_dp)],
+                'showgrid': False, 'zeroline': False,
+                'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
+                'showline': True, 'linecolor': '#dbdbdb',
             },
             'showlegend': False,
         },
         'config': {
-            'responsive': True,
-            'displayModeBar': True,
-            'scrollZoom': False,
-            'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
-        },
-    }
-
-
-def _build_rank_trend_plot_json(dates, ranks, range_start, range_end, shade_region=None):
-    """Plotly JSON for the single-model rank trend (rank 1 at top via reversed Y)."""
-    valid = [r for r in ranks if r is not None and (not isinstance(r, float) or not np.isnan(r))]
-    if not valid:
-        valid = [1]
-    rank_max = max(valid)
-    rank_min = min(valid)
-    padding = max(1, (rank_max - rank_min) * 0.1) if rank_max > rank_min else 1
-    # No clamp at rank 1: a top-ranked line must not sit flush against the top edge.
-    y_range = [rank_max + padding, rank_min - padding]
-    range_start, range_end = _pad_date_range(range_start, range_end)
-    shapes = []
-    if shade_region and len(shade_region) == 2:
-        x0, x1 = shade_region
-        shapes.append({
-            'type': 'rect',
-            'xref': 'x',
-            'yref': 'paper',
-            'x0': x0,
-            'x1': x1,
-            'y0': 0,
-            'y1': 1,
-            'fillcolor': 'rgba(50, 115, 220, 0.06)',
-            'line': {'width': 0},
-            'layer': 'below',
-        })
-    shapes.append({
-        'type': 'line',
-        'xref': 'x',
-        'yref': 'paper',
-        'x0': dates[-1],
-        'x1': dates[-1],
-        'y0': 0,
-        'y1': 1,
-        'line': {'color': 'rgba(72, 72, 72, 0.35)', 'width': 1, 'dash': 'dot'},
-        'layer': 'below',
-    })
-    annotations = [
-        {
-            'x': dates[-1],
-            'y': ranks[-1],
-            'text': 'Latest',
-            'showarrow': True,
-            'arrowhead': 2,
-            'arrowsize': 0.6,
-            'arrowwidth': 1,
-            'arrowcolor': '#3273dc',
-            'ax': 0,
-            'ay': -36,
-            'bgcolor': 'rgba(255, 255, 255, 0.92)',
-            'bordercolor': '#3273dc',
-            'borderwidth': 1,
-            'font': {'size': 11, 'color': '#363636'},
-        },
-    ]
-    if len(dates) > 1:
-        annotations.append({
-            'x': dates[0],
-            'y': ranks[0],
-            'text': 'Start',
-            'showarrow': True,
-            'arrowhead': 2,
-            'arrowsize': 0.5,
-            'arrowwidth': 1,
-            'arrowcolor': '#7a7a7a',
-            'ax': 0,
-            'ay': 32,
-            'bgcolor': 'rgba(255, 255, 255, 0.9)',
-            'bordercolor': '#dbdbdb',
-            'borderwidth': 1,
-            'font': {'size': 10, 'color': '#4a4a4a'},
-        })
-    rank_custom = [[i] for i in range(len(dates))]
-    return {
-        'data': [{
-            'x': dates,
-            'y': ranks,
-            'type': 'scatter',
-            'mode': 'lines',
-            'hoveron': 'points',
-            'name': 'rank',
-            'customdata': rank_custom,
-            'line': {
-                'color': '#3273dc',
-                'width': 2.5,
-                'shape': 'spline',
-                'smoothing': 1.3,
-            },
-            'hovertemplate': '<b>%{x|%d %b %Y}</b><br>Rank: %{y:.0f}<extra></extra>',
-        }],
-        'layout': {
-            'height': 400,
-            'autosize': True,
-            'paper_bgcolor': '#ffffff',
-            'plot_bgcolor': '#ffffff',
-            'margin': {'t': 8, 'r': 8, 'b': 44, 'l': 48},
-            'shapes': shapes,
-            'annotations': annotations,
-            'hovermode': 'closest',
-            'template': {
-                'layout': {
-                    'xaxis': {
-                        'showgrid': False,
-                        'zeroline': False,
-                        'minor': {'showgrid': False},
-                    },
-                    'yaxis': {
-                        'showgrid': False,
-                        'zeroline': False,
-                        'minor': {'showgrid': False},
-                    },
-                },
-            },
-            'xaxis': {
-                'title': {'text': 'Date', 'font': {'size': 12}},
-                'type': 'date',
-                'tickformat': '%b %Y',
-                'fixedrange': True,
-                'autorange': False,
-                'range': [range_start, range_end],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
-            },
-            'yaxis': {
-                'title': {'text': 'Rank (1 = best)', 'font': {'size': 12}},
-                'fixedrange': True,
-                'autorange': False,
-                'range': [round(y_range[0], 2), round(y_range[1], 2)],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
-            },
-            'showlegend': False,
-        },
-        'config': {
-            'responsive': True,
-            'displayModeBar': True,
-            'scrollZoom': False,
+            'responsive': True, 'displayModeBar': True, 'scrollZoom': False,
             'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
         },
     }
@@ -687,8 +501,10 @@ def wide_scores_and_rank_df(df, month_cols):
     return wide_scores, rank_df
 
 
-def _load_score_trend_from_db(model_id, domain):
-    """Single-model score trend from ``ModelMonthlyAggregate``."""
+def load_and_build_score_trend(model_id, domain):
+    """Score-over-time trend; vision domain only for now."""
+    if domain != 'vision':
+        return None
     try:
         rows = list(ModelMonthlyAggregate.objects
                     .filter(model_id=model_id, domain=domain)
@@ -742,7 +558,7 @@ def _load_score_trend_from_db(model_id, domain):
                 'Shaded band: months extended to today using the last known aggregate (flat carry-forward).'
             )
         edges = _load_month_benchmark_edges(domain)
-        plot_json = _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=shade_region)
+        plot_json = _build_trend_plot_json(dates, scores, 'score', range_start, range_end, shade_region=shade_region)
         plot_json['trendMeta'] = _build_trend_meta(
             dates, scores, 'score', edges, extra_default_lines=extra_default,
             rank_explain={'coverage_deltas': _load_focal_coverage_deltas(model_id, domain)},
@@ -753,24 +569,15 @@ def _load_score_trend_from_db(model_id, domain):
         return None
 
 
-def load_and_build_score_trend(model_id, domain):
-    """Score-over-time trend; vision domain only for now."""
-    try:
-        if domain != 'vision':
-            return None
-        return _load_score_trend_from_db(model_id, domain)
-    except Exception:
-        _logger.exception('score trend wrapper failed for model %s domain %s', model_id, domain)
-        return None
-
-
-def _load_rank_trend_from_db(model_id, domain, focal_is_public):
-    """Single-model rank-over-time trend.
+def load_and_build_rank_trend(model_id, domain, focal_is_public=True):
+    """Rank-over-time trend; vision domain only for now.
 
     Private focal models are spliced into the public-only frame so they get a
     rank against the public pool without ever appearing as named entries
     elsewhere -- the focal-exclusion in ``rank_transition_model_lines`` plus
     other private models simply not being in the frame keeps it safe."""
+    if domain != 'vision':
+        return None
     try:
         public_wide, _max_month = _load_public_wide_scores(domain)
         month_cols = [c for c in public_wide.columns if c != 'model_id']
@@ -835,7 +642,7 @@ def _load_rank_trend_from_db(model_id, domain, focal_is_public):
                 'Shaded band: months extended to today using the last known rank (flat carry-forward).'
             )
         edges = _load_month_benchmark_edges(domain)
-        plot_json = _build_rank_trend_plot_json(dates, ranks_out, range_start, range_end, shade_region=shade_region)
+        plot_json = _build_trend_plot_json(dates, ranks_out, 'rank', range_start, range_end, shade_region=shade_region)
         plot_json['trendMeta'] = _build_trend_meta(
             dates, ranks_out, 'rank', edges,
             extra_default_lines=extra_default,
@@ -851,29 +658,21 @@ def _load_rank_trend_from_db(model_id, domain, focal_is_public):
         return None
 
 
-def load_and_build_rank_trend(model_id, domain, focal_is_public=True):
-    """Rank-over-time trend; vision domain only for now."""
-    try:
-        if domain != 'vision':
-            return None
-        return _load_rank_trend_from_db(model_id, domain, focal_is_public)
-    except Exception:
-        _logger.exception('rank trend wrapper failed for model %s domain %s', model_id, domain)
-        return None
-
-
 # Matches ``compare_models.js`` Chart 3 (split violin) so A/B stay color-coded
 # consistently across all comparison charts on the page.
 _COMPARE_COLOR_A = '#45C676'  # green -- Model A
 _COMPARE_COLOR_B = '#47B7DE'  # cyan  -- Model B
 # Truncated label for the in-chart legend; full names stay in the sidebar.
 _COMPARE_LEGEND_NAME_MAX = 28
+# Hover-list cap for compare-page coverage bullets; tighter than the model-card
+# cap because two parallel lists already double the visual weight.
+_COMPARE_COVERAGE_BULLET_CAP = 8
 
 
 def _truncate_legend_name(name):
     if not name or len(name) <= _COMPARE_LEGEND_NAME_MAX:
         return name
-    return name[: _COMPARE_LEGEND_NAME_MAX - 1] + '…'
+    return name[: _COMPARE_LEGEND_NAME_MAX - 3] + '...'
 
 
 def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
@@ -933,11 +732,11 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
             if not cov:
                 return
             lines.append(f'{name} newly scored on {len(cov)} benchmark(s) this month:')
-            cap = 8
+            cap = _COMPARE_COVERAGE_BULLET_CAP
             for b in cov[:cap]:
-                lines.append(f'  • {b}')
+                lines.append(f'  - {b}')
             if len(cov) > cap:
-                lines.append(f'  … and {len(cov) - cap} more.')
+                lines.append(f'  ... and {len(cov) - cap} more.')
 
         _emit_coverage(name_a, cov_a)
         _emit_coverage(name_b, cov_b)
@@ -966,16 +765,16 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
     if valid_a and valid_b:
         if kind == 'score':
             overall = [
-                f'{name_a}: {valid_a[0]:.4f} → {valid_a[-1]:.4f} ({valid_a[-1] - valid_a[0]:+.4f}).',
-                f'{name_b}: {valid_b[0]:.4f} → {valid_b[-1]:.4f} ({valid_b[-1] - valid_b[0]:+.4f}).',
+                f'{name_a}: {valid_a[0]:.4f} -> {valid_a[-1]:.4f} ({valid_a[-1] - valid_a[0]:+.4f}).',
+                f'{name_b}: {valid_b[0]:.4f} -> {valid_b[-1]:.4f} ({valid_b[-1] - valid_b[0]:+.4f}).',
                 'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
             ]
         else:
             ra0, ra1 = int(round(valid_a[0])), int(round(valid_a[-1]))
             rb0, rb1 = int(round(valid_b[0])), int(round(valid_b[-1]))
             overall = [
-                f'{name_a}: rank {ra0} → {ra1} ({ra0 - ra1:+d}; positive means improved).',
-                f'{name_b}: rank {rb0} → {rb1} ({rb0 - rb1:+d}; positive means improved).',
+                f'{name_a}: rank {ra0} -> {ra1} ({ra0 - ra1:+d}; positive means improved).',
+                f'{name_b}: rank {rb0} -> {rb1} ({rb0 - rb1:+d}; positive means improved).',
                 'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
             ]
     else:

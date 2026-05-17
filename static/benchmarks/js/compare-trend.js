@@ -5,20 +5,20 @@
 (function () {
     'use strict';
 
+    var H = window.BrainScoreTrendHover;
+    var renderAttributionList = H.renderAttributionList;
+    var eventTouchesPlot = H.eventTouchesPlot;
+    var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
+    var bindPlotlyHover = H.bindPlotlyHover;
+    var ensureHoldBar = H.ensureHoldBar;
+
     var endpoint = (function () {
         var box = document.getElementById('compare-trend-box');
         return box ? box.dataset.trendEndpoint : null;
     })();
 
     function _renderAttributionList(listId, lines) {
-        var ul = document.getElementById(listId);
-        if (!ul) return;
-        ul.innerHTML = '';
-        (lines || []).forEach(function (line) {
-            var li = document.createElement('li');
-            li.textContent = line;
-            ul.appendChild(li);
-        });
+        renderAttributionList(document.getElementById(listId), lines);
     }
 
     function _renderEmpty(message) {
@@ -62,121 +62,12 @@
         return -1;
     }
 
-    /* Hover helpers ported from model-score-trend.js so the compare panels
-       react to hovering anywhere along the x-axis, not just on the line. */
-
-    function _eventTouchesPlot(gd, e) {
-        if (!gd || !e || !e.target) return false;
-        if (typeof gd.contains === 'function' && gd.contains(e.target)) return true;
-        if (typeof e.composedPath === 'function') {
-            var path = e.composedPath();
-            for (var i = 0; i < path.length; i++) {
-                if (path[i] === gd) return true;
-            }
-        }
-        return false;
-    }
-
-    /* Map pointer X to nearest data index using Plotly's internal axis when
-       available, falling back to layout margins. Independent of trace count --
-       both A and B share the same ``x`` array so spec.data[0].x is enough. */
-    function _nearestIndexFromMouseX(gd, spec, clientX) {
-        var xs = spec && spec.data && spec.data[0] && spec.data[0].x;
-        if (!xs || !xs.length || !gd) return -1;
-        var fullLayout = gd._fullLayout;
-        if (!fullLayout || !fullLayout.xaxis) return -1;
-        var xa = fullLayout.xaxis;
-        var bb = gd.getBoundingClientRect();
-        var m = fullLayout.margin || {};
-        var ml = typeof m.l === 'number' ? m.l : 80;
-        var mr = typeof m.r === 'number' ? m.r : 80;
-
-        var rel = NaN;
-        if (typeof xa._offset === 'number' && typeof xa._length === 'number' && xa._length > 0) {
-            rel = ((clientX - bb.left) - xa._offset) / xa._length;
-        }
-        if (!isFinite(rel)) {
-            var plotW = Math.max(1, bb.width - ml - mr);
-            rel = (clientX - bb.left - ml) / plotW;
-        }
-        rel = Math.max(0, Math.min(1, rel));
-
-        var range = xa._rl || xa.range;
-        if (!range || range.length < 2) return -1;
-        var t0 = +new Date(range[0]);
-        var t1 = +new Date(range[1]);
-        if (isNaN(t0) || isNaN(t1)) return -1;
-        if (t0 > t1) { var swap = t0; t0 = t1; t1 = swap; rel = 1 - rel; }
-        var t = t0 + rel * (t1 - t0);
-
-        var best = -1;
-        var bestD = Infinity;
-        for (var i = 0; i < xs.length; i++) {
-            var xi = +new Date(xs[i]);
-            if (isNaN(xi)) continue;
-            var d = Math.abs(xi - t);
-            if (d < bestD) { bestD = d; best = i; }
-        }
-        return best;
-    }
-
-    /* Plotly 3 sometimes delivers plotly_hover only via DOM events or only via
-       gd.on() depending on the build. Bind both. */
-    function _bindPlotlyHover(gd, onHover, onUnhover) {
-        if (!gd) return;
-        gd.addEventListener('plotly_hover', function (e) {
-            onHover(e.detail && e.detail.points ? e.detail : e);
-        });
-        gd.addEventListener('plotly_unhover', function (e) {
-            onUnhover(e.detail && e.detail.points ? e.detail : e);
-        });
-        if (typeof gd.on === 'function') {
-            gd.on('plotly_hover', onHover);
-            gd.on('plotly_unhover', onUnhover);
-        }
-    }
-
     /* Per-panel hover + click-to-pin state mirroring model-score-trend.js. */
     var _panels = {score: null, rank: null};
 
     function _findAside(listId) {
         var ul = document.getElementById(listId);
         return ul ? ul.closest('aside') : null;
-    }
-
-    function _ensureHoldBar(aside, onRelease) {
-        if (!aside) return null;
-        var existing = aside.querySelector('.trend-reason-hold');
-        if (existing) {
-            // Replace the release button so a stale closure from a prior wire
-            // pass doesn't hold the wrong panel's state.
-            var oldBtn = existing.querySelector('.js-trend-reason-release');
-            if (oldBtn) {
-                var freshBtn = oldBtn.cloneNode(true);
-                oldBtn.parentNode.replaceChild(freshBtn, oldBtn);
-                freshBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    onRelease();
-                });
-            }
-            return existing;
-        }
-        var bar = document.createElement('div');
-        bar.className = 'trend-reason-hold';
-        bar.setAttribute('role', 'status');
-        bar.innerHTML = (
-            '<div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap" style="gap:0.35rem">' +
-            '<span class="is-size-7 has-text-weight-semibold" style="line-height:1.35">Reason hold</span>' +
-            '<button type="button" class="button is-small is-light js-trend-reason-release">Release</button>' +
-            '</div>' +
-            '<p class="is-size-7 has-text-grey mb-0 mt-1">Pinned until Release is clicked or Esc is pressed — hover does not change this text.</p>'
-        );
-        aside.insertBefore(bar, aside.firstChild);
-        bar.querySelector('.js-trend-reason-release').addEventListener('click', function (e) {
-            e.preventDefault();
-            onRelease();
-        });
-        return bar;
     }
 
     function _wireHover(plotEl, spec, listId) {
@@ -215,7 +106,7 @@
             if (aside) aside.classList.add('trend-attribution-panel--pinned');
         }
 
-        var holdBar = _ensureHoldBar(aside, clearPin);
+        var holdBar = ensureHoldBar(aside, clearPin);
 
         // Tear down listeners from a prior wire pass; dropdown changes call
         // _wireHover repeatedly and would otherwise stack handlers.
@@ -237,7 +128,7 @@
 
         renderDefault();
 
-        _bindPlotlyHover(plotEl, function (ev) {
+        bindPlotlyHover(plotEl, function (ev) {
             if (state.pinnedIdx !== null) return;
             var i = _hoverIndex(ev);
             if (i < 0) return;
@@ -250,7 +141,7 @@
 
         on(plotEl, 'mousemove', function (e) {
             if (state.pinnedIdx !== null) return;
-            var idx = _nearestIndexFromMouseX(plotEl, spec, e.clientX);
+            var idx = nearestIndexFromMouseX(plotEl, spec, e.clientX);
             if (idx < 0 || idx === state.lastHoverIdx) return;
             state.lastHoverIdx = idx;
             renderEntry(idx);
@@ -268,9 +159,9 @@
         // Capture phase beats Plotly's plotly_unhover, so the index is still readable when we pin.
         function pinAtPointer(e) {
             if (e.button !== undefined && e.button !== 0) return;
-            if (!_eventTouchesPlot(plotEl, e)) return;
+            if (!eventTouchesPlot(plotEl, e)) return;
             if (e.target && e.target.closest && e.target.closest('.modebar')) return;
-            var idx = _nearestIndexFromMouseX(plotEl, spec, e.clientX);
+            var idx = nearestIndexFromMouseX(plotEl, spec, e.clientX);
             if (idx < 0) idx = state.lastHoverIdx;
             if (idx >= 0) setPin(idx);
         }

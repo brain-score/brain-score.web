@@ -48,6 +48,22 @@ GRAY_COLORS = [
 COLOR_NONE = '#e0e1e2'
 GAMMA = 0.5
 
+# Aggregate-root benchmarks rank against ``_rank_models``'s policy (ROUND_HALF_UP
+# @ 2 decimals) rather than full-precision floats, so the model card's rank for
+# these matches what the leaderboard shows for the same model. Leaf benchmark
+# ranks keep full precision -- ties at 3 decimals are rare and the extra detail
+# is useful per-benchmark. Vision-only intentionally; add other domains here as
+# they get rank-consistency fixes.
+_AGG_ROOT_BENCHMARK_IDS = frozenset({
+    'average_vision_v0', 'neural_vision_v0',
+    'behavior_vision_v0', 'engineering_vision_v0',
+})
+
+
+def _round_half_up_2dp(x):
+    return float(Decimal(str(x)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+
+
 def enrich_model_scores_with_benchmarks(model, benchmarks):
     """
     Enrich model scores with full benchmark metadata.
@@ -400,20 +416,6 @@ def view(request, id: int, domain: str):
         return render(request, 'benchmarks/model.html', model_context)
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
-
-# Aggregate-root benchmarks rank against ``_rank_models``'s policy (ROUND_HALF_UP
-# @ 2 decimals) rather than full-precision floats, so the model card's rank for
-# these matches what the leaderboard shows for the same model. Leaf benchmark
-# ranks keep full precision -- ties at 3 decimals are rare and the extra detail
-# is useful per-benchmark.
-_AGG_ROOT_BENCHMARK_IDS = frozenset({
-    'average_vision_v0', 'neural_vision_v0',
-    'behavior_vision_v0', 'engineering_vision_v0',
-})
-
-
-def _round_half_up_2dp(x):
-    return float(Decimal(str(x)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
 
 
 # Generate per-benchmark rankings for a model

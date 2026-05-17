@@ -5,7 +5,7 @@
     <div class="box">
       <div class="card-content">
         <p class="subtitle is-5">Trends over time</p>
-        <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it — use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
+        <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it -- use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
         {% if score_trend_plot_json or rank_trend_plot_json %}
         <link rel="stylesheet" href="{% static 'benchmarks/css/model-trend.css' %}">
         <div class="tabs is-boxed" id="trend-tabs">
@@ -27,7 +27,7 @@
             <div class="column is-12-mobile is-3-desktop">
               <aside class="trend-attribution-panel" aria-label="Why the score changed" id="model-score-attribution-aside">
                 <div class="trend-attribution-title">Why this line moves</div>
-                <p class="trend-attribution-sub" id="model-score-attribution-hint">Summary — hover a point for month-to-month detail.</p>
+                <p class="trend-attribution-sub" id="model-score-attribution-hint">Summary -- hover a point for month-to-month detail.</p>
                 <ul id="model-score-attribution-list">
                   {% for line in score_trend_sidebar_lines %}
                   <li>{{ line }}</li>
@@ -51,7 +51,7 @@
             <div class="column is-12-mobile is-3-desktop">
               <aside class="trend-attribution-panel" aria-label="Why the rank changed" id="model-rank-attribution-aside">
                 <div class="trend-attribution-title">Why this line moves</div>
-                <p class="trend-attribution-sub" id="model-rank-attribution-hint">Summary — hover a point for month-to-month detail.</p>
+                <p class="trend-attribution-sub" id="model-rank-attribution-hint">Summary -- hover a point for month-to-month detail.</p>
                 <ul id="model-rank-attribution-list">
                   {% for line in rank_trend_sidebar_lines %}
                   <li>{{ line }}</li>
@@ -66,6 +66,7 @@
           {% endif %}
         </div>
         <script src="https://cdn.plot.ly/plotly-3.3.0.min.js" integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+        <script src="{% static 'benchmarks/js/trend-hover.js' %}"></script>
         <script src="{% static 'benchmarks/js/model-score-trend.js' %}"></script>
         {% else %}
         <p class="help">Score trend is shown when this model has vision benchmark scores with timestamps.</p>

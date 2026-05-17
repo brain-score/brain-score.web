@@ -1,15 +1,17 @@
 """Recompute monthly score-trend aggregates and benchmark edges.
 
-Aggregation logic ported verbatim from
-``analytics/per-model_wayback/aggregate_scores.ipynb``. Only the data loader
-was rewritten to read from the database (Score / BenchmarkType) instead of
-the notebook's CSV inputs.
+The vectorized ``_aggregate_for_month_fast`` below is algorithmically
+equivalent to the per-row notebook helpers in
+``analytics/per-model_wayback/aggregate_scores.ipynb`` (filter -> build
+expected -> initialize -> aggregate), reorganized into pandas matrix ops so
+it scales past a few thousand models. The DB loaders below replace the
+notebook's CSV inputs with live queries; visibility is applied at the
+loader so private benchmarks/scores never enter the aggregation.
 """
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
-import numpy as np
 import pandas as pd
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -21,115 +23,13 @@ from benchmarks.models import (
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------
-# Notebook-ported aggregation helpers (do not edit without updating the
-# source notebook -- they are intentionally byte-identical).
-# ---------------------------------------------------------------------
-
-def normalize_score(val):
-    if pd.isna(val) or str(val).strip().lower() in ['x', 'nan', '']:
-        return 0.0
-    try:
-        score = float(val)
-        return 0.0 if np.isnan(score) else score
-    except (ValueError, TypeError):
-        return 0.0
-
-
-def build_tree_maps(tree_df):
+def build_parent_child_map(tree_df):
     parent_child_map = defaultdict(list)
-    child_parent_map = {}
-    identifier_to_depth = {}
     for _, row in tree_df.iterrows():
-        identifier = row['identifier']
         parent_id = row['parent_id'] if pd.notna(row['parent_id']) else None
-        depth = row['depth']
-        identifier_to_depth[identifier] = depth
         if parent_id:
-            parent_child_map[parent_id].append(identifier)
-            child_parent_map[identifier] = parent_id
-    return parent_child_map, child_parent_map, identifier_to_depth
-
-
-def filter_scores_for_month(score_df, timestamp_df, benchmark_cols, month_end):
-    filtered_scores = {model_id: {} for model_id in score_df.index}
-    filtered_timestamps = {model_id: {} for model_id in score_df.index}
-    for model_id in score_df.index:
-        for benchmark in benchmark_cols:
-            if benchmark in timestamp_df.columns:
-                timestamp = pd.to_datetime(timestamp_df.loc[model_id, benchmark], errors='coerce', utc=True)
-                if pd.notna(timestamp) and timestamp <= month_end:
-                    filtered_scores[model_id][benchmark] = score_df.loc[model_id, benchmark]
-                    filtered_timestamps[model_id][benchmark] = timestamp
-    return filtered_scores, filtered_timestamps
-
-
-def build_expected_benchmarks(benchmark_cols, timestamp_df_full_indexed, tree_df,
-                              parent_child_map, max_depth, month_end):
-    existing_benchmarks = set()
-    for benchmark in benchmark_cols:
-        if benchmark in timestamp_df_full_indexed.columns:
-            for model_id in timestamp_df_full_indexed.index:
-                timestamp = pd.to_datetime(timestamp_df_full_indexed.loc[model_id, benchmark], errors='coerce', utc=True)
-                if pd.notna(timestamp) and timestamp <= month_end:
-                    existing_benchmarks.add(benchmark)
-                    break
-    for depth in range(max_depth, -1, -1):
-        benchmarks_at_depth = [
-            row['identifier'] for _, row in tree_df.iterrows()
-            if row['depth'] == depth and row['identifier'] not in existing_benchmarks
-        ]
-        for benchmark in benchmarks_at_depth:
-            children = parent_child_map.get(benchmark, [])
-            if any(child in existing_benchmarks for child in children):
-                existing_benchmarks.add(benchmark)
-    return existing_benchmarks
-
-
-def initialize_leaf_scores(score_df, benchmark_cols, filtered_scores):
-    aggregated = {}
-    for model_id in score_df.index:
-        aggregated[model_id] = {}
-        for benchmark in benchmark_cols:
-            if benchmark in filtered_scores[model_id]:
-                aggregated[model_id][benchmark] = normalize_score(filtered_scores[model_id][benchmark])
-    return aggregated
-
-
-def aggregate_benchmarks(score_df, benchmark_cols, tree_df, parent_child_map,
-                         max_depth, existing_benchmarks, filtered_scores, aggregated):
-    for depth in range(max_depth, -1, -1):
-        benchmarks_at_depth = [
-            row['identifier'] for _, row in tree_df.iterrows()
-            if row['depth'] == depth and row['identifier'] in existing_benchmarks
-        ]
-        for benchmark in benchmarks_at_depth:
-            if benchmark in benchmark_cols:
-                continue
-            children = parent_child_map.get(benchmark, [])
-            expected_children = [c for c in children if c in existing_benchmarks]
-            if not expected_children:
-                continue
-            for model_id in score_df.index:
-                child_scores = []
-                for child in expected_children:
-                    model_agg = aggregated.get(model_id, {})
-                    model_filtered = filtered_scores.get(model_id, {})
-                    child_score = (model_agg.get(child) if child in model_agg
-                                   else model_filtered.get(child) if child in model_filtered
-                                   else 0.0)
-                    child_scores.append(normalize_score(child_score))
-                if model_id not in aggregated:
-                    aggregated[model_id] = {}
-                aggregated[model_id][benchmark] = sum(child_scores) / len(child_scores)
-    return aggregated
-
-
-# ---------------------------------------------------------------------
-# DB loaders -- replace the notebook's CSV inputs with live DB queries.
-# Visibility filter is applied here so private benchmarks/scores never
-# enter the aggregation.
-# ---------------------------------------------------------------------
+            parent_child_map[parent_id].append(row['identifier'])
+    return parent_child_map
 
 def _load_tree_df(domain):
     types = list(BenchmarkType.objects.filter(domain=domain, visible=True))
@@ -217,13 +117,6 @@ def _resolve_months(mode, since, domain):
         return []
     return _month_iter(first.strftime('%Y-%m'), curr_ym)
 
-
-# ---------------------------------------------------------------------
-# Vectorized per-month aggregation. Algorithmically equivalent to the
-# notebook helpers above (filter -> build_expected -> initialize ->
-# aggregate); reorganized into pandas matrix ops so it scales past a few
-# thousand models. The notebook helpers remain the algorithmic reference.
-# ---------------------------------------------------------------------
 
 def _depth_groups(tree_df):
     return tree_df.groupby('depth')['identifier'].apply(list).to_dict()
@@ -328,7 +221,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f'\nNo scores for domain={domain}.'))
             return
         all_model_ids = sorted(long_df['model_id'].unique().tolist())
-        parent_child_map, _child_parent_map, _identifier_to_depth = build_tree_maps(tree_df)
+        parent_child_map = build_parent_child_map(tree_df)
         depth_groups = _depth_groups(tree_df)
         max_depth = int(tree_df['depth'].max())
         agg_root = f'average_{domain}'
