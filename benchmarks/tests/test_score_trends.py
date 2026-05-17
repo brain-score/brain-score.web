@@ -94,6 +94,29 @@ class TestAggregationHelpers(BaseTestCase):
         self.assertEqual(set(filtered[1]), {'leaf_x'})
         self.assertEqual(set(filtered[2]), set())
 
+    def test_wide_scores_matches_leaderboard_double_rounding(self):
+        """Trend-plot ranking must mirror the leaderboard's *double-rounding*:
+        the MV pre-rounds every score to 3dp (mv.sql:1076), then
+        ``_rank_models`` rounds to 2dp HALF_UP. A single 2dp HALF_UP on the
+        raw float disagrees on values like 0.3849... (lifted to 0.385 by the
+        MV's 3dp step, then to 0.39 by the leaderboard's 2dp step -- but
+        rounded directly to 0.38 by a one-shot 2dp). Regression: an earlier
+        single-pass HALF_UP caused the trend plot to rank effnetb1 at 38
+        while the leaderboard had it at 40."""
+        df = pd.DataFrame({
+            'model_id': [1, 2, 3, 4],
+            # raw MMA floats; 0.3849 is the boundary case that desynced ranks
+            '2026-05': [0.385, 0.395, 0.380, 0.3849052968509248],
+        })
+        wide, _rank = _wide_scores_and_rank_df(df, ['2026-05'])
+        # 0.3849... -> 3dp 0.385 -> 2dp 0.39  (matches MV path)
+        # A one-shot 2dp HALF_UP would have left it at 0.38.
+        self.assertAlmostEqual(float(wide.loc[wide.model_id == 4, '2026-05'].iloc[0]), 0.39)
+        # Sanity: clean boundary values still round as expected.
+        self.assertAlmostEqual(float(wide.loc[wide.model_id == 1, '2026-05'].iloc[0]), 0.39)
+        self.assertAlmostEqual(float(wide.loc[wide.model_id == 2, '2026-05'].iloc[0]), 0.40)
+        self.assertAlmostEqual(float(wide.loc[wide.model_id == 3, '2026-05'].iloc[0]), 0.38)
+
     def test_load_score_dfs_drops_null_timestamp_placeholders(self):
         """Multiple Score rows per (model, benchmark_type) can exist (different
         BenchmarkInstance versions); older runs leave NULL-score, NULL-timestamp

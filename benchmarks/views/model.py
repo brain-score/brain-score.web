@@ -1,6 +1,7 @@
 import logging
 import threading
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 import numpy as np
 import pandas as pd
 from django.conf import settings
@@ -735,10 +736,24 @@ def _monthly_dates_until_today(last_date_str):
 
 
 def _wide_scores_and_rank_df(df, month_cols):
-    """Replace 0 with NaN, round scores; compute public rank per month (1 = best, ties skip)."""
+    """Replace 0 with NaN, round scores to 2dp (ROUND_HALF_UP, matching the
+    leaderboard's ``_rank_models``), compute public rank per month (1 = best,
+    ties skip).
+
+    Matches the leaderboard's *double-rounding* exactly: the MV pre-rounds
+    every ``score_ceiled`` to 3dp via PostgreSQL ``ROUND(numeric, 3)``
+    (mv.sql:1076), then ``_rank_models`` rounds that 3dp value to 2dp
+    HALF_UP. Doing a single 2dp HALF_UP on the full-precision MMA float
+    disagrees on values that sit just below ``.xx5`` (e.g. 0.3849... →
+    0.38 direct vs 0.385 → 0.39 via the MV path), which silently desyncs
+    trend-plot ranks from the leaderboard. Using numpy's default
+    ``.round`` (banker's) introduces a second, unrelated mismatch."""
     wide_scores = df[['model_id'] + month_cols].copy()
     for col in month_cols:
-        wide_scores[col] = wide_scores[col].replace(0.0, np.nan).round(2)
+        s = wide_scores[col].replace(0.0, np.nan).astype(float)
+        # floor(x*N + 0.5)/N is ROUND_HALF_UP for x >= 0; NaN propagates.
+        s_3dp = np.floor(s * 1000 + 0.5) / 1000           # mirrors MV's 3dp pre-round
+        wide_scores[col] = np.floor(s_3dp * 100 + 0.5) / 100  # then 2dp HALF_UP
     rank_df = wide_scores[['model_id']].copy()
     for col in month_cols:
         scores = wide_scores[col]
@@ -1294,6 +1309,21 @@ def view(request, id: int, domain: str):
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
 
+# Aggregate-root benchmarks rank against ``_rank_models``'s policy (ROUND_HALF_UP
+# @ 2 decimals) rather than full-precision floats, so the model card's rank for
+# these matches what the leaderboard shows for the same model. Leaf benchmark
+# ranks keep full precision -- ties at 3 decimals are rare and the extra detail
+# is useful per-benchmark.
+_AGG_ROOT_BENCHMARK_IDS = frozenset({
+    'average_vision_v0', 'neural_vision_v0',
+    'behavior_vision_v0', 'engineering_vision_v0',
+})
+
+
+def _round_half_up_2dp(x):
+    return float(Decimal(str(x)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+
+
 # Generate per-benchmark rankings for a model
 # This should be moved to database materialized view in future
 def add_benchmark_rankings(model, reference_context):
@@ -1341,15 +1371,25 @@ def add_benchmark_rankings(model, reference_context):
         try:
             score_value = float(score_ceiled)
             all_scores = benchmark_scores.get(versioned_benchmark_id, [])
+            # For aggregate roots, round both target and comparators to the same
+            # 2-decimal ROUND_HALF_UP that the leaderboard's _rank_models uses, so
+            # the displayed rank agrees with the leaderboard. Leaf benchmarks keep
+            # full precision (more informative ranks per benchmark).
+            if versioned_benchmark_id in _AGG_ROOT_BENCHMARK_IDS:
+                target = _round_half_up_2dp(score_value)
+                comparators = [_round_half_up_2dp(s) for s in all_scores]
+            else:
+                target = score_value
+                comparators = all_scores
             # Sort scores in descending order and find the rank
-            sorted_scores = sorted(all_scores, reverse=True)
+            sorted_scores = sorted(comparators, reverse=True)
             # Find the position of the current score (1-indexed)
             # If there are ties, all tied scores get the same rank
             rank = 1
             for i, s in enumerate(sorted_scores):
-                if s > score_value:
+                if s > target:
                     rank = i + 2  # +2 because we want 1-indexed and we're looking for the next position
-                elif s == score_value:
+                elif s == target:
                     rank = i + 1  # +1 for 1-indexed
                     break
             score['rank'] = rank
