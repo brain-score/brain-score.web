@@ -321,16 +321,22 @@ class TestFilter:
                     ["0.58", "0.58", "0.55", "0.55", "0.55"]
             ),
             (
+                    # Position 5 sits inside a 6-way 0.46 tie group; tie order
+                    # now uses full-precision valueNumeric (preserved through
+                    # aggregation in filter-coordinator.js since PR #517), not
+                    # the truncated .toFixed(2) display string. If the 0.46
+                    # cluster shifts again, expect this row to be the first
+                    # one to need updating.
                     ["V1_v0", "V2_v0", "IT_v0"],
-                    [2, 3, 3, 5, 19],
+                    [2, 3, 3, 5, 1],
                     [
                         "vit_large_patch14_clip_224:openai_ft_in1k",
                         "convnext_xlarge:fb_in22k_ft_in1k",
                         "convnext_large:fb_in22k_ft_in1k",
                         "vit_large_patch14_clip_224:laion2b_ft_in1k",
-                        "resnext101_32x48d_wsl"
+                        "convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384"
                     ],
-                    ["0.49", "0.48", "0.47", "0.47", "0.47"]
+                    ["0.49", "0.49", "0.47", "0.47", "0.46"]
             ),
             (
                     ["neural_vision_v0", "behavior_vision_v0"],
