@@ -309,6 +309,11 @@ class ModelMonthlyAggregate(models.Model):
     domain = models.CharField(max_length=200, default='vision')
     month = models.CharField(max_length=7)  # 'YYYY-MM'
     score = models.FloatField(null=True)
+    # Leaf benchmarks this model newly scored on (vs. prior month), restricted to
+    # leaves already counted in the *global* aggregate before this month. Captures
+    # the "coverage completion" case where a previously-submitted model's
+    # aggregate moves because it finally got scored on existing benchmarks.
+    coverage_leaves_added_vs_prev = models.JSONField(default=list)
 
     class Meta:
         db_table = 'brainscore_model_monthly_aggregate'

@@ -78,6 +78,15 @@ def _trend_cache_put(kind, domain, max_month, value):
         _TREND_CACHE[(kind, domain, max_month)] = value
 
 
+def clear_trend_cache():
+    """Drop the in-process trend snapshot cache. Call after ``recompute_score_trends``
+    so the next request in this worker reloads fresh aggregates instead of serving
+    a snapshot keyed on an unchanged ``max(month)``. Per-process only -- multi-worker
+    deployments still need a cross-worker bust (e.g. cache-version row or Redis pub/sub)."""
+    with _TREND_CACHE_LOCK:
+        _TREND_CACHE.clear()
+
+
 def _load_month_benchmark_edges(domain='vision'):
     """Maps 'YYYY-MM|YYYY-MM' -> list of leaf benchmark ids newly eligible."""
     cached, max_month = _trend_cache_get('edges', domain)
@@ -116,6 +125,28 @@ def _load_public_wide_scores(domain):
     return wide.copy(), max_month
 
 
+def _load_model_names(domain):
+    """Map ``{model_id: name}`` for all models in the domain. Cached per latest month."""
+    cached, max_month = _trend_cache_get('names', domain)
+    if cached is not None:
+        return cached, max_month
+    names = dict(Model.objects.filter(domain=domain).values_list('id', 'name'))
+    _trend_cache_put('names', domain, max_month, names)
+    return names, max_month
+
+
+def _load_focal_coverage_deltas(model_id, domain):
+    """Map ``{'YYYY-MM': [leaf_ids,...]}`` of leaves the focal model newly scored on each month.
+
+    Populated by ``recompute_score_trends``; drives the "you newly scored on
+    existing benchmarks this month" branch of the trend hover narrative.
+    """
+    rows = (ModelMonthlyAggregate.objects
+            .filter(model_id=model_id, domain=domain)
+            .values_list('month', 'coverage_leaves_added_vs_prev'))
+    return {m: (leaves or []) for m, leaves in rows}
+
+
 def _date_to_month_key(date_str):
     try:
         return pd.Timestamp(date_str).strftime('%Y-%m')
@@ -134,120 +165,115 @@ def _fmt_model_id(mid):
     return str(mid)
 
 
-def _rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2, rank_df, wide_scores):
+def _rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2,
+                                 rank_df, wide_scores, names=None, added_count=0,
+                                 coverage_added_count=0):
     """
-    List sidebar lines naming other models involved in a month-to-month rank change.
-    Mirrors aggregate_scores.ipynb analyze_rank_change (without per-benchmark result_df).
-    rank_change = rank2 - rank1 (positive => worse / moved down the leaderboard).
+    Sidebar lines naming other models involved in a month-to-month rank change.
+    Identical-movement rows are grouped on one bullet; ``names`` resolves ids to
+    display names (falling back to ``#id``). A one-line ``Why this changed:``
+    headline is prepended summarising movement and benchmark drivers.
     """
-    lines = []
     if ym_prev not in rank_df.columns or ym_curr not in rank_df.columns:
-        return lines
+        return []
 
     rank_change = rank2 - rank1
     focal = str(model_id)
-
+    names = names or {}
     ranks_t1 = rank_df.set_index('model_id')[ym_prev]
     ranks_t2 = rank_df.set_index('model_id')[ym_curr]
     sc1 = wide_scores.set_index('model_id')[ym_prev]
     sc2 = wide_scores.set_index('model_id')[ym_curr]
 
-    def is_other(om):
-        return str(om) != focal
+    def _name(mid):
+        try:
+            key = int(mid)
+        except (TypeError, ValueError):
+            key = mid
+        return names.get(key) or f'#{_fmt_model_id(mid)}'
 
-    if rank_change > 0:
-        passed_by = []
-        for other_model in ranks_t1.index:
-            if not is_other(other_model):
-                continue
-            other_rank1 = ranks_t1[other_model]
-            other_rank2 = ranks_t2[other_model]
-            if pd.notna(other_rank1) and pd.notna(other_rank2):
-                or1 = int(other_rank1)
-                or2 = int(other_rank2)
-                if (or1 > rank1 and or2 <= rank2) or (or1 >= rank1 and or2 < rank2):
-                    s1, s2 = sc1.get(other_model), sc2.get(other_model)
-                    dsc = ''
-                    if pd.notna(s1) and pd.notna(s2):
-                        dsc = f', aggregate score {float(s1):.4f} → {float(s2):.4f}'
-                    passed_by.append((or2, f'• Model {_fmt_model_id(other_model)}: rank {or1} → {or2}{dsc}'))
-        if passed_by:
-            passed_by.sort(key=lambda x: x[0])
-            lines.append(f'Models that moved ahead of this model ({len(passed_by)}):')
-            cap = 10
-            for _, txt in passed_by[:cap]:
-                lines.append(txt)
-            if len(passed_by) > cap:
-                lines.append(f'… and {len(passed_by) - cap} more.')
+    def _emit(rows, header, fmt):
+        if not rows:
+            return []
+        grouped = {}
+        for _, g_key, name in sorted(rows, key=lambda r: r[0]):
+            grouped.setdefault(g_key, []).append(name)
+        out = [f'{header} ({len(rows)}):']
+        cap, n = 10, 0
+        for g_key, g_names in grouped.items():
+            if n >= cap:
+                out.append(f'… and {len(rows) - n} more.')
+                return out
+            out.append(fmt(g_key, g_names))
+            n += len(g_names)
+        return out
 
-    if rank_change < 0:
-        passed = []
-        for other_model in ranks_t1.index:
-            if not is_other(other_model):
-                continue
-            other_rank1 = ranks_t1[other_model]
-            other_rank2 = ranks_t2[other_model]
-            if pd.notna(other_rank1) and pd.notna(other_rank2):
-                or1 = int(other_rank1)
-                or2 = int(other_rank2)
-                if (or1 < rank1 and or2 >= rank2) or (or1 <= rank1 and or2 > rank2):
-                    s1, s2 = sc1.get(other_model), sc2.get(other_model)
-                    dsc = ''
-                    if pd.notna(s1) and pd.notna(s2):
-                        dsc = f', aggregate score {float(s1):.4f} → {float(s2):.4f}'
-                    passed.append((or2, f'• Model {_fmt_model_id(other_model)}: rank {or1} → {or2}{dsc}'))
-        if passed:
-            passed.sort(key=lambda x: x[0])
-            lines.append(f'Models you moved past ({len(passed)}):')
-            cap = 10
-            for _, txt in passed[:cap]:
-                lines.append(txt)
-            if len(passed) > cap:
-                lines.append(f'… and {len(passed) - cap} more.')
-
-    new_models = []
-    for other_model in ranks_t2.index:
-        if not is_other(other_model):
+    moved_past, focal_past, new_above, exited = [], [], [], []
+    for om in ranks_t1.index:
+        if str(om) == focal:
             continue
-        prev_r = ranks_t1.get(other_model, np.nan)
-        curr_r = ranks_t2[other_model]
-        if pd.isna(prev_r) and pd.notna(curr_r):
-            new_models.append({
-                'mid': other_model,
-                'rank2': int(curr_r),
-                'score2': sc2.get(other_model),
-            })
-    if new_models:
-        better_new = [m for m in new_models if m['rank2'] < rank2]
-        if better_new:
-            better_new.sort(key=lambda x: x['rank2'])
-            lines.append(f'New entries ranked above you ({len(better_new)}):')
-            cap = 8
-            for m in better_new[:cap]:
-                sc = m['score2']
-                sx = f', score {float(sc):.4f}' if pd.notna(sc) else ''
-                lines.append(f"• Model {_fmt_model_id(m['mid'])}: rank {m['rank2']}{sx}")
-            if len(better_new) > cap:
-                lines.append(f'… and {len(better_new) - cap} more.')
-
-    exited = []
-    for other_model in ranks_t1.index:
-        if not is_other(other_model):
+        r1 = ranks_t1[om]
+        r2 = ranks_t2.get(om, np.nan)
+        if pd.isna(r1):
             continue
-        prev_r = ranks_t1[other_model]
-        curr_r = ranks_t2.get(other_model, np.nan)
-        if pd.notna(prev_r) and pd.isna(curr_r):
-            exited.append({'mid': other_model, 'rank1': int(prev_r)})
-    if exited:
-        worse_exited = [m for m in exited if m['rank1'] > rank1]
-        if worse_exited:
-            lines.append(f'Models that left the pool (previously ranked below you; {len(worse_exited)}):')
-            cap = 8
-            for m in worse_exited[:cap]:
-                lines.append(f"• Model {_fmt_model_id(m['mid'])}: was rank {m['rank1']}")
-            if len(worse_exited) > cap:
-                lines.append(f'… and {len(worse_exited) - cap} more.')
+        if pd.isna(r2):
+            or1 = int(r1)
+            if or1 > rank1:
+                exited.append((or1, ('exited', or1), _name(om)))
+            continue
+        or1, or2 = int(r1), int(r2)
+        s1, s2 = sc1.get(om), sc2.get(om)
+        s1f = float(s1) if pd.notna(s1) else None
+        s2f = float(s2) if pd.notna(s2) else None
+        key = ('move', or1, or2, s1f, s2f)
+        if rank_change > 0 and ((or1 > rank1 and or2 <= rank2) or (or1 >= rank1 and or2 < rank2)):
+            moved_past.append((or2, key, _name(om)))
+        elif rank_change < 0 and ((or1 < rank1 and or2 >= rank2) or (or1 <= rank1 and or2 > rank2)):
+            focal_past.append((or2, key, _name(om)))
+    for om in ranks_t2.index:
+        if str(om) == focal:
+            continue
+        if pd.notna(ranks_t1.get(om, np.nan)) or pd.isna(ranks_t2[om]):
+            continue
+        or2 = int(ranks_t2[om])
+        if or2 >= rank2:
+            continue
+        s2 = sc2.get(om)
+        s2f = float(s2) if pd.notna(s2) else None
+        new_above.append((or2, ('new', or2, s2f), _name(om)))
 
+    def _fmt_move(g, n):
+        _, or1, or2, s1, s2 = g
+        sp = f', aggregate score {s1:.4f} → {s2:.4f}' if s1 is not None and s2 is not None else ''
+        return f'• {", ".join(n)}: rank {or1} → {or2}{sp}'
+
+    def _fmt_new(g, n):
+        _, or2, s2 = g
+        sp = f', score {s2:.4f}' if s2 is not None else ''
+        return f'• {", ".join(n)}: rank {or2}{sp}'
+
+    def _fmt_exited(g, n):
+        return f'• {", ".join(n)}: was rank {g[1]}'
+
+    lines = []
+    lines += _emit(moved_past, 'Models that moved ahead of this model', _fmt_move)
+    lines += _emit(focal_past, 'Models you moved past', _fmt_move)
+    lines += _emit(new_above, 'New entries ranked above you', _fmt_new)
+    lines += _emit(exited, 'Models that left the pool (previously ranked below you)', _fmt_exited)
+
+    bits = []
+    if moved_past:
+        bits.append(f'{len(moved_past)} existing model(s) moved past you')
+    if focal_past:
+        bits.append(f'you moved past {len(focal_past)} model(s)')
+    if new_above:
+        bits.append(f'{len(new_above)} new model(s) entered above you')
+    if added_count:
+        bits.append(f'{added_count} new leaf benchmark(s) were counted')
+    if coverage_added_count:
+        bits.append(f'you newly scored on {coverage_added_count} existing benchmark(s) this month')
+    if bits:
+        lines.insert(0, 'Why this changed: ' + '; '.join(bits) + '.')
     return lines
 
 
@@ -290,6 +316,7 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
     ym_curr = _date_to_month_key(dates[i])
     edge_key = f'{ym_prev}|{ym_curr}'
     added = edges_map.get(edge_key, [])
+    coverage_added = ((rank_explain or {}).get('coverage_deltas') or {}).get(ym_curr, []) or []
 
     if kind == 'score':
         prev_v, curr_v = values[i - 1], values[i]
@@ -328,10 +355,28 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
             cols = [c for c in ws.columns if c != 'model_id']
             if ym_prev in cols and ym_curr in cols:
                 model_lines = _rank_transition_model_lines(
-                    mid_model, ym_prev, ym_curr, prev_v, curr_v, rdf, ws
+                    mid_model, ym_prev, ym_curr, prev_v, curr_v, rdf, ws,
+                    names=rank_explain.get('name_map'), added_count=len(added),
+                    coverage_added_count=len(coverage_added),
                 )
     if model_lines:
         out.extend(model_lines)
+    elif kind == 'score':
+        score_bits = []
+        if added:
+            score_bits.append(f'{len(added)} new leaf benchmark(s) were counted')
+        if coverage_added:
+            score_bits.append(f'you newly scored on {len(coverage_added)} existing benchmark(s) this month')
+        if score_bits:
+            out.append('Why this changed: ' + '; '.join(score_bits) + '.')
+
+    if coverage_added:
+        out.append(f'Existing benchmarks you newly got scored on ({len(coverage_added)}):')
+        cap = 12
+        for b in coverage_added[:cap]:
+            out.append(f'• {b}')
+        if len(coverage_added) > cap:
+            out.append(f'… and {len(coverage_added) - cap} more.')
 
     if added:
         out.append('New leaf benchmarks counted in the aggregate this month (vs. prior month):')
@@ -340,13 +385,8 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
             out.append(f'• {b}')
         if len(added) > cap:
             out.append(f'… and {len(added) - cap} more.')
-    else:
-        if kind == 'score':
-            out.append(
-                'No new leaf benchmarks between these months; the shift is likely from updated scores, '
-                're-aggregation, or other models in the public pool.'
-            )
-        elif not model_lines:
+    elif not coverage_added:
+        if kind == 'score' or not model_lines:
             out.append(
                 'No new leaf benchmarks between these months; the shift is likely from updated scores, '
                 're-aggregation, or other models in the public pool.'
@@ -366,10 +406,11 @@ def _build_trend_meta(dates, values, kind, edges_map, extra_default_lines=None, 
     base_overall = _overall_trend_lines(dates, values, kind)
     default_lines = base_overall + list(extra_default_lines or [])
     points = []
-    re = rank_explain if kind == 'rank' else None
+    # rank-only fields (rank_df, wide_scores, name_map) are guarded inside
+    # _point_attribution_lines; coverage_deltas applies to both kinds.
     for i in range(len(dates)):
         points.append({
-            'lines': _point_attribution_lines(i, dates, values, kind, edges_map, base_overall, rank_explain=re),
+            'lines': _point_attribution_lines(i, dates, values, kind, edges_map, base_overall, rank_explain=rank_explain),
         })
     list_el = 'model-score-attribution-list' if kind == 'score' else 'model-rank-attribution-list'
     return {
@@ -772,7 +813,10 @@ def _load_score_trend_from_db(model_id, domain):
             )
         edges = _load_month_benchmark_edges(domain)
         plot_json = _build_score_trend_plot_json(dates, scores, range_start, range_end, shade_region=shade_region)
-        plot_json['trendMeta'] = _build_trend_meta(dates, scores, 'score', edges, extra_default_lines=extra_default)
+        plot_json['trendMeta'] = _build_trend_meta(
+            dates, scores, 'score', edges, extra_default_lines=extra_default,
+            rank_explain={'coverage_deltas': _load_focal_coverage_deltas(model_id, domain)},
+        )
         return plot_json
     except Exception:
         _logger.exception('score trend build failed for model %s domain %s', model_id, domain)
@@ -876,6 +920,8 @@ def _load_rank_trend_from_db(model_id, domain, focal_is_public):
                 'model_id': model_id,
                 'rank_df': rank_df,
                 'wide_scores': wide_scores,
+                'name_map': _load_model_names(domain)[0],
+                'coverage_deltas': _load_focal_coverage_deltas(model_id, domain),
             },
         )
         return plot_json
