@@ -297,6 +297,48 @@ class Score(models.Model):
         db_table = 'brainscore_score'
 
 
+class ModelMonthlyAggregate(models.Model):
+    """Per-model, per-month aggregate score (e.g. ``average_vision``).
+
+    Long-format table written by the ``recompute_score_trends`` management
+    command. ``score`` is computed from the public-benchmark subtree as of
+    ``YYYY-MM``-end. Rows exist for every model (public and private); rank
+    computation against the public pool happens at read time.
+    """
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    domain = models.CharField(max_length=200, default='vision')
+    month = models.CharField(max_length=7)  # 'YYYY-MM'
+    score = models.FloatField(null=True)
+    # Leaf benchmarks this model newly scored on (vs. prior month), restricted to
+    # leaves already counted in the *global* aggregate before this month. Captures
+    # the "coverage completion" case where a previously-submitted model's
+    # aggregate moves because it finally got scored on existing benchmarks.
+    coverage_leaves_added_vs_prev = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'brainscore_model_monthly_aggregate'
+        unique_together = (('model', 'domain', 'month'),)
+        indexes = [
+            models.Index(fields=['domain', 'month']),
+        ]
+
+
+class MonthBenchmarkEdge(models.Model):
+    """Leaf benchmarks newly counted in the public aggregate between two months.
+
+    Drives the score-trend hover narrative ("new leaf benchmarks counted in the
+    aggregate this month"). One row per consecutive month pair per domain.
+    """
+    domain = models.CharField(max_length=200, default='vision')
+    month_prev = models.CharField(max_length=7)  # 'YYYY-MM'
+    month_curr = models.CharField(max_length=7)  # 'YYYY-MM'
+    leaf_benchmarks = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'brainscore_month_benchmark_edge'
+        unique_together = (('domain', 'month_prev', 'month_curr'),)
+
+
 class MailingList(models.Model):
     email = models.EmailField(max_length=254)
 
