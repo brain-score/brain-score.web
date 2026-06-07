@@ -1,0 +1,25 @@
+// Site-wide announcement banner (homepage + leaderboard). Markup in
+// templates/benchmarks/components/announcement-banner.html
+.bs-announcement
+  position: fixed
+  top: 0
+  left: 50%
+  z-index: 1000
+  display: flex
+  align-items: center
+  max-width: 92vw
+  padding: 0.7rem 1.4rem
+  border-radius: 0 0 14px 14px
+  background-image: linear-gradient(0deg, $brainscore_blue, $brainscore_green)
+  color: #fff
+  font-family: "Open Sans", sans-serif
+  font-size: 1rem
+  font-weight: 600
+  box-shadow: 0 6px 18px rgba(0, 27, 54, 0.18)
+  animation: bs-announcement-drop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both
+
+@keyframes bs-announcement-drop
+  from
+    transform: translateX(-50%) translateY(-150%)
+  to
+    transform: translateX(-50%) translateY(0)

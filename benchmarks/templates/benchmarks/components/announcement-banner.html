@@ -1,0 +1,8 @@
+{% comment %} Edit `message` to change text; set message="" (or comment the includes) to disable. {% endcomment %}
+{% with message="20 new benchmarks from the LAION-fMRI dataset added!" %}
+{% if message %}
+<div class="bs-announcement" role="status" aria-live="polite">
+    <span class="bs-announcement__text">{{ message }}</span>
+</div>
+{% endif %}
+{% endwith %}

@@ -13,6 +13,44 @@ from .index import get_context, get_datetime_range
 
 logger = logging.getLogger(__name__)
 
+# Benchmark identifier prefixes flagged as "new"; parent headers show "+N NEW". Trailing "*" optional.
+NEW_BENCHMARK_PREFIXES = [
+    "Allen2022",
+]
+
+
+def matches_new_prefix(identifier):
+    """Return True if ``identifier`` starts with any prefix in NEW_BENCHMARK_PREFIXES."""
+    if not identifier:
+        return False
+    return any(identifier.startswith(prefix.rstrip("*")) for prefix in NEW_BENCHMARK_PREFIXES)
+
+
+def strip_version(identifier):
+    """Normalize a benchmark identifier to its version-agnostic base (e.g.
+    ``Ferguson2024_v0`` -> ``Ferguson2024``), matching how parent references are stored."""
+    return identifier.split("_v")[0] if identifier else identifier
+
+
+def count_new_leaves_per_parent(benchmarks):
+    """Map each parent's version-stripped identifier to the number of its leaf descendants
+    whose identifier matches NEW_BENCHMARK_PREFIXES (aggregated up the full ancestor chain)."""
+    bench_by_base = {strip_version(b.identifier): b for b in benchmarks}
+    counts = defaultdict(int)
+    for b in benchmarks:
+        if b.number_of_all_children != 0 or not matches_new_prefix(b.identifier):
+            continue
+        current, visited = b, set()
+        while current is not None and current.parent:
+            parent_base = strip_version(current.parent["identifier"])
+            if parent_base in visited:
+                break
+            visited.add(parent_base)
+            counts[parent_base] += 1
+            current = bench_by_base.get(parent_base)
+    return counts
+
+
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
     if isinstance(obj, dict):
@@ -456,6 +494,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     for b in context['benchmarks']:
         benchmark_root_parent_map[b.identifier] = find_root_parent(b)
 
+    # Count of "new" leaf descendants per parent identifier (for the "+N NEW" header badge)
+    new_leaf_counts = count_new_leaves_per_parent(context['benchmarks'])
+
     # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
     for b in root_parents:
@@ -471,7 +512,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'context': {
                 'parentField': None,
                 'benchmarkId': field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                'newLeafCount': new_leaf_counts.get(strip_version(field), 0)
             }
         })
 
@@ -492,7 +534,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'context': {
                 'parentField': parent_field,
                 'benchmarkId': field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                'newLeafCount': new_leaf_counts.get(strip_version(field), 0)
             }
         })
 
@@ -522,7 +565,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'sortable': True,
             'context': {
                 'parentField': parent_field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                'isNew': matches_new_prefix(field)
             }
         })
 
