@@ -297,6 +297,86 @@ class Score(models.Model):
         db_table = 'brainscore_score'
 
 
+class ScoreResourceUsage(models.Model):
+    """Per-attempt resource log feeding the memoized-peak tier dispatcher
+    and the failure classifier. One row per Batch attempt — SUCCEEDED or
+    FAILED. ``score`` is nullable so OOM-killed and crash-killed runs still
+    land here for forensics. ``model_id_str`` / ``benchmark_id_str`` are
+    denormalised so a row exists even when no ``Model`` / ``BenchmarkInstance``
+    row does (e.g. first attempt of a brand-new submission).
+    """
+
+    FAILURE_KINDS = [
+        ('OOM', 'OOM'),
+        ('DETERMINISTIC', 'DETERMINISTIC'),
+        ('TRANSIENT', 'TRANSIENT'),
+        ('UNKNOWN', 'UNKNOWN'),
+    ]
+
+    score = models.ForeignKey(
+        Score, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='resource_usage',
+    )
+    model_id_str = models.CharField(max_length=128)
+    benchmark_id_str = models.CharField(max_length=128)
+
+    batch_job_id = models.CharField(max_length=64, null=True, blank=True)
+    batch_queue = models.CharField(max_length=64, null=True, blank=True)
+    batch_job_definition = models.CharField(max_length=128, null=True, blank=True)
+    ec2_instance_type = models.CharField(max_length=32, null=True, blank=True)
+    spot = models.BooleanField(null=True, blank=True)
+    spot_interrupted = models.BooleanField(default=False)
+    tier = models.CharField(max_length=8, null=True, blank=True)
+
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    queue_wait_seconds = models.IntegerField(null=True, blank=True)
+    execution_seconds = models.IntegerField(null=True, blank=True)
+
+    cpu_available = models.IntegerField(null=True, blank=True)
+    memory_available_gb = models.FloatField(null=True, blank=True)
+    num_gpus = models.IntegerField(null=True, blank=True)
+    gpu_memory_available_gb = models.FloatField(null=True, blank=True)
+    gpu_type = models.CharField(max_length=16, null=True, blank=True)
+    disk_available_gb = models.FloatField(null=True, blank=True)
+
+    max_cpu_pct = models.FloatField(null=True, blank=True)
+    max_memory_gb = models.FloatField(null=True, blank=True)
+    max_gpu_pct = models.FloatField(null=True, blank=True)
+    max_gpu_memory_gb = models.FloatField(null=True, blank=True)
+    max_disk_used_gb = models.FloatField(null=True, blank=True)
+
+    exit_code = models.IntegerField(null=True, blank=True)
+    failure_kind = models.CharField(
+        max_length=16, choices=FAILURE_KINDS, null=True, blank=True,
+    )
+    oom_retry_count = models.IntegerField(default=0)
+
+    preflight_estimate_gb = models.FloatField(null=True, blank=True)
+    preflight_formula_type = models.CharField(max_length=32, null=True, blank=True)
+
+    model_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
+    benchmark_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
+    container_image_digest = models.CharField(max_length=128, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+    class Meta:
+        db_table = 'brainscore_score_resource_usage'
+        indexes = [
+            models.Index(fields=['model_id_str', 'benchmark_id_str'],
+                         name='rsr_model_bench_idx'),
+            models.Index(fields=['started_at'], name='rsr_started_at_idx'),
+            models.Index(fields=['failure_kind'], name='rsr_failure_kind_idx',
+                         condition=models.Q(failure_kind__isnull=False)),
+            models.Index(fields=['batch_job_id'], name='rsr_batch_job_idx'),
+        ]
+
+
 class MailingList(models.Model):
     email = models.EmailField(max_length=254)
 
