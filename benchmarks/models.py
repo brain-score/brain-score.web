@@ -297,13 +297,15 @@ class Score(models.Model):
         db_table = 'brainscore_score'
 
 
-class ScoreResourceUsage(models.Model):
-    """Per-attempt resource log feeding the memoized-peak tier dispatcher
-    and the failure classifier. One row per Batch attempt — SUCCEEDED or
-    FAILED. ``score`` is nullable so OOM-killed and crash-killed runs still
-    land here for forensics. ``model_id_str`` / ``benchmark_id_str`` are
-    denormalised so a row exists even when no ``Model`` / ``BenchmarkInstance``
-    row does (e.g. first attempt of a brand-new submission).
+class ResourceUsage(models.Model):
+    """Per-attempt resource log written by any compute job — not tied to
+    scoring. Feeds the memoized-peak tier dispatcher and the failure
+    classifier. One row per terminal attempt. ``score`` is an optional FK
+    populated only when the job did produce a Brain-Score score; bulk /
+    analytics / calibration jobs leave it NULL. ``model_id_str`` /
+    ``benchmark_id_str`` are denormalised so a row exists even when no
+    ``Model`` / ``BenchmarkInstance`` row does (e.g. first attempt of a
+    brand-new submission).
     """
 
     FAILURE_KINDS = [
@@ -366,14 +368,14 @@ class ScoreResourceUsage(models.Model):
         return generic_repr(self)
 
     class Meta:
-        db_table = 'brainscore_score_resource_usage'
+        db_table = 'brainscore_resource_usage'
         indexes = [
             models.Index(fields=['model_id_str', 'benchmark_id_str'],
-                         name='rsr_model_bench_idx'),
-            models.Index(fields=['started_at'], name='rsr_started_at_idx'),
-            models.Index(fields=['failure_kind'], name='rsr_failure_kind_idx',
+                         name='ru_model_bench_idx'),
+            models.Index(fields=['started_at'], name='ru_started_at_idx'),
+            models.Index(fields=['failure_kind'], name='ru_failure_kind_idx',
                          condition=models.Q(failure_kind__isnull=False)),
-            models.Index(fields=['batch_job_id'], name='rsr_batch_job_idx'),
+            models.Index(fields=['batch_job_id'], name='ru_batch_job_idx'),
         ]
 
 
