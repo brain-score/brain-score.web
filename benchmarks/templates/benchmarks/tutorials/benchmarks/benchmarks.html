@@ -91,4 +91,21 @@
         <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark (Legacy)</button></a>
     </div>
 </div>
+
+<div class="box leaderboard-table-component">
+    <h3 class="benefits_heading is-size-3-mobile">Legacy Tutorials</h3>
+    <p class="benefits_info is-size-5-mobile shorter">
+        These original tutorials walk through the <span class="special_format">Ferguson2024</span> benchmark as a detailed example:
+    </p>
+    <div class="tutorial-buttons">
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/package_data"><button class="button button-primary tutorial">Package Data (Legacy)</button></a>
+        <a href="http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}/tutorials/benchmarks/create_benchmark"><button class="button button-primary tutorial">Create a Benchmark (Legacy)</button></a>
+    </div>
+</div>
+
+<!-- Pass search data to JavaScript -->
+<script>
+  window.tutorialSearchData = {{ search_data|safe }};
+</script>
+<script src="{% static 'benchmarks/js/tutorial-search.js' %}"></script>
 {% endblock %}
