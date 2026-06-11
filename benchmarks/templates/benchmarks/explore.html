@@ -26,19 +26,19 @@
                 <h2 class="title is-title-2">{{ total_model_count }} public Models</h2>
             </div>
 
-            {% if representative_models %}
+            {% if reference_models %}
             <div class="mb-4">
                 <h3 class="title is-5">
-                    Representative Models ({{ representative_models|length }})
+                    Reference Models ({{ reference_models|length }})
                     <span class="icon is-small ml-1"
-                          data-tooltip="This curated set of 100 models includes: 10 reference models (e.g., AlexNet, CORnet-S), 8 top 2024 competition winners, 20 best neural performers (top 5 per V1, V2, V4, IT), 20 best behavioral performers, and 42 highest-scoring models by overall Brain-Score."
+                          data-tooltip="This curated set of 100 models includes: 10 canonical models (e.g., AlexNet, CORnet-S), 8 top 2024 competition winners, 20 best neural performers (top 5 per V1, V2, V4, IT), 20 best behavioral performers, and 42 highest-scoring models by overall Brain-Score."
                           data-tooltip-position="right"
                           style="cursor: help; color: #5C8DB8;">
                         <i class="fa-solid fa-circle-info"></i>
                     </span>
                 </h3>
                 <div>
-                    {% for model in representative_models %}
+                    {% for model in reference_models %}
                         <a class="tag model-tag" href="{% url 'model-view' domain model.id %}">{{ model.name }}</a>
                     {% endfor %}
                 </div>

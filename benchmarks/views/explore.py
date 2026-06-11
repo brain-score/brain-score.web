@@ -6,7 +6,7 @@ from benchmarks.models import Model, BenchmarkInstance
 def view(request, domain):
     base_query = Model.objects.filter(domain=domain, public=True)
 
-    representative_groups = [
+    reference_groups = [
         Model.Group.REFERENCE,
         Model.Group.TOP10_2024,
         Model.Group.BEST_NEURAL,
@@ -14,10 +14,10 @@ def view(request, domain):
         Model.Group.GLOBAL_SCORE,
     ]
 
-    representative_models = (base_query
-                             .filter(group__in=representative_groups)
-                             .order_by('name')
-                             .values('name', 'id'))
+    reference_models = (base_query
+                        .filter(group__in=reference_groups)
+                        .order_by('name')
+                        .values('name', 'id'))
 
     other_models = (base_query
                     .filter(group__isnull=True)
@@ -34,7 +34,7 @@ def view(request, domain):
 
     context = {
         'domain': domain,
-        'representative_models': representative_models,
+        'reference_models': reference_models,
         'other_models': other_models,
         'total_model_count': total_model_count,
         'benchmarks': benchmarks,
