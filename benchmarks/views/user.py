@@ -304,6 +304,13 @@ class Upload(View):
             return render(request, 'benchmarks/upload.html',
                           {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
+        if self.domain == 'language' and request.POST.get('model_size') in ('large', 'xlarge'):
+            form.add_error('model_size',
+                           'Currently, only models <13B params (medium-sized and below) are supported. '
+                           'Please contact kpradeep@mit.edu and/or mferg@mit.edu to submit a larger model.')
+            return render(request, 'benchmarks/upload.html',
+                          {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
+
         user_instance = User.objects.get_by_natural_key(request.user.email)
 
         # parse directory tree, return new html page if not valid:
