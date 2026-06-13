@@ -1,0 +1,43 @@
+{% comment %} Homepage news. Content lives in news.yaml; latest 3 shown, rest behind "+N more". {% endcomment %}
+{% if news_items %}
+{% with leads=news_items|slice:":3" rest=news_items|slice:"3:" %}
+<div class="news-ticker">
+    <div class="news-ticker__head">
+        <span class="news-ticker__icon" aria-hidden="true"><i class="fa-solid fa-bullhorn"></i></span>
+        <span class="news-ticker__eyebrow">Latest updates</span>
+        {% if rest %}
+        <details class="news-ticker__more">
+            <summary class="news-ticker__toggle">
+                <span class="news-ticker__toggle--closed">+{{ rest|length }} more</span>
+                <span class="news-ticker__toggle--open">Close</span>
+            </summary>
+            <ul class="news-ticker__list">
+                {% for item in rest %}
+                <li class="news-ticker__item">
+                    <span class="news-ticker__date">{{ item.date|date:"M j, Y" }}</span>
+                    {% if item.link %}
+                    <a class="news-ticker__text" href="{{ item.link }}">{{ item.text }}</a>
+                    {% else %}
+                    <span class="news-ticker__text">{{ item.text }}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+    </div>
+    <ul class="news-ticker__leads">
+        {% for item in leads %}
+        <li class="news-ticker__item">
+            <span class="news-ticker__date">{{ item.date|date:"M j, Y" }}</span>
+            {% if item.link %}
+            <a class="news-ticker__text" href="{{ item.link }}">{{ item.text }}</a>
+            {% else %}
+            <span class="news-ticker__text">{{ item.text }}</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endwith %}
+{% endif %}

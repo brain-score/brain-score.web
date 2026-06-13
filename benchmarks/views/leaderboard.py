@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 # Benchmark identifier prefixes flagged as "new"; parent headers show "+N NEW". Trailing "*" optional.
 NEW_BENCHMARK_PREFIXES = [
-    "Allen2022",
+    "Allen2022",       # NSD
+    "Gifford2022",     # THINGS EEG2
+    "Papale2025",      # TVSD
+    "Hebart2023_fmri", # THINGS fMRI (excludes the older Hebart2023-match)
+    "Zerbe2026",       # LAION-fMRI
 ]
 
 

@@ -1,0 +1,98 @@
+// Homepage news below the navbar. Markup in
+// templates/benchmarks/components/news-bar.html; content in news.yaml
+.news-ticker
+  position: relative
+  margin-top: 115px // clear the fixed navbar
+  padding: 8px 24px 10px
+  background-color: $brainscore_gray1
+  border-bottom: 1px solid $brainscore_gray2
+  font-family: "Open Sans", sans-serif
+
+  .news-ticker__head
+    display: flex
+    align-items: center
+    gap: 8px
+    margin-bottom: 4px
+
+  .news-ticker__icon
+    flex: 0 0 auto
+    color: $brainscore_sky
+
+  .news-ticker__eyebrow
+    flex: 1 1 auto
+    font-weight: 800
+    text-transform: uppercase
+    letter-spacing: 0.5px
+    font-size: 0.72rem
+    color: $brainscore_sky
+
+  .news-ticker__leads
+    list-style: none
+    margin: 0
+    padding: 0
+
+  .news-ticker__item
+    display: flex
+    gap: 12px
+    align-items: baseline
+    padding: 2px 0
+    font-size: 0.9rem
+    line-height: 1.35
+
+  .news-ticker__date
+    flex: 0 0 auto
+    width: 100px
+    color: $brainscore_gray3
+    font-size: 0.78rem
+
+  .news-ticker__text
+    color: $brainscore_gray4
+
+  a.news-ticker__text
+    color: $brainscore_sky
+    text-decoration: none
+
+    &:hover
+      text-decoration: underline
+
+  .news-ticker__more
+    flex: 0 0 auto
+
+    summary.news-ticker__toggle
+      list-style: none
+      cursor: pointer
+      white-space: nowrap
+      font-size: 0.82rem
+      font-weight: 600
+      color: $brainscore_sky
+
+      &::-webkit-details-marker
+        display: none
+
+      &::after
+        content: " \25be"
+
+    &[open] summary.news-ticker__toggle::after
+      content: " \25b4"
+
+    .news-ticker__toggle--open
+      display: none
+
+    &[open] .news-ticker__toggle--closed
+      display: none
+
+    &[open] .news-ticker__toggle--open
+      display: inline
+
+    .news-ticker__list
+      list-style: none
+      margin: 0
+      padding: 10px 24px
+      position: absolute
+      left: 0
+      right: 0
+      top: 100%
+      background-color: white
+      border-bottom: 1px solid $brainscore_gray2
+      box-shadow: 0 8px 16px rgba(0, 27, 54, 0.10)
+      z-index: 999

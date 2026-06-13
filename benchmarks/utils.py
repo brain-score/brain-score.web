@@ -14,8 +14,47 @@ import time
 import pickle
 import gzip
 import os
+import yaml
 
 logger = logging.getLogger(__name__)
+
+NEWS_FILE = os.path.join(settings.BASE_DIR, 'news.yaml')
+
+
+def load_news():
+    """Load homepage news entries from ``news.yaml``, newest first.
+
+    Each returned entry is a dict with ``date`` (coerced to ``datetime.date`` or None),
+    ``text``, and an optional ``link``. Returns an empty list if the file is missing or invalid.
+    """
+    if not os.path.exists(NEWS_FILE):
+        return []
+    try:
+        with open(NEWS_FILE, encoding='utf-8') as f:
+            raw = yaml.safe_load(f) or []
+    except (yaml.YAMLError, OSError) as exc:
+        logger.warning(f"Could not load news.yaml: {exc}")
+        return []
+
+    from datetime import datetime, date
+    entries = []
+    for item in raw:
+        if not isinstance(item, dict) or not item.get('text'):
+            continue
+        item_date = item.get('date')
+        if isinstance(item_date, datetime):
+            item_date = item_date.date()
+        elif isinstance(item_date, str):
+            try:
+                item_date = datetime.strptime(item_date, '%Y-%m-%d').date()
+            except ValueError:
+                item_date = None
+        elif not isinstance(item_date, date):
+            item_date = None
+        entries.append({'date': item_date, 'text': item['text'], 'link': item.get('link')})
+
+    entries.sort(key=lambda e: (e['date'] is not None, e['date'] or date.min), reverse=True)
+    return entries
 
 
 def cache_page_for_public_only(timeout: int):

@@ -1,0 +1,27 @@
+# Homepage news, newest first. Each entry: date (YYYY-MM-DD), text, optional link.
+# The homepage shows the latest 3; the rest are revealed by "+N more".
+# Benchmark naming convention: "<what it is> (<Author Year>)".
+- date: 2026-06-06
+  text: LAION-fMRI (Zerbe2026) benchmarks added
+  link: /vision/leaderboard
+- date: 2026-03-19
+  text: NSD (Allen2022) fMRI benchmarks added
+  link: /vision/leaderboard
+- date: 2026-03-02
+  text: Reverse predictivity benchmarks added (Muzellec & Kar 2026)
+  link: /vision/leaderboard
+- date: 2026-02-17
+  text: "Blog: Overhauling the Brain-Score Leaderboard"
+  link: /blog/leaderboard_overhaul/
+- date: 2026-01-13
+  text: THINGS fMRI (Hebart2023) benchmarks added
+  link: /vision/leaderboard
+- date: 2026-01-13
+  text: THINGS EEG2 (Gifford2022) benchmark added
+  link: /vision/leaderboard
+- date: 2026-01-13
+  text: TVSD (Papale2025) benchmarks added
+  link: /vision/leaderboard
+- date: 2024-12-01
+  text: Brain-Score 2.0 released
+  link: /release2.0/
