@@ -6,14 +6,11 @@
   border-bottom: 1px solid $brainscore_gray2
   font-family: "Open Sans", sans-serif
 
-  // Inner content aligned to the centered landing panel (.my_container);
-  // 12px left inset lines the text up with the hero heading/paragraph.
+  // Inner uses the same .container.my_container as the landing panel, so its left
+  // edge tracks the panel at every breakpoint. Only vertical padding here.
   .news-ticker__inner
     position: relative
-    width: 95%
-    max-width: 1500px
-    margin: 0 auto
-    padding: 8px 0 10px 12px
+    padding: 8px 0 10px
 
   .news-ticker__head
     display: flex
