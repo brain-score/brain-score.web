@@ -195,6 +195,47 @@
     i, .count-value
       color: #999
 
+// "+N NEW" badge under parent headers (mirrors .benchmark-count, anchored below-left)
+.expandable-header .new-benchmark-badge
+  position: absolute
+  bottom: -12px
+  left: -5px
+  background: $brainscore_blue
+  color: white
+  font-size: 10px
+  font-weight: 700
+  letter-spacing: 0.3px
+  border-radius: 12px
+  padding: 2px 8px
+  white-space: nowrap
+  z-index: 12
+  pointer-events: none
+  animation: new-badge-glow 1.8s ease-in-out infinite
+
+// "New" tag on individual (leaf) benchmark headers
+.leaf-header .new-leaf-badge
+  position: absolute
+  bottom: -11px
+  left: 50%
+  transform: translateX(-50%)
+  background: $brainscore_blue
+  color: white
+  font-size: 9px
+  font-weight: 700
+  letter-spacing: 0.4px
+  border-radius: 10px
+  padding: 1px 7px
+  white-space: nowrap
+  z-index: 12
+  pointer-events: none
+  animation: new-badge-glow 1.8s ease-in-out infinite
+
+@keyframes new-badge-glow
+  0%, 100%
+    box-shadow: 0 0 5px rgba(71, 183, 222, 0.7), 0 0 10px rgba(71, 183, 222, 0.4)
+  50%
+    box-shadow: 0 0 9px rgba(71, 183, 222, 1), 0 0 18px rgba(71, 183, 222, 0.7)
+
 // Sort indicator
 .sort-indicator
   flex: 0 0 auto
