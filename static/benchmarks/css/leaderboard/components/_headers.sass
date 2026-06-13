@@ -212,21 +212,15 @@
   pointer-events: none
   animation: new-badge-glow 1.8s ease-in-out infinite
 
-// "New" tag on individual (leaf) benchmark headers
-.leaf-header .new-leaf-badge
-  position: absolute
-  bottom: -11px
-  left: 50%
-  transform: translateX(-50%)
+// Blue dot indicator on mid-level parent headers and leaf benchmark headers
+.new-dot
+  flex: 0 0 auto
+  align-self: center
+  width: 8px
+  height: 8px
+  margin-right: 6px
+  border-radius: 50%
   background: $brainscore_blue
-  color: white
-  font-size: 9px
-  font-weight: 700
-  letter-spacing: 0.4px
-  border-radius: 10px
-  padding: 1px 7px
-  white-space: nowrap
-  z-index: 12
   pointer-events: none
   animation: new-badge-glow 1.8s ease-in-out infinite
 

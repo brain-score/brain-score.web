@@ -1,5 +1,11 @@
 // Header components for leaderboard grid
 
+// Active "+N NEW" update, captured once from ?new=<slug> when the leaderboard loads.
+// null => default view (union of all updates flagged as leaderboard_default).
+var ACTIVE_NEW_UPDATE = (function () {
+  try { return new URLSearchParams(window.location.search).get('new'); } catch (e) { return null; }
+})();
+
 // Helper function to build hierarchy map from benchmark tree
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
   tree.forEach(node => {
@@ -267,13 +273,17 @@ LeafHeaderComponent.prototype.init = function(params) {
 
   this.eGui.appendChild(label);
 
-  // "New" tag on leaf benchmarks matching the configured prefixes (server-computed)
+  // "New" tag on leaf benchmarks in the active update (or any, on the default view)
   const leafColDef = params.column?.userProvidedColDef || params.column?.colDef || params.colDef || {};
-  if (leafColDef.context && leafColDef.context.isNew) {
-    const leafNewBadge = document.createElement('span');
-    leafNewBadge.className = 'new-leaf-badge';
-    leafNewBadge.textContent = 'New';
-    this.eGui.appendChild(leafNewBadge);
+  const leafCtx = leafColDef.context || {};
+  const leafIsNew = ACTIVE_NEW_UPDATE
+    ? (leafCtx.newUpdates || []).includes(ACTIVE_NEW_UPDATE)
+    : !!leafCtx.isNewDefault;
+  if (leafIsNew) {
+    const leafNewDot = document.createElement('span');
+    leafNewDot.className = 'new-dot';
+    leafNewDot.title = 'Recently added';
+    this.eGui.insertBefore(leafNewDot, label);
   }
 
   createSortIndicator(params, this.eGui);
@@ -375,15 +385,29 @@ ExpandableHeaderComponent.prototype.init = function(params) {
   labelContainer.appendChild(title);
   this.eGui.appendChild(labelContainer);
 
-  // "+N NEW" badge: new leaf benchmarks under this parent. Skip Global Score + Filtered Score.
-  const newLeafCount = (colDef.context && colDef.context.newLeafCount) || 0;
+  // "+N" added-benchmark badge for the active update (or the default-view union).
+  // Top-level categories (neural/behavior/engineering) read "+N NEW"; nested levels just "+N".
+  // Skip Global Score + Filtered Score.
+  const badgeCtx = colDef.context || {};
+  const newLeafCount = ACTIVE_NEW_UPDATE
+    ? ((badgeCtx.newLeafCounts || {})[ACTIVE_NEW_UPDATE] || 0)
+    : (badgeCtx.newLeafCountDefault || 0);
   const badgeField = colDef.field || '';
+  const badgeDomain = (window.DJANGO_DATA && window.DJANGO_DATA.domain) || 'vision';
+  const isTopCategory = [`neural_${badgeDomain}_v0`, `behavior_${badgeDomain}_v0`, `engineering_${badgeDomain}_v0`].includes(badgeField);
   const badgeExcluded = badgeField.startsWith('average_') || badgeField === 'filtered_score';
   if (newLeafCount > 0 && !badgeExcluded) {
-    const newBadge = document.createElement('span');
-    newBadge.className = 'new-benchmark-badge';
-    newBadge.textContent = `+${newLeafCount} NEW`;
-    this.eGui.appendChild(newBadge);
+    if (isTopCategory) {
+      const newBadge = document.createElement('span');
+      newBadge.className = 'new-benchmark-badge';
+      newBadge.textContent = `+${newLeafCount} NEW`;
+      this.eGui.appendChild(newBadge);
+    } else {
+      const dot = document.createElement('span');
+      dot.className = 'new-dot';
+      dot.title = 'Recently added';
+      labelContainer.insertBefore(dot, title);
+    }
   }
 
   if (!benchmarkId || !params.api?.getAllGridColumns) return;

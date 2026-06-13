@@ -51,7 +51,16 @@ def load_news():
                 item_date = None
         elif not isinstance(item_date, date):
             item_date = None
-        entries.append({'date': item_date, 'text': item['text'], 'link': item.get('link')})
+        slug = item.get('slug')
+        benchmarks = item.get('benchmarks') or []
+        link = item.get('link')
+        if not link and slug and benchmarks:
+            link = f'/vision/leaderboard?new={slug}'
+        entries.append({
+            'date': item_date, 'text': item['text'], 'link': link,
+            'slug': slug, 'benchmarks': benchmarks,
+            'leaderboard_default': item.get('leaderboard_default', True),
+        })
 
     entries.sort(key=lambda e: (e['date'] is not None, e['date'] or date.min), reverse=True)
     return entries

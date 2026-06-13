@@ -27,7 +27,7 @@ window.tourConfigs.defaultTour = {
       element: '.ag-cell[col-id="group_status"]',
       popover: {
         title: 'Model Group',
-        description: 'Blue indicates a curated model that is part of a benchmark group (e.g., reference, top-10). Grey indicates a community-submitted model. The small circle next to the model name shows runnable status: green = runnable, red = issues, grey = unknown.',
+        description: 'Blue indicates a curated model that is part of a benchmark group (e.g., reference, top-10). Grey indicates a community-submitted model.',
         position: 'right'
       }
     },
