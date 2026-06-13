@@ -1,12 +1,19 @@
 // Homepage news below the navbar. Markup in
 // templates/benchmarks/components/news-bar.html; content in news.yaml
 .news-ticker
-  position: relative
   margin-top: 115px // clear the fixed navbar
-  padding: 8px 24px 10px
   background-color: $brainscore_gray1
   border-bottom: 1px solid $brainscore_gray2
   font-family: "Open Sans", sans-serif
+
+  // Inner content aligned to the centered landing panel (.my_container);
+  // 12px left inset lines the text up with the hero heading/paragraph.
+  .news-ticker__inner
+    position: relative
+    width: 95%
+    max-width: 1500px
+    margin: 0 auto
+    padding: 8px 0 10px 12px
 
   .news-ticker__head
     display: flex

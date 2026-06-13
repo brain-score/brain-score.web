@@ -2,6 +2,7 @@
 {% if news_items %}
 {% with leads=news_items|slice:":3" rest=news_items|slice:"3:" %}
 <div class="news-ticker">
+    <div class="news-ticker__inner">
     <div class="news-ticker__head">
         <span class="news-ticker__icon" aria-hidden="true"><i class="fa-solid fa-bullhorn"></i></span>
         <span class="news-ticker__eyebrow">Latest updates</span>
@@ -38,6 +39,7 @@
         </li>
         {% endfor %}
     </ul>
+    </div>
 </div>
 {% endwith %}
 {% endif %}
