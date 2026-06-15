@@ -15,7 +15,6 @@ NOTE: Before beginning this process, contact one of the Brain-Score Administrato
 Brain Score Administrators:
 
 1. Kartik Pradeepan: kpradeep@mit.edu
-2. Mike Ferguson: mferg@mit.edu
 
 Once you have these values, continue by ensuring you are using ``<= python@3.8``. You can do this by first checking if you have 3.8 installed::
 
