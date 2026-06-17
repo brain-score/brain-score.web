@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('benchmarks', '0022_model_group'),
+        ('benchmarks', '0023_resourceusage_resourceusage_ru_model_bench_idx_and_more'),
     ]
 
     operations = [

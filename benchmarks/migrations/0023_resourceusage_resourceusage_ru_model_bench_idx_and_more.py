@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('benchmarks', '0024_modelmonthlyaggregate_coverage_leaves_added_vs_prev'),
+        ('benchmarks', '0022_model_group'),
     ]
 
     operations = [
