@@ -39,7 +39,7 @@ def get_benchmark_updates():
             updates.append({
                 "slug": entry["slug"],
                 "patterns": entry["benchmarks"],
-                "default": entry.get("leaderboard_default", True),
+                "default": entry["leaderboard_default"],
             })
     return updates
 
@@ -52,12 +52,9 @@ def count_new_leaves_per_parent(benchmarks, patterns):
     for b in benchmarks:
         if b.number_of_all_children != 0 or not matches_pattern(b.identifier, patterns):
             continue
-        current, visited = b, set()
+        current = b
         while current is not None and current.parent:
             parent_base = strip_version(current.parent["identifier"])
-            if parent_base in visited:
-                break
-            visited.add(parent_base)
             counts[parent_base] += 1
             current = bench_by_base.get(parent_base)
     return counts

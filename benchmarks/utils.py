@@ -36,20 +36,13 @@ def load_news():
         logger.warning(f"Could not load news.yaml: {exc}")
         return []
 
-    from datetime import datetime, date
+    from datetime import date
     entries = []
     for item in raw:
         if not isinstance(item, dict) or not item.get('text'):
             continue
-        item_date = item.get('date')
-        if isinstance(item_date, datetime):
-            item_date = item_date.date()
-        elif isinstance(item_date, str):
-            try:
-                item_date = datetime.strptime(item_date, '%Y-%m-%d').date()
-            except ValueError:
-                item_date = None
-        elif not isinstance(item_date, date):
+        item_date = item.get('date')  # yaml parses unquoted YYYY-MM-DD to date
+        if not isinstance(item_date, date):
             item_date = None
         slug = item.get('slug')
         benchmarks = item.get('benchmarks') or []
@@ -61,8 +54,6 @@ def load_news():
             'slug': slug, 'benchmarks': benchmarks,
             'leaderboard_default': item.get('leaderboard_default', True),
         })
-
-    entries.sort(key=lambda e: (e['date'] is not None, e['date'] or date.min), reverse=True)
     return entries
 
 

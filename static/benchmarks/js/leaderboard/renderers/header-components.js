@@ -2,9 +2,7 @@
 
 // Active "+N NEW" update, captured once from ?new=<slug> when the leaderboard loads.
 // null => default view (union of all updates flagged as leaderboard_default).
-var ACTIVE_NEW_UPDATE = (function () {
-  try { return new URLSearchParams(window.location.search).get('new'); } catch (e) { return null; }
-})();
+var ACTIVE_NEW_UPDATE = new URLSearchParams(window.location.search).get('new');
 
 // Helper function to build hierarchy map from benchmark tree
 function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
