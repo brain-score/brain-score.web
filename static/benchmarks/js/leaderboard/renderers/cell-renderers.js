@@ -15,20 +15,7 @@ ModelCellRenderer.prototype.init = function(params) {
   a.textContent = params.value.name;
   nameRow.appendChild(a);
 
-  const runnable = params.data?.metadata?.runnable;
-  const runnableIcon = document.createElement('span');
-  runnableIcon.className = 'runnable-inline-icon';
-  if (runnable === true) {
-    runnableIcon.classList.add('runnable-inline-green');
-    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.FUNCTIONAL;
-  } else if (runnable === false) {
-    runnableIcon.classList.add('runnable-inline-red');
-    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.ISSUES;
-  } else {
-    runnableIcon.classList.add('runnable-inline-grey');
-    runnableIcon.title = window.LeaderboardConstants.RUNNABLE_TOOLTIPS.UNKNOWN;
-  }
-  nameRow.appendChild(runnableIcon);
+  // Runnable status dot disabled for now.
 
   this.eGui.appendChild(nameRow);
 

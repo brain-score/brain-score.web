@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3
+FROM continuumio/miniconda3:24.7.1-0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
@@ -10,6 +10,8 @@ WORKDIR /app
 COPY environment.yml /app/
 COPY manage.py /app/
 COPY package.json /app/
+COPY package-lock.json /app/
+COPY news.yaml /app/
 COPY benchmarks /app/benchmarks
 COPY static /app/static
 COPY web /app/web
@@ -21,8 +23,8 @@ RUN echo "conda activate brain-score.web" >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c"]
 
-RUN . ~/.bashrc && npm install --no-optional
-RUN . ~/.bashrc && npm install -g sass
+RUN . ~/.bashrc && npm ci --no-optional
+RUN . ~/.bashrc && npm install -g sass@1.69.5
 
 EXPOSE 80
 

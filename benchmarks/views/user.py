@@ -21,6 +21,7 @@ from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.tokens import account_activation_token
+from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -84,7 +85,7 @@ class Signup(View):
             activation_link = f"https://{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
-                              f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
+                              f"If you encounter any trouble, please reach out to Kartik (kpradeep@mit.edu)."
                               f"Thanks,\n"
                               f"The Brain-Score Team")
             # if indirect signup via PR, provide additional context:
@@ -130,7 +131,8 @@ class Login(View):
 
 class LandingPage(View):
     def get(self, request):
-        return render(request, 'benchmarks/landing_page.html')
+        news = load_news()
+        return render(request, 'benchmarks/landing_page.html', {'news_items': news})
 
 
 class Logout(View):
@@ -801,7 +803,7 @@ class Password(View):
             activation_link = f"https://{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
-                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
+                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Kartik (kpradeep@mit.edu)."
                        f"Thanks,\n"
                        f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])

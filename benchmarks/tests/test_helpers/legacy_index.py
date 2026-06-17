@@ -433,6 +433,13 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
             bench_minmax = (0, 1)
         minmax[benchmark_id] = bench_minmax
 
+    # Match mv_final_model_context: keep only models with a valid leaf score_ceiled.
+    if scores is not None and len(scores) > 0:
+        leaf_scores = scores[scores['benchmark_version'] != 0]
+        numeric_ceiled = pd.to_numeric(leaf_scores['score_ceiled'], errors='coerce')
+        models_with_valid_ceiled = set(leaf_scores.loc[numeric_ceiled.notna(), 'model'])
+        scores = scores[scores['model'].isin(models_with_valid_ceiled)]
+
     # arrange into per-model scores
     # - prepare model meta
     model_meta = Model.objects.select_related('reference', 'owner', 'submission', 'submission__submitter')
