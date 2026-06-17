@@ -1,0 +1,39 @@
+# Homepage news, newest first. Each entry: date (YYYY-MM-DD), text, optional link.
+# The homepage shows the latest 3; the rest are revealed by "+N more".
+# Benchmark naming convention: "<what it is> (<Author Year>)".
+#
+# For a benchmark update, add `slug` + `benchmarks` (glob patterns matched against benchmark
+# identifiers). The news link auto-points to /vision/leaderboard?new=<slug>, which highlights
+# exactly those benchmarks with the "+N NEW" indicators. `leaderboard_default: false` keeps an
+# update out of the default (no-param) leaderboard view, so it only highlights when clicked.
+- date: 2026-06-06
+  text: "LAION-fMRI (Zerbe2026) benchmarks added. More coming soon!"
+  slug: laion-fmri
+  benchmarks: ["Zerbe2026*"]
+- date: 2026-03-19
+  text: NSD (Allen2022) fMRI benchmarks added
+  slug: nsd
+  benchmarks: ["Allen2022*"]
+- date: 2026-03-02
+  text: Reverse predictivity (Muzellec & Kar 2026) benchmarks added
+  slug: reverse-pls
+  benchmarks: ["*reverse_pls"]
+  leaderboard_default: false
+- date: 2026-02-17
+  text: "Blog: Overhauling the Brain-Score Leaderboard"
+  link: /blog/leaderboard_overhaul/
+- date: 2026-01-13
+  text: THINGS fMRI (Hebart2023) benchmarks added
+  slug: things-fmri
+  benchmarks: ["Hebart2023_fmri*"]
+- date: 2026-01-13
+  text: THINGS EEG2 (Gifford2022) benchmark added
+  slug: things-eeg2
+  benchmarks: ["Gifford2022*"]
+- date: 2026-01-13
+  text: TVSD (Papale2025) benchmarks added
+  slug: tvsd
+  benchmarks: ["Papale2025*"]
+- date: 2024-12-01
+  text: Brain-Score 2.0 released
+  link: /release2.0/

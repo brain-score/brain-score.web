@@ -292,6 +292,12 @@ function updateURLFromFilters() {
     params.set('excluded_benchmarks', excludedBenchmarks);
   }
 
+  // Preserve the active "+N NEW" update selection (?new=<slug>) across filter changes
+  const activeNew = new URLSearchParams(window.location.search).get('new');
+  if (activeNew) {
+    params.set('new', activeNew);
+  }
+
   // Update URL without page reload
   const newURL = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, '', newURL);
@@ -313,9 +319,12 @@ function decodeBenchmarkFilters(encodedFilters) {
   return encodedFilters.split(',').map(id => id.trim()).filter(id => id);
 }
 
-// Clear URL parameters
+// Clear URL parameters (keep the active "+N NEW" update selection)
 function clearURLParameters() {
-  const newURL = window.location.pathname;
+  const activeNew = new URLSearchParams(window.location.search).get('new');
+  const newURL = activeNew
+    ? `${window.location.pathname}?new=${encodeURIComponent(activeNew)}`
+    : window.location.pathname;
   window.history.replaceState({}, '', newURL);
 }
 

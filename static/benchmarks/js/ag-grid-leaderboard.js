@@ -42,20 +42,7 @@ ModelCellRenderer.prototype.init = function(params) {
   a.textContent = params.value.name;
   nameRow.appendChild(a);
 
-  const runnable = params.data?.metadata?.runnable;
-  const runnableIcon = document.createElement('span');
-  runnableIcon.className = 'runnable-inline-icon';
-  if (runnable === true) {
-    runnableIcon.classList.add('runnable-inline-green');
-    runnableIcon.title = 'Model code is functional and runnable';
-  } else if (runnable === false) {
-    runnableIcon.classList.add('runnable-inline-red');
-    runnableIcon.title = 'Model code has known issues or is non-functional';
-  } else {
-    runnableIcon.classList.add('runnable-inline-grey');
-    runnableIcon.title = 'Model code status unknown';
-  }
-  nameRow.appendChild(runnableIcon);
+  // Runnable status dot disabled for now.
 
   this.eGui.appendChild(nameRow);
 

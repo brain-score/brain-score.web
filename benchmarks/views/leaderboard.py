@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import logging
 from collections import defaultdict
@@ -8,10 +9,56 @@ import numpy as np
 from django.shortcuts import render
 
 from ..models import Model
-from ..utils import cache_get_context, cache_page_for_public_only
+from ..utils import cache_get_context, cache_page_for_public_only, load_news
 from .index import get_context, get_datetime_range
 
 logger = logging.getLogger(__name__)
+
+def strip_version(identifier):
+    """Normalize a benchmark identifier to its version-agnostic base (e.g.
+    ``Ferguson2024_v0`` -> ``Ferguson2024``), matching how parent references are stored."""
+    return identifier.split("_v")[0] if identifier else identifier
+
+
+def matches_pattern(identifier, patterns):
+    """Return True if ``identifier`` (version-stripped) matches any shell-style glob in
+    ``patterns`` (e.g. ``Allen2022*``, ``*reverse_pls``)."""
+    if not identifier:
+        return False
+    base = strip_version(identifier)
+    return any(fnmatch.fnmatchcase(base, p) for p in patterns)
+
+
+def get_benchmark_updates():
+    """The benchmark-update registry, read from news.yaml. Each entry with a ``slug`` and
+    ``benchmarks`` (glob patterns) defines a "+N NEW" set selectable via ``?new=<slug>``.
+    ``leaderboard_default`` (default True) controls whether it is part of the no-param view."""
+    updates = []
+    for entry in load_news():
+        if entry.get("slug") and entry.get("benchmarks"):
+            updates.append({
+                "slug": entry["slug"],
+                "patterns": entry["benchmarks"],
+                "default": entry["leaderboard_default"],
+            })
+    return updates
+
+
+def count_new_leaves_per_parent(benchmarks, patterns):
+    """Map each parent's version-stripped identifier to the number of its leaf descendants
+    whose identifier matches ``patterns`` (aggregated up the full ancestor chain)."""
+    bench_by_base = {strip_version(b.identifier): b for b in benchmarks}
+    counts = defaultdict(int)
+    for b in benchmarks:
+        if b.number_of_all_children != 0 or not matches_pattern(b.identifier, patterns):
+            continue
+        current = b
+        while current is not None and current.parent:
+            parent_base = strip_version(current.parent["identifier"])
+            counts[parent_base] += 1
+            current = bench_by_base.get(parent_base)
+    return counts
+
 
 def json_serializable(obj):
     """Recursively convert NumPy and other types to Python native types"""
@@ -456,6 +503,19 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     for b in context['benchmarks']:
         benchmark_root_parent_map[b.identifier] = find_root_parent(b)
 
+    # "+N NEW" header badges: per-update counts (selectable via ?new=<slug>) plus the
+    # default-view union. Counts are static (cached); the client picks which to show.
+    benchmark_updates = get_benchmark_updates()
+    slug_leaf_counts = {u['slug']: count_new_leaves_per_parent(context['benchmarks'], u['patterns'])
+                        for u in benchmark_updates}
+    default_patterns = [p for u in benchmark_updates if u['default'] for p in u['patterns']]
+    default_leaf_counts = count_new_leaves_per_parent(context['benchmarks'], default_patterns)
+
+    def new_count_context(field):
+        base = strip_version(field)
+        per_slug = {slug: counts[base] for slug, counts in slug_leaf_counts.items() if counts.get(base)}
+        return {'newLeafCounts': per_slug, 'newLeafCountDefault': default_leaf_counts.get(base, 0)}
+
     # Root parents (no parent ⇒ visible)
     root_parents = [b for b in context['benchmarks'] if not b.parent]
     for b in root_parents:
@@ -471,7 +531,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'context': {
                 'parentField': None,
                 'benchmarkId': field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                **new_count_context(field)
             }
         })
 
@@ -492,7 +553,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'context': {
                 'parentField': parent_field,
                 'benchmarkId': field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                **new_count_context(field)
             }
         })
 
@@ -522,7 +584,9 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             'sortable': True,
             'context': {
                 'parentField': parent_field,
-                'rootParent': benchmark_root_parent_map.get(field)
+                'rootParent': benchmark_root_parent_map.get(field),
+                'newUpdates': [u['slug'] for u in benchmark_updates if matches_pattern(field, u['patterns'])],
+                'isNewDefault': matches_pattern(field, default_patterns)
             }
         })
 

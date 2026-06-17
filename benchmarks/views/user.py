@@ -21,6 +21,7 @@ from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.tokens import account_activation_token
+from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -130,7 +131,8 @@ class Login(View):
 
 class LandingPage(View):
     def get(self, request):
-        return render(request, 'benchmarks/landing_page.html')
+        news = load_news()
+        return render(request, 'benchmarks/landing_page.html', {'news_items': news})
 
 
 class Logout(View):
