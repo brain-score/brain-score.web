@@ -7,7 +7,7 @@
 # exactly those benchmarks with the "+N NEW" indicators. `leaderboard_default: false` keeps an
 # update out of the default (no-param) leaderboard view, so it only highlights when clicked.
 - date: 2026-06-06
-  text: LAION-fMRI (Zerbe2026) benchmarks added
+  text: "LAION-fMRI (Zerbe2026) benchmarks added. More coming soon!"
   slug: laion-fmri
   benchmarks: ["Zerbe2026*"]
 - date: 2026-03-19
@@ -15,7 +15,7 @@
   slug: nsd
   benchmarks: ["Allen2022*"]
 - date: 2026-03-02
-  text: Reverse predictivity benchmarks added (Muzellec & Kar 2026)
+  text: Reverse predictivity (Muzellec & Kar 2026) benchmarks added
   slug: reverse-pls
   benchmarks: ["*reverse_pls"]
   leaderboard_default: false
