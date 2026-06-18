@@ -34,6 +34,44 @@ _logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
+
+def debug_seed_ratelimit(request):
+    """Dev-only endpoint: prime the per-user upload rate-limit counter so the
+    rejection UI can be tested without making N real uploads.
+
+    Without this, exercising ``rate_limited.html`` from a browser requires
+    pre-loading the runserver's in-process LocMemCache — which the
+    ``manage.py shell`` can't reach (separate process, separate cache).
+    This view runs IN the runserver's process, so its ``cache.set`` lands
+    in the cache the Upload.post handler will actually read.
+
+    Guarded by ``settings.DEBUG`` so it returns 403 in any non-dev
+    deployment even if the URL gets included by accident.
+
+    Usage::
+        /_debug/ratelimit/seed/?user_id=5&count=5      → fully rate-limited
+        /_debug/ratelimit/seed/?user_id=5&count=0      → reset to allowed
+        /_debug/ratelimit/seed/                        → seeds caller's own
+                                                         user to DAILY_LIMIT
+    """
+    from django.core.cache import cache
+    from django.http import HttpResponse, HttpResponseForbidden
+    from benchmarks.ratelimit import _cache_key, DAILY_LIMIT, DAILY_WINDOW_SEC
+    if not settings.DEBUG:
+        return HttpResponseForbidden("disabled outside DEBUG")
+    try:
+        user_id = int(request.GET.get("user_id", request.user.id))
+        count = int(request.GET.get("count", DAILY_LIMIT))
+    except (TypeError, ValueError):
+        return HttpResponse("user_id and count must be integers", status=400)
+    if count <= 0:
+        cache.delete(_cache_key(user_id, "day"))
+        return HttpResponse(f"cleared rate-limit for user_id={user_id}")
+    cache.set(_cache_key(user_id, "day"), count, DAILY_WINDOW_SEC)
+    return HttpResponse(
+        f"primed rate-limit for user_id={user_id} count={count} (limit={DAILY_LIMIT})"
+    )
+
 PLUGIN_LIMIT = 1  # used to limit the amount of plugins that can be submitted at once by a user
 
 
