@@ -20,6 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
+from benchmarks.ratelimit import DAILY_LIMIT, check_and_record_upload, get_recent_upload_count
 from benchmarks.tokens import account_activation_token
 from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
@@ -307,6 +308,22 @@ class Upload(View):
                           {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
         user_instance = User.objects.get_by_natural_key(request.user.email)
+
+        # Per-user upload rate limit. Superusers bypass so admin testing /
+        # backfills aren't blocked. The check runs BEFORE zip validation
+        # (which is cheap) and BEFORE the Jenkins POST (which schedules
+        # real Batch compute) so a rate-limited user pays no infra cost.
+        # Validation failures DON'T consume quota — they're caught above by
+        # `form.is_valid()` and never reach this point.
+        if not request.user.is_superuser:
+            allowed, reason = check_and_record_upload(user_instance.id)
+            if not allowed:
+                return render(request, 'benchmarks/rate_limited.html', {
+                    'domain': self.domain,
+                    'formatted': self.domain.capitalize(),
+                    'reason': reason,
+                    'limit': DAILY_LIMIT,
+                })
 
         # parse directory tree, return new html page if not valid:
         is_zip_valid, error = validate_zip(form.files.get('zip_file'))

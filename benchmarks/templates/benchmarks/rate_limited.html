@@ -1,0 +1,36 @@
+{% extends 'benchmarks/base.html' %}
+{% load static %}
+{% load compress %}
+
+{% block main %}
+{% include 'benchmarks/components/nav-bar.html' %}
+<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
+    <div class="column is-half has-text-centered-mobile">
+        <div class="container login-left">
+            <section id="rate-limited" class="container center">
+                <article class="message is-warning">
+                    <div class="message-header">
+                        <p>Submission limit reached</p>
+                    </div>
+                    <div class="message-body">
+                        {{ reason }}
+                        <br>
+                        <br>
+                        Each user can submit up to <strong>{{ limit }} models per day</strong>. This limit keeps the
+                        scoring queue fair for everyone — each submission can take several hours of compute time on
+                        shared infrastructure.
+                        <br>
+                        <br>
+                        The counter resets 24 hours after your first submission of the day. If you believe you've hit
+                        this limit in error, or you have a legitimate need to submit more than {{ limit }} models in a
+                        day, please reach out at <a href="https://www.brain-score.org/community">brain-score.org/community</a>.
+                        <br>
+                        <br>
+                        <a href="https://{{ request.get_host }}/profile/{{ domain }}">Return to your profile</a>
+                    </div>
+                </article>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
