@@ -1,0 +1,146 @@
+name: Staged deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer merge supersedes an older run that is still soaking in staging,
+# so the production gate always waits on the latest main.
+concurrency:
+  group: staged-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    outputs:
+      path: ${{ steps.classify.outputs.path }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+          HEAD="${{ github.sha }}"
+          BASE="$(git rev-parse -q --verify refs/tags/prod^{commit} 2>/dev/null || true)"
+
+          if [ -z "$BASE" ]; then
+            echo "No 'prod' tag yet -> first deploy soaks in staging."
+            echo "path=slow" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$BASE" = "$HEAD" ]; then
+            echo "HEAD already in production -> nothing to deploy."
+            echo "path=none" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "Changed vs production:"; echo "$CHANGED"
+          # Fast path requires EVERY changed file to be a template. Widen this allowlist to relax the gate.
+          NON_FAST="$(printf '%s\n' "$CHANGED" | grep -vE '\.html$' || true)"
+          if [ -z "$NON_FAST" ]; then
+            echo "All changes are templates -> fast path."
+            echo "path=fast" >> "$GITHUB_OUTPUT"
+          else
+            echo "Code changed -> soak in staging."
+            echo "path=slow" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: classify
+    if: needs.classify.outputs.path != 'none'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      version_label: ${{ steps.package.outputs.version_label }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: package
+        shell: bash
+        env:
+          APP: ${{ vars.EB_APPLICATION_NAME }}
+          BUCKET: ${{ vars.EB_SOURCE_BUCKET }}
+        run: |
+          set -euo pipefail
+          VERSION="gh-${{ github.run_id }}-${{ github.run_attempt }}-$(echo "${{ github.sha }}" | cut -c1-7)"
+          BUNDLE="bundle-$VERSION.zip"
+          zip -qr "$BUNDLE" . -x '.git/*' 'node_modules/*'
+          aws s3 cp "$BUNDLE" "s3://$BUCKET/$APP/$BUNDLE"
+          aws elasticbeanstalk create-application-version \
+            --application-name "$APP" \
+            --version-label "$VERSION" \
+            --source-bundle S3Bucket="$BUCKET",S3Key="$APP/$BUNDLE"
+          echo "version_label=$VERSION" >> "$GITHUB_OUTPUT"
+
+  deploy-staging:
+    needs: [classify, build]
+    if: needs.classify.outputs.path != 'none'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: staging
+      url: https://staging.brain-score.org
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: ./.github/actions/eb-deploy
+        with:
+          application-name: ${{ vars.EB_APPLICATION_NAME }}
+          environment-name: ${{ vars.EB_STAGING_ENV }}
+          version-label: ${{ needs.build.outputs.version_label }}
+
+  deploy-production:
+    needs: [classify, build, deploy-staging]
+    if: needs.classify.outputs.path != 'none'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    # fast -> production-fast (no wait timer); slow -> production (3-day wait timer).
+    environment:
+      name: ${{ needs.classify.outputs.path == 'fast' && 'production-fast' || 'production' }}
+      url: https://www.brain-score.org
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: ./.github/actions/eb-deploy
+        with:
+          application-name: ${{ vars.EB_APPLICATION_NAME }}
+          environment-name: ${{ vars.EB_PROD_ENV }}
+          version-label: ${{ needs.build.outputs.version_label }}
+      - name: Invalidate CloudFront
+        if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
+        shell: bash
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths '/*'
+      - name: Mark commit as deployed to production
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag -f prod "${{ github.sha }}"
+          git push -f origin refs/tags/prod
