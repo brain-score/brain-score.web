@@ -18,7 +18,6 @@
   text: Reverse predictivity (Muzellec & Kar 2026) benchmarks added
   slug: reverse-pls
   benchmarks: ["*reverse_pls"]
-  leaderboard_default: false
 - date: 2026-02-17
   text: "Blog: Overhauling the Brain-Score Leaderboard"
   link: /blog/leaderboard_overhaul/
