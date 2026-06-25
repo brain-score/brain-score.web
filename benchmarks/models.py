@@ -325,6 +325,7 @@ class ResourceUsage(models.Model):
     batch_job_id = models.CharField(max_length=64, null=True, blank=True)
     batch_queue = models.CharField(max_length=64, null=True, blank=True)
     batch_job_definition = models.CharField(max_length=128, null=True, blank=True)
+    ec2_instance_id = models.CharField(max_length=32, null=True, blank=True)
     ec2_instance_type = models.CharField(max_length=32, null=True, blank=True)
     spot = models.BooleanField(null=True, blank=True)
     spot_interrupted = models.BooleanField(default=False)
@@ -361,6 +362,10 @@ class ResourceUsage(models.Model):
     model_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
     benchmark_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
     container_image_digest = models.CharField(max_length=128, null=True, blank=True)
+
+    # Calibrated to match the actual AWS bill (DB estimate × ~2.0 historically).
+    # Accounts for: instance hours > container exec hours, EBS overhead, real spot price.
+    cost_usd_actual = models.FloatField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
