@@ -335,8 +335,8 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-sass', 'sass {infile} {outfile}'),
 )
 
-# Build assets at image-build time (manage.py compress); served by WhiteNoise, not the dev server.
-COMPRESS_OFFLINE = True
+# Offline in prod (assets built via manage.py compress); tests skip that step, so stay online there.
+COMPRESS_OFFLINE = os.getenv("DJANGO_ENV") != "test"
 
 AUTH_USER_MODEL = 'benchmarks.User'
 
