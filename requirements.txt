@@ -4,6 +4,8 @@ numpy
 psycopg2
 boto3
 pandas
+gunicorn==23.0.0
+whitenoise==6.6.0
 django-compressor==4.4
 colour
 tqdm
