@@ -86,6 +86,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # serve static files
     'django.middleware.gzip.GZipMiddleware',  # Compress HTTP responses
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -334,6 +335,9 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-sass', 'sass {infile} {outfile}'),
 )
 
+# Build assets at image-build time (manage.py compress); served by WhiteNoise, not the dev server.
+COMPRESS_OFFLINE = True
+
 AUTH_USER_MODEL = 'benchmarks.User'
 
 # Logging
@@ -361,6 +365,12 @@ LOGGING = {
             'handlers': ['file', 'console'],
             'level': log_level,
             'propagate': True,
+        },
+        # Host-probing scanners spam ERROR tracebacks; drop them.
+        'django.security.DisallowedHost': {
+            'handlers': ['console'],
+            'level': 'CRITICAL',
+            'propagate': False,
         },
     },
 }

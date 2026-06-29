@@ -13,6 +13,8 @@ dependencies:
   - boto3
   - pandas
   - pip:
+    - gunicorn==23.0.0
+    - whitenoise==6.6.0
     - django_compressor==4.4
     - colour
     - tqdm
