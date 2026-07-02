@@ -59,15 +59,6 @@ def get_base_model_query(domain="vision"):
     """Get the base model query for a domain before any filtering"""
     return FinalModelContext.objects.filter(domain=domain)  # Return QuerySet instead of list
 
-def view(request, domain: str):
-    # Get the authenticated user if any
-    user = request.user if request.user.is_authenticated else None
-
-    # Get the appropriate context based on user authentication
-    leaderboard_context = get_context(user=user, domain=domain, show_public=True)
-
-    return render(request, 'benchmarks/leaderboard/leaderboard.html', leaderboard_context)
-
 # Maintain 24-hr cache for leaderboard view
 @cache_get_context(timeout=7 * 24 * 60 * 60, key_prefix="index", use_compression=True)
 def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=None, show_public=False, force_user_cache=False):
@@ -146,9 +137,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Build CSV data and comparison data
     # Combined to a single pass through models to avoid redundant calculations.
     csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
-    # PERF: Commented out - builds DataFrames that are not currently used by any view/template.
-    # Takes ~1.7s due to 52k individual pd.to_datetime calls. Re-enable when wayback feature needs this.
-    # model_score_df, model_timestamp_df = build_model_benchmark_frames(benchmarks, model_rows_reranked)
 
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
@@ -369,88 +357,6 @@ def _build_model_data(benchmarks: List[FinalBenchmarkContext],
         csv_data = df.to_csv(index=True)
 
     return csv_data, comparison_data
-
-def _extract_score_value(score: Dict[str, Any]) -> Union[float, None]:
-    """
-    Helper function to normalize per-benchmark score values to floats so they can be aggregated reliably.
-    """
-    if not score:
-        return None
-
-    score_ceiled = score.get("score_ceiled")
-    if score_ceiled in (None, "X"):
-        return None
-    try:
-        return float(score_ceiled)
-    except (TypeError, ValueError):
-        return None
-
-
-
-def _parse_end_timestamp(raw_timestamp: Any) -> pd.Timestamp:
-    """
-    Helper function to convert stored timestamp strings into pandas Timestamps, coercing invalid values to NaT.
-    """
-    if not raw_timestamp:
-        return pd.NaT
-    try:
-        return pd.to_datetime(raw_timestamp)
-    except Exception:
-        return pd.NaT
-
-
-def build_model_benchmark_frames(
-    benchmarks: List[FinalBenchmarkContext],
-    models: List[FinalModelContext]
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Creates 2 DataFrames (model_id x leaf benchmarks) for scores and end timestamps.
-    """
-    #score_df: rows are model_id, columns are leaf benchmark IDs, values are floats (or NaN)
-    #timestamp_df: rows are model_id, columns are leaf benchmark IDs, values are pandas Timestamps (or NaT)
-    leaf_benchmark_ids = []
-    for bench in benchmarks:
-        if bench.number_of_all_children == 0:
-            leaf_benchmark_ids.append(bench.benchmark_type_id)
-    leaf_benchmark_set = set(leaf_benchmark_ids)
-
-    score_rows: List[Dict[str, Any]] = []
-    timestamp_rows: List[Dict[str, Any]] = []
-
-    for model in models:
-        score_entry = {"model_id": model.model_id}
-        timestamp_entry = {"model_id": model.model_id}
-
-        if model.scores:
-            for score in model.scores:
-                versioned_id = score.get("versioned_benchmark_identifier", "")
-                # Strip version suffix to get benchmark_type_id
-                benchmark_id = versioned_id.rsplit("_v", 1)[0] if "_v" in versioned_id else versioned_id
-                if benchmark_id not in leaf_benchmark_set:
-                    continue
-
-                score_entry[benchmark_id] = _extract_score_value(score)
-                timestamp_entry[benchmark_id] = _parse_end_timestamp(score.get("end_timestamp"))
-
-        score_rows.append(score_entry)
-        timestamp_rows.append(timestamp_entry)
-
-    # Initialize DataFrames with empty index
-    if score_rows:
-        score_df = pd.DataFrame(score_rows).set_index("model_id")
-    else:
-        score_df = pd.DataFrame(index=pd.Index([], name="model_id"))
-
-    if timestamp_rows:
-        timestamp_df = pd.DataFrame(timestamp_rows).set_index("model_id")
-    else:
-        timestamp_df = pd.DataFrame(index=pd.Index([], name="model_id"))
-
-    # Reindex to ensure all leaf benchmarks are included
-    score_df = score_df.reindex(columns=leaf_benchmark_ids)
-    timestamp_df = timestamp_df.reindex(columns=leaf_benchmark_ids)
-
-    return score_df, timestamp_df
 
 # Resubmissions are currently not supported. Retaining for future use.
 def _collect_submittable_benchmarks(benchmarks: List[FinalBenchmarkContext], user: User) -> Dict:
