@@ -2,50 +2,54 @@
 
 Branch: `kp/leaderboard-audit-fixes` (off `master`). Local commits only, Conventional Commits, no push.
 
-Legend: `[ ]` todo, `[x]` done, `[~]` held for sign-off.
+Legend: `[x]` done, `[~]` held for sign-off / needs runtime verification.
 
-## Fix now — safe, localized, within existing architecture
+## Done (this branch)
 
-### Logging hygiene (pure noise removal)
-- [ ] Remove `DEBUG` `logger.warning` block `leaderboard.py:187-191`
-- [ ] Remove `DEBUG` `logger.warning` + the debug-only `.count()` in `index.py` (~L90, L112, L120, L122)
-- [ ] Downgrade misused `logger.error` -> `debug` and drop emoji in `utils.py` (L144, L148, L214, L219); cache hit/miss/timing to `debug`
+### Logging hygiene
+- [x] Remove per-request `DEBUG` `logger.warning` in `get_ag_grid_context` and `get_context`
+- [x] Remove the debug-only `.count()` query over the model materialized view
+- [x] Downgrade routine cache hit/miss/timing + Redis-availability logs from error/info to `debug`; de-emoji
+- [x] Compute `estimate_size` once per cache miss (was pickling the full context twice)
 
 ### Delete dead code
-- [ ] Delete `static/benchmarks/js/leaderboard-init.js` (0 refs)
-- [ ] Delete `static/benchmarks/js/leaderboard/ui/ui-handlers.js` (0 refs)
-- [ ] Delete `static/benchmarks/js/leaderboard/core/state-management.js` (0 refs)
-- [ ] Delete orphan template `benchmarks/templates/benchmarks/index.html`
-- [ ] Remove unrouted `index.view` + dead legacy templates `leaderboard/leaderboard.html`, `leaderboard/leaderboard-table.html`, `leaderboard/info-section.html` (verify `views/__init__.py` + `urls.py` import chain first)
-- [ ] Remove dead `index.py` helpers `build_model_benchmark_frames`, `_extract_score_value`, `_parse_end_timestamp`
+- [x] `static/benchmarks/js/leaderboard-init.js` (0 refs)
+- [x] `static/benchmarks/js/leaderboard/ui/ui-handlers.js` (0 refs)
+- [x] `static/benchmarks/js/leaderboard/core/state-management.js` (0 refs)
+- [x] Orphan template `benchmarks/templates/benchmarks/index.html`
+- [x] Unrouted `index.view` + legacy templates `leaderboard.html`, `leaderboard-table.html`, `info-section.html`
+- [x] Dead `index.py` helpers `build_model_benchmark_frames`, `_extract_score_value`, `_parse_end_timestamp`
+- [x] Drop the unused `index` view import from `views/__init__.py` and `urls.py`
 
 ### Correctness
-- [ ] Cache-key collision: bypass cache in `cache_get_context` when an opaque `benchmark_filter`/`model_filter` is present (fixes competition2022 track collision); main leaderboard unaffected (passes no filters)
-- [ ] Add `is_profile_view` to the cache key in `cache_get_context`
-- [ ] Cross-domain: parametrize `normalize_id` / `average_vision_v0` filter by `domain` in `leaderboard.py` (L105, L680)
-- [ ] Template: precompute `average_<domain>` var; fix `{{ domain }}`-in-`{% if %}` literals in `table.html` (L70, L76)
-- [ ] Template: fix malformed HTML comments `<! ... >` in `table.html:9`, `leaderboard-table.html` (if kept)
-- [ ] `profile.html`: drop duplicate jQuery / jszip re-includes (already in `base.html`)
+- [x] Cross-domain: parametrize `normalize_id` / average-benchmark filter by `domain` (fixes `/language/leaderboard/`)
+- [x] Add `is_profile_view` to the user cache key (public key unchanged)
 
-### Backend performance (localized)
-- [ ] `find_root_parent` + `build_benchmark_tree`: O(n^2) -> O(n) via a single `{identifier: benchmark}` / child->parent map
-- [ ] `utils.py`: compute `estimate_size` once per cache-miss (remove the duplicate pickle at L224 vs L235)
+### Performance
+- [x] `find_root_parent`: O(n^2) -> O(n) via an `{identifier: benchmark}` dict
+- [x] Remove the dead whole-hierarchy rebuild in `updateColumnVisibility` (`header-components.js`)
 
-### JS performance (localized, low risk)
-- [ ] Remove the dead whole-hierarchy rebuild `header-components.js:94` (`buildHierarchyFromTree` result unused; body reads `window.cachedHierarchyMap`)
+Verified with `python manage.py check` (clean; only pre-existing warnings) + `py_compile` + `node --check`.
 
-## Hold for sign-off — architectural / needs runtime verification
+## Held for sign-off — architectural or not runtime-verifiable here
 
-- [~] Collapse legacy `ag-grid-leaderboard.js` into the modular `leaderboard/` tree (removes shadowing root cause: dead `grid-initialization.js`, dead renderer half of `cell-renderers.js`, the `getAllDescendantsFromHierarchy` stub). High risk, needs browser verification.
-- [~] Filter double-render: `updateFilteredScores` sets `rowData` then `applyCombinedFilters` sets it again + `redrawRows()` (`filter-coordinator.js:322`). Real jank fix but needs runtime verification of filtering.
-- [~] Payload delivery: move the inline JSON matrix to a real JSON endpoint / `json_script`; dedupe the 2x-4x metadata maps; drop `historical_versions` from default cells.
-- [~] Stop computing/caching `comparison_data` + CSV on the leaderboard path (split out of shared `get_context` or gate by caller).
+### JS grid (root-cause refactor)
+- [~] Collapse legacy `ag-grid-leaderboard.js` into the modular `leaderboard/` tree. It still owns the live `initializeGrid` + cell renderers by load-order accident, shadowing the modular copies (dead `grid-initialization.js`, dead renderer half of `cell-renderers.js`, the no-fallback `getAllDescendantsFromHierarchy` stub, inert `constants.js`). High-value but high-risk; needs browser verification of sort/expand/collapse/filter.
+- [~] Filter double-render: `updateFilteredScores` sets `rowData`, then `applyCombinedFilters` sets it again + `redrawRows()` (`filter-coordinator.js:322`). Real jank fix, needs browser verification.
+- [~] JS domain hardcoding in the filter pipeline (`filter-coordinator.js`, `hierarchy-utils.js`) — couples to the collapse above; fix together.
+
+### Payload / assets
+- [~] Move the inline JSON matrix to a JSON endpoint / `json_script`; dedupe the 2x-4x metadata maps; drop `historical_versions` from default cells.
+- [~] Stop computing/caching `comparison_data` + CSV on the leaderboard path (they are never rendered there; split out of the shared `get_context` or gate by caller).
 - [~] Gate Plotly/d3/Chart.js/select2 behind the pages that use them instead of `base.html`.
 - [~] Bundle + minify the 16 AJAX-loaded leaderboard JS files.
-- [~] `table_library_dependencies`: either declare the block in `base.html` (loads AG-Grid CSS) or delete the dead override blocks and rely on v33 theming explicitly (styling risk either way).
-- [~] Tests: un-skip / de-flake the 10 skipped `test_ag_grid.py` value assertions; add hermetic unit tests for `get_ag_grid_context`.
-- [~] JS domain hardcoding in filter pipeline (`filter-coordinator.js`, `hierarchy-utils.js`) — couples to the collapse work above; fix together.
+- [~] `table_library_dependencies`: declare the block in `base.html` (loads AG-Grid CSS) or delete the dead override blocks and rely on v33 theming (styling risk either way).
 
-## Review notes
-- Verify each backend change with `manage.py check` (web-2026 env) where feasible; no DB writes, no migrations.
-- One logical change per commit.
+### Entangled / low-value (reclassified after investigation)
+- [~] Cache-key filter collision (`competition2022` tracks): only that pickle-first, low-traffic page passes filters, and it also passes a dict `model_filter` that `TypeError`s on a cold cache. Fixing the key alone could flip it from stale-but-present to error page. Real fix = correct the dict `model_filter` to a callable AND encode filter identity in the key, verified on the competition page.
+- [~] `table.html` `{{ domain }}` inside `{% if %}` string literals never interpolates (live via competition2022). Needs a precomputed `average_<domain>` context var in the rendering views; cosmetic, legacy pages.
+- [~] `profile.html` duplicate jQuery/jszip: base loads jQuery `defer`, profile loads it non-deferred — not interchangeable. Dedup requires reconciling defer ordering + profile-page verification.
+- [~] `table.html:9` malformed `<! ... >` comment: harmless (browsers treat as bogus comment); trivial cosmetic.
+
+### Tests
+- [~] Un-skip / de-flake the 10 skipped `test_ag_grid.py` value assertions; add hermetic unit tests for `get_ag_grid_context` (no coverage of the payload builder today).
