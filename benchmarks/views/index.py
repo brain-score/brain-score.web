@@ -87,7 +87,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Necessary to wrap query in function to allow caching of query results.
     # For now, it is disabled. Provided minimal performance gains.
     all_model_data = get_base_model_query(domain)
-    _logger.warning(f"DEBUG get_context: get_base_model_query returned {all_model_data.count()} models")
 
     if user is None:
         # Public view - only show public models
@@ -109,7 +108,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Convert to list only when needed for ranking and further processing
     models = list(models)
-    _logger.warning(f"DEBUG get_context: after permission filters, got {len(models)} models")
 
     # Apply any additional model filters
     if model_filter:
@@ -117,9 +115,7 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
 
     # Recalculate ranks based on the filtered set of models
     # Necessary for various model-variant views (e.g., user profile view vs public vs super user profile view which have different sets of models)
-    _logger.warning(f"DEBUG get_context: before filter_and_rank_models, got {len(models)} models")
     model_rows_reranked = filter_and_rank_models(models, domain)
-    _logger.warning(f"DEBUG get_context: after filter_and_rank_models, got {len(model_rows_reranked)} models")
 
     # ------------------------------------------------------------------
     # 2) BUILD OTHER CONTEXT ITEMS AS NEEDED

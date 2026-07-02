@@ -140,12 +140,10 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             # Try to use Redis cache if available, otherwise fall back to default cache
             try:
                 cache_backend = caches["redis"]
-                if os.getenv("DJANGO_ENV") != "test":
-                    logger.error(f"✅ Redis/Valkey cache available for domain {domain}")
             except Exception as e:
                 cache_backend = default_cache
                 if os.getenv("DJANGO_ENV") != "test":
-                    logger.error(f"❌ Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
+                    logger.warning(f"Redis/Valkey cache not available for domain {domain}, using LocMemCache: {e}")
 
             # Grab or initialize version
             version_key = f"cache_version_{domain}"
@@ -192,15 +190,13 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
             # Try to get cached result
             try:
                 cached_result = cache_backend.get(cache_key)
-                logger.info(f"[CACHE GET] {cache_key}")
                 if cached_result is not None:
-                    logger.info(f"Cache hit for {cache_key}")
-                    
+                    logger.debug(f"Cache hit for {cache_key}")
+
                     # Decompress if needed
                     if use_compression and isinstance(cached_result, bytes):
                         try:
                             decompressed_result = decompress_data(cached_result)
-                            logger.info(f"Decompressed cache data for {cache_key}")
                             return decompressed_result
                         except Exception as e:
                             logger.warning(f"Failed to decompress cache data: {e}, falling back to function call")
@@ -211,18 +207,14 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                 logger.error(f"Cache GET error {cache_backend}: {e}")
 
             # If no cache found, calculate result
-            logger.error(f"Cache miss for key: {cache_key}")
+            logger.debug(f"Cache miss for key: {cache_key}")
             func_start = time.time()
-            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
+            result = func(user=user, domain=domain, benchmark_filter=benchmark_filter,
                         model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             func_end = time.time()
-            logger.error(f"Context execution took {func_end - func_start:.3f}s")
+            logger.debug(f"Context execution took {func_end - func_start:.3f}s")
             
             
-            # Estimate and log the original size if compression is enabled
-            if use_compression:
-                original_size = estimate_size(result)
-                      
             # Store result in cache
             try:
                 if use_compression:
@@ -230,17 +222,16 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                     compress_start = time.time()
                     compressed_result = compress_data(result)
                     compress_end = time.time()
-                    
+
                     compressed_size = len(compressed_result)
                     original_size = estimate_size(result)
                     compression_ratio = compressed_size / original_size if original_size > 0 else 1.0
-                    
-                    logger.debug(f"COMPRESSION DEBUG: {original_size / (1024 * 1024):.2f} MB → {compressed_size / (1024 * 1024):.2f} MB "
+
+                    logger.debug(f"Compressed cache {original_size / (1024 * 1024):.2f} MB -> {compressed_size / (1024 * 1024):.2f} MB "
                               f"(ratio: {compression_ratio:.2f}, time: {compress_end - compress_start:.3f}s)")
-                    
+
                     cache_backend.set(cache_key, compressed_result, timeout)
                 else:
-                    logger.debug(f"COMPRESSION DEBUG: No compression, storing raw result")
                     cache_backend.set(cache_key, result, timeout)
                     
                 logger.debug(f"[CACHE SET] {cache_key}")
