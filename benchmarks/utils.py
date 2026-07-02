@@ -168,6 +168,10 @@ def cache_get_context(timeout=24 * 60 * 60, key_prefix: Optional[str] = None, us
                 return func(user=user, domain=domain, benchmark_filter=benchmark_filter, 
                           model_filter=model_filter, show_public=show_public, force_user_cache=force_user_cache, **kwargs)
             
+            # Profile view renders an extra column, so it must not share a key with a plain user view
+            if kwargs.get('is_profile_view'):
+                key_parts.append("profile")
+
             # Add filters to key prefix
             if benchmark_filter:
                 key_parts.append("bench_filtered")
