@@ -101,13 +101,13 @@ def get_attr(obj, attr, default=None):
     return getattr(obj, attr, default)
 
 
-def normalize_id(identifier):
-    if identifier in ('average_vision', 'average_vision_v0'):
+def normalize_id(identifier, domain="vision"):
+    if identifier in (f'average_{domain}', f'average_{domain}_v0'):
         return None  # treat neural and behavior as root-level
     return identifier.split('_v')[0] if identifier else None
 
 
-def build_benchmark_tree(benchmarks, parent_id=None):
+def build_benchmark_tree(benchmarks, parent_id=None, domain="vision"):
     tree = []
 
     for b in benchmarks:
@@ -117,13 +117,13 @@ def build_benchmark_tree(benchmarks, parent_id=None):
 
         b_parent_id = get_attr(b_parent, 'identifier') if b_parent else None
 
-        if normalize_id(b_parent_id) == normalize_id(parent_id):
+        if normalize_id(b_parent_id, domain) == normalize_id(parent_id, domain):
             node = {
                 'id': b_identifier,
                 'label': b_short_name
             }
 
-            children = build_benchmark_tree(benchmarks, parent_id=b_identifier)
+            children = build_benchmark_tree(benchmarks, parent_id=b_identifier, domain=domain)
             if children:
                 node['children'] = children
 
@@ -669,8 +669,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
     context['filter_options'] = json.dumps(filter_options)
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
-    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
-    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
+    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != f'average_{domain}_v0']
+    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks, domain=domain))
 
     # Create benchmark bibtex map for citation export
     context['benchmark_bibtex_map'] = json.dumps(build_benchmark_bibtex_map(context['benchmarks']))
