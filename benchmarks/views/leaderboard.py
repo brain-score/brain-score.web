@@ -478,17 +478,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # Build benchmark ID -> root parent mapping for color palette selection
     benchmark_root_parent_map = {}
+    bench_by_id = {b.identifier: b for b in context['benchmarks']}
 
     def find_root_parent(benchmark):
         """Find the root parent (top-level category) for a benchmark."""
         current = benchmark
         while current.parent:
-            parent_id = current.parent['identifier']
-            parent_obj = next((b for b in context['benchmarks'] if b.identifier == parent_id), None)
-            if parent_obj:
-                current = parent_obj
-            else:
+            parent_obj = bench_by_id.get(current.parent['identifier'])
+            if parent_obj is None:
                 break
+            current = parent_obj
         return current.identifier
 
     # Build the mapping for all benchmarks
