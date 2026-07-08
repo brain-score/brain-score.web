@@ -6,9 +6,8 @@
     {% endif %}
 <div class="table-container">
     <table id="leaderboard" class="table is-hoverable benchmarks fixed_header">
-        <! Each of the cells in table/heading have a lot of information of what benchmark they are and who their
-        parent
-        is. This allows for QuerySelecting and using some of the filters from index.py>
+        {# Each cell in the table/heading carries data attributes describing the benchmark and its parent,
+           used for QuerySelecting and the index.py filters. #}
         <thead>
         <tr>
             <th id="rank-th"><p><span class="want_to_click">
@@ -67,13 +66,13 @@
                         <span data-benchmark="{{ benchmark.short_name }}"
                               class="want_to_click clicker depth_{{ benchmark.depth }}
                                    {% if benchmark.version %} instance {% endif %}
-                                   {% if benchmark.root_parent == 'average_{{ domain }}' %} brain_benchmark {% endif %}"
+                                   {% if benchmark.root_parent == 'average_'|add:domain %} brain_benchmark {% endif %}"
                         value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}
                         </span>
                         {# version #}
                         {% include "benchmarks/benchmark_version.html" with version=benchmark.version %}
                         {# number of child benchmarks, ignore roots #}
-                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_{{ domain }}' %}
+                        {% if benchmark.identifier in uniform_parents and benchmark.short_name != 'average_'|add:domain %}
                             {% include "benchmarks/benchmark_children.html" with number_of_children=benchmark.number_of_all_children %}
                         {% endif %}
                         {% if benchmark.benchmark_type.reference and benchmark.benchmark_type.reference.url %}
