@@ -29,9 +29,19 @@ Legend: `[x]` done, `[~]` held for sign-off / needs runtime verification.
 - [x] `find_root_parent`: O(n^2) -> O(n) via an `{identifier: benchmark}` dict
 - [x] Remove the dead whole-hierarchy rebuild in `updateColumnVisibility` (`header-components.js`)
 
-Verified with `python manage.py check` (clean; only pre-existing warnings) + `py_compile` + `node --check`.
+### Payload / templates / tests (round 2, verified against dev DB)
+- [x] Drop unused `comparison_data` from the leaderboard payload (compare page still builds it)
+- [x] `table.html`: interpolate `domain` in `{% if %}` via `'average_'|add:domain` (brain_benchmark now renders on competition2022); fix malformed `<! ... >` comment
+- [x] Add `test_leaderboard_context.py` invariant tests for `get_ag_grid_context` (keys/no comparison_data, row_data, pinned+priority-sorted columns, domain-aware tree vision+language, filter_options shape)
 
-## Held for sign-off — architectural or not runtime-verifiable here
+Verified with `python manage.py check` (clean; only pre-existing warnings), `py_compile`, `node --check`, a Playwright smoke test (grid renders, search 36->18), and `manage.py shell` invariant checks against the dev DB (vision + language). Server run needs `DEBUG=True` locally (offline-compress manifest otherwise 500s).
+
+## Held for sign-off — architectural, or cannot be proven safe headlessly
+
+Rationale for holding: the leaderboard grid cannot be regression-verified with a
+headless harness (baseline itself throws one pre-existing `null textContent`
+pageerror, and the team already `@skip`s 10 of 26 E2E value assertions for
+flakiness). Shipping JS/asset refactors blind would violate "prove it works".
 
 ### JS grid (root-cause refactor)
 - [~] Collapse legacy `ag-grid-leaderboard.js` into the modular `leaderboard/` tree. It still owns the live `initializeGrid` + cell renderers by load-order accident, shadowing the modular copies (dead `grid-initialization.js`, dead renderer half of `cell-renderers.js`, the no-fallback `getAllDescendantsFromHierarchy` stub, inert `constants.js`). High-value but high-risk; needs browser verification of sort/expand/collapse/filter.
