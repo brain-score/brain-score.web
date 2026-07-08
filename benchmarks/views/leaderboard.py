@@ -708,9 +708,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_url': context.get('citation_domain_url', ''),
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
-
-        # Compare tab data
-        'comparison_data': context.get('comparison_data', '[]'),
     }
 
     return minimal_context
