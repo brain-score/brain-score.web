@@ -6,6 +6,10 @@
     'use strict';
 
     var H = window.BrainScoreTrendHover;
+    if (!H) {
+        console.warn('compare-trend: trend-hover.js must load before compare-trend.js');
+        return;
+    }
     var renderAttributionList = H.renderAttributionList;
     var eventTouchesPlot = H.eventTouchesPlot;
     var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
@@ -291,9 +295,14 @@
                 if (el) el.addEventListener('change', _onSelectionChange);
             });
         } else {
-            jQuery('#model-x-select, #model-y-select').on('change', _onSelectionChange);
+            // compare_models.js sets defaults with .trigger('change.select2'), which
+            // does not fire a bare 'change' handler — listen for both.
+            jQuery('#model-x-select, #model-y-select').on('change change.select2', _onSelectionChange);
         }
         _onSelectionChange();
+        // compare_models.js init runs on $(document).ready, after defer scripts;
+        // retry once the default models are selected.
+        setTimeout(_onSelectionChange, 0);
     }
 
     if (document.readyState === 'loading') {

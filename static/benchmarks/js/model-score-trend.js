@@ -361,6 +361,14 @@
         }
     }
 
-    initTrendTabs();
-    initPlots();
+    function init() {
+        initTrendTabs();
+        initPlots();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();

@@ -254,6 +254,63 @@ class TestComparisonTrendNarrative(BaseTestCase):
         lines = meta['points'][0]['lines']
         self.assertIn('Neither model added new benchmark scores this month.', lines)
 
+    def test_score_hover_lists_global_benchmark_adds_without_coverage(self):
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.45], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1']},
+        )
+        lines = meta['points'][1]['lines']
+        self.assertTrue(any('Why this changed' in l and 'new leaf benchmark' in l for l in lines), lines)
+        self.assertIn('2 new leaf benchmarks counted globally this month.', lines)
+        # Per-model summary is present with the "scored on X of N" phrasing.
+        self.assertTrue(any('alpha: scored on 0 of 2' in l for l in lines), lines)
+        self.assertTrue(any('beta: scored on 0 of 2' in l for l in lines), lines)
+        # Bullet lines still list each added leaf; without scored_new_a/b, the
+        # per-benchmark tag is "not run by either" (not "-- scored").
+        self.assertIn('  - Bench.IT -- not run by either', lines)
+
+    def test_score_hover_marks_per_benchmark_scored_by_model(self):
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.55], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1']},
+            scored_new_a={'2026-06': ['Bench.IT']},
+            scored_new_b={'2026-06': []},
+        )
+        lines = meta['points'][1]['lines']
+        # A scored 1 of 2, B scored 0 of 2.
+        self.assertTrue(any('alpha: scored on 1 of 2' in l for l in lines), lines)
+        self.assertTrue(any('beta: scored on 0 of 2' in l for l in lines), lines)
+        # Per-benchmark tag: Bench.IT is scored by A only; V1 by neither.
+        self.assertIn('  - Bench.IT -- scored by A', lines)
+        self.assertIn('  - Bench.V1 -- not run by either', lines)
+
+    def test_score_focal_line_reports_scored_of_added(self):
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.55], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1']},
+            scored_new_a={'2026-06': ['Bench.IT']},
+        )
+        lines = meta['points'][1]['lines']
+        # Per-model focal-change line uses "scored on X of N" (not just "N were counted").
+        self.assertTrue(
+            any('alpha:' in l and 'scored on 1 of 2 new leaf benchmark' in l for l in lines),
+            lines,
+        )
+
+    def test_sidebar_truncates_long_model_names(self):
+        long_name = 'fixres_resnext101_32x48d_wsl_extra'
+        meta = self._meta(
+            'score', ['2026-05-31'], [0.42], [0.42],
+            name_a=long_name, name_b='beta',
+        )
+        # Default headline uses truncated name; full identifier does not appear.
+        defaults = meta['defaultLines']
+        self.assertFalse(any(long_name in l for l in defaults), defaults)
+        self.assertTrue(any(long_name[:19] in l and '...' in l for l in defaults), defaults)
+
     def test_rank_hover_summarises_global_churn(self):
         meta = self._meta(
             'rank', ['2026-04-30', '2026-05-31'], [3, 5], [10, 4],

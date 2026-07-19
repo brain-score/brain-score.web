@@ -6,7 +6,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from ..models import Model, ModelMonthlyAggregate, MonthBenchmarkEdge
+from ..models import Model, ModelMonthlyAggregate, MonthBenchmarkEdge, Score
 
 _logger = logging.getLogger(__name__)
 
@@ -108,6 +108,42 @@ def _load_focal_coverage_deltas(model_id, domain):
     result = {m: (leaves or []) for m, leaves in rows}
     _trend_cache_put(kind, domain, max_month, result)
     return result
+
+
+def _month_end_utc_ts(month_str):
+    """UTC ``pd.Timestamp`` for the last instant of ``YYYY-MM``. Used as the
+    ``end_timestamp`` upper bound when asking whether a model was scored on
+    a given benchmark by month M."""
+    ts = pd.Timestamp(str(month_str) + '-01') + pd.offsets.MonthEnd(0)
+    return ts.tz_localize('UTC')
+
+
+def _load_focal_scored_new_leaves(model_id, domain, edges_map):
+    """per-model, per-month cache of "of the leaves newly counted in the
+    aggregate this month, which ones did this model actually get a nonzero
+    non-NaN score on by month-end?"""
+    kind = f'focal_scored_new:{model_id}'
+    cached, max_month = _trend_cache_get(kind, domain)
+    if cached is not None:
+        return cached
+    result = {}
+    if edges_map:
+        for edge_key, added in edges_map.items():
+            if not added:
+                continue
+            _prev, curr = edge_key.split('|', 1)
+            month_end = _month_end_utc_ts(curr)
+            candidates = (Score.objects
+                          .filter(model_id=model_id, benchmark__benchmark_type__identifier__in=list(added),
+                                  end_timestamp__lte=month_end, score_ceiled__isnull=False, score_ceiled__gt=0)
+                          .values_list('benchmark__benchmark_type__identifier',
+                                       'score_ceiled'))
+            scored = sorted({ident for ident, sc in candidates
+                             if sc is not None and not (isinstance(sc, float) and np.isnan(sc))})
+            if scored:
+                result[curr] = scored
+    _trend_cache_put(kind, domain, max_month, result)
+    return result # -> {'YYYY-MM': [leaf_ids]}
 
 
 def _load_new_models_by_month(domain):
@@ -241,6 +277,9 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
     edge_key = f'{ym_prev}|{ym_curr}'
     added = edges_map.get(edge_key, [])
     coverage_added = ((rank_explain or {}).get('coverage_deltas') or {}).get(ym_curr, []) or []
+    scored_of_added = set(((rank_explain or {}).get('scored_new_deltas') or {}).get(ym_curr, []) or [])
+    scored_of_added &= set(added)
+    scored_of_added_count = len(scored_of_added)
 
     if kind == 'score':
         prev_v, curr_v = values[i - 1], values[i]
@@ -284,7 +323,7 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
     elif kind == 'score':
         score_bits = []
         if added:
-            score_bits.append(f'{len(added)} new leaf benchmark(s) were counted')
+            score_bits.append(f'{scored_of_added_count} of {len(added)} new leaf benchmark(s) actually scored')
         if coverage_added:
             score_bits.append(f'this model newly scored on {len(coverage_added)} existing benchmark(s) this month')
         if score_bits:
@@ -299,10 +338,12 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
             out.append(f'... and {len(coverage_added) - cap} more.')
 
     if added:
-        out.append('New leaf benchmarks counted in the aggregate this month (vs. prior month):')
+        unscored = len(added) - scored_of_added_count
+        out.append(f'New leaf benchmarks counted this month ({len(added)}): 'f'this model was scored on {scored_of_added_count} ' f'({unscored} not run — counted as 0 in the aggregate).')
         cap = _COVERAGE_BULLET_CAP
         for b in added[:cap]:
-            out.append(f'- {b}')
+            mark = ' -- scored' if b in scored_of_added else ' -- not run'
+            out.append(f'- {b}{mark}')
         if len(added) > cap:
             out.append(f'... and {len(added) - cap} more.')
     elif not coverage_added:
@@ -561,7 +602,9 @@ def load_and_build_score_trend(model_id, domain):
         plot_json = _build_trend_plot_json(dates, scores, 'score', range_start, range_end, shade_region=shade_region)
         plot_json['trendMeta'] = _build_trend_meta(
             dates, scores, 'score', edges, extra_default_lines=extra_default,
-            rank_explain={'coverage_deltas': _load_focal_coverage_deltas(model_id, domain)},
+            rank_explain={'coverage_deltas': _load_focal_coverage_deltas(model_id, domain),
+                'scored_new_deltas': _load_focal_scored_new_leaves(model_id, domain, edges),
+            },
         )
         return plot_json
     except Exception:
@@ -650,6 +693,7 @@ def load_and_build_rank_trend(model_id, domain, focal_is_public=True):
                 'model_id': model_id,
                 'rank_df': rank_df,
                 'coverage_deltas': _load_focal_coverage_deltas(model_id, domain),
+                'scored_new_deltas': _load_focal_scored_new_leaves(model_id, domain, edges),
             },
         )
         return plot_json
@@ -664,6 +708,10 @@ _COMPARE_COLOR_A = '#45C676'  # green -- Model A
 _COMPARE_COLOR_B = '#47B7DE'  # cyan  -- Model B
 # Truncated label for the in-chart legend; full names stay in the sidebar.
 _COMPARE_LEGEND_NAME_MAX = 28
+# Sidebar text cap: sidebar column is narrower than the legend space, and each
+# hover line prepends the model name (twice, on rank/score lines). Long
+# identifiers like ``fixres_resnext101_32x48d_wsl`` overflow past ~22 chars.
+_COMPARE_SIDEBAR_NAME_MAX = 22
 # Hover-list cap for compare-page coverage bullets; tighter than the model-card
 # cap because two parallel lists already double the visual weight.
 _COMPARE_COVERAGE_BULLET_CAP = 8
@@ -675,12 +723,128 @@ def _truncate_legend_name(name):
     return name[: _COMPARE_LEGEND_NAME_MAX - 3] + '...'
 
 
+def _truncate_sidebar_name(name):
+    """Shorter than the legend cap: sidebar lines prepend the name on every
+    row, so long identifiers reflow the narrow column."""
+    if not name or len(name) <= _COMPARE_SIDEBAR_NAME_MAX:
+        return name
+    return name[: _COMPARE_SIDEBAR_NAME_MAX - 3] + '...'
+
+
+def _load_comparison_rank_df(mid_a, mid_b, domain):
+    """Build the rank table needed to explain why a model’s rank changed."""
+    public_wide, _ = _load_public_wide_scores(domain)
+    month_cols = [c for c in public_wide.columns if c != 'model_id']
+    if not month_cols:
+        return None
+    df = public_wide
+    for mid in (mid_a, mid_b):
+        if (df['model_id'].astype(str) == str(mid)).any():
+            continue
+        focal_rows = dict(ModelMonthlyAggregate.objects
+                          .filter(model_id=mid, domain=domain)
+                          .values_list('month', 'score'))
+        if not focal_rows:
+            continue
+        focal = {'model_id': mid}
+        focal.update({m: focal_rows.get(m) for m in month_cols})
+        df = pd.concat([df, pd.DataFrame([focal])], ignore_index=True)
+    _, rank_df = wide_scores_and_rank_df(df, month_cols)
+    return rank_df
+
+
+def _compare_focal_change_lines(i, dates, values, kind, display_name, edges_map,
+                                coverage_deltas, model_id=None, rank_df=None,
+                                scored_new_deltas=None):
+    """Explain one model’s month-over-month change. This is the compare-side mirror
+    of _point_attribution_lines on the model card."""
+    if i == 0 or values[i] is None or values[i - 1] is None:
+        return []
+
+    ym_prev = _date_to_month_key(dates[i - 1])
+    ym_curr = _date_to_month_key(dates[i])
+    edge_key = f'{ym_prev}|{ym_curr}'
+    added = (edges_map or {}).get(edge_key, [])
+    coverage_added = (coverage_deltas or {}).get(ym_curr, []) or []
+    scored_of_added = set((scored_new_deltas or {}).get(ym_curr, []) or []) & set(added)
+
+    if kind == 'score':
+        prev_v, curr_v = values[i - 1], values[i]
+        if abs(curr_v - prev_v) < 1e-9:
+            return []
+        delta = curr_v - prev_v
+        lines = [
+            f'{display_name} vs prior month ({ym_prev}): {prev_v:.4f} -> {ym_curr}: {curr_v:.4f} ({delta:+.4f}).',
+        ]
+    else:
+        prev_v = int(round(float(values[i - 1])))
+        curr_v = int(round(float(values[i])))
+        if prev_v == curr_v:
+            return []
+        delta = curr_v - prev_v
+        if delta < 0:
+            hint = ' (improved)'
+        elif delta > 0:
+            hint = ' (moved down)'
+        else:
+            hint = ''
+        lines = [
+            f'{display_name} vs prior month ({ym_prev}): rank {prev_v} -> {ym_curr}: rank {curr_v} ({delta:+d}{hint}).',
+        ]
+
+    model_lines = []
+    if kind == 'rank' and rank_df is not None and model_id is not None:
+        if ym_prev in rank_df.columns and ym_curr in rank_df.columns:
+            model_lines = rank_transition_model_lines(
+                model_id, ym_prev, ym_curr, prev_v, curr_v, rank_df,
+                added_count=len(added), coverage_added_count=len(coverage_added),
+            )
+
+    if model_lines:
+        for ml in model_lines:
+            lines.append(f'{display_name}: {ml}')
+    elif kind == 'score':
+        score_bits = []
+        if added:
+            score_bits.append(
+                f'scored on {len(scored_of_added)} of {len(added)} new leaf benchmark(s)'
+            )
+        if coverage_added:
+            score_bits.append(f'newly scored on {len(coverage_added)} existing benchmark(s) this month')
+        if score_bits:
+            lines.append(f'{display_name}: Why this changed: ' + '; '.join(score_bits) + '.')
+
+    cap = _COMPARE_COVERAGE_BULLET_CAP
+    if coverage_added:
+        lines.append(f'{display_name} newly scored on {len(coverage_added)} benchmark(s) this month:')
+        for b in coverage_added[:cap]:
+            lines.append(f'  - {b}')
+        if len(coverage_added) > cap:
+            lines.append(f'  ... and {len(coverage_added) - cap} more.')
+    elif kind == 'score' and not model_lines and not added:
+        lines.append(
+            f'{display_name}: No new leaf benchmarks this month; change likely from updated scores, '
+            're-aggregation, or other models in the public pool.'
+        )
+    elif kind == 'rank' and not model_lines and not added:
+        lines.append(
+            f'{display_name}: No new leaf benchmarks this month; remaining movement is from aggregate score updates.'
+        )
+
+    return lines
+
+
 def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
                              coverage_a=None, coverage_b=None,
-                             new_leaf_counts=None, new_model_counts=None):
+                             new_leaf_counts=None, new_model_counts=None,
+                             edges_map=None, mid_a=None, mid_b=None, rank_df=None,
+                             scored_new_a=None, scored_new_b=None):
     """Hover narrative at month index ``i`` comparing A and B at that point.
-    Score appends per-model coverage bullets; rank appends a count summary."""
+    When ``i > 0``, appends month-over-month change reasons per model (mirroring
+    the single-model trend panel)."""
     ym = _date_to_month_key(dates[i])
+    name_a = _truncate_sidebar_name(name_a)
+    name_b = _truncate_sidebar_name(name_b)
     va = series_a[i]
     vb = series_b[i]
     lines = []
@@ -724,7 +888,49 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
                 f'{leader} is {lead_gap} position(s) ahead of {follower}.',
             ]
 
-    if kind == 'score':
+    if kind == 'score' and i > 0:
+        ym_prev = _date_to_month_key(dates[i - 1])
+        edge_key = f'{ym_prev}|{ym}'
+        added = (edges_map or {}).get(edge_key, [])
+        any_focal = False
+        for name, series, cov, mid, scored in (
+            (name_a, series_a, coverage_a, mid_a, scored_new_a),
+            (name_b, series_b, coverage_b, mid_b, scored_new_b),
+        ):
+            focal = _compare_focal_change_lines(
+                i, dates, series, kind, name, edges_map, cov,
+                model_id=mid, rank_df=rank_df, scored_new_deltas=scored,
+            )
+            if focal:
+                any_focal = True
+                lines.extend(focal)
+        if added:
+            scored_a_set = set((scored_new_a or {}).get(ym, []) or []) & set(added)
+            scored_b_set = set((scored_new_b or {}).get(ym, []) or []) & set(added)
+            lines.append(f'{len(added)} new leaf benchmarks counted globally this month.')
+            lines.append(
+                f'  {name_a}: scored on {len(scored_a_set)} of {len(added)} '
+                f'({len(added) - len(scored_a_set)} not run — counted as 0 in the aggregate).'
+            )
+            lines.append(
+                f'  {name_b}: scored on {len(scored_b_set)} of {len(added)} '
+                f'({len(added) - len(scored_b_set)} not run — counted as 0 in the aggregate).'
+            )
+            cap = _COMPARE_COVERAGE_BULLET_CAP
+            for b in added[:cap]:
+                marks = []
+                if b in scored_a_set: marks.append('A')
+                if b in scored_b_set: marks.append('B')
+                tag = f' -- scored by {"+".join(marks)}' if marks else ' -- not run by either'
+                lines.append(f'  - {b}{tag}')
+            if len(added) > cap:
+                lines.append(f'  ... and {len(added) - cap} more.')
+        elif not any_focal:
+            cov_a = (coverage_a or {}).get(ym, []) or []
+            cov_b = (coverage_b or {}).get(ym, []) or []
+            if not cov_a and not cov_b:
+                lines.append('Neither model changed score vs the prior month with benchmark coverage to report.')
+    elif kind == 'score':
         cov_a = (coverage_a or {}).get(ym, []) or []
         cov_b = (coverage_b or {}).get(ym, []) or []
 
@@ -742,7 +948,17 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         _emit_coverage(name_b, cov_b)
         if not cov_a and not cov_b:
             lines.append('Neither model added new benchmark scores this month.')
-    else:
+    elif kind == 'rank' and i > 0:
+        for name, series, cov, mid, scored in (
+            (name_a, series_a, coverage_a, mid_a, scored_new_a),
+            (name_b, series_b, coverage_b, mid_b, scored_new_b),
+        ):
+            lines.extend(_compare_focal_change_lines(
+                i, dates, series, kind, name, edges_map, cov,
+                model_id=mid, rank_df=rank_df, scored_new_deltas=scored,
+            ))
+
+    if kind == 'rank':
         nl = (new_leaf_counts or {}).get(ym, 0)
         nm = (new_model_counts or {}).get(ym, 0)
         bits = []
@@ -752,29 +968,34 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
             bits.append(f'{nm} new model(s) entered the leaderboard')
         if bits:
             lines.append('This month: ' + '; '.join(bits) + '.')
-        else:
+        elif i == 0:
             lines.append('No new benchmarks or models added this month.')
     return lines
 
 
 def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b,
                                   coverage_a=None, coverage_b=None,
-                                  new_leaf_counts=None, new_model_counts=None):
+                                  new_leaf_counts=None, new_model_counts=None,
+                                  edges_map=None, mid_a=None, mid_b=None, rank_df=None,
+                                  scored_new_a=None, scored_new_b=None):
+    # Truncate the display copy only, so callers keep their full identifiers.
+    name_a_disp = _truncate_sidebar_name(name_a)
+    name_b_disp = _truncate_sidebar_name(name_b)
     valid_a = [v for v in series_a if v is not None]
     valid_b = [v for v in series_b if v is not None]
     if valid_a and valid_b:
         if kind == 'score':
             overall = [
-                f'{name_a}: {valid_a[0]:.4f} -> {valid_a[-1]:.4f} ({valid_a[-1] - valid_a[0]:+.4f}).',
-                f'{name_b}: {valid_b[0]:.4f} -> {valid_b[-1]:.4f} ({valid_b[-1] - valid_b[0]:+.4f}).',
+                f'{name_a_disp}: {valid_a[0]:.4f} -> {valid_a[-1]:.4f} ({valid_a[-1] - valid_a[0]:+.4f}).',
+                f'{name_b_disp}: {valid_b[0]:.4f} -> {valid_b[-1]:.4f} ({valid_b[-1] - valid_b[0]:+.4f}).',
                 'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
             ]
         else:
             ra0, ra1 = int(round(valid_a[0])), int(round(valid_a[-1]))
             rb0, rb1 = int(round(valid_b[0])), int(round(valid_b[-1]))
             overall = [
-                f'{name_a}: rank {ra0} -> {ra1} ({ra0 - ra1:+d}; positive means improved).',
-                f'{name_b}: rank {rb0} -> {rb1} ({rb0 - rb1:+d}; positive means improved).',
+                f'{name_a_disp}: rank {ra0} -> {ra1} ({ra0 - ra1:+d}; positive means improved).',
+                f'{name_b_disp}: rank {rb0} -> {rb1} ({rb0 - rb1:+d}; positive means improved).',
                 'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
             ]
     else:
@@ -784,6 +1005,8 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
             i, dates, kind, series_a, series_b, name_a, name_b,
             coverage_a=coverage_a, coverage_b=coverage_b,
             new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
+            edges_map=edges_map, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
+            scored_new_a=scored_new_a, scored_new_b=scored_new_b,
         ),
     } for i in range(len(dates))]
     list_el = ('compare-score-attribution-list' if kind == 'score'
@@ -972,6 +1195,9 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
         edges = _load_month_benchmark_edges(domain)
         new_leaf_counts = _edges_counts_by_curr_month(edges)
         new_model_counts = _load_new_models_by_month(domain)
+        rank_df = _load_comparison_rank_df(mid_a, mid_b, domain)
+        scored_new_a = _load_focal_scored_new_leaves(mid_a, domain, edges)
+        scored_new_b = _load_focal_scored_new_leaves(mid_b, domain, edges)
 
         for kind in ('score', 'rank'):
             pair = _aligned_pair_series(mid_a, mid_b, domain, kind)
@@ -990,6 +1216,8 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
                 dates, kind, series_a, series_b, name_a, name_b,
                 coverage_a=coverage_a, coverage_b=coverage_b,
                 new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
+                edges_map=edges, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
+                scored_new_a=scored_new_a, scored_new_b=scored_new_b,
             )
             out[kind] = plot_json
         return out
