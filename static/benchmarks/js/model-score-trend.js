@@ -1,5 +1,9 @@
 (function () {
     var H = window.BrainScoreTrendHover;
+    if (!H) {
+        console.warn('model-score-trend: trend-hover.js must load before model-score-trend.js');
+        return;
+    }
     var renderAttributionList = H.renderAttributionList;
     var eventTouchesPlot = H.eventTouchesPlot;
     var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
