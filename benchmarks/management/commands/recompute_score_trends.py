@@ -231,7 +231,6 @@ class Command(BaseCommand):
         )
 
         leaf_set_by_month = {}
-        coverage_by_month = {}
 
         # Pre-compute the boundary month (one before months[0]) so the very
         # first iteration has a prior-month coverage + global leaf set to diff
@@ -242,7 +241,9 @@ class Command(BaseCommand):
             depth_groups, max_depth, _month_end_utc(boundary), agg_root,
         )
         leaf_set_by_month[boundary] = b_leaves
-        coverage_by_month[boundary] = b_coverage
+        # Only the immediately preceding month's coverage is ever diffed, so carry
+        # a single rolling map instead of retaining every month's per-model sets.
+        prev_coverage = b_coverage
         prev_month_for_coverage = boundary
 
         for idx, month_str in enumerate(months, start=1):
@@ -253,9 +254,7 @@ class Command(BaseCommand):
                 depth_groups, max_depth, month_end, agg_root,
             )
             leaf_set_by_month[month_str] = leaf_set
-            coverage_by_month[month_str] = coverage
 
-            prev_coverage = coverage_by_month.get(prev_month_for_coverage, {})
             prev_global_leaves = leaf_set_by_month.get(prev_month_for_coverage, set())
 
             with transaction.atomic():
@@ -278,6 +277,7 @@ class Command(BaseCommand):
             )
             self.stdout.flush()
             logger.info('  month %s: wrote %d aggregate rows in %.2fs', month_str, len(scores_by_model), elapsed)
+            prev_coverage = coverage
             prev_month_for_coverage = month_str
 
         ordered = [boundary] + months

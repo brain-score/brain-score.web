@@ -85,6 +85,23 @@ def _load_public_wide_scores(domain):
     return wide.copy(), max_month
 
 
+def _load_public_rank_df(domain):
+    """Cached public-only rank frame (same index as ``_load_public_wide_scores``).
+    Recomputed only when a new month lands; the model card would otherwise rebuild
+    the full model x month rank matrix on every page load."""
+    cached, max_month = _trend_cache_get('public_rank', domain)
+    if cached is not None:
+        return cached.copy(), max_month
+    public_wide, _ = _load_public_wide_scores(domain)
+    month_cols = [c for c in public_wide.columns if c != 'model_id']
+    if not month_cols:
+        rank_df = public_wide[['model_id']].copy()
+    else:
+        _, rank_df = wide_scores_and_rank_df(public_wide, month_cols)
+    _trend_cache_put('public_rank', domain, max_month, rank_df)
+    return rank_df.copy(), max_month
+
+
 def _load_model_names(domain):
     """``{model_id: name}`` for all models in the domain."""
     cached, max_month = _trend_cache_get('names', domain)
@@ -127,19 +144,28 @@ def _load_focal_scored_new_leaves(model_id, domain, edges_map):
     if cached is not None:
         return cached
     result = {}
-    if edges_map:
+    all_added = sorted({leaf for added in edges_map.values() for leaf in (added or [])}) if edges_map else []
+    if all_added:
+        # One query for every relevant leaf, then bucket per month in Python
+        # (avoids one Score query per month-edge). ``score_ceiled__gt=0`` also
+        # matches NaN in Postgres ordering, so the NaN guard stays.
+        earliest = {}
+        rows = (Score.objects
+                .filter(model_id=model_id, benchmark__benchmark_type__identifier__in=all_added,
+                        end_timestamp__isnull=False, score_ceiled__isnull=False, score_ceiled__gt=0)
+                .values_list('benchmark__benchmark_type__identifier', 'score_ceiled', 'end_timestamp'))
+        for ident, sc, ts in rows:
+            if sc is None or (isinstance(sc, float) and np.isnan(sc)):
+                continue
+            if ident not in earliest or ts < earliest[ident]:
+                earliest[ident] = ts
         for edge_key, added in edges_map.items():
             if not added:
                 continue
             _prev, curr = edge_key.split('|', 1)
             month_end = _month_end_utc_ts(curr)
-            candidates = (Score.objects
-                          .filter(model_id=model_id, benchmark__benchmark_type__identifier__in=list(added),
-                                  end_timestamp__lte=month_end, score_ceiled__isnull=False, score_ceiled__gt=0)
-                          .values_list('benchmark__benchmark_type__identifier',
-                                       'score_ceiled'))
-            scored = sorted({ident for ident, sc in candidates
-                             if sc is not None and not (isinstance(sc, float) and np.isnan(sc))})
+            scored = sorted({ident for ident in added
+                             if ident in earliest and earliest[ident] <= month_end})
             if scored:
                 result[curr] = scored
     _trend_cache_put(kind, domain, max_month, result)
@@ -197,8 +223,9 @@ def rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2,
 
     rank_change = rank2 - rank1
     focal = str(model_id)
-    ranks_t1 = rank_df.set_index('model_id')[ym_prev]
-    ranks_t2 = rank_df.set_index('model_id')[ym_curr]
+    ranks_indexed = rank_df.set_index('model_id')
+    ranks_t1 = ranks_indexed[ym_prev]
+    ranks_t2 = ranks_indexed[ym_curr]
 
     moved_past = focal_past = new_above = 0
     for om in ranks_t1.index:
@@ -529,16 +556,9 @@ def wide_scores_and_rank_df(df, month_cols):
         wide_scores[col] = np.floor(s_3dp * 100 + 0.5) / 100
     rank_df = wide_scores[['model_id']].copy()
     for col in month_cols:
-        scores = wide_scores[col]
-        ranks = scores.rank(method='min', ascending=False, na_option='keep')
-        unique_ranks = sorted(ranks.dropna().unique())
-        rank_mapping = {}
-        current_rank = 1
-        for rank_val in unique_ranks:
-            num_tied = (ranks == rank_val).sum()
-            rank_mapping[rank_val] = current_rank
-            current_rank += num_tied
-        rank_df[col] = ranks.map(rank_mapping)
+        # method='min' is competition ranking (1, 2, 2, 4, ...), which already
+        # matches the leaderboard's tie handling; no remap needed.
+        rank_df[col] = wide_scores[col].rank(method='min', ascending=False, na_option='keep')
     return wide_scores, rank_df
 
 
@@ -642,7 +662,11 @@ def load_and_build_rank_trend(model_id, domain, focal_is_public=True):
         row = df.loc[df['model_id'].astype(str) == str(model_id)]
         if row.empty:
             return None
-        _wide_scores, rank_df = wide_scores_and_rank_df(df, month_cols)
+        if focal_is_public:
+            # df is public_wide unchanged -> reuse the cached rank frame.
+            rank_df, _ = _load_public_rank_df(domain)
+        else:
+            _wide_scores, rank_df = wide_scores_and_rank_df(df, month_cols)
         model_idx = row.index[0]
         series = rank_df.loc[model_idx, month_cols]
         valid = series.dropna()
