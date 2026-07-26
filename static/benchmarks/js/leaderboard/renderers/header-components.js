@@ -257,6 +257,83 @@ function updateColumnVisibility() {
   }
 }
 
+// A leaf is "new" for the active ?new=<slug> update, or (no param) for the default-view union.
+function isLeafNew(ctx) {
+  return ACTIVE_NEW_UPDATE
+    ? (ctx.newUpdates || []).includes(ACTIVE_NEW_UPDATE)
+    : !!ctx.isNewDefault;
+}
+
+// Tint the header + cells of the new benchmark columns light blue ($brainscore_blue #47B7DE).
+// Accumulates across calls (clicking several "+N NEW" pills keeps earlier highlights) and is
+// keyed on AG Grid's per-cell col-id attribute, so it survives row virtualization on scroll.
+const highlightedNewCols = new Set();
+function highlightNewBenchmarkColumns(colIds) {
+  colIds.forEach(id => highlightedNewCols.add(id));
+  const ids = [...highlightedNewCols];
+  const sel = (cls) => ids.map(id => `#leaderboardGrid ${cls}[col-id="${id}"]`).join(',');
+  let style = document.getElementById('new-benchmark-col-highlight');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'new-benchmark-col-highlight';
+    document.head.appendChild(style);
+  }
+  style.textContent =
+    `${sel('.ag-cell')}{background-color:rgba(71,183,222,0.10);}` +
+    `${sel('.ag-header-cell')}{background-color:rgba(71,183,222,0.20);}`;
+}
+
+// Expand the column path to the given new leaves, highlight them, and bring them into view.
+// Shared by the on-load auto-expand and the clickable "+N NEW" pills.
+function revealNewBenchmarks(newLeaves) {
+  const api = window.globalGridApi;
+  if (!api || !window.benchmarkTree || !newLeaves || newLeaves.length === 0) return;
+
+  highlightNewBenchmarkColumns(newLeaves);
+
+  // child -> parent from the benchmark hierarchy (node ids === column ids)
+  const hierarchy = buildHierarchyFromTree(window.benchmarkTree);
+  const parentOf = new Map();
+  hierarchy.forEach((children, parent) => children.forEach(c => parentOf.set(c, parent)));
+
+  // Mark every ancestor of each new leaf as expanded
+  const ancestors = new Set();
+  newLeaves.forEach(leaf => {
+    let p = parentOf.get(leaf);
+    while (p) { ancestors.add(p); p = parentOf.get(p); }
+  });
+  if (ancestors.size === 0) return;
+  ancestors.forEach(id => window.columnExpansionState.set(id, true));
+
+  // Reveal the expanded parents and their now-visible descendants
+  updateColumnVisibility();
+
+  // Nest revealed children under their parents (leaves are appended last server-side),
+  // shallowest first so deeper levels land in already-positioned parents
+  const depth = id => { let d = 0, p = parentOf.get(id); while (p) { d++; p = parentOf.get(p); } return d; };
+  [...ancestors].sort((a, b) => depth(a) - depth(b)).forEach(parent => {
+    const cols = api.getAllGridColumns();
+    const parentIdx = cols.findIndex(c => c.getColId() === parent);
+    if (parentIdx === -1) return;
+    const childIds = (hierarchy.get(parent) || [])
+      .filter(id => { const c = cols.find(x => x.getColId() === id); return c && c.isVisible(); });
+    if (childIds.length) api.moveColumns(childIds, parentIdx + 1);
+  });
+
+  api.refreshHeader();
+  if (typeof api.ensureColumnVisible === 'function') api.ensureColumnVisible(newLeaves[0], 'middle');
+}
+
+// On-load auto-expand for a benchmark news headline (?new=<slug>): reveal that update's columns.
+function expandNewBenchmarkColumns() {
+  const api = window.globalGridApi;
+  if (!ACTIVE_NEW_UPDATE || !api) return;
+  const newLeaves = api.getAllGridColumns()
+    .filter(col => isLeafNew(col.getColDef()?.context || {}))
+    .map(col => col.getColId());
+  revealNewBenchmarks(newLeaves);
+}
+
 // LeafHeaderComponent - for leaf benchmark columns
 function LeafHeaderComponent() {}
 
@@ -274,10 +351,7 @@ LeafHeaderComponent.prototype.init = function(params) {
   // "New" tag on leaf benchmarks in the active update (or any, on the default view)
   const leafColDef = params.column?.userProvidedColDef || params.column?.colDef || params.colDef || {};
   const leafCtx = leafColDef.context || {};
-  const leafIsNew = ACTIVE_NEW_UPDATE
-    ? (leafCtx.newUpdates || []).includes(ACTIVE_NEW_UPDATE)
-    : !!leafCtx.isNewDefault;
-  if (leafIsNew) {
+  if (isLeafNew(leafCtx)) {
     const leafNewDot = document.createElement('span');
     leafNewDot.className = 'new-dot';
     leafNewDot.title = 'Recently added';
@@ -399,6 +473,24 @@ ExpandableHeaderComponent.prototype.init = function(params) {
       const newBadge = document.createElement('span');
       newBadge.className = 'new-benchmark-badge';
       newBadge.textContent = `+${newLeafCount} NEW`;
+      newBadge.style.cursor = 'pointer';
+      newBadge.style.pointerEvents = 'auto';
+      newBadge.title = 'Show the new benchmarks';
+      // Stop mousedown/pointerdown from reaching AG Grid's header drag/sort, which would
+      // otherwise swallow the click on this absolutely-positioned badge.
+      ['mousedown', 'pointerdown'].forEach(evt =>
+        newBadge.addEventListener(evt, e => e.stopPropagation()));
+      newBadge.addEventListener('click', e => {
+        e.stopPropagation();
+        // Scope to this category's new leaves via the benchmark hierarchy. (context.rootParent is
+        // unreliable for newly added benchmarks, so match descendants the way collapse does.)
+        const underCategory = new Set(
+          getAllDescendantsFromHierarchy(badgeField, buildHierarchyFromTree(window.benchmarkTree || [])));
+        const newLeaves = params.api.getAllGridColumns()
+          .filter(col => underCategory.has(col.getColId()) && isLeafNew(col.getColDef()?.context || {}))
+          .map(col => col.getColId());
+        revealNewBenchmarks(newLeaves);
+      });
       this.eGui.appendChild(newBadge);
     } else {
       const dot = document.createElement('span');
@@ -437,7 +529,9 @@ ExpandableHeaderComponent.prototype.init = function(params) {
     count.dataset.parentField = colDef.field;
 
     const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
+    icon.className = window.columnExpansionState.get(colDef.field) === true
+      ? 'fa-solid fa-down-left-and-up-right-to-center'
+      : 'fa-solid fa-up-right-and-down-left-from-center';
     icon.style.marginRight = '4px';
     icon.style.fontSize = '10px';
 
@@ -582,5 +676,10 @@ window.LeaderboardHeaderComponents = {
   LeafHeaderComponent,
   ExpandableHeaderComponent,
   createSortIndicator,
-  updateColumnVisibility
+  updateColumnVisibility,
+  expandNewBenchmarkColumns,
+  // ag-grid-leaderboard.js delegates to these; getAllDescendantsFromHierarchy has no fallback
+  // there, so without this export it silently returns [] (breaks deep expand + collapse).
+  buildHierarchyFromTree,
+  getAllDescendantsFromHierarchy
 };

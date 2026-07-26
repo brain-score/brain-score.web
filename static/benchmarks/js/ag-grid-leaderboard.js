@@ -463,7 +463,12 @@ function initializeGrid(rowData, columnDefs, benchmarkGroups) {
         ]
       });
 
-            // Push progress to 92% once grid is ready
+            // Auto-expand columns for benchmarks linked from a news headline (?new=<slug>)
+      if (typeof window.LeaderboardHeaderComponents?.expandNewBenchmarkColumns === 'function') {
+        window.LeaderboardHeaderComponents.expandNewBenchmarkColumns();
+      }
+
+      // Push progress to 92% once grid is ready
       if (typeof LoadingAnimation !== 'undefined' && typeof LoadingAnimation.setProgress === 'function') {
         LoadingAnimation.setProgress(92);
       }

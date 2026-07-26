@@ -20,6 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
+from benchmarks.ratelimit import DAILY_LIMIT, check_and_record_upload, get_recent_upload_count
 from benchmarks.tokens import account_activation_token
 from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
@@ -32,6 +33,44 @@ import os
 _logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+
+def debug_seed_ratelimit(request):
+    """Dev-only endpoint: prime the per-user upload rate-limit counter so the
+    rejection UI can be tested without making N real uploads.
+
+    Without this, exercising ``rate_limited.html`` from a browser requires
+    pre-loading the runserver's in-process LocMemCache — which the
+    ``manage.py shell`` can't reach (separate process, separate cache).
+    This view runs IN the runserver's process, so its ``cache.set`` lands
+    in the cache the Upload.post handler will actually read.
+
+    Guarded by ``settings.DEBUG`` so it returns 403 in any non-dev
+    deployment even if the URL gets included by accident.
+
+    Usage::
+        /_debug/ratelimit/seed/?user_id=5&count=5      → fully rate-limited
+        /_debug/ratelimit/seed/?user_id=5&count=0      → reset to allowed
+        /_debug/ratelimit/seed/                        → seeds caller's own
+                                                         user to DAILY_LIMIT
+    """
+    from django.core.cache import cache
+    from django.http import HttpResponse, HttpResponseForbidden
+    from benchmarks.ratelimit import _cache_key, DAILY_LIMIT, DAILY_WINDOW_SEC
+    if not settings.DEBUG:
+        return HttpResponseForbidden("disabled outside DEBUG")
+    try:
+        user_id = int(request.GET.get("user_id", request.user.id))
+        count = int(request.GET.get("count", DAILY_LIMIT))
+    except (TypeError, ValueError):
+        return HttpResponse("user_id and count must be integers", status=400)
+    if count <= 0:
+        cache.delete(_cache_key(user_id, "day"))
+        return HttpResponse(f"cleared rate-limit for user_id={user_id}")
+    cache.set(_cache_key(user_id, "day"), count, DAILY_WINDOW_SEC)
+    return HttpResponse(
+        f"primed rate-limit for user_id={user_id} count={count} (limit={DAILY_LIMIT})"
+    )
 
 PLUGIN_LIMIT = 1  # used to limit the amount of plugins that can be submitted at once by a user
 
@@ -307,6 +346,22 @@ class Upload(View):
                           {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
         user_instance = User.objects.get_by_natural_key(request.user.email)
+
+        # Per-user upload rate limit. Superusers bypass so admin testing /
+        # backfills aren't blocked. The check runs BEFORE zip validation
+        # (which is cheap) and BEFORE the Jenkins POST (which schedules
+        # real Batch compute) so a rate-limited user pays no infra cost.
+        # Validation failures DON'T consume quota — they're caught above by
+        # `form.is_valid()` and never reach this point.
+        if not request.user.is_superuser:
+            allowed, reason = check_and_record_upload(user_instance.id)
+            if not allowed:
+                return render(request, 'benchmarks/rate_limited.html', {
+                    'domain': self.domain,
+                    'formatted': self.domain.capitalize(),
+                    'reason': reason,
+                    'limit': DAILY_LIMIT,
+                })
 
         # parse directory tree, return new html page if not valid:
         is_zip_valid, error = validate_zip(form.files.get('zip_file'))
