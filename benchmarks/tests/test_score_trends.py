@@ -356,6 +356,15 @@ class TestComparisonTrendEndpoint(BaseTestCase):
             self.assertEqual(body, {'score': None, 'rank': None})
             agg.assert_not_called()
 
+    def test_unknown_or_private_ids_return_404_without_aggregator(self):
+        """Ids that aren't public vision models must 404 before the aggregator
+        runs, so the endpoint can't be used to read private models by id."""
+        from benchmarks.views.compare import trend_pair
+        with patch('benchmarks.views.compare.load_and_build_comparison_trend') as agg:
+            resp = trend_pair(self._get(mid_a='999999999', mid_b='888888888'), domain='vision')
+            self.assertEqual(resp.status_code, 404)
+            agg.assert_not_called()
+
 
 class TestRefreshEndpoint(BaseTestCase):
     """Auth, mode parsing, and lock contention. ``call_command`` is patched so
