@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('benchmarks', '0024_monthbenchmarkedge_modelmonthlyaggregate_and_more'),
+        ('benchmarks', '0025_monthbenchmarkedge_modelmonthlyaggregate_and_more'),
     ]
 
     operations = [

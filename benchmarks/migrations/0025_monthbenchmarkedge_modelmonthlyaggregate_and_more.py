@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('benchmarks', '0023_resourceusage_resourceusage_ru_model_bench_idx_and_more'),
+        ('benchmarks', '0024_resourceusage_ec2_instance_id_cost_usd_actual'),
     ]
 
     operations = [
