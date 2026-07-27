@@ -60,11 +60,27 @@
     min-height: 200px;
 }
 
+/* Compare page: give the chart more room; keep attribution capped to plot height. */
+#compare-trend-box .trend-plot-host {
+    height: 480px;
+}
+
+#compare-trend-box .trend-attribution-panel {
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 @media screen and (max-width: 768px) {
     .trend-attribution-panel {
         border-left: none;
         border-top: 3px solid #3273dc;
         border-radius: 0 0 6px 6px;
         margin-top: 0.75rem;
+    }
+
+    #compare-trend-box .trend-attribution-panel {
+        max-height: none;
+        overflow-y: visible;
     }
 }

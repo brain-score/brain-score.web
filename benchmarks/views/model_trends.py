@@ -1079,18 +1079,18 @@ def _build_comparison_plot_json(dates, kind, series_a, series_b, name_a, name_b,
             'hovertemplate': '<b>%{x|%d %b %Y}</b><br>' + hover_fmt + '<extra>' + short + '</extra>',
         }
 
-    # Axis polish kept in sync with the single-model trend so model-card and
-    # compare plots feel like the same chart with an extra line. Legend is
-    # shown here only because users need the color/model mapping.
+    # Compare is taller than the model-card chart so two series + an external
+    # legend still leave a usable plot area. Legend sits above the axes so it
+    # does not cover early-month points.
     return {
         'data': [_trace(name_a, _COMPARE_COLOR_A, series_a),
                  _trace(name_b, _COMPARE_COLOR_B, series_b)],
         'layout': {
-            'height': 400,
+            'height': 480,
             'autosize': True,
             'paper_bgcolor': '#ffffff',
             'plot_bgcolor': '#ffffff',
-            'margin': {'t': 8, 'r': 8, 'b': 44, 'l': 48},
+            'margin': {'t': 52, 'r': 12, 'b': 44, 'l': 48},
             'hovermode': 'closest',
             'template': {
                 'layout': {
@@ -1126,15 +1126,12 @@ def _build_comparison_plot_json(dates, kind, series_a, series_b, name_a, name_b,
                 'linecolor': '#dbdbdb',
             },
             'showlegend': True,
-            # Vertical + inside-chart: horizontal orientation overflowed the
-            # chart on narrow viewports for long model identifiers.
             'legend': {
-                'orientation': 'v',
-                'yanchor': 'top', 'y': 0.98,
-                'xanchor': 'left', 'x': 0.02,
-                'bgcolor': 'rgba(255, 255, 255, 0.85)',
-                'bordercolor': '#dbdbdb',
-                'borderwidth': 1,
+                'orientation': 'h',
+                'yanchor': 'bottom', 'y': 1.08,
+                'xanchor': 'left', 'x': 0,
+                'bgcolor': 'rgba(255, 255, 255, 0)',
+                'borderwidth': 0,
                 'font': {'size': 11},
             },
         },
