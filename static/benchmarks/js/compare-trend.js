@@ -15,6 +15,7 @@
     var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
     var bindPlotlyHover = H.bindPlotlyHover;
     var ensureHoldBar = H.ensureHoldBar;
+    var wireResponsiveResize = H.wireResponsiveResize;
 
     var endpoint = (function () {
         var box = document.getElementById('compare-trend-box');
@@ -40,22 +41,6 @@
         var empty = document.getElementById('compare-trend-empty');
         if (content) content.style.display = '';
         if (empty) empty.style.display = 'none';
-    }
-
-    /* Mirrors wireResponsiveResize in model-score-trend.js. Idempotent so
-       dropdown changes don't stack observers on the same gd. */
-    function _wireResponsiveResize(gd) {
-        if (!gd || gd.__compareTrendResizeWired) return;
-        gd.__compareTrendResizeWired = true;
-        var resize = function () {
-            if (typeof Plotly === 'undefined') return;
-            if (!gd.isConnected || gd.offsetParent === null) return;
-            try { Plotly.Plots.resize(gd); } catch (e) { /* swallow */ }
-        };
-        window.addEventListener('resize', resize);
-        if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(resize).observe(gd);
-        }
     }
 
     function _hoverIndex(ev) {
@@ -203,12 +188,12 @@
         if (haveScore && scoreEl) {
             Plotly.react(scoreEl, payload.score.data, payload.score.layout, payload.score.config);
             _wireHover(scoreEl, payload.score, 'compare-score-attribution-list');
-            _wireResponsiveResize(scoreEl);
+            wireResponsiveResize(scoreEl);
         }
         if (haveRank && rankEl) {
             Plotly.react(rankEl, payload.rank.data, payload.rank.layout, payload.rank.config);
             _wireHover(rankEl, payload.rank, 'compare-rank-attribution-list');
-            _wireResponsiveResize(rankEl);
+            wireResponsiveResize(rankEl);
         }
         // If only one kind is available, hide the other tab so users don't land on an empty panel.
         var scoreTab = document.querySelector('#compare-trend-tabs li[data-tab="score"]');

@@ -9,6 +9,7 @@
     var nearestIndexFromMouseX = H.nearestIndexFromMouseX;
     var bindPlotlyHover = H.bindPlotlyHover;
     var ensureHoldBar = H.ensureHoldBar;
+    var wireResponsiveResize = H.wireResponsiveResize;
 
     /** Set in initPlots when rank chart exists; used to wire hover after plot + tab are ready. */
     window.__brainScoreRankTrendSpec = null;
@@ -83,28 +84,6 @@
                 }
             });
         });
-    }
-
-    /* Keep ``gd`` sized through window resizes AND container visibility
-       flips. A plot initialized while hidden caches a 0-width layout and
-       then disagrees with its sibling tab on width unless re-measured. */
-    function wireResponsiveResize(gd) {
-        if (!gd) return;
-        var resize = function () {
-            if (typeof Plotly === 'undefined') return;
-            if (!gd.isConnected || !gd.offsetWidth) return;
-            try {
-                // Plotly v3 sometimes ignores a bare Plots.resize; force a
-                // re-measurement via relayout(autosize).
-                Plotly.relayout(gd, {autosize: true});
-                Plotly.Plots.resize(gd);
-            } catch (e) { /* swallow */ }
-        };
-        window.addEventListener('resize', resize);
-        if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(resize).observe(gd);
-        }
-        requestAnimationFrame(resize);
     }
 
     function hoverPointsFromEvent(ev) {

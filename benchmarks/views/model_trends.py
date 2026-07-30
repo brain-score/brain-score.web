@@ -1,6 +1,7 @@
 """Historical score / rank trend analysis for the model card and compare pages."""
 import logging
 import threading
+import time
 from datetime import date
 
 import numpy as np
@@ -18,13 +19,25 @@ _TREND_CACHE_LOCK = threading.Lock()
 # Hover list cap for new-leaf / coverage-completion bullets on the model card.
 _COVERAGE_BULLET_CAP = 12
 
+# The max-month lookup runs on every cache access; memoize it briefly so a
+# single page render (which touches several loaders) hits the DB once, not once
+# per loader. A new month is picked up within the TTL; recompute clears it.
+_MAX_MONTH_TTL_SECONDS = 60
+_max_month_memo = {}  # domain -> (max_month, expires_at)
+
 
 def _trend_cache_key(domain):
-    return (ModelMonthlyAggregate.objects
-            .filter(domain=domain)
-            .order_by('-month')
-            .values_list('month', flat=True)
-            .first())
+    now = time.time()
+    hit = _max_month_memo.get(domain)
+    if hit is not None and hit[1] > now:
+        return hit[0]
+    max_month = (ModelMonthlyAggregate.objects
+                 .filter(domain=domain)
+                 .order_by('-month')
+                 .values_list('month', flat=True)
+                 .first())
+    _max_month_memo[domain] = (max_month, now + _MAX_MONTH_TTL_SECONDS)
+    return max_month
 
 
 def _trend_cache_get(kind, domain):
@@ -46,6 +59,7 @@ def clear_trend_cache():
     strategy (cache-version row, Redis pub/sub)."""
     with _TREND_CACHE_LOCK:
         _TREND_CACHE.clear()
+    _max_month_memo.clear()
 
 
 def _load_month_benchmark_edges(domain='vision'):
@@ -62,9 +76,14 @@ def _load_month_benchmark_edges(domain='vision'):
 
 
 def _load_all_months(domain):
-    return sorted({m for m in ModelMonthlyAggregate.objects
-                   .filter(domain=domain)
-                   .values_list('month', flat=True).distinct()})
+    cached, max_month = _trend_cache_get('all_months', domain)
+    if cached is not None:
+        return cached
+    months = sorted({m for m in ModelMonthlyAggregate.objects
+                     .filter(domain=domain)
+                     .values_list('month', flat=True).distinct()})
+    _trend_cache_put('all_months', domain, max_month, months)
+    return months
 
 
 def _load_public_wide_scores(domain):
@@ -389,6 +408,47 @@ def _build_trend_meta(dates, values, kind, edges_map, extra_default_lines=None, 
     }
 
 
+# Shared Plotly layout pieces so the single-model and compare charts stay in
+# sync (same axes, grid handling, and modebar) with only their distinct bits
+# -- height, margin, legend, trace -- set per builder.
+def _trend_grid_template():
+    # Plotly 3's default template re-enables grids unless explicitly disabled.
+    return {'layout': {
+        'xaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
+        'yaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
+    }}
+
+
+def _trend_xaxis(range_start, range_end):
+    return {
+        'title': {'text': 'Date', 'font': {'size': 12}},
+        'type': 'date', 'tickformat': '%b %Y',
+        'fixedrange': True, 'autorange': False,
+        'range': [range_start, range_end],
+        'showgrid': False, 'zeroline': False,
+        'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
+        'showline': True, 'linecolor': '#dbdbdb', 'mirror': False,
+    }
+
+
+def _trend_yaxis(title, y_range):
+    return {
+        'title': {'text': title, 'font': {'size': 12}},
+        'fixedrange': True, 'autorange': False,
+        'range': y_range,
+        'showgrid': False, 'zeroline': False,
+        'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
+        'showline': True, 'linecolor': '#dbdbdb',
+    }
+
+
+def _trend_plot_config():
+    return {
+        'responsive': True, 'displayModeBar': True, 'scrollZoom': False,
+        'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+    }
+
+
 def _build_trend_plot_json(dates, ys, kind, range_start, range_end, shade_region=None):
     """Plotly JSON for a single-model trend. ``kind`` is ``'score'`` or ``'rank'``;
     rank reverses the y-axis so rank 1 sits at the top."""
@@ -460,36 +520,12 @@ def _build_trend_plot_json(dates, ys, kind, range_start, range_end, shade_region
             'paper_bgcolor': '#ffffff', 'plot_bgcolor': '#ffffff',
             'margin': {'t': 8, 'r': 8, 'b': 44, 'l': 48},
             'shapes': shapes, 'annotations': annotations, 'hovermode': 'closest',
-            # Plotly 3's default template re-enables grids unless explicitly disabled.
-            'template': {
-                'layout': {
-                    'xaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
-                    'yaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
-                },
-            },
-            'xaxis': {
-                'title': {'text': 'Date', 'font': {'size': 12}},
-                'type': 'date', 'tickformat': '%b %Y',
-                'fixedrange': True, 'autorange': False,
-                'range': [range_start, range_end],
-                'showgrid': False, 'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
-                'showline': True, 'linecolor': '#dbdbdb',
-            },
-            'yaxis': {
-                'title': {'text': y_title, 'font': {'size': 12}},
-                'fixedrange': True, 'autorange': False,
-                'range': [round(y_range[0], y_range_dp), round(y_range[1], y_range_dp)],
-                'showgrid': False, 'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)', 'minor': {'showgrid': False},
-                'showline': True, 'linecolor': '#dbdbdb',
-            },
+            'template': _trend_grid_template(),
+            'xaxis': _trend_xaxis(range_start, range_end),
+            'yaxis': _trend_yaxis(y_title, [round(y_range[0], y_range_dp), round(y_range[1], y_range_dp)]),
             'showlegend': False,
         },
-        'config': {
-            'responsive': True, 'displayModeBar': True, 'scrollZoom': False,
-            'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
-        },
+        'config': _trend_plot_config(),
     }
 
 
@@ -1039,39 +1075,9 @@ def _build_comparison_plot_json(dates, kind, series_a, series_b, name_a, name_b,
             'plot_bgcolor': '#ffffff',
             'margin': {'t': 52, 'r': 12, 'b': 44, 'l': 48},
             'hovermode': 'closest',
-            'template': {
-                'layout': {
-                    'xaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
-                    'yaxis': {'showgrid': False, 'zeroline': False, 'minor': {'showgrid': False}},
-                },
-            },
-            'xaxis': {
-                'title': {'text': 'Date', 'font': {'size': 12}},
-                'type': 'date',
-                'tickformat': '%b %Y',
-                'fixedrange': True,
-                'autorange': False,
-                'range': [range_start, range_end],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
-                'mirror': False,
-            },
-            'yaxis': {
-                'title': {'text': y_title, 'font': {'size': 12}},
-                'fixedrange': True,
-                'autorange': False,
-                'range': [round(y_range[0], 6), round(y_range[1], 6)],
-                'showgrid': False,
-                'zeroline': False,
-                'gridcolor': 'rgba(0,0,0,0)',
-                'minor': {'showgrid': False},
-                'showline': True,
-                'linecolor': '#dbdbdb',
-            },
+            'template': _trend_grid_template(),
+            'xaxis': _trend_xaxis(range_start, range_end),
+            'yaxis': _trend_yaxis(y_title, [round(y_range[0], 6), round(y_range[1], 6)]),
             'showlegend': True,
             'legend': {
                 'orientation': 'h',
@@ -1082,12 +1088,7 @@ def _build_comparison_plot_json(dates, kind, series_a, series_b, name_a, name_b,
                 'font': {'size': 11},
             },
         },
-        'config': {
-            'responsive': True,
-            'displayModeBar': True,
-            'scrollZoom': False,
-            'modeBarButtonsToRemove': ['zoomIn2d', 'zoomOut2d', 'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
-        },
+        'config': _trend_plot_config(),
     }
 
 

@@ -217,6 +217,30 @@
         wireColumnResizers();
     }
 
+    /* Keep ``gd`` sized through window resizes AND container visibility flips
+       (tab switches, column drags). A plot initialised while hidden caches a
+       0-width layout and must be re-measured once visible. Idempotent so
+       repeated wiring (e.g. compare dropdown changes) doesn't stack observers. */
+    function wireResponsiveResize(gd) {
+        if (!gd || gd.__trendResizeWired) return;
+        gd.__trendResizeWired = true;
+        var resize = function () {
+            if (typeof Plotly === 'undefined') return;
+            if (!gd.isConnected || gd.offsetParent === null || !gd.offsetWidth) return;
+            try {
+                // Plotly v3 sometimes ignores a bare Plots.resize; force a
+                // re-measurement via relayout(autosize) first.
+                Plotly.relayout(gd, {autosize: true});
+                Plotly.Plots.resize(gd);
+            } catch (e) { /* swallow */ }
+        };
+        window.addEventListener('resize', resize);
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(resize).observe(gd);
+        }
+        requestAnimationFrame(resize);
+    }
+
     window.BrainScoreTrendHover = {
         renderAttributionList: renderAttributionList,
         eventTouchesPlot: eventTouchesPlot,
@@ -224,5 +248,6 @@
         bindPlotlyHover: bindPlotlyHover,
         ensureHoldBar: ensureHoldBar,
         wireColumnResizers: wireColumnResizers,
+        wireResponsiveResize: wireResponsiveResize,
     };
 })();
