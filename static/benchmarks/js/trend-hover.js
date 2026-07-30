@@ -14,12 +14,32 @@
 (function () {
     'use strict';
 
+    /* Assign a presentation class per line so CSS can build a readable
+       hierarchy: idx 0 is the headline; ``- `` lines are bullets (prefix
+       stripped); a trailing ``:`` marks a section label; ``... and N more``
+       is de-emphasised; everything else is a plain note. */
     function renderAttributionList(ulEl, lines) {
         if (!ulEl) return;
         ulEl.innerHTML = '';
-        (lines || []).forEach(function (line) {
+        (lines || []).forEach(function (line, idx) {
             var li = document.createElement('li');
-            li.textContent = line;
+            var trimmed = (line || '').replace(/^\s+/, '');
+            if (/^-\s/.test(trimmed)) {
+                li.className = 'attr-item';
+                li.textContent = trimmed.replace(/^-\s+/, '');
+            } else if (/^\.\.\.\s*and\b/.test(trimmed)) {
+                li.className = 'attr-more';
+                li.textContent = trimmed;
+            } else if (idx === 0) {
+                li.className = 'attr-head';
+                li.textContent = line;
+            } else if (/:$/.test(trimmed)) {
+                li.className = 'attr-label';
+                li.textContent = line;
+            } else {
+                li.className = 'attr-note';
+                li.textContent = line;
+            }
             ulEl.appendChild(li);
         });
     }
@@ -159,7 +179,7 @@
             function currentFrac() {
                 var col = split.querySelector('.trend-plot-col');
                 var rect = split.getBoundingClientRect();
-                if (!col || !rect.width) return 0.75;
+                if (!col || !rect.width) return 2 / 3;
                 return col.getBoundingClientRect().width / rect.width;
             }
 

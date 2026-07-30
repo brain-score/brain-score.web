@@ -286,6 +286,9 @@
             gd.addEventListener('mouseleave', onPlotMouseLeave);
         }
 
+        // Render the classed default now so the idle sidebar matches the hover
+        // formatting instead of the plain server-rendered <li>s.
+        restoreDefault();
         return true;
     }
 

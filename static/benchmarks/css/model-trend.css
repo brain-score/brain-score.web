@@ -29,15 +29,63 @@
 }
 
 .trend-attribution-panel ul {
+    list-style: none;
     margin: 0;
-    padding-left: 1.1rem;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: #363636;
+    padding-left: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #4a5568;
 }
 
-.trend-attribution-panel li:not(:last-child) {
-    margin-bottom: 0.5rem;
+.trend-attribution-panel li {
+    margin: 0 0 0.3rem 0;
+}
+
+/* Line hierarchy; classes assigned by trend-hover.js renderAttributionList(). */
+.trend-attribution-panel .attr-head {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1f2733;
+    margin-bottom: 0.45rem;
+}
+
+.trend-attribution-panel .attr-label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #37414f;
+    margin-top: 0.6rem;
+    margin-bottom: 0.25rem;
+}
+
+.trend-attribution-panel .attr-note {
+    font-size: 0.82rem;
+    color: #55606f;
+}
+
+.trend-attribution-panel .attr-item {
+    position: relative;
+    padding-left: 0.9rem;
+    font-size: 0.8rem;
+    color: #4a5568;
+    margin-bottom: 0.1rem;
+}
+
+.trend-attribution-panel .attr-item::before {
+    content: "";
+    position: absolute;
+    left: 0.2rem;
+    top: 0.6em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #a7b0be;
+}
+
+.trend-attribution-panel .attr-more {
+    font-size: 0.76rem;
+    font-style: italic;
+    color: #8a93a2;
+    margin-bottom: 0.35rem;
 }
 
 .trend-reason-hold {
@@ -105,14 +153,12 @@
         flex-wrap: nowrap;
     }
 
+    /* Default split: plot 2/3, attribution 1/3 (both pages); the resizer
+       overrides via --plot-col. */
     .trend-split.columns > .column.trend-plot-col {
-        flex: 0 0 var(--plot-col, 75%);
-        width: var(--plot-col, 75%);
+        flex: 0 0 var(--plot-col, 66.6667%);
+        width: var(--plot-col, 66.6667%);
         max-width: none;
-    }
-    #compare-trend-box .trend-split.columns > .column.trend-plot-col {
-        flex-basis: var(--plot-col, 83%);
-        width: var(--plot-col, 83%);
     }
     .trend-split.columns > .column.trend-attr-col {
         flex: 1 1 0;
