@@ -172,10 +172,14 @@ class TestRankNarrative(BaseTestCase):
         self.assertTrue(lines and 'passed' in lines[0].lower(), lines)
 
     def test_clear_trend_cache_drops_all_entries(self):
-        model_views._TREND_CACHE[('public_wide', 'vision', '2026-05')] = 'sentinel'
-        model_views._TREND_CACHE[('names', 'vision', '2026-05')] = 'sentinel'
+        model_views._TREND_CACHE[('public_wide', 'vision', 12345)] = 'sentinel'
+        model_views._TREND_CACHE[('names', 'vision', 12345)] = 'sentinel'
+        # Also memoized so the recomputing process re-reads the version instead
+        # of serving the stale one until the TTL expires.
+        model_views._version_memo['vision'] = (12345, float('inf'))
         clear_trend_cache()
         self.assertEqual(model_views._TREND_CACHE, {})
+        self.assertEqual(model_views._version_memo, {})
 
     def test_rank_line_omits_benchmark_churn(self):
         """Benchmark churn is shown as separate bullets, not folded into the
