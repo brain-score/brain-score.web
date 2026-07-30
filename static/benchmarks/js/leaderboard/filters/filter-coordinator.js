@@ -428,8 +428,13 @@ function applyWaybackTimestampFilter(rowData) {
             return;
           }
 
-          // Format historical version value for leaderboard display (2 decimal places)
-          // Historical values are raw floats, current values are pre-formatted strings
+          // Format historical version value for leaderboard display (2 decimal places),
+          // but ALSO preserve the raw float in valueNumeric so parent re-aggregation can
+          // average at full precision instead of cascading .toFixed(2) at each level
+          // (which was producing leaderboard scores ~0.02 below the trend plot).
+          const rawNumeric = typeof activeVersionData.value === 'number'
+            ? activeVersionData.value
+            : parseFloat(activeVersionData.value);
           let formattedValue = activeVersionData.value;
           if (typeof formattedValue === 'number') {
             formattedValue = formattedValue.toFixed(2);
@@ -438,27 +443,27 @@ function applyWaybackTimestampFilter(rowData) {
           newRow[key] = {
             ...scoreObj,
             value: formattedValue,
+            valueNumeric: rawNumeric,
             score_raw: activeVersionData.score_raw,
             timestamp: activeVersionData.timestamp,
             // Keep original benchmark metadata but use historical score data
           };
         }
 
-        // Step 3: Check if the score existed at wayback date (timestamp filter)
-        // Only apply timestamp filtering to CURRENT version scores
-        // Historical versions are already validated by their version_valid_from/to range
-        if (activeVersionData === scoreObj) {
-          const ts = newRow[key].timestamp;
-          if (ts) {
-            try {
-              const scoreTime = new Date(ts).getTime();
-              if (scoreTime > waybackMs) {
-                // Score was submitted after wayback date
-                newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
-              }
-            } catch (error) {
+        // Apply timestamp gate uniformly. ``version_valid_from`` only tracks
+        // when the benchmark version went live, not when *this model* was
+        // measured against it, so historical-version blocks must also be
+        // gated to avoid back-dating later measurements onto earlier wayback
+        // dates.
+        const ts = newRow[key].timestamp;
+        if (ts) {
+          try {
+            const scoreTime = new Date(ts).getTime();
+            if (scoreTime > waybackMs) {
               newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
             }
+          } catch (error) {
+            newRow[key] = { ...newRow[key], value: "X", color: "#E0E1E2", waybackExcluded: true };
           }
         }
       } else {
@@ -853,8 +858,14 @@ function updateFilteredScores(rowData) {
         // Second pass, build the scores array
         childInfo.forEach(({ childId, childScore, hasValidScore }) => {
           if (hasValidScore) {
-            // Include valid numeric scores
-            const numVal = parseFloat(childScore);
+            // Prefer full-precision numeric carried through from prior aggregation
+            // / historical-version swap-in; fall back to parsing the display string
+            // when the child came straight from Python's MV (3-decimal truncation
+            // is already baked into that string, so no extra loss here).
+            const childObj = row[childId];
+            const numVal = (childObj && typeof childObj.valueNumeric === 'number' && !isNaN(childObj.valueNumeric))
+              ? childObj.valueNumeric
+              : parseFloat(childScore);
             childScores.push(numVal);
           } else if (hasAnyValidScores && (childScore === 'X' || childScore === '')) {
             // If we have some valid scores, treat X/empty as 0
@@ -904,7 +915,8 @@ function updateFilteredScores(rowData) {
           const average = childScores.reduce((a, b) => a + b, 0) / childScores.length;
           row[benchmarkId] = {
             ...row[benchmarkId],
-            value: average.toFixed(2)
+            value: average.toFixed(2),
+            valueNumeric: average,
           };
         }
       }
@@ -960,13 +972,19 @@ function updateFilteredScores(rowData) {
 
       // Only include in filtered score if column is visible and not excluded
       if (row[category] && !isExcluded && isColumnVisible) {
-        const score = row[category].value;
+        const scoreObj = row[category];
+        const score = scoreObj.value;
         if (score !== null && score !== undefined && score !== '') {
           if (score === 'X') {
             // Treat X as 0 in filtered score calculation (but only if column is visible)
             categoryScores.push(0);
           } else {
-            const numVal = typeof score === 'string' ? parseFloat(score) : score;
+            // Prefer full-precision numeric from prior aggregation; fall back to
+            // parsing the display string (Python-supplied parents arrive as
+            // 3-decimal strings).
+            const numVal = (typeof scoreObj.valueNumeric === 'number' && !isNaN(scoreObj.valueNumeric))
+              ? scoreObj.valueNumeric
+              : (typeof score === 'string' ? parseFloat(score) : score);
             if (!isNaN(numVal)) {
               categoryScores.push(numVal);
             } else {
@@ -1035,7 +1053,8 @@ function updateFilteredScores(rowData) {
         const globalAverage = categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length;
         row.average_vision_v0 = {
           ...row.average_vision_v0,
-          value: globalAverage.toFixed(2)
+          value: globalAverage.toFixed(2),
+          valueNumeric: globalAverage,
         };
         row._tempFilteredScore = globalAverage;
       } else {

@@ -4,7 +4,7 @@ import zipfile
 import re
 import uuid
 from typing import Tuple, Union, List
-from io import TextIOWrapper
+from io import BytesIO, TextIOWrapper
 import boto3
 import requests
 from botocore.exceptions import ClientError
@@ -20,7 +20,9 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
 from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
+from benchmarks.ratelimit import DAILY_LIMIT, check_and_record_upload, get_recent_upload_count
 from benchmarks.tokens import account_activation_token
+from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -31,6 +33,44 @@ import os
 _logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+
+def debug_seed_ratelimit(request):
+    """Dev-only endpoint: prime the per-user upload rate-limit counter so the
+    rejection UI can be tested without making N real uploads.
+
+    Without this, exercising ``rate_limited.html`` from a browser requires
+    pre-loading the runserver's in-process LocMemCache — which the
+    ``manage.py shell`` can't reach (separate process, separate cache).
+    This view runs IN the runserver's process, so its ``cache.set`` lands
+    in the cache the Upload.post handler will actually read.
+
+    Guarded by ``settings.DEBUG`` so it returns 403 in any non-dev
+    deployment even if the URL gets included by accident.
+
+    Usage::
+        /_debug/ratelimit/seed/?user_id=5&count=5      → fully rate-limited
+        /_debug/ratelimit/seed/?user_id=5&count=0      → reset to allowed
+        /_debug/ratelimit/seed/                        → seeds caller's own
+                                                         user to DAILY_LIMIT
+    """
+    from django.core.cache import cache
+    from django.http import HttpResponse, HttpResponseForbidden
+    from benchmarks.ratelimit import _cache_key, DAILY_LIMIT, DAILY_WINDOW_SEC
+    if not settings.DEBUG:
+        return HttpResponseForbidden("disabled outside DEBUG")
+    try:
+        user_id = int(request.GET.get("user_id", request.user.id))
+        count = int(request.GET.get("count", DAILY_LIMIT))
+    except (TypeError, ValueError):
+        return HttpResponse("user_id and count must be integers", status=400)
+    if count <= 0:
+        cache.delete(_cache_key(user_id, "day"))
+        return HttpResponse(f"cleared rate-limit for user_id={user_id}")
+    cache.set(_cache_key(user_id, "day"), count, DAILY_WINDOW_SEC)
+    return HttpResponse(
+        f"primed rate-limit for user_id={user_id} count={count} (limit={DAILY_LIMIT})"
+    )
 
 PLUGIN_LIMIT = 1  # used to limit the amount of plugins that can be submitted at once by a user
 
@@ -84,7 +124,7 @@ class Signup(View):
             activation_link = f"https://{current_site}/activate/{uid}/{token}"
             message_suffix = (f"Please click or paste the following link to activate your account:\n"
                               f"{activation_link}\n\n"
-                              f"If you encounter any trouble, please reach out to Mike (mferg@mit.edu)."
+                              f"If you encounter any trouble, please reach out to Kartik (kpradeep@mit.edu)."
                               f"Thanks,\n"
                               f"The Brain-Score Team")
             # if indirect signup via PR, provide additional context:
@@ -130,7 +170,8 @@ class Login(View):
 
 class LandingPage(View):
     def get(self, request):
-        return render(request, 'benchmarks/landing_page.html')
+        news = load_news()
+        return render(request, 'benchmarks/landing_page.html', {'news_items': news})
 
 
 class Logout(View):
@@ -308,16 +349,37 @@ class Upload(View):
         if request.user.is_anonymous:
             return HttpResponseRedirect(f'../profile/{self.domain}')
         form = UploadFileForm()
+        if self.domain == 'language':
+            form.fields['model_size'].required = True
         return render(request, 'benchmarks/upload.html',
                       {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
     def post(self, request):
         assert self.domain is not None
         form = UploadFileForm(request.POST, request.FILES)
+        if self.domain == 'language':
+            form.fields['model_size'].required = True
         if not form.is_valid():
-            return HttpResponse("Form is invalid", status=400)
+            return render(request, 'benchmarks/upload.html',
+                          {'form': form, 'domain': self.domain, 'formatted': self.domain.capitalize()})
 
         user_instance = User.objects.get_by_natural_key(request.user.email)
+
+        # Per-user upload rate limit. Superusers bypass so admin testing /
+        # backfills aren't blocked. The check runs BEFORE zip validation
+        # (which is cheap) and BEFORE the Jenkins POST (which schedules
+        # real Batch compute) so a rate-limited user pays no infra cost.
+        # Validation failures DON'T consume quota — they're caught above by
+        # `form.is_valid()` and never reach this point.
+        if not request.user.is_superuser:
+            allowed, reason = check_and_record_upload(user_instance.id)
+            if not allowed:
+                return render(request, 'benchmarks/rate_limited.html', {
+                    'domain': self.domain,
+                    'formatted': self.domain.capitalize(),
+                    'reason': reason,
+                    'limit': DAILY_LIMIT,
+                })
 
         # parse directory tree, return new html page if not valid:
         is_zip_valid, error = validate_zip(form.files.get('zip_file'))
@@ -341,16 +403,18 @@ class Upload(View):
             return render(request, f'benchmarks/{page}_submitted.html',
                           {'plugin': plugin, 'identifier': identifier, "domain": self.domain})
 
+        model_size = request.POST.get('model_size', '') if self.domain == 'language' else ''
+
         json_info = {
             "model_type": request.POST['model_type'] if "model_type" in form.base_fields else "BrainModel",
             "user_id": user_instance.id,
             "public": str('public' in request.POST),
             "competition": 'cosyne2022' if 'competition' in request.POST and request.POST['competition'] else None,
-            "domain": self.domain
+            "domain": self.domain,
+            "model_size": model_size,
         }
 
-        with open('result.json', 'w') as fp:
-            json.dump(json_info, fp)
+        config_bytes = json.dumps(json_info).encode('utf-8')
 
         _logger.debug(request.user.get_full_name())
         _logger.debug(f"request user: {request.user.get_full_name()}")
@@ -363,7 +427,10 @@ class Upload(View):
                       f"?TOKEN=trigger2scoreAmodel" \
                       f"&email={request.user.email}"
         _logger.debug(f"request_url: {request_url}")
-        params = {"submission.zip": request.FILES['zip_file'], 'submission.config': open('result.json', 'rb')}
+        params = {
+            "submission.zip": request.FILES['zip_file'],
+            'submission.config': ('submission.config', BytesIO(config_bytes)),
+        }
         response = requests.post(request_url, files=params, auth=auth)
         _logger.debug(f"response: {response}")
 
@@ -809,7 +876,7 @@ class Password(View):
             activation_link = f"https://{current_site}/password-change/{uid}/{token}"
             message = (f"Hello!\n\n"
                        f"Please click or paste the following link to change your password:\n{activation_link}\n\n"
-                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Mike (mferg@mit.edu)."
+                       f"If you encounter any trouble, reach out to Martin (msch@mit.edu) or Kartik (kpradeep@mit.edu)."
                        f"Thanks,\n"
                        f"The Brain-Score Team")
             email = EmailMessage(mail_subject, message, to=[to_email])

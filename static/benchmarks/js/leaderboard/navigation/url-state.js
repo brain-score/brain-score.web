@@ -46,6 +46,10 @@ function parseURLFilters() {
   window.activeFilters.max_wayback_timestamp =
     parseFloatParam('max_wayback_timestamp') ?? defaultMax;
 
+  // Parse search query (preserves logical operators verbatim: OR, AND, NOT)
+  const searchQuery = urlParams.get('search') ?? '';
+  applySearchFromURL(searchQuery);
+
   // Apply filters to UI
   applyFiltersToUI();
 
@@ -164,6 +168,28 @@ function applyFiltersToUI() {
   }
 }
 
+// Restore search input value from URL and rebuild the parsed query the grid uses
+function applySearchFromURL(searchQuery) {
+  const searchInput = document.getElementById('modelSearchInput');
+  if (searchInput) {
+    // Set both property and attribute so the value survives cloneNode() in setupSearchHandlers
+    searchInput.value = searchQuery;
+    if (searchQuery) {
+      searchInput.setAttribute('value', searchQuery);
+    } else {
+      searchInput.removeAttribute('value');
+    }
+  }
+
+  if (window.LeaderboardSearch?.parseSearchQuery) {
+    window.currentSearchQuery = window.LeaderboardSearch.parseSearchQuery(searchQuery);
+  }
+
+  if (window.globalGridApi && typeof window.globalGridApi.onFilterChanged === 'function') {
+    window.globalGridApi.onFilterChanged();
+  }
+}
+
 // Update dropdown input with selected values
 function updateDropdownInput(filterId, selectedValues) {
   const filter = document.getElementById(filterId);
@@ -253,10 +279,23 @@ function updateURLFromFilters() {
   addRange('min_wayback_timestamp');
   addRange('max_wayback_timestamp');
 
+  // Add search query (preserves logical operators: OR, AND, NOT)
+  const searchInput = document.getElementById('modelSearchInput');
+  const searchValue = searchInput?.value?.trim();
+  if (searchValue) {
+    params.set('search', searchValue);
+  }
+
   // Add benchmark exclusions
   const excludedBenchmarks = encodeBenchmarkFilters();
   if (excludedBenchmarks) {
     params.set('excluded_benchmarks', excludedBenchmarks);
+  }
+
+  // Preserve the active "+N NEW" update selection (?new=<slug>) across filter changes
+  const activeNew = new URLSearchParams(window.location.search).get('new');
+  if (activeNew) {
+    params.set('new', activeNew);
   }
 
   // Update URL without page reload
@@ -280,9 +319,12 @@ function decodeBenchmarkFilters(encodedFilters) {
   return encodedFilters.split(',').map(id => id.trim()).filter(id => id);
 }
 
-// Clear URL parameters
+// Clear URL parameters (keep the active "+N NEW" update selection)
 function clearURLParameters() {
-  const newURL = window.location.pathname;
+  const activeNew = new URLSearchParams(window.location.search).get('new');
+  const newURL = activeNew
+    ? `${window.location.pathname}?new=${encodeURIComponent(activeNew)}`
+    : window.location.pathname;
   window.history.replaceState({}, '', newURL);
 }
 
@@ -307,7 +349,7 @@ function hasURLFilters() {
     'public_data_only', 'runnable_only', 'excluded_benchmarks',
     'min_param_count', 'max_param_count', 'min_model_size', 'max_model_size',
     'min_score', 'max_score', 'min_stimuli_count', 'max_stimuli_count',
-    'min_ceiling', 'max_ceiling'
+    'min_ceiling', 'max_ceiling', 'search'
   ];
 
   return filterParams.some(param => params.has(param));
@@ -317,6 +359,7 @@ function hasURLFilters() {
 window.LeaderboardURLState = {
   parseURLFilters,
   applyFiltersToUI,
+  applySearchFromURL,
   updateURLFromFilters,
   encodeBenchmarkFilters,
   decodeBenchmarkFilters,

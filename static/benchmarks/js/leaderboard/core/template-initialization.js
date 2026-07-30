@@ -386,13 +386,20 @@ function setupLayoutToggleHandlers() {
   // Set initial position
   positionPanel(savedLayout === 'sidebar' ? 'sidebar' : 'horizontal');
 
+  // Ensure grid height and panel maxHeight are set after sidebar-mode is applied
+  // (fixes race condition where onGridReady fires before sidebar-mode class is set)
+  setTimeout(() => {
+    if (typeof resizeGridToViewport === 'function') resizeGridToViewport();
+  }, 200);
+
   layoutToggleBtn?.addEventListener('click', () => {
     const isSidebar = container.classList.toggle('sidebar-mode');
 
     if (isSidebar) {
       positionPanel('sidebar');
       panel.classList.remove('hidden');
-      panel.style.display = 'block';
+      panel.style.display = '';
+      panel.style.maxHeight = '';
       isPanelVisible = true;
       updateToggleButton('sidebar');
       localStorage.setItem('leaderboardLayout', 'sidebar');
@@ -401,11 +408,18 @@ function setupLayoutToggleHandlers() {
       positionPanel('horizontal');
       panel.classList.remove('hidden');
       panel.style.display = 'block';
+      panel.style.maxHeight = '';
       isPanelVisible = true;
       updateToggleButton('horizontal');
       localStorage.setItem('leaderboardLayout', 'horizontal');
       container.classList.remove('filters-hidden');
     }
+
+    // Re-sync grid height and scrollbar after layout change
+    setTimeout(() => {
+      if (typeof resizeGridToViewport === 'function') resizeGridToViewport();
+      if (window._topScrollbarSyncWidths) window._topScrollbarSyncWidths();
+    }, 50);
   });
 
   // Advanced filter button
@@ -432,17 +446,27 @@ function setupLayoutToggleHandlers() {
           panel.style.visibility = '';
           panel.style.opacity = '';
         }
+        // Re-sync grid height and scrollbar after filter toggle
+        setTimeout(() => {
+          if (typeof resizeGridToViewport === 'function') resizeGridToViewport();
+          if (window._topScrollbarSyncWidths) window._topScrollbarSyncWidths();
+        }, 50);
       } else {
         isPanelVisible = !isPanelVisible;
         if (isPanelVisible) {
           panel.classList.remove('hidden');
-          panel.style.display = 'block';
+          panel.style.display = '';
           container.classList.remove('filters-hidden');
         } else {
           panel.classList.add('hidden');
           panel.style.display = '';
           container.classList.add('filters-hidden');
         }
+        // Re-sync grid height and scrollbar after sidebar filter toggle
+        setTimeout(() => {
+          if (typeof resizeGridToViewport === 'function') resizeGridToViewport();
+          if (window._topScrollbarSyncWidths) window._topScrollbarSyncWidths();
+        }, 50);
       }
     });
   }

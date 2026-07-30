@@ -47,22 +47,54 @@
     font-style: italic
 
 // ======================
-// RUNNABLE STATUS CELL
+// INLINE RUNNABLE ICON (in model cell)
 // ======================
-.ag-cell[col-id="runnable_status"]
+.model-name-row
+  display: flex
+  align-items: center
+  gap: 6px
+  max-width: 100%
+
+  a
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    flex-shrink: 1
+    min-width: 0
+
+.runnable-inline-icon
+  display: inline-block
+  width: 8px
+  height: 8px
+  border-radius: 50%
+  flex-shrink: 0
+
+  &.runnable-inline-green
+    background-color: #28a745
+
+  &.runnable-inline-red
+    background-color: #dc3545
+
+  &.runnable-inline-grey
+    background-color: #6c757d
+
+// ======================
+// GROUP STATUS CELL
+// ======================
+.ag-cell[col-id="group_status"]
   display: flex
   justify-content: center
   align-items: center
   height: 100%
 
-.runnable-status-cell
+.group-status-cell
   display: flex
   justify-content: center
   align-items: center
   height: 100%
   pointer-events: auto
 
-.runnable-status-icon
+.group-status-icon
   width: 12px
   height: 12px
   border-radius: 50%
@@ -71,13 +103,10 @@
   z-index: 1
   pointer-events: auto
 
-  &.runnable-green
-    background-color: #28a745
+  &.group-blue
+    background-color: $brainscore_blue
 
-  &.runnable-red
-    background-color: #dc3545
-
-  &.runnable-grey
+  &.group-grey
     background-color: #6c757d
 
 // ======================

@@ -2,6 +2,33 @@
 // AG-Grid customizations
 
 // ======================
+// TOP SCROLLBAR
+// ======================
+.top-scrollbar-wrapper
+  overflow-x: scroll
+  overflow-y: hidden
+  height: 16px
+  margin-bottom: 4px
+
+  // Force scrollbar visible on macOS/WebKit (default is overlay/hidden)
+  &::-webkit-scrollbar
+    -webkit-appearance: none
+    height: 12px
+
+  &::-webkit-scrollbar-thumb
+    background-color: rgba(0, 0, 0, 0.3)
+    border-radius: 6px
+    border: 2px solid transparent
+    background-clip: padding-box
+
+  &::-webkit-scrollbar-track
+    background-color: rgba(0, 0, 0, 0.05)
+    border-radius: 6px
+
+  > div
+    height: 1px
+
+// ======================
 // GRID CONTAINER
 // ======================
 #leaderboardGrid

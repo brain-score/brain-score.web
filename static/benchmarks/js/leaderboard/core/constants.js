@@ -25,9 +25,27 @@ const RUNNABLE_TOOLTIPS = {
   UNKNOWN: 'Model code status unknown'
 };
 
+// Group membership status (for the circle column)
+const GROUP_STATUS = {
+  MEMBER: 'group-blue',
+  NON_MEMBER: 'group-grey'
+};
+
+// Sort values for group membership
+const GROUP_SORT_VALUES = {
+  MEMBER: 1,
+  NON_MEMBER: 0
+};
+
+// Tooltip messages for group membership
+const GROUP_TOOLTIPS = {
+  MEMBER: 'Curated model (part of a benchmark group)',
+  NON_MEMBER: 'Community-submitted model'
+};
+
 // Column width constants
 const COLUMN_WIDTHS = {
-  RUNNABLE_STATUS: 80,
+  GROUP_STATUS: 80,
   MODEL_COLUMN: 200,
   SCORE_COLUMN: 100
 };
@@ -66,6 +84,9 @@ window.LeaderboardConstants = {
   RUNNABLE_STATUS,
   RUNNABLE_SORT_VALUES,
   RUNNABLE_TOOLTIPS,
+  GROUP_STATUS,
+  GROUP_SORT_VALUES,
+  GROUP_TOOLTIPS,
   COLUMN_WIDTHS,
   NAVIGATION_CLICK_AREA,
   SORT_CLICK_AREA,

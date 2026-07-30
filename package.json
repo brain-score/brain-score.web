@@ -8,7 +8,7 @@
     "bulma-extensions": "^6.2.7",
     "bulma-list": "^1.2.0",
     "datatables.net-dt": "^1.10.19",
-    "sass": "^1.69.5"
+    "sass": "1.69.5"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

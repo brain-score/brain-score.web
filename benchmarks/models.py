@@ -218,6 +218,13 @@ class Submission(models.Model):
 
 
 class Model(models.Model):
+    class Group:
+        REFERENCE = 'reference'
+        TOP10_2024 = 'top10_2024'
+        BEST_NEURAL = 'best_neural'
+        BEST_BEHAVIORAL = 'best_behavioral'
+        GLOBAL_SCORE = 'global_score'
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -227,6 +234,7 @@ class Model(models.Model):
     public = models.BooleanField(default=False)
     competition = models.CharField(max_length=200, default=None, null=True)
     domain = models.CharField(max_length=200, default="vision")
+    group = models.CharField(max_length=50, default=None, null=True)
 
     def __repr__(self):
         return generic_repr(self)
@@ -287,6 +295,135 @@ class Score(models.Model):
 
     class Meta:
         db_table = 'brainscore_score'
+
+
+class ModelMonthlyAggregate(models.Model):
+    """Per-model, per-month aggregate score (e.g. ``average_vision``).
+
+    Long-format table written by the ``recompute_score_trends`` management
+    command. ``score`` is computed from the public-benchmark subtree as of
+    ``YYYY-MM``-end. Rows exist for every model (public and private); rank
+    computation against the public pool happens at read time.
+    """
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    domain = models.CharField(max_length=200, default='vision')
+    month = models.CharField(max_length=7)  # 'YYYY-MM'
+    score = models.FloatField(null=True)
+    # Leaf benchmarks this model newly scored on (vs. prior month), restricted to
+    # leaves already counted in the *global* aggregate before this month. Captures
+    # the "coverage completion" case where a previously-submitted model's
+    # aggregate moves because it finally got scored on existing benchmarks.
+    coverage_leaves_added_vs_prev = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'brainscore_model_monthly_aggregate'
+        unique_together = (('model', 'domain', 'month'),)
+        indexes = [
+            models.Index(fields=['domain', 'month']),
+        ]
+
+
+class MonthBenchmarkEdge(models.Model):
+    """Leaf benchmarks newly counted in the public aggregate between two months.
+
+    Drives the score-trend hover narrative ("new leaf benchmarks counted in the
+    aggregate this month"). One row per consecutive month pair per domain.
+    """
+    domain = models.CharField(max_length=200, default='vision')
+    month_prev = models.CharField(max_length=7)  # 'YYYY-MM'
+    month_curr = models.CharField(max_length=7)  # 'YYYY-MM'
+    leaf_benchmarks = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'brainscore_month_benchmark_edge'
+        unique_together = (('domain', 'month_prev', 'month_curr'),)
+
+
+class ResourceUsage(models.Model):
+    """Per-attempt resource log written by any compute job — not tied to
+    scoring. Feeds the memoized-peak tier dispatcher and the failure
+    classifier. One row per terminal attempt. ``score`` is an optional FK
+    populated only when the job did produce a Brain-Score score; bulk /
+    analytics / calibration jobs leave it NULL. ``model_id_str`` /
+    ``benchmark_id_str`` are denormalised so a row exists even when no
+    ``Model`` / ``BenchmarkInstance`` row does (e.g. first attempt of a
+    brand-new submission).
+    """
+
+    FAILURE_KINDS = [
+        ('OOM', 'OOM'),
+        ('DETERMINISTIC', 'DETERMINISTIC'),
+        ('TRANSIENT', 'TRANSIENT'),
+        ('UNKNOWN', 'UNKNOWN'),
+    ]
+
+    score = models.ForeignKey(
+        Score, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='resource_usage',
+    )
+    model_id_str = models.CharField(max_length=128)
+    benchmark_id_str = models.CharField(max_length=128)
+
+    batch_job_id = models.CharField(max_length=64, null=True, blank=True)
+    batch_queue = models.CharField(max_length=64, null=True, blank=True)
+    batch_job_definition = models.CharField(max_length=128, null=True, blank=True)
+    ec2_instance_id = models.CharField(max_length=32, null=True, blank=True)
+    ec2_instance_type = models.CharField(max_length=32, null=True, blank=True)
+    spot = models.BooleanField(null=True, blank=True)
+    spot_interrupted = models.BooleanField(default=False)
+    tier = models.CharField(max_length=8, null=True, blank=True)
+
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    queue_wait_seconds = models.IntegerField(null=True, blank=True)
+    execution_seconds = models.IntegerField(null=True, blank=True)
+
+    cpu_available = models.IntegerField(null=True, blank=True)
+    memory_available_gb = models.FloatField(null=True, blank=True)
+    num_gpus = models.IntegerField(null=True, blank=True)
+    gpu_memory_available_gb = models.FloatField(null=True, blank=True)
+    gpu_type = models.CharField(max_length=16, null=True, blank=True)
+    disk_available_gb = models.FloatField(null=True, blank=True)
+
+    max_cpu_pct = models.FloatField(null=True, blank=True)
+    max_memory_gb = models.FloatField(null=True, blank=True)
+    max_gpu_pct = models.FloatField(null=True, blank=True)
+    max_gpu_memory_gb = models.FloatField(null=True, blank=True)
+    max_disk_used_gb = models.FloatField(null=True, blank=True)
+
+    exit_code = models.IntegerField(null=True, blank=True)
+    failure_kind = models.CharField(
+        max_length=16, choices=FAILURE_KINDS, null=True, blank=True,
+    )
+    oom_retry_count = models.IntegerField(default=0)
+
+    preflight_estimate_gb = models.FloatField(null=True, blank=True)
+    preflight_formula_type = models.CharField(max_length=32, null=True, blank=True)
+
+    model_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
+    benchmark_plugin_sha = models.CharField(max_length=40, null=True, blank=True)
+    container_image_digest = models.CharField(max_length=128, null=True, blank=True)
+
+    # Calibrated to match the actual AWS bill (DB estimate × ~2.0 historically).
+    # Accounts for: instance hours > container exec hours, EBS overhead, real spot price.
+    cost_usd_actual = models.FloatField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+    class Meta:
+        db_table = 'brainscore_resource_usage'
+        indexes = [
+            models.Index(fields=['model_id_str', 'benchmark_id_str'],
+                         name='ru_model_bench_idx'),
+            models.Index(fields=['started_at'], name='ru_started_at_idx'),
+            models.Index(fields=['failure_kind'], name='ru_failure_kind_idx',
+                         condition=models.Q(failure_kind__isnull=False)),
+            models.Index(fields=['batch_job_id'], name='ru_batch_job_idx'),
+        ]
 
 
 class MailingList(models.Model):

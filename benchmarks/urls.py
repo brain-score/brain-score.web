@@ -2,9 +2,9 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import index, user, model, competition2022, competition2024, compare, community, release2_0, brain_model, \
-    content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
-from .utils import show_token, refresh_cache
+from .views import index, user, model, competition2022, competition2024, compare, community, \
+    release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
+from .utils import show_token, refresh_cache, refresh_score_trends
 
 
 # all currently supported Brain-Score domains:
@@ -84,6 +84,7 @@ non_domain_urls = [
 
     # Triggers the refresh_cache function in utils.py when URL is visited
     path('refresh_cache/<str:domain>/', refresh_cache, name='refresh_cache'),
+    path('refresh_score_trends/<str:domain>/', refresh_score_trends, name='refresh_score_trends'),
     
     # Report issue endpoint
     path('report-issue/', report_issue.report_issue_view, name='report_issue'),
@@ -113,6 +114,8 @@ for domain in supported_domains:
         path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
         path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
         path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
+        path(f'{domain}/compare/trend_pair/', partial(compare.trend_pair, domain=domain),
+             name=f'{domain}-compare-trend-pair'),
     ]
     all_domain_urls.append(domain_urls)
 
@@ -120,6 +123,10 @@ if settings.DEBUG:
     all_domain_urls.append([
         path('content_utils/sample_benchmark_images/', content_utils.sample_benchmark_images, name='sample_benchmark_images'),
         path('debug/show_token/', show_token, name='show_token'),  # Show token required to trigger cache refresh
+        # Prime the per-user upload rate-limit counter in the runserver's
+        # own LocMemCache so the rejection UI can be tested without making
+        # N real uploads. See benchmarks.views.user.debug_seed_ratelimit.
+        path('debug/ratelimit/seed/', user.debug_seed_ratelimit, name='debug-seed-ratelimit'),
     ])
 
 # collapse all domains into 1D list (from 2D)
