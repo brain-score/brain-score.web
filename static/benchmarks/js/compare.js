@@ -10,8 +10,8 @@ $(document).ready(function () {
         return;
     }
 
-    const margin = {top: 25, right: 0, bottom: 40, left: 60},
-        outerWidth = $(container_selector).width(),
+    const margin = {top: 25, right: 0, bottom: 40, left: 60};
+    let outerWidth = $(container_selector).width(),
         outerHeight = $(container_selector).width() * 2 / 3,
         width = outerWidth - margin.left - margin.right,
         height = outerHeight - margin.top - margin.bottom;
@@ -310,6 +310,24 @@ $(document).ready(function () {
         .on("change", updatePlot);
 
     updatePlot();
+
+    // Redraw at the container's current width on resize so the chart tracks the
+    // layout instead of freezing at load-time size. Skip while the panel is
+    // hidden (width 0) to avoid collapsing the chart.
+    let _cmpResizeTimer = null;
+    $(window).on('resize', function () {
+        clearTimeout(_cmpResizeTimer);
+        _cmpResizeTimer = setTimeout(function () {
+            const w = $(container_selector).width();
+            if (!w || w < 50) return;
+            outerWidth = w;
+            outerHeight = w * 2 / 3;
+            width = outerWidth - margin.left - margin.right;
+            height = outerHeight - margin.top - margin.bottom;
+            svg.attr("width", outerWidth).attr("height", outerHeight);
+            updatePlot();
+        }, 200);
+    });
 
     // typing functionality in select dropdowns
     $('#xlabel').select2({

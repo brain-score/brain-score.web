@@ -1,5 +1,6 @@
 import logging
 import threading
+from decimal import Decimal, ROUND_HALF_UP
 import numpy as np
 from django.http import Http404
 from django.shortcuts import render
@@ -7,6 +8,7 @@ from django.template.defaulttags import register
 
 from .index import get_context, display_model, display_submitter, get_visibility
 from .leaderboard import get_ag_grid_context
+from .model_trends import load_and_build_score_trend, load_and_build_rank_trend
 from ..models import FinalModelContext, BenchmarkMeta
 from time import time
 _logger = logging.getLogger(__name__)
@@ -45,6 +47,21 @@ GRAY_COLORS = [
 
 COLOR_NONE = '#e0e1e2'
 GAMMA = 0.5
+
+# Aggregate-root benchmarks rank against ``_rank_models``'s policy (ROUND_HALF_UP
+# @ 2 decimals) rather than full-precision floats, so the model card's rank for
+# these matches what the leaderboard shows for the same model. Leaf benchmark
+# ranks keep full precision -- ties at 3 decimals are rare and the extra detail
+# is useful per-benchmark. Vision-only intentionally; add other domains here as
+# they get rank-consistency fixes.
+_AGG_ROOT_BENCHMARK_IDS = frozenset({
+    'average_vision_v0', 'neural_vision_v0',
+    'behavior_vision_v0', 'engineering_vision_v0',
+})
+
+
+def _round_half_up_2dp(x):
+    return float(Decimal(str(x)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
 
 
 def enrich_model_scores_with_benchmarks(model, benchmarks):
@@ -258,11 +275,10 @@ def view(request, id: int, domain: str):
     start_time = time()
     # Check if user is logged in
     user = request.user if request.user.is_authenticated else None
-    
+
     # Try to get model object
     try:
         model_obj = FinalModelContext.objects.get(model_id=id, domain=domain)
-        
         # Check if user has permission to view this model
         if not model_obj.public:
             if not user:
@@ -277,10 +293,8 @@ def view(request, id: int, domain: str):
 
         # Get context for model cards - always use global public context for consistent ranking
         context = get_context(user=None, domain=domain, show_public=True)
-        
         # The public models are now cached within the user context
         public_models = context.get('public_models', context['models']) if user else context['models']
-        
         # Determine if submission details should be visible (in most/possible all cases, owner == submitter, and therefore, this can be condensed)
         is_owner = False
         if user and model_obj.user:
@@ -288,19 +302,15 @@ def view(request, id: int, domain: str):
                 is_owner = user.id == model_obj.user.get('id')
             else:
                 is_owner = user.id == model_obj.user.id
-        
         is_submitter = False
         if user and model_obj.submitter:
             if isinstance(model_obj.submitter, dict):
                 is_submitter = user.id == model_obj.submitter.get('id')
             else:
                 is_submitter = user.id == model_obj.submitter.id
-        
         submission_details_visible = user and (user.is_superuser or is_owner or is_submitter)
-        
         # Get the visibility level for this model
         visibility = get_visibility(model_obj, user)
-        
         # Try to find the model in the context
         filtered_models = [model for model in context['models'] if model.model_id == id]
 
@@ -367,6 +377,15 @@ def view(request, id: int, domain: str):
                 'parent_identifier': parent_id,
                 'meta': meta if meta else None,
             }
+        # Score / rank trend plots (trendMeta for sidebar lives inside plot JSON)
+        score_trend_plot_json = load_and_build_score_trend(model.model_id, domain)
+        rank_trend_plot_json = load_and_build_rank_trend(
+            model.model_id, domain, focal_is_public=bool(getattr(model_obj, 'public', False)),
+        )
+        _score_tm = (score_trend_plot_json or {}).get('trendMeta') or {}
+        _rank_tm = (rank_trend_plot_json or {}).get('trendMeta') or {}
+        score_trend_sidebar_lines = _score_tm.get('defaultLines') or []
+        rank_trend_sidebar_lines = _rank_tm.get('defaultLines') or []
 
         # Prepare the context for the template
         model_context = {
@@ -385,17 +404,19 @@ def view(request, id: int, domain: str):
             'visual_degrees': model.visual_degrees,
             'layers': getattr(model, 'layers', None),
             'benchmark_lookup': benchmark_lookup,
+            'score_trend_plot_json': score_trend_plot_json,
+            'rank_trend_plot_json': rank_trend_plot_json,
+            'score_trend_sidebar_lines': score_trend_sidebar_lines,
+            'rank_trend_sidebar_lines': rank_trend_sidebar_lines,
         }
-        
         # Set thread-local benchmark lookup for template filters
         _thread_locals.benchmark_lookup = benchmark_lookup
 
-        end_time = time()
-        print(f"Total time taken to get model context: {end_time - start_time} seconds")
+        _logger.debug("model context build time: %.3fs", time() - start_time)
         return render(request, 'benchmarks/model.html', model_context)
-        
     except FinalModelContext.DoesNotExist:
         raise Http404("Model not found")
+
 
 # Generate per-benchmark rankings for a model
 # This should be moved to database materialized view in future
@@ -406,7 +427,6 @@ def add_benchmark_rankings(model, reference_context):
     """
     # Get all public models for comparison
     public_models = [m for m in reference_context['models'] if getattr(m, 'public', True)]
-    
     # Pre-compute scores for each benchmark to avoid repeated lookups
     benchmark_scores = {}
     for other_model in public_models + [model]:
@@ -428,16 +448,13 @@ def add_benchmark_rankings(model, reference_context):
                 benchmark_scores[versioned_id].append(score_float)
             except (ValueError, TypeError):
                 continue
-    
     # Process scores
     for score in model.scores:
         if not isinstance(score, dict):
             continue
-            
         versioned_benchmark_id = score.get('versioned_benchmark_identifier')
         if not versioned_benchmark_id:
             continue
-        
         # If score is invalid, set rank to be same as invalid score
         # i.e., if score is empty, rank is empty. If score is "X", rank is "X", if score is nan, rank is nan
         # Allows us to preserve invalid state in the rank and avoid casting invalid score to float
@@ -445,19 +462,28 @@ def add_benchmark_rankings(model, reference_context):
         if score_ceiled in ('', 'X', None):
             score['rank'] = score_ceiled
             continue
-            
         try:
             score_value = float(score_ceiled)
             all_scores = benchmark_scores.get(versioned_benchmark_id, [])
+            # For aggregate roots, round both target and comparators to the same
+            # 2-decimal ROUND_HALF_UP that the leaderboard's _rank_models uses, so
+            # the displayed rank agrees with the leaderboard. Leaf benchmarks keep
+            # full precision (more informative ranks per benchmark).
+            if versioned_benchmark_id in _AGG_ROOT_BENCHMARK_IDS:
+                target = _round_half_up_2dp(score_value)
+                comparators = [_round_half_up_2dp(s) for s in all_scores]
+            else:
+                target = score_value
+                comparators = all_scores
             # Sort scores in descending order and find the rank
-            sorted_scores = sorted(all_scores, reverse=True)
+            sorted_scores = sorted(comparators, reverse=True)
             # Find the position of the current score (1-indexed)
             # If there are ties, all tied scores get the same rank
             rank = 1
             for i, s in enumerate(sorted_scores):
-                if s > score_value:
+                if s > target:
                     rank = i + 2  # +2 because we want 1-indexed and we're looking for the next position
-                elif s == score_value:
+                elif s == target:
                     rank = i + 1  # +1 for 1-indexed
                     break
             score['rank'] = rank
@@ -696,22 +722,18 @@ def order_layers(layers_dict):
     """Order layers in the specific sequence: V1, V2, V4, IT"""
     if not layers_dict:
         return []
-        
     # Define the desired order
     desired_order = ['V1', 'V2', 'V4', 'IT']
     # Create a list to store ordered items
     ordered_items = []
-    
     # First add items in the desired order
     for key in desired_order:
         if key in layers_dict:
             ordered_items.append((key, layers_dict[key]))
-    
     # Then add any remaining items that weren't in the desired order
     for key, value in layers_dict.items():
         if key not in desired_order:
             ordered_items.append((key, value))
-            
     return ordered_items
 
 @register.filter

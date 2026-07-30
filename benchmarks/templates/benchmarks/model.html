@@ -103,7 +103,6 @@
     </div>
 {% endblock %}
 
-
 {# Center content #}
 {% block content %}
     <section class="individual_model container center">
@@ -325,6 +324,7 @@ model.look_at(...)</pre>
                 </div>
             </div>
         </div>
+        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
     </section>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>
