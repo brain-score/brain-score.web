@@ -423,16 +423,17 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             else:
                 display_value = raw_score
 
-            # Store only the score data - benchmark citation data moved to separate map
-            rd[vid] = {
-                'value': display_value,
-                'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp'),
-                # Wayback machine: version timeline data
-                'version_valid_from': score.get('version_valid_from'),
-                'version_valid_to': score.get('version_valid_to'),
-                'historical_versions': score.get('historical_versions')
-            }
+            # Only the value is always present; wayback/timeline fields are omitted when
+            # empty so ~88k cells don't each carry null placeholders (frontend null-checks them).
+            cell = {'value': display_value}
+            for key, src in (('timestamp', 'end_timestamp'),
+                             ('version_valid_from', 'version_valid_from'),
+                             ('version_valid_to', 'version_valid_to'),
+                             ('historical_versions', 'historical_versions')):
+                val = score.get(src)
+                if val:
+                    cell[key] = val
+            rd[vid] = cell
         row_data.append(rd)
 
     # Build `column_defs` to show only root-level parents first,
@@ -645,22 +646,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmarkDataMetaMap'] = json.dumps(data_map) 
     context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
 
-    layer_map = context.get('layer_mapping', {})
-
-    # now rebuild your model_metadata_map, merging in layer_mapping
-    model_meta_map = {}
-    for m in context['models']:
-        if not (hasattr(m, 'model_meta') and m.model_meta):
-            continue
-
-        # start from the existing metadata dict
-        meta = dict(m.model_meta)
-
-        # if this model has a .layers attribute, add it under "layer_mapping"
-        if hasattr(m, 'layers'):
-            meta['layer_mapping'] = m.layers
-
-        model_meta_map[m.name] = meta
+    # model_metadata_map feeds CSV export; layer_mapping was injected but never read, so drop it
+    model_meta_map = {m.name: dict(m.model_meta)
+                      for m in context['models']
+                      if hasattr(m, 'model_meta') and m.model_meta}
 
     # serialize out to JSON (and make sure all numpy types etc. are native Python)
     context['model_metadata_map'] = json.dumps(json_serializable(model_meta_map))
