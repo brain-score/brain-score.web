@@ -213,11 +213,33 @@ def _fmt_model_id(mid):
     return str(mid)
 
 
-def rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2,
-                                rank_df, added_count=0, coverage_added_count=0):
-    """One-line ``Why this changed: ...`` summary of a month-to-month rank move,
-    counts only / third-person. Per-model enumeration was dropped because long
-    model names widened the sidebar and reflowed the chart on narrow viewports."""
+def _fmt_month(date_or_ym):
+    """``'YYYY-MM'`` or a date string -> ``'Mon YYYY'`` (e.g. ``'Jan 2026'``)."""
+    try:
+        return pd.Timestamp(date_or_ym).strftime('%b %Y')
+    except Exception:
+        return _date_to_month_key(date_or_ym)
+
+
+def _plural(n, noun):
+    """``'1 model'`` / ``'2 models'`` (regular ``+s``)."""
+    return f'{n} {noun}' if n == 1 else f'{n} {noun}s'
+
+
+def _rank_move(prev_rank, curr_rank):
+    """Human phrase for a rank change: ``'up 2'`` (improved) / ``'down 1'`` / ``'no change'``."""
+    if curr_rank < prev_rank:
+        return f'up {prev_rank - curr_rank}'
+    if curr_rank > prev_rank:
+        return f'down {curr_rank - prev_rank}'
+    return 'no change'
+
+
+def rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2, rank_df):
+    """One-line summary of *which models* drove a month-to-month rank move,
+    counts only / third-person. Benchmark churn is shown separately (bullets),
+    so it is intentionally not repeated here. Per-model enumeration was dropped
+    because long model names widened the sidebar on narrow viewports."""
     if ym_prev not in rank_df.columns or ym_curr not in rank_df.columns:
         return []
 
@@ -249,19 +271,16 @@ def rank_transition_model_lines(model_id, ym_prev, ym_curr, rank1, rank2,
             new_above += 1
 
     bits = []
-    if moved_past:
-        bits.append(f'{moved_past} model(s) beat this model')
     if focal_past:
-        bits.append(f'this model passed {focal_past} model(s)')
+        bits.append(f'passed {_plural(focal_past, "model")}')
+    if moved_past:
+        bits.append(f'{_plural(moved_past, "model")} moved ahead')
     if new_above:
-        bits.append(f'{new_above} new model(s) entered above this model')
-    if added_count:
-        bits.append(f'{added_count} new leaf benchmark(s) were counted')
-    if coverage_added_count:
-        bits.append(f'this model newly scored on {coverage_added_count} existing benchmark(s) this month')
+        bits.append(f'{_plural(new_above, "new model")} entered above')
     if not bits:
         return []
-    return ['Why this changed: ' + '; '.join(bits) + '.']
+    s = '; '.join(bits) + '.'
+    return [s[0].upper() + s[1:]]
 
 
 def _overall_trend_lines(dates, values, kind):
@@ -271,16 +290,14 @@ def _overall_trend_lines(dates, values, kind):
     n = len(dates)
     if kind == 'score':
         return [
-            f'Whole series: {n} point(s), {values[0]:.4f} -> {values[-1]:.4f}.',
-            f'Net change (first -> last): {(values[-1] - values[0]):+.4f}.',
-            'Hover a point to compare it to the previous month.',
+            f'{_plural(n, "month")}, {values[0]:.3f} → {values[-1]:.3f} ({values[-1] - values[0]:+.3f} overall).',
+            'Hover a point for month-by-month detail.',
         ]
     r0 = int(round(float(values[0])))
     r1 = int(round(float(values[-1])))
     return [
-        f'Whole series: {n} point(s), rank {r0} -> {r1}.',
-        f'Net movement (first -> last): {r0 - r1:+d} (positive means improved).',
-        'Hover a point to compare it to the previous month.',
+        f'{_plural(n, "month")}, rank {r0} → {r1} ({_rank_move(r0, r1)}).',
+        'Hover a point for month-by-month detail.',
     ]
 
 
@@ -288,15 +305,9 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
     """Narrative for hover at index i vs previous point; uses benchmark-edge map when value changes."""
     if i == 0:
         if kind == 'score':
-            head = [
-                f'First point ({_date_to_month_key(dates[0])}): score {values[0]:.4f}.',
-                'There is no prior month on this chart.',
-            ]
+            head = [f'{_fmt_month(dates[0])}: {values[0]:.3f} (first month shown).']
         else:
-            head = [
-                f'First point ({_date_to_month_key(dates[0])}): rank {int(round(float(values[0])))}.',
-                'There is no prior month on this chart.',
-            ]
+            head = [f'{_fmt_month(dates[0])}: rank {int(round(float(values[0])))} (first month shown).']
         return head + overall_lines
 
     ym_prev = _date_to_month_key(dates[i - 1])
@@ -312,77 +323,50 @@ def _point_attribution_lines(i, dates, values, kind, edges_map, overall_lines, r
         prev_v, curr_v = values[i - 1], values[i]
         delta = curr_v - prev_v
         unchanged = abs(delta) < 1e-9
-        head = [
-            f'vs prior month ({ym_prev}): {prev_v:.4f} -> {ym_curr}: {curr_v:.4f}.',
-        ]
+        head = [f'{_fmt_month(ym_curr)}: {curr_v:.3f}, {delta:+.3f} vs {_fmt_month(ym_prev)}.']
     else:
         prev_v = int(round(float(values[i - 1])))
         curr_v = int(round(float(values[i])))
         delta = curr_v - prev_v
         unchanged = delta == 0
-        head = [
-            f'vs prior month ({ym_prev}): rank {prev_v} -> {ym_curr}: rank {curr_v}.',
-        ]
+        head = [f'{_fmt_month(ym_curr)}: rank {curr_v}, {_rank_move(prev_v, curr_v)} from {_fmt_month(ym_prev)}.']
 
     if unchanged:
-        return head + ['No change from the previous point. Overall movement:'] + overall_lines
+        if kind == 'score':
+            return [f'{_fmt_month(ym_curr)}: {curr_v:.3f} (no change from {_fmt_month(ym_prev)}).'] + overall_lines
+        return [f'{_fmt_month(ym_curr)}: rank {curr_v} (no change from {_fmt_month(ym_prev)}).'] + overall_lines
 
-    if kind == 'score':
-        mid = [f'Change from previous point: {delta:+.4f}.']
-    else:
-        if delta < 0:
-            mid = [f'Rank change vs prior month: {delta:+d} (negative = improved).']
-        else:
-            mid = [f'Rank change vs prior month: {delta:+d} (positive = moved down).']
-
-    out = head + mid
+    out = list(head)
     model_lines = []
     if kind == 'rank' and rank_explain is not None:
         rdf = rank_explain.get('rank_df')
         mid_model = rank_explain.get('model_id')
         if rdf is not None and mid_model is not None and ym_prev in rdf.columns and ym_curr in rdf.columns:
-            model_lines = rank_transition_model_lines(
-                mid_model, ym_prev, ym_curr, prev_v, curr_v, rdf,
-                added_count=len(added), coverage_added_count=len(coverage_added),
-            )
-    if model_lines:
-        out.extend(model_lines)
-    elif kind == 'score':
-        score_bits = []
-        if added:
-            score_bits.append(f'{scored_of_added_count} of {len(added)} new leaf benchmark(s) actually scored')
-        if coverage_added:
-            score_bits.append(f'this model newly scored on {len(coverage_added)} existing benchmark(s) this month')
-        if score_bits:
-            out.append('Why this changed: ' + '; '.join(score_bits) + '.')
+            model_lines = rank_transition_model_lines(mid_model, ym_prev, ym_curr, prev_v, curr_v, rdf)
+    out.extend(model_lines)
 
+    cap = _COVERAGE_BULLET_CAP
     if coverage_added:
-        out.append(f'Existing benchmarks this model newly got scored on ({len(coverage_added)}):')
-        cap = _COVERAGE_BULLET_CAP
-        for b in coverage_added[:cap]:
-            out.append(f'- {b}')
-        if len(coverage_added) > cap:
-            out.append(f'... and {len(coverage_added) - cap} more.')
+        if len(coverage_added) <= 3:
+            out.append(f'Newly scored on {_plural(len(coverage_added), "benchmark")}: ' + ', '.join(coverage_added) + '.')
+        else:
+            out.append(f'Newly scored on {_plural(len(coverage_added), "benchmark")}:')
+            for b in coverage_added[:cap]:
+                out.append(f'- {b}')
+            if len(coverage_added) > cap:
+                out.append(f'... and {len(coverage_added) - cap} more.')
 
     if added:
-        unscored = len(added) - scored_of_added_count
-        out.append(f'New leaf benchmarks counted this month ({len(added)}): 'f'this model was scored on {scored_of_added_count} ' f'({unscored} not run — counted as 0 in the aggregate).')
-        cap = _COVERAGE_BULLET_CAP
+        out.append(f'{_plural(len(added), "new benchmark")} added, scored on {scored_of_added_count} of {len(added)} (unscored count as 0):')
         for b in added[:cap]:
-            mark = ' -- scored' if b in scored_of_added else ' -- not run'
-            out.append(f'- {b}{mark}')
+            out.append(f'- {b} ({"scored" if b in scored_of_added else "not run"})')
         if len(added) > cap:
             out.append(f'... and {len(added) - cap} more.')
     elif not coverage_added:
         if kind == 'score' or not model_lines:
-            out.append(
-                'No new leaf benchmarks between these months; the shift is likely from updated scores, '
-                're-aggregation, or other models in the public pool.'
-            )
+            out.append('No new benchmarks this month; the change is from updated scores or other models in the pool.')
         else:
-            out.append(
-                'No new leaf benchmarks between these months; remaining movement is from aggregate score updates.'
-            )
+            out.append('No new benchmarks this month; the change is from score updates.')
     return out
 
 
@@ -797,63 +781,37 @@ def _compare_focal_change_lines(i, dates, values, kind, display_name, edges_map,
         if abs(curr_v - prev_v) < 1e-9:
             return []
         delta = curr_v - prev_v
-        lines = [
-            f'{display_name} vs prior month ({ym_prev}): {prev_v:.4f} -> {ym_curr}: {curr_v:.4f} ({delta:+.4f}).',
-        ]
+        lines = [f'{display_name} {_fmt_month(ym_curr)}: {curr_v:.3f}, {delta:+.3f} vs {_fmt_month(ym_prev)}.']
     else:
         prev_v = int(round(float(values[i - 1])))
         curr_v = int(round(float(values[i])))
         if prev_v == curr_v:
             return []
-        delta = curr_v - prev_v
-        if delta < 0:
-            hint = ' (improved)'
-        elif delta > 0:
-            hint = ' (moved down)'
-        else:
-            hint = ''
-        lines = [
-            f'{display_name} vs prior month ({ym_prev}): rank {prev_v} -> {ym_curr}: rank {curr_v} ({delta:+d}{hint}).',
-        ]
+        lines = [f'{display_name} {_fmt_month(ym_curr)}: rank {curr_v}, {_rank_move(prev_v, curr_v)} from {_fmt_month(ym_prev)}.']
 
     model_lines = []
     if kind == 'rank' and rank_df is not None and model_id is not None:
         if ym_prev in rank_df.columns and ym_curr in rank_df.columns:
-            model_lines = rank_transition_model_lines(
-                model_id, ym_prev, ym_curr, prev_v, curr_v, rank_df,
-                added_count=len(added), coverage_added_count=len(coverage_added),
-            )
+            model_lines = rank_transition_model_lines(model_id, ym_prev, ym_curr, prev_v, curr_v, rank_df)
 
     if model_lines:
         for ml in model_lines:
             lines.append(f'{display_name}: {ml}')
-    elif kind == 'score':
-        score_bits = []
-        if added:
-            score_bits.append(
-                f'scored on {len(scored_of_added)} of {len(added)} new leaf benchmark(s)'
-            )
-        if coverage_added:
-            score_bits.append(f'newly scored on {len(coverage_added)} existing benchmark(s) this month')
-        if score_bits:
-            lines.append(f'{display_name}: Why this changed: ' + '; '.join(score_bits) + '.')
+    elif kind == 'score' and added:
+        lines.append(f'{display_name}: scored {len(scored_of_added)} of {_plural(len(added), "new benchmark")}.')
 
     cap = _COMPARE_COVERAGE_BULLET_CAP
     if coverage_added:
-        lines.append(f'{display_name} newly scored on {len(coverage_added)} benchmark(s) this month:')
-        for b in coverage_added[:cap]:
-            lines.append(f'  - {b}')
-        if len(coverage_added) > cap:
-            lines.append(f'  ... and {len(coverage_added) - cap} more.')
-    elif kind == 'score' and not model_lines and not added:
-        lines.append(
-            f'{display_name}: No new leaf benchmarks this month; change likely from updated scores, '
-            're-aggregation, or other models in the public pool.'
-        )
-    elif kind == 'rank' and not model_lines and not added:
-        lines.append(
-            f'{display_name}: No new leaf benchmarks this month; remaining movement is from aggregate score updates.'
-        )
+        if len(coverage_added) <= 3:
+            lines.append(f'{display_name} newly scored: ' + ', '.join(coverage_added) + '.')
+        else:
+            lines.append(f'{display_name} newly scored on {_plural(len(coverage_added), "benchmark")}:')
+            for b in coverage_added[:cap]:
+                lines.append(f'  - {b}')
+            if len(coverage_added) > cap:
+                lines.append(f'  ... and {len(coverage_added) - cap} more.')
+    elif not model_lines and not added:
+        lines.append(f'{display_name}: no new benchmarks this month; change from score updates or other models.')
 
     return lines
 
@@ -867,49 +825,44 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
     When ``i > 0``, appends month-over-month change reasons per model (mirroring
     the single-model trend panel)."""
     ym = _date_to_month_key(dates[i])
+    mlabel = _fmt_month(ym)
     name_a = _truncate_sidebar_name(name_a)
     name_b = _truncate_sidebar_name(name_b)
     va = series_a[i]
     vb = series_b[i]
     lines = []
     if va is None and vb is None:
-        lines = [f'At {ym}: neither model has data for this month.']
+        lines = [f'{mlabel}: no data for either model.']
     elif va is None:
         if kind == 'score':
-            lines = [f'At {ym}: {name_a} had no data; {name_b} scored {vb:.4f}.']
+            lines = [f'{mlabel}: {name_a} no data; {name_b} {vb:.3f}.']
         else:
-            lines = [f'At {ym}: {name_a} had no data; {name_b} was rank {int(round(vb))}.']
+            lines = [f'{mlabel}: {name_a} no data; {name_b} rank {int(round(vb))}.']
     elif vb is None:
         if kind == 'score':
-            lines = [f'At {ym}: {name_b} had no data; {name_a} scored {va:.4f}.']
+            lines = [f'{mlabel}: {name_b} no data; {name_a} {va:.3f}.']
         else:
-            lines = [f'At {ym}: {name_b} had no data; {name_a} was rank {int(round(va))}.']
+            lines = [f'{mlabel}: {name_b} no data; {name_a} rank {int(round(va))}.']
     elif kind == 'score':
         gap = va - vb
         leader, _follower, lead_gap = (name_a, name_b, gap) if gap >= 0 else (name_b, name_a, -gap)
         if abs(gap) < 1e-9:
-            lines = [
-                f'At {ym}: {name_a} = {va:.4f}, {name_b} = {vb:.4f}.',
-                'The two models are tied at this month.',
-            ]
+            lines = [f'{mlabel}: {name_a} {va:.3f}, {name_b} {vb:.3f}.', 'Tied this month.']
         else:
             lines = [
-                f'At {ym}: {name_a} = {va:.4f}, {name_b} = {vb:.4f}.',
-                f'{leader} leads by {lead_gap:.4f} ({lead_gap / max(va, vb) * 100:.1f}% of the better score).',
+                f'{mlabel}: {name_a} {va:.3f}, {name_b} {vb:.3f}.',
+                f'{leader} leads by {lead_gap:.3f} ({lead_gap / max(va, vb) * 100:.0f}%).',
             ]
     else:  # rank kind: smaller is better
         ra = int(round(va))
         rb = int(round(vb))
         if ra == rb:
-            lines = [
-                f'At {ym}: both ranked {ra}.',
-                'The two models are tied at this month.',
-            ]
+            lines = [f'{mlabel}: both rank {ra}.', 'Tied this month.']
         else:
             leader, follower, lead_gap = (name_a, name_b, rb - ra) if ra < rb else (name_b, name_a, ra - rb)
             lines = [
-                f'At {ym}: {name_a} = rank {ra}, {name_b} = rank {rb}.',
-                f'{leader} is {lead_gap} position(s) ahead of {follower}.',
+                f'{mlabel}: {name_a} rank {ra}, {name_b} rank {rb}.',
+                f'{leader} leads by {_plural(lead_gap, "position")}.',
             ]
 
     if kind == 'score' and i > 0:
@@ -931,29 +884,20 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         if added:
             scored_a_set = set((scored_new_a or {}).get(ym, []) or []) & set(added)
             scored_b_set = set((scored_new_b or {}).get(ym, []) or []) & set(added)
-            lines.append(f'{len(added)} new leaf benchmarks counted globally this month.')
-            lines.append(
-                f'  {name_a}: scored on {len(scored_a_set)} of {len(added)} '
-                f'({len(added) - len(scored_a_set)} not run — counted as 0 in the aggregate).'
-            )
-            lines.append(
-                f'  {name_b}: scored on {len(scored_b_set)} of {len(added)} '
-                f'({len(added) - len(scored_b_set)} not run — counted as 0 in the aggregate).'
-            )
+            lines.append(f'{_plural(len(added), "new benchmark")} added this month (unscored count as 0):')
             cap = _COMPARE_COVERAGE_BULLET_CAP
             for b in added[:cap]:
-                marks = []
-                if b in scored_a_set: marks.append('A')
-                if b in scored_b_set: marks.append('B')
-                tag = f' -- scored by {"+".join(marks)}' if marks else ' -- not run by either'
-                lines.append(f'  - {b}{tag}')
+                who = []
+                if b in scored_a_set: who.append(name_a)
+                if b in scored_b_set: who.append(name_b)
+                lines.append(f'- {b} ({" + ".join(who) if who else "neither"})')
             if len(added) > cap:
-                lines.append(f'  ... and {len(added) - cap} more.')
+                lines.append(f'... and {len(added) - cap} more.')
         elif not any_focal:
             cov_a = (coverage_a or {}).get(ym, []) or []
             cov_b = (coverage_b or {}).get(ym, []) or []
             if not cov_a and not cov_b:
-                lines.append('Neither model changed score vs the prior month with benchmark coverage to report.')
+                lines.append('Neither model changed score vs the prior month.')
     elif kind == 'score':
         cov_a = (coverage_a or {}).get(ym, []) or []
         cov_b = (coverage_b or {}).get(ym, []) or []
@@ -961,7 +905,10 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         def _emit_coverage(name, cov):
             if not cov:
                 return
-            lines.append(f'{name} newly scored on {len(cov)} benchmark(s) this month:')
+            if len(cov) <= 3:
+                lines.append(f'{name} newly scored: ' + ', '.join(cov) + '.')
+                return
+            lines.append(f'{name} newly scored on {_plural(len(cov), "benchmark")}:')
             cap = _COMPARE_COVERAGE_BULLET_CAP
             for b in cov[:cap]:
                 lines.append(f'  - {b}')
@@ -971,7 +918,7 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         _emit_coverage(name_a, cov_a)
         _emit_coverage(name_b, cov_b)
         if not cov_a and not cov_b:
-            lines.append('Neither model added new benchmark scores this month.')
+            lines.append('No new benchmark scores for either model this month.')
     elif kind == 'rank' and i > 0:
         for name, series, cov, mid, scored in (
             (name_a, series_a, coverage_a, mid_a, scored_new_a),
@@ -987,13 +934,13 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         nm = (new_model_counts or {}).get(ym, 0)
         bits = []
         if nl:
-            bits.append(f'{nl} new leaf benchmark(s) counted globally')
+            bits.append(f'{_plural(nl, "new benchmark")} counted')
         if nm:
-            bits.append(f'{nm} new model(s) entered the leaderboard')
+            bits.append(f'{_plural(nm, "new model")} entered')
         if bits:
             lines.append('This month: ' + '; '.join(bits) + '.')
         elif i == 0:
-            lines.append('No new benchmarks or models added this month.')
+            lines.append('No new benchmarks or models this month.')
     return lines
 
 
@@ -1010,17 +957,17 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
     if valid_a and valid_b:
         if kind == 'score':
             overall = [
-                f'{name_a_disp}: {valid_a[0]:.4f} -> {valid_a[-1]:.4f} ({valid_a[-1] - valid_a[0]:+.4f}).',
-                f'{name_b_disp}: {valid_b[0]:.4f} -> {valid_b[-1]:.4f} ({valid_b[-1] - valid_b[0]:+.4f}).',
-                'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
+                f'{name_a_disp}: {valid_a[0]:.3f} → {valid_a[-1]:.3f} ({valid_a[-1] - valid_a[0]:+.3f}).',
+                f'{name_b_disp}: {valid_b[0]:.3f} → {valid_b[-1]:.3f} ({valid_b[-1] - valid_b[0]:+.3f}).',
+                'Hover to compare by month; click to pin, Esc to release.',
             ]
         else:
             ra0, ra1 = int(round(valid_a[0])), int(round(valid_a[-1]))
             rb0, rb1 = int(round(valid_b[0])), int(round(valid_b[-1]))
             overall = [
-                f'{name_a_disp}: rank {ra0} -> {ra1} ({ra0 - ra1:+d}; positive means improved).',
-                f'{name_b_disp}: rank {rb0} -> {rb1} ({rb0 - rb1:+d}; positive means improved).',
-                'Hover a point on either line to compare both models at that month. Click to pin; Esc to release.',
+                f'{name_a_disp}: rank {ra0} → {ra1} ({_rank_move(ra0, ra1)}).',
+                f'{name_b_disp}: rank {rb0} → {rb1} ({_rank_move(rb0, rb1)}).',
+                'Hover to compare by month; click to pin, Esc to release.',
             ]
     else:
         overall = ['No overlapping trend data for these two models.']

@@ -157,8 +157,7 @@ class TestRankNarrative(BaseTestCase):
         for needle in ('#1', '#3', '#99'):
             self.assertNotIn(needle, joined)
         self.assertEqual(len(lines), 1)
-        self.assertTrue(lines[0].startswith('Why this changed:'), lines[0])
-        self.assertIn('2 model(s) beat this model', lines[0])
+        self.assertIn('2 models moved ahead', lines[0])
         self.assertNotIn(' you ', ' ' + lines[0].lower() + ' ')
 
     def test_rank_lines_third_person_when_focal_improved(self):
@@ -170,7 +169,7 @@ class TestRankNarrative(BaseTestCase):
             model_id=2, ym_prev='2024-01', ym_curr='2024-02',
             rank1=3, rank2=1, rank_df=rank_df,
         )
-        self.assertTrue(lines and 'this model passed' in lines[0], lines)
+        self.assertTrue(lines and 'passed' in lines[0].lower(), lines)
 
     def test_clear_trend_cache_drops_all_entries(self):
         model_views._TREND_CACHE[('public_wide', 'vision', '2026-05')] = 'sentinel'
@@ -178,7 +177,9 @@ class TestRankNarrative(BaseTestCase):
         clear_trend_cache()
         self.assertEqual(model_views._TREND_CACHE, {})
 
-    def test_headline_includes_coverage_completion_bit(self):
+    def test_rank_line_omits_benchmark_churn(self):
+        """Benchmark churn is shown as separate bullets, not folded into the
+        model-movement line."""
         rank_df = self._rank_df(
             {'model_id': [1, 2, 3], '2024-01': [0.5, 0.6, 0.4], '2024-02': [0.5, 0.4, 0.6]},
             ['2024-01', '2024-02'],
@@ -186,11 +187,10 @@ class TestRankNarrative(BaseTestCase):
         lines = rank_transition_model_lines(
             model_id=2, ym_prev='2024-01', ym_curr='2024-02',
             rank1=1, rank2=3, rank_df=rank_df,
-            coverage_added_count=2,
         )
-        headline = lines[0] if lines else ''
-        self.assertTrue(headline.startswith('Why this changed:'), headline)
-        self.assertIn('this model newly scored on 2 existing benchmark(s)', headline)
+        self.assertEqual(len(lines), 1)
+        self.assertIn('moved ahead', lines[0])
+        self.assertNotIn('benchmark', lines[0])
 
 
 class TestComparisonTrendNarrative(BaseTestCase):
@@ -204,33 +204,33 @@ class TestComparisonTrendNarrative(BaseTestCase):
         meta = self._meta('score', ['2026-04-30', '2026-05-31'],
                           [0.50, 0.55], [0.30, 0.40])
         lines = meta['points'][1]['lines']
-        self.assertIn('alpha = 0.5500, beta = 0.4000.', lines[0])
-        self.assertIn('alpha leads by 0.1500', lines[1])
+        self.assertIn('alpha 0.550, beta 0.400.', lines[0])
+        self.assertIn('alpha leads by 0.150', lines[1])
 
     def test_score_tied_says_tied(self):
         meta = self._meta('score', ['2026-05-31'], [0.42], [0.42])
         lines = meta['points'][0]['lines']
-        self.assertIn('alpha = 0.4200, beta = 0.4200.', lines[0])
-        self.assertIn('tied at this month', lines[1])
+        self.assertIn('alpha 0.420, beta 0.420.', lines[0])
+        self.assertIn('Tied this month', lines[1])
 
     def test_handles_one_missing(self):
         meta = self._meta('score', ['2026-05-31'], [None], [0.42])
         lines = meta['points'][0]['lines']
-        self.assertIn('alpha had no data', lines[0])
-        self.assertIn('beta scored 0.4200', lines[0])
+        self.assertIn('alpha no data', lines[0])
+        self.assertIn('beta 0.420', lines[0])
 
     def test_rank_smaller_is_better(self):
         meta = self._meta('rank', ['2026-05-31'], [3], [10])
         lines = meta['points'][0]['lines']
-        self.assertIn('alpha = rank 3, beta = rank 10.', lines[0])
-        self.assertIn('alpha is 7 position(s) ahead of beta', lines[1])
+        self.assertIn('alpha rank 3, beta rank 10.', lines[0])
+        self.assertIn('alpha leads by 7 positions', lines[1])
 
     def test_default_headline_summarises_endpoints(self):
         meta = self._meta('score', ['2026-04-30', '2026-05-31'],
                           [0.40, 0.50], [0.30, 0.45])
         defaults = meta['defaultLines']
-        self.assertIn('alpha: 0.4000 -> 0.5000 (+0.1000).', defaults)
-        self.assertIn('beta: 0.3000 -> 0.4500 (+0.1500).', defaults)
+        self.assertIn('alpha: 0.400 → 0.500 (+0.100).', defaults)
+        self.assertIn('beta: 0.300 → 0.450 (+0.150).', defaults)
 
     def test_score_hover_lists_per_model_coverage(self):
         meta = self._meta(
@@ -240,11 +240,8 @@ class TestComparisonTrendNarrative(BaseTestCase):
             coverage_b={'2026-05': ['Bar.IT']},
         )
         lines = meta['points'][1]['lines']
-        self.assertIn('alpha newly scored on 2 benchmark(s) this month:', lines)
-        self.assertIn('  - Foo.IT', lines)
-        self.assertIn('  - Foo.V1', lines)
-        self.assertIn('beta newly scored on 1 benchmark(s) this month:', lines)
-        self.assertIn('  - Bar.IT', lines)
+        self.assertIn('alpha newly scored: Foo.IT, Foo.V1.', lines)
+        self.assertIn('beta newly scored: Bar.IT.', lines)
 
     def test_score_hover_states_no_coverage_change_when_empty(self):
         meta = self._meta(
@@ -252,7 +249,7 @@ class TestComparisonTrendNarrative(BaseTestCase):
             coverage_a={}, coverage_b={},
         )
         lines = meta['points'][0]['lines']
-        self.assertIn('Neither model added new benchmark scores this month.', lines)
+        self.assertIn('No new benchmark scores for either model this month.', lines)
 
     def test_score_hover_lists_global_benchmark_adds_without_coverage(self):
         meta = self._meta(
@@ -261,14 +258,12 @@ class TestComparisonTrendNarrative(BaseTestCase):
             edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1']},
         )
         lines = meta['points'][1]['lines']
-        self.assertTrue(any('Why this changed' in l and 'new leaf benchmark' in l for l in lines), lines)
-        self.assertIn('2 new leaf benchmarks counted globally this month.', lines)
-        # Per-model summary is present with the "scored on X of N" phrasing.
-        self.assertTrue(any('alpha: scored on 0 of 2' in l for l in lines), lines)
-        self.assertTrue(any('beta: scored on 0 of 2' in l for l in lines), lines)
-        # Bullet lines still list each added leaf; without scored_new_a/b, the
-        # per-benchmark tag is "not run by either" (not "-- scored").
-        self.assertIn('  - Bench.IT -- not run by either', lines)
+        self.assertIn('2 new benchmarks added this month (unscored count as 0):', lines)
+        # Per-model summary uses the "scored X of N" phrasing.
+        self.assertTrue(any('alpha: scored 0 of 2 new benchmarks' in l for l in lines), lines)
+        self.assertTrue(any('beta: scored 0 of 2 new benchmarks' in l for l in lines), lines)
+        # Without scored_new_a/b, each added benchmark is tagged "(neither)".
+        self.assertIn('- Bench.IT (neither)', lines)
 
     def test_score_hover_marks_per_benchmark_scored_by_model(self):
         meta = self._meta(
@@ -280,11 +275,11 @@ class TestComparisonTrendNarrative(BaseTestCase):
         )
         lines = meta['points'][1]['lines']
         # A scored 1 of 2, B scored 0 of 2.
-        self.assertTrue(any('alpha: scored on 1 of 2' in l for l in lines), lines)
-        self.assertTrue(any('beta: scored on 0 of 2' in l for l in lines), lines)
-        # Per-benchmark tag: Bench.IT is scored by A only; V1 by neither.
-        self.assertIn('  - Bench.IT -- scored by A', lines)
-        self.assertIn('  - Bench.V1 -- not run by either', lines)
+        self.assertTrue(any('alpha: scored 1 of 2 new benchmarks' in l for l in lines), lines)
+        self.assertTrue(any('beta: scored 0 of 2 new benchmarks' in l for l in lines), lines)
+        # Per-benchmark tag: Bench.IT scored by alpha only; V1 by neither.
+        self.assertIn('- Bench.IT (alpha)', lines)
+        self.assertIn('- Bench.V1 (neither)', lines)
 
     def test_score_focal_line_reports_scored_of_added(self):
         meta = self._meta(
@@ -294,9 +289,9 @@ class TestComparisonTrendNarrative(BaseTestCase):
             scored_new_a={'2026-06': ['Bench.IT']},
         )
         lines = meta['points'][1]['lines']
-        # Per-model focal-change line uses "scored on X of N" (not just "N were counted").
+        # Per-model focal-change line uses "scored X of N new benchmarks".
         self.assertTrue(
-            any('alpha:' in l and 'scored on 1 of 2 new leaf benchmark' in l for l in lines),
+            any('alpha: scored 1 of 2 new benchmarks' in l for l in lines),
             lines,
         )
 
@@ -319,8 +314,8 @@ class TestComparisonTrendNarrative(BaseTestCase):
         )
         lines = meta['points'][1]['lines']
         churn_line = next((l for l in lines if l.startswith('This month:')), '')
-        self.assertIn('7 new leaf benchmark(s) counted globally', churn_line)
-        self.assertIn('12 new model(s) entered the leaderboard', churn_line)
+        self.assertIn('7 new benchmarks counted', churn_line)
+        self.assertIn('12 new models entered', churn_line)
 
     def test_rank_hover_says_no_churn_when_counts_zero(self):
         meta = self._meta(
@@ -328,7 +323,7 @@ class TestComparisonTrendNarrative(BaseTestCase):
             new_leaf_counts={}, new_model_counts={},
         )
         lines = meta['points'][0]['lines']
-        self.assertIn('No new benchmarks or models added this month.', lines)
+        self.assertIn('No new benchmarks or models this month.', lines)
 
 
 class TestComparisonTrendEndpoint(BaseTestCase):
