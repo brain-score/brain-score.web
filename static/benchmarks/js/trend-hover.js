@@ -125,11 +125,84 @@
         return bar;
     }
 
+    /* Draggable divider between the plot column and the attribution column.
+       Writes a ``--plot-col`` percentage onto every ``.trend-split`` in the
+       same scope so both tabs (Scores/Rankings) stay in sync; the CSS turns
+       that into the column widths at desktop width. */
+    var MIN_FRAC = 0.35, MAX_FRAC = 0.85;
+
+    function wireColumnResizers() {
+        document.querySelectorAll('.trend-resizer').forEach(function (handle) {
+            if (handle.__trendResizeWired) return;
+            handle.__trendResizeWired = true;
+            var split = handle.closest('.trend-split');
+            if (!split) return;
+            var scope = handle.closest('[data-trend-resize-scope]') || split;
+
+            function apply(frac) {
+                frac = Math.max(MIN_FRAC, Math.min(MAX_FRAC, frac));
+                var pct = (frac * 100).toFixed(1) + '%';
+                scope.querySelectorAll('.trend-split').forEach(function (s) {
+                    s.style.setProperty('--plot-col', pct);
+                });
+            }
+            function fracFromX(clientX) {
+                var rect = split.getBoundingClientRect();
+                return rect.width ? (clientX - rect.left) / rect.width : null;
+            }
+            function resizePlots() {
+                if (typeof Plotly === 'undefined') return;
+                scope.querySelectorAll('.js-plotly-plot').forEach(function (gd) {
+                    try { Plotly.Plots.resize(gd); } catch (e) { /* swallow */ }
+                });
+            }
+            function currentFrac() {
+                var col = split.querySelector('.trend-plot-col');
+                var rect = split.getBoundingClientRect();
+                if (!col || !rect.width) return 0.75;
+                return col.getBoundingClientRect().width / rect.width;
+            }
+
+            var dragging = false;
+            handle.addEventListener('pointerdown', function (e) {
+                dragging = true;
+                try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+            handle.addEventListener('pointermove', function (e) {
+                if (!dragging) return;
+                var f = fracFromX(e.clientX);
+                if (f !== null) apply(f);
+            });
+            function endDrag(e) {
+                if (!dragging) return;
+                dragging = false;
+                try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+                document.body.style.userSelect = '';
+                resizePlots();
+            }
+            handle.addEventListener('pointerup', endDrag);
+            handle.addEventListener('pointercancel', endDrag);
+            handle.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowLeft') { apply(currentFrac() - 0.03); resizePlots(); e.preventDefault(); }
+                else if (e.key === 'ArrowRight') { apply(currentFrac() + 0.03); resizePlots(); e.preventDefault(); }
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireColumnResizers);
+    } else {
+        wireColumnResizers();
+    }
+
     window.BrainScoreTrendHover = {
         renderAttributionList: renderAttributionList,
         eventTouchesPlot: eventTouchesPlot,
         nearestIndexFromMouseX: nearestIndexFromMouseX,
         bindPlotlyHover: bindPlotlyHover,
         ensureHoldBar: ensureHoldBar,
+        wireColumnResizers: wireColumnResizers,
     };
 })();

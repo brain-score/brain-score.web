@@ -160,7 +160,7 @@
                      data-trend-endpoint="{% url domain|add:'-compare-trend-pair' %}">
                     <h3 class="subtitle is-5">Historical trend</h3>
                     <p id="compare-trend-empty" class="help">Select two different models to see how their average_vision score and rank have evolved over time.</p>
-                    <div id="compare-trend-content" style="display:none;">
+                    <div id="compare-trend-content" style="display:none;" data-trend-resize-scope>
                         <div class="tabs is-boxed" id="compare-trend-tabs">
                             <ul>
                                 <li class="is-active" data-tab="score">
@@ -172,11 +172,12 @@
                             </ul>
                         </div>
                         <div id="compare-trend-panel-score" class="trend-tab-panel">
-                            <div class="columns is-variable is-2 is-desktop is-align-items-stretch">
-                                <div class="column is-12-mobile is-10-desktop">
+                            <div class="columns is-variable is-2 is-desktop is-align-items-stretch trend-split">
+                                <div class="column is-12-mobile is-10-desktop trend-plot-col">
                                     <div id="compare-score-trend-plot" class="plotly-graph-div trend-plot-host"></div>
                                 </div>
-                                <div class="column is-12-mobile is-2-desktop">
+                                <div class="trend-resizer" role="separator" aria-orientation="vertical" aria-label="Resize chart and details" tabindex="0"></div>
+                                <div class="column is-12-mobile is-2-desktop trend-attr-col">
                                     <aside class="trend-attribution-panel" aria-label="Score comparison narrative">
                                         <div class="trend-attribution-title">Score comparison</div>
                                         <p class="trend-attribution-sub">Summary -- hover a point for month-by-month detail.</p>
@@ -186,11 +187,12 @@
                             </div>
                         </div>
                         <div id="compare-trend-panel-rank" class="trend-tab-panel" style="display:none;">
-                            <div class="columns is-variable is-2 is-desktop is-align-items-stretch">
-                                <div class="column is-12-mobile is-10-desktop">
+                            <div class="columns is-variable is-2 is-desktop is-align-items-stretch trend-split">
+                                <div class="column is-12-mobile is-10-desktop trend-plot-col">
                                     <div id="compare-rank-trend-plot" class="plotly-graph-div trend-plot-host"></div>
                                 </div>
-                                <div class="column is-12-mobile is-2-desktop">
+                                <div class="trend-resizer" role="separator" aria-orientation="vertical" aria-label="Resize chart and details" tabindex="0"></div>
+                                <div class="column is-12-mobile is-2-desktop trend-attr-col">
                                     <aside class="trend-attribution-panel" aria-label="Rank comparison narrative">
                                         <div class="trend-attribution-title">Rank comparison</div>
                                         <p class="trend-attribution-sub">Summary -- hover a point for month-by-month detail.</p>

@@ -7,6 +7,10 @@
     padding: 1rem 1rem 1rem 1.1rem;
     height: 100%;
     min-height: 200px;
+    /* Cap to the plot height and scroll internally instead of growing the row. */
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .trend-attribution-panel .trend-attribution-title {
@@ -77,10 +81,72 @@
         border-top: 3px solid #3273dc;
         border-radius: 0 0 6px 6px;
         margin-top: 0.75rem;
+        /* Stacked: let it grow with the page instead of scrolling in place. */
+        max-height: none;
+        overflow: visible;
     }
 
+    /* Higher-specificity compare cap also needs releasing when stacked. */
     #compare-trend-box .trend-attribution-panel {
         max-height: none;
-        overflow-y: visible;
+        overflow: visible;
+    }
+}
+
+/* Draggable divider: resize the plot vs attribution columns (desktop only,
+   where the columns are side by side). ``--plot-col`` is set on each
+   ``.trend-split`` by trend-hover.js; falls back to the static Bulma split. */
+.trend-resizer {
+    display: none;
+}
+
+@media screen and (min-width: 1024px) {
+    .trend-split.columns {
+        flex-wrap: nowrap;
+    }
+
+    .trend-split.columns > .column.trend-plot-col {
+        flex: 0 0 var(--plot-col, 75%);
+        width: var(--plot-col, 75%);
+        max-width: none;
+    }
+    #compare-trend-box .trend-split.columns > .column.trend-plot-col {
+        flex-basis: var(--plot-col, 83%);
+        width: var(--plot-col, 83%);
+    }
+    .trend-split.columns > .column.trend-attr-col {
+        flex: 1 1 0;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+    }
+
+    .trend-resizer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 10px;
+        align-self: stretch;
+        cursor: col-resize;
+        touch-action: none;
+    }
+    .trend-resizer::before {
+        content: "";
+        width: 2px;
+        height: 42px;
+        border-radius: 2px;
+        background: #dbdbdb;
+        transition: background 0.15s;
+    }
+    .trend-resizer:hover::before,
+    .trend-resizer:focus-visible::before {
+        background: #3273dc;
+    }
+    .trend-resizer:focus {
+        outline: none;
+    }
+    .trend-resizer:focus-visible {
+        outline: 2px solid #3273dc;
+        outline-offset: 2px;
     }
 }
