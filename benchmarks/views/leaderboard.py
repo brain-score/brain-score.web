@@ -699,6 +699,21 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
     }
 
+    # Escape script-context characters so a "</script>" inside any user-influenced value
+    # (e.g. a model or submitter name) cannot break out of the inline <script> that assigns
+    # window.DJANGO_DATA. The \uXXXX forms are valid JSON and parse back to the same data.
+    script_blob_keys = (
+        'row_data', 'column_defs', 'benchmark_groups', 'filter_options',
+        'benchmark_metadata', 'benchmark_tree', 'benchmark_ids', 'benchmark_bibtex_map',
+        'benchmarkStimuliMetaMap', 'benchmarkDataMetaMap', 'benchmarkMetricMetaMap',
+        'model_metadata_map',
+    )
+    for key in script_blob_keys:
+        minimal_context[key] = (minimal_context[key]
+                                .replace('<', '\\u003c')
+                                .replace('>', '\\u003e')
+                                .replace('&', '\\u0026'))
+
     return minimal_context
 
 
