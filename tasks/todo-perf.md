@@ -15,14 +15,25 @@ Order = safest/highest-value first.
       (128KB bundle vs 12.5MB payload). Not worth it now.
 - [x] 3. Filter double-render + latent recursion: renamed coordinator updateFilteredScores
       to computeFilteredScores; applyCombinedFilters sets the grid once. Browser-verified.
-- [ ] 4. table_library_dependencies: declare the block or delete the dead overrides
-      (AG-Grid CSS currently ships zero links).
-- [ ] 5. Heavy-lib gating: move Plotly/d3/Chart.js/select2/jstat/countdown out of
-      base.html unconditional load into a per-page block; leaderboard opts out.
-      (Broad blast radius -> smoke every page type.)
-- [ ] 6. Payload delivery: json_script (or lean JSON endpoint) instead of inline
-      {{ ...|safe }} blobs; decide after dedup shrinks the payload.
-- [ ] 7. Un-skip / de-flake the 10 skipped test_ag_grid.py value assertions.
+- [x] 4. table_library_dependencies: deleted the dead override blocks (AG-Grid CSS was
+      never shipping; grid uses v33 JS theming). Rendered output unchanged.
+- [~] 5. Heavy-lib gating: NOT DONE. Plotly/d3/Chart.js/select2/jstat/countdown are all
+      used by some page, so gating means inverting base.html to opt-in and touching every
+      page that needs them + smoking each page type. Broad, site-wide, not leaderboard-only;
+      too risky to rush. Recommend a dedicated pass.
+- [x] 6a. Security: escaped < > & in the inline DJANGO_DATA blobs (script-context injection
+      via user-influenced model/submitter names). Done + verified.
+- [~] 6b. json_script parse-perf: NOT DONE. Would move the 12MB inline JS-object-literal to
+      <script type=application/json> + JSON.parse (faster parse). Requires the view to pass
+      raw objects (not pre-dumped strings) and rework the DJANGO_DATA/domain-preservation flow.
+      Moderate change; deferred to avoid a fragile end-of-session rewrite.
+- [~] 7. Un-skip / de-flake 10 test_ag_grid.py assertions: NOT DONE. They hardcode
+      data-dependent ranks and run against a live server; de-flaking = making them
+      data-independent (separate test-refactor, no product-perf gain).
+
+## Done this branch (all browser-verified against dev DB)
+1 payload trim (-36%), 3 filter recursion/double-render, 4 dead CSS blocks, 6a script escaping.
+Deferred: 2 bundling (systemic stub recursion), 5 heavy-lib gating (site-wide), 6b json_script, 7 E2E.
 
 ## Verification harness
 - Dev server: `DEBUG=True python manage.py runserver 127.0.0.1:8020 --noreload` (RDS dev DB).
