@@ -7,7 +7,6 @@
         <p class="subtitle is-5">Trends over time</p>
         <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it -- use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
         {% if score_trend_plot_json or rank_trend_plot_json %}
-        <link rel="stylesheet" href="{% static 'benchmarks/css/model-trend.css' %}">
         <div class="tabs is-boxed" id="trend-tabs">
           <ul>
             <li class="{% if score_trend_plot_json %}is-active{% endif %}" data-tab="scores">
