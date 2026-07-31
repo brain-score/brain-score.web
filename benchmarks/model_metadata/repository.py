@@ -89,6 +89,7 @@ def _load_catalog():
         models[key] = row
 
     for row in _read_csv("model_datasets.csv"):
+        row["role_display"] = row["role"].replace("_", " ").title()
         models[_model_key(row)]["datasets"].append(row)
 
     for row in _read_csv("intended_use.csv"):
@@ -102,6 +103,11 @@ def _load_catalog():
         assertions[_model_key(row)][row["status"]] += 1
 
     for key, model in models.items():
+        if model["parameter_count_display"] and model["parameter_count_exact"] is False:
+            model["parameter_count_display"] = f"≈{model['parameter_count_display']}"
+        model["recurrent_display"] = (
+            "Yes" if model["recurrent"] else "No" if model["recurrent"] is False else None
+        )
         counts = assertions[key]
         model["verification"] = {
             "verified": counts["verified"],
