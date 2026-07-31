@@ -1,0 +1,109 @@
+domain,identifier,category,ordinal,value
+vision,CORnet-S,applications,0,"Computational neuroscience research (modeling primate ventral visual stream), core object recognition benchmarking, brain-alignment research via Brain-Score"
+vision,CORnet-S,users,0,"Visual neuroscience researchers, computational neuroscientists, ML researchers studying brain-model alignment"
+vision,CORnet-S,limitations,0,"Slower to train than shallower CORnet variants (CORnet-Z, CORnet-RT) due to recurrence"
+vision,CORnet-S,limitations,1,described as 'Best overall but slow to train'
+vision,VOneCORnet-S,applications,0,"Same, plus studying recurrent computation's role in robustness/behavior"
+vision,VOneCORnet-S,users,0,"Vision neuroscientists, ML robustness researchers"
+vision,VOneCORnet-S,limitations,0,Heavier compute from recurrent unrolling
+vision,VOneCORnet-S,limitations,1,weaker raw ImageNet top-1 than transformers
+vision,VOneCORnet-S,biases,0,Inherits ImageNet dataset biases
+vision,ViT_L_32_imagenet1k,applications,0,General image classification
+vision,ViT_L_32_imagenet1k,applications,1,transfer-learning backbone for downstream CV tasks
+vision,ViT_L_32_imagenet1k,users,0,ML researchers/engineers in the PyTorch ecosystem needing an off-the-shelf ViT classifier
+vision,ViT_L_32_imagenet1k,limitations,0,Lower accuracy (76.97% top-1) vs same-size ViT pretrained on ImageNet-21k or SWAG
+vision,ViT_L_32_imagenet1k,limitations,1,data-hungry/overfitting-prone when trained from scratch on IN-1k alone
+vision,ViT_L_32_imagenet1k,biases,0,"Inherits generic ImageNet-1k dataset biases (geographic/demographic skew, label noise), not specifically documented per-checkpoint"
+vision,antialiased-r50,applications,0,Backbone for downstream vision applications needing improved shift-invariance/robustness to small translations
+vision,antialiased-r50,users,0,Computer vision researchers/engineers needing a more robust drop-in ResNet-50 backbone
+vision,antialiased-r50,limitations,0,"Antialiasing adds extra compute/runtime overhead versus baseline (no extra parameters, but slower forward pass)"
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,applications,0,"Image classification, feature/embedding extraction, backbone for downstream vision tasks (classification head, feature maps, or pooled embeddings all supported)"
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,users,0,ML engineers/researchers needing a strong ImageNet classifier or general-purpose visual feature extractor
+vision,convnext_base_imagenet_full_seed-0,applications,0,Used in this context as a candidate model for measuring representational alignment to biological vision and adversarial robustness
+vision,convnext_base_imagenet_full_seed-0,users,0,Vision neuroscience / alignment researchers (via Brain-Score)
+vision,convnext_base_imagenet_full_seed-0,users,1,ML robustness researchers
+vision,convnext_tiny:in12k_ft_in1k,applications,0,"Image classification, feature/embedding extraction, backbone for downstream vision tasks"
+vision,convnext_tiny:in12k_ft_in1k,users,0,ML engineers/researchers needing an efficient ImageNet classifier or feature extractor
+vision,convnext_tiny_imagenet_full_seed-0,applications,0,Candidate model for measuring representational alignment to biological vision and adversarial robustness
+vision,convnext_tiny_imagenet_full_seed-0,users,0,Vision neuroscience / alignment researchers (via Brain-Score)
+vision,convnext_tiny_imagenet_full_seed-0,users,1,ML robustness researchers
+vision,convnext_tiny_sup,applications,0,Candidate model for measuring representational alignment to biological vision and adversarial robustness
+vision,convnext_tiny_sup,users,0,Vision neuroscience / alignment researchers (via Brain-Score)
+vision,convnext_xlarge:fb_in22k_ft_in1k,applications,0,"Image classification, feature/embedding extraction, high-capacity backbone for downstream vision tasks"
+vision,convnext_xlarge:fb_in22k_ft_in1k,users,0,ML engineers/researchers needing a very high-capacity ImageNet classifier or feature extractor
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,applications,0,"High-accuracy image classification, feature/embedding extraction, backbone for downstream vision or multimodal tasks"
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,users,0,ML engineers/researchers needing maximum accuracy at the cost of very large model size/compute
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,limitations,0,Very large parameter count and compute cost (198.09 GMACs) relative to accuracy gains over smaller variants
+vision,vit_base_patch16_clip_224:openai_ft_in1k,applications,0,"General image classification, compact transfer-learning backbone, feature/embedding extraction"
+vision,vit_base_patch16_clip_224:openai_ft_in1k,users,0,Researchers/developers wanting a compact (86M param) CLIP-initialized ViT classifier
+vision,vit_base_patch16_clip_224:openai_ft_in1k,limitations,0,"Original CLIP documented weaknesses - fine-grained classification, counting, abstract/systematic and some geo/OOD tasks (CLIP paper Limitations)"
+vision,vit_base_patch16_clip_224:openai_ft_in1k,limitations,1,fine-tuning trades away zero-shot versatility
+vision,vit_base_patch16_clip_224:openai_ft_in1k,biases,0,"Extensively documented in CLIP paper Sec.7 Broader Impacts - race/gender association biases, surveillance-use risk, biases from uncurated internet data"
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,applications,0,High-accuracy image classification
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,applications,1,strong transfer-learning/embedding backbone
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,users,0,Researchers/practitioners with compute for a 632M-param model wanting SOTA-level ViT classification/embeddings
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,limitations,0,"Very high compute/memory cost (632M params, 162 GMACs)"
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,limitations,1,ImageNet fine-tuning narrows original CLIP zero-shot generality
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,biases,0,Inherits LAION-5B's documented societal/cultural/gender/racial stereotypes from uncurated web-scraped pairs
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,biases,1,NSFW-content risk
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,applications,0,ImageNet-1k classification
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,applications,1,best-performing LAION-based 224px backbone/embeddings in this family
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,users,0,Researchers/practitioners wanting best LAION-pretrained 224px accuracy in this family
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,limitations,0,Same LAION-2B uncurated-data caveats
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,limitations,1,still trails OpenAI-pretrained 224px equivalent (88.16% vs 87.90% top-1)
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,biases,0,Same LAION-5B documented content-safety/demographic caveats
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,applications,0,ImageNet classification
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,applications,1,general embeddings/backbone where open pretraining provenance matters more than peak accuracy
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,users,0,Researchers preferring open-data provenance
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,users,1,those needing 224px compute budget
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,limitations,0,Lowest top-1 accuracy among the 6 catalogued CLIP-L variants
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,limitations,1,LAION-2B uncurated-data caveats apply
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,biases,0,LAION-5B documented ~2.9-3.3% unsafe-content estimate and demographic/content skew of web-crawled images
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,applications,0,Best-accuracy 224px OpenAI-CLIP backbone for classification / feature extraction
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,users,0,Researchers/practitioners wanting best accuracy-per-compute among 224px OpenAI-CLIP ViT-L options
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,limitations,0,Inherited CLIP weaknesses (fine-grained/counting)
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,limitations,1,intermediate IN-12k stage adds training cost/complexity
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,biases,0,Same OpenAI-documented FairFace disparities / WIT-400M demographic skew
+vision,vit_large_patch14_clip_224:openai_ft_in1k,applications,0,ImageNet classification
+vision,vit_large_patch14_clip_224:openai_ft_in1k,applications,1,"transfer-learning backbone/embeddings, lower-compute 224px option"
+vision,vit_large_patch14_clip_224:openai_ft_in1k,users,0,"CV researchers/engineers needing compact (224px, lower-compute) ViT-L classifier"
+vision,vit_large_patch14_clip_224:openai_ft_in1k,limitations,0,"Same CLIP-inherited weaknesses (fine-grained classification, counting)"
+vision,vit_large_patch14_clip_224:openai_ft_in1k,limitations,1,slightly lower top-1 than IN12k->IN1k variant (87.86% vs 88.16%)
+vision,vit_large_patch14_clip_224:openai_ft_in1k,biases,0,Same FairFace-documented racial/gender disparities & WIT-400M demographic skew as OpenAI CLIP model card
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,applications,0,ImageNet-1k classification
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,applications,1,"general visual feature extraction/embeddings for transfer learning, retrieval"
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,users,0,ML researchers/engineers building/benchmarking classifiers
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,users,1,practitioners needing strong ViT-L backbone
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,limitations,0,CLIP struggles with fine-grained classification/counting (OpenAI model card)
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,limitations,1,IN fine-tuning reduces zero-shot robustness vs base CLIP
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,biases,0,OpenAI CLIP card documents racial/gender disparities (FairFace tests)
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,biases,1,"WIT-400M skews to internet-connected, developed-nation, younger, male demographics"
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,applications,0,ImageNet classification
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,applications,1,transfer-learning backbone
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,applications,2,research on class-token vs GAP pooling design
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,users,0,CV researchers studying pooling strategy / relative position bias
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,users,1,timm/HF users
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,limitations,0,"Author-documented config flaw: class token enabled but GAP+fc-norm NOT disabled, described as ""a bit of a mistake"" in timm source, kept only for future-retrain comparisons"
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,biases,0,"Inherits ImageNet-1k dataset biases (category imbalance, geographic/demographic skew)"
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,applications,0,General ImageNet classification
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,applications,1,backbone for transfer learning
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,applications,2,research into relative position encodings
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,users,0,CV researchers studying position-encoding variants
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,users,1,timm/HF users needing accurate mid-size backbones
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,limitations,0,"Explicitly flagged ""experimental / WIP, expect changes"" in timm source code"
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,limitations,1,large patch (32) at low res (256) reduces spatial granularity
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,biases,0,"Inherits ImageNet-1k dataset biases (category imbalance, geographic/demographic skew)"
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,applications,0,General image classification
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,applications,1,lightweight transfer-learning backbone
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,users,0,"ML practitioners, researchers benchmarking ViT variants"
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,limitations,0,Tiny capacity limits accuracy vs larger ViT/hybrid variants
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,biases,0,Inherits ImageNet-21k/1k dataset biases
+vision,voneresnet-50,applications,0,"Same, plus studying stochasticity's role in robustness"
+vision,voneresnet-50,users,0,"Vision neuroscientists, ML robustness researchers"
+vision,voneresnet-50,limitations,0,"Stochastic noise adds inference-time variability, complicates comparisons"
+vision,voneresnet-50,biases,0,Inherits ImageNet dataset biases
+vision,voneresnet-50-non_stochastic,applications,0,"Computational neuroscience (V1 modeling), adversarial robustness research, Brain-Score benchmarking"
+vision,voneresnet-50-non_stochastic,users,0,"Vision neuroscientists, ML robustness researchers"
+vision,voneresnet-50-non_stochastic,limitations,0,Clean accuracy/robustness trade off with V1 channel count
+vision,voneresnet-50-non_stochastic,limitations,1,lacks noise-driven robustness gains
+vision,voneresnet-50-non_stochastic,biases,0,"Inherits ImageNet dataset biases (object-centric, Western-centric sourcing)"
