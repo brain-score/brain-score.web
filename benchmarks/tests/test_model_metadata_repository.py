@@ -26,5 +26,15 @@ class TestModelMetadataRepository(TestCase):
         self.assertIn("creators", metadata["contributors"])
         self.assertEqual(metadata["license"], "GNU GPL v3+")
 
+    def test_distinguishes_pretraining_from_fine_tuning(self):
+        metadata = get_model_metadata(
+            "vision", "vit_large_patch14_clip_224:openai_ft_in1k"
+        )
+
+        self.assertEqual(
+            [dataset["role"] for dataset in metadata["datasets"]],
+            ["pretraining", "fine_tuning"],
+        )
+
     def test_missing_model_returns_none(self):
         self.assertIsNone(get_model_metadata("vision", "not-a-model"))
