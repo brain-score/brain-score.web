@@ -1,0 +1,38 @@
+{% if model_metadata.lineage.has_relationships %}
+<div class="box model-sidebar-card model-lineage-card" data-model-lineage>
+    <div class="card-content">
+        <p class="subtitle is-5 model-sidebar-title">Model lineage &amp; genealogy</p>
+
+        <ol class="model-lineage-tree" aria-label="Model ancestry">
+            {% for ancestor in model_metadata.lineage.ancestors %}
+            <li class="model-lineage-ancestor{% if ancestor.has_metadata %} has-metadata{% endif %}">
+                <i class="fa-solid fa-code-branch" aria-hidden="true"></i>
+                <span>{{ ancestor.display_name }}</span>
+            </li>
+            {% endfor %}
+            <li class="model-lineage-current">
+                <span aria-hidden="true"></span>
+                <strong>{{ model_metadata.lineage.current.display_name }}</strong>
+            </li>
+        </ol>
+
+        {% if model_metadata.lineage.related_models %}
+        <hr>
+        <p class="model-lineage-label">Related variants</p>
+        <ul class="model-lineage-related">
+            {% for related in model_metadata.lineage.related_models %}
+            <li>
+                <span>{{ related.display_name }}</span>
+                <span class="tag is-light">{{ related.relationship_display }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if model_metadata.lineage.hidden_related_count %}
+        <p class="model-lineage-more">
+            +{{ model_metadata.lineage.hidden_related_count }} more metadata-covered variants
+        </p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}

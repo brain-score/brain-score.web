@@ -51,6 +51,14 @@ TABLE_FIELDS = {
     ),
     "intended_use.csv": ("domain", "identifier", "category", "ordinal", "value"),
     "contributors.csv": ("domain", "identifier", "kind", "ordinal", "name"),
+    "model_relationships.csv": (
+        "domain",
+        "identifier",
+        "ordinal",
+        "base_identifier",
+        "base_name",
+        "relationship",
+    ),
     "assertions.csv": ("domain", "identifier", "path", "status", "source"),
 }
 
@@ -148,6 +156,19 @@ def child_rows(document):
             rows["contributors.csv"].append(
                 {**key, "kind": kind, "ordinal": ordinal, "name": name}
             )
+
+    for ordinal, base_model in enumerate(
+        document.get("lineage", {}).get("base_models", [])
+    ):
+        rows["model_relationships.csv"].append(
+            {
+                **key,
+                "ordinal": ordinal,
+                "base_identifier": base_model.get("identifier"),
+                "base_name": base_model["name"],
+                "relationship": base_model.get("relationship"),
+            }
+        )
 
     for assertion in document.get("provenance", {}).get("assertions", []):
         rows["assertions.csv"].append({**key, **assertion})
