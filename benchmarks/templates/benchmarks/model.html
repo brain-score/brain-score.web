@@ -103,7 +103,6 @@
     </div>
 {% endblock %}
 
-
 {# Center content #}
 {% block content %}
     <section class="individual_model container center">
@@ -310,6 +309,8 @@ model.look_at(...)</pre>
                    target="_blank" class="berg-box-link" data-berg-label="box_tutorial">tutorial</a>.
             </p>
         </div>
+
+        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
 
         {# Benchmarks bibtex #}
         <div class="box">

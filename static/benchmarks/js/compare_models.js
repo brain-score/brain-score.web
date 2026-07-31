@@ -553,7 +553,7 @@ $(document).ready(function () {
             }]
         };
 
-        Plotly.newPlot('difference-bar-chart', [trace], layout, {responsive: true});
+        Plotly.newPlot('difference-bar-chart', [trace], layout);
 
         // Click handler: navigate to benchmark page
         document.getElementById('difference-bar-chart').on('plotly_click', function (eventData) {
@@ -664,7 +664,7 @@ $(document).ready(function () {
             }]
         };
 
-        Plotly.newPlot('domain-summary-chart', traces, layout, {responsive: true});
+        Plotly.newPlot('domain-summary-chart', traces, layout);
     }
 
     // ---- Main orchestrator ----
@@ -745,4 +745,20 @@ $(document).ready(function () {
     }
 
     $('#model-x-select, #model-y-select').on('change', updateAllCharts);
+
+    // Re-render on resize (debounced) so the charts track the container width
+    // instead of freezing at load-time size. Slightly longer delay than the
+    // compare-benchmarks D3 redraw so REF_WIDTH is re-read after it updates.
+    var _cmResizeTimer = null;
+    $(window).on('resize', function () {
+        clearTimeout(_cmResizeTimer);
+        _cmResizeTimer = setTimeout(function () {
+            var rs = document.querySelector('#comparison-scatter svg');
+            if (rs) {
+                REF_WIDTH = parseInt(rs.getAttribute('width')) || REF_WIDTH;
+                REF_HEIGHT = parseInt(rs.getAttribute('height')) || REF_HEIGHT;
+            }
+            updateAllCharts();
+        }, 220);
+    });
 });
