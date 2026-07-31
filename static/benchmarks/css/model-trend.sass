@@ -77,6 +77,33 @@
   color: #8a93a2
   margin-bottom: 0.35rem
 
+.trend-attribution-panel .attr-more summary
+  cursor: pointer
+  color: #47739e
+  list-style: none
+
+.trend-attribution-panel .attr-more summary::-webkit-details-marker
+  display: none
+
+.trend-attribution-panel .attr-more summary::before
+  content: "\25b8 "
+
+.trend-attribution-panel .attr-more details[open] > summary::before
+  content: "\25be "
+
+.trend-attribution-panel .attr-more-list
+  margin-top: 0.25rem
+  font-style: normal
+
+// Legend swatch before a model name; keeps the trace colour out of the prose.
+.trend-attribution-panel .attr-model-dot
+  display: inline-block
+  width: 7px
+  height: 7px
+  border-radius: 50%
+  margin-right: 0.32em
+  vertical-align: baseline
+
 .trend-reason-hold
   display: none
   border: 1px solid #b8d4f0

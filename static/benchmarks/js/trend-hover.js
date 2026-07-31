@@ -18,19 +18,43 @@
        hierarchy: idx 0 is the headline; ``- `` lines are bullets (prefix
        stripped); a trailing ``:`` marks a section label; ``... and N more``
        is de-emphasised; everything else is a plain note. */
+    /* "... and N more." followed by bullets becomes a <details> toggle holding
+       them; with nothing after it, it stays the plain de-emphasised line. */
+    function makeMoreToggle(summaryText) {
+        var li = document.createElement('li');
+        li.className = 'attr-more';
+        var details = document.createElement('details');
+        var summary = document.createElement('summary');
+        summary.textContent = summaryText;
+        var ul = document.createElement('ul');
+        ul.className = 'attr-more-list';
+        details.appendChild(summary);
+        details.appendChild(ul);
+        li.appendChild(details);
+        return {li: li, list: ul};
+    }
+
     function renderAttributionList(ulEl, lines) {
         if (!ulEl) return;
         ulEl.innerHTML = '';
+        var sink = ulEl;  // bullets after a "... and N more." marker land in its <details>
         (lines || []).forEach(function (line, idx) {
             var li = document.createElement('li');
             var trimmed = (line || '').replace(/^\s+/, '');
             if (/^-\s/.test(trimmed)) {
                 li.className = 'attr-item';
                 li.textContent = trimmed.replace(/^-\s+/, '');
-            } else if (/^\.\.\.\s*and\b/.test(trimmed)) {
-                li.className = 'attr-more';
-                li.textContent = trimmed;
-            } else if (idx === 0) {
+                sink.appendChild(li);
+                return;
+            }
+            sink = ulEl;  // any non-bullet line closes the overflow group
+            if (/^\.\.\.\s*and\b/.test(trimmed)) {
+                var more = makeMoreToggle(trimmed);
+                ulEl.appendChild(more.li);
+                sink = more.list;
+                return;
+            }
+            if (idx === 0) {
                 li.className = 'attr-head';
                 li.textContent = line;
             } else if (/:$/.test(trimmed)) {
@@ -41,6 +65,12 @@
                 li.textContent = line;
             }
             ulEl.appendChild(li);
+        });
+        // A marker with nothing after it (single-model panel, which still
+        // truncates server-side) stays the plain line rather than an empty toggle.
+        Array.prototype.forEach.call(ulEl.querySelectorAll('.attr-more details'), function (d) {
+            if (d.querySelector('.attr-more-list').children.length) return;
+            d.parentNode.textContent = d.querySelector('summary').textContent;
         });
     }
 
@@ -217,6 +247,45 @@
         wireColumnResizers();
     }
 
+    /* Brain-Score watermark, sized and placed like the compare-page charts in
+       compare_models.js (120x28 px, bottom-right of the plot area). */
+    var LOGO_PX = {w: 120, h: 28};
+
+    function applyLogo(plotEl, layout) {
+        if (!layout || typeof logo_url === 'undefined' || !logo_url) return layout;
+        var m = layout.margin || {};
+        var width = (plotEl && plotEl.offsetWidth) || 800;
+        var areaW = width - (m.l || 0) - (m.r || 0);
+        var areaH = (layout.height || 400) - (m.t || 0) - (m.b || 0);
+        if (areaW <= 0 || areaH <= 0) return layout;
+        layout.images = [{
+            source: logo_url,
+            xref: 'paper', yref: 'paper',
+            x: 0.98, y: 0.02,  // just clear of the x-axis
+            sizex: LOGO_PX.w / areaW, sizey: LOGO_PX.h / areaH,
+            xanchor: 'right', yanchor: 'bottom',
+            layer: 'above',
+        }];
+        return layout;
+    }
+
+    /* A plot initialised while hidden measures 0 wide, so applyLogo had to guess.
+       Re-derive the size from the real geometry once the plot is visible. */
+    function resizeLogo(gd) {
+        var fl = gd && gd._fullLayout;
+        if (!fl || !fl.images || !fl.images.length) return;
+        var m = fl.margin || {};
+        var areaW = gd.offsetWidth - (m.l || 0) - (m.r || 0);
+        var areaH = (fl.height || gd.offsetHeight) - (m.t || 0) - (m.b || 0);
+        if (areaW <= 0 || areaH <= 0) return;
+        var sizex = LOGO_PX.w / areaW;
+        var sizey = LOGO_PX.h / areaH;
+        var img = fl.images[0];
+        // Guard the relayout: ResizeObserver would otherwise fire on our own change.
+        if (Math.abs((img.sizex || 0) - sizex) < 0.002 && Math.abs((img.sizey || 0) - sizey) < 0.002) return;
+        Plotly.relayout(gd, {'images[0].sizex': sizex, 'images[0].sizey': sizey});
+    }
+
     /* Keep ``gd`` sized through window resizes AND container visibility flips
        (tab switches, column drags). A plot initialised while hidden caches a
        0-width layout and must be re-measured once visible. Idempotent so
@@ -232,6 +301,7 @@
                 // re-measurement via relayout(autosize) first.
                 Plotly.relayout(gd, {autosize: true});
                 Plotly.Plots.resize(gd);
+                resizeLogo(gd);
             } catch (e) { /* swallow */ }
         };
         window.addEventListener('resize', resize);
@@ -242,6 +312,7 @@
     }
 
     window.BrainScoreTrendHover = {
+        applyLogo: applyLogo,
         renderAttributionList: renderAttributionList,
         eventTouchesPlot: eventTouchesPlot,
         nearestIndexFromMouseX: nearestIndexFromMouseX,

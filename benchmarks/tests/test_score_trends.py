@@ -244,8 +244,11 @@ class TestComparisonTrendNarrative(BaseTestCase):
             coverage_b={'2026-05': ['Bar.IT']},
         )
         lines = meta['points'][1]['lines']
-        self.assertIn('alpha newly scored: Foo.IT, Foo.V1.', lines)
-        self.assertIn('beta newly scored: Bar.IT.', lines)
+        # Same bulleted phrasing regardless of how many benchmarks each model added.
+        self.assertIn('alpha newly scored on 2 benchmarks:', lines)
+        self.assertIn('  - Foo.IT', lines)
+        self.assertIn('beta newly scored on 1 benchmark:', lines)
+        self.assertIn('  - Bar.IT', lines)
 
     def test_score_hover_states_no_coverage_change_when_empty(self):
         meta = self._meta(
@@ -284,6 +287,35 @@ class TestComparisonTrendNarrative(BaseTestCase):
         # Per-benchmark tag: Bench.IT scored by alpha only; V1 by neither.
         self.assertIn('- Bench.IT (alpha)', lines)
         self.assertIn('- Bench.V1 (neither)', lines)
+
+    def test_score_hover_orders_models_scored_on_same_benchmark(self):
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.55], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_new_a={'2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_new_b={'2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_values_a={'Bench.IT': 0.6, 'Bench.V1': 0.2, 'Bench.V4': 0.4},
+            scored_values_b={'Bench.IT': 0.5, 'Bench.V1': 0.3, 'Bench.V4': 0.4},
+        )
+        lines = meta['points'][1]['lines']
+        # The higher scorer always leads, so the relation is always ">".
+        self.assertIn('- Bench.IT (alpha > beta)', lines)
+        self.assertIn('- Bench.V1 (beta > alpha)', lines)
+        self.assertIn('- Bench.V4 (alpha = beta)', lines)
+
+    def test_score_hover_keeps_overflow_bullets_after_the_more_marker(self):
+        added = [f'Bench.{i:02d}' for i in range(12)]
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.55], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': added},
+        )
+        lines = meta['points'][1]['lines']
+        marker = lines.index('... and 4 more.')
+        # The client hides these behind the marker's toggle, so they must follow it.
+        self.assertEqual(lines[marker - 1], '- Bench.07 (neither)')
+        self.assertEqual(lines[marker + 1:], [f'- {b} (neither)' for b in added[8:]])
 
     def test_score_focal_line_reports_scored_of_added(self):
         meta = self._meta(
