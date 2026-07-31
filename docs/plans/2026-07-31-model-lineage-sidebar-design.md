@@ -38,9 +38,10 @@ base is external, missing, or would create a cycle.
 The sidebar uses the existing `model-sidebar-card` container and title style.
 It renders the ancestor chain first, highlights the current model, and then
 shows three related sibling or child variants initially with concise
-relationship labels. Model names link to the matching public Brain-Score model
-card. The page resolves these IDs from the existing model context at render
-time, without adding IDs to metadata or changing the database.
+relationship labels. Ancestors and related variants link to matching public
+Brain-Score model cards. The page resolves these IDs from the existing model
+context at render time, without adding IDs to metadata or changing the
+database. External or unresolved bases remain plain text.
 
 When more variants exist, a `+N more metadata-covered variants` button reveals
 up to three more per activation. The count updates until all variants are

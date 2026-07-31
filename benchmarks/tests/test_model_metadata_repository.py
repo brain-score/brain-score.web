@@ -75,16 +75,25 @@ class TestModelMetadataRepository(TestCase):
         self.assertEqual(len(metadata["lineage"]["related_models"]), 8)
         self.assertEqual(metadata["lineage"]["hidden_related_count"], 5)
 
-    def test_adds_related_model_card_ids_without_mutating_catalog(self):
-        metadata = get_model_metadata("vision", "alexnet")
+    def test_adds_lineage_model_card_ids_without_mutating_catalog(self):
+        metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+        ancestor_identifier = metadata["lineage"]["ancestors"][0]["identifier"]
         related_identifier = metadata["lineage"]["related_models"][0]["identifier"]
 
-        linked_metadata = with_model_card_ids(metadata, {related_identifier: 123})
+        linked_metadata = with_model_card_ids(
+            metadata,
+            {ancestor_identifier: 122, related_identifier: 123},
+        )
 
+        self.assertEqual(
+            linked_metadata["lineage"]["ancestors"][0]["model_card_id"],
+            122,
+        )
         self.assertEqual(
             linked_metadata["lineage"]["related_models"][0]["model_card_id"],
             123,
         )
+        self.assertNotIn("model_card_id", metadata["lineage"]["ancestors"][0])
         self.assertNotIn(
             "model_card_id", metadata["lineage"]["related_models"][0]
         )

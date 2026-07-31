@@ -65,6 +65,10 @@ class TestModelMetadataTemplate(TestCase):
             "benchmarks/_model_metadata_lineage.html"
         )
         metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+        metadata = with_model_card_ids(
+            metadata,
+            {"alexnet": 982, "AlexNet_SIN": 2168},
+        )
 
         html = template.render(Context({"model_metadata": metadata}))
 
@@ -72,6 +76,8 @@ class TestModelMetadataTemplate(TestCase):
         self.assertIn("AlexNet", html)
         self.assertIn("AlexNet SIN", html)
         self.assertIn("AlexNet_SIN_fov12", html)
+        self.assertIn('href="/model/vision/982"', html)
+        self.assertIn('href="/model/vision/2168"', html)
 
     def test_links_and_progressively_hides_related_variants(self):
         template = Engine(dirs=[TEMPLATE_DIR]).get_template(
