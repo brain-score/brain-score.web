@@ -1,8 +1,60 @@
 domain,identifier,category,ordinal,value
+vision,AdvProp_efficientnet-b2,applications,0,Image Classification
+vision,AdvProp_efficientnet-b2,users,0,CV practitioners needing robustness-aware pretrained backbones
+vision,AdvProp_efficientnet-b2,users,1,researchers studying adversarial training as a regularizer rather than a defense
+vision,AdvProp_efficientnet-b2,limitations,0,Adds training-time compute overhead (adversarial example generation + auxiliary BN)
+vision,AdvProp_efficientnet-b2,limitations,1,benefits scale with model size — smaller models like B2 see less improvement than B7/B8
+vision,AdvProp_efficientnet-b2,limitations,2,"robustness gains are to common corruptions, not necessarily to adaptive/white-box adversarial attacks"
+vision,AdvProp_efficientnet-b2,biases,0,Inherits standard ImageNet dataset biases
+vision,AdvProp_efficientnet-b4,applications,0,Image Classification needing a mid-to-large robust backbone
+vision,AdvProp_efficientnet-b4,users,0,CV practitioners needing a mid-to-large robust backbone
+vision,AdvProp_efficientnet-b4,users,1,researchers studying adversarial training as regularization
+vision,AdvProp_efficientnet-b4,limitations,0,Training overhead from adversarial example generation + auxiliary BN
+vision,AdvProp_efficientnet-b4,limitations,1,"AdvProp's benefit scales with model size, so B4 likely sees a smaller boost than B7/B8"
+vision,AdvProp_efficientnet-b4,limitations,2,"robustness gains target common corruptions, not adaptive/white-box attacks"
+vision,AdvProp_efficientnet-b4,biases,0,Inherits standard ImageNet dataset biases
+vision,AdvProp_efficientnet-b6,applications,0,High-accuracy image classification
+vision,AdvProp_efficientnet-b6,applications,1,robustness to common corruptions/distribution shift
+vision,AdvProp_efficientnet-b6,users,0,"CV researchers/practitioners needing large, robust pretrained backbones"
+vision,AdvProp_efficientnet-b6,limitations,0,High compute/training cost
+vision,AdvProp_efficientnet-b6,limitations,1,large-resolution inference cost
+vision,AdvProp_efficientnet-b6,limitations,2,robustness gains don't cover adaptive/white-box attacks
+vision,AdvProp_efficientnet-b6,biases,0,"Inherits ImageNet dataset biases (geographic/cultural skew, label noise, legacy category issues)"
+vision,AdvProp_efficientnet-b7,applications,0,High-accuracy image classification where compute budget allows a large backbone
+vision,AdvProp_efficientnet-b7,applications,1,robustness-sensitive deployment (corruption/distribution shift)
+vision,AdvProp_efficientnet-b7,applications,2,strong transfer-learning backbone
+vision,AdvProp_efficientnet-b7,users,0,CV researchers/practitioners needing top-tier accuracy + robustness
+vision,AdvProp_efficientnet-b7,users,1,benchmark/robustness research
+vision,AdvProp_efficientnet-b7,limitations,0,Very high compute cost (largest standard AdvProp scale short of B8)
+vision,AdvProp_efficientnet-b7,limitations,1,600×600 input drives high inference latency/memory
+vision,AdvProp_efficientnet-b7,limitations,2,"robustness gains target common corruptions, not adaptive/white-box attacks"
+vision,AdvProp_efficientnet-b7,biases,0,"Inherits ImageNet dataset biases (geographic/cultural skew, label noise, legacy category issues)"
+vision,AdvProp_efficientnet-b8,applications,0,Maximum-accuracy image classification where compute/memory budget is not constrained
+vision,AdvProp_efficientnet-b8,applications,1,robustness-sensitive research
+vision,AdvProp_efficientnet-b8,applications,2,not suited for latency-sensitive deployment
+vision,AdvProp_efficientnet-b8,users,0,CV researchers benchmarking top-end accuracy
+vision,AdvProp_efficientnet-b8,users,1,robustness researchers
+vision,AdvProp_efficientnet-b8,users,2,not typical production/edge use cases
+vision,AdvProp_efficientnet-b8,limitations,0,"Largest compute/memory footprint in the family (87M params, 672×672 input)"
+vision,AdvProp_efficientnet-b8,limitations,1,very slow inference relative to smaller variants
+vision,AdvProp_efficientnet-b8,limitations,2,diminishing returns vs. B7 for many practical use cases
+vision,AdvProp_efficientnet-b8,limitations,3,"robustness gains target common corruptions, not adaptive/white-box attacks"
+vision,AdvProp_efficientnet-b8,biases,0,"Inherits ImageNet dataset biases (geographic/cultural skew, label noise, legacy category issues)"
+vision,AlexNet_SIN,applications,0,Studying/reducing texture bias in CNNs
+vision,AlexNet_SIN,applications,1,shape-bias research
+vision,AlexNet_SIN,applications,2,robustness-to-corruption research
+vision,AlexNet_SIN,applications,3,"not recommended as a general-purpose high-accuracy classifier, given the authors' own accuracy caveat"
+vision,AlexNet_SIN,users,0,Vision science / cognitive science researchers studying human-vs-CNN perception
+vision,AlexNet_SIN,users,1,robustness researchers
+vision,AlexNet_SIN,users,2,NOT recommended for production classification use
+vision,AlexNet_SIN,limitations,0,Explicitly authors-stated: suboptimal hyperparameters led to below-standard accuracy
+vision,AlexNet_SIN,limitations,1,"AlexNet's measured shape bias after SIN training was notably lower than ResNet-50-SIN's (42.9% texture / lower shape bias for AlexNet on cue-conflict stimuli, and a follow-up torchvision-based re-evaluation found AlexNet's shape bias at 25.3%, lower than originally reported figures) — indicating AlexNet benefits less from SIN training than deeper architectures like ResNet-50"
+vision,AlexNet_SIN,biases,0,"This model exists specifically to study/reduce texture bias — but even after SIN training, AlexNet's shape bias improvement was modest compared to ResNet-50-SIN (81% shape bias), suggesting AlexNet's shallow/simple architecture may limit how much shape bias can be induced via data alone. Also inherits standard ImageNet dataset biases (geographic/cultural skew, label noise)"
 vision,CORnet-S,applications,0,"Computational neuroscience research (modeling primate ventral visual stream), core object recognition benchmarking, brain-alignment research via Brain-Score"
 vision,CORnet-S,users,0,"Visual neuroscience researchers, computational neuroscientists, ML researchers studying brain-model alignment"
 vision,CORnet-S,limitations,0,"Slower to train than shallower CORnet variants (CORnet-Z, CORnet-RT) due to recurrence"
 vision,CORnet-S,limitations,1,described as 'Best overall but slow to train'
+vision,CORnet-S,biases,0,Inherits ImageNet dataset biases
 vision,VOneCORnet-S,applications,0,"Same, plus studying recurrent computation's role in robustness/behavior"
 vision,VOneCORnet-S,users,0,"Vision neuroscientists, ML robustness researchers"
 vision,VOneCORnet-S,limitations,0,Heavier compute from recurrent unrolling
@@ -14,6 +66,38 @@ vision,ViT_L_32_imagenet1k,users,0,ML researchers/engineers in the PyTorch ecosy
 vision,ViT_L_32_imagenet1k,limitations,0,Lower accuracy (76.97% top-1) vs same-size ViT pretrained on ImageNet-21k or SWAG
 vision,ViT_L_32_imagenet1k,limitations,1,data-hungry/overfitting-prone when trained from scratch on IN-1k alone
 vision,ViT_L_32_imagenet1k,biases,0,"Inherits generic ImageNet-1k dataset biases (geographic/demographic skew, label noise), not specifically documented per-checkpoint"
+vision,alexnet,applications,0,Image Classification
+vision,alexnet,users,0,ML researchers and Students
+vision,alexnet,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_01,applications,0,Image Classification
+vision,alexnet_training_seed_01,users,0,ML researchers and Students
+vision,alexnet_training_seed_01,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_01,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_02,applications,0,Image Classification
+vision,alexnet_training_seed_02,users,0,ML researchers and Students
+vision,alexnet_training_seed_02,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_02,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_03,applications,0,Image Classification
+vision,alexnet_training_seed_03,users,0,ML researchers and Students
+vision,alexnet_training_seed_03,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_03,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_06,applications,0,Image Classification
+vision,alexnet_training_seed_06,users,0,ML researchers and Students
+vision,alexnet_training_seed_06,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_06,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_07,applications,0,Image Classification
+vision,alexnet_training_seed_07,users,0,ML researchers and Students
+vision,alexnet_training_seed_07,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_07,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_09,applications,0,Image Classification
+vision,alexnet_training_seed_09,users,0,ML researchers and Students
+vision,alexnet_training_seed_09,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_09,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
+vision,alexnet_training_seed_10,applications,0,Image Classification
+vision,alexnet_training_seed_10,users,0,ML researchers and Students
+vision,alexnet_training_seed_10,limitations,0,"parameter-inefficient fully-connected layers, no residual/skip connections, limiting depth scalability, local response normalization provides negligible benefit, high error rate vs. modern architectures, fixed input resolution, prone to overfitting without heavy regularization, susceptible to adversarial pertrubation, inherits ImageNet dataset biases"
+vision,alexnet_training_seed_10,biases,0,"geographical and cultural bias, label noise and category ambiguity, demographic bias, representation bias in object categories, class imbalance, co-occurence/contextual bias"
 vision,antialiased-r50,applications,0,Backbone for downstream vision applications needing improved shift-invariance/robustness to small translations
 vision,antialiased-r50,users,0,Computer vision researchers/engineers needing a more robust drop-in ResNet-50 backbone
 vision,antialiased-r50,limitations,0,"Antialiasing adds extra compute/runtime overhead versus baseline (no extra parameters, but slower forward pass)"
@@ -34,6 +118,20 @@ vision,convnext_xlarge:fb_in22k_ft_in1k,users,0,ML engineers/researchers needing
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,applications,0,"High-accuracy image classification, feature/embedding extraction, backbone for downstream vision or multimodal tasks"
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,users,0,ML engineers/researchers needing maximum accuracy at the cost of very large model size/compute
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,limitations,0,Very large parameter count and compute cost (198.09 GMACs) relative to accuracy gains over smaller variants
+vision,pixels,applications,0,"Baseline/floor (""null model"") for interpreting Brain-Score results – isolates how much of a real model's score reflects learned representation vs. trivial pixel similarity"
+vision,pixels,users,0,Brain-Score benchmark developers/researchers needing a reference floor score
+vision,pixels,limitations,0,Captures no learned/semantic features
+vision,pixels,limitations,1,"scores near the bottom of the public leaderboard on nearly all neural (V1, V2, V4, IT) and behavioral benchmarks (~490-510th of ~511 models)"
+vision,pixels,biases,0,N/A – untrained
+vision,pixels,biases,1,"any ""bias"" comes only from whichever benchmark stimuli it's tested on, not training data"
+vision,resnext101_32x8d_wsl,applications,0,General image-classification / transfer-learning backbone
+vision,resnext101_32x8d_wsl,applications,1,"grouped-convolution (""cardinality"") efficiency vs. plain ResNet at similar FLOPs"
+vision,resnext101_32x8d_wsl,users,0,ML researchers/engineers
+vision,resnext101_32x8d_wsl,users,1,also used as a candidate model of the primate ventral visual stream in Brain-Score
+vision,resnext101_32x8d_wsl,limitations,0,Diminishing accuracy gains from cardinality at narrow bottleneck widths
+vision,resnext101_32x8d_wsl,limitations,1,grouped convolutions less GPU-parallelization-friendly (slower per-minibatch than ResNet-101 despite similar nominal FLOPs)
+vision,resnext101_32x8d_wsl,limitations,2,cardinality benefit shrinks with depth
+vision,resnext101_32x8d_wsl,biases,0,"Inherits general ImageNet-1K dataset biases (geographic/cultural skew, label noise, category imbalance)"
 vision,vit_base_patch16_clip_224:openai_ft_in1k,applications,0,"General image classification, compact transfer-learning backbone, feature/embedding extraction"
 vision,vit_base_patch16_clip_224:openai_ft_in1k,users,0,Researchers/developers wanting a compact (86M param) CLIP-initialized ViT classifier
 vision,vit_base_patch16_clip_224:openai_ft_in1k,limitations,0,"Original CLIP documented weaknesses - fine-grained classification, counting, abstract/systematic and some geo/OOD tasks (CLIP paper Limitations)"

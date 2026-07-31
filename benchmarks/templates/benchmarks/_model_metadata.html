@@ -9,10 +9,12 @@
     </div>
 
     <dl class="model-metadata-specs">
+        {% if model_metadata.architecture_description %}
         <div>
             <dt>Architecture</dt>
             <dd>{{ model_metadata.architecture_description }}</dd>
         </div>
+        {% endif %}
         {% if model_metadata.parameter_count_display %}
         <div>
             <dt>Parameters</dt>
@@ -45,7 +47,9 @@
         {% endif %}
     </dl>
 
+    {% if model_metadata.training_process or model_metadata.datasets or model_metadata.preprocessing_description or model_metadata.contributors.organizations or model_metadata.contributors.creators or model_metadata.license %}
     <div class="model-metadata-grid">
+        {% if model_metadata.training_process or model_metadata.datasets or model_metadata.preprocessing_description %}
         <section class="model-metadata-panel">
             <h3 class="title is-5">Training and data</h3>
             {% if model_metadata.training_process %}<p>{{ model_metadata.training_process }}</p>{% endif %}
@@ -63,7 +67,9 @@
             <p class="model-metadata-note"><strong>Preprocessing:</strong> {{ model_metadata.preprocessing_description }}</p>
             {% endif %}
         </section>
+        {% endif %}
 
+        {% if model_metadata.contributors.organizations or model_metadata.contributors.creators or model_metadata.license %}
         <section class="model-metadata-panel">
             <h3 class="title is-5">Creators and licensing</h3>
             {% if model_metadata.contributors.organizations %}
@@ -78,7 +84,9 @@
                 <p class="model-metadata-note"><strong>License:</strong> {{ model_metadata.license }}</p>
             {% endif %}
         </section>
+        {% endif %}
     </div>
+    {% endif %}
 
     {% if model_metadata.intended_use %}
     <section class="model-metadata-use">
