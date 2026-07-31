@@ -208,6 +208,22 @@ def _load_catalog():
         }
         model["intended_use"] = dict(model["intended_use"])
         model["contributors"] = dict(model["contributors"])
+        model["has_card_content"] = any(
+            (
+                model["architecture_description"],
+                model["parameter_count_display"],
+                model["input_resolution_display"],
+                model["recurrent_display"],
+                model["supervision_description"],
+                model["weights_provider"],
+                model["training_process"],
+                model["datasets"],
+                model["preprocessing_description"],
+                model["contributors"],
+                model["license"],
+                model["intended_use"],
+            )
+        )
 
     _attach_lineage(models, relationships)
 

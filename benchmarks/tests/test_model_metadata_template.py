@@ -38,6 +38,13 @@ class TestModelMetadataTemplate(TestCase):
 
         self.assertEqual(html.strip(), "")
 
+    def test_hides_empty_metadata_card(self):
+        metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+
+        html = self.template.render(Context({"model_metadata": metadata}))
+
+        self.assertEqual(html.strip(), "")
+
     def test_renders_provenance_counts(self):
         template = Engine(dirs=[TEMPLATE_DIR]).get_template(
             "benchmarks/_model_metadata_provenance.html"
