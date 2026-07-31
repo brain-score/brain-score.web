@@ -1,6 +1,135 @@
 @use "sass:math"
 
 section.individual_model
+  .model-metadata
+    border-top: 4px solid $brainscore_green
+
+    .title
+      margin-bottom: 0
+
+  .model-metadata-heading
+    align-items: center
+    display: flex
+    justify-content: space-between
+    margin-bottom: 20px
+
+  .model-metadata-kicker
+    color: darken($brainscore_green, 25%)
+    font-size: 0.72rem
+    font-weight: 700
+    letter-spacing: 0.08em
+    margin-bottom: 3px
+    text-transform: uppercase
+
+  .model-metadata-specs
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    margin-bottom: 24px
+
+    > div
+      border-bottom: 1px solid $brainscore_gray1
+      padding: 10px 14px 10px 0
+
+    dt
+      color: $brainscore_gray3
+      font-size: 0.72rem
+      font-weight: 700
+      letter-spacing: 0.04em
+      text-transform: uppercase
+
+    dd
+      color: $brainscore_gray4
+      margin-top: 3px
+
+  .model-metadata-grid
+    display: grid
+    gap: 16px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  .model-metadata-panel
+    background: lighten($brainscore_gray1, 2%)
+    border: 1px solid $brainscore_gray2
+    border-radius: 6px
+    padding: 18px
+
+    p, li
+      font-size: 0.9rem
+
+    ul
+      margin: 5px 0 12px 18px
+
+  .model-metadata-label
+    color: $brainscore_gray3
+    font-size: 0.7rem !important
+    font-weight: 700
+    letter-spacing: 0.05em
+    margin: 12px 0 0
+    text-transform: uppercase
+
+  .model-metadata-datasets
+    display: flex
+    flex-wrap: wrap
+    gap: 8px
+    margin-top: 16px
+
+  .model-metadata-dataset
+    align-items: center
+    background: white
+    border: 1px solid $brainscore_gray2
+    border-radius: 5px
+    display: flex
+    gap: 8px
+    padding: 7px 9px
+
+    .tag
+      background: rgba($brainscore_green, 0.14)
+      color: darken($brainscore_green, 27%)
+      font-size: 0.62rem
+
+  .model-metadata-note
+    border-top: 1px solid $brainscore_gray2
+    margin-top: 16px
+    padding-top: 12px
+
+  .model-metadata-use
+    margin-top: 24px
+
+  .model-metadata-use-grid
+    display: grid
+    gap: 10px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+    > div
+      background: #fafbfe
+      border-left: 3px solid $brainscore_gray3
+      padding: 12px 14px
+
+    .is-recommended
+      border-left-color: $brainscore_green
+
+    .is-limitation, .is-bias
+      border-left-color: #d97841
+
+    h4
+      color: $brainscore_gray4
+      font-size: 0.78rem
+      font-weight: 700
+      letter-spacing: 0.03em
+      text-transform: uppercase
+
+    ul
+      margin: 6px 0 0 18px
+
+    li
+      font-size: 0.86rem
+
+  @media (max-width: 1100px)
+    .model-metadata-grid, .model-metadata-use-grid
+      grid-template-columns: 1fr
+
+    .model-metadata-specs
+      grid-template-columns: 1fr
+
   .no_reference
     color: gray
     font-size: 10pt
@@ -130,3 +259,50 @@ section.individual_model
 
 .build_failed
   color: red
+
+.model-metadata-tags
+  display: flex
+  flex-wrap: wrap
+  gap: 6px
+  margin-top: 14px
+
+  .tag
+    background: rgba($brainscore_green, 0.13)
+    color: darken($brainscore_green, 28%)
+
+.model-metadata-provenance
+  .model-metadata-verification
+    display: flex
+    height: 7px
+    margin: 12px 0 14px
+    overflow: hidden
+
+    span
+      flex-basis: 0
+      flex-grow: var(--metadata-count)
+
+  .is-verified
+    background: $brainscore_green
+
+  .is-inferred
+    background: #e3a43b
+
+  .is-undocumented
+    background: $brainscore_gray3
+
+  .model-metadata-counts
+    display: grid
+    gap: 6px
+
+    div
+      align-items: center
+      display: flex
+      gap: 7px
+
+    dt
+      border-radius: 50%
+      height: 7px
+      width: 7px
+
+    dd
+      font-size: 0.82rem
