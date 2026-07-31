@@ -112,7 +112,11 @@
                     <i class="fa-solid fa-circle-info"></i>
                 </a>
             </p>
-            <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% if visual_degrees is not None %}
+                <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% else %}
+                <span class="has-text-grey">Not documented</span>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

@@ -1,10 +1,20 @@
 @use "sass:math"
 
 section.individual_model
-  .model-metadata
-    border-top: 4px solid $brainscore_green
+  &.container
+    max-width: none
+    width: 100%
 
-    .title
+  > .model-metadata:first-child
+    margin-top: 0
+
+  .model-metadata
+    border: 1px solid $brainscore_gray2
+    border-top: 4px solid $brainscore_green
+    box-shadow: 0 8px 24px rgba($brainscore_gray4, 0.08)
+    padding: 24px
+
+    .model-metadata-heading .title
       margin-bottom: 0
 
   .model-metadata-heading
@@ -15,7 +25,7 @@ section.individual_model
 
   .model-metadata-kicker
     color: darken($brainscore_green, 25%)
-    font-size: 0.72rem
+    font-size: 0.74rem
     font-weight: 700
     letter-spacing: 0.08em
     margin-bottom: 3px
@@ -23,12 +33,13 @@ section.individual_model
 
   .model-metadata-specs
     display: grid
+    gap: 0 24px
     grid-template-columns: repeat(2, minmax(0, 1fr))
     margin-bottom: 24px
 
     > div
       border-bottom: 1px solid $brainscore_gray1
-      padding: 10px 14px 10px 0
+      padding: 11px 0
 
     dt
       color: $brainscore_gray3
@@ -39,6 +50,8 @@ section.individual_model
 
     dd
       color: $brainscore_gray4
+      font-size: 0.95rem
+      line-height: 1.45
       margin-top: 3px
 
   .model-metadata-grid
@@ -47,13 +60,20 @@ section.individual_model
     grid-template-columns: repeat(2, minmax(0, 1fr))
 
   .model-metadata-panel
-    background: lighten($brainscore_gray1, 2%)
+    background: #fbfcff
     border: 1px solid $brainscore_gray2
-    border-radius: 6px
-    padding: 18px
+    border-radius: 8px
+    padding: 20px
+
+    .title
+      color: $brainscore_gray4
+      font-weight: 600
+      margin-bottom: 8px
 
     p, li
-      font-size: 0.9rem
+      color: darken($brainscore_gray3, 18%)
+      font-size: 0.92rem
+      line-height: 1.45
 
     ul
       margin: 5px 0 12px 18px
@@ -79,7 +99,8 @@ section.individual_model
     border-radius: 5px
     display: flex
     gap: 8px
-    padding: 7px 9px
+    color: $brainscore_gray4
+    padding: 8px 10px
 
     .tag
       background: rgba($brainscore_green, 0.14)
@@ -94,15 +115,20 @@ section.individual_model
   .model-metadata-use
     margin-top: 24px
 
+    > .title
+      color: $brainscore_gray4
+      margin-bottom: 12px
+
   .model-metadata-use-grid
     display: grid
     gap: 10px
     grid-template-columns: repeat(2, minmax(0, 1fr))
 
     > div
-      background: #fafbfe
+      background: #fbfcff
+      border: 1px solid $brainscore_gray1
       border-left: 3px solid $brainscore_gray3
-      padding: 12px 14px
+      padding: 14px 16px
 
     .is-recommended
       border-left-color: $brainscore_green
@@ -121,7 +147,9 @@ section.individual_model
       margin: 6px 0 0 18px
 
     li
-      font-size: 0.86rem
+      color: darken($brainscore_gray3, 18%)
+      font-size: 0.9rem
+      line-height: 1.45
 
   @media (max-width: 1100px)
     .model-metadata-grid, .model-metadata-use-grid
@@ -267,10 +295,21 @@ section.individual_model
   margin-top: 14px
 
   .tag
-    background: rgba($brainscore_green, 0.13)
-    color: darken($brainscore_green, 28%)
+    background: rgba(white, 0.9)
+    border: 1px solid rgba(white, 0.65)
+    box-shadow: 0 1px 3px rgba($brainscore_gray4, 0.1)
+    color: $brainscore_gray4
+    font-size: 0.76rem
+    font-weight: 600
+    padding: 0.35rem 0.65rem
 
 .model-metadata-provenance
+  border-top: 3px solid $brainscore_green
+
+  .subtitle
+    color: $brainscore_gray4
+    font-weight: 600
+
   .model-metadata-verification
     display: flex
     height: 7px
