@@ -247,30 +247,6 @@
         wireColumnResizers();
     }
 
-    /* Keep ``gd`` sized through window resizes AND container visibility flips
-       (tab switches, column drags). A plot initialised while hidden caches a
-       0-width layout and must be re-measured once visible. Idempotent so
-       repeated wiring (e.g. compare dropdown changes) doesn't stack observers. */
-    function wireResponsiveResize(gd) {
-        if (!gd || gd.__trendResizeWired) return;
-        gd.__trendResizeWired = true;
-        var resize = function () {
-            if (typeof Plotly === 'undefined') return;
-            if (!gd.isConnected || gd.offsetParent === null || !gd.offsetWidth) return;
-            try {
-                // Plotly v3 sometimes ignores a bare Plots.resize; force a
-                // re-measurement via relayout(autosize) first.
-                Plotly.relayout(gd, {autosize: true});
-                Plotly.Plots.resize(gd);
-            } catch (e) { /* swallow */ }
-        };
-        window.addEventListener('resize', resize);
-        if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(resize).observe(gd);
-        }
-        requestAnimationFrame(resize);
-    }
-
     /* Brain-Score watermark, sized and placed like the compare-page charts in
        compare_models.js (120x28 px, bottom-right of the plot area). */
     var LOGO_PX = {w: 120, h: 28};
@@ -291,6 +267,48 @@
             layer: 'above',
         }];
         return layout;
+    }
+
+    /* A plot initialised while hidden measures 0 wide, so applyLogo had to guess.
+       Re-derive the size from the real geometry once the plot is visible. */
+    function resizeLogo(gd) {
+        var fl = gd && gd._fullLayout;
+        if (!fl || !fl.images || !fl.images.length) return;
+        var m = fl.margin || {};
+        var areaW = gd.offsetWidth - (m.l || 0) - (m.r || 0);
+        var areaH = (fl.height || gd.offsetHeight) - (m.t || 0) - (m.b || 0);
+        if (areaW <= 0 || areaH <= 0) return;
+        var sizex = LOGO_PX.w / areaW;
+        var sizey = LOGO_PX.h / areaH;
+        var img = fl.images[0];
+        // Guard the relayout: ResizeObserver would otherwise fire on our own change.
+        if (Math.abs((img.sizex || 0) - sizex) < 0.002 && Math.abs((img.sizey || 0) - sizey) < 0.002) return;
+        Plotly.relayout(gd, {'images[0].sizex': sizex, 'images[0].sizey': sizey});
+    }
+
+    /* Keep ``gd`` sized through window resizes AND container visibility flips
+       (tab switches, column drags). A plot initialised while hidden caches a
+       0-width layout and must be re-measured once visible. Idempotent so
+       repeated wiring (e.g. compare dropdown changes) doesn't stack observers. */
+    function wireResponsiveResize(gd) {
+        if (!gd || gd.__trendResizeWired) return;
+        gd.__trendResizeWired = true;
+        var resize = function () {
+            if (typeof Plotly === 'undefined') return;
+            if (!gd.isConnected || gd.offsetParent === null || !gd.offsetWidth) return;
+            try {
+                // Plotly v3 sometimes ignores a bare Plots.resize; force a
+                // re-measurement via relayout(autosize) first.
+                Plotly.relayout(gd, {autosize: true});
+                Plotly.Plots.resize(gd);
+                resizeLogo(gd);
+            } catch (e) { /* swallow */ }
+        };
+        window.addEventListener('resize', resize);
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(resize).observe(gd);
+        }
+        requestAnimationFrame(resize);
     }
 
     window.BrainScoreTrendHover = {
