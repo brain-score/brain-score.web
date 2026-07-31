@@ -16,6 +16,14 @@ The benchmark section, How to use, BERG, Historical Trend, and Benchmarks BibTeX
 
 Keep the existing sidebar breakpoint and benchmark hierarchy. On narrower layouts, actions and usage columns wrap naturally, while card padding is reduced. No new JavaScript or interaction pattern is introduced.
 
+## Metadata Card Visibility
+
+The metadata repository computes whether the center metadata card has any
+content rendered by its specifications, training, contributor, licensing, or
+intended-use sections. The template omits the entire card when that value is
+false. Sidebar metadata components, including lineage, remain independent and
+can still render when the center card is absent.
+
 ## Verification
 
 Compile the Sass entrypoint, run the focused metadata/template tests, add template assertions for the new page-scoped hooks, and check the final diff for whitespace errors. Visual verification uses the same model and viewport as the supplied screenshots.
