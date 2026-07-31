@@ -17,10 +17,12 @@ Order = safest/highest-value first.
       to computeFilteredScores; applyCombinedFilters sets the grid once. Browser-verified.
 - [x] 4. table_library_dependencies: deleted the dead override blocks (AG-Grid CSS was
       never shipping; grid uses v33 JS theming). Rendered output unchanged.
-- [~] 5. Heavy-lib gating: NOT DONE. Plotly/d3/Chart.js/select2/jstat/countdown are all
-      used by some page, so gating means inverting base.html to opt-in and touching every
-      page that needs them + smoking each page type. Broad, site-wide, not leaderboard-only;
-      too risky to rush. Recommend a dedicated pass.
+- [x] 5. Heavy-lib gating: DONE via opt-out. Wrapped Plotly/d3/d3-tip/Chart.js/jstat in a
+      third_party_viz_libs block (default-loaded so other pages are unchanged); leaderboard
+      shell overrides it empty. Leaderboard now skips ~480KB gz of unused JS (Plotly ~350KB gz
+      the bulk). select2 + jquery.countdown kept ungated (shared scripts invoke them everywhere,
+      else the leaderboard threw .select2/.countdown errors). Verified: leaderboard skips the
+      libs + grid works + no new errors; model/compare/competition still load them.
 - [x] 6a. Security: escaped < > & in the inline DJANGO_DATA blobs (script-context injection
       via user-influenced model/submitter names). Done + verified.
 - [~] 6b. json_script parse-perf: NOT DONE. Would move the 12MB inline JS-object-literal to
