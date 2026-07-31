@@ -298,10 +298,13 @@
 <script src="{% static 'benchmarks/js/leaderboard/core/grid-initialization.js' %}"></script>
 <script src="{% static 'benchmarks/js/ag-grid-leaderboard.js' %}"></script>
 
-{# Pass Django data to JavaScript - using |safe since data is already JSON-serialized #}
+{# Pass Django data to JavaScript - using |safe since data is already JSON-serialized.
+   row_data is the large blob (~12MB); ship it as a JSON data island so the browser can
+   JSON.parse it, which is faster than parsing a JS object literal of that size. #}
+<script type="application/json" id="ld-row-data">{{ row_data|safe }}</script>
 <script>
   window.DJANGO_DATA = {
-    row_data: {{ row_data|safe }},
+    row_data: JSON.parse(document.getElementById('ld-row-data').textContent),
     column_defs: {{ column_defs|safe }},
     benchmark_groups: {{ benchmark_groups|safe }},
     benchmark_tree: {{ benchmark_tree|safe }},
