@@ -151,7 +151,7 @@ def child_rows(document):
 
 def write_table(path, fields, rows):
     with path.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(
             {field: scalar(row.get(field)) for field in fields}
