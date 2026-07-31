@@ -4,16 +4,24 @@
   display: grid
   grid-template-columns: 300px 1fr
   gap: 2rem
-  max-width: none
+  max-width: 1500px
   margin: 0
   padding: 2rem
   padding-left: 0
 
 
-.blog-post-preview 
-  margin-bottom: 3rem
-  padding-bottom: 2rem
-  border-bottom: 1px solid #eee
+// Landing-page post cards (matches the benchmark tutorial .tutorial-card)
+.blog-post-preview
+  background: #f8f9fa
+  border-radius: 8px
+  padding: 1.5rem
+  border-left: 4px solid #47b7de
+  margin-bottom: 1.5rem
+  transition: box-shadow 0.2s, transform 0.2s
+
+  &:hover
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    transform: translateY(-2px)
 
 
 .post-header h2 
@@ -240,14 +248,22 @@
 
 ////
 
-.blog-detail-container 
+.blog-detail-container
   display: grid
   grid-template-columns: 300px 1fr
   gap: 2rem
-  max-width: none
+  max-width: 1500px
   margin: 0
   padding: 2rem
   padding-left: 0
+
+
+// Card around the post reading area (matches the benchmark tutorial .tutorial-body)
+.blog-post-content
+  background: white
+  padding: 2rem
+  border-radius: 8px
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
 
 
 .post-meta 
@@ -308,6 +324,7 @@
 
 .post-content figure
   margin: 2rem 0
+  max-width: 720px
 
 
 .post-content figure img
@@ -315,7 +332,7 @@
   width: 100%
   max-width: 720px
   height: auto
-  margin: 0 auto
+  margin: 0
   border-radius: 8px
 
 
@@ -324,7 +341,7 @@
   font-size: 0.875rem
   line-height: 1.4
   color: #666
-  text-align: center
+  text-align: left
 
 
 // Code styling - inline code (dark red on light pink background)
