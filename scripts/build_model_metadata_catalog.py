@@ -67,9 +67,9 @@ def scalar(value):
 
 def model_row(document):
     model = document["model"]
-    architecture = document["architecture"]
-    interface = document["interface"]
-    training = document["training"]
+    architecture = document.get("architecture", {})
+    interface = document.get("interface", {})
+    training = document.get("training", {})
     input_spec = first(interface.get("inputs", []))
     shape = input_spec.get("shape", {})
     parameter_count = architecture.get("parameter_count", {})
@@ -90,8 +90,8 @@ def model_row(document):
         "identifier": model["identifier"],
         "display_name": model["display_name"],
         "version": model.get("version"),
-        "architecture_family": architecture["family"],
-        "architecture_description": architecture["description"],
+        "architecture_family": architecture.get("family"),
+        "architecture_description": architecture.get("description"),
         "parameter_count": parameter_count.get("value"),
         "parameter_count_exact": parameter_count.get("exact"),
         "trainable_layers": trainable_layers.get("description"),

@@ -36,5 +36,17 @@ class TestModelMetadataRepository(TestCase):
             ["pretraining", "fine_tuning"],
         )
 
+    def test_loads_model_with_blank_optional_fields(self):
+        metadata = get_model_metadata("vision", "alexnet")
+
+        self.assertEqual(metadata["parameter_count"], 61_100_840)
+        self.assertIsNone(metadata["visual_degrees"])
+
+    def test_loads_model_without_architecture(self):
+        metadata = get_model_metadata("vision", "AT_efficientnet-b2")
+
+        self.assertEqual(metadata["architecture_family"], "")
+        self.assertEqual(metadata["architecture_description"], "")
+
     def test_missing_model_returns_none(self):
         self.assertIsNone(get_model_metadata("vision", "not-a-model"))

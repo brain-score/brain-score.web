@@ -43,8 +43,11 @@
             </button>
         </p>
         {% if model_metadata %}
+            {% if model_metadata.architecture_family_display or model_metadata.parameter_count_display or model_metadata.supervision_type or model_metadata.license %}
             <div class="model-metadata-tags" aria-label="Model metadata summary">
+                {% if model_metadata.architecture_family_display %}
                 <span class="tag">{{ model_metadata.architecture_family_display }}</span>
+                {% endif %}
                 {% if model_metadata.parameter_count_display %}
                     <span class="tag">{{ model_metadata.parameter_count_display }} parameters</span>
                 {% endif %}
@@ -53,6 +56,7 @@
                 {% endif %}
                 {% if model_metadata.license %}<span class="tag">{{ model_metadata.license }}</span>{% endif %}
             </div>
+            {% endif %}
         {% endif %}
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
