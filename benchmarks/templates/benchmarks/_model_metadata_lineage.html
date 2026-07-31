@@ -7,7 +7,13 @@
             {% for ancestor in model_metadata.lineage.ancestors %}
             <li class="model-lineage-ancestor{% if ancestor.has_metadata %} has-metadata{% endif %}">
                 <i class="fa-solid fa-code-branch" aria-hidden="true"></i>
+                {% if ancestor.model_card_id %}
+                <a href="/model/{{ model_metadata.domain }}/{{ ancestor.model_card_id }}">
+                    {{ ancestor.display_name }}
+                </a>
+                {% else %}
                 <span>{{ ancestor.display_name }}</span>
+                {% endif %}
             </li>
             {% endfor %}
             <li class="model-lineage-current">

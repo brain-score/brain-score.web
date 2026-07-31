@@ -144,6 +144,10 @@ def with_model_card_ids(metadata, model_ids_by_identifier):
         return None
 
     metadata = deepcopy(metadata)
+    for ancestor in metadata["lineage"]["ancestors"]:
+        ancestor["model_card_id"] = model_ids_by_identifier.get(
+            ancestor["identifier"]
+        )
     for related in metadata["lineage"]["related_models"]:
         related["model_card_id"] = model_ids_by_identifier.get(
             related["identifier"]
