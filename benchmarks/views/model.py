@@ -395,6 +395,10 @@ def view(request, id: int, domain: str):
             except (KeyError, OSError, ValueError) as error:
                 _logger.warning("Could not load metadata for %s: %s", model.name, error)
 
+        visual_degrees = model.visual_degrees
+        if visual_degrees is None and model_metadata:
+            visual_degrees = model_metadata.get('visual_degrees')
+
         # Prepare the context for the template
         model_context = {
             'model': model,
@@ -409,7 +413,7 @@ def view(request, id: int, domain: str):
             'visibility': visibility,
             'model_name': display_model(model_obj, user),
             'submitter_name': display_submitter(model_obj, user),
-            'visual_degrees': model.visual_degrees,
+            'visual_degrees': visual_degrees,
             'layers': getattr(model, 'layers', None),
             'model_metadata': model_metadata,
             'benchmark_lookup': benchmark_lookup,

@@ -17,7 +17,7 @@ class TestModelMetadataRepository(TestCase):
             [dataset["role"] for dataset in metadata["datasets"]],
             ["pretraining", "fine_tuning"],
         )
-        self.assertEqual(metadata["verification"]["total"], 31)
+        self.assertEqual(metadata["verification"]["total"], 33)
 
     def test_preserves_repeated_sections(self):
         metadata = get_model_metadata("vision", "voneresnet-50")
@@ -47,6 +47,17 @@ class TestModelMetadataRepository(TestCase):
 
         self.assertEqual(metadata["architecture_family"], "")
         self.assertEqual(metadata["architecture_description"], "")
+
+    def test_loads_visual_degrees_and_curation_confidence(self):
+        visual_metadata = get_model_metadata("vision", "voneresnet-50")
+        confidence_metadata = get_model_metadata("vision", "AdvProp_efficientnet-b2")
+
+        self.assertEqual(visual_metadata["visual_degrees"], 8.0)
+        self.assertEqual(
+            visual_metadata["visual_degrees_description"],
+            "8 degrees (VOneNet family default convention)",
+        )
+        self.assertEqual(confidence_metadata["curation_confidence"], "medium_high")
 
     def test_missing_model_returns_none(self):
         self.assertIsNone(get_model_metadata("vision", "not-a-model"))

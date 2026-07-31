@@ -24,6 +24,7 @@ MODEL_FIELDS = (
     "input_height",
     "input_width",
     "visual_degrees",
+    "visual_degrees_description",
     "supervision_type",
     "supervision_description",
     "interface_description",
@@ -34,6 +35,7 @@ MODEL_FIELDS = (
     "checkpoint_identifier",
     "source_url",
     "license",
+    "curation_confidence",
 )
 
 TABLE_FIELDS = {
@@ -101,6 +103,7 @@ def model_row(document):
         "input_height": shape.get("height"),
         "input_width": shape.get("width"),
         "visual_degrees": interface.get("visual_degrees"),
+        "visual_degrees_description": interface.get("visual_degrees_description"),
         "supervision_type": supervision.get("type"),
         "supervision_description": supervision.get("description"),
         "interface_description": interface.get("description"),
@@ -111,6 +114,9 @@ def model_row(document):
         "checkpoint_identifier": weights.get("identifier"),
         "source_url": source.get("url"),
         "license": license_data.get("spdx") or license_data.get("name"),
+        "curation_confidence": document.get("provenance", {}).get(
+            "curation_confidence"
+        ),
     }
 
 

@@ -30,6 +30,8 @@ vision,AT_efficientnet-b2,/interface/tokenizer,undocumented,curation_workbook
 vision,AT_efficientnet-b2,/authorship/creators,undocumented,curation_workbook
 vision,AT_efficientnet-b2,/authorship/organizations,undocumented,curation_workbook
 vision,AT_efficientnet-b2,/licenses,undocumented,curation_workbook
+vision,AT_efficientnet-b2,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AT_efficientnet-b2,/interface/visual_degrees,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b2,/model/display_name,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b2,/lineage/base_models,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b2,/model/version,undocumented,curation_workbook
@@ -61,6 +63,8 @@ vision,AdvProp_efficientnet-b2,/interface/tokenizer,undocumented,curation_workbo
 vision,AdvProp_efficientnet-b2,/authorship/creators,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b2,/authorship/organizations,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b2,/licenses,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b2,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b2,/interface/visual_degrees,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b4,/model/display_name,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b4,/lineage/base_models,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b4,/model/version,undocumented,curation_workbook
@@ -92,6 +96,8 @@ vision,AdvProp_efficientnet-b4,/interface/tokenizer,undocumented,curation_workbo
 vision,AdvProp_efficientnet-b4,/authorship/creators,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b4,/authorship/organizations,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b4,/licenses,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b4,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b4,/interface/visual_degrees,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b6,/model/display_name,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b6,/lineage/base_models,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b6,/model/version,undocumented,curation_workbook
@@ -123,6 +129,8 @@ vision,AdvProp_efficientnet-b6,/interface/tokenizer,undocumented,curation_workbo
 vision,AdvProp_efficientnet-b6,/authorship/creators,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b6,/authorship/organizations,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b6,/licenses,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b6,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b6,/interface/visual_degrees,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b7,/model/display_name,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b7,/lineage/base_models,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b7,/model/version,undocumented,curation_workbook
@@ -154,6 +162,8 @@ vision,AdvProp_efficientnet-b7,/interface/tokenizer,undocumented,curation_workbo
 vision,AdvProp_efficientnet-b7,/authorship/creators,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b7,/authorship/organizations,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b7,/licenses,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b7,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b7,/interface/visual_degrees,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b8,/model/display_name,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b8,/lineage/base_models,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b8,/model/version,undocumented,curation_workbook
@@ -185,6 +195,8 @@ vision,AdvProp_efficientnet-b8,/interface/tokenizer,undocumented,curation_workbo
 vision,AdvProp_efficientnet-b8,/authorship/creators,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b8,/authorship/organizations,undocumented,curation_workbook
 vision,AdvProp_efficientnet-b8,/licenses,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b8,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AdvProp_efficientnet-b8,/interface/visual_degrees,undocumented,curation_workbook
 vision,AlexNet_SIN,/model/display_name,undocumented,curation_workbook
 vision,AlexNet_SIN,/lineage/base_models,undocumented,curation_workbook
 vision,AlexNet_SIN,/model/version,undocumented,curation_workbook
@@ -216,6 +228,8 @@ vision,AlexNet_SIN,/interface/tokenizer,undocumented,curation_workbook
 vision,AlexNet_SIN,/authorship/creators,undocumented,curation_workbook
 vision,AlexNet_SIN,/authorship/organizations,undocumented,curation_workbook
 vision,AlexNet_SIN,/licenses,undocumented,curation_workbook
+vision,AlexNet_SIN,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AlexNet_SIN,/interface/visual_degrees,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/model/display_name,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/lineage/base_models,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/model/version,undocumented,curation_workbook
@@ -247,6 +261,8 @@ vision,AlexNet_SIN_fov12,/interface/tokenizer,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/authorship/creators,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/authorship/organizations,undocumented,curation_workbook
 vision,AlexNet_SIN_fov12,/licenses,undocumented,curation_workbook
+vision,AlexNet_SIN_fov12,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AlexNet_SIN_fov12,/interface/visual_degrees,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/model/display_name,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/lineage/base_models,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/model/version,undocumented,curation_workbook
@@ -278,6 +294,8 @@ vision,AlexNet_SIN_fov16,/interface/tokenizer,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/authorship/creators,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/authorship/organizations,undocumented,curation_workbook
 vision,AlexNet_SIN_fov16,/licenses,undocumented,curation_workbook
+vision,AlexNet_SIN_fov16,/provenance/curation_confidence,undocumented,curation_workbook
+vision,AlexNet_SIN_fov16,/interface/visual_degrees,undocumented,curation_workbook
 vision,CORnet-S,/model/display_name,verified,curation_workbook
 vision,CORnet-S,/lineage/base_models,verified,curation_workbook
 vision,CORnet-S,/model/version,inferred,curation_workbook
@@ -309,6 +327,8 @@ vision,CORnet-S,/interface/tokenizer,undocumented,curation_workbook
 vision,CORnet-S,/authorship/creators,verified,curation_workbook
 vision,CORnet-S,/authorship/organizations,verified,curation_workbook
 vision,CORnet-S,/licenses,verified,curation_workbook
+vision,CORnet-S,/provenance/curation_confidence,undocumented,curation_workbook
+vision,CORnet-S,/interface/visual_degrees,undocumented,curation_workbook
 vision,VOneCORnet-S,/model/display_name,verified,curation_workbook
 vision,VOneCORnet-S,/lineage/base_models,verified,curation_workbook
 vision,VOneCORnet-S,/model/version,inferred,curation_workbook
@@ -340,6 +360,8 @@ vision,VOneCORnet-S,/interface/tokenizer,undocumented,curation_workbook
 vision,VOneCORnet-S,/authorship/creators,verified,curation_workbook
 vision,VOneCORnet-S,/authorship/organizations,verified,curation_workbook
 vision,VOneCORnet-S,/licenses,verified,curation_workbook
+vision,VOneCORnet-S,/provenance/curation_confidence,undocumented,curation_workbook
+vision,VOneCORnet-S,/interface/visual_degrees,inferred,curation_workbook
 vision,ViT_L_32_imagenet1k,/model/display_name,verified,curation_workbook
 vision,ViT_L_32_imagenet1k,/lineage/base_models,verified,curation_workbook
 vision,ViT_L_32_imagenet1k,/model/version,verified,curation_workbook
@@ -371,6 +393,8 @@ vision,ViT_L_32_imagenet1k,/interface/tokenizer,undocumented,curation_workbook
 vision,ViT_L_32_imagenet1k,/authorship/creators,verified,curation_workbook
 vision,ViT_L_32_imagenet1k,/authorship/organizations,verified,curation_workbook
 vision,ViT_L_32_imagenet1k,/licenses,inferred,curation_workbook
+vision,ViT_L_32_imagenet1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,ViT_L_32_imagenet1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet,/model/display_name,undocumented,curation_workbook
 vision,alexnet,/lineage/base_models,undocumented,curation_workbook
 vision,alexnet,/model/version,undocumented,curation_workbook
@@ -402,6 +426,8 @@ vision,alexnet,/interface/tokenizer,undocumented,curation_workbook
 vision,alexnet,/authorship/creators,undocumented,curation_workbook
 vision,alexnet,/authorship/organizations,undocumented,curation_workbook
 vision,alexnet,/licenses,undocumented,curation_workbook
+vision,alexnet,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_01,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_01,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_01,/model/version,verified,curation_workbook
@@ -433,6 +459,8 @@ vision,alexnet_training_seed_01,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_01,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_01,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_01,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_01,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_01,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_02,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_02,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_02,/model/version,verified,curation_workbook
@@ -464,6 +492,8 @@ vision,alexnet_training_seed_02,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_02,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_02,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_02,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_02,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_02,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_03,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_03,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_03,/model/version,verified,curation_workbook
@@ -495,6 +525,8 @@ vision,alexnet_training_seed_03,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_03,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_03,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_03,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_03,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_03,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_06,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_06,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_06,/model/version,verified,curation_workbook
@@ -526,6 +558,8 @@ vision,alexnet_training_seed_06,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_06,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_06,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_06,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_06,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_06,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_07,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_07,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_07,/model/version,verified,curation_workbook
@@ -557,6 +591,8 @@ vision,alexnet_training_seed_07,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_07,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_07,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_07,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_07,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_07,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_09,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_09,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_09,/model/version,verified,curation_workbook
@@ -588,6 +624,8 @@ vision,alexnet_training_seed_09,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_09,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_09,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_09,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_09,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_09,/interface/visual_degrees,undocumented,curation_workbook
 vision,alexnet_training_seed_10,/model/display_name,verified,curation_workbook
 vision,alexnet_training_seed_10,/lineage/base_models,verified,curation_workbook
 vision,alexnet_training_seed_10,/model/version,verified,curation_workbook
@@ -619,6 +657,8 @@ vision,alexnet_training_seed_10,/interface/tokenizer,verified,curation_workbook
 vision,alexnet_training_seed_10,/authorship/creators,verified,curation_workbook
 vision,alexnet_training_seed_10,/authorship/organizations,verified,curation_workbook
 vision,alexnet_training_seed_10,/licenses,verified,curation_workbook
+vision,alexnet_training_seed_10,/provenance/curation_confidence,undocumented,curation_workbook
+vision,alexnet_training_seed_10,/interface/visual_degrees,undocumented,curation_workbook
 vision,antialiased-r50,/model/display_name,verified,curation_workbook
 vision,antialiased-r50,/lineage/base_models,verified,curation_workbook
 vision,antialiased-r50,/model/version,verified,curation_workbook
@@ -650,6 +690,8 @@ vision,antialiased-r50,/interface/tokenizer,undocumented,curation_workbook
 vision,antialiased-r50,/authorship/creators,verified,curation_workbook
 vision,antialiased-r50,/authorship/organizations,verified,curation_workbook
 vision,antialiased-r50,/licenses,verified,curation_workbook
+vision,antialiased-r50,/provenance/curation_confidence,undocumented,curation_workbook
+vision,antialiased-r50,/interface/visual_degrees,undocumented,curation_workbook
 vision,compact_resnet50_robust_V4,/model/display_name,undocumented,curation_workbook
 vision,compact_resnet50_robust_V4,/lineage/base_models,undocumented,curation_workbook
 vision,compact_resnet50_robust_V4,/model/version,undocumented,curation_workbook
@@ -681,6 +723,8 @@ vision,compact_resnet50_robust_V4,/interface/tokenizer,undocumented,curation_wor
 vision,compact_resnet50_robust_V4,/authorship/creators,undocumented,curation_workbook
 vision,compact_resnet50_robust_V4,/authorship/organizations,undocumented,curation_workbook
 vision,compact_resnet50_robust_V4,/licenses,undocumented,curation_workbook
+vision,compact_resnet50_robust_V4,/provenance/curation_confidence,undocumented,curation_workbook
+vision,compact_resnet50_robust_V4,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/model/display_name,verified,curation_workbook
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/lineage/base_models,verified,curation_workbook
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/model/version,inferred,curation_workbook
@@ -712,6 +756,8 @@ vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/interface/tokenizer,undocum
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/authorship/creators,verified,curation_workbook
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/authorship/organizations,verified,curation_workbook
 vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/licenses,verified,curation_workbook
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_base_imagenet_full_seed-0,/model/display_name,verified,curation_workbook
 vision,convnext_base_imagenet_full_seed-0,/lineage/base_models,verified,curation_workbook
 vision,convnext_base_imagenet_full_seed-0,/model/version,undocumented,curation_workbook
@@ -743,6 +789,8 @@ vision,convnext_base_imagenet_full_seed-0,/interface/tokenizer,undocumented,cura
 vision,convnext_base_imagenet_full_seed-0,/authorship/creators,undocumented,curation_workbook
 vision,convnext_base_imagenet_full_seed-0,/authorship/organizations,undocumented,curation_workbook
 vision,convnext_base_imagenet_full_seed-0,/licenses,undocumented,curation_workbook
+vision,convnext_base_imagenet_full_seed-0,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_base_imagenet_full_seed-0,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_tiny:in12k_ft_in1k,/model/display_name,verified,curation_workbook
 vision,convnext_tiny:in12k_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,convnext_tiny:in12k_ft_in1k,/model/version,inferred,curation_workbook
@@ -774,6 +822,8 @@ vision,convnext_tiny:in12k_ft_in1k,/interface/tokenizer,undocumented,curation_wo
 vision,convnext_tiny:in12k_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,convnext_tiny:in12k_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,convnext_tiny:in12k_ft_in1k,/licenses,verified,curation_workbook
+vision,convnext_tiny:in12k_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_tiny:in12k_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_tiny_imagenet_full_seed-0,/model/display_name,verified,curation_workbook
 vision,convnext_tiny_imagenet_full_seed-0,/lineage/base_models,inferred,curation_workbook
 vision,convnext_tiny_imagenet_full_seed-0,/model/version,undocumented,curation_workbook
@@ -805,6 +855,8 @@ vision,convnext_tiny_imagenet_full_seed-0,/interface/tokenizer,undocumented,cura
 vision,convnext_tiny_imagenet_full_seed-0,/authorship/creators,undocumented,curation_workbook
 vision,convnext_tiny_imagenet_full_seed-0,/authorship/organizations,undocumented,curation_workbook
 vision,convnext_tiny_imagenet_full_seed-0,/licenses,undocumented,curation_workbook
+vision,convnext_tiny_imagenet_full_seed-0,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_tiny_imagenet_full_seed-0,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_tiny_sup,/model/display_name,verified,curation_workbook
 vision,convnext_tiny_sup,/lineage/base_models,verified,curation_workbook
 vision,convnext_tiny_sup,/model/version,undocumented,curation_workbook
@@ -836,6 +888,8 @@ vision,convnext_tiny_sup,/interface/tokenizer,undocumented,curation_workbook
 vision,convnext_tiny_sup,/authorship/creators,undocumented,curation_workbook
 vision,convnext_tiny_sup,/authorship/organizations,undocumented,curation_workbook
 vision,convnext_tiny_sup,/licenses,undocumented,curation_workbook
+vision,convnext_tiny_sup,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_tiny_sup,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_xlarge:fb_in22k_ft_in1k,/model/display_name,verified,curation_workbook
 vision,convnext_xlarge:fb_in22k_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,convnext_xlarge:fb_in22k_ft_in1k,/model/version,inferred,curation_workbook
@@ -867,6 +921,8 @@ vision,convnext_xlarge:fb_in22k_ft_in1k,/interface/tokenizer,undocumented,curati
 vision,convnext_xlarge:fb_in22k_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,convnext_xlarge:fb_in22k_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,convnext_xlarge:fb_in22k_ft_in1k,/licenses,verified,curation_workbook
+vision,convnext_xlarge:fb_in22k_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_xlarge:fb_in22k_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/model/display_name,verified,curation_workbook
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/model/version,inferred,curation_workbook
@@ -898,6 +954,8 @@ vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/interface/tokenizer,undocumen
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/licenses,verified,curation_workbook
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,pixels,/model/display_name,undocumented,curation_workbook
 vision,pixels,/lineage/base_models,undocumented,curation_workbook
 vision,pixels,/model/version,undocumented,curation_workbook
@@ -929,6 +987,8 @@ vision,pixels,/interface/tokenizer,undocumented,curation_workbook
 vision,pixels,/authorship/creators,undocumented,curation_workbook
 vision,pixels,/authorship/organizations,undocumented,curation_workbook
 vision,pixels,/licenses,undocumented,curation_workbook
+vision,pixels,/provenance/curation_confidence,undocumented,curation_workbook
+vision,pixels,/interface/visual_degrees,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/model/display_name,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/lineage/base_models,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/model/version,undocumented,curation_workbook
@@ -960,6 +1020,8 @@ vision,resnext101_32x8d_wsl,/interface/tokenizer,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/authorship/creators,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/authorship/organizations,undocumented,curation_workbook
 vision,resnext101_32x8d_wsl,/licenses,undocumented,curation_workbook
+vision,resnext101_32x8d_wsl,/provenance/curation_confidence,undocumented,curation_workbook
+vision,resnext101_32x8d_wsl,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/model/display_name,verified,curation_workbook
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/model/version,verified,curation_workbook
@@ -991,6 +1053,8 @@ vision,vit_base_patch16_clip_224:openai_ft_in1k,/interface/tokenizer,undocumente
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_base_patch16_clip_224:openai_ft_in1k,/licenses,inferred,curation_workbook
+vision,vit_base_patch16_clip_224:openai_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_base_patch16_clip_224:openai_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/model/display_name,verified,curation_workbook
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/model/version,verified,curation_workbook
@@ -1022,6 +1086,8 @@ vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/interface/tokenizer,undo
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/licenses,verified,curation_workbook
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/model/display_name,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/model/version,inferred,curation_workbook
@@ -1053,6 +1119,8 @@ vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/interface/tokenizer,und
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/licenses,inferred,curation_workbook
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/model/display_name,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/model/version,inferred,curation_workbook
@@ -1084,6 +1152,8 @@ vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/interface/tokenizer,undocumen
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/licenses,inferred,curation_workbook
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/model/display_name,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/model/version,inferred,curation_workbook
@@ -1115,6 +1185,8 @@ vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/interface/tokenizer,undo
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/licenses,inferred,curation_workbook
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/model/display_name,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/model/version,inferred,curation_workbook
@@ -1146,6 +1218,8 @@ vision,vit_large_patch14_clip_224:openai_ft_in1k,/interface/tokenizer,undocument
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_large_patch14_clip_224:openai_ft_in1k,/licenses,inferred,curation_workbook
+vision,vit_large_patch14_clip_224:openai_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_large_patch14_clip_224:openai_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/model/display_name,verified,curation_workbook
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/model/version,inferred,curation_workbook
@@ -1177,6 +1251,8 @@ vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/interface/tokenizer,undocumen
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/licenses,inferred,curation_workbook
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/model/display_name,verified,curation_workbook
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/model/version,verified,curation_workbook
@@ -1208,6 +1284,8 @@ vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/interface/tokenizer,undocumen
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/licenses,verified,curation_workbook
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/model/display_name,verified,curation_workbook
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/model/version,verified,curation_workbook
@@ -1239,6 +1317,8 @@ vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/interface/tokenizer,undocum
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/licenses,verified,curation_workbook
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/model/display_name,verified,curation_workbook
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/lineage/base_models,verified,curation_workbook
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/model/version,verified,curation_workbook
@@ -1270,6 +1350,8 @@ vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/interface/tokenizer,undocumen
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/authorship/creators,verified,curation_workbook
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/authorship/organizations,verified,curation_workbook
 vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/licenses,verified,curation_workbook
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/provenance/curation_confidence,undocumented,curation_workbook
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,/interface/visual_degrees,undocumented,curation_workbook
 vision,voneresnet-50,/model/display_name,verified,curation_workbook
 vision,voneresnet-50,/lineage/base_models,verified,curation_workbook
 vision,voneresnet-50,/model/version,inferred,curation_workbook
@@ -1301,6 +1383,8 @@ vision,voneresnet-50,/interface/tokenizer,undocumented,curation_workbook
 vision,voneresnet-50,/authorship/creators,verified,curation_workbook
 vision,voneresnet-50,/authorship/organizations,verified,curation_workbook
 vision,voneresnet-50,/licenses,verified,curation_workbook
+vision,voneresnet-50,/provenance/curation_confidence,undocumented,curation_workbook
+vision,voneresnet-50,/interface/visual_degrees,inferred,curation_workbook
 vision,voneresnet-50-non_stochastic,/model/display_name,verified,curation_workbook
 vision,voneresnet-50-non_stochastic,/lineage/base_models,verified,curation_workbook
 vision,voneresnet-50-non_stochastic,/model/version,inferred,curation_workbook
@@ -1332,3 +1416,5 @@ vision,voneresnet-50-non_stochastic,/interface/tokenizer,undocumented,curation_w
 vision,voneresnet-50-non_stochastic,/authorship/creators,verified,curation_workbook
 vision,voneresnet-50-non_stochastic,/authorship/organizations,verified,curation_workbook
 vision,voneresnet-50-non_stochastic,/licenses,verified,curation_workbook
+vision,voneresnet-50-non_stochastic,/provenance/curation_confidence,undocumented,curation_workbook
+vision,voneresnet-50-non_stochastic,/interface/visual_degrees,verified,curation_workbook
