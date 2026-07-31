@@ -10,10 +10,18 @@
   padding-left: 0
 
 
-.blog-post-preview 
-  margin-bottom: 3rem
-  padding-bottom: 2rem
-  border-bottom: 1px solid #eee
+// Landing-page post cards (matches the benchmark tutorial .tutorial-card)
+.blog-post-preview
+  background: #f8f9fa
+  border-radius: 8px
+  padding: 1.5rem
+  border-left: 4px solid #47b7de
+  margin-bottom: 1.5rem
+  transition: box-shadow 0.2s, transform 0.2s
+
+  &:hover
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    transform: translateY(-2px)
 
 
 .post-header h2 
@@ -250,12 +258,12 @@
   padding-left: 0
 
 
-// Outlined card around the post reading area
+// Card around the post reading area (matches the benchmark tutorial .tutorial-body)
 .blog-post-content
-  border: 1px solid #e0e0e0
-  border-radius: 8px
-  padding: 2rem
   background: white
+  padding: 2rem
+  border-radius: 8px
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1)
 
 
 .post-meta 
