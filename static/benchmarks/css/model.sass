@@ -416,10 +416,13 @@ section.individual_model
       justify-content: space-between
       padding: 5px 0
 
-      > span:first-child
+      .model-lineage-related-name
         font-size: 0.78rem
         min-width: 0
         overflow-wrap: anywhere
+
+      a.model-lineage-related-name:hover
+        text-decoration: underline
 
     .tag
       flex: none
@@ -427,10 +430,24 @@ section.individual_model
       height: auto
       padding: 0.2rem 0.4rem
 
-  .model-lineage-more
+  .model-lineage-toggle
+    align-items: center
+    background: none
+    border: 0
     color: $brainscore_gray3
+    cursor: pointer
+    display: flex
     font-size: 0.74rem
+    gap: 6px
     margin-top: 8px
+    padding: 0
+
+    &:hover
+      color: darken($brainscore_green, 24%)
+
+    &:focus-visible
+      outline: 2px solid $brainscore_green
+      outline-offset: 3px
 
 .info-section .model-sidebar-card
   border: 1px solid $brainscore_gray2
