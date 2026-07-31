@@ -4,7 +4,7 @@ from unittest import TestCase
 from django.conf import settings
 from django.template import Context, Engine
 
-from benchmarks.model_metadata import get_model_metadata
+from benchmarks.model_metadata import get_model_metadata, with_model_card_ids
 
 
 TEMPLATE_DIR = Path(__file__).parents[1] / "templates"
@@ -72,6 +72,22 @@ class TestModelMetadataTemplate(TestCase):
         self.assertIn("AlexNet", html)
         self.assertIn("AlexNet SIN", html)
         self.assertIn("AlexNet_SIN_fov12", html)
+
+    def test_links_and_progressively_hides_related_variants(self):
+        template = Engine(dirs=[TEMPLATE_DIR]).get_template(
+            "benchmarks/_model_metadata_lineage.html"
+        )
+        metadata = get_model_metadata("vision", "alexnet")
+        first_related = metadata["lineage"]["related_models"][0]
+        metadata = with_model_card_ids(metadata, {first_related["identifier"]: 2342})
+
+        html = template.render(Context({"model_metadata": metadata}))
+
+        self.assertIn('href="/model/vision/2342"', html)
+        self.assertEqual(html.count("data-related-variant"), 8)
+        self.assertEqual(html.count("data-related-variant hidden"), 5)
+        self.assertIn("data-lineage-toggle", html)
+        self.assertIn("+5 more metadata-covered variants", html)
 
     def test_hides_lineage_card_without_relationships(self):
         template = Engine(dirs=[TEMPLATE_DIR]).get_template(

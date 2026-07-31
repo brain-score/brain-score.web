@@ -1,5 +1,6 @@
 import csv
 from collections import Counter, defaultdict
+from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
@@ -22,7 +23,7 @@ RELATIONSHIP_LABELS = {
     "derived_from": "Derived",
 }
 
-MAX_RELATED_MODELS = 3
+INITIAL_RELATED_MODELS = 3
 
 
 def _read_csv(name):
@@ -132,10 +133,22 @@ def _attach_lineage(models, relationships):
                 "identifier": identifier,
                 "display_name": model["display_name"],
             },
-            "related_models": related[:MAX_RELATED_MODELS],
-            "hidden_related_count": max(0, len(related) - MAX_RELATED_MODELS),
+            "related_models": related,
+            "hidden_related_count": max(0, len(related) - INITIAL_RELATED_MODELS),
             "has_relationships": bool(ancestors or related),
         }
+
+
+def with_model_card_ids(metadata, model_ids_by_identifier):
+    if metadata is None:
+        return None
+
+    metadata = deepcopy(metadata)
+    for related in metadata["lineage"]["related_models"]:
+        related["model_card_id"] = model_ids_by_identifier.get(
+            related["identifier"]
+        )
+    return metadata
 
 
 @lru_cache(maxsize=1)

@@ -19,18 +19,28 @@
         {% if model_metadata.lineage.related_models %}
         <hr>
         <p class="model-lineage-label">Related variants</p>
-        <ul class="model-lineage-related">
+        <ul class="model-lineage-related" id="model-lineage-related-variants">
             {% for related in model_metadata.lineage.related_models %}
-            <li>
-                <span>{{ related.display_name }}</span>
+            <li data-related-variant{% if forloop.counter > 3 %} hidden{% endif %}>
+                {% if related.model_card_id %}
+                <a class="model-lineage-related-name" href="/model/{{ model_metadata.domain }}/{{ related.model_card_id }}">
+                    {{ related.display_name }}
+                </a>
+                {% else %}
+                <span class="model-lineage-related-name">{{ related.display_name }}</span>
+                {% endif %}
                 <span class="tag is-light">{{ related.relationship_display }}</span>
             </li>
             {% endfor %}
         </ul>
         {% if model_metadata.lineage.hidden_related_count %}
-        <p class="model-lineage-more">
-            +{{ model_metadata.lineage.hidden_related_count }} more metadata-covered variants
-        </p>
+        <button class="model-lineage-toggle" type="button" data-lineage-toggle
+                aria-controls="model-lineage-related-variants" aria-expanded="false">
+            <span data-lineage-toggle-label>
+                +{{ model_metadata.lineage.hidden_related_count }} more metadata-covered variants
+            </span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </button>
         {% endif %}
         {% endif %}
     </div>

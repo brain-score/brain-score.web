@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from benchmarks.model_metadata import get_model_metadata
+from benchmarks.model_metadata import get_model_metadata, with_model_card_ids
 from benchmarks.model_metadata.repository import _attach_lineage
 
 
@@ -69,11 +69,25 @@ class TestModelMetadataRepository(TestCase):
         )
         self.assertTrue(metadata["lineage"]["has_relationships"])
 
-    def test_limits_related_alexnet_variants(self):
+    def test_keeps_all_related_alexnet_variants(self):
         metadata = get_model_metadata("vision", "alexnet")
 
-        self.assertEqual(len(metadata["lineage"]["related_models"]), 3)
+        self.assertEqual(len(metadata["lineage"]["related_models"]), 8)
         self.assertEqual(metadata["lineage"]["hidden_related_count"], 5)
+
+    def test_adds_related_model_card_ids_without_mutating_catalog(self):
+        metadata = get_model_metadata("vision", "alexnet")
+        related_identifier = metadata["lineage"]["related_models"][0]["identifier"]
+
+        linked_metadata = with_model_card_ids(metadata, {related_identifier: 123})
+
+        self.assertEqual(
+            linked_metadata["lineage"]["related_models"][0]["model_card_id"],
+            123,
+        )
+        self.assertNotIn(
+            "model_card_id", metadata["lineage"]["related_models"][0]
+        )
 
     def test_keeps_external_convnext_base_unlinked(self):
         metadata = get_model_metadata("vision", "convnext_tiny:in12k_ft_in1k")
