@@ -7,12 +7,11 @@ Order = safest/highest-value first.
 
 - [x] 1. Payload trim (was "metadata dedup"): dropped unused complete/layer_mapping and
       omit null wayback fields. 19.6MB -> 12.5MB (-36%). Data-identical, browser-verified.
-- [~] 2. Bundle JS via django-compressor: DEFERRED. Blocked by systemic name collisions
-      between ag-grid-leaderboard.js delegating stubs and the modular globals. Concatenation
-      makes load order deterministic (ag-grid last) so each stub wins and recurses when the
-      modular fn self-calls (updateFilteredScores -> fixed in item 3; buildHierarchyFromTree
-      and ~others remain). Requires collapsing the stub layer (large/risky) for marginal gain
-      (128KB bundle vs 12.5MB payload). Not worth it now.
+- [x] 2. Bundle JS via django-compressor: DONE. Removed the ~18 ag-grid delegating stubs
+      (the modular files already own those globals) to eliminate the concatenation recursion,
+      then wrapped the 14 module scripts in {% compress js %} -> one ~123KB bundle. Verified in
+      the offline bundle (DEBUG=False): grid renders, expand 7->11, filter/search work, no
+      recursion; dev pass-through unaffected.
 - [x] 3. Filter double-render + latent recursion: renamed coordinator updateFilteredScores
       to computeFilteredScores; applyCombinedFilters sets the grid once. Browser-verified.
 - [x] 4. table_library_dependencies: deleted the dead override blocks (AG-Grid CSS was
@@ -28,9 +27,9 @@ Order = safest/highest-value first.
 - [x] 6b. json_script parse-perf: DONE for row_data (the ~12MB, ~96% of payload). Shipped as
       a <script type=application/json> island + JSON.parse; progressive-loader skips data
       islands. Small blobs left inline (negligible remaining gain). Browser-verified.
-- [~] 7. Un-skip / de-flake 10 test_ag_grid.py assertions: NOT DONE. They hardcode
-      data-dependent ranks and run against a live server; de-flaking = making them
-      data-independent (separate test-refactor, no product-perf gain).
+- [x] 7. Un-skip / de-flake 10 test_ag_grid.py assertions: DONE. Replaced hardcoded top-5
+      snapshots with behavioural invariants, read column values via the grid API (the DOM-order
+      read was the real flakiness), and drive sort via applyColumnState. Full suite: 31 passed.
 
 ## Done this branch (all browser-verified against dev DB)
 1 payload trim (-36%), 3 filter recursion/double-render, 4 dead CSS blocks, 6a script escaping.
