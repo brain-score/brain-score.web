@@ -29,7 +29,7 @@ vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,0,wit-400m,WIT-400M,pretr
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,1,imagenet-12k,ImageNet-12k,pretraining,
 vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,2,imagenet-1k,ImageNet-1k,fine_tuning,
 vision,vit_large_patch14_clip_224:openai_ft_in1k,0,wit-400m,WIT-400M,pretraining,
-vision,vit_large_patch14_clip_224:openai_ft_in1k,1,imagenet-1k,ImageNet-1k,pretraining,
+vision,vit_large_patch14_clip_224:openai_ft_in1k,1,imagenet-1k,ImageNet-1k,fine_tuning,
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,0,wit-400m,WIT-400M,pretraining,
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,1,imagenet-12k,ImageNet-12k,fine_tuning,
 vision,vit_large_patch14_clip_336:laion2b_ft_in1k,2,imagenet-1k,ImageNet-1k,fine_tuning,
