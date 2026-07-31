@@ -310,6 +310,8 @@ model.look_at(...)</pre>
             </p>
         </div>
 
+        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
+
         {# Benchmarks bibtex #}
         <div class="box">
             <h2 class="subtitle is-4">
@@ -324,7 +326,6 @@ model.look_at(...)</pre>
                 </div>
             </div>
         </div>
-        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
     </section>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>
