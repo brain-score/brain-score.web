@@ -3,6 +3,9 @@
 
 {% block page_title %}Brain-Score - Leaderboard{% endblock %}
 
+{# The leaderboard uses none of the viz libs (Plotly/d3/Chart/select2/jstat/countdown). #}
+{% block third_party_viz_libs %}{% endblock %}
+
 {% block banner %}
 <h1>{{ domain_display }} Leaderboard</h1>
 <p>Explore model performance across our benchmark suite.</p>
