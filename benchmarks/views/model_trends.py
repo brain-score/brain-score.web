@@ -906,7 +906,8 @@ def _scored_by_label(leaf, name_a, name_b, scored_a, scored_b, values_a, values_
         return f'{name_a} + {name_b}'
     if abs(va - vb) < 1e-9:
         return f'{name_a} = {name_b}'
-    return f'{name_a} > {name_b}' if va > vb else f'{name_a} < {name_b}'
+    # Higher scorer first, so the relation always reads ">".
+    return f'{name_a} > {name_b}' if va > vb else f'{name_b} > {name_a}'
 
 
 def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,

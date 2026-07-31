@@ -299,8 +299,9 @@ class TestComparisonTrendNarrative(BaseTestCase):
             scored_values_b={'Bench.IT': 0.5, 'Bench.V1': 0.3, 'Bench.V4': 0.4},
         )
         lines = meta['points'][1]['lines']
+        # The higher scorer always leads, so the relation is always ">".
         self.assertIn('- Bench.IT (alpha > beta)', lines)
-        self.assertIn('- Bench.V1 (alpha < beta)', lines)
+        self.assertIn('- Bench.V1 (beta > alpha)', lines)
         self.assertIn('- Bench.V4 (alpha = beta)', lines)
 
     def test_score_hover_keeps_overflow_bullets_after_the_more_marker(self):
