@@ -53,6 +53,29 @@ class TestModelMetadataTemplate(TestCase):
         self.assertIn("7</strong> undocumented", html)
         self.assertIn("model-sidebar-card", html)
 
+    def test_renders_lineage_chain_and_related_variants(self):
+        template = Engine(dirs=[TEMPLATE_DIR]).get_template(
+            "benchmarks/_model_metadata_lineage.html"
+        )
+        metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+
+        html = template.render(Context({"model_metadata": metadata}))
+
+        self.assertIn("data-model-lineage", html)
+        self.assertIn("AlexNet", html)
+        self.assertIn("AlexNet SIN", html)
+        self.assertIn("AlexNet_SIN_fov12", html)
+
+    def test_hides_lineage_card_without_relationships(self):
+        template = Engine(dirs=[TEMPLATE_DIR]).get_template(
+            "benchmarks/_model_metadata_lineage.html"
+        )
+        metadata = get_model_metadata("vision", "pixels")
+
+        html = template.render(Context({"model_metadata": metadata}))
+
+        self.assertEqual(html.strip(), "")
+
     def test_model_page_uses_scoped_card_containers(self):
         model_template = (TEMPLATE_DIR / "benchmarks" / "model.html").read_text()
         trend_template = (

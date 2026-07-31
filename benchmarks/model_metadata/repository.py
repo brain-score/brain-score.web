@@ -16,6 +16,14 @@ ARCHITECTURE_LABELS = {
     "other": "Other",
 }
 
+RELATIONSHIP_LABELS = {
+    "variant_of": "Variant",
+    "fine_tuned_from": "Fine-tuned",
+    "derived_from": "Derived",
+}
+
+MAX_RELATED_MODELS = 3
+
 
 def _read_csv(name):
     with (DATA_DIR / name).open(newline="", encoding="utf-8") as stream:
@@ -52,6 +60,82 @@ def _format_count(value):
 
 def _model_key(row):
     return row["domain"], row["identifier"]
+
+
+def _attach_lineage(models, relationships):
+    related_by_base = defaultdict(list)
+    for model_key, relationship in relationships.items():
+        base_identifier = relationship["base_identifier"]
+        if base_identifier:
+            related_by_base[(model_key[0], base_identifier)].append(model_key)
+
+    for model_key, model in models.items():
+        domain, identifier = model_key
+        ancestors = []
+        visited = {model_key}
+        ancestor_key = model_key
+        while ancestor_key in relationships:
+            relationship = relationships[ancestor_key]
+            base_identifier = relationship["base_identifier"]
+            base_key = (domain, base_identifier) if base_identifier else None
+            if base_key in visited:
+                break
+
+            base_model = models.get(base_key) if base_key else None
+            ancestors.append(
+                {
+                    "identifier": base_identifier,
+                    "display_name": relationship["base_name"],
+                    "has_metadata": base_model is not None,
+                }
+            )
+            if not base_model:
+                break
+            visited.add(base_key)
+            ancestor_key = base_key
+        ancestors.reverse()
+
+        related_keys = set(related_by_base.get((domain, identifier), []))
+        direct_relationship = relationships.get(model_key)
+        if direct_relationship and direct_relationship["base_identifier"]:
+            related_keys.update(
+                related_by_base[
+                    (domain, direct_relationship["base_identifier"])
+                ]
+            )
+        related_keys.discard(model_key)
+
+        related = []
+        for related_key in sorted(
+            related_keys,
+            key=lambda key: (
+                models[key]["display_name"].casefold(),
+                models[key]["identifier"],
+            ),
+        ):
+            related_model = models[related_key]
+            relationship = relationships[related_key]
+            related.append(
+                {
+                    "identifier": related_model["identifier"],
+                    "display_name": related_model["display_name"],
+                    "relationship": relationship["relationship"],
+                    "relationship_display": RELATIONSHIP_LABELS.get(
+                        relationship["relationship"], "Related"
+                    ),
+                }
+            )
+
+        model["lineage"] = {
+            "ancestors": ancestors,
+            "current": {
+                "identifier": identifier,
+                "display_name": model["display_name"],
+            },
+            "related_models": related[:MAX_RELATED_MODELS],
+            "hidden_related_count": max(0, len(related) - MAX_RELATED_MODELS),
+            "has_relationships": bool(ancestors or related),
+        }
 
 
 @lru_cache(maxsize=1)
@@ -98,6 +182,13 @@ def _load_catalog():
     for row in _read_csv("contributors.csv"):
         models[_model_key(row)]["contributors"][row["kind"]].append(row["name"])
 
+    relationships = {}
+    for row in _read_csv("model_relationships.csv"):
+        key = _model_key(row)
+        if key in relationships:
+            raise ValueError(f"Multiple direct base models: {key}")
+        relationships[key] = row
+
     assertions = defaultdict(Counter)
     for row in _read_csv("assertions.csv"):
         assertions[_model_key(row)][row["status"]] += 1
@@ -117,6 +208,8 @@ def _load_catalog():
         }
         model["intended_use"] = dict(model["intended_use"])
         model["contributors"] = dict(model["contributors"])
+
+    _attach_lineage(models, relationships)
 
     return models
 

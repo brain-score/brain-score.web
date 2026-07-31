@@ -357,6 +357,81 @@ section.individual_model
     dd
       font-size: 0.82rem
 
+.model-lineage-card
+  .model-lineage-tree
+    list-style: none
+    margin: 0
+
+    li
+      align-items: center
+      display: grid
+      gap: 9px
+      grid-template-columns: 14px minmax(0, 1fr)
+      overflow-wrap: anywhere
+      padding: 5px 0
+
+  .model-lineage-ancestor
+    color: $brainscore_gray3
+    font-size: 0.84rem
+    margin-left: 3px
+
+    i
+      font-size: 0.72rem
+
+    &.has-metadata
+      color: $brainscore_gray4
+
+  .model-lineage-current
+    color: darken($brainscore_green, 24%)
+    font-size: 0.86rem
+
+    > span
+      background: $brainscore_green
+      border-radius: 50%
+      height: 7px
+      justify-self: center
+      width: 7px
+
+  hr
+    background: $brainscore_gray1
+    height: 1px
+    margin: 15px 0
+
+  .model-lineage-label
+    color: $brainscore_gray3
+    font-size: 0.7rem
+    font-weight: 700
+    letter-spacing: 0.06em
+    margin-bottom: 8px
+    text-transform: uppercase
+
+  .model-lineage-related
+    list-style: none
+    margin: 0
+
+    li
+      align-items: center
+      display: flex
+      gap: 8px
+      justify-content: space-between
+      padding: 5px 0
+
+      > span:first-child
+        font-size: 0.78rem
+        min-width: 0
+        overflow-wrap: anywhere
+
+    .tag
+      flex: none
+      font-size: 0.62rem
+      height: auto
+      padding: 0.2rem 0.4rem
+
+  .model-lineage-more
+    color: $brainscore_gray3
+    font-size: 0.74rem
+    margin-top: 8px
+
 .info-section .model-sidebar-card
   border: 1px solid $brainscore_gray2
   border-top: 3px solid $brainscore_green

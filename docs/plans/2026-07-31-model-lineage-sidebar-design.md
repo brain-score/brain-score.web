@@ -26,7 +26,7 @@ these rows to the model catalog to build:
 
 - an ordered ancestor chain;
 - whether each ancestor has validated metadata;
-- sibling variants sharing the same direct base;
+- sibling variants sharing the same direct base and direct child variants;
 - the number of siblings omitted from the visible list.
 
 Only models with validated metadata participate. The repository does not infer
@@ -37,8 +37,9 @@ base is external, missing, or would create a cycle.
 
 The sidebar uses the existing `model-sidebar-card` container and title style.
 It renders the ancestor chain first, highlights the current model, and then
-shows up to three sibling variants with concise relationship labels. Additional
-siblings are summarized as `+N more metadata-covered variants`.
+shows up to three related sibling or child variants with concise relationship
+labels. Additional variants are summarized as
+`+N more metadata-covered variants`.
 
 The entire card is omitted when no ancestor or sibling relationship is
 available. Models without lineage metadata retain the current page layout with

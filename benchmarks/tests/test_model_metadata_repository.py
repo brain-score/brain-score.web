@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from benchmarks.model_metadata import get_model_metadata
+from benchmarks.model_metadata.repository import _attach_lineage
 
 
 class TestModelMetadataRepository(TestCase):
@@ -58,6 +59,60 @@ class TestModelMetadataRepository(TestCase):
             "8 degrees (VOneNet family default convention)",
         )
         self.assertEqual(confidence_metadata["curation_confidence"], "medium_high")
+
+    def test_builds_recursive_alexnet_lineage(self):
+        metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+
+        self.assertEqual(
+            [ancestor["identifier"] for ancestor in metadata["lineage"]["ancestors"]],
+            ["alexnet", "AlexNet_SIN"],
+        )
+        self.assertTrue(metadata["lineage"]["has_relationships"])
+
+    def test_limits_related_alexnet_variants(self):
+        metadata = get_model_metadata("vision", "alexnet")
+
+        self.assertEqual(len(metadata["lineage"]["related_models"]), 3)
+        self.assertEqual(metadata["lineage"]["hidden_related_count"], 5)
+
+    def test_keeps_external_convnext_base_unlinked(self):
+        metadata = get_model_metadata("vision", "convnext_tiny:in12k_ft_in1k")
+
+        self.assertEqual(
+            metadata["lineage"]["ancestors"][0],
+            {
+                "identifier": "convnext-tiny",
+                "display_name": "ConvNeXt-Tiny",
+                "has_metadata": False,
+            },
+        )
+
+    def test_hides_lineage_without_relationships(self):
+        metadata = get_model_metadata("vision", "pixels")
+
+        self.assertFalse(metadata["lineage"]["has_relationships"])
+
+    def test_stops_recursive_lineage_at_cycle(self):
+        models = {
+            ("vision", "a"): {"identifier": "a", "display_name": "A"},
+            ("vision", "b"): {"identifier": "b", "display_name": "B"},
+        }
+        relationships = {
+            ("vision", "a"): {
+                "base_identifier": "b",
+                "base_name": "B",
+                "relationship": "variant_of",
+            },
+            ("vision", "b"): {
+                "base_identifier": "a",
+                "base_name": "A",
+                "relationship": "variant_of",
+            },
+        }
+
+        _attach_lineage(models, relationships)
+
+        self.assertEqual(len(models[("vision", "a")]["lineage"]["ancestors"]), 1)
 
     def test_missing_model_returns_none(self):
         self.assertIsNone(get_model_metadata("vision", "not-a-model"))
