@@ -1,7 +1,7 @@
 {% if model_metadata %}
-<div class="box model-metadata-provenance">
+<div class="box model-sidebar-card model-metadata-provenance">
     <div class="card-content">
-        <p class="subtitle is-5">Metadata provenance</p>
+        <p class="subtitle is-5 model-sidebar-title">Metadata provenance</p>
         <div class="model-metadata-verification" aria-label="Metadata verification summary">
             {% if model_metadata.verification.verified %}
             <span class="is-verified" style="--metadata-count: {{ model_metadata.verification.verified }}"></span>

@@ -14,23 +14,23 @@
 
 {% block banner %}
     {% if model.public %}
-        <h1 class="title">{{ model.name }}</h1>
-        <p>
+        <h1 class="title model-banner-title">{{ model.name }}</h1>
+        <p class="model-banner-actions">
             {# Paper #}
             {% if model.reference_identifier %}
-                <button class="button">
+                <button class="button model-banner-action">
                     <a href="{{ model.reference_link }}" target="_blank">
                         <i class="fas fa-file-alt"></i> {{ model.reference_identifier }}
                     </a>
                 </button>
             {% else %}
-                <button class="button disabled">
+                <button class="button model-banner-action disabled">
                     No reference provided
                 </button>
             {% endif %}
 
             {# Code #}
-            <button class="button">
+            <button class="button model-banner-action">
                 <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ model.domain }}%20{{ model.name }}&type=code"
                    target="_blank">
                     <i class="fa-brands fa-github"></i> Find on GitHub
@@ -38,7 +38,7 @@
             </button>
 
             {# Contributor #}
-            <button class="button">
+            <button class="button model-banner-action is-static">
                 Contributed by: {{ model|display_submitter:user|default:"" }}
             </button>
         </p>
@@ -69,9 +69,9 @@
 {% block info_section %}
     {% include "benchmarks/_model_metadata_provenance.html" %}
 
-    <div class="box">
+    <div class="box model-sidebar-card model-layer-card">
         <div class="card-content">
-            <p class="subtitle is-5">
+            <p class="subtitle is-5 model-sidebar-title">
                 Layer Commitment
                 <a href="https://{{ request.get_host }}/brain_model#region_layer_map">
                     <i class="fa-solid fa-circle-info"> </i>
@@ -79,7 +79,7 @@
             </p>
 
             {% if layers %}
-                <table class="table">
+                <table class="table model-layer-table">
                     <thead>
                     <tr>
                         <th>Region</th>
@@ -104,19 +104,21 @@
         </div>
     </div>
 
-    <div class="box">
+    <div class="box model-sidebar-card model-visual-angle-card">
         <div class="card-content">
-            <p class="subtitle is-5">
+            <p class="subtitle is-5 model-sidebar-title">
                 Visual Angle
                 <a href="https://{{ request.get_host }}/brain_model#visual_degrees">
                     <i class="fa-solid fa-circle-info"></i>
                 </a>
             </p>
-            {% if visual_degrees is not None %}
-                <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
-            {% else %}
-                <span class="has-text-grey">Not documented</span>
-            {% endif %}
+            <p class="model-sidebar-value">
+                {% if visual_degrees is not None %}
+                    <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+                {% else %}
+                    <span class="has-text-grey">Not documented</span>
+                {% endif %}
+            </p>
         </div>
     </div>
 {% endblock %}
@@ -126,10 +128,10 @@
     <section class="individual_model container center">
         {% include "benchmarks/_model_metadata.html" %}
 
-        <div class="content">
+        <div class="content box model-page-card model-scores-card">
             {# Scores #}
-            <h3 id="scores" class="title is-3">Scores on benchmarks</h3>
-            <span class='fine_print'>
+            <h3 id="scores" class="title is-3 model-section-title">Scores on benchmarks</h3>
+            <span class="fine_print model-section-summary">
                Model rank shown below is with respect to all public models.<br>
             </span>
             <div class="content benchmark_scores">
@@ -267,28 +269,28 @@
         </div>
 
         {# Usage #}
-        <div class="box">
-            <h4 class="subtitle is-4">
+        <div class="box model-page-card model-usage-card">
+            <h4 class="subtitle is-4 model-section-title">
                 How to use
             </h4>
-            <div class="columns">
+            <div class="columns model-usage-layout">
                 <div class="column">
-                    <pre class="mt-0">
+                    <pre class="mt-0 model-code-block">
 from brainscore_{{ model.domain }} import load_model
 model = load_model("{{ model.name }}")
 model.start_task(...)
 model.start_recording(...)
 model.look_at(...)</pre>
                 </div>
-                <div class="column">
-                    <div class="block">
-                        <a href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html"
+                <div class="column model-usage-links">
+                    <div class="block model-usage-link-row">
+                        <a class="model-usage-link" href="https://brain-score.readthedocs.io/en/latest/modules/model_interface.html"
                            target="_blank">
                             <i class="fa-brands fa-readme"></i> Model API
                         </a>
                     </div>
-                    <div class="block">
-                        <a href="https://github.com/brain-score/{{ model.domain }}/tree/master/examples"
+                    <div class="block model-usage-link-row">
+                        <a class="model-usage-link" href="https://github.com/brain-score/{{ model.domain }}/tree/master/examples"
                            target="_blank">
                             <i class="fa-brands fa-github"></i> Code examples
                         </a>
@@ -309,8 +311,8 @@ model.look_at(...)</pre>
         </div>
 
         {# BERG info box #}
-        <div class="box" id="berg-box">
-            <h4 class="subtitle is-4">
+        <div class="box model-page-card model-berg-card" id="berg-box">
+            <h4 class="subtitle is-4 model-section-title">
                 Brain Encoding Response Generator (BERG)
             </h4>
             <p>
@@ -333,14 +335,14 @@ model.look_at(...)</pre>
         {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
 
         {# Benchmarks bibtex #}
-        <div class="box">
-            <h2 class="subtitle is-4">
+        <div class="box model-page-card model-bibtex-card">
+            <h2 class="subtitle is-4 model-section-title">
             <span class="want_to_click collapsible_control is_collapsible"
                   data-initial="hidden" data-target="bibtex_collapsible"></span>
                 Benchmarks bibtex
             </h2>
             <div id="bibtex_collapsible" class="content">
-                <div class="box">
+                <div class="box model-bibtex-content">
         <pre class="mt-0">{% for bibtex in model.scores|scores_bibtex %}{{ bibtex }}
         {% endfor %}</pre>
                 </div>
