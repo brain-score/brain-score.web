@@ -871,17 +871,22 @@ def _compare_focal_change_lines(i, dates, values, kind, display_name, edges_map,
 
     cap = _COMPARE_COVERAGE_BULLET_CAP
     if coverage_added:
-        if len(coverage_added) <= 3:
-            lines.append(f'{display_name} newly scored: ' + ', '.join(coverage_added) + '.')
-        else:
-            lines.append(f'{display_name} newly scored on {_plural(len(coverage_added), "benchmark")}:')
-            for b in coverage_added[:cap]:
-                lines.append(f'  - {b}')
-            if len(coverage_added) > cap:
-                lines.append(f'  ... and {len(coverage_added) - cap} more.')
+        lines.append(f'{display_name} newly scored on {_plural(len(coverage_added), "benchmark")}:')
+        lines.extend(_bullets_with_more(coverage_added, cap, indent='  '))
     elif not model_lines and not added:
         lines.append(f'{display_name}: no new benchmarks this month; change from score updates or other models.')
 
+    return lines
+
+
+def _bullets_with_more(items, cap, render=str, indent=''):
+    """First ``cap`` bullets, then a ``... and N more.`` marker followed by the
+    rest. The client collapses everything after the marker behind a toggle, so
+    the overflow stays reachable without lengthening the panel by default."""
+    lines = [f'{indent}- {render(x)}' for x in items[:cap]]
+    if len(items) > cap:
+        lines.append(f'{indent}... and {len(items) - cap} more.')
+        lines.extend(f'{indent}- {render(x)}' for x in items[cap:])
     return lines
 
 
@@ -975,12 +980,10 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
             scored_b_set = set((scored_new_b or {}).get(ym, []) or []) & set(added)
             lines.append(f'{_plural(len(added), "new benchmark")} added this month (unscored count as 0):')
             cap = _COMPARE_COVERAGE_BULLET_CAP
-            for b in added[:cap]:
-                who = _scored_by_label(b, name_a, name_b, scored_a_set, scored_b_set,
-                                       scored_values_a, scored_values_b)
-                lines.append(f'- {b} ({who})')
-            if len(added) > cap:
-                lines.append(f'... and {len(added) - cap} more.')
+            lines.extend(_bullets_with_more(
+                added, cap,
+                lambda b: f'{b} ({_scored_by_label(b, name_a, name_b, scored_a_set, scored_b_set, scored_values_a, scored_values_b)})',
+            ))
         elif not any_focal:
             cov_a = (coverage_a or {}).get(ym, []) or []
             cov_b = (coverage_b or {}).get(ym, []) or []
@@ -993,15 +996,8 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         def _emit_coverage(name, cov):
             if not cov:
                 return
-            if len(cov) <= 3:
-                lines.append(f'{name} newly scored: ' + ', '.join(cov) + '.')
-                return
             lines.append(f'{name} newly scored on {_plural(len(cov), "benchmark")}:')
-            cap = _COMPARE_COVERAGE_BULLET_CAP
-            for b in cov[:cap]:
-                lines.append(f'  - {b}')
-            if len(cov) > cap:
-                lines.append(f'  ... and {len(cov) - cap} more.')
+            lines.extend(_bullets_with_more(cov, _COMPARE_COVERAGE_BULLET_CAP, indent='  '))
 
         _emit_coverage(name_a, cov_a)
         _emit_coverage(name_b, cov_b)
@@ -1077,6 +1073,9 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
         'attributionListId': list_el,
         'defaultLines': overall,
         'points': points,
+        # Names as they appear in the narrative, so the client can tint them to
+        # match each model's trace in the legend.
+        'nameColors': [[name_a_disp, _COMPARE_COLOR_A], [name_b_disp, _COMPARE_COLOR_B]],
     }
 
 

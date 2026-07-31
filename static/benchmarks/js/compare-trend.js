@@ -22,8 +22,59 @@
         return box ? box.dataset.trendEndpoint : null;
     })();
 
-    function _renderAttributionList(listId, lines) {
-        renderAttributionList(document.getElementById(listId), lines);
+    /* Mark model names with a small legend-coloured dot rather than tinting the
+       text: names appear on nearly every line, so colouring them all drowns the
+       panel. Only the first mention of each name per line gets a dot. */
+    function _colorizeNames(rootEl, nameColors) {
+        if (!rootEl || !nameColors || !nameColors.length) return;
+        var names = nameColors.filter(function (nc) { return nc && nc[0]; });
+        if (!names.length) return;
+        var colorOf = {};
+        names.forEach(function (nc) { colorOf[nc[0]] = nc[1]; });
+        // Longest first: one model name may be a prefix of the other.
+        var pattern = names
+            .map(function (nc) { return nc[0]; })
+            .sort(function (a, b) { return b.length - a.length; })
+            .map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); })
+            .join('|');
+
+        Array.prototype.forEach.call(rootEl.querySelectorAll('li, summary'), function (lineEl) {
+            var seen = {};
+            var re = new RegExp(pattern, 'g');
+            var walker = document.createTreeWalker(lineEl, NodeFilter.SHOW_TEXT, null, false);
+            var textNodes = [];
+            while (walker.nextNode()) textNodes.push(walker.currentNode);
+            textNodes.forEach(function (node) {
+                if (node.parentNode !== lineEl) return;  // nested lines handle themselves
+                var text = node.nodeValue;
+                re.lastIndex = 0;
+                var frag = document.createDocumentFragment();
+                var last = 0;
+                var match;
+                var marked = false;
+                while ((match = re.exec(text)) !== null) {
+                    if (seen[match[0]]) continue;
+                    seen[match[0]] = true;
+                    marked = true;
+                    frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+                    var dot = document.createElement('span');
+                    dot.className = 'attr-model-dot';
+                    dot.style.background = colorOf[match[0]];
+                    frag.appendChild(dot);
+                    frag.appendChild(document.createTextNode(match[0]));
+                    last = match.index + match[0].length;
+                }
+                if (!marked) return;
+                frag.appendChild(document.createTextNode(text.slice(last)));
+                node.parentNode.replaceChild(frag, node);
+            });
+        });
+    }
+
+    function _renderAttributionList(listId, lines, nameColors) {
+        var ul = document.getElementById(listId);
+        renderAttributionList(ul, lines);
+        _colorizeNames(ul, nameColors);
     }
 
     function _renderEmpty(message) {
@@ -66,23 +117,24 @@
         var points = meta.points || [];
         var aside = _findAside(listId);
         var kind = meta.kind || (listId.indexOf('rank') !== -1 ? 'rank' : 'score');
+        var nameColors = meta.nameColors || [];
 
         var state = {pinnedIdx: null, lastHoverIdx: -1};
 
         function renderEntry(idx) {
             var pt = points[idx];
-            if (pt && pt.lines) _renderAttributionList(listId, pt.lines);
+            if (pt && pt.lines) _renderAttributionList(listId, pt.lines, nameColors);
         }
         function renderDefault() {
             if (state.pinnedIdx !== null) return;
-            _renderAttributionList(listId, defaults);
+            _renderAttributionList(listId, defaults, nameColors);
         }
         function clearPin() {
             state.pinnedIdx = null;
             state.lastHoverIdx = -1;
             if (holdBar) holdBar.classList.remove('is-active');
             if (aside) aside.classList.remove('trend-attribution-panel--pinned');
-            _renderAttributionList(listId, defaults);
+            _renderAttributionList(listId, defaults, nameColors);
         }
         function setPin(idx) {
             if (idx < 0 || idx >= points.length) return;
@@ -90,7 +142,7 @@
             if (!pt || !pt.lines) return;
             state.pinnedIdx = idx;
             state.lastHoverIdx = idx;
-            _renderAttributionList(listId, pt.lines);
+            _renderAttributionList(listId, pt.lines, nameColors);
             if (holdBar) holdBar.classList.add('is-active');
             if (aside) aside.classList.add('trend-attribution-panel--pinned');
         }

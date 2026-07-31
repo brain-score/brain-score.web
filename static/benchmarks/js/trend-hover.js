@@ -18,19 +18,43 @@
        hierarchy: idx 0 is the headline; ``- `` lines are bullets (prefix
        stripped); a trailing ``:`` marks a section label; ``... and N more``
        is de-emphasised; everything else is a plain note. */
+    /* "... and N more." followed by bullets becomes a <details> toggle holding
+       them; with nothing after it, it stays the plain de-emphasised line. */
+    function makeMoreToggle(summaryText) {
+        var li = document.createElement('li');
+        li.className = 'attr-more';
+        var details = document.createElement('details');
+        var summary = document.createElement('summary');
+        summary.textContent = summaryText;
+        var ul = document.createElement('ul');
+        ul.className = 'attr-more-list';
+        details.appendChild(summary);
+        details.appendChild(ul);
+        li.appendChild(details);
+        return {li: li, list: ul};
+    }
+
     function renderAttributionList(ulEl, lines) {
         if (!ulEl) return;
         ulEl.innerHTML = '';
+        var sink = ulEl;  // bullets after a "... and N more." marker land in its <details>
         (lines || []).forEach(function (line, idx) {
             var li = document.createElement('li');
             var trimmed = (line || '').replace(/^\s+/, '');
             if (/^-\s/.test(trimmed)) {
                 li.className = 'attr-item';
                 li.textContent = trimmed.replace(/^-\s+/, '');
-            } else if (/^\.\.\.\s*and\b/.test(trimmed)) {
-                li.className = 'attr-more';
-                li.textContent = trimmed;
-            } else if (idx === 0) {
+                sink.appendChild(li);
+                return;
+            }
+            sink = ulEl;  // any non-bullet line closes the overflow group
+            if (/^\.\.\.\s*and\b/.test(trimmed)) {
+                var more = makeMoreToggle(trimmed);
+                ulEl.appendChild(more.li);
+                sink = more.list;
+                return;
+            }
+            if (idx === 0) {
                 li.className = 'attr-head';
                 li.textContent = line;
             } else if (/:$/.test(trimmed)) {
@@ -41,6 +65,12 @@
                 li.textContent = line;
             }
             ulEl.appendChild(li);
+        });
+        // A marker with nothing after it (single-model panel, which still
+        // truncates server-side) stays the plain line rather than an empty toggle.
+        Array.prototype.forEach.call(ulEl.querySelectorAll('.attr-more details'), function (d) {
+            if (d.querySelector('.attr-more-list').children.length) return;
+            d.parentNode.textContent = d.querySelector('summary').textContent;
         });
     }
 
