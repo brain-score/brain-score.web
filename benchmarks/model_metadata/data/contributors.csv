@@ -1,0 +1,57 @@
+domain,identifier,kind,ordinal,name
+vision,CORnet-S,creators,0,"Jonas Kubilius, Martin Schrimpf, Kohitij Kar, Rishi Rajalingham, Ha Hong, Najib Majaj, Elias Issa, Pouya Bashivan, Jonathan Prescott-Roy, Kailyn Schmidt, Aran Nayebi, Daniel Bear, Daniel L.K. Yamins, James J. DiCarlo"
+vision,CORnet-S,organizations,0,"DiCarlo Lab, McGovern Institute for Brain Research, MIT (with Stanford collaborators)"
+vision,VOneCORnet-S,creators,0,"Dapello, Marques, Schrimpf, Geiger, Cox, DiCarlo"
+vision,VOneCORnet-S,organizations,0,MIT DiCarlo Lab
+vision,ViT_L_32_imagenet1k,creators,0,PyTorch Vision team (Meta AI / PyTorch Foundation contributors)
+vision,ViT_L_32_imagenet1k,organizations,0,"PyTorch (Linux Foundation), formerly Meta AI"
+vision,antialiased-r50,creators,0,Richard Zhang
+vision,antialiased-r50,organizations,0,Adobe Inc.
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,creators,0,Ross Wightman (timm fine-tune)
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,creators,1,"base CLIP-ConvNeXt weights via OpenCLIP team (Ilharco, Wortsman, Wightman, Gordon, Carlini, Taori, Dave, Shankar, Namkoong, Miller, Hajishirzi, Farhadi, Schmidt)"
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,organizations,0,OpenCLIP
+vision,convnext_tiny:in12k_ft_in1k,creators,0,Ross Wightman
+vision,convnext_tiny:in12k_ft_in1k,organizations,0,Hugging Face (timm maintainer org)
+vision,convnext_xlarge:fb_in22k_ft_in1k,creators,0,"Original ConvNeXt paper authors (Liu, Mao, Wu, Feichtenhofer, Darrell, Xie)"
+vision,convnext_xlarge:fb_in22k_ft_in1k,creators,1,HF/timm distribution by Ross Wightman
+vision,convnext_xlarge:fb_in22k_ft_in1k,organizations,0,Facebook AI Research / Meta AI (original weights)
+vision,convnext_xlarge:fb_in22k_ft_in1k,organizations,1,Hugging Face (timm distribution)
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,creators,0,Ross Wightman (timm fine-tune)
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,creators,1,"OpenCLIP team (Ilharco, Wortsman, Wightman, Gordon, Carlini, Taori, Dave, Shankar, Namkoong, Miller, Hajishirzi, Farhadi, Schmidt) for CLIP pretraining"
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,creators,2,LAION for the LAION-2B dataset
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,organizations,0,Hugging Face (timm) / OpenCLIP (mlfoundations) / LAION
+vision,vit_base_patch16_clip_224:openai_ft_in1k,creators,0,"OpenAI (Radford, Kim, Hallacy et al., pretrain) + Ross Wightman/timm (fine-tune)"
+vision,vit_base_patch16_clip_224:openai_ft_in1k,organizations,0,OpenAI + timm/Hugging Face
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,creators,0,"LAION/OpenCLIP community (Ilharco, Wortsman, Cherti, Beaumont, Wightman, Schuhmann, Jitsev et al.) + Ross Wightman (timm fine-tune)"
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,organizations,0,LAION + timm/Hugging Face
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,creators,0,LAION/mlfoundations OpenCLIP team (base)
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,creators,1,Ross Wightman (fine-tune)
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,organizations,0,LAION (dataset/training collaboration)
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,organizations,1,Ross Wightman/timm (fine-tune/hosting)
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,creators,0,LAION/mlfoundations OpenCLIP team (base)
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,creators,1,Ross Wightman (fine-tune)
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,organizations,0,LAION (dataset/training collaboration)
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,organizations,1,Ross Wightman/timm (fine-tune/hosting)
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,creators,0,OpenAI (base)
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,creators,1,Ross Wightman (fine-tune)
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,organizations,0,OpenAI (pretrain)
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,organizations,1,Ross Wightman/timm (fine-tune/hosting)
+vision,vit_large_patch14_clip_224:openai_ft_in1k,creators,0,OpenAI (base CLIP)
+vision,vit_large_patch14_clip_224:openai_ft_in1k,creators,1,Ross Wightman (fine-tune)
+vision,vit_large_patch14_clip_224:openai_ft_in1k,organizations,0,OpenAI (base pretrain)
+vision,vit_large_patch14_clip_224:openai_ft_in1k,organizations,1,"Ross Wightman/timm (fine-tune, hosting)"
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,creators,0,CLIP pretraining: Alec Radford et al. (OpenAI)
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,creators,1,ImageNet fine-tune: Ross Wightman (timm)
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,organizations,0,OpenAI (base CLIP pretrain)
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,organizations,1,"Ross Wightman/timm (fine-tune, hosting)"
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,creators,0,Ross Wightman
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,organizations,0,timm / Hugging Face
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,creators,0,Ross Wightman
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,organizations,0,timm / Hugging Face
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,creators,0,"Google Research (Steiner, Kolesnikov, et al.)"
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,creators,1,PyTorch port by Ross Wightman
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,organizations,0,Google Research / timm (Hugging Face)
+vision,voneresnet-50,creators,0,"Dapello, Marques, Schrimpf, Geiger, Cox, DiCarlo"
+vision,voneresnet-50,organizations,0,MIT DiCarlo Lab
+vision,voneresnet-50-non_stochastic,creators,0,"Dapello, Marques, Schrimpf, Geiger, Cox, DiCarlo"
+vision,voneresnet-50-non_stochastic,organizations,0,MIT DiCarlo Lab
