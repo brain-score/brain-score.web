@@ -3,6 +3,7 @@ title: A Leaderboard that Remembers
 date: 2026-07-31
 author: Nathan Teshome
 author_role: MIT UROP
+author_url: https://nathanteshome.com/
 category: New Features, Engineering
 tags: leaderboard, wayback, trends, history, platform, benchmarking
 excerpt: The leaderboard can now show you the past - what the field looked like on any date, how a single model moved through it month by month, and why two models traded places.

@@ -5,7 +5,7 @@
 <h1>{{ post.title }}</h1>
 <div class="post-meta">
   <span class="post-date">{{ post.created_at|date:"F d, Y" }}</span>
-  <span class="post-author">by {{ post.author_name }}</span>
+  <span class="post-author">by {% if post.author_url %}<a href="{{ post.author_url }}" target="_blank" rel="noopener">{{ post.author_name }}</a>{% else %}{{ post.author_name }}{% endif %}</span>
   {% if post.get_categories_list %}
     <span class="post-category">
       {% for category in post.get_categories_list %}
@@ -26,7 +26,7 @@
     <!-- Author Info -->
     <div class="sidebar-widget author-info">
       <h3>About the Author</h3>
-      <p><strong>{{ post.author_name }}</strong></p>
+      <p><strong>{% if post.author_url %}<a href="{{ post.author_url }}" target="_blank" rel="noopener">{{ post.author_name }}</a>{% else %}{{ post.author_name }}{% endif %}</strong></p>
       <p>{{ post.author_role }}</p>
     </div>
 
