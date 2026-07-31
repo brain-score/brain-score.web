@@ -1,6 +1,6 @@
 {% load static %}
 {# Element ids hardcoded -- model-score-trend.js keys off them. #}
-<div class="box model-page-card model-trend-card" data-trend-resize-scope>
+<div class="box model-page-card" data-trend-resize-scope>
         <h4 class="subtitle is-4 model-section-title">Historical Trend</h4>
         <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it -- use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
         {% if score_trend_plot_json or rank_trend_plot_json %}

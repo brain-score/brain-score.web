@@ -160,94 +160,10 @@ section.individual_model
 
   .model-section-title
     color: $brainscore_gray4
+    font-size: 1.5rem
     font-weight: 600
     line-height: 1.25
     margin-bottom: 8px
-
-  .model-section-summary
-    color: darken($brainscore_gray3, 12%)
-    display: block
-    font-size: 0.88rem
-    margin-bottom: 4px
-
-  .model-scores-card
-    > .benchmark_scores
-      margin-top: 16px
-
-  .model-usage-layout
-    margin-bottom: 0
-    margin-top: 6px
-
-  .model-code-block
-    background: $brainscore_gray4
-    border-left: 4px solid $brainscore_green
-    border-radius: 7px
-    color: #edf4fb
-    height: 100%
-    line-height: 1.55
-    overflow-x: auto
-    padding: 18px
-    white-space: pre-wrap
-
-  .model-usage-links
-    display: flex
-    flex-direction: column
-    gap: 10px
-    justify-content: center
-
-  .model-usage-link-row
-    margin-bottom: 0 !important
-
-  .model-usage-link
-    align-items: center
-    background: #fbfcff
-    border: 1px solid $brainscore_gray2
-    border-radius: 7px
-    color: darken($brainscore_green, 27%)
-    display: flex
-    font-weight: 600
-    gap: 8px
-    padding: 12px 14px
-
-    &:hover
-      background: $brainscore_gray1
-      border-color: darken($brainscore_gray2, 8%)
-
-  .model-berg-card
-    p
-      color: darken($brainscore_gray3, 20%)
-      line-height: 1.55
-
-    p:last-child
-      margin-bottom: 0
-
-  .model-trend-card
-    .tabs.is-boxed
-      margin-top: 18px
-
-      li.is-active a
-        border-color: $brainscore_gray2
-        border-bottom-color: white
-        color: darken($brainscore_green, 25%)
-
-  .model-bibtex-card
-    .model-section-title
-      margin-bottom: 0
-
-  .model-bibtex-content
-    background: $brainscore_gray4
-    border: 0
-    box-shadow: none
-    margin-top: 16px
-    padding: 0
-
-    pre
-      background: transparent
-      color: #edf4fb
-      margin: 0
-      max-height: 420px
-      overflow: auto
-      padding: 18px
 
   @media (max-width: 1100px)
     .model-metadata-grid, .model-metadata-use-grid
@@ -264,21 +180,6 @@ section.individual_model
     font-size: 10pt
 
   div.benchmark_scores
-    > div
-      border-bottom: 1px solid $brainscore_gray1
-      border-radius: 0
-      box-shadow: none
-      margin-bottom: 0
-      padding: 11px 0
-
-      &:last-child
-        border-bottom: 0
-
-    table.benchmarks
-      background: transparent
-      margin-bottom: 0
-      width: 100%
-
     div
       // with increasing depth, we increase the left indent
       &.benchmark_child_0
@@ -302,11 +203,7 @@ section.individual_model
         font-weight: bold
 
       .rank
-        background: rgba($brainscore_green, 0.14)
-        border: 1px solid rgba($brainscore_green, 0.3)
-        color: darken($brainscore_green, 28%)
-        font-size: 0.7rem
-        font-weight: 600
+        background-color: gold
 
     td.benchmark_info.depth_1
       // set widths so that following bars are horizontally aligned
@@ -408,35 +305,6 @@ section.individual_model
 .build_failed
   color: red
 
-.model-banner-actions
-  align-items: center
-  display: flex
-  flex-wrap: wrap
-  gap: 8px
-  margin-bottom: 0
-
-.banner .model-banner-action
-  background: rgba(white, 0.92)
-  border: 1px solid rgba(white, 0.68)
-  box-shadow: 0 2px 6px rgba($brainscore_gray4, 0.12)
-  color: $brainscore_gray4
-  font-size: 0.85rem
-  font-weight: 600
-  height: 2.35rem
-
-  a
-    color: inherit
-
-  &:hover
-    background: white
-    border-color: white
-
-  &.disabled, &.is-static
-    opacity: 0.86
-
-.model-banner-title
-  overflow-wrap: anywhere
-
 .model-metadata-tags
   display: flex
   flex-wrap: wrap
@@ -506,31 +374,3 @@ section.individual_model
     font-weight: 600
     gap: 6px
     margin-bottom: 14px
-
-    a
-      color: darken($brainscore_green, 18%)
-      font-size: 0.82rem
-
-  .model-layer-table
-    background: transparent
-    margin-bottom: 0
-    width: 100%
-
-    th, td
-      border-color: $brainscore_gray1
-      font-size: 0.86rem
-      padding: 0.55rem 0.4rem
-
-    th
-      color: $brainscore_gray4
-
-    td
-      color: darken($brainscore_gray3, 18%)
-
-  .model-sidebar-value
-    background: #fbfcff
-    border: 1px solid $brainscore_gray1
-    border-radius: 6px
-    color: $brainscore_gray4
-    margin: 0
-    padding: 10px 12px

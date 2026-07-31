@@ -53,19 +53,13 @@ class TestModelMetadataTemplate(TestCase):
         self.assertIn("5</strong> undocumented", html)
         self.assertIn("model-sidebar-card", html)
 
-    def test_model_page_uses_scoped_card_styles(self):
+    def test_model_page_uses_scoped_card_containers(self):
         model_template = (TEMPLATE_DIR / "benchmarks" / "model.html").read_text()
         trend_template = (
             TEMPLATE_DIR / "benchmarks" / "_model_trend_panel.html"
         ).read_text()
 
-        for class_name in (
-            "model-banner-actions",
-            "model-sidebar-card",
-            "model-scores-card",
-            "model-usage-card",
-            "model-berg-card",
-            "model-bibtex-card",
-        ):
+        for class_name in ("model-sidebar-card", "model-page-card", "model-section-title"):
             self.assertIn(class_name, model_template)
-        self.assertIn("model-trend-card", trend_template)
+        self.assertIn("model-page-card", trend_template)
+        self.assertIn("model-section-title", trend_template)

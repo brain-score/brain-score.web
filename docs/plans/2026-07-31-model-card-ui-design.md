@@ -6,11 +6,11 @@ Extend the curated metadata card's visual language across the model page without
 
 ## Approach
 
-Use page-scoped classes rather than changing generic Bulma components. The metadata card remains the visual reference: white surfaces, subtle blue-gray borders, a green top accent, restrained shadows, dark navy headings, compact labels, and consistent spacing.
+Use page-scoped classes rather than changing generic Bulma components. The metadata card remains the visual reference for outer containers: white surfaces, subtle blue-gray borders, a green top accent, restrained shadows, and consistent section titles.
 
-The banner keeps its existing gradient. Its reference, source, and contributor actions receive a shared compact treatment, while metadata tags remain secondary. The sidebar cards use one header style, padding scale, border treatment, table treatment, and empty-state language.
+The banner and its existing controls remain unchanged. Sidebar cards receive the shared container and title treatment while retaining their original tables, values, icons, and empty states.
 
-The benchmark section becomes a card-level region. Existing score colors, hierarchy, collapse controls, and bar calculations remain unchanged; only spacing, row separation, rank badges, and typography are refined. How to use, BERG, Historical Trend, and Benchmarks BibTeX use the same card shell and heading hierarchy. Usage links become compact action rows, and code blocks use a consistent inset surface.
+The benchmark section, How to use, BERG, Historical Trend, and Benchmarks BibTeX receive the same outer card shell and title hierarchy. All content within those containers retains the original Brain-Score presentation, including score rows, rank badges, code blocks, links, tabs, and collapsible content.
 
 ## Responsive Behavior
 
