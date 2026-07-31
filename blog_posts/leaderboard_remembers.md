@@ -60,7 +60,7 @@ Showing a model's history required teaching Brain-Score to remember its own scor
 
 That meant rebuilding the benchmark tree over time, determining which benchmarks counted in each month, handling missing scores, and rolling everything back up into the single number people see on the leaderboard. In effect, the system does its usual math backwards through time. It has to know not just what the score was, but what version of the field that score belonged to.
 
-With that in place, the history becomes visible. On each model page, a "Trends over time" chart now shows how a model's average score and rank moved month by month. That alone lets the leaderboard show change rather than just the present. But it raises a better question immediately: if Brain-Score can show that something changed, can it also explain why?
+With that in place, the history becomes visible. On each model page, a "Historical Trend" chart now shows how a model's average score and rank moved month by month. That alone lets the leaderboard show change rather than just the present. But it raises a better question immediately: if Brain-Score can show that something changed, can it also explain why?
 
 That is what reason attribution does. Instead of stopping at a falling line or a rank drop, the system says what changed around the model at that moment. Did the model improve? Did a new benchmark enter the aggregate? Did the competitive field shift? Did the scoring landscape simply grow more demanding?
 
@@ -88,4 +88,4 @@ The chart shows the two trajectories side by side, but the real power is in the 
 
 The compare page completes the picture. The Wayback view shows the old grid. The model page follows one car across the season. The compare page shows the duel itself. It turns the leaderboard from a frozen finishing order into something closer to a replay, where you can finally watch the overtakes happen and ask why they happened when they did.
 
-Not every rank change is a story about a worse model. Sometimes it is a story about a growing, shifting scientific benchmark. All three views are live now: the Wayback slider on the leaderboard, "Trends over time" on every model page, and the two-model timeline on the compare page. Check it out now!
+Not every rank change is a story about a worse model. Sometimes it is a story about a growing, shifting scientific benchmark. All three views are live now: the Wayback slider on the leaderboard, "Historical Trend" on every model page, and the two-model timeline on the compare page. Check it out now!
