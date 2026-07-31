@@ -25,10 +25,9 @@ Order = safest/highest-value first.
       libs + grid works + no new errors; model/compare/competition still load them.
 - [x] 6a. Security: escaped < > & in the inline DJANGO_DATA blobs (script-context injection
       via user-influenced model/submitter names). Done + verified.
-- [~] 6b. json_script parse-perf: NOT DONE. Would move the 12MB inline JS-object-literal to
-      <script type=application/json> + JSON.parse (faster parse). Requires the view to pass
-      raw objects (not pre-dumped strings) and rework the DJANGO_DATA/domain-preservation flow.
-      Moderate change; deferred to avoid a fragile end-of-session rewrite.
+- [x] 6b. json_script parse-perf: DONE for row_data (the ~12MB, ~96% of payload). Shipped as
+      a <script type=application/json> island + JSON.parse; progressive-loader skips data
+      islands. Small blobs left inline (negligible remaining gain). Browser-verified.
 - [~] 7. Un-skip / de-flake 10 test_ag_grid.py assertions: NOT DONE. They hardcode
       data-dependent ranks and run against a live server; de-flaking = making them
       data-independent (separate test-refactor, no product-perf gain).
