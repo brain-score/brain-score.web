@@ -101,13 +101,13 @@ def get_attr(obj, attr, default=None):
     return getattr(obj, attr, default)
 
 
-def normalize_id(identifier):
-    if identifier in ('average_vision', 'average_vision_v0'):
+def normalize_id(identifier, domain="vision"):
+    if identifier in (f'average_{domain}', f'average_{domain}_v0'):
         return None  # treat neural and behavior as root-level
     return identifier.split('_v')[0] if identifier else None
 
 
-def build_benchmark_tree(benchmarks, parent_id=None):
+def build_benchmark_tree(benchmarks, parent_id=None, domain="vision"):
     tree = []
 
     for b in benchmarks:
@@ -117,13 +117,13 @@ def build_benchmark_tree(benchmarks, parent_id=None):
 
         b_parent_id = get_attr(b_parent, 'identifier') if b_parent else None
 
-        if normalize_id(b_parent_id) == normalize_id(parent_id):
+        if normalize_id(b_parent_id, domain) == normalize_id(parent_id, domain):
             node = {
                 'id': b_identifier,
                 'label': b_short_name
             }
 
-            children = build_benchmark_tree(benchmarks, parent_id=b_identifier)
+            children = build_benchmark_tree(benchmarks, parent_id=b_identifier, domain=domain)
             if children:
                 node['children'] = children
 
@@ -181,14 +181,6 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     """
     # Get the base context (with user context via decorator)
     context = get_context(user=user, domain=domain, show_public=show_public, force_user_cache=force_user_cache)
-
-    # DEBUG: Check how many models we got
-    models = context.get('models', [])
-    logger.warning(f"DEBUG get_ag_grid_context: got {len(models)} models from get_context")
-    if models:
-        logger.warning(f"DEBUG get_ag_grid_context: first model has {len(models[0].scores) if hasattr(models[0], 'scores') and models[0].scores else 0} scores")
-        if hasattr(models[0], 'scores') and models[0].scores and len(models[0].scores) > 0:
-            logger.warning(f"DEBUG get_ag_grid_context: first score keys: {list(models[0].scores[0].keys())}")
 
     # Extract model metadata for filters
     model_metadata = {
@@ -431,16 +423,17 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             else:
                 display_value = raw_score
 
-            # Store only the score data - benchmark citation data moved to separate map
-            rd[vid] = {
-                'value': display_value,
-                'complete': score.get('is_complete', True),
-                'timestamp': score.get('end_timestamp'),
-                # Wayback machine: version timeline data
-                'version_valid_from': score.get('version_valid_from'),
-                'version_valid_to': score.get('version_valid_to'),
-                'historical_versions': score.get('historical_versions')
-            }
+            # Only the value is always present; wayback/timeline fields are omitted when
+            # empty so ~88k cells don't each carry null placeholders (frontend null-checks them).
+            cell = {'value': display_value}
+            for key, src in (('timestamp', 'end_timestamp'),
+                             ('version_valid_from', 'version_valid_from'),
+                             ('version_valid_to', 'version_valid_to'),
+                             ('historical_versions', 'historical_versions')):
+                val = score.get(src)
+                if val:
+                    cell[key] = val
+            rd[vid] = cell
         row_data.append(rd)
 
     # Build `column_defs` to show only root-level parents first,
@@ -486,17 +479,16 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
 
     # Build benchmark ID -> root parent mapping for color palette selection
     benchmark_root_parent_map = {}
+    bench_by_id = {b.identifier: b for b in context['benchmarks']}
 
     def find_root_parent(benchmark):
         """Find the root parent (top-level category) for a benchmark."""
         current = benchmark
         while current.parent:
-            parent_id = current.parent['identifier']
-            parent_obj = next((b for b in context['benchmarks'] if b.identifier == parent_id), None)
-            if parent_obj:
-                current = parent_obj
-            else:
+            parent_obj = bench_by_id.get(current.parent['identifier'])
+            if parent_obj is None:
                 break
+            current = parent_obj
         return current.identifier
 
     # Build the mapping for all benchmarks
@@ -654,22 +646,10 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmarkDataMetaMap'] = json.dumps(data_map) 
     context['benchmarkMetricMetaMap'] = json.dumps(metric_map)
 
-    layer_map = context.get('layer_mapping', {})
-
-    # now rebuild your model_metadata_map, merging in layer_mapping
-    model_meta_map = {}
-    for m in context['models']:
-        if not (hasattr(m, 'model_meta') and m.model_meta):
-            continue
-
-        # start from the existing metadata dict
-        meta = dict(m.model_meta)
-
-        # if this model has a .layers attribute, add it under "layer_mapping"
-        if hasattr(m, 'layers'):
-            meta['layer_mapping'] = m.layers
-
-        model_meta_map[m.name] = meta
+    # model_metadata_map feeds CSV export; layer_mapping was injected but never read, so drop it
+    model_meta_map = {m.name: dict(m.model_meta)
+                      for m in context['models']
+                      if hasattr(m, 'model_meta') and m.model_meta}
 
     # serialize out to JSON (and make sure all numpy types etc. are native Python)
     context['model_metadata_map'] = json.dumps(json_serializable(model_meta_map))
@@ -677,8 +657,8 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     context['benchmark_groups'] = json.dumps(make_benchmark_groups(context['benchmarks']))
     context['filter_options'] = json.dumps(filter_options)
     context['benchmark_metadata'] = json.dumps(benchmark_metadata_list)
-    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != 'average_vision_v0']
-    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks))
+    filtered_benchmarks = [b for b in context['benchmarks'] if b.identifier != f'average_{domain}_v0']
+    context['benchmark_tree'] = json.dumps(build_benchmark_tree(filtered_benchmarks, domain=domain))
 
     # Create benchmark bibtex map for citation export
     context['benchmark_bibtex_map'] = json.dumps(build_benchmark_bibtex_map(context['benchmarks']))
@@ -717,10 +697,22 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'citation_domain_url': context.get('citation_domain_url', ''),
         'citation_domain_title': context.get('citation_domain_title', ''),
         'citation_domain_bibtex': context.get('citation_domain_bibtex', ''),
-
-        # Compare tab data
-        'comparison_data': context.get('comparison_data', '[]'),
     }
+
+    # Escape script-context characters so a "</script>" inside any user-influenced value
+    # (e.g. a model or submitter name) cannot break out of the inline <script> that assigns
+    # window.DJANGO_DATA. The \uXXXX forms are valid JSON and parse back to the same data.
+    script_blob_keys = (
+        'row_data', 'column_defs', 'benchmark_groups', 'filter_options',
+        'benchmark_metadata', 'benchmark_tree', 'benchmark_ids', 'benchmark_bibtex_map',
+        'benchmarkStimuliMetaMap', 'benchmarkDataMetaMap', 'benchmarkMetricMetaMap',
+        'model_metadata_map',
+    )
+    for key in script_blob_keys:
+        minimal_context[key] = (minimal_context[key]
+                                .replace('<', '\\u003c')
+                                .replace('>', '\\u003e')
+                                .replace('&', '\\u0026'))
 
     return minimal_context
 

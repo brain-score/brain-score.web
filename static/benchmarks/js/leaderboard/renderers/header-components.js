@@ -91,7 +91,6 @@ function createSortIndicator(params, element, fontSize = '12px') {
 function updateColumnVisibility() {
   if (!window.globalGridApi || !window.benchmarkTree) return;
 
-  const hierarchyMap = buildHierarchyFromTree(window.benchmarkTree);
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
 
   // Get all columns
