@@ -199,6 +199,31 @@ def _load_focal_scored_new_leaves(model_id, domain, edges_map):
     return result # -> {'YYYY-MM': [leaf_ids]}
 
 
+def _load_scored_new_leaf_values(model_id, domain, edges_map):
+    """``{leaf_id: score_ceiled}`` at the leaf's first qualifying score, so the
+    compare narrative can say which of two models scored higher on it."""
+    kind = f'focal_scored_new_values:{model_id}'
+    cached, version = _trend_cache_get(kind, domain)
+    if cached is not None:
+        return cached
+    result = {}
+    all_added = sorted({leaf for added in edges_map.values() for leaf in (added or [])}) if edges_map else []
+    if all_added:
+        earliest = {}
+        rows = (Score.objects
+                .filter(model_id=model_id, benchmark__benchmark_type__identifier__in=all_added,
+                        end_timestamp__isnull=False, score_ceiled__isnull=False, score_ceiled__gt=0)
+                .values_list('benchmark__benchmark_type__identifier', 'score_ceiled', 'end_timestamp'))
+        for ident, sc, ts in rows:
+            if sc is None or (isinstance(sc, float) and np.isnan(sc)):
+                continue
+            if ident not in earliest or ts < earliest[ident][0]:
+                earliest[ident] = (ts, float(sc))
+        result = {ident: sc for ident, (_ts, sc) in earliest.items()}
+    _trend_cache_put(kind, domain, version, result)
+    return result
+
+
 def _load_new_models_by_month(domain):
     """``{'YYYY-MM': int}`` -> count of models entering the leaderboard each month
     (first non-zero MMA score lands in that month)."""
@@ -860,11 +885,31 @@ def _compare_focal_change_lines(i, dates, values, kind, display_name, edges_map,
     return lines
 
 
+def _scored_by_label(leaf, name_a, name_b, scored_a, scored_b, values_a, values_b):
+    """Who got a score on this newly added benchmark. When both did, order them
+    by their score on it (``A > B``) instead of listing them as ``A + B``."""
+    in_a, in_b = leaf in scored_a, leaf in scored_b
+    if not in_a and not in_b:
+        return 'neither'
+    if not in_b:
+        return name_a
+    if not in_a:
+        return name_b
+    va = (values_a or {}).get(leaf)
+    vb = (values_b or {}).get(leaf)
+    if va is None or vb is None:
+        return f'{name_a} + {name_b}'
+    if abs(va - vb) < 1e-9:
+        return f'{name_a} = {name_b}'
+    return f'{name_a} > {name_b}' if va > vb else f'{name_a} < {name_b}'
+
+
 def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
                              coverage_a=None, coverage_b=None,
                              new_leaf_counts=None, new_model_counts=None,
                              edges_map=None, mid_a=None, mid_b=None, rank_df=None,
-                             scored_new_a=None, scored_new_b=None):
+                             scored_new_a=None, scored_new_b=None,
+                             scored_values_a=None, scored_values_b=None):
     """Hover narrative at month index ``i`` comparing A and B at that point.
     When ``i > 0``, appends month-over-month change reasons per model (mirroring
     the single-model trend panel)."""
@@ -931,10 +976,9 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
             lines.append(f'{_plural(len(added), "new benchmark")} added this month (unscored count as 0):')
             cap = _COMPARE_COVERAGE_BULLET_CAP
             for b in added[:cap]:
-                who = []
-                if b in scored_a_set: who.append(name_a)
-                if b in scored_b_set: who.append(name_b)
-                lines.append(f'- {b} ({" + ".join(who) if who else "neither"})')
+                who = _scored_by_label(b, name_a, name_b, scored_a_set, scored_b_set,
+                                       scored_values_a, scored_values_b)
+                lines.append(f'- {b} ({who})')
             if len(added) > cap:
                 lines.append(f'... and {len(added) - cap} more.')
         elif not any_focal:
@@ -992,7 +1036,8 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
                                   coverage_a=None, coverage_b=None,
                                   new_leaf_counts=None, new_model_counts=None,
                                   edges_map=None, mid_a=None, mid_b=None, rank_df=None,
-                                  scored_new_a=None, scored_new_b=None):
+                                  scored_new_a=None, scored_new_b=None,
+                                  scored_values_a=None, scored_values_b=None):
     # Truncate the display copy only, so callers keep their full identifiers.
     name_a_disp = _truncate_sidebar_name(name_a)
     name_b_disp = _truncate_sidebar_name(name_b)
@@ -1022,6 +1067,7 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
             new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
             edges_map=edges_map, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
             scored_new_a=scored_new_a, scored_new_b=scored_new_b,
+            scored_values_a=scored_values_a, scored_values_b=scored_values_b,
         ),
     } for i in range(len(dates))]
     list_el = ('compare-score-attribution-list' if kind == 'score'
@@ -1175,6 +1221,8 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
         rank_df = _load_comparison_rank_df(mid_a, mid_b, domain)
         scored_new_a = _load_focal_scored_new_leaves(mid_a, domain, edges)
         scored_new_b = _load_focal_scored_new_leaves(mid_b, domain, edges)
+        scored_values_a = _load_scored_new_leaf_values(mid_a, domain, edges)
+        scored_values_b = _load_scored_new_leaf_values(mid_b, domain, edges)
 
         for kind in ('score', 'rank'):
             pair = _aligned_pair_series(mid_a, mid_b, domain, kind)
@@ -1195,6 +1243,7 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
                 new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
                 edges_map=edges, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
                 scored_new_a=scored_new_a, scored_new_b=scored_new_b,
+                scored_values_a=scored_values_a, scored_values_b=scored_values_b,
             )
             out[kind] = plot_json
         return out

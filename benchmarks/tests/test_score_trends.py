@@ -285,6 +285,21 @@ class TestComparisonTrendNarrative(BaseTestCase):
         self.assertIn('- Bench.IT (alpha)', lines)
         self.assertIn('- Bench.V1 (neither)', lines)
 
+    def test_score_hover_orders_models_scored_on_same_benchmark(self):
+        meta = self._meta(
+            'score', ['2026-05-31', '2026-06-30'],
+            [0.46, 0.55], [0.30, 0.29],
+            edges_map={'2026-05|2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_new_a={'2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_new_b={'2026-06': ['Bench.IT', 'Bench.V1', 'Bench.V4']},
+            scored_values_a={'Bench.IT': 0.6, 'Bench.V1': 0.2, 'Bench.V4': 0.4},
+            scored_values_b={'Bench.IT': 0.5, 'Bench.V1': 0.3, 'Bench.V4': 0.4},
+        )
+        lines = meta['points'][1]['lines']
+        self.assertIn('- Bench.IT (alpha > beta)', lines)
+        self.assertIn('- Bench.V1 (alpha < beta)', lines)
+        self.assertIn('- Bench.V4 (alpha = beta)', lines)
+
     def test_score_focal_line_reports_scored_of_added(self):
         meta = self._meta(
             'score', ['2026-05-31', '2026-06-30'],
