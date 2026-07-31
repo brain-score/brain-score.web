@@ -50,7 +50,7 @@ class TestModelMetadataTemplate(TestCase):
 
         self.assertIn("19</strong> verified", html)
         self.assertIn("7</strong> inferred", html)
-        self.assertIn("5</strong> undocumented", html)
+        self.assertIn("7</strong> undocumented", html)
         self.assertIn("model-sidebar-card", html)
 
     def test_model_page_uses_scoped_card_containers(self):
