@@ -92,6 +92,13 @@ class TestModelMetadataRepository(TestCase):
 
         self.assertFalse(metadata["lineage"]["has_relationships"])
 
+    def test_marks_empty_center_card(self):
+        empty_metadata = get_model_metadata("vision", "AlexNet_SIN_fov12")
+        populated_metadata = get_model_metadata("vision", "alexnet")
+
+        self.assertFalse(empty_metadata["has_card_content"])
+        self.assertTrue(populated_metadata["has_card_content"])
+
     def test_stops_recursive_lineage_at_cycle(self):
         models = {
             ("vision", "a"): {"identifier": "a", "display_name": "A"},
