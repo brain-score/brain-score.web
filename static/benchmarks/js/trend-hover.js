@@ -271,7 +271,30 @@
         requestAnimationFrame(resize);
     }
 
+    /* Brain-Score watermark, sized and placed like the compare-page charts in
+       compare_models.js (120x28 px, bottom-right of the plot area). */
+    var LOGO_PX = {w: 120, h: 28};
+
+    function applyLogo(plotEl, layout) {
+        if (!layout || typeof logo_url === 'undefined' || !logo_url) return layout;
+        var m = layout.margin || {};
+        var width = (plotEl && plotEl.offsetWidth) || 800;
+        var areaW = width - (m.l || 0) - (m.r || 0);
+        var areaH = (layout.height || 400) - (m.t || 0) - (m.b || 0);
+        if (areaW <= 0 || areaH <= 0) return layout;
+        layout.images = [{
+            source: logo_url,
+            xref: 'paper', yref: 'paper',
+            x: 0.98, y: 0.02,  // just clear of the x-axis
+            sizex: LOGO_PX.w / areaW, sizey: LOGO_PX.h / areaH,
+            xanchor: 'right', yanchor: 'bottom',
+            layer: 'above',
+        }];
+        return layout;
+    }
+
     window.BrainScoreTrendHover = {
+        applyLogo: applyLogo,
         renderAttributionList: renderAttributionList,
         eventTouchesPlot: eventTouchesPlot,
         nearestIndexFromMouseX: nearestIndexFromMouseX,

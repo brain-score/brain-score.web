@@ -16,6 +16,7 @@
     var bindPlotlyHover = H.bindPlotlyHover;
     var ensureHoldBar = H.ensureHoldBar;
     var wireResponsiveResize = H.wireResponsiveResize;
+    var applyLogo = H.applyLogo;
 
     var endpoint = (function () {
         var box = document.getElementById('compare-trend-box');
@@ -238,12 +239,12 @@
         }
         _showContent();
         if (haveScore && scoreEl) {
-            Plotly.react(scoreEl, payload.score.data, payload.score.layout, payload.score.config);
+            Plotly.react(scoreEl, payload.score.data, applyLogo(scoreEl, payload.score.layout), payload.score.config);
             _wireHover(scoreEl, payload.score, 'compare-score-attribution-list');
             wireResponsiveResize(scoreEl);
         }
         if (haveRank && rankEl) {
-            Plotly.react(rankEl, payload.rank.data, payload.rank.layout, payload.rank.config);
+            Plotly.react(rankEl, payload.rank.data, applyLogo(rankEl, payload.rank.layout), payload.rank.config);
             _wireHover(rankEl, payload.rank, 'compare-rank-attribution-list');
             wireResponsiveResize(rankEl);
         }

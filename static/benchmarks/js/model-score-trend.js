@@ -10,6 +10,7 @@
     var bindPlotlyHover = H.bindPlotlyHover;
     var ensureHoldBar = H.ensureHoldBar;
     var wireResponsiveResize = H.wireResponsiveResize;
+    var applyLogo = H.applyLogo;
 
     /** Set in initPlots when rank chart exists; used to wire hover after plot + tab are ready. */
     window.__brainScoreRankTrendSpec = null;
@@ -282,7 +283,7 @@
                 var scorePromise = Plotly.newPlot(
                     'model-score-trend-plot',
                     scoreSpec.data || [],
-                    scoreSpec.layout || {},
+                    applyLogo(scoreContainer, scoreSpec.layout || {}),
                     scoreSpec.config || { responsive: true }
                 );
                 function attachScore() {
@@ -309,7 +310,7 @@
                 var rankPromise = Plotly.newPlot(
                     'model-rank-trend-plot',
                     rankSpec.data || [],
-                    rankSpec.layout || {},
+                    applyLogo(rankContainer, rankSpec.layout || {}),
                     rankSpec.config || { responsive: true }
                 );
                 window.__brainScoreRankPlotReady = rankPromise || Promise.resolve();
