@@ -278,9 +278,7 @@
 
 
 
-{# Load leaderboard-specific JavaScript modules (bundled via compressor). url-state stays
-   outside the block because it is domain-conditional and offline compression renders
-   templates without the domain context. #}
+{# Leaderboard JS modules, bundled via compressor. url-state stays outside the block: it is domain-conditional and offline compression renders without the domain context. #}
 {% compress js %}
 <script src="{% static 'benchmarks/js/leaderboard/core/constants.js' %}"></script>
 <script src="{% static 'benchmarks/js/leaderboard/renderers/cell-renderers.js' %}"></script>
@@ -302,9 +300,7 @@
   <script src="{% static 'benchmarks/js/leaderboard/navigation/url-state.js' %}"></script>
 {% endif %}
 
-{# Pass Django data to JavaScript - using |safe since data is already JSON-serialized.
-   row_data is the large blob (~12MB); ship it as a JSON data island so the browser can
-   JSON.parse it, which is faster than parsing a JS object literal of that size. #}
+{# Pass Django data to JS (|safe: already JSON-serialized). row_data (~12MB) ships as a JSON data island so the browser can JSON.parse it, faster than parsing a JS object literal that large. #}
 <script type="application/json" id="ld-row-data">{{ row_data|safe }}</script>
 <script>
   window.DJANGO_DATA = {
