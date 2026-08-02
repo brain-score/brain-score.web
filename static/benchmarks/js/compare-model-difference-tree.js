@@ -113,6 +113,10 @@
         return flattened;
     }
 
+    function defaultCollapsed(node) {
+        return node.depth >= 2 || String(node.typeId).indexOf('behavior_') === 0;
+    }
+
     function escapeCsv(value) {
         var text = String(value === null || value === undefined ? '' : value);
         return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
@@ -198,6 +202,12 @@
                     row.appendChild(toggle);
                     childrenList = createElement(document, 'ul', 'model-difference-tree-list');
                     node.children.forEach(function (child) { childrenList.appendChild(renderNode(child)); });
+                    if (defaultCollapsed(node)) {
+                        childrenList.style.display = 'none';
+                        toggle.textContent = '\u25b6';
+                        toggle.setAttribute('aria-expanded', 'false');
+                        toggle.setAttribute('aria-label', 'Expand ' + node.label);
+                    }
                     toggle.addEventListener('click', function () {
                         var collapsed = childrenList.style.display !== 'none';
                         childrenList.style.display = collapsed ? 'none' : '';
@@ -269,6 +279,7 @@
     return {
         buildDifferenceTree: buildDifferenceTree,
         createDifferenceTree: createDifferenceTree,
+        defaultCollapsed: defaultCollapsed,
         differenceTreeToCsv: differenceTreeToCsv,
         displayLabel: displayLabel,
         flattenTree: flattenTree

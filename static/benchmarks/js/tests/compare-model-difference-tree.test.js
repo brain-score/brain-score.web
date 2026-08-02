@@ -43,3 +43,9 @@ test('exports readable difference-tree columns without ids', () => {
     assert.match(csv, /benchmark,parent,tree_level,shared_leaves,Model A,Model B,difference/);
     assert.equal(csv.includes('_id'), false);
 });
+
+test('collapses dense and behavioral branches by default', () => {
+    assert.equal(differenceTree.defaultCollapsed({depth: 2, typeId: 'V1'}), true);
+    assert.equal(differenceTree.defaultCollapsed({depth: 1, typeId: 'behavior_vision'}), true);
+    assert.equal(differenceTree.defaultCollapsed({depth: 1, typeId: 'neural_vision'}), false);
+});
