@@ -37,6 +37,8 @@ $(document).ready(function () {
 
     // Consistent logo size: 120x28 px (same as D3 chart)
     var LOGO_PX = {w: 120, h: 28};
+    var latestBranchRanks = [];
+    var latestRankNames = {nameA: '', nameB: ''};
 
     function logoSize(plotWidth, plotHeight, margins) {
         var areaW = plotWidth - (margins.l || 0) - (margins.r || 0);
@@ -580,8 +582,9 @@ $(document).ready(function () {
                 '<extra></extra>'
         };
 
-        var barMargins = {l: 220, t: 50, r: 20, b: 50};
         var barEl = document.getElementById('difference-bar-chart');
+        var barWidth = barEl.offsetWidth || 800;
+        var barMargins = {l: Math.min(220, Math.max(145, Math.round(barWidth * 0.34))), t: 50, r: 20, b: 50};
         var barLogo = logoSize(barEl.offsetWidth || 800, 650, barMargins);
 
         var layout = {
@@ -632,7 +635,7 @@ $(document).ready(function () {
     }
 
     // ---- Chart 3: Domain Summary (split violin plot) ----
-    function renderDomainSummary(data, nameA, nameB) {
+    function renderDomainSummary(data, nameA, nameB, modelIdA, modelIdB) {
         var domainStats = {};
         for (var i = 0; i < data.length; i++) {
             var d = data[i];
@@ -703,16 +706,45 @@ $(document).ready(function () {
             });
         }
 
-        var violinMargins = {t: 35, r: 20, l: 80, b: 50};
+        var categoryLabels = domains.slice();
+        var rankCore = window.CompareModelBranchRanksCore;
+        latestBranchRanks = [];
+        latestRankNames = {nameA: nameA, nameB: nameB};
+        if (rankCore && window.CompareDashboard && typeof compare_dashboard_data !== 'undefined') {
+            latestBranchRanks = rankCore.buildBranchRanks(
+                compare_dashboard_data.benchmarks,
+                window.CompareDashboard.getLatestComparisonData(),
+                compareDomain,
+                modelIdA,
+                modelIdB
+            );
+            var rankOverlay = rankCore.buildBranchRankOverlay(latestBranchRanks, {
+                nameA: nameA,
+                nameB: nameB
+            });
+            traces = traces.concat(rankOverlay.data);
+            categoryLabels = latestBranchRanks.map(function (row) { return row.benchmark; });
+            domains.forEach(function (domain) {
+                if (categoryLabels.indexOf(domain) === -1) categoryLabels.push(domain);
+            });
+        }
+
+        var violinMargins = {t: 35, r: latestBranchRanks.length ? 85 : 20, l: 80, b: 60};
         var violinEl = document.getElementById('domain-summary-chart');
-        var violinLogo = logoSize(violinEl.offsetWidth || 700, 400, violinMargins);
+        var violinLogo = logoSize(violinEl.offsetWidth || 700, 460, violinMargins);
 
         var layout = {
             font: PLOT_FONT,
+            height: 460,
             violinmode: 'overlay',
             yaxis: {title: {text: 'Score', font: {size: 14}}, range: [0, 1.05], tickfont: {size: 12}},
-            xaxis: {title: '', tickfont: {size: 12}},
-            legend: {orientation: 'h', y: -0.15},
+            xaxis: {
+                title: '',
+                categoryorder: 'array',
+                categoryarray: categoryLabels,
+                tickfont: {size: 12}
+            },
+            legend: {orientation: 'h', y: -0.18},
             margin: violinMargins,
             plot_bgcolor: 'white',
             images: [{
@@ -724,6 +756,7 @@ $(document).ready(function () {
                 layer: 'above'
             }]
         };
+        if (latestBranchRanks.length) layout.yaxis2 = rankOverlay.yaxis;
 
         Plotly.newPlot('domain-summary-chart', traces, layout);
     }
@@ -773,6 +806,7 @@ $(document).ready(function () {
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
+            latestBranchRanks = [];
             setModelEmpty(true);
             publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
@@ -783,6 +817,7 @@ $(document).ready(function () {
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
+            latestBranchRanks = [];
             setModelEmpty(true);
             publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
@@ -794,7 +829,7 @@ $(document).ready(function () {
         var stats = computeStatistics(data);
         renderScatterPlot(data, stats, nameA, nameB);
         renderDifferenceChart(data, nameA, nameB);
-        renderDomainSummary(data, nameA, nameB);
+        renderDomainSummary(data, nameA, nameB, modelIdA, modelIdB);
     }
 
     // ---- CSV download ----
@@ -833,6 +868,34 @@ $(document).ready(function () {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    });
+
+    $('#downloadModelDomainSVGButton').click(function () {
+        var chart = document.getElementById('domain-summary-chart');
+        if (!chart || !chart.data) return;
+        Plotly.downloadImage(chart, {
+            format: 'svg',
+            filename: 'brain-score-model-domain-distribution-and-ranks'
+        });
+    });
+
+    $('#downloadModelRankCSVButton').click(function () {
+        var rankCore = window.CompareModelBranchRanksCore;
+        if (!rankCore || !latestBranchRanks.length) return;
+        var csv = rankCore.branchRanksToCsv(
+            latestBranchRanks,
+            latestRankNames.nameA,
+            latestRankNames.nameB
+        );
+        var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'brain-score-model-rank-by-branch.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 
     // ---- Initialize ----

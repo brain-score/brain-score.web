@@ -397,70 +397,57 @@
                     </div>
                 </section>
 
-                <section class="box compare-analysis-panel">
-                    <div class="compare-analysis-heading">
-                        <div>
-                            <h3 class="subtitle is-4">Top benchmark differences</h3>
-                            <p class="help">See where the selected models differ most across their shared benchmarks.</p>
-                        </div>
-                    </div>
-                    <div id="difference-bar-chart" class="compare-analysis-plot" style="width: 100%; height: 650px;"></div>
-                </section>
-
                 <div class="columns is-variable is-4 compare-model-secondary-analyses">
                     <div class="column is-half">
-                <section id="model-difference-tree-panel" class="box compare-analysis-panel" aria-labelledby="model-difference-tree-title">
-                    <div class="compare-analysis-heading">
-                        <div>
-                            <h3 id="model-difference-tree-title" class="subtitle is-4">Model difference tree</h3>
-                            <p class="help">See whether score differences form a coherent benchmark branch. Engineering benchmarks are excluded.</p>
-                        </div>
-                    </div>
-                    <div class="model-difference-key" aria-label="Model difference legend">
-                        <span class="is-model-b"><i></i><strong id="model-difference-tree-b-label">Model B</strong> higher</span>
-                        <span class="is-model-a"><i></i><strong id="model-difference-tree-a-label">Model A</strong> higher</span>
-                    </div>
-                    <p id="model-difference-tree-summary" class="benchmark-correlation-summary" aria-live="polite"></p>
-                    <div id="model-difference-tree" class="model-difference-tree-surface" aria-live="polite"></div>
-                    <div id="model-difference-tree-empty" class="notification is-light">
-                        Select two models with at least three shared benchmark scores.
-                    </div>
-                    <p class="help compare-analysis-method">Bar direction shows which model scores higher; length shows the difference relative to the largest visible branch difference.</p>
-                    <div class="buttons are-small compare-analysis-downloads">
-                        <button id="model-difference-tree-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
-                    </div>
-                </section>
+                        <section class="box compare-analysis-panel">
+                            <div class="compare-analysis-heading">
+                                <div>
+                                    <h3 class="subtitle is-4">Top benchmark differences</h3>
+                                    <p class="help">See where the selected models differ most across their shared benchmarks.</p>
+                                </div>
+                            </div>
+                            <div id="difference-bar-chart" class="compare-analysis-plot" style="width: 100%; height: 650px;"></div>
+                        </section>
                     </div>
 
                     <div class="column is-half">
-                <section id="model-branch-rank-panel" class="box compare-analysis-panel" aria-labelledby="model-branch-rank-title">
-                    <div class="compare-analysis-heading">
-                        <div>
-                            <h3 id="model-branch-rank-title" class="subtitle is-4">Rank by benchmark branch</h3>
-                            <p class="help">Compare where each model ranks within the suite's official summary branches.</p>
-                        </div>
-                    </div>
-                    <div id="model-branch-rank-plot" class="compare-analysis-plot" aria-live="polite"></div>
-                    <div id="model-branch-rank-empty" class="notification is-light">
-                        Select two models with finite scores on a shared summary branch.
-                    </div>
-                    <p class="help compare-analysis-method">Each rank uses every current model with a finite score on that branch. Engineering branches are excluded.</p>
-                    <div class="buttons are-small compare-analysis-downloads">
-                        <button id="model-branch-rank-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
-                        <button id="model-branch-rank-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
-                    </div>
-                </section>
+                        <section id="model-difference-tree-panel" class="box compare-analysis-panel" aria-labelledby="model-difference-tree-title">
+                            <div class="compare-analysis-heading">
+                                <div>
+                                    <h3 id="model-difference-tree-title" class="subtitle is-4">Model difference tree</h3>
+                                    <p class="help">See whether score differences form a coherent benchmark branch. Engineering benchmarks are excluded.</p>
+                                </div>
+                            </div>
+                            <div class="model-difference-key" aria-label="Model difference legend">
+                                <span class="is-model-b"><i></i><strong id="model-difference-tree-b-label">Model B</strong> higher</span>
+                                <span class="is-model-a"><i></i><strong id="model-difference-tree-a-label">Model A</strong> higher</span>
+                            </div>
+                            <p id="model-difference-tree-summary" class="benchmark-correlation-summary" aria-live="polite"></p>
+                            <div id="model-difference-tree" class="model-difference-tree-surface" aria-live="polite"></div>
+                            <div id="model-difference-tree-empty" class="notification is-light">
+                                Select two models with at least three shared benchmark scores.
+                            </div>
+                            <p class="help compare-analysis-method">Bar direction shows which model scores higher; length shows the difference relative to the largest visible branch difference.</p>
+                            <div class="buttons are-small compare-analysis-downloads">
+                                <button id="model-difference-tree-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
-                <section class="box compare-analysis-panel">
+                <section id="model-domain-rank-panel" class="box compare-analysis-panel" aria-labelledby="model-domain-rank-title">
                     <div class="compare-analysis-heading">
                         <div>
-                            <h3 class="subtitle is-4">Score distribution by domain</h3>
-                            <p class="help">Compare each model's score distribution across benchmark domains.</p>
+                            <h3 id="model-domain-rank-title" class="subtitle is-4">Score distribution and branch rank</h3>
+                            <p class="help">Compare the selected models' leaf-score distributions and their standing within each official summary branch.</p>
                         </div>
                     </div>
-                    <div id="domain-summary-chart" class="compare-analysis-plot" style="width: 100%; height: 400px;"></div>
+                    <div id="domain-summary-chart" class="compare-analysis-plot" style="width: 100%; height: 460px;"></div>
+                    <p class="help compare-analysis-method">Split violins use the left score axis. Larger circles (Model A) and diamonds (Model B) use the reversed right rank axis; rank 1 is best. Engineering branches are excluded.</p>
+                    <div class="buttons are-small compare-analysis-downloads">
+                        <button id="downloadModelDomainSVGButton" class="button is-outlined" type="button">Download plot as SVG</button>
+                        <button id="downloadModelRankCSVButton" class="button is-outlined" type="button">Download rank data as CSV</button>
+                    </div>
                 </section>
             </div>
         </div>
@@ -492,7 +479,7 @@
             panelModels.style.display = showModels ? '' : 'none';
             if (remember) rememberTab(tab);
             if (showModels && typeof Plotly !== 'undefined') {
-                var ids = ['difference-bar-chart', 'domain-summary-chart', 'model-branch-rank-plot',
+                var ids = ['difference-bar-chart', 'domain-summary-chart',
                            'compare-score-trend-plot', 'compare-rank-trend-plot'];
                 for (var i = 0; i < ids.length; i++) {
                     var el = document.getElementById(ids[i]);

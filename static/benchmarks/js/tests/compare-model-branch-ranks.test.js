@@ -47,22 +47,24 @@ test('exports readable branch ranks without ids', () => {
     assert.equal(csv.includes('_id'), false);
 });
 
-test('scales the rank axis to the compared models', () => {
-    const plot = branchRanks.buildPlotlyBranchRanks([{
+test('builds a reversed secondary rank axis for the violin overlay', () => {
+    const overlay = branchRanks.buildBranchRankOverlay([{
         benchmark: 'Neural', rankA: 2, scoreA: 0.7,
         rankB: 6, scoreB: 0.6, eligibleModels: 120
     }], {nameA: 'Model A', nameB: 'Model B'});
 
-    assert.deepEqual(plot.layout.xaxis.range, [0.5, 6.5]);
-    assert.equal(plot.layout.xaxis.dtick, 1);
+    assert.deepEqual(overlay.yaxis.range, [6.5, 0.5]);
+    assert.equal(overlay.yaxis.overlaying, 'y');
+    assert.equal(overlay.data[0].yaxis, 'y2');
+    assert.deepEqual(overlay.data[0].x, ['Neural']);
 });
 
 test('uses the comparison page model colors', () => {
-    const plot = branchRanks.buildPlotlyBranchRanks([{
+    const overlay = branchRanks.buildBranchRankOverlay([{
         benchmark: 'Neural', rankA: 2, scoreA: 0.7,
         rankB: 6, scoreB: 0.6, eligibleModels: 120
     }], {nameA: 'Model A', nameB: 'Model B'});
 
-    assert.equal(plot.data[1].marker.color, '#45C676');
-    assert.equal(plot.data[2].marker.color, '#47B7DE');
+    assert.equal(overlay.data[0].marker.color, '#45C676');
+    assert.equal(overlay.data[1].marker.color, '#47B7DE');
 });
