@@ -17,12 +17,20 @@ $(document).ready(function () {
         'Behavioral': '#984ea3',
         'Engineering': '#8c564b',
         'Neural': '#7f7f7f',
-        'Average Vision': '#17becf'
+        'Average Vision': '#17becf',
+        'Average Language': '#17becf'
     };
 
     // Domains shown by default (others start hidden via legendonly)
-    var DEFAULT_VISIBLE = {'V1': true, 'V2': true, 'V4': true, 'IT': true, 'Behavioral': true};
-    var DOMAIN_ORDER = ['V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering', 'Neural', 'Average Vision'];
+    var compareDomain = (typeof compare_dashboard_data !== 'undefined')
+        ? compare_dashboard_data.domain
+        : 'vision';
+    var DEFAULT_VISIBLE = compareDomain === 'language'
+        ? {'Neural': true, 'Behavioral': true}
+        : {'V1': true, 'V2': true, 'V4': true, 'IT': true, 'Behavioral': true};
+    var DOMAIN_ORDER = compareDomain === 'language'
+        ? ['Neural', 'Behavioral', 'Engineering', 'Average Language']
+        : ['V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering', 'Neural', 'Average Vision'];
 
     // Shared font to match compare-benchmarks (D3) tab
     var PLOT_FONT = {family: "'Open Sans', Arial, sans-serif", size: 14, color: 'black'};
@@ -829,10 +837,16 @@ $(document).ready(function () {
             selectedB = window.CompareDashboard.getUrlParam('model_b');
         }
         if (firstInitialization && !selectedA && !selectedB) {
-            var defaultA = models.find(function (model) { return model.name === DEFAULT_MODEL_A; });
-            var defaultB = models.find(function (model) { return model.name === DEFAULT_MODEL_B; });
-            selectedA = defaultA ? defaultA.id : null;
-            selectedB = defaultB ? defaultB.id : null;
+            if (compareDomain === 'language' && window.CompareDashboard) {
+                var topRankedIds = window.CompareDashboard.getTopRankedModelIds(2);
+                selectedA = topRankedIds[0] || null;
+                selectedB = topRankedIds[1] || null;
+            } else {
+                var defaultA = models.find(function (model) { return model.name === DEFAULT_MODEL_A; });
+                var defaultB = models.find(function (model) { return model.name === DEFAULT_MODEL_B; });
+                selectedA = defaultA ? defaultA.id : null;
+                selectedB = defaultB ? defaultB.id : null;
+            }
         }
 
         initDropdowns(models, selectedA, selectedB);

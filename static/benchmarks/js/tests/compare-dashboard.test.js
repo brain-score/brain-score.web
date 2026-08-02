@@ -134,6 +134,17 @@ test('filters the benchmark cohort by an inclusive completedness threshold', () 
     );
 });
 
+test('selects the top two ranked models for language comparison defaults', () => {
+    const modelIds = dashboard.topRankedModelIds([
+        {model_id: 4, model: 'unranked', rank: null},
+        {model_id: 3, model: 'third', rank: 3},
+        {model_id: 2, model: 'second', rank: 2},
+        {model_id: 1, model: 'first', rank: 1}
+    ], 2);
+
+    assert.deepEqual(modelIds, [1, 2]);
+});
+
 test('calculates completedness from the two selected benchmark subtrees', () => {
     const data = addLaterNeuralLeaf(payload());
     data.models.push({

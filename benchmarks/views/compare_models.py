@@ -16,6 +16,10 @@ _DOMAIN_MARKERS = {
     "behavior_vision": "Behavioral",
     "engineering_vision": "Engineering",
     "average_vision": "Average Vision",
+    "neural_language": "Neural",
+    "behavior_language": "Behavioral",
+    "engineering_language": "Engineering",
+    "average_language": "Average Language",
 }
 
 _VERSION_SUFFIX = re.compile(r"_v(?P<version>\d+)$")
@@ -26,7 +30,7 @@ def _build_benchmark_domain_map(benchmarks: List[FinalBenchmarkContext]) -> Dict
     Map every benchmark's versioned identifier to a display domain.
 
     Walks the parent chain for every benchmark (leaves and parents) to find
-    the first domain marker ancestor (V1/V2/V4/IT/behavior_vision/engineering_vision).
+    the first neural, behavioral, engineering, or domain-average ancestor.
     comparison_data includes scores for parent aggregates too, so we must
     classify all of them -- not just leaves.
     """

@@ -129,6 +129,7 @@
                 </section>
             </div>
 
+            {% if domain == 'vision' %}
             <div class="column">
                 <aside class="benchmark-scatter-examples-panel" aria-labelledby="benchmark-scatter-examples-title">
                     <div class="benchmark-scatter-examples-heading">
@@ -199,6 +200,7 @@
                     </div>
                 </aside>
             </div>
+            {% endif %}
         </div>
 
         <section id="benchmark-correlation-explorer" class="box compare-analysis-panel benchmark-correlation-explorer" aria-labelledby="benchmark-correlation-title">
@@ -247,7 +249,7 @@
                     <div class="compare-analysis-heading">
                         <div>
                             <h2 id="model-compare-title" class="subtitle is-4">Model comparison</h2>
-                            <p class="help">Choose two models to compare their shared benchmark scores and historical performance.</p>
+                            <p class="help">Choose two models to compare their shared benchmark scores.</p>
                         </div>
                     </div>
 
@@ -297,6 +299,7 @@
                     </div>
                 </section>
 
+                {% if domain == 'vision' %}
                 {# Two-model overlaid trend; fetched on demand by compare-trend.js. #}
                 <section class="box compare-analysis-panel" id="compare-trend-box"
                      data-trend-endpoint="{% url domain|add:'-compare-trend-pair' %}">
@@ -351,6 +354,7 @@
                 </section>
                 <script defer src="{% static 'benchmarks/js/trend-hover.js' %}"></script>
                 <script defer src="{% static 'benchmarks/js/compare-trend.js' %}"></script>
+                {% endif %}
 
                 <section class="box compare-analysis-panel">
                     <div class="compare-analysis-heading">

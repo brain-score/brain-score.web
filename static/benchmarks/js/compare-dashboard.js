@@ -89,6 +89,20 @@
         });
     }
 
+    function topRankedModelIds(rows, limit) {
+        var maximum = Math.max(0, Number(limit) || 0);
+        return (rows || []).filter(function (row) {
+            var rank = Number(row.rank);
+            return Number.isFinite(rank) && rank > 0;
+        }).sort(function (left, right) {
+            return Number(left.rank) - Number(right.rank) ||
+                String(left.model).localeCompare(String(right.model)) ||
+                String(left.model_id).localeCompare(String(right.model_id));
+        }).slice(0, maximum).map(function (row) {
+            return row.model_id;
+        });
+    }
+
     function completenessLeavesForSelection(
         benchmarks,
         benchmarkById,
@@ -370,6 +384,9 @@
             getResolved: function () { return resolved; },
             getComparisonData: function () { return resolved.rows; },
             getLatestComparisonData: function () { return latestResolved.rows; },
+            getTopRankedModelIds: function (limit) {
+                return topRankedModelIds(latestResolved.rows, limit);
+            },
             getAvailableData: function () { return resolved.availableRows; },
             getEligibleModels: function () {
                 return resolved.rows.map(function (row) {
@@ -585,6 +602,7 @@
         dateToUtcDay: dateToUtcDay,
         endOfUtcDay: endOfUtcDay,
         filterRowsByCompleteness: filterRowsByCompleteness,
+        topRankedModelIds: topRankedModelIds,
         numericScore: numericScore,
         resolveCohort: resolveCohort,
         createDashboard: createDashboard,

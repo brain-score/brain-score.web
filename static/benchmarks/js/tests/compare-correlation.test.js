@@ -44,6 +44,18 @@ function rows() {
     });
 }
 
+function languageBenchmarks() {
+    return [
+        {id: 'average_language_v0', type_id: 'average_language', label: 'average_language', parent_id: null, is_leaf: false, is_engineering: false},
+        {id: 'neural_language_v0', type_id: 'neural_language', label: 'neural_language', parent_id: 'average_language_v0', is_leaf: false, is_engineering: false},
+        {id: 'language-neural_v0', type_id: 'language-neural', label: 'Language neural', parent_id: 'neural_language_v0', is_leaf: true, is_engineering: false},
+        {id: 'behavior_language_v0', type_id: 'behavior_language', label: 'behavior_language', parent_id: 'average_language_v0', is_leaf: false, is_engineering: false},
+        {id: 'language-behavior_v0', type_id: 'language-behavior', label: 'Language behavior', parent_id: 'behavior_language_v0', is_leaf: true, is_engineering: false},
+        {id: 'engineering_language_v0', type_id: 'engineering_language', label: 'engineering_language', parent_id: null, is_leaf: false, is_engineering: true},
+        {id: 'language-engineering_v0', type_id: 'language-engineering', label: 'Language engineering', parent_id: 'engineering_language_v0', is_leaf: true, is_engineering: true}
+    ];
+}
+
 test('defaults to neural, region, and behavioral axes and deselects engineering', () => {
     const items = benchmarks();
     const modes = correlation.createDefaultModes(items);
@@ -57,6 +69,18 @@ test('defaults to neural, region, and behavioral axes and deselects engineering'
     assert.equal(modes['v1-a_v0'], correlation.HIDE);
     assert.equal(modes['engineering_vision_v0'], correlation.DESELECT);
     assert.equal(modes['engineering-a_v0'], correlation.DESELECT);
+});
+
+test('defaults language axes to neural and behavioral aggregates', () => {
+    const items = languageBenchmarks();
+    const modes = correlation.createDefaultModes(items);
+
+    assert.equal(modes.average_language_v0, correlation.HIDE);
+    assert.equal(modes.neural_language_v0, correlation.SELECT);
+    assert.equal(modes.behavior_language_v0, correlation.SELECT);
+    assert.equal(modes['language-neural_v0'], correlation.HIDE);
+    assert.equal(modes.engineering_language_v0, correlation.DESELECT);
+    assert.equal(correlation.displayLabel(items[0]), 'Language');
 });
 
 test('select all includes active non-engineering benchmarks only', () => {

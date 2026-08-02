@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from benchmarks.views.compare_models import (
+    _build_benchmark_domain_map,
     _build_compare_dashboard_payload,
     _build_model_metadata,
 )
@@ -83,6 +84,22 @@ class TestCompareDashboardPayload(SimpleTestCase):
         self.assertEqual(set(metadata), {"1", "2"})
         self.assertEqual(metadata["1"]["name"], "same-name")
         self.assertEqual(metadata["2"]["name"], "same-name")
+
+    def test_language_benchmarks_use_language_domain_groups(self):
+        benchmarks = [
+            self._benchmark("average_language", children=2),
+            self._benchmark(
+                "neural_language", parent="average_language", children=1
+            ),
+            self._benchmark("ExampleLanguage", parent="neural_language"),
+            self._benchmark("engineering_language", children=1),
+            self._benchmark("SyntaxGym", parent="engineering_language"),
+        ]
+
+        mapping = _build_benchmark_domain_map(benchmarks)
+
+        self.assertEqual(mapping["ExampleLanguage_v0"], "Neural")
+        self.assertEqual(mapping["SyntaxGym_v0"], "Engineering")
 
     @patch("benchmarks.views.compare.render")
     @patch("benchmarks.views.compare.get_datetime_range")

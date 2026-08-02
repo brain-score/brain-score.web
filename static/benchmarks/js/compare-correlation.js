@@ -243,7 +243,11 @@
             average_vision: 'Vision',
             neural_vision: 'Neural',
             behavior_vision: 'Behavioral',
-            engineering_vision: 'Engineering'
+            engineering_vision: 'Engineering',
+            average_language: 'Language',
+            neural_language: 'Neural',
+            behavior_language: 'Behavioral',
+            engineering_language: 'Engineering'
         };
         return labels[benchmark.type_id] || benchmark.label || benchmark.type_id;
     }
@@ -582,7 +586,7 @@
                 parentId = hierarchy.parentById[parentId];
             }
             collapsed[benchmark.id] = depth >= 2 || benchmark.is_engineering ||
-                benchmark.type_id === 'behavior_vision';
+                benchmark.type_id.indexOf('behavior_') === 0;
         });
 
         function renderNode(benchmarkId) {
