@@ -756,7 +756,7 @@ $(document).ready(function () {
             images: [{
                 source: logo_url,
                 xref: 'paper', yref: 'paper',
-                x: 1, y: 0,
+                x: 1, y: 0.04,
                 sizex: violinLogo.sizex, sizey: violinLogo.sizey,
                 xanchor: 'right', yanchor: 'bottom',
                 layer: 'above'
