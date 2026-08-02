@@ -486,6 +486,123 @@
   &.is-deselect.is-active
     background: #69756e
 
+.model-difference-key
+  align-items: center
+  color: #536159
+  display: flex
+  font-size: .75rem
+  gap: 1.25rem
+  justify-content: center
+  margin-bottom: .75rem
+
+  span
+    align-items: center
+    display: inline-flex
+    gap: .35rem
+
+  i
+    border-radius: 999px
+    display: inline-block
+    height: .55rem
+    width: 1.5rem
+
+  .is-model-a i
+    background: #078930
+
+  .is-model-b i
+    background: #76529b
+
+.model-difference-tree-surface
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  max-height: 680px
+  overflow: auto
+  padding: .85rem
+
+.model-difference-tree-list
+  list-style: none
+  margin: 0
+  padding-left: 1rem
+
+  &.is-root
+    padding-left: 0
+
+.model-difference-node
+  margin: .16rem 0
+
+.model-difference-node-row
+  align-items: center
+  display: grid
+  gap: .45rem
+  grid-template-columns: 1.1rem minmax(10rem, 1fr) 4.5rem minmax(150px, 240px) 4.5rem
+  min-height: 2rem
+
+.model-difference-toggle,
+.model-difference-toggle-spacer
+  align-items: center
+  background: transparent
+  border: 0
+  color: #536159
+  display: inline-flex
+  font-size: .7rem
+  height: 1.5rem
+  justify-content: center
+  padding: 0
+  width: 1.1rem
+
+.model-difference-toggle
+  cursor: pointer
+
+.model-difference-node-label
+  color: #26342d
+  font-size: .75rem
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.model-difference-leaf-count
+  color: #738079
+  font-size: .65rem
+  text-align: right
+
+.model-difference-track
+  background: #edf2ee
+  border-radius: 999px
+  height: .7rem
+  overflow: hidden
+  position: relative
+
+.model-difference-center-line
+  background: #9ba7a0
+  bottom: 0
+  left: 50%
+  position: absolute
+  top: 0
+  width: 1px
+
+.model-difference-bar
+  bottom: 0
+  position: absolute
+  top: 0
+
+  &.is-model-a
+    background: #078930
+
+  &.is-model-b
+    background: #76529b
+
+.model-difference-value
+  font-size: .72rem
+  font-variant-numeric: tabular-nums
+  text-align: right
+
+  &.is-model-a
+    color: #067528
+
+  &.is-model-b
+    color: #654482
+
 .benchmark-correlation-matrix-panel
   display: flex
   flex-direction: column
@@ -554,3 +671,10 @@ body.benchmark-correlation-expanded
 
     #scatter-legend
       padding: .5rem 1rem 1rem
+
+@media screen and (max-width: 800px)
+  .model-difference-node-row
+    grid-template-columns: 1.1rem minmax(8rem, 1fr) minmax(100px, 160px) 4rem
+
+  .model-difference-leaf-count
+    display: none

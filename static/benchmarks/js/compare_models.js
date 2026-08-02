@@ -748,6 +748,18 @@ $(document).ready(function () {
         if (isEmpty) $('#model-pair-summary').hide();
     }
 
+    function publishModelComparison(data, nameA, nameB, modelIdA, modelIdB) {
+        var detail = {
+            data: data || [],
+            nameA: nameA || '',
+            nameB: nameB || '',
+            modelIdA: modelIdA || null,
+            modelIdB: modelIdB || null
+        };
+        window.CompareModelsCurrent = detail;
+        document.dispatchEvent(new CustomEvent('compare-models:change', {detail: detail}));
+    }
+
     // ---- Main orchestrator ----
     function updateAllCharts() {
         var modelIdA = $('#model-x-select').val();
@@ -762,6 +774,7 @@ $(document).ready(function () {
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
             setModelEmpty(true);
+            publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
         }
 
@@ -771,10 +784,12 @@ $(document).ready(function () {
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
             setModelEmpty(true);
+            publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
         }
 
         setModelEmpty(false);
+        publishModelComparison(data, nameA, nameB, modelIdA, modelIdB);
         updatePairSummary(data);
         var stats = computeStatistics(data);
         renderScatterPlot(data, stats, nameA, nameB);
