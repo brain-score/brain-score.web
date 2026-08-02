@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pandas as pd
 from django.conf import settings
+from django.http import Http404
 from django.test import RequestFactory
 
 from .test_views import BaseTestCase
@@ -392,8 +393,8 @@ class TestComparisonTrendEndpoint(BaseTestCase):
         runs, so the endpoint can't be used to read private models by id."""
         from benchmarks.views.compare import trend_pair
         with patch('benchmarks.views.compare.load_and_build_comparison_trend') as agg:
-            resp = trend_pair(self._get(mid_a='999999999', mid_b='888888888'), domain='vision')
-            self.assertEqual(resp.status_code, 404)
+            with self.assertRaises(Http404):
+                trend_pair(self._get(mid_a='999999999', mid_b='888888888'), domain='vision')
             agg.assert_not_called()
 
 
