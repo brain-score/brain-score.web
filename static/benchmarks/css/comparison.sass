@@ -301,6 +301,17 @@
   flex: 0 0 auto
   margin-bottom: 0
 
+.compare-analysis-expand-button
+  align-items: center
+  display: inline-flex
+  height: 2rem
+  justify-content: center
+  padding: 0
+  width: 2rem
+
+  .icon
+    margin: 0 !important
+
 .compare-analysis-control-surface
   background: #f7faf8
   border: 1px solid #dfe8e2
@@ -359,6 +370,39 @@
 
 body.benchmark-stability-expanded
   overflow: hidden
+
+body.compare-analysis-plot-expanded
+  overflow: hidden
+
+.compare-analysis-panel.is-expanded-plot
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: auto
+  padding: 1.25rem
+  position: fixed
+  right: .75rem
+  top: .75rem
+  width: auto
+  z-index: 1200
+
+  .compare-analysis-heading
+    flex: 0 0 auto
+
+  .compare-analysis-plot
+    max-height: none
+    min-height: 0
+
+  .js-plotly-plot
+    max-width: 100%
+    width: 100% !important
+
+  .model-difference-tree-surface
+    flex: 1 1 auto
+    max-height: none
+    min-height: 0
 
 .benchmark-stability-panel.is-expanded
   bottom: .75rem

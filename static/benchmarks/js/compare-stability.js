@@ -323,8 +323,16 @@
             if (panel) panel.classList.toggle('is-expanded', expanded);
             if (document.body) document.body.classList.toggle('benchmark-stability-expanded', expanded);
             if (expandButton) {
-                expandButton.textContent = expanded ? 'Close' : 'Expand';
+                var expandAction = expanded ? 'Collapse' : 'Expand';
+                var expandIcon = expandButton.querySelector('i');
+                if (expandIcon) {
+                    expandIcon.className = expanded
+                        ? 'fa-solid fa-down-left-and-up-right-to-center'
+                        : 'fa-solid fa-up-right-and-down-left-from-center';
+                }
                 expandButton.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+                expandButton.setAttribute('aria-label', expandAction);
+                expandButton.title = expandAction;
             }
             // Rebuild when changing interaction modes so Plotly re-enables
             // hover immediately after leaving the compact static view.

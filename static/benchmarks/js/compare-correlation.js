@@ -772,8 +772,16 @@
             if (!explorer || !expand) return;
             explorer.classList.toggle('is-expanded', isExpanded);
             document.body.classList.toggle('benchmark-correlation-expanded', isExpanded);
-            expand.textContent = isExpanded ? 'Collapse' : 'Expand';
+            var expandAction = isExpanded ? 'Collapse' : 'Expand';
+            var expandIcon = expand.querySelector('i');
+            if (expandIcon) {
+                expandIcon.className = isExpanded
+                    ? 'fa-solid fa-down-left-and-up-right-to-center'
+                    : 'fa-solid fa-up-right-and-down-left-from-center';
+            }
             expand.setAttribute('aria-pressed', isExpanded ? 'true' : 'false');
+            expand.setAttribute('aria-label', expandAction);
+            expand.title = expandAction;
             renderMatrix();
         }
         if (expand) expand.addEventListener('click', function () {
