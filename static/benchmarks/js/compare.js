@@ -521,15 +521,27 @@ $(document).ready(function () {
         document.body.removeChild(a);
     });
 
-    // example selections for correlations in literature
-    $(".comparison_selector").click(function () {
-        $(this).children('div').show(); // unhide own contents
-        $(".comparison_selector").not(this).children('div').hide(); // hide others
-        const x = $(this).attr('data-benchmark-x');
-        const y = $(this).attr('data-benchmark-y');
+    function syncComparisonExampleSelection() {
+        const selectedX = $(xlabel_selector).val();
+        const selectedY = $(ylabel_selector).val();
+        $('.comparison_selector').each(function () {
+            const item = $(this);
+            const isActive = item.attr('data-benchmark-x') === selectedX &&
+                item.attr('data-benchmark-y') === selectedY;
+            item.toggleClass('is-active', isActive);
+            item.find('.benchmark-scatter-example-button').attr('aria-expanded', isActive);
+            item.find('.benchmark-scatter-example-detail').toggle(isActive);
+        });
+    }
+
+    // Example selections for correlations in literature.
+    $('.benchmark-scatter-example-button').click(function () {
+        const item = $(this).closest('.comparison_selector');
+        const x = item.attr('data-benchmark-x');
+        const y = item.attr('data-benchmark-y');
         $("#xlabel").val(x).trigger('change');
         $("#ylabel").val(y).trigger('change');
-        updatePlot();
     });
-    $(".comparison_selector").children('div').hide(); // hide all initially -- do here so that non-js still works
+    $(xlabel_selector + ', ' + ylabel_selector).on('change', syncComparisonExampleSelection);
+    syncComparisonExampleSelection();
 });

@@ -54,16 +54,77 @@
   .tick
     fill: #4A4A4A
 
-// pre-selectors
-.comparison_selector
-  cursor: pointer
+.benchmark-scatter-examples-panel
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  padding: .85rem
 
-  >p
-    border: 1px solid darkgray
-    border-radius: 20px
-    padding: 1em 2.5em
-    margin-top: 0.5em
-    margin-bottom: 0.5em
+.benchmark-scatter-examples-heading
+  border-bottom: 1px solid #dfe8e2
+  margin-bottom: .65rem
+  padding-bottom: .65rem
+
+  .subtitle
+    margin-bottom: .2rem
+
+.benchmark-scatter-example-list
+  display: grid
+  gap: .4rem
+
+.comparison_selector
+  min-width: 0
+
+.benchmark-scatter-example-button
+  align-items: center
+  background: #fff
+  border: 1px solid #ced9d2
+  border-radius: 5px
+  color: #26342d
+  cursor: pointer
+  display: grid
+  font: inherit
+  font-size: .78rem
+  gap: .4rem
+  grid-template-columns: 1rem minmax(0, 1fr)
+  line-height: 1.35
+  padding: .58rem .65rem
+  text-align: left
+  width: 100%
+
+  &:hover,
+  &:focus-visible
+    border-color: #45c676
+    outline: none
+
+.benchmark-scatter-example-toggle
+  color: #617069
+  font-size: .72rem
+  text-align: center
+  transition: transform .15s ease
+
+.comparison_selector.is-active
+  .benchmark-scatter-example-button
+    background: #078930
+    border-color: #078930
+    color: #fff
+    font-weight: 600
+
+  .benchmark-scatter-example-toggle
+    color: #fff
+    transform: rotate(90deg)
+
+.benchmark-scatter-example-detail
+  border-left: 2px solid #dfe8e2
+  color: #3f5147
+  font-size: .78rem
+  line-height: 1.5
+  margin: .55rem .35rem .35rem .5rem
+  padding: .05rem .55rem .1rem .75rem
+
+  a
+    overflow-wrap: anywhere
 
 .d3-tip
   line-height: 1
@@ -223,27 +284,93 @@
     display: block
     height: 100%
 
-.benchmark-correlation-explorer
+.compare-analysis-panel
   border-top: 4px solid #45c676
+
+.compare-analysis-heading
+  align-items: flex-start
+  display: flex
+  gap: 1rem
+  justify-content: space-between
+  margin-bottom: 1rem
+
+  .subtitle
+    margin-bottom: .25rem
+
+.compare-analysis-actions
+  flex: 0 0 auto
+  margin-bottom: 0
+
+.compare-analysis-control-surface
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  margin-bottom: 1rem
+  padding: .85rem
+
+.compare-analysis-plot
+  background: #fff
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  overflow: hidden
+  width: 100%
+
+.compare-analysis-method
+  margin-top: .65rem
+
+.compare-analysis-downloads
+  justify-content: flex-end
+  margin-bottom: 0
+  margin-top: .7rem
+
+  .button
+    font-size: .7rem
+
+.benchmark-correlation-explorer
   margin-top: 1.5rem
 
-  .benchmark-correlation-heading
-    align-items: flex-start
-    display: flex
-    gap: 1rem
-    justify-content: space-between
-    margin-bottom: 1rem
+.compare-benchmark-scatter-panel
+  margin-bottom: 0
 
-    .subtitle
-      margin-bottom: .25rem
-
-  .benchmark-correlation-actions
-    flex: 0 0 auto
+.benchmark-scatter-controls
+  .controls-container
     margin-bottom: 0
 
-.compare-benchmark-scatter-panel
-  border-top: 4px solid #45c676
-  margin-bottom: 0
+  .select2-container
+    width: 100% !important
+
+.model-compare-overview
+  .model-compare-controls
+    margin-bottom: 0
+
+  .select2-container
+    width: 100% !important
+
+.compare-versus
+  align-self: center
+  font-size: 1.2em
+  font-weight: bold
+  padding-top: 2em
+
+.compare-model-card
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  height: 100%
+  padding: .85rem
+
+.compare-model-scatter-surface
+  align-items: flex-start
+  display: flex
+  justify-content: center
+  padding: .5rem
+
+  #scatter-plot
+    min-width: 0
+
+  #scatter-legend
+    padding: 1em 0 0 1.5em
 
 .benchmark-correlation-layout
   display: grid
@@ -365,12 +492,7 @@
   margin-bottom: .65rem
 
 #benchmark-correlation-matrix
-  border: 1px solid #dfe8e2
-  border-radius: 7px
   height: clamp(500px, 64vh, 720px)
-  min-width: 0
-  overflow: hidden
-  width: 100%
 
 body.benchmark-correlation-expanded
   overflow: hidden
@@ -406,18 +528,6 @@ body.benchmark-correlation-expanded
     height: calc(100vh - 10rem)
     min-height: 0
 
-.benchmark-correlation-method
-  margin-top: .65rem
-
-.benchmark-correlation-downloads
-  justify-content: flex-end
-  margin-bottom: 0
-  margin-top: .7rem
-
-.download-container .button,
-.benchmark-correlation-downloads .button
-  font-size: .7rem
-
 @media screen and (max-width: 1100px)
   .compare-dashboard-kpis,
   .compare-analysis-summary,
@@ -432,3 +542,9 @@ body.benchmark-correlation-expanded
 
   #benchmark-correlation-tree
     max-height: 480px
+
+  .compare-model-scatter-surface
+    display: block
+
+    #scatter-legend
+      padding: .5rem 1rem 1rem
