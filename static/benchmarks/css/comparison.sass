@@ -330,11 +330,63 @@
 .benchmark-correlation-explorer
   margin-top: 1.5rem
 
+.benchmark-scatter-side-column
+  display: flex
+  flex-direction: column
+  min-width: 0
+
 .benchmark-stability-panel
-  margin-top: 1.5rem
+  margin-top: .75rem
+  padding: .8rem
+
+  .compare-analysis-heading
+    align-items: center
+    margin-bottom: .35rem
+
+  .subtitle
+    margin-bottom: 0
+
+  .benchmark-stability-intro,
+  .benchmark-stability-method,
+  .benchmark-stability-downloads
+    display: none
 
 #benchmark-correlation-stability
-  height: 360px
+  height: 230px
+
+body.benchmark-stability-expanded
+  overflow: hidden
+
+.benchmark-stability-panel.is-expanded
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: hidden
+  padding: 1.25rem
+  position: fixed
+  right: .75rem
+  top: .75rem
+  z-index: 1200
+
+  .compare-analysis-heading
+    margin-bottom: 1rem
+
+  .subtitle
+    font-size: 1.5rem
+
+  .benchmark-stability-intro,
+  .benchmark-stability-method
+    display: block
+
+  .benchmark-stability-downloads
+    display: flex
+
+  #benchmark-correlation-stability
+    flex: 1 1 auto
+    height: calc(100vh - 210px)
+    min-height: 500px
 
 #model-branch-rank-plot
   min-height: 360px

@@ -132,8 +132,8 @@
                 </section>
             </div>
 
-            {% if domain == 'vision' %}
-            <div class="column">
+            <div class="column benchmark-scatter-side-column">
+                {% if domain == 'vision' %}
                 <aside class="benchmark-scatter-examples-panel" aria-labelledby="benchmark-scatter-examples-title">
                     <div class="benchmark-scatter-examples-heading">
                         <h2 id="benchmark-scatter-examples-title" class="subtitle is-6">Example relationships</h2>
@@ -202,29 +202,30 @@
                         </div>
                     </div>
                 </aside>
-            </div>
-            {% endif %}
-        </div>
+                {% endif %}
 
-        <section id="benchmark-correlation-stability-panel" class="box compare-analysis-panel benchmark-stability-panel" aria-labelledby="benchmark-correlation-stability-title">
-            <div class="compare-analysis-heading">
-                <div>
-                    <h2 id="benchmark-correlation-stability-title" class="subtitle is-4">Correlation stability over time</h2>
-                    <p class="help">Track whether the selected benchmark relationship persists as the eligible model cohort grows.</p>
-                </div>
+                <section id="benchmark-correlation-stability-panel" class="box compare-analysis-panel benchmark-stability-panel" aria-labelledby="benchmark-correlation-stability-title">
+                    <div class="compare-analysis-heading">
+                        <div>
+                            <h2 id="benchmark-correlation-stability-title" class="subtitle is-6">Correlation stability</h2>
+                            <p class="help benchmark-stability-intro">A compact historical view of the selected relationship.</p>
+                        </div>
+                        <button id="benchmark-stability-expand" class="button is-small is-outlined" type="button" aria-pressed="false">Expand</button>
+                    </div>
+                    <div id="benchmark-correlation-stability" class="compare-analysis-plot" aria-live="polite"></div>
+                    <div id="benchmark-correlation-stability-empty" class="notification is-light" style="display:none;">
+                        No historical snapshot has at least two paired models with variable scores for this benchmark pair.
+                    </div>
+                    <p class="help compare-analysis-method benchmark-stability-method">
+                        Snapshots are quarterly before the latest year and monthly thereafter. They use the current completedness threshold and the same finite paired-score rule as the scatterplot. Select a point to update the wayback date.
+                    </p>
+                    <div class="buttons are-small compare-analysis-downloads benchmark-stability-downloads">
+                        <button id="benchmark-stability-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
+                        <button id="benchmark-stability-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
+                    </div>
+                </section>
             </div>
-            <div id="benchmark-correlation-stability" class="compare-analysis-plot" aria-live="polite"></div>
-            <div id="benchmark-correlation-stability-empty" class="notification is-light" style="display:none;">
-                No historical snapshot has at least two paired models with variable scores for this benchmark pair.
-            </div>
-            <p class="help compare-analysis-method">
-                Snapshots are quarterly before the latest year and monthly thereafter. They use the current completedness threshold and the same finite paired-score rule as the scatterplot. Select a point to update the wayback date.
-            </p>
-            <div class="buttons are-small compare-analysis-downloads">
-                <button id="benchmark-stability-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
-                <button id="benchmark-stability-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
-            </div>
-        </section>
+        </div>
 
         <section id="benchmark-correlation-explorer" class="box compare-analysis-panel benchmark-correlation-explorer" aria-labelledby="benchmark-correlation-title">
             <div class="compare-analysis-heading">

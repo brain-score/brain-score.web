@@ -114,11 +114,28 @@
         return rows.map(function (row) { return row.map(escapeCsv).join(','); }).join('\n');
     }
 
+    function compactDateTicks(dates) {
+        if (!dates.length) return [];
+        var indexes = dates.length < 3
+            ? dates.map(function (_date, index) { return index; })
+            : [0, Math.floor((dates.length - 1) / 2), dates.length - 1];
+        return indexes.filter(function (index, position) {
+            return indexes.indexOf(index) === position;
+        }).map(function (index) {
+            return {
+                value: dates[index],
+                label: dates[index].slice(0, 7)
+            };
+        });
+    }
+
     function buildPlotlyStability(series, options) {
         options = options || {};
+        var compact = !!options.compact;
         var dates = series.map(function (point) { return point.date; });
         var counts = series.map(function (point) { return point.n; });
         var correlations = series.map(function (point) { return point.r; });
+        var compactTicks = compactDateTicks(dates);
         return {
             data: [
                 {
@@ -144,27 +161,44 @@
                 }
             ],
             layout: {
-                height: 360,
-                margin: {t: 25, r: 70, b: 55, l: 65},
+                height: compact ? 230 : (options.expandedHeight || 640),
+                margin: compact ? {t: 8, r: 10, b: 30, l: 35} : {t: 45, r: 75, b: 65, l: 70},
                 paper_bgcolor: '#ffffff',
                 plot_bgcolor: '#ffffff',
                 font: {family: "'Open Sans', Arial, sans-serif", color: '#26342d'},
                 bargap: 0.08,
-                hovermode: 'x unified',
-                legend: {orientation: 'h', x: 0, y: 1.12},
-                xaxis: {title: 'Wayback date', gridcolor: '#edf1ee'},
+                hovermode: compact ? false : 'x unified',
+                showlegend: !compact,
+                legend: {orientation: 'h', x: 0, y: 1.08},
+                xaxis: compact ? {
+                    tickmode: 'array',
+                    tickvals: compactTicks.map(function (tick) { return tick.value; }),
+                    ticktext: compactTicks.map(function (tick) { return tick.label; }),
+                    tickfont: {size: 9},
+                    fixedrange: true,
+                    gridcolor: '#edf1ee'
+                } : {
+                    title: 'Wayback date',
+                    gridcolor: '#edf1ee'
+                },
                 yaxis: {
-                    title: 'Pearson r',
+                    title: compact ? '' : 'Pearson r',
                     range: [-1.05, 1.05],
+                    tickmode: compact ? 'array' : 'auto',
+                    tickvals: compact ? [-1, 0, 1] : undefined,
+                    tickfont: compact ? {size: 9} : undefined,
+                    fixedrange: compact,
                     zerolinecolor: '#cfd8d2',
                     gridcolor: '#edf1ee'
                 },
                 yaxis2: {
-                    title: 'Paired models',
+                    title: compact ? '' : 'Paired models',
                     overlaying: 'y',
                     side: 'right',
                     rangemode: 'tozero',
-                    showgrid: false
+                    showgrid: false,
+                    showticklabels: !compact,
+                    fixedrange: compact
                 },
                 shapes: options.currentDate ? [{
                     type: 'line',
@@ -176,7 +210,7 @@
                     yref: 'paper',
                     line: {color: '#26342d', width: 1, dash: 'dot'}
                 }] : [],
-                images: options.logoUrl ? [{
+                images: !compact && options.logoUrl ? [{
                     source: options.logoUrl,
                     xref: 'paper',
                     yref: 'paper',
@@ -192,7 +226,9 @@
             config: {
                 responsive: true,
                 displaylogo: false,
-                displayModeBar: true,
+                displayModeBar: !compact,
+                staticPlot: compact,
+                scrollZoom: !compact,
                 modeBarButtonsToRemove: ['lasso2d', 'select2d'],
                 toImageButtonOptions: {
                     format: 'svg',
@@ -220,11 +256,14 @@
         var empty = document.getElementById('benchmark-correlation-stability-empty');
         var downloadSvg = document.getElementById('benchmark-stability-download-svg');
         var downloadCsv = document.getElementById('benchmark-stability-download-csv');
+        var expandButton = document.getElementById('benchmark-stability-expand');
+        var panel = document.getElementById('benchmark-correlation-stability-panel');
         var browserRoot = document.defaultView || {};
         var plotly = browserRoot.Plotly;
         var latestSeries = [];
         var latestOptions = {};
         var seriesKey = null;
+        var expanded = false;
 
         function selection() {
             var first = document.getElementById('xlabel');
@@ -258,7 +297,9 @@
                 secondLabel: selected.secondLabel,
                 minimumCompleteness: state.minimumCompleteness,
                 currentDate: state.asOfDate,
-                logoUrl: browserRoot.logo_url
+                logoUrl: browserRoot.logo_url,
+                compact: !expanded,
+                expandedHeight: Math.max(500, (browserRoot.innerHeight || 800) - 210)
             };
             var hasCorrelation = latestSeries.some(function (point) { return point.r !== null; });
             if (empty) empty.style.display = hasCorrelation ? 'none' : '';
@@ -277,6 +318,22 @@
         }
 
         dashboard.subscribe(render);
+        function setExpanded(nextExpanded) {
+            expanded = nextExpanded;
+            if (panel) panel.classList.toggle('is-expanded', expanded);
+            if (document.body) document.body.classList.toggle('benchmark-stability-expanded', expanded);
+            if (expandButton) {
+                expandButton.textContent = expanded ? 'Close' : 'Expand';
+                expandButton.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+            }
+            if (dashboard.getState) render(null, dashboard.getState());
+        }
+        if (expandButton) expandButton.addEventListener('click', function () {
+            setExpanded(!expanded);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (expanded && event.key === 'Escape') setExpanded(false);
+        });
         if (downloadSvg) downloadSvg.addEventListener('click', function () {
             if (!latestSeries.length || !plotly) return;
             plotly.downloadImage(container, {
@@ -294,12 +351,16 @@
             );
         });
 
-        return {getSeries: function () { return latestSeries.slice(); }};
+        return {
+            getSeries: function () { return latestSeries.slice(); },
+            isExpanded: function () { return expanded; }
+        };
     }
 
     return {
         buildPlotlyStability: buildPlotlyStability,
         buildStabilitySeries: buildStabilitySeries,
+        compactDateTicks: compactDateTicks,
         createStabilityPlot: createStabilityPlot,
         stabilitySnapshotDates: stabilitySnapshotDates,
         pairedCorrelation: pairedCorrelation,

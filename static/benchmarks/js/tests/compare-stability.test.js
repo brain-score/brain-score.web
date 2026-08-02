@@ -46,3 +46,30 @@ test('exports readable stability data without benchmark ids', () => {
     assert.match(csv, /Neural,Behavioral,50/);
     assert.equal(csv.includes('_id'), false);
 });
+
+test('reduces compact timeline dates to three readable ticks', () => {
+    assert.deepEqual(stability.compactDateTicks([
+        '2020-03-31', '2021-03-31', '2022-03-31', '2023-03-31', '2024-03-31'
+    ]), [
+        {value: '2020-03-31', label: '2020-03'},
+        {value: '2022-03-31', label: '2022-03'},
+        {value: '2024-03-31', label: '2024-03'}
+    ]);
+});
+
+test('makes the compact timeline static and the expanded timeline interactive', () => {
+    const series = [
+        {date: '2025-03-31', r: 0.4, n: 20},
+        {date: '2026-08-02', r: 0.6, n: 40}
+    ];
+    const compact = stability.buildPlotlyStability(series, {compact: true});
+    const expanded = stability.buildPlotlyStability(series, {compact: false});
+
+    assert.equal(compact.config.staticPlot, true);
+    assert.equal(compact.config.displayModeBar, false);
+    assert.deepEqual(compact.layout.yaxis.tickvals, [-1, 0, 1]);
+    assert.equal(compact.layout.xaxis.tickvals.length, 2);
+    assert.equal(expanded.config.staticPlot, false);
+    assert.equal(expanded.config.displayModeBar, true);
+    assert.equal(expanded.layout.xaxis.title, 'Wayback date');
+});
