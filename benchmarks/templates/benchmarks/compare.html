@@ -85,35 +85,37 @@
 
         <div class="columns">
             <div class="comparison column is-two-thirds">
-                <div class="controls-container columns">
-                    <div class="xlabel-container searchable-dropdown column">
-                        <select id="xlabel">
-                            {% for benchmark in benchmarks %}
-                                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                            {% endfor %}
-                        </select>
+                <div class="box compare-benchmark-scatter-panel">
+                    <div class="controls-container columns">
+                        <div class="xlabel-container searchable-dropdown column">
+                            <select id="xlabel">
+                                {% for benchmark in benchmarks %}
+                                    <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <span id="vs" class="column is-narrow">vs</span>
+                        <div class="ylabel-container searchable-dropdown column">
+                            <select id="ylabel">
+                                {% for benchmark in benchmarks %}
+                                    <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <span id="vs" class="column is-narrow">vs</span>
-                    <div class="ylabel-container searchable-dropdown column">
-                        <select id="ylabel">
-                            {% for benchmark in benchmarks %}
-                                <option value="{{ benchmark.identifier }}">{{ benchmark.short_name|simplify_domain }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
 
-                <div id="comparison-scatter"></div>
-                <div id="benchmark-compare-empty" class="notification is-light" style="display:none;">
-                    Fewer than two models have valid scores for this benchmark pair in the selected cohort.
-                </div>
-                <div class="download-container columns">
-                    <div class="column">
-                        <button id="downloadSVGButton" class="button is-small is-outlined">Download plot as SVG</button>
+                    <div id="comparison-scatter"></div>
+                    <div id="benchmark-compare-empty" class="notification is-light" style="display:none;">
+                        Fewer than two models have valid scores for this benchmark pair in the selected cohort.
                     </div>
-                    <div class="column is-narrow"></div>
-                    <div class="column has-text-right">
-                        <button id="downloadCSVButton" class="button is-small is-outlined">Download data as CSV</button>
+                    <div class="download-container columns">
+                        <div class="column">
+                            <button id="downloadSVGButton" class="button is-small is-outlined">Download plot as SVG</button>
+                        </div>
+                        <div class="column is-narrow"></div>
+                        <div class="column has-text-right">
+                            <button id="downloadCSVButton" class="button is-small is-outlined">Download data as CSV</button>
+                        </div>
                     </div>
                 </div>
             </div>
