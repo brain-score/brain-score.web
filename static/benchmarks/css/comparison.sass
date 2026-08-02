@@ -391,6 +391,20 @@ body.benchmark-stability-expanded
 #model-branch-rank-plot
   min-height: 360px
 
+.compare-model-secondary-analyses
+  > .column
+    display: flex
+
+  .compare-analysis-panel
+    margin-bottom: 0
+    width: 100%
+
+  .model-difference-node-row
+    grid-template-columns: 1.1rem minmax(7rem, 1fr) minmax(100px, 150px) 4rem
+
+  .model-difference-leaf-count
+    display: none
+
 .compare-benchmark-scatter-panel
   margin-bottom: 0
 
@@ -562,10 +576,10 @@ body.benchmark-stability-expanded
     width: 1.5rem
 
   .is-model-a i
-    background: #078930
+    background: #45c676
 
   .is-model-b i
-    background: #76529b
+    background: #47b7de
 
 .model-difference-tree-surface
   background: #f7faf8
@@ -642,10 +656,10 @@ body.benchmark-stability-expanded
   top: 0
 
   &.is-model-a
-    background: #078930
+    background: #45c676
 
   &.is-model-b
-    background: #76529b
+    background: #47b7de
 
 .model-difference-value
   font-size: .72rem
@@ -653,10 +667,10 @@ body.benchmark-stability-expanded
   text-align: right
 
   &.is-model-a
-    color: #067528
+    color: #137d3a
 
   &.is-model-b
-    color: #654482
+    color: #247f9f
 
 .benchmark-correlation-matrix-panel
   display: flex

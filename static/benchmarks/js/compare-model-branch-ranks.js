@@ -25,6 +25,9 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
 
+    var MODEL_A_COLOR = '#45C676';
+    var MODEL_B_COLOR = '#47B7DE';
+
     function branchLabel(benchmark) {
         var labels = {
             average_vision: 'Overall Vision',
@@ -127,7 +130,7 @@
                     type: 'scatter',
                     mode: 'markers',
                     name: options.nameA || 'Model A',
-                    marker: {color: '#078930', size: 13, symbol: 'circle'},
+                    marker: {color: MODEL_A_COLOR, size: 13, symbol: 'circle'},
                     hovertemplate: '<b>%{y}</b><br>Rank: %{x}<br>Score: %{customdata[0]:.3f}<br>Eligible models: %{customdata[1]}<extra></extra>'
                 },
                 {
@@ -139,7 +142,7 @@
                     type: 'scatter',
                     mode: 'markers',
                     name: options.nameB || 'Model B',
-                    marker: {color: '#76529b', size: 13, symbol: 'diamond'},
+                    marker: {color: MODEL_B_COLOR, size: 13, symbol: 'diamond'},
                     hovertemplate: '<b>%{y}</b><br>Rank: %{x}<br>Score: %{customdata[0]:.3f}<br>Eligible models: %{customdata[1]}<extra></extra>'
                 }
             ],

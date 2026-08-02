@@ -56,3 +56,13 @@ test('scales the rank axis to the compared models', () => {
     assert.deepEqual(plot.layout.xaxis.range, [0.5, 6.5]);
     assert.equal(plot.layout.xaxis.dtick, 1);
 });
+
+test('uses the comparison page model colors', () => {
+    const plot = branchRanks.buildPlotlyBranchRanks([{
+        benchmark: 'Neural', rankA: 2, scoreA: 0.7,
+        rankB: 6, scoreB: 0.6, eligibleModels: 120
+    }], {nameA: 'Model A', nameB: 'Model B'});
+
+    assert.equal(plot.data[1].marker.color, '#45C676');
+    assert.equal(plot.data[2].marker.color, '#47B7DE');
+});
