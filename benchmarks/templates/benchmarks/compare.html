@@ -6,6 +6,7 @@
     <script defer src="{% static '/benchmarks/js/compare-correlation.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-stability.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-model-difference-tree.js' %}" charset="utf-8"></script>
+    <script defer src="{% static '/benchmarks/js/compare-model-branch-ranks.js' %}" charset="utf-8"></script>
 {% endblock %}
 
 {% block banner %}
@@ -427,6 +428,24 @@
                     </div>
                 </section>
 
+                <section id="model-branch-rank-panel" class="box compare-analysis-panel" aria-labelledby="model-branch-rank-title">
+                    <div class="compare-analysis-heading">
+                        <div>
+                            <h3 id="model-branch-rank-title" class="subtitle is-4">Rank by benchmark branch</h3>
+                            <p class="help">Compare where each model ranks within the suite's official summary branches.</p>
+                        </div>
+                    </div>
+                    <div id="model-branch-rank-plot" class="compare-analysis-plot" aria-live="polite"></div>
+                    <div id="model-branch-rank-empty" class="notification is-light">
+                        Select two models with finite scores on a shared summary branch.
+                    </div>
+                    <p class="help compare-analysis-method">Each rank uses every current model with a finite score on that branch. Engineering branches are excluded.</p>
+                    <div class="buttons are-small compare-analysis-downloads">
+                        <button id="model-branch-rank-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
+                        <button id="model-branch-rank-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
+                    </div>
+                </section>
+
                 <section class="box compare-analysis-panel">
                     <div class="compare-analysis-heading">
                         <div>
@@ -466,7 +485,7 @@
             panelModels.style.display = showModels ? '' : 'none';
             if (remember) rememberTab(tab);
             if (showModels && typeof Plotly !== 'undefined') {
-                var ids = ['difference-bar-chart', 'domain-summary-chart',
+                var ids = ['difference-bar-chart', 'domain-summary-chart', 'model-branch-rank-plot',
                            'compare-score-trend-plot', 'compare-rank-trend-plot'];
                 for (var i = 0; i < ids.length; i++) {
                     var el = document.getElementById(ids[i]);
