@@ -168,7 +168,7 @@ test('starts a positive-only Plotly color scale at the lowest correlation', () =
         [1, '#078930']
     ]);
     assert.equal(plot.layout.images[0].source, '/static/logo.png');
-    assert.ok(plot.layout.images[0].x > 1);
+    assert.equal(plot.layout.images[0].x, 1.04);
     assert.ok(plot.layout.images[0].y < 0.1);
     assert.equal(plot.config.displayModeBar, true);
     assert.equal(

@@ -481,7 +481,7 @@
             source: logoSource,
             xref: 'paper',
             yref: 'paper',
-            x: 1.08,
+            x: 1.04,
             y: 0.02,
             sizex: 0.17,
             sizey: 0.045,
