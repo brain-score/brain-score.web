@@ -5,6 +5,15 @@ import unittest
 
 
 class TestMaterializedViews(BaseTestCase):
+    def test_benchmark_metadata_view_includes_public_data_availability(self):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT pg_get_viewdef('mv_final_benchmark_context'::regclass)
+            """)
+            view_definition = cursor.fetchone()[0]
+
+        self.assertIn('data_publicly_available', view_definition)
+
     def test_refresh_materialized_views(self):
         """Test that the refresh_all_materialized_views() function executes successfully"""
         with connection.cursor() as cursor:
