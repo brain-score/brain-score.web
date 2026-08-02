@@ -86,7 +86,7 @@
             </div>
         </section>
 
-        <div class="columns">
+        <div class="columns benchmark-scatter-layout">
             <div class="comparison column is-two-thirds">
                 <section class="box compare-analysis-panel compare-benchmark-scatter-panel" aria-labelledby="benchmark-scatter-title">
                     <div class="compare-analysis-heading">
@@ -213,6 +213,7 @@
                         <button id="benchmark-stability-expand" class="button is-small is-outlined" type="button" aria-pressed="false">Expand</button>
                     </div>
                     <div id="benchmark-correlation-stability" class="compare-analysis-plot" aria-live="polite"></div>
+                    <p class="help benchmark-stability-compact-caption">Pearson r over time; bars show the paired-model cohort.</p>
                     <div id="benchmark-correlation-stability-empty" class="notification is-light" style="display:none;">
                         No historical snapshot has at least two paired models with variable scores for this benchmark pair.
                     </div>

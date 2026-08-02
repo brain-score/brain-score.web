@@ -351,6 +351,9 @@
   .benchmark-stability-downloads
     display: none
 
+.benchmark-stability-compact-caption
+  margin: .35rem .15rem 0
+
 #benchmark-correlation-stability
   height: 230px
 
@@ -382,6 +385,9 @@ body.benchmark-stability-expanded
 
   .benchmark-stability-downloads
     display: flex
+
+  .benchmark-stability-compact-caption
+    display: none
 
   #benchmark-correlation-stability
     flex: 1 1 auto
@@ -737,6 +743,29 @@ body.benchmark-correlation-expanded
 
     #scatter-legend
       padding: .5rem 1rem 1rem
+
+  .benchmark-scatter-layout
+    flex-wrap: wrap
+
+    > .comparison
+      flex: none
+      order: 1
+      width: 100%
+
+    > .benchmark-scatter-side-column
+      display: contents
+
+    .benchmark-stability-panel:not(.is-expanded)
+      flex: none
+      margin: .75rem
+      order: 2
+      width: calc(100% - 1.5rem)
+
+    .benchmark-scatter-examples-panel
+      flex: none
+      margin: .75rem
+      order: 3
+      width: calc(100% - 1.5rem)
 
 @media screen and (max-width: 800px)
   .model-difference-node-row

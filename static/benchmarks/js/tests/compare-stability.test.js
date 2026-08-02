@@ -71,5 +71,6 @@ test('makes the compact timeline static and the expanded timeline interactive', 
     assert.equal(compact.layout.xaxis.tickvals.length, 2);
     assert.equal(expanded.config.staticPlot, false);
     assert.equal(expanded.config.displayModeBar, true);
+    assert.equal(expanded.layout.hovermode, 'x unified');
     assert.equal(expanded.layout.xaxis.title, 'Wayback date');
 });

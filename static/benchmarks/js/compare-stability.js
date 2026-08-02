@@ -326,6 +326,12 @@
                 expandButton.textContent = expanded ? 'Close' : 'Expand';
                 expandButton.setAttribute('aria-pressed', expanded ? 'true' : 'false');
             }
+            // Rebuild when changing interaction modes so Plotly re-enables
+            // hover immediately after leaving the compact static view.
+            if (plotly && container) {
+                plotly.purge(container);
+                container.__stabilityClickBound = false;
+            }
             if (dashboard.getState) render(null, dashboard.getState());
         }
         if (expandButton) expandButton.addEventListener('click', function () {
