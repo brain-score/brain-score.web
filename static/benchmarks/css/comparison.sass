@@ -563,18 +563,27 @@ body.benchmark-stability-expanded
   color: #536159
   display: flex
   font-size: .75rem
-  gap: 1.25rem
+  gap: .75rem
   justify-content: center
   margin-bottom: .75rem
 
   span
     align-items: center
     display: inline-flex
+    flex: 1 1 0
     gap: .35rem
+    min-width: 0
+
+  strong
+    max-width: calc(100% - 4.5rem)
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
 
   i
     border-radius: 999px
     display: inline-block
+    flex: 0 0 auto
     height: .55rem
     width: 1.5rem
 

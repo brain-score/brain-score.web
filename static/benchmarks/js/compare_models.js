@@ -145,6 +145,12 @@ $(document).ready(function () {
         return name;
     }
 
+    function compactLabel(value, maximumLength) {
+        var text = String(value || '');
+        if (text.length <= maximumLength) return text;
+        return text.slice(0, maximumLength - 1) + '\u2026';
+    }
+
     // ---- Get benchmarks with valid scores for both models ----
     function latestComparisonRows() {
         return window.CompareDashboard ? window.CompareDashboard.getLatestComparisonData() : comparison_data;
@@ -462,8 +468,8 @@ $(document).ready(function () {
             font: PLOT_FONT,
             width: chartWidth,
             height: chartHeight,
-            xaxis: {title: {text: nameA, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
-            yaxis: {title: {text: nameB, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
+            xaxis: {title: {text: 'Model A score', font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
+            yaxis: {title: {text: 'Model B score', font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
             hovermode: 'closest',
             showlegend: false,
             margin: scatterMargins,
@@ -557,10 +563,10 @@ $(document).ready(function () {
     function renderDifferenceChart(data, nameA, nameB) {
         var sorted = data.slice().sort(function (a, b) {
             return Math.abs(b.diff) - Math.abs(a.diff);
-        }).slice(0, 40).reverse();
+        }).slice(0, 30).reverse();
 
         var trace = {
-            y: sorted.map(function (d) { return d.shortName; }),
+            y: sorted.map(function (d) { return compactLabel(d.shortName, 30); }),
             x: sorted.map(function (d) { return d.diff; }),
             type: 'bar',
             orientation: 'h',
@@ -584,26 +590,26 @@ $(document).ready(function () {
 
         var barEl = document.getElementById('difference-bar-chart');
         var barWidth = barEl.offsetWidth || 800;
-        var barMargins = {l: Math.min(220, Math.max(145, Math.round(barWidth * 0.34))), t: 50, r: 20, b: 50};
+        var barMargins = {l: Math.min(175, Math.max(135, Math.round(barWidth * 0.27))), t: 50, r: 20, b: 60};
         var barLogo = logoSize(barEl.offsetWidth || 800, 650, barMargins);
 
         var layout = {
             font: PLOT_FONT,
-            xaxis: {title: {text: 'Score Difference (' + nameA + ' minus ' + nameB + ')', font: {size: 14}}, zeroline: true, tickfont: {size: 12}},
-            yaxis: {automargin: true, tickfont: {size: 10}},
+            xaxis: {title: {text: 'Score difference (Model A minus Model B)', font: {size: 14}}, zeroline: true, tickfont: {size: 12}},
+            yaxis: {automargin: false, tickfont: {size: 10}},
             margin: barMargins,
             plot_bgcolor: 'white',
             annotations: [
                 {
                     x: 0, y: 1.05, xref: 'paper', yref: 'paper',
-                    text: '<b>\u25C0 ' + nameB + ' scores higher</b>',
-                    showarrow: false, font: {size: 11, color: '#555'},
+                    text: '<b>\u25C0 Model B higher</b>',
+                    showarrow: false, font: {size: 11, color: '#247f9f'},
                     xanchor: 'left'
                 },
                 {
                     x: 1, y: 1.05, xref: 'paper', yref: 'paper',
-                    text: '<b>' + nameA + ' scores higher \u25B6</b>',
-                    showarrow: false, font: {size: 11, color: '#555'},
+                    text: '<b>Model A higher \u25B6</b>',
+                    showarrow: false, font: {size: 11, color: '#137d3a'},
                     xanchor: 'right'
                 }
             ],
@@ -668,8 +674,8 @@ $(document).ready(function () {
                 x: ds.scoresA.map(function () { return dom; }),
                 text: ds.names,
                 type: 'violin',
-                name: nameA,
-                legendgroup: nameA,
+                name: 'Model A',
+                legendgroup: 'model-a',
                 showlegend: di === 0,
                 side: 'negative',
                 line: {color: '#45C676'},
@@ -689,8 +695,8 @@ $(document).ready(function () {
                 x: ds.scoresB.map(function () { return dom; }),
                 text: ds.names,
                 type: 'violin',
-                name: nameB,
-                legendgroup: nameB,
+                name: 'Model B',
+                legendgroup: 'model-b',
                 showlegend: di === 0,
                 side: 'positive',
                 line: {color: '#47B7DE'},
@@ -737,7 +743,7 @@ $(document).ready(function () {
             font: PLOT_FONT,
             height: 460,
             violinmode: 'overlay',
-            yaxis: {title: {text: 'Score', font: {size: 14}}, range: [0, 1.05], tickfont: {size: 12}},
+            yaxis: {title: {text: 'Score', font: {size: 14}}, range: [-0.03, 1.12], tickfont: {size: 12}},
             xaxis: {
                 title: '',
                 categoryorder: 'array',

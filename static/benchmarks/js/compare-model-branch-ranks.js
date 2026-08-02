@@ -83,11 +83,27 @@
     function buildBranchRankOverlay(branchRanks, options) {
         options = options || {};
         var labels = branchRanks.map(function (row) { return row.benchmark; });
+        var connectorX = [];
+        var connectorY = [];
+        branchRanks.forEach(function (row) {
+            connectorX.push(row.benchmark, row.benchmark, null);
+            connectorY.push(row.rankA, row.rankB, null);
+        });
         var maximumRank = Math.max.apply(null, branchRanks.map(function (row) {
             return Math.max(row.rankA, row.rankB);
         }).concat([2]));
         return {
             data: [
+                {
+                    x: connectorX,
+                    y: connectorY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    yaxis: 'y2',
+                    showlegend: false,
+                    hoverinfo: 'skip',
+                    line: {color: '#cdd6d0', width: 3}
+                },
                 {
                     x: labels,
                     y: branchRanks.map(function (row) { return row.rankA; }),
@@ -99,6 +115,7 @@
                     name: (options.nameA || 'Model A') + ' branch rank',
                     yaxis: 'y2',
                     showlegend: false,
+                    cliponaxis: false,
                     marker: {
                         color: MODEL_A_COLOR,
                         line: {color: '#ffffff', width: 1.5},
@@ -118,6 +135,7 @@
                     name: (options.nameB || 'Model B') + ' branch rank',
                     yaxis: 'y2',
                     showlegend: false,
+                    cliponaxis: false,
                     marker: {
                         color: MODEL_B_COLOR,
                         line: {color: '#ffffff', width: 1.5},
@@ -131,7 +149,7 @@
                 title: {text: 'Branch rank (1 is best)'},
                 overlaying: 'y',
                 side: 'right',
-                range: [maximumRank + 0.5, 0.5],
+                range: [maximumRank + 1, 0],
                 tick0: 1,
                 dtick: maximumRank <= 12 ? 1 : undefined,
                 showgrid: false,

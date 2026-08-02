@@ -117,6 +117,11 @@
         return node.depth >= 2 || String(node.typeId).indexOf('behavior_') === 0;
     }
 
+    function compactModelName(name) {
+        var text = String(name || '');
+        return text.length > 30 ? text.slice(0, 29) + '\u2026' : text;
+    }
+
     function escapeCsv(value) {
         var text = String(value === null || value === undefined ? '' : value);
         return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
@@ -181,8 +186,14 @@
                     ? sharedLeaves + ' shared non-engineering benchmark leaves; parent scores use equal-weighted child aggregation.'
                     : '';
             }
-            if (modelALabel) modelALabel.textContent = latestDetail.nameA || 'Model A';
-            if (modelBLabel) modelBLabel.textContent = latestDetail.nameB || 'Model B';
+            if (modelALabel) {
+                modelALabel.textContent = compactModelName(latestDetail.nameA || 'Model A');
+                modelALabel.title = latestDetail.nameA || 'Model A';
+            }
+            if (modelBLabel) {
+                modelBLabel.textContent = compactModelName(latestDetail.nameB || 'Model B');
+                modelBLabel.title = latestDetail.nameB || 'Model B';
+            }
             if (!hasData) return;
 
             var allNodes = flattenTree(latestTree);
@@ -278,6 +289,7 @@
 
     return {
         buildDifferenceTree: buildDifferenceTree,
+        compactModelName: compactModelName,
         createDifferenceTree: createDifferenceTree,
         defaultCollapsed: defaultCollapsed,
         differenceTreeToCsv: differenceTreeToCsv,

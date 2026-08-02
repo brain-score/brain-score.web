@@ -49,3 +49,12 @@ test('collapses dense and behavioral branches by default', () => {
     assert.equal(differenceTree.defaultCollapsed({depth: 1, typeId: 'behavior_vision'}), true);
     assert.equal(differenceTree.defaultCollapsed({depth: 1, typeId: 'neural_vision'}), false);
 });
+
+test('compacts long model names for the tree legend', () => {
+    const fullName = 'vit_large_patch14_clip_224:openai_ft_in1k';
+    const compact = differenceTree.compactModelName(fullName);
+
+    assert.equal(compact.length, 30);
+    assert.equal(compact.endsWith('\u2026'), true);
+    assert.equal(differenceTree.compactModelName('short-model'), 'short-model');
+});
