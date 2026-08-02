@@ -65,6 +65,17 @@ function addLaterNeuralLeaf(data) {
     return data;
 }
 
+test('defaults benchmark comparisons to neural versus behavior', () => {
+    assert.deepEqual(
+        dashboard.defaultComparisonBenchmarkTypes('vision'),
+        ['neural_vision', 'behavior_vision']
+    );
+    assert.deepEqual(
+        dashboard.defaultComparisonBenchmarkTypes('language'),
+        ['neural_language', 'behavior_language']
+    );
+});
+
 test('uses the latest benchmark version from the first version start date', () => {
     const oldCohort = dashboard.resolveCohort(payload(), {
         asOfDate: '2021-06-01'
