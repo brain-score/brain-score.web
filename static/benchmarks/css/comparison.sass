@@ -54,16 +54,77 @@
   .tick
     fill: #4A4A4A
 
-// pre-selectors
-.comparison_selector
-  cursor: pointer
+.benchmark-scatter-examples-panel
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  padding: .85rem
 
-  >p
-    border: 1px solid darkgray
-    border-radius: 20px
-    padding: 1em 2.5em
-    margin-top: 0.5em
-    margin-bottom: 0.5em
+.benchmark-scatter-examples-heading
+  border-bottom: 1px solid #dfe8e2
+  margin-bottom: .65rem
+  padding-bottom: .65rem
+
+  .subtitle
+    margin-bottom: .2rem
+
+.benchmark-scatter-example-list
+  display: grid
+  gap: .4rem
+
+.comparison_selector
+  min-width: 0
+
+.benchmark-scatter-example-button
+  align-items: center
+  background: #fff
+  border: 1px solid #ced9d2
+  border-radius: 5px
+  color: #26342d
+  cursor: pointer
+  display: grid
+  font: inherit
+  font-size: .78rem
+  gap: .4rem
+  grid-template-columns: 1rem minmax(0, 1fr)
+  line-height: 1.35
+  padding: .58rem .65rem
+  text-align: left
+  width: 100%
+
+  &:hover,
+  &:focus-visible
+    border-color: #45c676
+    outline: none
+
+.benchmark-scatter-example-toggle
+  color: #617069
+  font-size: .72rem
+  text-align: center
+  transition: transform .15s ease
+
+.comparison_selector.is-active
+  .benchmark-scatter-example-button
+    background: #078930
+    border-color: #078930
+    color: #fff
+    font-weight: 600
+
+  .benchmark-scatter-example-toggle
+    color: #fff
+    transform: rotate(90deg)
+
+.benchmark-scatter-example-detail
+  border-left: 2px solid #dfe8e2
+  color: #3f5147
+  font-size: .78rem
+  line-height: 1.5
+  margin: .55rem .35rem .35rem .5rem
+  padding: .05rem .55rem .1rem .75rem
+
+  a
+    overflow-wrap: anywhere
 
 .d3-tip
   line-height: 1
@@ -96,3 +157,675 @@
 .compare-layout
   max-width: 1500px
   margin: 0
+
+.compare-dashboard
+  border-top: 4px solid #45c676
+  margin-bottom: 1.5rem
+
+  .compare-dashboard-heading,
+  .compare-wayback-heading,
+  .compare-completeness-heading
+    align-items: flex-start
+    display: flex
+    justify-content: space-between
+    gap: 1rem
+
+  .compare-dashboard-heading
+    margin-bottom: 1rem
+
+    .subtitle
+      margin-bottom: .25rem
+
+  .compare-dashboard-controls
+    margin-bottom: .5rem
+
+  #compare-wayback-range
+    accent-color: #078930
+    cursor: pointer
+    width: 100%
+
+  #compare-completeness-number
+    display: inline-block
+    padding: .35rem .5rem
+    text-align: right
+    width: 5rem
+
+  #compare-completeness-range
+    accent-color: #078930
+    cursor: pointer
+    width: 100%
+
+  #compare-wayback-value
+    color: #26342d
+    font-size: .9rem
+    font-weight: 600
+    white-space: nowrap
+
+  .compare-slider-bounds
+    color: #6b756f
+    display: flex
+    font-size: .7rem
+    justify-content: space-between
+    margin-top: -.15rem
+
+.compare-dashboard-kpis,
+.compare-analysis-summary
+  display: grid
+  gap: .75rem
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+
+.compare-kpi,
+.compare-analysis-summary > div
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 6px
+  padding: .8rem 1rem
+
+  span
+    color: #617069
+    display: block
+    font-size: .75rem
+    letter-spacing: .02em
+    margin-bottom: .2rem
+    text-transform: uppercase
+
+  strong
+    color: #26342d
+    display: block
+    font-size: 1.15rem
+
+.compare-analysis-summary
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+  margin: .75rem 0 1.25rem
+
+  > div
+    text-align: center
+
+#model-pair-summary
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+
+.compare-completeness-details
+  margin-top: .9rem
+
+  summary
+    color: #3f5147
+    cursor: pointer
+    font-size: .85rem
+    font-weight: 600
+
+.compare-completeness-histogram
+  display: grid
+  gap: .35rem
+  margin-top: .75rem
+  max-width: 720px
+
+.compare-completeness-bin
+  align-items: center
+  display: grid
+  font-size: .75rem
+  gap: .65rem
+  grid-template-columns: 4.5rem minmax(8rem, 1fr) 2.5rem
+
+.compare-completeness-label,
+.compare-completeness-count
+  color: #536159
+
+.compare-completeness-count
+  text-align: right
+
+.compare-completeness-track
+  background: #e7ede9
+  border-radius: 999px
+  height: .55rem
+  overflow: hidden
+
+  > span
+    background: #45c676
+    display: block
+    height: 100%
+
+.compare-analysis-panel
+  border-top: 4px solid #45c676
+
+.compare-analysis-heading
+  align-items: flex-start
+  display: flex
+  gap: 1rem
+  justify-content: space-between
+  margin-bottom: 1rem
+
+  .subtitle
+    margin-bottom: .25rem
+
+.compare-analysis-actions
+  flex: 0 0 auto
+  margin-bottom: 0
+
+.compare-analysis-expand-button
+  align-items: center
+  display: inline-flex
+  height: 2rem
+  justify-content: center
+  padding: 0
+  width: 2rem
+
+  .icon
+    margin: 0 !important
+
+.compare-analysis-control-surface
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  margin-bottom: 1rem
+  padding: .85rem
+
+.compare-analysis-plot
+  background: #fff
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  overflow: hidden
+  width: 100%
+
+.compare-analysis-method
+  margin-top: .65rem
+
+.compare-analysis-downloads
+  justify-content: flex-end
+  margin-bottom: 0
+  margin-top: .7rem
+
+  .button
+    font-size: .7rem
+
+.benchmark-correlation-explorer
+  margin-top: 1.5rem
+
+.benchmark-scatter-side-column
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.benchmark-stability-panel
+  margin-top: .75rem
+  padding: .8rem
+
+  .compare-analysis-heading
+    align-items: center
+    margin-bottom: .35rem
+
+  .subtitle
+    margin-bottom: 0
+
+  .benchmark-stability-intro,
+  .benchmark-stability-method,
+  .benchmark-stability-downloads
+    display: none
+
+.benchmark-stability-compact-caption
+  margin: .35rem .15rem 0
+
+#benchmark-correlation-stability
+  height: 230px
+
+body.benchmark-stability-expanded
+  overflow: hidden
+
+body.compare-analysis-plot-expanded
+  overflow: hidden
+
+.compare-analysis-panel.is-expanded-plot
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: auto
+  padding: 1.25rem
+  position: fixed
+  right: .75rem
+  top: .75rem
+  width: auto
+  z-index: 1200
+
+  .compare-analysis-heading
+    flex: 0 0 auto
+
+  .compare-analysis-plot
+    max-height: none
+    min-height: 0
+
+  .js-plotly-plot
+    max-width: 100%
+    width: 100% !important
+
+  .model-difference-tree-surface
+    flex: 1 1 auto
+    max-height: none
+    min-height: 0
+
+.benchmark-stability-panel.is-expanded
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: hidden
+  padding: 1.25rem
+  position: fixed
+  right: .75rem
+  top: .75rem
+  z-index: 1200
+
+  .compare-analysis-heading
+    margin-bottom: 1rem
+
+  .subtitle
+    font-size: 1.5rem
+
+  .benchmark-stability-intro,
+  .benchmark-stability-method
+    display: block
+
+  .benchmark-stability-downloads
+    display: flex
+
+  .benchmark-stability-compact-caption
+    display: none
+
+  #benchmark-correlation-stability
+    flex: 1 1 auto
+    height: calc(100vh - 210px)
+    min-height: 500px
+
+.compare-model-secondary-analyses
+  > .column
+    display: flex
+
+  .compare-analysis-panel
+    margin-bottom: 0
+    width: 100%
+
+  .model-difference-node-row
+    grid-template-columns: 1.1rem minmax(7rem, 1fr) minmax(100px, 150px) 4rem
+
+  .model-difference-leaf-count
+    display: none
+
+.compare-benchmark-scatter-panel
+  margin-bottom: 0
+
+.benchmark-scatter-controls
+  .controls-container
+    margin-bottom: 0
+
+  .select2-container
+    width: 100% !important
+
+.model-compare-overview
+  .model-compare-controls
+    margin-bottom: 0
+
+  .select2-container
+    width: 100% !important
+
+.compare-versus
+  align-self: center
+  font-size: 1.2em
+  font-weight: bold
+  padding-top: 2em
+
+.compare-model-card
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  height: 100%
+  padding: .85rem
+
+  .has-text-weight-bold
+    overflow-wrap: anywhere
+
+.compare-model-scatter-surface
+  align-items: flex-start
+  display: flex
+  justify-content: center
+  padding: .5rem
+
+  #scatter-plot
+    min-width: 0
+
+  #scatter-legend
+    padding: 1em 0 0 1.5em
+
+.benchmark-correlation-layout
+  display: grid
+  gap: 1.25rem
+  grid-template-columns: minmax(390px, .85fr) minmax(0, 1.35fr)
+
+.benchmark-correlation-tree-panel
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  padding: .85rem
+
+.benchmark-correlation-state-key
+  border-bottom: 1px solid #dfe8e2
+  color: #536159
+  font-size: .72rem
+  margin-bottom: .65rem
+  padding-bottom: .55rem
+
+  p
+    margin: .15rem 0
+
+#benchmark-correlation-tree
+  max-height: 620px
+  overflow: auto
+
+.benchmark-correlation-tree-list
+  list-style: none
+  margin: 0
+  padding-left: .8rem
+
+  &.is-root
+    padding-left: 0
+
+.benchmark-correlation-node
+  margin: .18rem 0
+
+  &.is-unavailable
+    opacity: .48
+
+.benchmark-correlation-node-row
+  align-items: center
+  display: flex
+  gap: .3rem
+  min-height: 1.9rem
+
+.benchmark-correlation-toggle,
+.benchmark-correlation-toggle-spacer
+  align-items: center
+  background: transparent
+  border: 0
+  color: #536159
+  display: inline-flex
+  flex: 0 0 1.1rem
+  font-size: .7rem
+  height: 1.5rem
+  justify-content: center
+  padding: 0
+  width: 1.1rem
+
+.benchmark-correlation-toggle
+  cursor: pointer
+
+.benchmark-correlation-node-label
+  color: #26342d
+  flex: 1 1 auto
+  font-size: .72rem
+  min-width: 4rem
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.benchmark-correlation-state-controls
+  border: 1px solid #ced9d2
+  border-radius: 4px
+  display: inline-flex
+  flex: 0 0 auto
+  overflow: hidden
+
+.benchmark-correlation-state
+  background: #fff
+  border: 0
+  border-left: 1px solid #dfe8e2
+  color: #536159
+  cursor: pointer
+  font-size: .61rem
+  line-height: 1
+  padding: .38rem .34rem
+
+  &:first-child
+    border-left: 0
+
+  &:disabled
+    cursor: not-allowed
+
+  &.is-active
+    color: #fff
+    font-weight: 600
+
+  &.is-select.is-active
+    background: #078930
+
+  &.is-hide.is-active
+    background: #9a6a0a
+
+  &.is-deselect.is-active
+    background: #69756e
+
+.model-difference-key
+  align-items: center
+  color: #536159
+  display: flex
+  font-size: .75rem
+  gap: .75rem
+  justify-content: center
+  margin-bottom: .75rem
+
+  span
+    align-items: center
+    display: inline-flex
+    flex: 1 1 0
+    gap: .35rem
+    min-width: 0
+
+  strong
+    max-width: calc(100% - 4.5rem)
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  i
+    border-radius: 999px
+    display: inline-block
+    flex: 0 0 auto
+    height: .55rem
+    width: 1.5rem
+
+  .is-model-a i
+    background: #45c676
+
+  .is-model-b i
+    background: #47b7de
+
+.model-difference-tree-surface
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  max-height: 680px
+  overflow: auto
+  padding: .85rem
+
+.model-difference-tree-list
+  list-style: none
+  margin: 0
+  padding-left: 1rem
+
+  &.is-root
+    padding-left: 0
+
+.model-difference-node
+  margin: .16rem 0
+
+.model-difference-node-row
+  align-items: center
+  display: grid
+  gap: .45rem
+  grid-template-columns: 1.1rem minmax(10rem, 1fr) 4.5rem minmax(150px, 240px) 4.5rem
+  min-height: 2rem
+
+.model-difference-toggle,
+.model-difference-toggle-spacer
+  align-items: center
+  background: transparent
+  border: 0
+  color: #536159
+  display: inline-flex
+  font-size: .7rem
+  height: 1.5rem
+  justify-content: center
+  padding: 0
+  width: 1.1rem
+
+.model-difference-toggle
+  cursor: pointer
+
+.model-difference-node-label
+  color: #26342d
+  font-size: .75rem
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.model-difference-leaf-count
+  color: #738079
+  font-size: .65rem
+  text-align: right
+
+.model-difference-track
+  background: #edf2ee
+  border-radius: 999px
+  height: .7rem
+  overflow: hidden
+  position: relative
+
+.model-difference-center-line
+  background: #9ba7a0
+  bottom: 0
+  left: 50%
+  position: absolute
+  top: 0
+  width: 1px
+
+.model-difference-bar
+  bottom: 0
+  position: absolute
+  top: 0
+
+  &.is-model-a
+    background: #45c676
+
+  &.is-model-b
+    background: #47b7de
+
+.model-difference-value
+  font-size: .72rem
+  font-variant-numeric: tabular-nums
+  text-align: right
+
+  &.is-model-a
+    color: #137d3a
+
+  &.is-model-b
+    color: #247f9f
+
+.benchmark-correlation-matrix-panel
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.benchmark-correlation-summary
+  color: #3f5147
+  font-size: .8rem
+  font-weight: 600
+  margin-bottom: .65rem
+
+#benchmark-correlation-matrix
+  height: clamp(500px, 64vh, 720px)
+
+body.benchmark-correlation-expanded
+  overflow: hidden
+
+.benchmark-correlation-explorer.is-expanded
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: hidden
+  position: fixed
+  right: .75rem
+  top: .75rem
+  z-index: 1200
+
+  .benchmark-correlation-layout
+    flex: 1 1 auto
+    grid-template-columns: minmax(320px, 25%) minmax(0, 1fr)
+    min-height: 0
+
+  .benchmark-correlation-tree-panel,
+  #benchmark-correlation-tree
+    max-height: none
+    min-height: 0
+    overflow: auto
+
+  .benchmark-correlation-matrix-panel
+    min-height: 0
+
+  #benchmark-correlation-matrix
+    flex: 1 1 auto
+    height: calc(100vh - 10rem)
+    min-height: 0
+
+@media screen and (max-width: 1100px)
+  .compare-dashboard-kpis,
+  .compare-analysis-summary,
+  #model-pair-summary
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  .benchmark-correlation-layout
+    grid-template-columns: 1fr
+
+  .benchmark-correlation-explorer.is-expanded .benchmark-correlation-layout
+    grid-template-columns: minmax(300px, 36%) minmax(0, 1fr)
+
+  #benchmark-correlation-tree
+    max-height: 480px
+
+  .compare-model-scatter-surface
+    display: block
+
+    #scatter-legend
+      padding: .5rem 1rem 1rem
+
+  .benchmark-scatter-layout
+    flex-wrap: wrap
+
+    > .comparison
+      flex: none
+      order: 1
+      width: 100%
+
+    > .benchmark-scatter-side-column
+      display: contents
+
+    .benchmark-stability-panel:not(.is-expanded)
+      flex: none
+      margin: .75rem
+      order: 3
+      width: calc(100% - 1.5rem)
+
+    .benchmark-scatter-examples-panel
+      flex: none
+      margin: .75rem
+      order: 2
+      width: calc(100% - 1.5rem)
+
+@media screen and (max-width: 800px)
+  .model-difference-node-row
+    grid-template-columns: 1.1rem minmax(8rem, 1fr) minmax(100px, 160px) 4rem
+
+  .model-difference-leaf-count
+    display: none

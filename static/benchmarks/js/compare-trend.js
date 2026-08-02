@@ -293,11 +293,8 @@
     function _selectedId(selectId) {
         var el = document.getElementById(selectId);
         if (!el) return null;
-        var name = el.value;
-        if (!name) return null;
-        if (typeof model_metadata === 'undefined') return null;
-        var meta = model_metadata[name];
-        return meta && meta.model_id ? meta.model_id : null;
+        var modelId = parseInt(el.value, 10);
+        return Number.isFinite(modelId) ? modelId : null;
     }
 
     function _onSelectionChange() {

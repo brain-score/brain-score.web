@@ -17,18 +17,28 @@ $(document).ready(function () {
         'Behavioral': '#984ea3',
         'Engineering': '#8c564b',
         'Neural': '#7f7f7f',
-        'Average Vision': '#17becf'
+        'Average Vision': '#17becf',
+        'Average Language': '#17becf'
     };
 
     // Domains shown by default (others start hidden via legendonly)
-    var DEFAULT_VISIBLE = {'V1': true, 'V2': true, 'V4': true, 'IT': true, 'Behavioral': true};
-    var DOMAIN_ORDER = ['V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering', 'Neural', 'Average Vision'];
+    var compareDomain = (typeof compare_dashboard_data !== 'undefined')
+        ? compare_dashboard_data.domain
+        : 'vision';
+    var DEFAULT_VISIBLE = compareDomain === 'language'
+        ? {'Neural': true, 'Behavioral': true}
+        : {'V1': true, 'V2': true, 'V4': true, 'IT': true, 'Behavioral': true};
+    var DOMAIN_ORDER = compareDomain === 'language'
+        ? ['Neural', 'Behavioral', 'Engineering', 'Average Language']
+        : ['V1', 'V2', 'V4', 'IT', 'Behavioral', 'Engineering', 'Neural', 'Average Vision'];
 
     // Shared font to match compare-benchmarks (D3) tab
     var PLOT_FONT = {family: "'Open Sans', Arial, sans-serif", size: 14, color: 'black'};
 
     // Consistent logo size: 120x28 px (same as D3 chart)
     var LOGO_PX = {w: 120, h: 28};
+    var latestBranchRanks = [];
+    var latestRankNames = {nameA: '', nameB: ''};
 
     function logoSize(plotWidth, plotHeight, margins) {
         var areaW = plotWidth - (margins.l || 0) - (margins.r || 0);
@@ -39,15 +49,17 @@ $(document).ready(function () {
         };
     }
 
-    // ---- Extract unique model names from comparison_data ----
-    function extractModelNames(data) {
-        var names = [];
+    function extractModels(data) {
+        var models = [];
         for (var i = 0; i < data.length; i++) {
-            if (data[i].model) {
-                names.push(data[i].model);
-            }
+            if (!data[i].model) continue;
+            models.push({
+                id: data[i].model_id != null ? data[i].model_id : data[i].model,
+                name: data[i].model,
+                completeness: data[i].completeness
+            });
         }
-        return names.sort();
+        return models.sort(function (a, b) { return a.name.localeCompare(b.name); });
     }
 
     // ---- Fuzzy matcher for Select2 ----
@@ -87,22 +99,37 @@ $(document).ready(function () {
     }
 
     // ---- Initialize Select2 dropdowns with fuzzy search ----
-    function initDropdowns(modelNames) {
+    function initDropdowns(models, selectedA, selectedB) {
         var selA = $('#model-x-select');
         var selB = $('#model-y-select');
+        if (selA.hasClass('select2-hidden-accessible')) selA.select2('destroy');
+        if (selB.hasClass('select2-hidden-accessible')) selB.select2('destroy');
         selA.empty();
         selB.empty();
 
         selA.append(new Option('', '', true, true));
         selB.append(new Option('', '', true, true));
 
-        for (var i = 0; i < modelNames.length; i++) {
-            selA.append(new Option(modelNames[i], modelNames[i], false, false));
-            selB.append(new Option(modelNames[i], modelNames[i], false, false));
+        var nameCounts = {};
+        models.forEach(function (model) {
+            nameCounts[model.name] = (nameCounts[model.name] || 0) + 1;
+        });
+        for (var i = 0; i < models.length; i++) {
+            var label = nameCounts[models[i].name] > 1
+                ? models[i].name + ' (ID ' + models[i].id + ')'
+                : models[i].name;
+            selA.append(new Option(label, String(models[i].id), false, false));
+            selB.append(new Option(label, String(models[i].id), false, false));
         }
 
         selA.select2({placeholder: 'Select Model A', allowClear: true, matcher: fuzzyMatcher});
         selB.select2({placeholder: 'Select Model B', allowClear: true, matcher: fuzzyMatcher});
+        if (selectedA && models.some(function (model) { return String(model.id) === String(selectedA); })) {
+            selA.val(String(selectedA)).trigger('change.select2');
+        }
+        if (selectedB && models.some(function (model) { return String(model.id) === String(selectedB); })) {
+            selB.val(String(selectedB)).trigger('change.select2');
+        }
     }
 
     // ---- Shorten benchmark name for display ----
@@ -118,12 +145,44 @@ $(document).ready(function () {
         return name;
     }
 
+    function compactLabel(value, maximumLength) {
+        var text = String(value || '');
+        if (text.length <= maximumLength) return text;
+        return text.slice(0, maximumLength - 1) + '\u2026';
+    }
+
     // ---- Get benchmarks with valid scores for both models ----
-    function getCommonBenchmarks(nameA, nameB) {
+    function latestComparisonRows() {
+        return window.CompareDashboard ? window.CompareDashboard.getLatestComparisonData() : comparison_data;
+    }
+
+    function comparisonRows() {
+        return latestComparisonRows();
+    }
+
+    function rowForModel(modelId) {
+        var rows = comparisonRows();
+        for (var i = 0; i < rows.length; i++) {
+            if (String(rows[i].model_id || rows[i].model) === String(modelId)) return rows[i];
+        }
+        return null;
+    }
+
+    function modelName(modelId) {
+        var row = rowForModel(modelId);
+        if (!row) return '';
+        var duplicateCount = comparisonRows().filter(function (candidate) {
+            return candidate.model === row.model;
+        }).length;
+        return duplicateCount > 1 ? row.model + ' (ID ' + row.model_id + ')' : row.model;
+    }
+
+    function getCommonBenchmarks(modelIdA, modelIdB) {
         var rowA = null, rowB = null;
-        for (var i = 0; i < comparison_data.length; i++) {
-            if (comparison_data[i].model === nameA) rowA = comparison_data[i];
-            if (comparison_data[i].model === nameB) rowB = comparison_data[i];
+        var rows = comparisonRows();
+        for (var i = 0; i < rows.length; i++) {
+            if (String(rows[i].model_id || rows[i].model) === String(modelIdA)) rowA = rows[i];
+            if (String(rows[i].model_id || rows[i].model) === String(modelIdB)) rowB = rows[i];
             if (rowA && rowB) break;
         }
         if (!rowA || !rowB) return [];
@@ -136,6 +195,8 @@ $(document).ready(function () {
 
             var benchId = key.replace(/-score$/, '');
             var completeKey = benchId + '-is_complete';
+
+            if (window.CompareDashboard && !window.CompareDashboard.isLeafBenchmark(benchId)) continue;
 
             if (rowA[completeKey] != 1 || rowB[completeKey] != 1) continue;
 
@@ -249,35 +310,43 @@ $(document).ready(function () {
     }
 
     // ---- Update model info cards ----
-    function updateModelCards(nameA, nameB) {
-        var metaA = (typeof model_metadata !== 'undefined') ? model_metadata[nameA] : null;
-        var metaB = (typeof model_metadata !== 'undefined') ? model_metadata[nameB] : null;
+    function updateModelCards(modelIdA, modelIdB) {
+        var metaA = (typeof model_metadata !== 'undefined') ? model_metadata[String(modelIdA)] : null;
+        var metaB = (typeof model_metadata !== 'undefined') ? model_metadata[String(modelIdB)] : null;
+        var rowA = rowForModel(modelIdA);
+        var rowB = rowForModel(modelIdB);
+        var nameA = rowA ? modelName(modelIdA) : '';
+        var nameB = rowB ? modelName(modelIdB) : '';
 
-        if (!nameA || !nameB) {
+        if (!modelIdA || !modelIdB || !rowA || !rowB) {
             $('#model-cards-row').hide();
             return;
         }
 
         if (metaA) {
             $('#card-a-name').text(nameA);
-            $('#card-a-rank').text(metaA.rank != null ? 'Rank #' + metaA.rank : '');
+            $('#card-a-rank').text(rowA.rank != null ? 'Cohort rank #' + rowA.rank : '');
+            $('#card-a-completeness').text(rowA.completeness.toFixed(1) + '%');
             $('#card-a-contributor').text(metaA.contributor || 'Unknown');
             $('#card-a-link').attr('href', metaA.url || '#');
         } else {
             $('#card-a-name').text(nameA);
-            $('#card-a-rank').text('');
+            $('#card-a-rank').text(rowA.rank != null ? 'Cohort rank #' + rowA.rank : '');
+            $('#card-a-completeness').text(rowA.completeness.toFixed(1) + '%');
             $('#card-a-contributor').text('Unknown');
             $('#card-a-link').attr('href', '#');
         }
 
         if (metaB) {
             $('#card-b-name').text(nameB);
-            $('#card-b-rank').text(metaB.rank != null ? 'Rank #' + metaB.rank : '');
+            $('#card-b-rank').text(rowB.rank != null ? 'Cohort rank #' + rowB.rank : '');
+            $('#card-b-completeness').text(rowB.completeness.toFixed(1) + '%');
             $('#card-b-contributor').text(metaB.contributor || 'Unknown');
             $('#card-b-link').attr('href', metaB.url || '#');
         } else {
             $('#card-b-name').text(nameB);
-            $('#card-b-rank').text('');
+            $('#card-b-rank').text(rowB.rank != null ? 'Cohort rank #' + rowB.rank : '');
+            $('#card-b-completeness').text(rowB.completeness.toFixed(1) + '%');
             $('#card-b-contributor').text('Unknown');
             $('#card-b-link').attr('href', '#');
         }
@@ -399,8 +468,8 @@ $(document).ready(function () {
             font: PLOT_FONT,
             width: chartWidth,
             height: chartHeight,
-            xaxis: {title: {text: nameA, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
-            yaxis: {title: {text: nameB, font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
+            xaxis: {title: {text: 'Model A score', font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
+            yaxis: {title: {text: 'Model B score', font: {size: 14}}, range: [-0.05, 1.05], tickfont: {size: 12}},
             hovermode: 'closest',
             showlegend: false,
             margin: scatterMargins,
@@ -494,10 +563,10 @@ $(document).ready(function () {
     function renderDifferenceChart(data, nameA, nameB) {
         var sorted = data.slice().sort(function (a, b) {
             return Math.abs(b.diff) - Math.abs(a.diff);
-        }).slice(0, 40).reverse();
+        }).slice(0, 30).reverse();
 
         var trace = {
-            y: sorted.map(function (d) { return d.shortName; }),
+            y: sorted.map(function (d) { return compactLabel(d.shortName, 30); }),
             x: sorted.map(function (d) { return d.diff; }),
             type: 'bar',
             orientation: 'h',
@@ -519,27 +588,28 @@ $(document).ready(function () {
                 '<extra></extra>'
         };
 
-        var barMargins = {l: 220, t: 50, r: 20, b: 50};
         var barEl = document.getElementById('difference-bar-chart');
+        var barWidth = barEl.offsetWidth || 800;
+        var barMargins = {l: Math.min(175, Math.max(135, Math.round(barWidth * 0.27))), t: 50, r: 20, b: 60};
         var barLogo = logoSize(barEl.offsetWidth || 800, 650, barMargins);
 
         var layout = {
             font: PLOT_FONT,
-            xaxis: {title: {text: 'Score Difference (' + nameA + ' minus ' + nameB + ')', font: {size: 14}}, zeroline: true, tickfont: {size: 12}},
-            yaxis: {automargin: true, tickfont: {size: 10}},
+            xaxis: {title: {text: 'Score difference (Model A minus Model B)', font: {size: 14}}, zeroline: true, tickfont: {size: 12}},
+            yaxis: {automargin: false, tickfont: {size: 10}},
             margin: barMargins,
             plot_bgcolor: 'white',
             annotations: [
                 {
                     x: 0, y: 1.05, xref: 'paper', yref: 'paper',
-                    text: '<b>\u25C0 ' + nameB + ' scores higher</b>',
-                    showarrow: false, font: {size: 11, color: '#555'},
+                    text: '<b>\u25C0 Model B higher</b>',
+                    showarrow: false, font: {size: 11, color: '#247f9f'},
                     xanchor: 'left'
                 },
                 {
                     x: 1, y: 1.05, xref: 'paper', yref: 'paper',
-                    text: '<b>' + nameA + ' scores higher \u25B6</b>',
-                    showarrow: false, font: {size: 11, color: '#555'},
+                    text: '<b>Model A higher \u25B6</b>',
+                    showarrow: false, font: {size: 11, color: '#137d3a'},
                     xanchor: 'right'
                 }
             ],
@@ -571,7 +641,7 @@ $(document).ready(function () {
     }
 
     // ---- Chart 3: Domain Summary (split violin plot) ----
-    function renderDomainSummary(data, nameA, nameB) {
+    function renderDomainSummary(data, nameA, nameB, modelIdA, modelIdB) {
         var domainStats = {};
         for (var i = 0; i < data.length; i++) {
             var d = data[i];
@@ -604,8 +674,8 @@ $(document).ready(function () {
                 x: ds.scoresA.map(function () { return dom; }),
                 text: ds.names,
                 type: 'violin',
-                name: nameA,
-                legendgroup: nameA,
+                name: 'Model A',
+                legendgroup: 'model-a',
                 showlegend: di === 0,
                 side: 'negative',
                 line: {color: '#45C676'},
@@ -625,8 +695,8 @@ $(document).ready(function () {
                 x: ds.scoresB.map(function () { return dom; }),
                 text: ds.names,
                 type: 'violin',
-                name: nameB,
-                legendgroup: nameB,
+                name: 'Model B',
+                legendgroup: 'model-b',
                 showlegend: di === 0,
                 side: 'positive',
                 line: {color: '#47B7DE'},
@@ -642,57 +712,130 @@ $(document).ready(function () {
             });
         }
 
-        var violinMargins = {t: 35, r: 20, l: 80, b: 50};
+        var categoryLabels = domains.slice();
+        var rankCore = window.CompareModelBranchRanksCore;
+        latestBranchRanks = [];
+        latestRankNames = {nameA: nameA, nameB: nameB};
+        if (rankCore && window.CompareDashboard && typeof compare_dashboard_data !== 'undefined') {
+            latestBranchRanks = rankCore.buildBranchRanks(
+                compare_dashboard_data.benchmarks,
+                window.CompareDashboard.getLatestComparisonData(),
+                compareDomain,
+                modelIdA,
+                modelIdB
+            );
+            var rankOverlay = rankCore.buildBranchRankOverlay(latestBranchRanks, {
+                nameA: nameA,
+                nameB: nameB
+            });
+            traces = traces.concat(rankOverlay.data);
+            categoryLabels = latestBranchRanks.map(function (row) { return row.benchmark; });
+            domains.forEach(function (domain) {
+                if (categoryLabels.indexOf(domain) === -1) categoryLabels.push(domain);
+            });
+        }
+
+        var violinMargins = {t: 35, r: latestBranchRanks.length ? 85 : 20, l: 80, b: 60};
         var violinEl = document.getElementById('domain-summary-chart');
-        var violinLogo = logoSize(violinEl.offsetWidth || 700, 400, violinMargins);
+        var violinLogo = logoSize(violinEl.offsetWidth || 700, 460, violinMargins);
 
         var layout = {
             font: PLOT_FONT,
+            height: 460,
             violinmode: 'overlay',
-            yaxis: {title: {text: 'Score', font: {size: 14}}, range: [0, 1.05], tickfont: {size: 12}},
-            xaxis: {title: '', tickfont: {size: 12}},
-            legend: {orientation: 'h', y: -0.15},
+            yaxis: {title: {text: 'Score', font: {size: 14}}, range: [-0.03, 1.12], tickfont: {size: 12}},
+            xaxis: {
+                title: '',
+                categoryorder: 'array',
+                categoryarray: categoryLabels,
+                tickfont: {size: 12}
+            },
+            legend: {orientation: 'h', y: -0.18},
             margin: violinMargins,
             plot_bgcolor: 'white',
             images: [{
                 source: logo_url,
                 xref: 'paper', yref: 'paper',
-                x: 1, y: 0,
+                x: 1, y: 0.04,
                 sizex: violinLogo.sizex, sizey: violinLogo.sizey,
                 xanchor: 'right', yanchor: 'bottom',
                 layer: 'above'
             }]
         };
+        if (latestBranchRanks.length) layout.yaxis2 = rankOverlay.yaxis;
 
         Plotly.newPlot('domain-summary-chart', traces, layout);
     }
 
+    function updatePairSummary(data) {
+        var aWins = 0, bWins = 0, ties = 0;
+        var tieTolerance = 0.005;
+        data.forEach(function (item) {
+            if (Math.abs(item.diff) <= tieTolerance) ties += 1;
+            else if (item.diff > 0) aWins += 1;
+            else bWins += 1;
+        });
+        $('#model-stat-common').text(data.length);
+        $('#model-stat-a-wins').text(aWins);
+        $('#model-stat-ties').text(ties);
+        $('#model-stat-b-wins').text(bWins);
+        $('#model-pair-summary').show();
+    }
+
+    function setModelEmpty(isEmpty) {
+        $('#model-compare-empty').toggle(isEmpty);
+        if (isEmpty) $('#model-pair-summary').hide();
+    }
+
+    function publishModelComparison(data, nameA, nameB, modelIdA, modelIdB) {
+        var detail = {
+            data: data || [],
+            nameA: nameA || '',
+            nameB: nameB || '',
+            modelIdA: modelIdA || null,
+            modelIdB: modelIdB || null
+        };
+        window.CompareModelsCurrent = detail;
+        document.dispatchEvent(new CustomEvent('compare-models:change', {detail: detail}));
+    }
+
     // ---- Main orchestrator ----
     function updateAllCharts() {
-        var nameA = $('#model-x-select').val();
-        var nameB = $('#model-y-select').val();
+        var modelIdA = $('#model-x-select').val();
+        var modelIdB = $('#model-y-select').val();
+        var nameA = modelName(modelIdA);
+        var nameB = modelName(modelIdB);
 
-        updateModelCards(nameA, nameB);
+        updateModelCards(modelIdA, modelIdB);
 
-        if (!nameA || !nameB || nameA === nameB) {
+        if (!modelIdA || !modelIdB || String(modelIdA) === String(modelIdB)) {
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
+            latestBranchRanks = [];
+            setModelEmpty(true);
+            publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
         }
 
-        var data = getCommonBenchmarks(nameA, nameB);
+        var data = getCommonBenchmarks(modelIdA, modelIdB);
         if (data.length < 3) {
             Plotly.purge('scatter-plot');
             Plotly.purge('difference-bar-chart');
             Plotly.purge('domain-summary-chart');
+            latestBranchRanks = [];
+            setModelEmpty(true);
+            publishModelComparison([], nameA, nameB, modelIdA, modelIdB);
             return;
         }
 
+        setModelEmpty(false);
+        publishModelComparison(data, nameA, nameB, modelIdA, modelIdB);
+        updatePairSummary(data);
         var stats = computeStatistics(data);
         renderScatterPlot(data, stats, nameA, nameB);
         renderDifferenceChart(data, nameA, nameB);
-        renderDomainSummary(data, nameA, nameB);
+        renderDomainSummary(data, nameA, nameB, modelIdA, modelIdB);
     }
 
     // ---- CSV download ----
@@ -713,11 +856,13 @@ $(document).ready(function () {
     }
 
     $('#downloadModelCSVButton').click(function () {
-        var nameA = $('#model-x-select').val();
-        var nameB = $('#model-y-select').val();
-        if (!nameA || !nameB) return;
+        var modelIdA = $('#model-x-select').val();
+        var modelIdB = $('#model-y-select').val();
+        var nameA = modelName(modelIdA);
+        var nameB = modelName(modelIdB);
+        if (!modelIdA || !modelIdB) return;
 
-        var data = getCommonBenchmarks(nameA, nameB);
+        var data = getCommonBenchmarks(modelIdA, modelIdB);
         if (data.length === 0) return;
 
         var csv = makeCSV(data, nameA, nameB);
@@ -731,20 +876,77 @@ $(document).ready(function () {
         document.body.removeChild(a);
     });
 
+    $('#downloadModelDomainSVGButton').click(function () {
+        var chart = document.getElementById('domain-summary-chart');
+        if (!chart || !chart.data) return;
+        Plotly.downloadImage(chart, {
+            format: 'svg',
+            filename: 'brain-score-model-domain-distribution-and-ranks'
+        });
+    });
+
+    $('#downloadModelRankCSVButton').click(function () {
+        var rankCore = window.CompareModelBranchRanksCore;
+        if (!rankCore || !latestBranchRanks.length) return;
+        var csv = rankCore.branchRanksToCsv(
+            latestBranchRanks,
+            latestRankNames.nameA,
+            latestRankNames.nameB
+        );
+        var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'brain-score-model-rank-by-branch.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
     // ---- Initialize ----
     var DEFAULT_MODEL_A = 'convnext_large_mlp:clip_laion2b_augreg_ft_in1k_384';
     var DEFAULT_MODEL_B = 'vit_large_patch14_clip_224:openai_ft_in1k';
 
-    var modelNames = extractModelNames(comparison_data);
-    initDropdowns(modelNames);
+    var firstInitialization = true;
 
-    if (modelNames.indexOf(DEFAULT_MODEL_A) !== -1 && modelNames.indexOf(DEFAULT_MODEL_B) !== -1) {
-        $('#model-x-select').val(DEFAULT_MODEL_A).trigger('change.select2');
-        $('#model-y-select').val(DEFAULT_MODEL_B).trigger('change.select2');
+    function refreshModelDropdowns() {
+        var rows = comparisonRows();
+        var models = extractModels(rows);
+        var selectedA = $('#model-x-select').val();
+        var selectedB = $('#model-y-select').val();
+
+        if (firstInitialization && window.CompareDashboard) {
+            selectedA = window.CompareDashboard.getUrlParam('model_a');
+            selectedB = window.CompareDashboard.getUrlParam('model_b');
+        }
+        if (firstInitialization && !selectedA && !selectedB) {
+            if (compareDomain === 'language' && window.CompareDashboard) {
+                var topRankedIds = window.CompareDashboard.getTopRankedModelIds(2);
+                selectedA = topRankedIds[0] || null;
+                selectedB = topRankedIds[1] || null;
+            } else {
+                var defaultA = models.find(function (model) { return model.name === DEFAULT_MODEL_A; });
+                var defaultB = models.find(function (model) { return model.name === DEFAULT_MODEL_B; });
+                selectedA = defaultA ? defaultA.id : null;
+                selectedB = defaultB ? defaultB.id : null;
+            }
+        }
+
+        initDropdowns(models, selectedA, selectedB);
+        firstInitialization = false;
         updateAllCharts();
     }
 
-    $('#model-x-select, #model-y-select').on('change', updateAllCharts);
+    $('#model-x-select, #model-y-select').on('change', function () {
+        if (window.CompareDashboard) {
+            window.CompareDashboard.setUrlParam('model_a', $('#model-x-select').val());
+            window.CompareDashboard.setUrlParam('model_b', $('#model-y-select').val());
+        }
+        updateAllCharts();
+    });
+
+    refreshModelDropdowns();
 
     // Re-render on resize (debounced) so the charts track the container width
     // instead of freezing at load-time size. Slightly longer delay than the
