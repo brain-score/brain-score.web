@@ -3,6 +3,7 @@
 
 {% block page_head_scripts %}
     <script defer src="{% static '/benchmarks/js/compare-dashboard.js' %}" charset="utf-8"></script>
+    <script defer src="{% static '/benchmarks/js/compare-correlation.js' %}" charset="utf-8"></script>
 {% endblock %}
 
 {% block banner %}
@@ -68,7 +69,7 @@
 
             <div class="compare-dashboard-kpis" aria-live="polite">
                 <div class="compare-kpi"><span>As of</span><strong id="compare-kpi-date">Loading</strong></div>
-                <div class="compare-kpi"><span>Eligible models</span><strong id="compare-kpi-models">0</strong></div>
+                <div class="compare-kpi"><span>Eligible cohort models</span><strong id="compare-kpi-models">0</strong></div>
                 <div class="compare-kpi"><span>Active selected leaves</span><strong id="compare-kpi-benchmarks">0</strong></div>
                 <div class="compare-kpi"><span>Median completedness</span><strong id="compare-kpi-median">Not available</strong></div>
             </div>
@@ -108,11 +109,11 @@
                 </div>
                 <div class="download-container columns">
                     <div class="column">
-                        <button id="downloadSVGButton" class="button">Download plot as SVG</button>
+                        <button id="downloadSVGButton" class="button is-small is-outlined">Download plot as SVG</button>
                     </div>
                     <div class="column is-narrow"></div>
                     <div class="column has-text-right">
-                        <button id="downloadCSVButton" class="button">Download data as CSV</button>
+                        <button id="downloadCSVButton" class="button is-small is-outlined">Download data as CSV</button>
                     </div>
                 </div>
             </div>
@@ -177,6 +178,43 @@
                 </div>
             </div>
         </div>
+
+        <section id="benchmark-correlation-explorer" class="box benchmark-correlation-explorer" aria-labelledby="benchmark-correlation-title">
+            <div class="benchmark-correlation-heading">
+                <div>
+                    <h2 id="benchmark-correlation-title" class="subtitle is-4">Benchmark correlation matrix</h2>
+                    <p class="help">Explore pairwise-complete Pearson correlations within the current comparison cohort.</p>
+                </div>
+                <div class="buttons are-small benchmark-correlation-actions">
+                    <button id="benchmark-correlation-expand" class="button is-outlined" type="button" aria-pressed="false">Expand</button>
+                    <button id="benchmark-correlation-select-all" class="button is-success is-light" type="button" title="Select all active non-engineering benchmarks">Select all</button>
+                    <button id="benchmark-correlation-reset" class="button is-outlined" type="button">Reset tree</button>
+                </div>
+            </div>
+
+            <div class="benchmark-correlation-layout">
+                <aside class="benchmark-correlation-tree-panel" aria-label="Benchmark matrix controls">
+                    <div class="benchmark-correlation-state-key">
+                        <p><strong>Select</strong> includes a benchmark in aggregation and shows it in the matrix.</p>
+                        <p><strong>Hide</strong> includes it in parent aggregation without showing it.</p>
+                        <p><strong>Deselect</strong> removes the benchmark and its descendants.</p>
+                    </div>
+                    <div id="benchmark-correlation-tree"></div>
+                </aside>
+
+                <div class="benchmark-correlation-matrix-panel">
+                    <p id="benchmark-correlation-summary" class="benchmark-correlation-summary" aria-live="polite"></p>
+                    <div id="benchmark-correlation-matrix" aria-live="polite"></div>
+                    <p class="help benchmark-correlation-method">
+                        Hover for Pearson r and paired n. Cells use the same scores and finite paired-model rule as the scatterplot; a coefficient requires at least eight paired models.
+                    </p>
+                    <div class="buttons are-small benchmark-correlation-downloads">
+                        <button id="benchmark-correlation-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
+                        <button id="benchmark-correlation-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     {# ==================== Tab 2: Compare Models ==================== #}
@@ -298,7 +336,7 @@
 
                 <div class="download-container columns">
                     <div class="column has-text-right">
-                        <button id="downloadModelCSVButton" class="button">Download data as CSV</button>
+                        <button id="downloadModelCSVButton" class="button is-small is-outlined">Download data as CSV</button>
                     </div>
                 </div>
             </div>

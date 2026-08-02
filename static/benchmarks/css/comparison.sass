@@ -223,8 +223,208 @@
     display: block
     height: 100%
 
+.benchmark-correlation-explorer
+  border-top: 4px solid #45c676
+  margin-top: 1.5rem
+
+  .benchmark-correlation-heading
+    align-items: flex-start
+    display: flex
+    gap: 1rem
+    justify-content: space-between
+    margin-bottom: 1rem
+
+    .subtitle
+      margin-bottom: .25rem
+
+  .benchmark-correlation-actions
+    flex: 0 0 auto
+    margin-bottom: 0
+
+.benchmark-correlation-layout
+  display: grid
+  gap: 1.25rem
+  grid-template-columns: minmax(390px, .85fr) minmax(0, 1.35fr)
+
+.benchmark-correlation-tree-panel
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  min-width: 0
+  padding: .85rem
+
+.benchmark-correlation-state-key
+  border-bottom: 1px solid #dfe8e2
+  color: #536159
+  font-size: .72rem
+  margin-bottom: .65rem
+  padding-bottom: .55rem
+
+  p
+    margin: .15rem 0
+
+#benchmark-correlation-tree
+  max-height: 620px
+  overflow: auto
+
+.benchmark-correlation-tree-list
+  list-style: none
+  margin: 0
+  padding-left: .8rem
+
+  &.is-root
+    padding-left: 0
+
+.benchmark-correlation-node
+  margin: .18rem 0
+
+  &.is-unavailable
+    opacity: .48
+
+.benchmark-correlation-node-row
+  align-items: center
+  display: flex
+  gap: .3rem
+  min-height: 1.9rem
+
+.benchmark-correlation-toggle,
+.benchmark-correlation-toggle-spacer
+  align-items: center
+  background: transparent
+  border: 0
+  color: #536159
+  display: inline-flex
+  flex: 0 0 1.1rem
+  font-size: .7rem
+  height: 1.5rem
+  justify-content: center
+  padding: 0
+  width: 1.1rem
+
+.benchmark-correlation-toggle
+  cursor: pointer
+
+.benchmark-correlation-node-label
+  color: #26342d
+  flex: 1 1 auto
+  font-size: .72rem
+  min-width: 4rem
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.benchmark-correlation-state-controls
+  border: 1px solid #ced9d2
+  border-radius: 4px
+  display: inline-flex
+  flex: 0 0 auto
+  overflow: hidden
+
+.benchmark-correlation-state
+  background: #fff
+  border: 0
+  border-left: 1px solid #dfe8e2
+  color: #536159
+  cursor: pointer
+  font-size: .61rem
+  line-height: 1
+  padding: .38rem .34rem
+
+  &:first-child
+    border-left: 0
+
+  &:disabled
+    cursor: not-allowed
+
+  &.is-active
+    color: #fff
+    font-weight: 600
+
+  &.is-select.is-active
+    background: #078930
+
+  &.is-hide.is-active
+    background: #9a6a0a
+
+  &.is-deselect.is-active
+    background: #69756e
+
+.benchmark-correlation-matrix-panel
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.benchmark-correlation-summary
+  color: #3f5147
+  font-size: .8rem
+  font-weight: 600
+  margin-bottom: .65rem
+
+#benchmark-correlation-matrix
+  border: 1px solid #dfe8e2
+  border-radius: 7px
+  height: clamp(500px, 64vh, 720px)
+  min-width: 0
+  overflow: hidden
+  width: 100%
+
+body.benchmark-correlation-expanded
+  overflow: hidden
+
+.benchmark-correlation-explorer.is-expanded
+  bottom: .75rem
+  display: flex
+  flex-direction: column
+  left: .75rem
+  margin: 0
+  overflow: hidden
+  position: fixed
+  right: .75rem
+  top: .75rem
+  z-index: 1200
+
+  .benchmark-correlation-layout
+    flex: 1 1 auto
+    grid-template-columns: minmax(320px, 25%) minmax(0, 1fr)
+    min-height: 0
+
+  .benchmark-correlation-tree-panel,
+  #benchmark-correlation-tree
+    max-height: none
+    min-height: 0
+    overflow: auto
+
+  .benchmark-correlation-matrix-panel
+    min-height: 0
+
+  #benchmark-correlation-matrix
+    flex: 1 1 auto
+    height: calc(100vh - 10rem)
+    min-height: 0
+
+.benchmark-correlation-method
+  margin-top: .65rem
+
+.benchmark-correlation-downloads
+  justify-content: flex-end
+  margin-bottom: 0
+  margin-top: .7rem
+
+.download-container .button,
+.benchmark-correlation-downloads .button
+  font-size: .7rem
+
 @media screen and (max-width: 1100px)
   .compare-dashboard-kpis,
   .compare-analysis-summary,
   #model-pair-summary
     grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  .benchmark-correlation-layout
+    grid-template-columns: 1fr
+
+  .benchmark-correlation-explorer.is-expanded .benchmark-correlation-layout
+    grid-template-columns: minmax(300px, 36%) minmax(0, 1fr)
+
+  #benchmark-correlation-tree
+    max-height: 480px

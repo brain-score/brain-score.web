@@ -42,6 +42,9 @@ $(document).ready(function () {
     }
 
     function validScore(value) {
+        if (window.CompareCorrelationCore) {
+            return window.CompareCorrelationCore.validMatrixScore(value) !== null;
+        }
         return value !== null && value !== undefined && value !== '' &&
             Number.isFinite(Number(value));
     }
@@ -96,16 +99,19 @@ $(document).ready(function () {
     function calculateCorrelation(xArr, yArr) {
         const n = xArr.length;
         if (n < 2) return {correlation: null, rSquared: null, pValue: null};
-        const sumX = xArr.reduce((a, b) => a + b, 0);
-        const sumY = yArr.reduce((a, b) => a + b, 0);
-        const sumXY = xArr.map((xi, i) => xi * yArr[i]).reduce((a, b) => a + b, 0);
-        const sumX2 = xArr.map(xi => xi * xi).reduce((a, b) => a + b, 0);
-        const sumY2 = yArr.map(yi => yi * yi).reduce((a, b) => a + b, 0);
-
-        const numerator = (n * sumXY) - (sumX * sumY);
-        const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-
-        const correlation = denominator === 0 ? null : numerator / denominator;
+        const sharedResult = window.CompareCorrelationCore
+            ? window.CompareCorrelationCore.pearsonCorrelation(xArr, yArr, 2)
+            : null;
+        const meanX = xArr.reduce((sum, value) => sum + value, 0) / n;
+        const meanY = yArr.reduce((sum, value) => sum + value, 0) / n;
+        const numerator = xArr.reduce((sum, value, index) =>
+            sum + (value - meanX) * (yArr[index] - meanY), 0);
+        const denominator = Math.sqrt(
+            xArr.reduce((sum, value) => sum + Math.pow(value - meanX, 2), 0) *
+            yArr.reduce((sum, value) => sum + Math.pow(value - meanY, 2), 0)
+        );
+        const fallbackCorrelation = denominator === 0 ? null : numerator / denominator;
+        const correlation = sharedResult ? sharedResult.r : fallbackCorrelation;
         if (correlation === null) return {correlation: null, rSquared: null, pValue: null};
         const rSquared = correlation * correlation;  // Calculate R^2
 
@@ -298,7 +304,7 @@ $(document).ready(function () {
             + "    Spearman rho: " + (spearman.correlation === null ? 'N/A' : spearman.correlation.toFixed(2))
             + "    R\u00B2: " + (rSquared === null ? 'N/A' : rSquared.toFixed(2))
             + "    " + pValueStr
-            + "    n=" + filtered_data.length + " models";
+            + "    n=" + filtered_data.length + " paired models";
 
         g.append("text")
             .attr("class", "stats-text")
