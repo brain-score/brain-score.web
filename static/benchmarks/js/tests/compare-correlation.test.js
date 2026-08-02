@@ -148,7 +148,7 @@ test('uses finite pairwise scores including zero and enforces minimum overlap', 
     assert.deepEqual(unsupported, {r: null, n: 9});
 });
 
-test('normalizes the Plotly color scale to the finite matrix extent', () => {
+test('starts a positive-only Plotly color scale at the lowest correlation', () => {
     const matrix = {
         axes: benchmarks().slice(0, 2),
         cells: [
@@ -163,6 +163,10 @@ test('normalizes the Plotly color scale to the finite matrix extent', () => {
     assert.equal(plot.data[0].type, 'heatmap');
     assert.equal(plot.data[0].zmin, 0.25);
     assert.equal(plot.data[0].zmax, 1);
+    assert.deepEqual(plot.data[0].colorscale, [
+        [0, '#f7faf8'],
+        [1, '#078930']
+    ]);
     assert.equal(plot.layout.images[0].source, '/static/logo.png');
     assert.ok(plot.layout.images[0].x > 1);
     assert.ok(plot.layout.images[0].y < 0.1);
@@ -173,6 +177,43 @@ test('normalizes the Plotly color scale to the finite matrix extent', () => {
     );
     assert.equal('width' in plot.config.toImageButtonOptions, false);
     assert.equal('height' in plot.config.toImageButtonOptions, false);
+});
+
+test('uses the full Pearson color range when the matrix contains negatives', () => {
+    const matrix = {
+        axes: benchmarks().slice(0, 2),
+        cells: [
+            [{r: 1, n: 10}, {r: -0.4, n: 9}],
+            [{r: -0.4, n: 9}, {r: 1, n: 10}]
+        ],
+        modelCount: 10,
+        minimumOverlap: 8
+    };
+    const plot = correlation.buildPlotlyMatrix(matrix, '/static/logo.png', 12);
+
+    assert.equal(plot.data[0].zmin, -1);
+    assert.equal(plot.data[0].zmax, 1);
+    assert.deepEqual(plot.data[0].colorscale, [
+        [0, '#b2182b'],
+        [0.5, '#f7faf8'],
+        [1, '#078930']
+    ]);
+});
+
+test('chooses readable matrix text for the interpolated cell color', () => {
+    const positiveConfig = correlation.matrixColorConfig([
+        [{r: 0.25}, {r: 0.6}, {r: 1}]
+    ]);
+    const divergingConfig = correlation.matrixColorConfig([
+        [{r: -1}, {r: 0}, {r: 1}]
+    ]);
+
+    assert.equal(correlation.matrixTextColor(0.25, positiveConfig), '#000000');
+    assert.equal(correlation.matrixTextColor(0.6, positiveConfig), '#000000');
+    assert.equal(correlation.matrixTextColor(1, positiveConfig), '#000000');
+    assert.equal(correlation.matrixTextColor(-1, divergingConfig), '#ffffff');
+    assert.equal(correlation.matrixTextColor(0, divergingConfig), '#000000');
+    assert.equal(correlation.matrixTextColor(1, divergingConfig), '#000000');
 });
 
 test('limits dense Plotly axes while retaining the first and last labels', () => {

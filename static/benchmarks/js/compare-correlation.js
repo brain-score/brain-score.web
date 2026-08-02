@@ -284,26 +284,103 @@
         };
     }
 
-    function correlationExtent(cells) {
+    function csvValue(value) {
+        var text = value === null || value === undefined ? '' : String(value);
+        return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+
+    function matrixColorConfig(cells) {
         var values = [];
         (cells || []).forEach(function (row) {
             (row || []).forEach(function (result) {
                 if (result && result.r !== null && Number.isFinite(result.r)) values.push(result.r);
             });
         });
-        if (!values.length) return {min: -1, max: 1};
-        var minimum = Math.min.apply(null, values);
-        var maximum = Math.max.apply(null, values);
-        if (minimum === maximum) {
-            minimum = Math.max(-1, minimum - 0.1);
-            maximum = Math.min(1, maximum + 0.1);
+        var hasNegative = values.some(function (value) { return value < 0; });
+        if (hasNegative) {
+            return {
+                zmin: -1,
+                zmax: 1,
+                colorscale: [
+                    [0, '#b2182b'],
+                    [0.5, '#f7faf8'],
+                    [1, '#078930']
+                ]
+            };
         }
-        return {min: minimum, max: maximum};
+        var minimum = values.length ? Math.min.apply(null, values) : 0;
+        if (minimum >= 1) minimum = 0;
+        return {
+            zmin: minimum,
+            zmax: 1,
+            colorscale: [
+                [0, '#f7faf8'],
+                [1, '#078930']
+            ]
+        };
     }
 
-    function csvValue(value) {
-        var text = value === null || value === undefined ? '' : String(value);
-        return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    function hexColorToRgb(color) {
+        var hex = String(color || '').replace('#', '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(function (character) { return character + character; }).join('');
+        }
+        return {
+            r: parseInt(hex.slice(0, 2), 16),
+            g: parseInt(hex.slice(2, 4), 16),
+            b: parseInt(hex.slice(4, 6), 16)
+        };
+    }
+
+    function colorAtScale(position, colorscale) {
+        var bounded = Math.max(0, Math.min(1, position));
+        var lower = colorscale[0];
+        var upper = colorscale[colorscale.length - 1];
+        for (var index = 1; index < colorscale.length; index++) {
+            if (bounded <= colorscale[index][0]) {
+                lower = colorscale[index - 1];
+                upper = colorscale[index];
+                break;
+            }
+        }
+        var span = upper[0] - lower[0];
+        var fraction = span ? (bounded - lower[0]) / span : 0;
+        var start = hexColorToRgb(lower[1]);
+        var end = hexColorToRgb(upper[1]);
+        return {
+            r: start.r + (end.r - start.r) * fraction,
+            g: start.g + (end.g - start.g) * fraction,
+            b: start.b + (end.b - start.b) * fraction
+        };
+    }
+
+    function relativeLuminance(color) {
+        function linearChannel(channel) {
+            var value = channel / 255;
+            return value <= 0.04045
+                ? value / 12.92
+                : Math.pow((value + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * linearChannel(color.r) +
+            0.7152 * linearChannel(color.g) +
+            0.0722 * linearChannel(color.b);
+    }
+
+    function contrastRatio(left, right) {
+        var lighter = Math.max(relativeLuminance(left), relativeLuminance(right));
+        var darker = Math.min(relativeLuminance(left), relativeLuminance(right));
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    function matrixTextColor(value, colorConfig) {
+        if (value === null || value === undefined || !Number.isFinite(value)) return '#000000';
+        var position = (value - colorConfig.zmin) / (colorConfig.zmax - colorConfig.zmin);
+        var background = colorAtScale(position, colorConfig.colorscale);
+        var dark = {r: 0, g: 0, b: 0};
+        var light = {r: 255, g: 255, b: 255};
+        return contrastRatio(dark, background) >= contrastRatio(light, background)
+            ? '#000000'
+            : '#ffffff';
     }
 
     function matrixToCsv(matrix) {
@@ -331,7 +408,7 @@
         var labels = matrix.axes.map(displayLabel);
         var indexes = labels.map(function (_label, index) { return index; });
         var ticks = matrixAxisTicks(labels, maximumTicks);
-        var extent = correlationExtent(matrix.cells);
+        var colorConfig = matrixColorConfig(matrix.cells);
         var customdata = matrix.cells.map(function (row, rowIndex) {
             return row.map(function (result, columnIndex) {
                 return [
@@ -350,13 +427,9 @@
                 return row.map(function (result) { return result.r; });
             }),
             customdata: customdata,
-            zmin: extent.min,
-            zmax: extent.max,
-            colorscale: [
-                [0, '#b2182b'],
-                [0.5, '#f7faf8'],
-                [1, '#078930']
-            ],
+            zmin: colorConfig.zmin,
+            zmax: colorConfig.zmax,
+            colorscale: colorConfig.colorscale,
             xgap: labels.length <= 20 ? 2 : 0,
             ygap: labels.length <= 20 ? 2 : 0,
             hoverongaps: true,
@@ -374,15 +447,12 @@
 
         if (labels.length <= 12) {
             var textGroups = {
-                dark: {x: [], y: [], text: [], color: '#26342d'},
+                dark: {x: [], y: [], text: [], color: '#000000'},
                 light: {x: [], y: [], text: [], color: '#ffffff'}
             };
             matrix.cells.forEach(function (row, rowIndex) {
                 row.forEach(function (result, columnIndex) {
-                    var normalized = result.r === null
-                        ? 0.5
-                        : (result.r - extent.min) / (extent.max - extent.min);
-                    var group = normalized <= 0.2 || normalized >= 0.8
+                    var group = matrixTextColor(result.r, colorConfig) === '#ffffff'
                         ? textGroups.light
                         : textGroups.dark;
                     group.x.push(columnIndex);
@@ -745,11 +815,12 @@
         buildCorrelationMatrix: buildCorrelationMatrix,
         buildHierarchy: buildHierarchy,
         buildPlotlyMatrix: buildPlotlyMatrix,
-        correlationExtent: correlationExtent,
         createDefaultModes: createDefaultModes,
         createExplorer: createExplorer,
         descendantsOf: descendantsOf,
         displayLabel: displayLabel,
+        matrixColorConfig: matrixColorConfig,
+        matrixTextColor: matrixTextColor,
         matrixAxisTicks: matrixAxisTicks,
         matrixAxisTicksForRange: matrixAxisTicksForRange,
         matrixToCsv: matrixToCsv,
