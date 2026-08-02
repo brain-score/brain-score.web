@@ -47,6 +47,12 @@
         return Number.isFinite(number) ? number : null;
     }
 
+    function defaultComparisonBenchmarkTypes(domain) {
+        var normalizedDomain = String(domain || '').trim();
+        if (!normalizedDomain) return [];
+        return ['neural_' + normalizedDomain, 'behavior_' + normalizedDomain];
+    }
+
     function activeVersionAt(benchmark, cutoffMs) {
         var versions = (benchmark.versions || []).slice().sort(function (a, b) {
             return Number(b.version) - Number(a.version);
@@ -600,6 +606,7 @@
         activeVersionAt: activeVersionAt,
         completenessLeavesForSelection: completenessLeavesForSelection,
         dateToUtcDay: dateToUtcDay,
+        defaultComparisonBenchmarkTypes: defaultComparisonBenchmarkTypes,
         endOfUtcDay: endOfUtcDay,
         filterRowsByCompleteness: filterRowsByCompleteness,
         topRankedModelIds: topRankedModelIds,

@@ -378,8 +378,15 @@ $(document).ready(function () {
         });
 
     if (window.CompareDashboard) {
-        const requestedX = window.CompareDashboard.getUrlParam('benchmark_x');
-        const requestedY = window.CompareDashboard.getUrlParam('benchmark_y');
+        const defaultBenchmarkTypes = window.CompareDashboardCore
+            ? window.CompareDashboardCore.defaultComparisonBenchmarkTypes(
+                window.compare_dashboard_data && window.compare_dashboard_data.domain
+            )
+            : [];
+        const requestedX = window.CompareDashboard.getUrlParam('benchmark_x') ||
+            defaultBenchmarkTypes[0];
+        const requestedY = window.CompareDashboard.getUrlParam('benchmark_y') ||
+            defaultBenchmarkTypes[1];
         const requestedXId = $(xlabel_selector + ' option[value="' + requestedX + '"]').length
             ? requestedX
             : window.CompareDashboard.getBenchmarkIdByTypeId(requestedX);
