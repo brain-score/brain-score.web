@@ -4,6 +4,7 @@
 {% block page_head_scripts %}
     <script defer src="{% static '/benchmarks/js/compare-dashboard.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-correlation.js' %}" charset="utf-8"></script>
+    <script defer src="{% static '/benchmarks/js/compare-stability.js' %}" charset="utf-8"></script>
 {% endblock %}
 
 {% block banner %}
@@ -202,6 +203,26 @@
             </div>
             {% endif %}
         </div>
+
+        <section id="benchmark-correlation-stability-panel" class="box compare-analysis-panel benchmark-stability-panel" aria-labelledby="benchmark-correlation-stability-title">
+            <div class="compare-analysis-heading">
+                <div>
+                    <h2 id="benchmark-correlation-stability-title" class="subtitle is-4">Correlation stability over time</h2>
+                    <p class="help">Track whether the selected benchmark relationship persists as the eligible model cohort grows.</p>
+                </div>
+            </div>
+            <div id="benchmark-correlation-stability" class="compare-analysis-plot" aria-live="polite"></div>
+            <div id="benchmark-correlation-stability-empty" class="notification is-light" style="display:none;">
+                No historical snapshot has at least two paired models with variable scores for this benchmark pair.
+            </div>
+            <p class="help compare-analysis-method">
+                Snapshots are quarterly before the latest year and monthly thereafter. They use the current completedness threshold and the same finite paired-score rule as the scatterplot. Select a point to update the wayback date.
+            </p>
+            <div class="buttons are-small compare-analysis-downloads">
+                <button id="benchmark-stability-download-svg" class="button is-outlined" type="button">Download plot as SVG</button>
+                <button id="benchmark-stability-download-csv" class="button is-outlined" type="button">Download data as CSV</button>
+            </div>
+        </section>
 
         <section id="benchmark-correlation-explorer" class="box compare-analysis-panel benchmark-correlation-explorer" aria-labelledby="benchmark-correlation-title">
             <div class="compare-analysis-heading">
