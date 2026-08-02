@@ -57,6 +57,8 @@
         logo_url = "/static/benchmarks/img/logo.png";
     </script>
 
+    {% block page_head_scripts %}{% endblock %}
+
     {# own sources #}
     {% compress js %}
     <script defer src="{% static "/benchmarks/js/navbar.js" %}" type="text/javascript" charset="utf-8"></script>

@@ -96,3 +96,135 @@
 .compare-layout
   max-width: 1500px
   margin: 0
+
+.compare-dashboard
+  border-top: 4px solid #45c676
+  margin-bottom: 1.5rem
+
+  .compare-dashboard-heading,
+  .compare-wayback-heading,
+  .compare-completeness-heading
+    align-items: flex-start
+    display: flex
+    justify-content: space-between
+    gap: 1rem
+
+  .compare-dashboard-heading
+    margin-bottom: 1rem
+
+    .subtitle
+      margin-bottom: .25rem
+
+  .compare-dashboard-controls
+    margin-bottom: .5rem
+
+  #compare-wayback-range
+    accent-color: #078930
+    cursor: pointer
+    width: 100%
+
+  #compare-completeness-number
+    display: inline-block
+    padding: .35rem .5rem
+    text-align: right
+    width: 5rem
+
+  #compare-completeness-range
+    accent-color: #078930
+    cursor: pointer
+    width: 100%
+
+  #compare-wayback-value
+    color: #26342d
+    font-size: .9rem
+    font-weight: 600
+    white-space: nowrap
+
+  .compare-slider-bounds
+    color: #6b756f
+    display: flex
+    font-size: .7rem
+    justify-content: space-between
+    margin-top: -.15rem
+
+.compare-dashboard-kpis,
+.compare-analysis-summary
+  display: grid
+  gap: .75rem
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+
+.compare-kpi,
+.compare-analysis-summary > div
+  background: #f7faf8
+  border: 1px solid #dfe8e2
+  border-radius: 6px
+  padding: .8rem 1rem
+
+  span
+    color: #617069
+    display: block
+    font-size: .75rem
+    letter-spacing: .02em
+    margin-bottom: .2rem
+    text-transform: uppercase
+
+  strong
+    color: #26342d
+    display: block
+    font-size: 1.15rem
+
+.compare-analysis-summary
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+  margin: .75rem 0 1.25rem
+
+  > div
+    text-align: center
+
+#model-pair-summary
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+
+.compare-completeness-details
+  margin-top: .9rem
+
+  summary
+    color: #3f5147
+    cursor: pointer
+    font-size: .85rem
+    font-weight: 600
+
+.compare-completeness-histogram
+  display: grid
+  gap: .35rem
+  margin-top: .75rem
+  max-width: 720px
+
+.compare-completeness-bin
+  align-items: center
+  display: grid
+  font-size: .75rem
+  gap: .65rem
+  grid-template-columns: 4.5rem minmax(8rem, 1fr) 2.5rem
+
+.compare-completeness-label,
+.compare-completeness-count
+  color: #536159
+
+.compare-completeness-count
+  text-align: right
+
+.compare-completeness-track
+  background: #e7ede9
+  border-radius: 999px
+  height: .55rem
+  overflow: hidden
+
+  > span
+    background: #45c676
+    display: block
+    height: 100%
+
+@media screen and (max-width: 1100px)
+  .compare-dashboard-kpis,
+  .compare-analysis-summary,
+  #model-pair-summary
+    grid-template-columns: repeat(2, minmax(0, 1fr))

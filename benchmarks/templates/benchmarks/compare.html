@@ -1,6 +1,10 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block page_head_scripts %}
+    <script defer src="{% static '/benchmarks/js/compare-dashboard.js' %}" charset="utf-8"></script>
+{% endblock %}
+
 {% block banner %}
     <h1>Compare</h1>
     <p>
@@ -14,6 +18,7 @@
         var benchmark_domain_map = {{ benchmark_domain_map|safe }};
         var model_metadata = {{ model_metadata|safe }};
         var benchmark_url_map = {{ benchmark_url_map|safe }};
+        var compare_dashboard_data = {{ compare_dashboard_data|safe }};
     </script>
 
     <div class="compare-layout">
@@ -26,6 +31,57 @@
 
     {# ==================== Tab 1: Compare Benchmarks ==================== #}
     <div id="panel-benchmarks">
+        <section id="compare-dashboard" class="box compare-dashboard" aria-labelledby="compare-dashboard-title">
+            <div class="compare-dashboard-heading">
+                <div>
+                    <h2 id="compare-dashboard-title" class="subtitle is-4">Comparison cohort</h2>
+                    <p class="help">These controls define the models and benchmarks used in Compare Benchmarks.</p>
+                </div>
+                <button id="compare-dashboard-reset" class="button is-small is-outlined" type="button">Reset cohort</button>
+            </div>
+
+            <div class="columns is-variable is-5 compare-dashboard-controls">
+                <div class="column is-half">
+                    <div class="compare-wayback-heading">
+                        <label class="label" for="compare-wayback-range">Wayback date</label>
+                        <output id="compare-wayback-value" for="compare-wayback-range">Loading</output>
+                    </div>
+                    <input id="compare-wayback-range" class="slider is-fullwidth" type="range" min="0" max="1" step="1" value="1">
+                    <div class="compare-slider-bounds" aria-hidden="true">
+                        <span id="compare-wayback-min-label">Earliest</span>
+                        <span>Latest</span>
+                    </div>
+                    <p class="help">Uses benchmarks and models available by the end of this UTC day.</p>
+                </div>
+                <div class="column is-half">
+                    <div class="compare-completeness-heading">
+                        <label class="label" for="compare-completeness-range">Minimum model completedness for selected benchmarks</label>
+                        <span>
+                            <input id="compare-completeness-number" class="input" type="number" min="0" max="100" step="1" value="0">
+                            <span>%</span>
+                        </span>
+                    </div>
+                    <input id="compare-completeness-range" class="slider is-fullwidth" type="range" min="0" max="100" step="1" value="0">
+                    <p class="help">Calculated from active leaves under the two selected benchmarks. Finite, non-zero scores count as complete; engineering leaves are excluded.</p>
+                </div>
+            </div>
+
+            <div class="compare-dashboard-kpis" aria-live="polite">
+                <div class="compare-kpi"><span>As of</span><strong id="compare-kpi-date">Loading</strong></div>
+                <div class="compare-kpi"><span>Eligible models</span><strong id="compare-kpi-models">0</strong></div>
+                <div class="compare-kpi"><span>Active selected leaves</span><strong id="compare-kpi-benchmarks">0</strong></div>
+                <div class="compare-kpi"><span>Median completedness</span><strong id="compare-kpi-median">Not available</strong></div>
+            </div>
+
+            <details class="compare-completeness-details">
+                <summary>View selected-benchmark completedness before thresholding</summary>
+                <div id="compare-completeness-histogram" class="compare-completeness-histogram"></div>
+            </details>
+            <div id="compare-dashboard-empty" class="notification is-warning is-light" style="display:none;">
+                No models meet this cohort. Move the date forward or lower the completedness threshold.
+            </div>
+        </section>
+
         <div class="columns">
             <div class="comparison column is-two-thirds">
                 <div class="controls-container columns">
@@ -47,6 +103,9 @@
                 </div>
 
                 <div id="comparison-scatter"></div>
+                <div id="benchmark-compare-empty" class="notification is-light" style="display:none;">
+                    Fewer than two models have valid scores for this benchmark pair in the selected cohort.
+                </div>
                 <div class="download-container columns">
                     <div class="column">
                         <button id="downloadSVGButton" class="button">Download plot as SVG</button>
@@ -141,6 +200,7 @@
                         <div class="box" id="model-card-a" style="padding: 0.75rem;">
                             <p class="has-text-weight-bold" id="card-a-name"></p>
                             <p class="is-size-7"><span id="card-a-rank"></span></p>
+                            <p class="is-size-7">Completedness: <span id="card-a-completeness"></span></p>
                             <p class="is-size-7">Contributor: <span id="card-a-contributor"></span></p>
                             <p class="is-size-7"><a id="card-a-link" href="#">View model page</a></p>
                         </div>
@@ -149,10 +209,21 @@
                         <div class="box" id="model-card-b" style="padding: 0.75rem;">
                             <p class="has-text-weight-bold" id="card-b-name"></p>
                             <p class="is-size-7"><span id="card-b-rank"></span></p>
+                            <p class="is-size-7">Completedness: <span id="card-b-completeness"></span></p>
                             <p class="is-size-7">Contributor: <span id="card-b-contributor"></span></p>
                             <p class="is-size-7"><a id="card-b-link" href="#">View model page</a></p>
                         </div>
                     </div>
+                </div>
+
+                <div id="model-pair-summary" class="compare-analysis-summary" style="display:none;" aria-live="polite">
+                    <div><span>Common leaf coverage</span><strong id="model-stat-common">0</strong></div>
+                    <div><span>Model A higher</span><strong id="model-stat-a-wins">0</strong></div>
+                    <div><span>Essentially tied</span><strong id="model-stat-ties">0</strong></div>
+                    <div><span>Model B higher</span><strong id="model-stat-b-wins">0</strong></div>
+                </div>
+                <div id="model-compare-empty" class="notification is-light" style="display:none;">
+                    Select two eligible models with at least three common leaf-benchmark scores.
                 </div>
 
                 {# Two-model overlaid trend; fetched on demand by compare-trend.js. #}
@@ -241,20 +312,25 @@
         var panelBenchmarks = document.getElementById('panel-benchmarks');
         var panelModels = document.getElementById('panel-models');
 
-        tabBenchmarks.addEventListener('click', function() {
-            tabBenchmarks.classList.add('is-active');
-            tabModels.classList.remove('is-active');
-            panelBenchmarks.style.display = '';
-            panelModels.style.display = 'none';
-        });
+        function rememberTab(tab) {
+            if (window.CompareDashboard) {
+                window.CompareDashboard.setUrlParam('tab', tab === 'benchmarks' ? null : tab);
+                return;
+            }
+            var url = new URL(window.location.href);
+            if (tab === 'benchmarks') url.searchParams.delete('tab');
+            else url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+        }
 
-        tabModels.addEventListener('click', function() {
-            tabModels.classList.add('is-active');
-            tabBenchmarks.classList.remove('is-active');
-            panelModels.style.display = '';
-            panelBenchmarks.style.display = 'none';
-            // Trigger Plotly resize so charts render at correct width
-            if (typeof Plotly !== 'undefined') {
+        function activateTab(tab, remember) {
+            var showModels = tab === 'models';
+            tabBenchmarks.classList.toggle('is-active', !showModels);
+            tabModels.classList.toggle('is-active', showModels);
+            panelBenchmarks.style.display = showModels ? 'none' : '';
+            panelModels.style.display = showModels ? '' : 'none';
+            if (remember) rememberTab(tab);
+            if (showModels && typeof Plotly !== 'undefined') {
                 var ids = ['difference-bar-chart', 'domain-summary-chart',
                            'compare-score-trend-plot', 'compare-rank-trend-plot'];
                 for (var i = 0; i < ids.length; i++) {
@@ -262,7 +338,13 @@
                     if (el && el.data) Plotly.Plots.resize(el);
                 }
             }
-        });
+        }
+
+        tabBenchmarks.addEventListener('click', function() { activateTab('benchmarks', true); });
+        tabModels.addEventListener('click', function() { activateTab('models', true); });
+
+        var requestedTab = new URLSearchParams(window.location.search).get('tab');
+        activateTab(requestedTab === 'models' ? 'models' : 'benchmarks', false);
     })();
     </script>
     </div>

@@ -36,11 +36,21 @@ $(document).ready(function () {
         .attr("height", outerHeight)
         .attr("fill", "white");
 
+    function currentComparisonData() {
+        if (window.CompareDashboard) return window.CompareDashboard.getComparisonData();
+        return comparison_data;
+    }
+
+    function validScore(value) {
+        return value !== null && value !== undefined && value !== '' &&
+            Number.isFinite(Number(value));
+    }
+
     function getDeduplicatedValues() {
         // Filter data to guard against empty "" or "X" scores turning into NaNs
-        const filtered_data = comparison_data.filter(row =>
-            row[xKey.replace('-score', '-is_complete')] == 1 && row[xKey].length > 0 && !isNaN(row[xKey]) &&
-            row[yKey.replace('-score', '-is_complete')] == 1 && row[yKey].length > 0 && !isNaN(row[yKey]));
+        const filtered_data = currentComparisonData().filter(row =>
+            row[xKey.replace('-score', '-is_complete')] == 1 && validScore(row[xKey]) &&
+            row[yKey.replace('-score', '-is_complete')] == 1 && validScore(row[yKey]));
 
         // Calculate the correlation
         const xValues = filtered_data.map(d => +d[xKey]);
@@ -85,6 +95,7 @@ $(document).ready(function () {
     // Calculate Pearson correlation coefficient, R^2, and p-value
     function calculateCorrelation(xArr, yArr) {
         const n = xArr.length;
+        if (n < 2) return {correlation: null, rSquared: null, pValue: null};
         const sumX = xArr.reduce((a, b) => a + b, 0);
         const sumY = yArr.reduce((a, b) => a + b, 0);
         const sumXY = xArr.map((xi, i) => xi * yArr[i]).reduce((a, b) => a + b, 0);
@@ -94,15 +105,32 @@ $(document).ready(function () {
         const numerator = (n * sumXY) - (sumX * sumY);
         const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
-        const correlation = denominator === 0 ? 0 : numerator / denominator;
+        const correlation = denominator === 0 ? null : numerator / denominator;
+        if (correlation === null) return {correlation: null, rSquared: null, pValue: null};
         const rSquared = correlation * correlation;  // Calculate R^2
 
-        // // Calculate the t-statistic
-        const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
-        // // Calculate the p-value (2-tailed) using jStat's cumulative distribution function
-        const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
+        let pValue = null;
+        if (n > 2 && rSquared < 1) {
+            const tStatistic = correlation * Math.sqrt((n - 2) / (1 - rSquared));
+            pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), n - 2));
+        }
 
         return {correlation, rSquared, pValue};  // Return correlation, R^2, and p-value
+    }
+
+    function rankArray(values) {
+        const indexed = values.map((value, index) => ({value, index}))
+            .sort((a, b) => a.value - b.value);
+        const ranks = new Array(values.length);
+        let i = 0;
+        while (i < indexed.length) {
+            let j = i + 1;
+            while (j < indexed.length && indexed[j].value === indexed[i].value) j++;
+            const averageRank = (i + j + 1) / 2;
+            for (let k = i; k < j; k++) ranks[indexed[k].index] = averageRank;
+            i = j;
+        }
+        return ranks;
     }
 
 
@@ -113,9 +141,15 @@ $(document).ready(function () {
         const sumY = yArr.reduce((a, b) => a + b, 0);
         const sumXY = xArr.map((xi, i) => xi * yArr[i]).reduce((a, b) => a + b, 0);
         const sumX2 = xArr.map(xi => xi * xi).reduce((a, b) => a + b, 0);
-        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const denominator = n * sumX2 - sumX * sumX;
+        const slope = denominator === 0 ? 0 : (n * sumXY - sumX * sumY) / denominator;
         const intercept = (sumY - slope * sumX) / n;
         return {slope, intercept};
+    }
+
+    function setEmpty(isEmpty) {
+        $('#benchmark-compare-empty').toggle(isEmpty);
+        svg.style('display', isEmpty ? 'none' : null);
     }
 
     function updatePlot() {
@@ -125,7 +159,7 @@ $(document).ready(function () {
         const xName = $(xlabel_selector).find('option:selected').text();
         const yName = $(ylabel_selector).find('option:selected').text();
 
-        d3.selectAll("svg > *").remove();
+        svg.selectAll("*").remove();
 
         // tip
         var tip = d3.tip()
@@ -133,14 +167,20 @@ $(document).ready(function () {
             .offset([-10, 0])
             .html(function (d) {
                 return "<strong>" + d[idKey] + "</strong><br>" +
-                    xKey + ": " + d[xKey] + "<br>" +
-                    yKey + ": " + d[yKey];
+                    xName + ": " + d[xKey] + "<br>" +
+                    yName + ": " + d[yKey];
             });
 
         svg.call(tip);
 
         const [filtered_data, xValues, yValues] = getDeduplicatedValues();
+        if (filtered_data.length < 2) {
+            setEmpty(true);
+            return;
+        }
+        setEmpty(false);
         const {correlation, rSquared, pValue} = calculateCorrelation(xValues, yValues);
+        const spearman = calculateCorrelation(rankArray(xValues), rankArray(yValues));
 
         // Calculate regression line
         const {slope, intercept} = calculateLinearRegression(xValues, yValues);
@@ -251,11 +291,12 @@ $(document).ready(function () {
 
         // Correlation stats -- centered above the plot
         var statsFont = "'Open Sans', Arial, sans-serif";
-        var pValueStr = pValue >= 0.01
+        var pValueStr = pValue === null ? 'p-value: N/A' : (pValue >= 0.01
             ? `p-value: ${pValue.toFixed(2)}`
-            : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1e')}`;
-        var statsText = "Pearson R: " + correlation.toFixed(2)
-            + "    R\u00B2: " + rSquared.toFixed(2)
+            : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1e')}`);
+        var statsText = "Pearson R: " + (correlation === null ? 'N/A' : correlation.toFixed(2))
+            + "    Spearman rho: " + (spearman.correlation === null ? 'N/A' : spearman.correlation.toFixed(2))
+            + "    R\u00B2: " + (rSquared === null ? 'N/A' : rSquared.toFixed(2))
             + "    " + pValueStr
             + "    n=" + filtered_data.length + " models";
 
@@ -306,8 +347,47 @@ $(document).ready(function () {
             .attr("xlink:href", logo_url);
     }
 
+    function syncComparisonBenchmarks() {
+        if (!window.CompareDashboard) return;
+        window.CompareDashboard.setComparisonBenchmarks(
+            $(xlabel_selector).val(),
+            $(ylabel_selector).val()
+        );
+    }
+
     $(xlabel_selector + ', ' + ylabel_selector)
-        .on("change", updatePlot);
+        .on("change", function () {
+            if (window.CompareDashboard) {
+                window.CompareDashboard.setUrlParam(
+                    'benchmark_x',
+                    window.CompareDashboard.getBenchmarkTypeId($(xlabel_selector).val())
+                );
+                window.CompareDashboard.setUrlParam(
+                    'benchmark_y',
+                    window.CompareDashboard.getBenchmarkTypeId($(ylabel_selector).val())
+                );
+                syncComparisonBenchmarks();
+            }
+            updatePlot();
+        });
+
+    if (window.CompareDashboard) {
+        const requestedX = window.CompareDashboard.getUrlParam('benchmark_x');
+        const requestedY = window.CompareDashboard.getUrlParam('benchmark_y');
+        const requestedXId = $(xlabel_selector + ' option[value="' + requestedX + '"]').length
+            ? requestedX
+            : window.CompareDashboard.getBenchmarkIdByTypeId(requestedX);
+        const requestedYId = $(ylabel_selector + ' option[value="' + requestedY + '"]').length
+            ? requestedY
+            : window.CompareDashboard.getBenchmarkIdByTypeId(requestedY);
+        if (requestedXId) {
+            $(xlabel_selector).val(requestedXId);
+        }
+        if (requestedYId) {
+            $(ylabel_selector).val(requestedYId);
+        }
+        syncComparisonBenchmarks();
+    }
 
     updatePlot();
 
@@ -340,6 +420,31 @@ $(document).ready(function () {
         tags: true,
         allowClear: true
     });
+
+    function refreshBenchmarkOptions() {
+        if (!window.CompareDashboard) return;
+        [xlabel_selector, ylabel_selector].forEach(function (selector) {
+            const select = $(selector);
+            select.find('option').each(function () {
+                const option = $(this);
+                if (!option.data('base-label')) option.data('base-label', option.text());
+                const active = window.CompareDashboard.isBenchmarkActive(this.value);
+                option.prop('disabled', !active);
+                option.text(option.data('base-label'));
+            });
+            if (!window.CompareDashboard.isBenchmarkActive(select.val())) {
+                const fallback = select.find('option:not(:disabled)').first().val();
+                select.val(fallback || '').trigger('change.select2');
+            }
+            select.trigger('change.select2');
+        });
+        syncComparisonBenchmarks();
+        updatePlot();
+    }
+
+    if (window.CompareDashboard) {
+        window.CompareDashboard.subscribe(refreshBenchmarkOptions);
+    }
 
     // download functionality
 
@@ -379,8 +484,13 @@ $(document).ready(function () {
     function makeCSV() {
         // only data for selected benchmarks
         [filtered_data, x, y] = getDeduplicatedValues();
-        const headers = ['model', xKey, yKey];
-        const rows = filtered_data.map(row => headers.map(field => JSON.stringify(row[field])).join(','));
+        const fields = ['model', xKey, yKey];
+        const headers = [
+            'model',
+            $(xlabel_selector).find('option:selected').text(),
+            $(ylabel_selector).find('option:selected').text()
+        ];
+        const rows = filtered_data.map(row => fields.map(field => JSON.stringify(row[field])).join(','));
         return [headers.join(','), ...rows].join('\n');
     }
 
