@@ -55,6 +55,8 @@ test('builds a reversed secondary rank axis for the violin overlay', () => {
 
     assert.deepEqual(overlay.yaxis.range, [7, 0]);
     assert.equal(overlay.yaxis.overlaying, 'y');
+    assert.equal(overlay.yaxis.tickformat, ',d');
+    assert.equal(overlay.yaxis.title.font.size, 14);
     assert.equal(overlay.data[1].yaxis, 'y2');
     assert.deepEqual(overlay.data[1].x, ['Neural']);
     assert.deepEqual(overlay.data[0].y, [2, 6, null]);
@@ -68,4 +70,8 @@ test('uses the comparison page model colors', () => {
 
     assert.equal(overlay.data[1].marker.color, '#45C676');
     assert.equal(overlay.data[2].marker.color, '#47B7DE');
+    assert.equal(overlay.data[1].marker.symbol, 'x');
+    assert.equal(overlay.data[2].marker.symbol, 'x');
+    assert.equal(overlay.data[1].marker.size, 11);
+    assert.equal(overlay.data[2].marker.size, 11);
 });

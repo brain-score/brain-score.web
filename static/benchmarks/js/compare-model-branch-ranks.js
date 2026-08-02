@@ -118,9 +118,8 @@
                     cliponaxis: false,
                     marker: {
                         color: MODEL_A_COLOR,
-                        line: {color: '#ffffff', width: 1.5},
-                        size: 14,
-                        symbol: 'circle'
+                        size: 11,
+                        symbol: 'x'
                     },
                     hovertemplate: '<b>%{x}</b><br>Rank: %{y}<br>Summary score: %{customdata[0]:.3f}<br>Eligible models: %{customdata[1]}<extra>' + (options.nameA || 'Model A') + '</extra>'
                 },
@@ -138,20 +137,23 @@
                     cliponaxis: false,
                     marker: {
                         color: MODEL_B_COLOR,
-                        line: {color: '#ffffff', width: 1.5},
-                        size: 14,
-                        symbol: 'diamond'
+                        size: 11,
+                        symbol: 'x'
                     },
                     hovertemplate: '<b>%{x}</b><br>Rank: %{y}<br>Summary score: %{customdata[0]:.3f}<br>Eligible models: %{customdata[1]}<extra>' + (options.nameB || 'Model B') + '</extra>'
                 }
             ],
             yaxis: {
-                title: {text: 'Branch rank (1 is best)'},
+                title: {text: 'Branch rank (1 is best)', font: {size: 14}},
                 overlaying: 'y',
                 side: 'right',
                 range: [maximumRank + 1, 0],
                 tick0: 1,
                 dtick: maximumRank <= 12 ? 1 : undefined,
+                tickfont: {size: 12},
+                tickformat: ',d',
+                hoverformat: ',d',
+                automargin: true,
                 showgrid: false,
                 zeroline: false
             }
