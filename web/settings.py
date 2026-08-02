@@ -188,6 +188,8 @@ def get_db_info():
 
 
 DATABASES = get_db_info()
+if os.getenv("DJANGO_ENV") == "test":
+    TEST_RUNNER = "benchmarks.test_runner.ExistingDatabaseTestRunner"
 
 # Cache Configuration
 # https://docs.djangoproject.com/en/4.0/topics/cache/
