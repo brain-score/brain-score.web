@@ -6,10 +6,12 @@
         module.exports = core;
     }
     root.CompareCorrelationCore = core;
+    var initialized = false;
 
     function initialize() {
-        if (!root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
+        if (initialized || !root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
         if (!root.document.getElementById('benchmark-correlation-explorer')) return;
+        initialized = true;
         root.CompareCorrelation = core.createExplorer(
             root.compare_dashboard_data,
             root.CompareDashboard,
@@ -18,6 +20,7 @@
     }
 
     if (root.document) {
+        root.document.addEventListener('compare-dashboard:ready', initialize);
         if (root.document.readyState === 'loading') {
             root.document.addEventListener('DOMContentLoaded', initialize);
         } else {
@@ -38,6 +41,43 @@
         IT: true,
         behavior_vision: true
     };
+    var CORRELATION_PRESETS = [
+        {
+            id: 'rdm',
+            label: 'RDM',
+            description: 'Compare active benchmark leaves whose names contain RDM.',
+            kind: 'metric',
+            token: 'rdm'
+        },
+        {
+            id: 'ridge',
+            label: 'Ridge',
+            description: 'Compare active benchmark leaves whose names contain ridge.',
+            kind: 'metric',
+            token: 'ridge'
+        },
+        {
+            id: 'nsd-stimuli',
+            label: 'NSD stimuli',
+            description: 'Compare Allen2022, Li2026, and Zerbe2026 benchmark leaves.',
+            kind: 'families',
+            prefixes: ['allen2022', 'li2026', 'zerbe2026']
+        },
+        {
+            id: 'things-stimuli',
+            label: 'THINGS stimuli',
+            description: 'Compare Papale, Hebart fMRI, and Gifford benchmark leaves.',
+            kind: 'families',
+            prefixes: ['papale', 'hebart2023_fmri', 'gifford']
+        },
+        {
+            id: 'fmri',
+            label: 'fMRI',
+            description: 'Compare active benchmark leaves whose names contain fMRI.',
+            kind: 'metric',
+            token: 'fmri'
+        }
+    ];
 
     function buildHierarchy(benchmarks) {
         var byId = {};
@@ -98,6 +138,80 @@
                 next[benchmark.id] = DESELECT;
             } else if (activeBenchmarkIds[benchmark.id]) {
                 next[benchmark.id] = SELECT;
+            }
+        });
+        return next;
+    }
+
+    function benchmarkSearchTokens(benchmark) {
+        return [benchmark.id, benchmark.type_id, benchmark.label]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .split(/[^a-z0-9]+/)
+            .filter(Boolean);
+    }
+
+    function benchmarkContainsToken(benchmark, token) {
+        var normalizedToken = String(token || '').toLowerCase();
+        return benchmarkSearchTokens(benchmark).some(function (candidate) {
+            return candidate.indexOf(normalizedToken) === 0;
+        });
+    }
+
+    function presetDefinition(presetId) {
+        return CORRELATION_PRESETS.find(function (preset) { return preset.id === presetId; });
+    }
+
+    function matchingPresetBenchmarkIds(presetId, benchmarks) {
+        var preset = presetDefinition(presetId);
+        if (!preset) return [];
+        var leaves = (benchmarks || []).filter(function (benchmark) {
+            return benchmark.is_leaf && !benchmark.is_engineering;
+        });
+
+        if (preset.kind === 'metric') {
+            return leaves.filter(function (benchmark) {
+                return benchmarkContainsToken(benchmark, preset.token);
+            }).map(function (benchmark) { return benchmark.id; });
+        }
+
+        if (preset.kind === 'families') {
+            return leaves.filter(function (benchmark) {
+                var typeId = String(benchmark.type_id || benchmark.label || '').toLowerCase();
+                return preset.prefixes.some(function (prefix) {
+                    return typeId.indexOf(prefix) === 0;
+                });
+            }).map(function (benchmark) { return benchmark.id; });
+        }
+
+        return [];
+    }
+
+    function getCorrelationPresets(benchmarks) {
+        return CORRELATION_PRESETS.map(function (preset) {
+            return {
+                id: preset.id,
+                label: preset.label,
+                description: preset.description,
+                benchmarkIds: matchingPresetBenchmarkIds(preset.id, benchmarks)
+            };
+        }).filter(function (preset) { return preset.benchmarkIds.length >= 2; });
+    }
+
+    function createPresetModes(presetId, benchmarks, activeBenchmarkIds) {
+        var hierarchy = buildHierarchy(benchmarks);
+        var next = {};
+        (benchmarks || []).forEach(function (benchmark) {
+            next[benchmark.id] = DESELECT;
+        });
+        matchingPresetBenchmarkIds(presetId, benchmarks).forEach(function (benchmarkId) {
+            if (!activeBenchmarkIds[benchmarkId]) return;
+            next[benchmarkId] = SELECT;
+            var parentId = hierarchy.parentById[benchmarkId];
+            while (parentId) {
+                if (!hierarchy.byId[parentId].is_engineering) next[parentId] = HIDE;
+                parentId = hierarchy.parentById[parentId];
             }
         });
         return next;
@@ -408,7 +522,118 @@
         return rows.map(function (row) { return row.map(csvValue).join(','); }).join('\n');
     }
 
-    function buildPlotlyMatrix(matrix, logoSource, maximumTicks) {
+    function paddedScatterRange(values) {
+        var minimum = Math.min.apply(null, values);
+        var maximum = Math.max.apply(null, values);
+        var span = maximum - minimum;
+        var padding = span ? span * 0.05 : Math.max(Math.abs(maximum) * 0.05, 0.05);
+        return [minimum - padding, maximum + padding];
+    }
+
+    function buildPlotlyBenchmarkScatter(points, options) {
+        options = options || {};
+        var xValues = points.map(function (point) { return point.x; });
+        var yValues = points.map(function (point) { return point.y; });
+        var xRange = paddedScatterRange(xValues);
+        var yRange = paddedScatterRange(yValues);
+        var regression = options.regression || {slope: 0, intercept: 0};
+        var regressionX = [xRange[0], xRange[1]];
+        var regressionY = regressionX.map(function (value) {
+            return regression.slope * value + regression.intercept;
+        });
+        var images = options.logoSource ? [{
+            source: options.logoSource,
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.985,
+            y: 0.025,
+            sizex: 0.16,
+            sizey: 0.055,
+            xanchor: 'right',
+            yanchor: 'bottom',
+            sizing: 'contain',
+            opacity: 0.82,
+            layer: 'above'
+        }] : [];
+
+        return {
+            data: [
+                {
+                    x: regressionX,
+                    y: regressionY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: {color: '#c8ceca', width: 2, dash: 'dot'},
+                    hoverinfo: 'skip',
+                    showlegend: false
+                },
+                {
+                    x: xValues,
+                    y: yValues,
+                    customdata: points.map(function (point) { return point.model; }),
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: {
+                        color: '#078930',
+                        opacity: 0.48,
+                        size: 11,
+                        line: {color: 'rgba(7, 137, 48, 0.22)', width: 1}
+                    },
+                    hovertemplate: '<b>%{customdata}</b>' +
+                        '<br>' + options.xLabel + ': %{x:.4f}' +
+                        '<br>' + options.yLabel + ': %{y:.4f}<extra></extra>',
+                    showlegend: false
+                }
+            ],
+            layout: {
+                title: {
+                    text: options.statsText || '',
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: {size: 13, color: '#26342d'}
+                },
+                autosize: true,
+                height: options.height || 560,
+                margin: {l: 75, r: 35, t: 58, b: 70, pad: 2},
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                font: {family: "'Open Sans', Arial, sans-serif", color: '#26342d'},
+                hovermode: 'closest',
+                dragmode: 'zoom',
+                showlegend: false,
+                images: images,
+                xaxis: {
+                    title: {text: options.xLabel},
+                    range: xRange,
+                    automargin: true,
+                    gridcolor: '#edf1ee',
+                    zeroline: false
+                },
+                yaxis: {
+                    title: {text: options.yLabel},
+                    range: yRange,
+                    automargin: true,
+                    gridcolor: '#edf1ee',
+                    zeroline: false
+                }
+            },
+            config: {
+                responsive: true,
+                scrollZoom: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+                toImageButtonOptions: {
+                    format: 'png',
+                    filename: 'brain-score-benchmark-scatter',
+                    scale: 2
+                }
+            }
+        };
+    }
+
+    function buildPlotlyMatrix(matrix, logoSource, maximumTicks, expanded) {
+        expanded = !!expanded;
         var labels = matrix.axes.map(displayLabel);
         var indexes = labels.map(function (_label, index) { return index; });
         var ticks = matrixAxisTicks(labels, maximumTicks);
@@ -485,11 +710,11 @@
             source: logoSource,
             xref: 'paper',
             yref: 'paper',
-            x: 1.04,
+            x: expanded ? 0.98 : 1.02,
             y: 0.02,
-            sizex: 0.17,
+            sizex: 0.16,
             sizey: 0.045,
-            xanchor: 'center',
+            xanchor: expanded ? 'right' : 'left',
             yanchor: 'bottom',
             sizing: 'contain',
             opacity: 0.82,
@@ -506,7 +731,7 @@
                     font: {size: 14, color: '#26342d'}
                 },
                 autosize: true,
-                margin: {l: 90, r: 105, t: 58, b: 100, pad: 2},
+                margin: {l: 90, r: expanded ? 105 : 150, t: 58, b: 100, pad: 2},
                 paper_bgcolor: '#ffffff',
                 plot_bgcolor: '#f7faf8',
                 font: {family: 'Open Sans, Arial, sans-serif', size: 10, color: '#26342d'},
@@ -570,6 +795,7 @@
         var expand = document.getElementById('benchmark-correlation-expand');
         var selectAll = document.getElementById('benchmark-correlation-select-all');
         var reset = document.getElementById('benchmark-correlation-reset');
+        var presetSelect = document.getElementById('benchmark-correlation-preset-select');
         var downloadSvg = document.getElementById('benchmark-correlation-download-svg');
         var downloadCsv = document.getElementById('benchmark-correlation-download-csv');
         var browserRoot = document.defaultView || {};
@@ -577,6 +803,8 @@
         var latestMatrix = null;
         var relayoutHandler = null;
         var updatingTicks = false;
+        var activePresetId = null;
+        var availablePresets = getCorrelationPresets(benchmarks);
 
         benchmarks.forEach(function (benchmark) {
             var depth = 0;
@@ -631,6 +859,7 @@
                 button.setAttribute('aria-pressed', modes[benchmarkId] === mode ? 'true' : 'false');
                 if (modes[benchmarkId] === mode) button.classList.add('is-active');
                 button.addEventListener('click', function () {
+                    activePresetId = null;
                     modes = setBenchmarkMode(modes, benchmarkId, mode, hierarchy);
                     render();
                 });
@@ -653,6 +882,28 @@
             var rootList = createElement(document, 'ul', 'benchmark-correlation-tree-list is-root');
             hierarchy.roots.forEach(function (rootId) { rootList.appendChild(renderNode(rootId)); });
             treeContainer.appendChild(rootList);
+        }
+
+        function renderPresets() {
+            if (!presetSelect) return;
+            presetSelect.innerHTML = '';
+            var placeholder = createElement(document, 'option', '', 'Choose a preset');
+            placeholder.value = '';
+            presetSelect.appendChild(placeholder);
+            availablePresets.forEach(function (preset) {
+                var activeCount = preset.benchmarkIds.filter(function (benchmarkId) {
+                    return resolved.activeBenchmarkIds[benchmarkId];
+                }).length;
+                var option = createElement(
+                    document, 'option', '', preset.label + ' (' + activeCount + ')'
+                );
+                option.value = preset.id;
+                option.disabled = activeCount < 2;
+                option.title = preset.description;
+                presetSelect.appendChild(option);
+            });
+            presetSelect.value = activePresetId || '';
+            presetSelect.disabled = !availablePresets.length;
         }
 
         function renderMatrix() {
@@ -697,11 +948,13 @@
                 return;
             }
 
-            var maximumTicks = explorer && explorer.classList.contains('is-expanded') ? 48 : 24;
+            var isExpanded = explorer && explorer.classList.contains('is-expanded');
+            var maximumTicks = isExpanded ? 48 : 24;
             var plot = buildPlotlyMatrix(
                 matrix,
                 browserRoot.logo_url || '/static/benchmarks/img/logo.png',
-                maximumTicks
+                maximumTicks,
+                isExpanded
             );
             matrixContainer.setAttribute(
                 'aria-label',
@@ -741,12 +994,22 @@
         }
 
         function render() {
+            renderPresets();
             renderTree();
             renderMatrix();
         }
 
         if (selectAll) selectAll.addEventListener('click', function () {
+            activePresetId = null;
             modes = selectAllBenchmarks(modes, benchmarks, resolved.activeBenchmarkIds);
+            render();
+        });
+        if (presetSelect) presetSelect.addEventListener('change', function () {
+            activePresetId = presetSelect.value || null;
+            if (!activePresetId) return;
+            modes = createPresetModes(
+                activePresetId, benchmarks, resolved.activeBenchmarkIds
+            );
             render();
         });
         if (downloadSvg) downloadSvg.addEventListener('click', function () {
@@ -793,11 +1056,17 @@
             }
         });
         if (reset) reset.addEventListener('click', function () {
+            activePresetId = null;
             modes = createDefaultModes(benchmarks);
             render();
         });
         dashboard.subscribe(function (nextResolved) {
             resolved = nextResolved;
+            if (activePresetId) {
+                modes = createPresetModes(
+                    activePresetId, benchmarks, resolved.activeBenchmarkIds
+                );
+            }
             render();
         });
 
@@ -805,14 +1074,22 @@
             getModes: function () { return Object.assign({}, modes); },
             setExpanded: setExpanded,
             selectAll: function () {
+                activePresetId = null;
                 modes = selectAllBenchmarks(modes, benchmarks, resolved.activeBenchmarkIds);
                 render();
             },
             reset: function () {
+                activePresetId = null;
                 modes = createDefaultModes(benchmarks);
                 render();
             },
+            applyPreset: function (presetId) {
+                activePresetId = presetId;
+                modes = createPresetModes(presetId, benchmarks, resolved.activeBenchmarkIds);
+                render();
+            },
             setMode: function (benchmarkId, mode) {
+                activePresetId = null;
                 modes = setBenchmarkMode(modes, benchmarkId, mode, hierarchy);
                 render();
             }
@@ -824,18 +1101,23 @@
         HIDE: HIDE,
         DESELECT: DESELECT,
         aggregateRows: aggregateRows,
+        buildPlotlyBenchmarkScatter: buildPlotlyBenchmarkScatter,
         buildCorrelationMatrix: buildCorrelationMatrix,
         buildHierarchy: buildHierarchy,
         buildPlotlyMatrix: buildPlotlyMatrix,
         createDefaultModes: createDefaultModes,
+        createPresetModes: createPresetModes,
         createExplorer: createExplorer,
         descendantsOf: descendantsOf,
         displayLabel: displayLabel,
+        getCorrelationPresets: getCorrelationPresets,
+        matchingPresetBenchmarkIds: matchingPresetBenchmarkIds,
         matrixColorConfig: matrixColorConfig,
         matrixTextColor: matrixTextColor,
         matrixAxisTicks: matrixAxisTicks,
         matrixAxisTicksForRange: matrixAxisTicksForRange,
         matrixToCsv: matrixToCsv,
+        paddedScatterRange: paddedScatterRange,
         pearsonCorrelation: pearsonCorrelation,
         selectAllBenchmarks: selectAllBenchmarks,
         setBenchmarkMode: setBenchmarkMode,

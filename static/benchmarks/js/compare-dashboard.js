@@ -7,10 +7,56 @@
     }
     root.CompareDashboardCore = core;
 
-    if (root.document && root.compare_dashboard_data) {
-        root.CompareDashboard = core.createDashboard(root.compare_dashboard_data, root);
-        core.initializeDashboardUi(root);
+    function setLoadState(error) {
+        if (!root.document) return;
+        var loading = root.document.getElementById('compare-dashboard-loading');
+        var failure = root.document.getElementById('compare-dashboard-load-error');
+        if (loading) loading.style.display = error ? 'none' : '';
+        if (failure) failure.style.display = error ? '' : 'none';
     }
+
+    function initialize(payload) {
+        if (!payload || root.CompareDashboard) return;
+        root.compare_dashboard_data = payload;
+        root.CompareDashboard = core.createDashboard(payload, root);
+        core.initializeDashboardUi(root);
+        setLoadState(null);
+        var loading = root.document && root.document.getElementById('compare-dashboard-loading');
+        if (loading) loading.style.display = 'none';
+        if (root.document && typeof root.CustomEvent === 'function') {
+            root.document.dispatchEvent(new root.CustomEvent(
+                'compare-dashboard:ready',
+                {detail: {dashboard: root.CompareDashboard, payload: payload}}
+            ));
+        }
+    }
+
+    function load() {
+        if (!root.document) return;
+        if (root.compare_dashboard_data) {
+            initialize(root.compare_dashboard_data);
+            return;
+        }
+        if (!root.compare_dashboard_data_url || typeof root.fetch !== 'function') {
+            setLoadState(new Error('Compare dashboard data URL is unavailable'));
+            return;
+        }
+        setLoadState(null);
+        root.fetch(root.compare_dashboard_data_url, {
+            credentials: 'same-origin',
+            headers: {'Accept': 'application/json'}
+        }).then(function (response) {
+            if (!response.ok) throw new Error('Compare dashboard request failed: ' + response.status);
+            return response.json();
+        }).then(initialize).catch(function (error) {
+            setLoadState(error);
+            if (root.console && typeof root.console.error === 'function') {
+                root.console.error('Unable to load comparison data', error);
+            }
+        });
+    }
+
+    if (root.document) load();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
 

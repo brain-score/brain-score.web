@@ -1,4 +1,4 @@
-$(document).ready(function () {
+function initializeBenchmarkComparison() {
     // adapted from http://bl.ocks.org/peterssonjonas/4a0e7cb8d23231243e0e
 
     const container_selector = "div#comparison-scatter";
@@ -10,31 +10,10 @@ $(document).ready(function () {
         return;
     }
 
-    const margin = {top: 25, right: 0, bottom: 40, left: 60};
-    let outerWidth = $(container_selector).width(),
-        outerHeight = $(container_selector).width() * 2 / 3,
-        width = outerWidth - margin.left - margin.right,
-        height = outerHeight - margin.top - margin.bottom;
-
-    const dot_size = 8,
-        color = '#078930';
-
     let idKey = "model",
         xKey = null,
         yKey = null;
-
-    let g = null,
-        xAxis = null,
-        yAxis = null;
-
-    let x = null,
-        y = null;
-
-    const svg = d3.select(container_selector)
-        .append("svg")
-        .attr("width", outerWidth)
-        .attr("height", outerHeight)
-        .attr("fill", "white");
+    const scatterElement = document.querySelector(container_selector);
 
     function currentComparisonData() {
         if (window.CompareDashboard) return window.CompareDashboard.getComparisonData();
@@ -59,40 +38,6 @@ $(document).ready(function () {
         const xValues = filtered_data.map(d => +d[xKey]);
         const yValues = filtered_data.map(d => +d[yKey]);
         return [filtered_data, xValues, yValues];
-    }
-
-    function updateRegressionLine() {
-        const [filtered_data, xValues, yValues] = getDeduplicatedValues();
-
-        const {slope, intercept} = calculateLinearRegression(xValues, yValues);
-
-        // Calculate line endpoints within the current x-axis range
-        const xStart = x.domain()[0];
-        const xEnd = x.domain()[1];
-        const yStart = slope * xStart + intercept;
-        const yEnd = slope * xEnd + intercept;
-
-        // Update the regression line with the new start and end points
-        svg.select("#regression-line")
-            .attr("x1", x(xStart))
-            .attr("y1", y(yStart))
-            .attr("x2", x(xEnd))
-            .attr("y2", y(yEnd));
-    }
-
-    function transform(d) {
-        return "translate(" + x(d[xKey]) + "," + y(d[yKey]) + ")";
-    }
-
-    function zoom() {
-        svg.select(".x.axis").call(xAxis);
-        svg.select(".y.axis").call(yAxis);
-
-        svg.selectAll(".dot")
-            .attr("transform", transform)
-            .attr("r", dot_size);
-        // Update the regression line based on zoom
-        updateRegressionLine();
     }
 
     // Calculate Pearson correlation coefficient, R^2, and p-value
@@ -155,7 +100,8 @@ $(document).ready(function () {
 
     function setEmpty(isEmpty) {
         $('#benchmark-compare-empty').toggle(isEmpty);
-        svg.style('display', isEmpty ? 'none' : null);
+        $(container_selector).toggle(!isEmpty);
+        if (isEmpty && window.Plotly && scatterElement) window.Plotly.purge(scatterElement);
     }
 
     function updatePlot() {
@@ -164,20 +110,6 @@ $(document).ready(function () {
 
         const xName = $(xlabel_selector).find('option:selected').text();
         const yName = $(ylabel_selector).find('option:selected').text();
-
-        svg.selectAll("*").remove();
-
-        // tip
-        var tip = d3.tip()
-            .attr("class", "d3-tip")
-            .offset([-10, 0])
-            .html(function (d) {
-                return "<strong>" + d[idKey] + "</strong><br>" +
-                    xName + ": " + d[xKey] + "<br>" +
-                    yName + ": " + d[yKey];
-            });
-
-        svg.call(tip);
 
         const [filtered_data, xValues, yValues] = getDeduplicatedValues();
         if (filtered_data.length < 2) {
@@ -188,115 +120,7 @@ $(document).ready(function () {
         const {correlation, rSquared, pValue} = calculateCorrelation(xValues, yValues);
         const spearman = calculateCorrelation(rankArray(xValues), rankArray(yValues));
 
-        // Calculate regression line
         const {slope, intercept} = calculateLinearRegression(xValues, yValues);
-        // Define the endpoints for the line
-        const xStart = d3.min(xValues);
-        const xEnd = d3.max(xValues);
-        const yStart = slope * xStart + intercept;
-        const yEnd = slope * xEnd + intercept;
-
-        const xMax = d3.max(filtered_data, function (d) {
-                return d[xKey];
-            }) * 1.05,
-            xMin = d3.min(filtered_data, function (d) {
-                return d[xKey];
-            }) * .95,
-            yMax = d3.max(filtered_data, function (d) {
-                return d[yKey];
-            }) * 1.05,
-            yMin = d3.min(filtered_data, function (d) {
-                return d[yKey];
-            }) * .95;
-
-        x = d3.scale.linear()
-            .range([0, width]).nice();
-
-        y = d3.scale.linear()
-            .range([height, 0]).nice();
-
-        x.domain([xMin, xMax]);
-        y.domain([yMin, yMax]);
-
-        const zoomBeh = d3.behavior.zoom()
-            .x(x)
-            .y(y)
-            .scaleExtent([0, 500])
-            .on("zoom", zoom);
-
-        g = svg
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-            .call(zoomBeh);
-
-        xAxis = d3.svg.axis()
-            .scale(x)
-            .ticks(5)
-            .orient("bottom")
-            .tickSize(-height);
-
-        yAxis = d3.svg.axis()
-            .scale(y)
-            .ticks(3)
-            .orient("left")
-            .tickSize(-width);
-
-        g.append("rect")
-            .attr("width", width)
-            .attr("height", height);
-
-        g.append("g")
-            .classed("x axis", true)
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
-            .append("text")
-            .attr("class", "label")
-            .attr("x", width / 2)
-            .attr("y", 35)
-            .style("text-anchor", "middle")
-            .style("fill", "black")
-            .style("font-size", "14px")
-            .style("font-family", "'Open Sans', Arial, sans-serif")
-            .style("font-weight", "400")
-            .text(xName);
-
-        svg.selectAll(".x.axis text")
-            .style("fill", "black")
-            .style("font-family", "'Open Sans', Arial, sans-serif")
-            .style("font-weight", "400")
-            .style("font-size", "12px");
-
-        // Restore axis label size (selectAll above set ticks to 12px)
-        svg.select(".x.axis .label")
-            .style("font-size", "14px");
-
-        g.append("g")
-            .classed("y axis", true)
-            .call(yAxis)
-            .append("text")
-            .attr("class", "label")
-            .attr("transform", "rotate(-90)")
-            .attr("x", -height / 2)
-            .attr("y", -50)
-            .attr("dy", ".71em")
-            .style("text-anchor", "middle")
-            .style("fill", "black")
-            .style("font-size", "14px")
-            .style("font-family", "'Open Sans', Arial, sans-serif")
-            .style("font-weight", "400")
-            .text(yName);
-
-        svg.selectAll(".y.axis text")
-            .style("fill", "black")
-            .style("font-family", "'Open Sans', Arial, sans-serif")
-            .style("font-weight", "400")
-            .style("font-size", "12px");
-
-        svg.select(".y.axis .label")
-            .style("font-size", "14px");
-
-        // Correlation stats -- centered above the plot
-        var statsFont = "'Open Sans', Arial, sans-serif";
         var pValueStr = pValue === null ? 'p-value: N/A' : (pValue >= 0.01
             ? `p-value: ${pValue.toFixed(2)}`
             : `p-value: ${pValue.toExponential(1).replace(/^(\d)\.?\d*e/, '$1e')}`);
@@ -305,52 +129,21 @@ $(document).ready(function () {
             + "    R\u00B2: " + (rSquared === null ? 'N/A' : rSquared.toFixed(2))
             + "    " + pValueStr
             + "    n=" + filtered_data.length + " paired models";
-
-        g.append("text")
-            .attr("class", "stats-text")
-            .attr("x", width / 2)
-            .attr("y", -8)
-            .attr("fill", "black")
-            .style("font-size", "14px")
-            .style("font-family", statsFont)
-            .style("font-weight", "400")
-            .style("text-anchor", "middle")
-            .text(statsText);
-
-        // plot regression line
-        g.append("line")
-            .attr("id", "regression-line")
-            .attr("x1", x(xStart))
-            .attr("y1", y(yStart))
-            .attr("x2", x(xEnd))
-            .attr("y2", y(yEnd))
-            .attr("stroke-width", 2)
-            .attr("stroke", "lightgrey")
-            .attr("stroke-dasharray", "4,4");
-
-
-        const objects = g.append("svg")
-            .classed("objects", true)
-            .attr("width", width)
-            .attr("height", height);
-
-        objects.selectAll(".dot")
-            .data(filtered_data)
-            .enter().append("circle")
-            .classed("dot", true)
-            .attr("r", dot_size)
-            .attr("transform", transform)
-            .style("fill", color)
-            .on("mouseover", tip.show)
-            .on("mouseout", tip.hide);
-
-        // add Brain-Score logo (bottom-right corner)
-        g.append("svg:image")
-            .attr('x', width - 125)
-            .attr('y', height - 33)
-            .attr('width', 120)
-            .attr('height', 28)
-            .attr("xlink:href", logo_url);
+        if (!window.Plotly || !window.CompareCorrelationCore) return;
+        const plot = window.CompareCorrelationCore.buildPlotlyBenchmarkScatter(
+            filtered_data.map(function (row) {
+                return {model: row[idKey], x: Number(row[xKey]), y: Number(row[yKey])};
+            }),
+            {
+                xLabel: xName,
+                yLabel: yName,
+                statsText: statsText,
+                regression: {slope: slope, intercept: intercept},
+                logoSource: window.logo_url || '/static/benchmarks/img/logo.png',
+                height: Math.max(480, Math.min(760, Math.round($(container_selector).width() * 2 / 3)))
+            }
+        );
+        window.Plotly.react(scatterElement, plot.data, plot.layout, plot.config);
     }
 
     function syncComparisonBenchmarks() {
@@ -404,21 +197,13 @@ $(document).ready(function () {
 
     updatePlot();
 
-    // Redraw at the container's current width on resize so the chart tracks the
-    // layout instead of freezing at load-time size. Skip while the panel is
-    // hidden (width 0) to avoid collapsing the chart.
     let _cmpResizeTimer = null;
     $(window).on('resize', function () {
         clearTimeout(_cmpResizeTimer);
         _cmpResizeTimer = setTimeout(function () {
-            const w = $(container_selector).width();
-            if (!w || w < 50) return;
-            outerWidth = w;
-            outerHeight = w * 2 / 3;
-            width = outerWidth - margin.left - margin.right;
-            height = outerHeight - margin.top - margin.bottom;
-            svg.attr("width", outerWidth).attr("height", outerHeight);
-            updatePlot();
+            if (window.Plotly && window.Plotly.Plots && scatterElement) {
+                window.Plotly.Plots.resize(scatterElement);
+            }
         }, 200);
     });
 
@@ -461,16 +246,6 @@ $(document).ready(function () {
 
     // download functionality
 
-    function inlineStyles(element) {
-        const cssStyles = window.getComputedStyle(element);
-        for (let i = 0; i < cssStyles.length; i++) {
-            const styleName = cssStyles[i];
-            element.style[styleName] = cssStyles.getPropertyValue(styleName);
-        }
-
-        Array.from(element.children).forEach(child => inlineStyles(child));
-    }
-
     function getFileName(extension) {
         let xlabel = $(xlabel_selector).find('option:selected').text();
         let ylabel = $(ylabel_selector).find('option:selected').text();
@@ -478,25 +253,16 @@ $(document).ready(function () {
     }
 
     $("#downloadSVGButton").click(function () {
-        const svgNode = d3.select('svg').node();
-        const clonedSvg = svgNode.cloneNode(true);
-        inlineStyles(clonedSvg);
-        let svgData = clonedSvg.outerHTML;
-        svgData = svgData.replace('xlink:href="/static/benchmarks/img/logo.png"',
-            'xlink:href="' + window.location.origin + '/static/benchmarks/img/logo.png"')
-        const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
-
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(svgBlob);
-        downloadLink.download = getFileName(".svg");
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        if (!window.Plotly || !scatterElement) return;
+        window.Plotly.downloadImage(scatterElement, {
+            format: 'svg',
+            filename: getFileName('')
+        });
     });
 
     function makeCSV() {
         // only data for selected benchmarks
-        [filtered_data, x, y] = getDeduplicatedValues();
+        const [filtered_data] = getDeduplicatedValues();
         const fields = ['model', xKey, yKey];
         const headers = [
             'model',
@@ -551,4 +317,9 @@ $(document).ready(function () {
     });
     $(xlabel_selector + ', ' + ylabel_selector).on('change', syncComparisonExampleSelection);
     syncComparisonExampleSelection();
+}
+
+$(document).ready(function () {
+    if (window.CompareDashboard) initializeBenchmarkComparison();
+    else document.addEventListener('compare-dashboard:ready', initializeBenchmarkComparison, {once: true});
 });

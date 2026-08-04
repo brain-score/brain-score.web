@@ -327,3 +327,51 @@ test('initializes the UI after a deferred script creates the dashboard API', () 
     assert.equal(elements['compare-wayback-value'].textContent, '2026-08-03');
     assert.equal(elements['compare-wayback-min-label'].textContent, '2020-08-27');
 });
+
+test('fetches dashboard data and announces when asynchronous initialization completes', async () => {
+    const elements = {
+        'compare-dashboard': {style: {}, addEventListener() {}},
+        'compare-dashboard-loading': {style: {}},
+        'compare-dashboard-load-error': {style: {}},
+        'compare-dashboard-empty': {style: {}},
+        'compare-completeness-histogram': {style: {}, innerHTML: ''}
+    };
+    const events = [];
+    const context = {
+        compare_dashboard_data: null,
+        compare_dashboard_data_url: '/vision/compare/data/',
+        document: {
+            readyState: 'interactive',
+            getElementById(id) { return elements[id] || null; },
+            dispatchEvent(event) { events.push(event.type); }
+        },
+        location: {href: 'http://localhost/vision/compare/', search: ''},
+        history: {replaceState() {}},
+        URL,
+        URLSearchParams,
+        CustomEvent: class CustomEvent {
+            constructor(type, options) {
+                this.type = type;
+                this.detail = options.detail;
+            }
+        },
+        fetch(url) {
+            assert.equal(url, '/vision/compare/data/');
+            return Promise.resolve({ok: true, json: () => Promise.resolve(payload())});
+        },
+        setTimeout,
+        clearTimeout
+    };
+    context.globalThis = context;
+
+    const source = fs.readFileSync(require.resolve('../compare-dashboard.js'), 'utf8');
+    vm.runInNewContext(source, context);
+    assert.equal(context.CompareDashboard, undefined);
+
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.ok(context.CompareDashboard);
+    assert.equal(context.compare_dashboard_data.domain, 'vision');
+    assert.equal(elements['compare-dashboard-loading'].style.display, 'none');
+    assert.deepEqual(events, ['compare-dashboard:ready']);
+});

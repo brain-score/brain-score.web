@@ -23,7 +23,8 @@
         var benchmark_domain_map = {{ benchmark_domain_map|safe }};
         var model_metadata = {{ model_metadata|safe }};
         var benchmark_url_map = {{ benchmark_url_map|safe }};
-        var compare_dashboard_data = {{ compare_dashboard_data|safe }};
+        var compare_dashboard_data = null;
+        var compare_dashboard_data_url = "{{ compare_dashboard_data_url|escapejs }}";
     </script>
 
     <div class="compare-layout">
@@ -43,6 +44,13 @@
                     <p class="help">These controls define the models and benchmarks used in Compare Benchmarks.</p>
                 </div>
                 <button id="compare-dashboard-reset" class="button is-small is-outlined" type="button">Reset cohort</button>
+            </div>
+
+            <div id="compare-dashboard-loading" class="notification is-light" role="status">
+                Loading comparison data&hellip;
+            </div>
+            <div id="compare-dashboard-load-error" class="notification is-danger is-light" role="alert" style="display:none;">
+                Comparison data could not be loaded. Reload the page to try again.
             </div>
 
             <div class="columns is-variable is-5 compare-dashboard-controls">
@@ -251,6 +259,15 @@
 
             <div class="benchmark-correlation-layout">
                 <aside class="benchmark-correlation-tree-panel" aria-label="Benchmark matrix controls">
+                    <div class="benchmark-correlation-quick-selection">
+                        <label for="benchmark-correlation-preset-select">Quick selection</label>
+                        <div class="select is-small is-fullwidth">
+                            <select id="benchmark-correlation-preset-select"
+                                    aria-label="Choose a benchmark tree quick selection">
+                                <option value="">Choose a preset</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="benchmark-correlation-state-key">
                         <p><strong>Select</strong> includes a benchmark in aggregation and shows it in the matrix.</p>
                         <p><strong>Hide</strong> includes it in parent aggregation without showing it.</p>

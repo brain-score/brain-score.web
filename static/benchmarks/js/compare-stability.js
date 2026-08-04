@@ -7,13 +7,17 @@
         dashboardCore = require('./compare-dashboard.js');
         correlationCore = require('./compare-correlation.js');
     }
-    var core = factory(dashboardCore, correlationCore);
+    var core = factory(dashboardCore, function () {
+        return correlationCore || root.CompareCorrelationCore;
+    });
     if (typeof module === 'object' && module.exports) module.exports = core;
     root.CompareStabilityCore = core;
+    var initialized = false;
 
     function initialize() {
-        if (!root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
+        if (initialized || !root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
         if (!root.document.getElementById('benchmark-correlation-stability-panel')) return;
+        initialized = true;
         root.CompareStability = core.createStabilityPlot(
             root.compare_dashboard_data,
             root.CompareDashboard,
@@ -22,13 +26,14 @@
     }
 
     if (root.document) {
+        root.document.addEventListener('compare-dashboard:ready', initialize);
         if (root.document.readyState === 'loading') {
             root.document.addEventListener('DOMContentLoaded', initialize);
         } else {
             initialize();
         }
     }
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (dashboardCore, correlationCore) {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (dashboardCore, getCorrelationCore) {
     'use strict';
 
     function stabilitySnapshotDates(minimumDate, maximumDate) {
@@ -56,6 +61,8 @@
     }
 
     function pairedCorrelation(rows, firstBenchmarkId, secondBenchmarkId) {
+        var correlationCore = getCorrelationCore();
+        if (!correlationCore) return {r: null, n: 0};
         var left = [];
         var right = [];
         (rows || []).forEach(function (row) {
@@ -76,17 +83,54 @@
             payload.datetime_range.max || new Date(Number(payload.datetime_range.max_unix) * 1000).toISOString()
         );
         return dates.map(function (date) {
-            var resolved = dashboardCore.resolveCohort(payload, {
-                asOfDate: date,
-                minimumCompleteness: options.minimumCompleteness || 0,
-                comparisonBenchmarkIds: [options.firstBenchmarkId, options.secondBenchmarkId]
-            });
-            var correlation = pairedCorrelation(
-                resolved.rows,
-                options.firstBenchmarkId,
-                options.secondBenchmarkId
-            );
-            return {date: date, r: correlation.r, n: correlation.n};
+            return stabilityPoint(payload, options, date);
+        });
+    }
+
+    function stabilityPoint(payload, options, date) {
+        var resolved = dashboardCore.resolveCohort(payload, {
+            asOfDate: date,
+            minimumCompleteness: options.minimumCompleteness || 0,
+            comparisonBenchmarkIds: [options.firstBenchmarkId, options.secondBenchmarkId]
+        });
+        var correlation = pairedCorrelation(
+            resolved.rows,
+            options.firstBenchmarkId,
+            options.secondBenchmarkId
+        );
+        return {date: date, r: correlation.r, n: correlation.n};
+    }
+
+    function buildStabilitySeriesIncrementally(payload, options, schedule, isCancelled) {
+        options = options || {};
+        var dates = options.dates || stabilitySnapshotDates(
+            payload.datetime_range.min || new Date(Number(payload.datetime_range.min_unix) * 1000).toISOString(),
+            payload.datetime_range.max || new Date(Number(payload.datetime_range.max_unix) * 1000).toISOString()
+        );
+        schedule = schedule || function (callback) { setTimeout(callback, 0); };
+        isCancelled = isCancelled || function () { return false; };
+        return new Promise(function (resolve, reject) {
+            var series = [];
+            var index = 0;
+
+            function next() {
+                if (isCancelled()) {
+                    resolve(null);
+                    return;
+                }
+                try {
+                    series.push(stabilityPoint(payload, options, dates[index]));
+                    index += 1;
+                } catch (error) {
+                    reject(error);
+                    return;
+                }
+                if (index >= dates.length) resolve(series);
+                else schedule(next);
+            }
+
+            if (!dates.length) resolve(series);
+            else schedule(next);
         });
     }
 
@@ -162,7 +206,7 @@
             ],
             layout: {
                 height: compact ? 230 : (options.expandedHeight || 640),
-                margin: compact ? {t: 8, r: 10, b: 30, l: 35} : {t: 45, r: 75, b: 65, l: 70},
+                margin: compact ? {t: 8, r: 10, b: 30, l: 35} : {t: 45, r: 95, b: 65, l: 80},
                 paper_bgcolor: '#ffffff',
                 plot_bgcolor: '#ffffff',
                 font: {family: "'Open Sans', Arial, sans-serif", color: '#26342d'},
@@ -182,22 +226,24 @@
                     gridcolor: '#edf1ee'
                 },
                 yaxis: {
-                    title: compact ? '' : 'Pearson r',
+                    title: compact ? '' : {text: 'Pearson r', standoff: 10},
                     range: [-1.05, 1.05],
                     tickmode: compact ? 'array' : 'auto',
                     tickvals: compact ? [-1, 0, 1] : undefined,
                     tickfont: compact ? {size: 9} : undefined,
                     fixedrange: compact,
+                    automargin: !compact,
                     zerolinecolor: '#cfd8d2',
                     gridcolor: '#edf1ee'
                 },
                 yaxis2: {
-                    title: compact ? '' : 'Paired models',
+                    title: compact ? '' : {text: 'Paired models', standoff: 10},
                     overlaying: 'y',
                     side: 'right',
                     rangemode: 'tozero',
                     showgrid: false,
                     showticklabels: !compact,
+                    automargin: !compact,
                     fixedrange: compact
                 },
                 shapes: options.currentDate ? [{
@@ -263,6 +309,10 @@
         var latestSeries = [];
         var latestOptions = {};
         var seriesKey = null;
+        var buildingKey = null;
+        var buildGeneration = 0;
+        var latestState = null;
+        var latestSelection = null;
         var expanded = false;
 
         function selection() {
@@ -276,27 +326,23 @@
             };
         }
 
-        function render(_resolved, state) {
-            var selected = selection();
-            if (!selected.firstBenchmarkId || !selected.secondBenchmarkId || !plotly) return;
-            var nextKey = [
-                selected.firstBenchmarkId,
-                selected.secondBenchmarkId,
-                state.minimumCompleteness
-            ].join('|');
-            if (nextKey !== seriesKey) {
-                latestSeries = buildStabilitySeries(payload, {
-                    firstBenchmarkId: selected.firstBenchmarkId,
-                    secondBenchmarkId: selected.secondBenchmarkId,
-                    minimumCompleteness: state.minimumCompleteness
-                });
-                seriesKey = nextKey;
+        function schedule(callback) {
+            if (typeof browserRoot.requestIdleCallback === 'function') {
+                browserRoot.requestIdleCallback(callback, {timeout: 100});
+            } else if (typeof browserRoot.setTimeout === 'function') {
+                browserRoot.setTimeout(callback, 0);
+            } else {
+                setTimeout(callback, 0);
             }
+        }
+
+        function draw() {
+            if (!latestState || !latestSelection || !plotly) return;
             latestOptions = {
-                firstLabel: selected.firstLabel,
-                secondLabel: selected.secondLabel,
-                minimumCompleteness: state.minimumCompleteness,
-                currentDate: state.asOfDate,
+                firstLabel: latestSelection.firstLabel,
+                secondLabel: latestSelection.secondLabel,
+                minimumCompleteness: latestState.minimumCompleteness,
+                currentDate: latestState.asOfDate,
                 logoUrl: browserRoot.logo_url,
                 compact: !expanded,
                 expandedHeight: Math.max(500, (browserRoot.innerHeight || 800) - 210)
@@ -314,6 +360,49 @@
                     if (point && point.x) dashboard.setAsOfDate(String(point.x).slice(0, 10));
                 });
                 container.__stabilityClickBound = true;
+            });
+        }
+
+        function render(_resolved, state) {
+            var selected = selection();
+            if (!selected.firstBenchmarkId || !selected.secondBenchmarkId || !plotly) return;
+            latestState = state;
+            latestSelection = selected;
+            var nextKey = [
+                selected.firstBenchmarkId,
+                selected.secondBenchmarkId,
+                state.minimumCompleteness
+            ].join('|');
+            if (nextKey === seriesKey) {
+                draw();
+                return;
+            }
+            if (nextKey === buildingKey) return;
+
+            buildingKey = nextKey;
+            var generation = ++buildGeneration;
+            if (downloadSvg) downloadSvg.disabled = true;
+            if (downloadCsv) downloadCsv.disabled = true;
+            buildStabilitySeriesIncrementally(payload, {
+                firstBenchmarkId: selected.firstBenchmarkId,
+                secondBenchmarkId: selected.secondBenchmarkId,
+                minimumCompleteness: state.minimumCompleteness
+            }, schedule, function () {
+                return generation !== buildGeneration;
+            }).then(function (series) {
+                if (!series || generation !== buildGeneration) return;
+                latestSeries = series;
+                seriesKey = nextKey;
+                buildingKey = null;
+                if (downloadSvg) downloadSvg.disabled = false;
+                if (downloadCsv) downloadCsv.disabled = false;
+                draw();
+            }).catch(function (error) {
+                if (generation !== buildGeneration) return;
+                buildingKey = null;
+                if (browserRoot.console && typeof browserRoot.console.error === 'function') {
+                    browserRoot.console.error('Unable to build correlation stability timeline', error);
+                }
             });
         }
 
@@ -374,6 +463,7 @@
     return {
         buildPlotlyStability: buildPlotlyStability,
         buildStabilitySeries: buildStabilitySeries,
+        buildStabilitySeriesIncrementally: buildStabilitySeriesIncrementally,
         compactDateTicks: compactDateTicks,
         createStabilityPlot: createStabilityPlot,
         stabilitySnapshotDates: stabilitySnapshotDates,

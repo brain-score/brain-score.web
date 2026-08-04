@@ -102,11 +102,32 @@ class TestCompareDashboardPayload(SimpleTestCase):
         self.assertEqual(mapping["SyntaxGym_v0"], "Engineering")
 
     @patch("benchmarks.views.compare.render")
+    @patch("benchmarks.views.compare.get_context")
+    def test_compare_view_references_dashboard_data_endpoint(self, get_context, render):
+        benchmarks = [self._benchmark("average_vision")]
+        models = [self._model(7, "example", [])]
+        get_context.return_value = {
+            "benchmarks": benchmarks,
+            "models": models,
+            "comparison_data": "[]",
+        }
+        sentinel = object()
+        render.return_value = sentinel
+
+        from benchmarks.views.compare import view
+
+        response = view(SimpleNamespace(), "vision")
+
+        self.assertIs(response, sentinel)
+        context = render.call_args.args[2]
+        metadata = json.loads(context["model_metadata"])
+        self.assertEqual(context["compare_dashboard_data_url"], "/vision/compare/data/")
+        self.assertEqual(context["comparison_data"], "[]")
+        self.assertEqual(metadata["7"]["name"], "example")
+
     @patch("benchmarks.views.compare.get_datetime_range")
     @patch("benchmarks.views.compare.get_context")
-    def test_compare_view_includes_dashboard_payload(
-        self, get_context, get_datetime_range, render
-    ):
+    def test_dashboard_data_endpoint_returns_payload(self, get_context, get_datetime_range):
         benchmarks = [self._benchmark("average_vision")]
         models = [self._model(7, "example", [])]
         get_context.return_value = {
@@ -118,16 +139,12 @@ class TestCompareDashboardPayload(SimpleTestCase):
             "min": "2020-08-27T00:00:00+00:00",
             "max": "2026-08-02T00:00:00+00:00",
         }
-        sentinel = object()
-        render.return_value = sentinel
 
-        from benchmarks.views.compare import view
+        from benchmarks.views.compare import dashboard_data
 
-        response = view(SimpleNamespace(), "vision")
+        response = dashboard_data(SimpleNamespace(method="GET"), "vision")
+        payload = json.loads(response.content)
 
-        self.assertIs(response, sentinel)
-        context = render.call_args.args[2]
-        payload = json.loads(context["compare_dashboard_data"])
-        metadata = json.loads(context["model_metadata"])
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["models"][0]["id"], 7)
-        self.assertEqual(metadata["7"]["name"], "example")
+        self.assertEqual(payload["domain"], "vision")
