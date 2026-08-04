@@ -1,4 +1,4 @@
-$(document).ready(function () {
+function initializeModelComparison() {
     // Guard: only run on the model compare page
     if (document.getElementById('scatter-plot') === null) {
         return;
@@ -963,4 +963,9 @@ $(document).ready(function () {
             updateAllCharts();
         }, 220);
     });
+}
+
+$(document).ready(function () {
+    if (window.CompareDashboard) initializeModelComparison();
+    else document.addEventListener('compare-dashboard:ready', initializeModelComparison, {once: true});
 });

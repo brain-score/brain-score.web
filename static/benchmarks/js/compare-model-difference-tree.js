@@ -4,10 +4,12 @@
     var core = factory();
     if (typeof module === 'object' && module.exports) module.exports = core;
     root.CompareModelDifferenceTreeCore = core;
+    var initialized = false;
 
     function initialize() {
-        if (!root.document || !root.compare_dashboard_data) return;
+        if (initialized || !root.document || !root.compare_dashboard_data) return;
         if (!root.document.getElementById('model-difference-tree-panel')) return;
+        initialized = true;
         root.CompareModelDifferenceTree = core.createDifferenceTree(
             root.compare_dashboard_data,
             root.document
@@ -15,6 +17,7 @@
     }
 
     if (root.document) {
+        root.document.addEventListener('compare-dashboard:ready', initialize);
         if (root.document.readyState === 'loading') {
             root.document.addEventListener('DOMContentLoaded', initialize);
         } else {
