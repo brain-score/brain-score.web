@@ -45,13 +45,14 @@ test('preserves the original collapsed size across repeated toggles', () => {
 
     expand.resizePlots(panel, true, browserRoot);
     expand.resizePlots(panel, false, browserRoot);
+    expand.rememberCollapsedPlotSize(plot, {height: 540, width: null, autosize: true});
     expand.resizePlots(panel, true, browserRoot);
     expand.resizePlots(panel, false, browserRoot);
 
     assert.equal(updates[0].height, 770);
     assert.equal(updates[1].height, 620);
     assert.equal(updates[2].height, 770);
-    assert.equal(updates[3].height, 620);
+    assert.equal(updates[3].height, 540);
     assert.equal(updates[1].autosize, true);
     assert.equal(updates[3].width, null);
 });
