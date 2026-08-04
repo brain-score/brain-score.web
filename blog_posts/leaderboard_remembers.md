@@ -15,7 +15,7 @@ show_on_site: true
 
 Imagine turning on a Formula 1 race and only getting to see the final frame: all the cars frozen at the finish line, the winner already declared, and the whole race reduced to a single result. You would honestly feel like you missed the race.
 
-That is often how leaderboards can feel. We see rows of names, scores, and rankings - a neat snapshot of who is winning right now. But we miss the turns, the overtakes, the crashes, the moments when everything changed.
+That is often how [leaderboards](/vision/leaderboard/) can feel. We see rows of names, scores, and rankings - a neat snapshot of who is winning right now. But we miss the turns, the overtakes, the crashes, the moments when everything changed.
 
 What if the story behind the rankings mattered just as much as the final result?
 
@@ -34,7 +34,7 @@ So the real question became: how can we make Brain-Score remember itself?
 
 ## Looking backward: the Wayback view
 
-The first piece is a Wayback Machine for the leaderboard: pick a date range and see what the field looked like then - which models ranked where, and which benchmarks actually existed at that moment.
+The first piece is a [Wayback Machine for the leaderboard](/vision/leaderboard/): pick a date range and see what the field looked like then - which models ranked where, and which benchmarks actually existed at that moment.
 
 That sounds simple enough. It is not. A slider can move smoothly and the page can look polished, but if the wrong scores survive the filter, the tool is not remembering history - it is inventing it. Getting this right meant establishing which scores were valid at which times, how benchmarks entered the tree over time, and how parent scores aggregate from their children.
 
@@ -45,7 +45,7 @@ This is also where the feature becomes scientific rather than cosmetic. It is no
   <figcaption>The Wayback slider, with calendar-style date selection.</figcaption>
 </figure>
 
-As a case study, `vision_transformer_vit_large_patch16_224` tells a story the old leaderboard alone could not. In August 2023, it sat tied for first on the vision leaderboard - a model that looked like a serious contender in the field. Open the same table today and it has slipped below 250th place. That drop can read like failure, as if the model simply got worse. The Wayback view pushes back on that reading. It does not erase the past; it restores it. You can see the model where it actually stood - among the benchmarks and competitors that existed when it was strong - and ask a better question: did the model fall, or did the race change around it?
+As a case study, [`vision_transformer_vit_large_patch16_224`](/model/vision/1395) tells a story the old leaderboard alone could not. In August 2023, it sat tied for first on the [vision leaderboard](/vision/leaderboard/) - a model that looked like a serious contender in the field. Open the same table today and it has slipped below 250th place. That drop can read like failure, as if the model simply got worse. The Wayback view pushes back on that reading. It does not erase the past; it restores it. You can see the model where it actually stood - among the benchmarks and competitors that existed when it was strong - and ask a better question: did the model fall, or did the race change around it?
 
 <figure>
   <img src="/static/benchmarks/img/blog/leaderboard_remembers/wayback_machine.png" alt="A model ranked tied for first in August 2023 now lower than 250th place">
@@ -60,7 +60,7 @@ Showing a model's history required teaching Brain-Score to remember its own scor
 
 That meant rebuilding the benchmark tree over time, determining which benchmarks counted in each month, handling missing scores, and rolling everything back up into the single number people see on the leaderboard. In effect, the system does its usual math backwards through time. It has to know not just what the score was, but what version of the field that score belonged to.
 
-With that in place, the history becomes visible. On each model page, a "Historical Trend" chart now shows how a model's average score and rank moved month by month. That alone lets the leaderboard show change rather than just the present. But it raises a better question immediately: if Brain-Score can show that something changed, can it also explain why?
+With that in place, the history becomes visible. On each model page, a ["Historical Trend" chart](/model/vision/1395) now shows how a model's average score and rank moved month by month. That alone lets the leaderboard show change rather than just the present. But it raises a better question immediately: if Brain-Score can show that something changed, can it also explain why?
 
 That is what reason attribution does. Instead of stopping at a falling line or a rank drop, the system says what changed around the model at that moment. Did the model improve? Did a new benchmark enter the aggregate? Did the competitive field shift? Did the scoring landscape simply grow more demanding?
 
@@ -77,7 +77,7 @@ In the figure above, the line falls sharply in June 2022. The sidebar explains w
 
 A single model's history can tell you a lot, but the race becomes most interesting when two cars are close enough that every turn matters.
 
-That is where the compare page comes in. Instead of following one model in isolation, it lets you watch two models move through the same benchmark landscape at the same time. In the example below, `cvt_cvt-w24-384-in22k_finetuned-in1k_4` and `resnext101_32x48d_wsl` spend long stretches running close together. Neither one stays permanently ahead. Their scores tighten, drift apart, and come back together again, which makes the comparison feel much more like a race than a static leaderboard.
+That is where the [compare page](/vision/compare/?tab=models&model_a=1885&model_b=649) comes in. Instead of following one model in isolation, it lets you watch two models move through the same benchmark landscape at the same time. In the example below, [`cvt_cvt-w24-384-in22k_finetuned-in1k_4`](/model/vision/1885) and [`resnext101_32x48d_wsl`](/model/vision/649) spend long stretches running close together. Neither one stays permanently ahead. Their scores tighten, drift apart, and come back together again, which makes the comparison feel much more like a race than a static leaderboard.
 
 <figure>
   <img src="/static/benchmarks/img/blog/leaderboard_remembers/model_compare.png" alt="Two models compared across the same benchmark timeline">
@@ -88,4 +88,8 @@ The chart shows the two trajectories side by side, but the real power is in the 
 
 The compare page completes the picture. The Wayback view shows the old grid. The model page follows one car across the season. The compare page shows the duel itself. It turns the leaderboard from a frozen finishing order into something closer to a replay, where you can finally watch the overtakes happen and ask why they happened when they did.
 
-Not every rank change is a story about a worse model. Sometimes it is a story about a growing, shifting scientific benchmark. All three views are live now: the Wayback slider on the leaderboard, "Historical Trend" on every model page, and the two-model timeline on the compare page. Check it out now!
+Not every rank change is a story about a worse model. Sometimes it is a story about a growing, shifting scientific benchmark. All three views are live now: the [Wayback slider on the leaderboard](/vision/leaderboard/), ["Historical Trend" on every model page](/model/vision/1395), and the [two-model timeline on the compare page](/vision/compare/?tab=models&model_a=1885&model_b=649).
+
+## Keep exploring on Compare
+
+The timeline is now one part of a much richer [Compare workspace](/vision/compare/). Compare benchmarks with the neural-versus-behavior scatter plot, browse a selectable benchmark correlation matrix, and see whether relationships remain stable over time. Switch to [Compare Models](/vision/compare/?tab=models) for top benchmark differences, the model difference tree, score distributions, and branch ranks. The benchmark analyses share Wayback and model-completedness controls, while the visualizations offer expanded views and downloadable data, so you can move from a leaderboard result to deeper analysis without leaving Brain-Score.
