@@ -253,6 +253,38 @@ test('uses finite pairwise scores including zero and enforces minimum overlap', 
     assert.deepEqual(unsupported, {r: null, n: 9});
 });
 
+test('builds an interactive branded benchmark scatter plot', () => {
+    const plot = correlation.buildPlotlyBenchmarkScatter([
+        {model: 'model-a', x: 0.2, y: 0.3},
+        {model: 'model-b', x: 0.7, y: 0.8}
+    ], {
+        xLabel: 'Neural',
+        yLabel: 'Behavioral',
+        statsText: 'Pearson R: 1.00',
+        regression: {slope: 1, intercept: 0.1},
+        logoSource: '/static/logo.png',
+        height: 520
+    });
+
+    assert.equal(plot.data[1].type, 'scatter');
+    assert.equal(plot.data[1].mode, 'markers');
+    assert.deepEqual(plot.data[1].customdata, ['model-a', 'model-b']);
+    assert.equal(plot.layout.xaxis.title.text, 'Neural');
+    assert.equal(plot.layout.yaxis.title.text, 'Behavioral');
+    assert.equal(plot.layout.height, 520);
+    assert.equal(plot.layout.images[0].source, '/static/logo.png');
+    assert.ok(plot.layout.images[0].x <= 1);
+    assert.equal(plot.layout.images[0].xanchor, 'right');
+    assert.equal(plot.config.displayModeBar, true);
+    assert.equal(plot.config.scrollZoom, true);
+    assert.equal(plot.config.toImageButtonOptions.format, 'png');
+});
+
+test('pads constant score ranges so scatter axes remain visible', () => {
+    assert.deepEqual(correlation.paddedScatterRange([0, 0]), [-0.05, 0.05]);
+    assert.deepEqual(correlation.paddedScatterRange([1, 1]), [0.95, 1.05]);
+});
+
 test('starts a positive-only Plotly color scale at the lowest correlation', () => {
     const matrix = {
         axes: benchmarks().slice(0, 2),
@@ -273,7 +305,9 @@ test('starts a positive-only Plotly color scale at the lowest correlation', () =
         [1, '#078930']
     ]);
     assert.equal(plot.layout.images[0].source, '/static/logo.png');
-    assert.equal(plot.layout.images[0].x, 1.04);
+    assert.equal(plot.layout.images[0].x, 1.02);
+    assert.equal(plot.layout.images[0].xanchor, 'left');
+    assert.equal(plot.layout.margin.r, 150);
     assert.ok(plot.layout.images[0].y < 0.1);
     assert.equal(plot.config.displayModeBar, true);
     assert.equal(
@@ -282,6 +316,23 @@ test('starts a positive-only Plotly color scale at the lowest correlation', () =
     );
     assert.equal('width' in plot.config.toImageButtonOptions, false);
     assert.equal('height' in plot.config.toImageButtonOptions, false);
+});
+
+test('keeps the expanded matrix logo inside the plot boundary', () => {
+    const matrix = {
+        axes: benchmarks().slice(0, 2),
+        cells: [
+            [{r: 1, n: 10}, {r: 0.25, n: 9}],
+            [{r: 0.25, n: 9}, {r: 1, n: 10}]
+        ],
+        modelCount: 10,
+        minimumOverlap: 8
+    };
+    const plot = correlation.buildPlotlyMatrix(matrix, '/static/logo.png', 48, true);
+
+    assert.equal(plot.layout.images[0].x, 0.98);
+    assert.equal(plot.layout.images[0].xanchor, 'right');
+    assert.equal(plot.layout.margin.r, 105);
 });
 
 test('uses the full Pearson color range when the matrix contains negatives', () => {

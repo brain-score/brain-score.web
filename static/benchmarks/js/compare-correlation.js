@@ -6,10 +6,12 @@
         module.exports = core;
     }
     root.CompareCorrelationCore = core;
+    var initialized = false;
 
     function initialize() {
-        if (!root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
+        if (initialized || !root.document || !root.CompareDashboard || !root.compare_dashboard_data) return;
         if (!root.document.getElementById('benchmark-correlation-explorer')) return;
+        initialized = true;
         root.CompareCorrelation = core.createExplorer(
             root.compare_dashboard_data,
             root.CompareDashboard,
@@ -18,6 +20,7 @@
     }
 
     if (root.document) {
+        root.document.addEventListener('compare-dashboard:ready', initialize);
         if (root.document.readyState === 'loading') {
             root.document.addEventListener('DOMContentLoaded', initialize);
         } else {
@@ -519,7 +522,118 @@
         return rows.map(function (row) { return row.map(csvValue).join(','); }).join('\n');
     }
 
-    function buildPlotlyMatrix(matrix, logoSource, maximumTicks) {
+    function paddedScatterRange(values) {
+        var minimum = Math.min.apply(null, values);
+        var maximum = Math.max.apply(null, values);
+        var span = maximum - minimum;
+        var padding = span ? span * 0.05 : Math.max(Math.abs(maximum) * 0.05, 0.05);
+        return [minimum - padding, maximum + padding];
+    }
+
+    function buildPlotlyBenchmarkScatter(points, options) {
+        options = options || {};
+        var xValues = points.map(function (point) { return point.x; });
+        var yValues = points.map(function (point) { return point.y; });
+        var xRange = paddedScatterRange(xValues);
+        var yRange = paddedScatterRange(yValues);
+        var regression = options.regression || {slope: 0, intercept: 0};
+        var regressionX = [xRange[0], xRange[1]];
+        var regressionY = regressionX.map(function (value) {
+            return regression.slope * value + regression.intercept;
+        });
+        var images = options.logoSource ? [{
+            source: options.logoSource,
+            xref: 'paper',
+            yref: 'paper',
+            x: 0.985,
+            y: 0.025,
+            sizex: 0.16,
+            sizey: 0.055,
+            xanchor: 'right',
+            yanchor: 'bottom',
+            sizing: 'contain',
+            opacity: 0.82,
+            layer: 'above'
+        }] : [];
+
+        return {
+            data: [
+                {
+                    x: regressionX,
+                    y: regressionY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: {color: '#c8ceca', width: 2, dash: 'dot'},
+                    hoverinfo: 'skip',
+                    showlegend: false
+                },
+                {
+                    x: xValues,
+                    y: yValues,
+                    customdata: points.map(function (point) { return point.model; }),
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: {
+                        color: '#078930',
+                        opacity: 0.48,
+                        size: 11,
+                        line: {color: 'rgba(7, 137, 48, 0.22)', width: 1}
+                    },
+                    hovertemplate: '<b>%{customdata}</b>' +
+                        '<br>' + options.xLabel + ': %{x:.4f}' +
+                        '<br>' + options.yLabel + ': %{y:.4f}<extra></extra>',
+                    showlegend: false
+                }
+            ],
+            layout: {
+                title: {
+                    text: options.statsText || '',
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: {size: 13, color: '#26342d'}
+                },
+                autosize: true,
+                height: options.height || 560,
+                margin: {l: 75, r: 35, t: 58, b: 70, pad: 2},
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                font: {family: "'Open Sans', Arial, sans-serif", color: '#26342d'},
+                hovermode: 'closest',
+                dragmode: 'zoom',
+                showlegend: false,
+                images: images,
+                xaxis: {
+                    title: {text: options.xLabel},
+                    range: xRange,
+                    automargin: true,
+                    gridcolor: '#edf1ee',
+                    zeroline: false
+                },
+                yaxis: {
+                    title: {text: options.yLabel},
+                    range: yRange,
+                    automargin: true,
+                    gridcolor: '#edf1ee',
+                    zeroline: false
+                }
+            },
+            config: {
+                responsive: true,
+                scrollZoom: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+                toImageButtonOptions: {
+                    format: 'png',
+                    filename: 'brain-score-benchmark-scatter',
+                    scale: 2
+                }
+            }
+        };
+    }
+
+    function buildPlotlyMatrix(matrix, logoSource, maximumTicks, expanded) {
+        expanded = !!expanded;
         var labels = matrix.axes.map(displayLabel);
         var indexes = labels.map(function (_label, index) { return index; });
         var ticks = matrixAxisTicks(labels, maximumTicks);
@@ -596,11 +710,11 @@
             source: logoSource,
             xref: 'paper',
             yref: 'paper',
-            x: 1.04,
+            x: expanded ? 0.98 : 1.02,
             y: 0.02,
-            sizex: 0.17,
+            sizex: 0.16,
             sizey: 0.045,
-            xanchor: 'center',
+            xanchor: expanded ? 'right' : 'left',
             yanchor: 'bottom',
             sizing: 'contain',
             opacity: 0.82,
@@ -617,7 +731,7 @@
                     font: {size: 14, color: '#26342d'}
                 },
                 autosize: true,
-                margin: {l: 90, r: 105, t: 58, b: 100, pad: 2},
+                margin: {l: 90, r: expanded ? 105 : 150, t: 58, b: 100, pad: 2},
                 paper_bgcolor: '#ffffff',
                 plot_bgcolor: '#f7faf8',
                 font: {family: 'Open Sans, Arial, sans-serif', size: 10, color: '#26342d'},
@@ -834,11 +948,13 @@
                 return;
             }
 
-            var maximumTicks = explorer && explorer.classList.contains('is-expanded') ? 48 : 24;
+            var isExpanded = explorer && explorer.classList.contains('is-expanded');
+            var maximumTicks = isExpanded ? 48 : 24;
             var plot = buildPlotlyMatrix(
                 matrix,
                 browserRoot.logo_url || '/static/benchmarks/img/logo.png',
-                maximumTicks
+                maximumTicks,
+                isExpanded
             );
             matrixContainer.setAttribute(
                 'aria-label',
@@ -985,6 +1101,7 @@
         HIDE: HIDE,
         DESELECT: DESELECT,
         aggregateRows: aggregateRows,
+        buildPlotlyBenchmarkScatter: buildPlotlyBenchmarkScatter,
         buildCorrelationMatrix: buildCorrelationMatrix,
         buildHierarchy: buildHierarchy,
         buildPlotlyMatrix: buildPlotlyMatrix,
@@ -1000,6 +1117,7 @@
         matrixAxisTicks: matrixAxisTicks,
         matrixAxisTicksForRange: matrixAxisTicksForRange,
         matrixToCsv: matrixToCsv,
+        paddedScatterRange: paddedScatterRange,
         pearsonCorrelation: pearsonCorrelation,
         selectAllBenchmarks: selectAllBenchmarks,
         setBenchmarkMode: setBenchmarkMode,
