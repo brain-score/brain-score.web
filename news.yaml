@@ -6,11 +6,15 @@
 # identifiers). The news link auto-points to /vision/leaderboard?new=<slug>, which highlights
 # exactly those benchmarks with the "+N NEW" indicators. `leaderboard_default: false` keeps an
 # update out of the default (no-param) leaderboard view, so it only highlights when clicked.
+- date: 2026-08-04
+  text: Triple-N (Li2026) macaque electrophysiology benchmarks added
+  slug: triple-n
+  benchmarks: ["Li2026.*"]
 - date: 2026-07-31
   text: "Blog: A Leaderboard that Remembers"
   link: /blog/leaderboard_remembers/
 - date: 2026-06-06
-  text: "LAION-fMRI (Zerbe2026) benchmarks added. More coming soon!"
+  text: LAION-fMRI (Zerbe2026) benchmarks added
   slug: laion-fmri
   benchmarks: ["Zerbe2026*"]
 - date: 2026-03-19
