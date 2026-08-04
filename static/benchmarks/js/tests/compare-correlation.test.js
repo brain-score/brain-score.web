@@ -56,6 +56,30 @@ function languageBenchmarks() {
     ];
 }
 
+function presetBenchmarks() {
+    return [
+        {id: 'average_vision_v0', type_id: 'average_vision', label: 'average_vision', parent_id: null, is_leaf: false, is_engineering: false},
+        {id: 'neural_vision_v0', type_id: 'neural_vision', label: 'neural_vision', parent_id: 'average_vision_v0', is_leaf: false, is_engineering: false},
+        {id: 'V1_v0', type_id: 'V1', label: 'V1', parent_id: 'neural_vision_v0', is_leaf: false, is_engineering: false},
+        {id: 'Allen2022_fmri_surface.V1_v0', type_id: 'Allen2022_fmri_surface.V1', label: 'Allen2022_fmri_surface.V1', parent_id: 'V1_v0', is_leaf: false, is_engineering: false},
+        {id: 'Allen2022_fmri_surface.V1-rdm_v1', type_id: 'Allen2022_fmri_surface.V1-rdm', label: 'Allen2022_fmri_surface.V1-rdm', parent_id: 'Allen2022_fmri_surface.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Allen2022_fmri_surface.V1-ridge_v1', type_id: 'Allen2022_fmri_surface.V1-ridge', label: 'Allen2022_fmri_surface.V1-ridge', parent_id: 'Allen2022_fmri_surface.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Li2026.V1_v0', type_id: 'Li2026.V1', label: 'Li2026.V1', parent_id: 'V1_v0', is_leaf: false, is_engineering: false},
+        {id: 'Li2026.V1-rdm_v1', type_id: 'Li2026.V1-rdm', label: 'Li2026.V1-rdm', parent_id: 'Li2026.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Li2026.V1-ridgecv_v1', type_id: 'Li2026.V1-ridgecv', label: 'Li2026.V1-ridgecv', parent_id: 'Li2026.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Zerbe2026_fmri.V1_v0', type_id: 'Zerbe2026_fmri.V1', label: 'Zerbe2026_fmri.V1', parent_id: 'V1_v0', is_leaf: false, is_engineering: false},
+        {id: 'Zerbe2026_fmri.V1-rdm-pearson_v1', type_id: 'Zerbe2026_fmri.V1-rdm-pearson', label: 'Zerbe2026_fmri.V1-rdm-pearson', parent_id: 'Zerbe2026_fmri.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Zerbe2026_fmri.V1-ood-ridgecv_v1', type_id: 'Zerbe2026_fmri.V1-ood-ridgecv', label: 'Zerbe2026_fmri.V1-ood-ridgecv', parent_id: 'Zerbe2026_fmri.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Zerbe2026_fmri.V1-tau-ridgecv_v1', type_id: 'Zerbe2026_fmri.V1-tau-ridgecv', label: 'Zerbe2026_fmri.V1-tau-ridgecv', parent_id: 'Zerbe2026_fmri.V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'tong.Coggan2024_fMRI.V1-rdm_v1', type_id: 'tong.Coggan2024_fMRI.V1-rdm', label: 'tong.Coggan2024_fMRI.V1-rdm', parent_id: 'V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Hebart2023_fmri.V1-ridgecv_v1', type_id: 'Hebart2023_fmri.V1-ridgecv', label: 'Hebart2023_fmri.V1-ridgecv', parent_id: 'V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Papale2025.V1-ridgecv_v1', type_id: 'Papale2025.V1-ridgecv', label: 'Papale2025.V1-ridgecv', parent_id: 'V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'Gifford2022.IT-ridgecv_v1', type_id: 'Gifford2022.IT-ridgecv', label: 'Gifford2022.IT-ridgecv', parent_id: 'V1_v0', is_leaf: true, is_engineering: false},
+        {id: 'engineering_vision_v0', type_id: 'engineering_vision', label: 'engineering_vision', parent_id: null, is_leaf: false, is_engineering: true},
+        {id: 'engineering-rdm_v1', type_id: 'engineering-rdm', label: 'Engineering RDM', parent_id: 'engineering_vision_v0', is_leaf: true, is_engineering: true}
+    ];
+}
+
 test('defaults to neural, region, and behavioral axes and deselects engineering', () => {
     const items = benchmarks();
     const modes = correlation.createDefaultModes(items);
@@ -95,6 +119,63 @@ test('select all includes active non-engineering benchmarks only', () => {
     assert.equal(modes['v1-b_v0'], correlation.HIDE);
     assert.equal(modes['engineering_vision_v0'], correlation.DESELECT);
     assert.equal(modes['engineering-a_v0'], correlation.DESELECT);
+});
+
+test('metric and stimulus presets discover matching benchmark leaves by name', () => {
+    const items = presetBenchmarks();
+    items.push({
+        id: 'FutureStudy.V1-rdm_cv_v1',
+        type_id: 'FutureStudy.V1-rdm_cv',
+        label: 'FutureStudy.V1-rdm_cv',
+        parent_id: 'V1_v0',
+        is_leaf: true,
+        is_engineering: false
+    });
+
+    const rdm = correlation.matchingPresetBenchmarkIds('rdm', items);
+    const ridge = correlation.matchingPresetBenchmarkIds('ridge', items);
+    const nsd = correlation.matchingPresetBenchmarkIds('nsd-stimuli', items);
+    const things = correlation.matchingPresetBenchmarkIds('things-stimuli', items);
+
+    assert.ok(rdm.includes('FutureStudy.V1-rdm_cv_v1'));
+    assert.equal(rdm.includes('engineering-rdm_v1'), false);
+    assert.ok(ridge.includes('Zerbe2026_fmri.V1-ood-ridgecv_v1'));
+    assert.deepEqual(nsd, [
+        'Allen2022_fmri_surface.V1-rdm_v1',
+        'Allen2022_fmri_surface.V1-ridge_v1',
+        'Li2026.V1-rdm_v1',
+        'Li2026.V1-ridgecv_v1',
+        'Zerbe2026_fmri.V1-rdm-pearson_v1',
+        'Zerbe2026_fmri.V1-ood-ridgecv_v1',
+        'Zerbe2026_fmri.V1-tau-ridgecv_v1'
+    ]);
+    assert.deepEqual(things, [
+        'Hebart2023_fmri.V1-ridgecv_v1',
+        'Papale2025.V1-ridgecv_v1',
+        'Gifford2022.IT-ridgecv_v1'
+    ]);
+    assert.equal(
+        correlation.getCorrelationPresets(items)
+            .some(preset => preset.id === 'rdm-ridge-pairs'),
+        false
+    );
+});
+
+test('preset modes select active matches, hide ancestors, and deselect everything else', () => {
+    const items = presetBenchmarks();
+    const active = activeBenchmarks(items);
+    active['Li2026.V1-rdm_v1'] = false;
+    const modes = correlation.createPresetModes('rdm', items, active);
+
+    assert.equal(modes['Allen2022_fmri_surface.V1-rdm_v1'], correlation.SELECT);
+    assert.equal(modes['Allen2022_fmri_surface.V1_v0'], correlation.HIDE);
+    assert.equal(modes.V1_v0, correlation.HIDE);
+    assert.equal(modes.neural_vision_v0, correlation.HIDE);
+    assert.equal(modes.average_vision_v0, correlation.HIDE);
+    assert.equal(modes['Li2026.V1-rdm_v1'], correlation.DESELECT);
+    assert.equal(modes['Allen2022_fmri_surface.V1-ridge_v1'], correlation.DESELECT);
+    assert.equal(modes.engineering_vision_v0, correlation.DESELECT);
+    assert.equal(modes['engineering-rdm_v1'], correlation.DESELECT);
 });
 
 test('deselect cascades and selecting a child restores deselected ancestors', () => {

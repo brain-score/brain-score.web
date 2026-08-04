@@ -38,6 +38,43 @@
         IT: true,
         behavior_vision: true
     };
+    var CORRELATION_PRESETS = [
+        {
+            id: 'rdm',
+            label: 'RDM',
+            description: 'Compare active benchmark leaves whose names contain RDM.',
+            kind: 'metric',
+            token: 'rdm'
+        },
+        {
+            id: 'ridge',
+            label: 'Ridge',
+            description: 'Compare active benchmark leaves whose names contain ridge.',
+            kind: 'metric',
+            token: 'ridge'
+        },
+        {
+            id: 'nsd-stimuli',
+            label: 'NSD stimuli',
+            description: 'Compare Allen2022, Li2026, and Zerbe2026 benchmark leaves.',
+            kind: 'families',
+            prefixes: ['allen2022', 'li2026', 'zerbe2026']
+        },
+        {
+            id: 'things-stimuli',
+            label: 'THINGS stimuli',
+            description: 'Compare Papale, Hebart fMRI, and Gifford benchmark leaves.',
+            kind: 'families',
+            prefixes: ['papale', 'hebart2023_fmri', 'gifford']
+        },
+        {
+            id: 'fmri',
+            label: 'fMRI',
+            description: 'Compare active benchmark leaves whose names contain fMRI.',
+            kind: 'metric',
+            token: 'fmri'
+        }
+    ];
 
     function buildHierarchy(benchmarks) {
         var byId = {};
@@ -98,6 +135,80 @@
                 next[benchmark.id] = DESELECT;
             } else if (activeBenchmarkIds[benchmark.id]) {
                 next[benchmark.id] = SELECT;
+            }
+        });
+        return next;
+    }
+
+    function benchmarkSearchTokens(benchmark) {
+        return [benchmark.id, benchmark.type_id, benchmark.label]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .split(/[^a-z0-9]+/)
+            .filter(Boolean);
+    }
+
+    function benchmarkContainsToken(benchmark, token) {
+        var normalizedToken = String(token || '').toLowerCase();
+        return benchmarkSearchTokens(benchmark).some(function (candidate) {
+            return candidate.indexOf(normalizedToken) === 0;
+        });
+    }
+
+    function presetDefinition(presetId) {
+        return CORRELATION_PRESETS.find(function (preset) { return preset.id === presetId; });
+    }
+
+    function matchingPresetBenchmarkIds(presetId, benchmarks) {
+        var preset = presetDefinition(presetId);
+        if (!preset) return [];
+        var leaves = (benchmarks || []).filter(function (benchmark) {
+            return benchmark.is_leaf && !benchmark.is_engineering;
+        });
+
+        if (preset.kind === 'metric') {
+            return leaves.filter(function (benchmark) {
+                return benchmarkContainsToken(benchmark, preset.token);
+            }).map(function (benchmark) { return benchmark.id; });
+        }
+
+        if (preset.kind === 'families') {
+            return leaves.filter(function (benchmark) {
+                var typeId = String(benchmark.type_id || benchmark.label || '').toLowerCase();
+                return preset.prefixes.some(function (prefix) {
+                    return typeId.indexOf(prefix) === 0;
+                });
+            }).map(function (benchmark) { return benchmark.id; });
+        }
+
+        return [];
+    }
+
+    function getCorrelationPresets(benchmarks) {
+        return CORRELATION_PRESETS.map(function (preset) {
+            return {
+                id: preset.id,
+                label: preset.label,
+                description: preset.description,
+                benchmarkIds: matchingPresetBenchmarkIds(preset.id, benchmarks)
+            };
+        }).filter(function (preset) { return preset.benchmarkIds.length >= 2; });
+    }
+
+    function createPresetModes(presetId, benchmarks, activeBenchmarkIds) {
+        var hierarchy = buildHierarchy(benchmarks);
+        var next = {};
+        (benchmarks || []).forEach(function (benchmark) {
+            next[benchmark.id] = DESELECT;
+        });
+        matchingPresetBenchmarkIds(presetId, benchmarks).forEach(function (benchmarkId) {
+            if (!activeBenchmarkIds[benchmarkId]) return;
+            next[benchmarkId] = SELECT;
+            var parentId = hierarchy.parentById[benchmarkId];
+            while (parentId) {
+                if (!hierarchy.byId[parentId].is_engineering) next[parentId] = HIDE;
+                parentId = hierarchy.parentById[parentId];
             }
         });
         return next;
@@ -570,6 +681,7 @@
         var expand = document.getElementById('benchmark-correlation-expand');
         var selectAll = document.getElementById('benchmark-correlation-select-all');
         var reset = document.getElementById('benchmark-correlation-reset');
+        var presetSelect = document.getElementById('benchmark-correlation-preset-select');
         var downloadSvg = document.getElementById('benchmark-correlation-download-svg');
         var downloadCsv = document.getElementById('benchmark-correlation-download-csv');
         var browserRoot = document.defaultView || {};
@@ -577,6 +689,8 @@
         var latestMatrix = null;
         var relayoutHandler = null;
         var updatingTicks = false;
+        var activePresetId = null;
+        var availablePresets = getCorrelationPresets(benchmarks);
 
         benchmarks.forEach(function (benchmark) {
             var depth = 0;
@@ -631,6 +745,7 @@
                 button.setAttribute('aria-pressed', modes[benchmarkId] === mode ? 'true' : 'false');
                 if (modes[benchmarkId] === mode) button.classList.add('is-active');
                 button.addEventListener('click', function () {
+                    activePresetId = null;
                     modes = setBenchmarkMode(modes, benchmarkId, mode, hierarchy);
                     render();
                 });
@@ -653,6 +768,28 @@
             var rootList = createElement(document, 'ul', 'benchmark-correlation-tree-list is-root');
             hierarchy.roots.forEach(function (rootId) { rootList.appendChild(renderNode(rootId)); });
             treeContainer.appendChild(rootList);
+        }
+
+        function renderPresets() {
+            if (!presetSelect) return;
+            presetSelect.innerHTML = '';
+            var placeholder = createElement(document, 'option', '', 'Choose a preset');
+            placeholder.value = '';
+            presetSelect.appendChild(placeholder);
+            availablePresets.forEach(function (preset) {
+                var activeCount = preset.benchmarkIds.filter(function (benchmarkId) {
+                    return resolved.activeBenchmarkIds[benchmarkId];
+                }).length;
+                var option = createElement(
+                    document, 'option', '', preset.label + ' (' + activeCount + ')'
+                );
+                option.value = preset.id;
+                option.disabled = activeCount < 2;
+                option.title = preset.description;
+                presetSelect.appendChild(option);
+            });
+            presetSelect.value = activePresetId || '';
+            presetSelect.disabled = !availablePresets.length;
         }
 
         function renderMatrix() {
@@ -741,12 +878,22 @@
         }
 
         function render() {
+            renderPresets();
             renderTree();
             renderMatrix();
         }
 
         if (selectAll) selectAll.addEventListener('click', function () {
+            activePresetId = null;
             modes = selectAllBenchmarks(modes, benchmarks, resolved.activeBenchmarkIds);
+            render();
+        });
+        if (presetSelect) presetSelect.addEventListener('change', function () {
+            activePresetId = presetSelect.value || null;
+            if (!activePresetId) return;
+            modes = createPresetModes(
+                activePresetId, benchmarks, resolved.activeBenchmarkIds
+            );
             render();
         });
         if (downloadSvg) downloadSvg.addEventListener('click', function () {
@@ -793,11 +940,17 @@
             }
         });
         if (reset) reset.addEventListener('click', function () {
+            activePresetId = null;
             modes = createDefaultModes(benchmarks);
             render();
         });
         dashboard.subscribe(function (nextResolved) {
             resolved = nextResolved;
+            if (activePresetId) {
+                modes = createPresetModes(
+                    activePresetId, benchmarks, resolved.activeBenchmarkIds
+                );
+            }
             render();
         });
 
@@ -805,14 +958,22 @@
             getModes: function () { return Object.assign({}, modes); },
             setExpanded: setExpanded,
             selectAll: function () {
+                activePresetId = null;
                 modes = selectAllBenchmarks(modes, benchmarks, resolved.activeBenchmarkIds);
                 render();
             },
             reset: function () {
+                activePresetId = null;
                 modes = createDefaultModes(benchmarks);
                 render();
             },
+            applyPreset: function (presetId) {
+                activePresetId = presetId;
+                modes = createPresetModes(presetId, benchmarks, resolved.activeBenchmarkIds);
+                render();
+            },
             setMode: function (benchmarkId, mode) {
+                activePresetId = null;
                 modes = setBenchmarkMode(modes, benchmarkId, mode, hierarchy);
                 render();
             }
@@ -828,9 +989,12 @@
         buildHierarchy: buildHierarchy,
         buildPlotlyMatrix: buildPlotlyMatrix,
         createDefaultModes: createDefaultModes,
+        createPresetModes: createPresetModes,
         createExplorer: createExplorer,
         descendantsOf: descendantsOf,
         displayLabel: displayLabel,
+        getCorrelationPresets: getCorrelationPresets,
+        matchingPresetBenchmarkIds: matchingPresetBenchmarkIds,
         matrixColorConfig: matrixColorConfig,
         matrixTextColor: matrixTextColor,
         matrixAxisTicks: matrixAxisTicks,

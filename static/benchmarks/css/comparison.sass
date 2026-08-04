@@ -509,6 +509,24 @@ body.compare-analysis-plot-expanded
   min-width: 0
   padding: .85rem
 
+.benchmark-correlation-quick-selection
+  align-items: center
+  border-bottom: 1px solid #dfe8e2
+  display: grid
+  gap: .6rem
+  grid-template-columns: auto minmax(0, 1fr)
+  margin-bottom: .65rem
+  padding-bottom: .65rem
+
+  label
+    color: #536159
+    font-size: .72rem
+    font-weight: 600
+
+  .select,
+  select
+    width: 100%
+
 .benchmark-correlation-state-key
   border-bottom: 1px solid #dfe8e2
   color: #536159
@@ -735,6 +753,11 @@ body.compare-analysis-plot-expanded
   display: flex
   flex-direction: column
   min-width: 0
+
+  .compare-analysis-downloads
+    align-self: stretch
+    justify-content: flex-end
+    width: 100%
 
 .benchmark-correlation-summary
   color: #3f5147
