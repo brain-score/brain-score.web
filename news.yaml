@@ -14,7 +14,7 @@
   text: "Blog: A Leaderboard that Remembers"
   link: /blog/leaderboard_remembers/
 - date: 2026-06-06
-  text: "LAION-fMRI (Zerbe2026) benchmarks added. More coming soon!"
+  text: LAION-fMRI (Zerbe2026) benchmarks added
   slug: laion-fmri
   benchmarks: ["Zerbe2026*"]
 - date: 2026-03-19
