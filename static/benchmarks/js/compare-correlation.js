@@ -530,6 +530,10 @@
         return [minimum - padding, maximum + padding];
     }
 
+    function responsiveScatterHeight(width) {
+        return Math.max(480, Math.min(760, Math.round((Number(width) || 0) * 2 / 3)));
+    }
+
     function buildPlotlyBenchmarkScatter(points, options) {
         options = options || {};
         var xValues = points.map(function (point) { return point.x; });
@@ -1119,6 +1123,7 @@
         matrixToCsv: matrixToCsv,
         paddedScatterRange: paddedScatterRange,
         pearsonCorrelation: pearsonCorrelation,
+        responsiveScatterHeight: responsiveScatterHeight,
         selectAllBenchmarks: selectAllBenchmarks,
         setBenchmarkMode: setBenchmarkMode,
         validMatrixScore: validMatrixScore

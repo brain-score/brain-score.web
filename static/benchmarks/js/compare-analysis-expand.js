@@ -44,19 +44,28 @@
         return Number.isFinite(value) && value > 0 ? value : null;
     }
 
+    function rememberCollapsedPlotSize(plot, size) {
+        size = size || {};
+        plot.__compareCollapsedSize = {
+            height: finiteDimension(size.height) || 480,
+            width: finiteDimension(size.width),
+            autosize: size.autosize !== false
+        };
+        return plot.__compareCollapsedSize;
+    }
+
     function collapsedPlotSize(plot) {
         if (plot.__compareCollapsedSize) return plot.__compareCollapsedSize;
         var layout = plot.layout || {};
         var fullLayout = plot._fullLayout || {};
-        plot.__compareCollapsedSize = {
+        return rememberCollapsedPlotSize(plot, {
             height: finiteDimension(layout.height) ||
                 finiteDimension(fullLayout.height) ||
                 finiteDimension(plot.clientHeight) ||
                 480,
             width: finiteDimension(layout.width),
             autosize: layout.autosize !== false
-        };
-        return plot.__compareCollapsedSize;
+        });
     }
 
     function resizeAfterRelayout(plot, plotly, browserRoot, update) {
@@ -134,6 +143,7 @@
         expandIconClass: expandIconClass,
         expandedPlotHeight: expandedPlotHeight,
         initializeExpandButtons: initializeExpandButtons,
+        rememberCollapsedPlotSize: rememberCollapsedPlotSize,
         resizePlots: resizePlots,
         updateButton: updateButton
     };

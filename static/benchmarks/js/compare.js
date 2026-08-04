@@ -14,6 +14,32 @@ function initializeBenchmarkComparison() {
         xKey = null,
         yKey = null;
     const scatterElement = document.querySelector(container_selector);
+    const scatterPanel = document.getElementById('benchmark-scatter-panel');
+
+    function scatterIsExpanded() {
+        return !!(scatterPanel && scatterPanel.classList.contains('is-expanded-plot'));
+    }
+
+    function currentScatterHeight() {
+        const expandCore = window.CompareAnalysisExpandCore;
+        if (scatterIsExpanded() && expandCore) {
+            return expandCore.expandedPlotHeight(window.innerHeight);
+        }
+        return window.CompareCorrelationCore.responsiveScatterHeight(
+            $(container_selector).width()
+        );
+    }
+
+    function rememberCollapsedScatterSize(height) {
+        const expandCore = window.CompareAnalysisExpandCore;
+        if (!scatterIsExpanded() && expandCore && scatterElement) {
+            expandCore.rememberCollapsedPlotSize(scatterElement, {
+                height: height,
+                width: null,
+                autosize: true
+            });
+        }
+    }
 
     function currentComparisonData() {
         if (window.CompareDashboard) return window.CompareDashboard.getComparisonData();
@@ -140,10 +166,13 @@ function initializeBenchmarkComparison() {
                 statsText: statsText,
                 regression: {slope: slope, intercept: intercept},
                 logoSource: window.logo_url || '/static/benchmarks/img/logo.png',
-                height: Math.max(480, Math.min(760, Math.round($(container_selector).width() * 2 / 3)))
+                height: currentScatterHeight()
             }
         );
-        window.Plotly.react(scatterElement, plot.data, plot.layout, plot.config);
+        Promise.resolve(window.Plotly.react(scatterElement, plot.data, plot.layout, plot.config))
+            .then(function () {
+                rememberCollapsedScatterSize(plot.layout.height);
+            });
     }
 
     function syncComparisonBenchmarks() {
@@ -198,12 +227,24 @@ function initializeBenchmarkComparison() {
     updatePlot();
 
     let _cmpResizeTimer = null;
+    let _cmpResizeGeneration = 0;
     $(window).on('resize', function () {
         clearTimeout(_cmpResizeTimer);
         _cmpResizeTimer = setTimeout(function () {
-            if (window.Plotly && window.Plotly.Plots && scatterElement) {
-                window.Plotly.Plots.resize(scatterElement);
-            }
+            if (!window.Plotly || !scatterElement || !scatterElement.layout) return;
+            const generation = ++_cmpResizeGeneration;
+            const height = currentScatterHeight();
+            Promise.resolve(window.Plotly.relayout(scatterElement, {
+                height: height,
+                width: null,
+                autosize: true
+            })).then(function () {
+                if (generation !== _cmpResizeGeneration) return;
+                rememberCollapsedScatterSize(height);
+                if (window.Plotly.Plots && window.Plotly.Plots.resize) {
+                    window.Plotly.Plots.resize(scatterElement);
+                }
+            });
         }, 200);
     });
 

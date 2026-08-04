@@ -285,6 +285,12 @@ test('pads constant score ranges so scatter axes remain visible', () => {
     assert.deepEqual(correlation.paddedScatterRange([1, 1]), [0.95, 1.05]);
 });
 
+test('keeps responsive scatter heights within the dashboard bounds', () => {
+    assert.equal(correlation.responsiveScatterHeight(600), 480);
+    assert.equal(correlation.responsiveScatterHeight(900), 600);
+    assert.equal(correlation.responsiveScatterHeight(1400), 760);
+});
+
 test('starts a positive-only Plotly color scale at the lowest correlation', () => {
     const matrix = {
         axes: benchmarks().slice(0, 2),
