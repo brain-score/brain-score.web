@@ -131,10 +131,19 @@ test('metric and stimulus presets discover matching benchmark leaves by name', (
         is_leaf: true,
         is_engineering: false
     });
+    items.push({
+        id: 'Zerbe2026_fmri.IT-new-metric_v2',
+        type_id: 'Zerbe2026_fmri.IT-new-metric',
+        label: 'Zerbe2026_fmri.IT-new-metric',
+        parent_id: 'IT_v0',
+        is_leaf: true,
+        is_engineering: false
+    });
 
     const rdm = correlation.matchingPresetBenchmarkIds('rdm', items);
     const ridge = correlation.matchingPresetBenchmarkIds('ridge', items);
     const nsd = correlation.matchingPresetBenchmarkIds('nsd-stimuli', items);
+    const laion = correlation.matchingPresetBenchmarkIds('laion-stimuli', items);
     const things = correlation.matchingPresetBenchmarkIds('things-stimuli', items);
 
     assert.ok(rdm.includes('FutureStudy.V1-rdm_cv_v1'));
@@ -147,7 +156,14 @@ test('metric and stimulus presets discover matching benchmark leaves by name', (
         'Li2026.V1-ridgecv_v1',
         'Zerbe2026_fmri.V1-rdm-pearson_v1',
         'Zerbe2026_fmri.V1-ood-ridgecv_v1',
-        'Zerbe2026_fmri.V1-tau-ridgecv_v1'
+        'Zerbe2026_fmri.V1-tau-ridgecv_v1',
+        'Zerbe2026_fmri.IT-new-metric_v2'
+    ]);
+    assert.deepEqual(laion, [
+        'Zerbe2026_fmri.V1-rdm-pearson_v1',
+        'Zerbe2026_fmri.V1-ood-ridgecv_v1',
+        'Zerbe2026_fmri.V1-tau-ridgecv_v1',
+        'Zerbe2026_fmri.IT-new-metric_v2'
     ]);
     assert.deepEqual(things, [
         'Hebart2023_fmri.V1-ridgecv_v1',
