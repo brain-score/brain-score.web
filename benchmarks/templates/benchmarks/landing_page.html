@@ -37,18 +37,31 @@
 
 <div class="landing-dashboard">
     <header class="landing-dashboard__intro container my_container">
-        <div>
-            <p class="landing-eyebrow">A living benchmark for computational models of the brain</p>
-            <h1>See what the field is building now.</h1>
+        <div class="landing-hero__copy">
+            <img class="landing-hero__wordmark" src="{% static 'benchmarks/img/logo_name_full.png' %}"
+                 alt="Brain-Score">
+            <p class="landing-eyebrow">Integrative benchmarks <span aria-hidden="true">|</span> Models at scale</p>
+            <p class="landing-hero__summary">
+                Brain-Score brings models and neural and behavioral measurements into one
+                transparent, continuously evolving platform.
+            </p>
+            <div class="landing-bridge" aria-label="Brain-Score bridges computational models and brain measurements">
+                <span class="landing-bridge__endpoint landing-bridge__endpoint--models">Models</span>
+                <span class="landing-bridge__line" aria-hidden="true">
+                    <img src="{% static 'benchmarks/img/colored_logo.png' %}" alt="">
+                </span>
+                <span class="landing-bridge__endpoint landing-bridge__endpoint--brain">Brain and behavior</span>
+            </div>
         </div>
-        <p>
-            Brain-Score brings models and neural and behavioral measurements into one
-            transparent, continuously evolving platform.
-        </p>
+        <picture class="landing-hero__art" aria-hidden="true">
+            <source srcset="{% static 'benchmarks/img/head_art_1.avif' %}" type="image/avif">
+            <source srcset="{% static 'benchmarks/img/head_art_1.webp' %}" type="image/webp">
+            <img src="{% static 'benchmarks/img/head_art_1.png' %}" alt="" decoding="async" fetchpriority="high">
+        </picture>
     </header>
 
     <section class="landing-opening container my_container" aria-label="Latest Brain-Score activity">
-        <div class="landing-panel landing-activity">
+        <div class="landing-panel landing-panel--bridge landing-activity">
             <div class="landing-section-heading">
                 <div>
                     <p class="landing-eyebrow">Live from the community</p>
@@ -96,6 +109,11 @@
         </div>
 
         <aside class="landing-onboarding" aria-labelledby="landing-onboarding-title">
+            <picture class="landing-onboarding__network" aria-hidden="true">
+                <source srcset="{% static 'benchmarks/img/CNN_abstract.avif' %}" type="image/avif">
+                <source srcset="{% static 'benchmarks/img/CNN_abstract.webp' %}" type="image/webp">
+                <img src="{% static 'benchmarks/img/CNN_abstract.png' %}" alt="" decoding="async">
+            </picture>
             <span class="landing-onboarding__icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></span>
             <p class="landing-eyebrow">New here?</p>
             <h2 id="landing-onboarding-title">Learn how Brain-Score works</h2>
@@ -127,7 +145,7 @@
         </div>
 
         <div class="landing-explore__grid">
-            <article class="landing-panel landing-space-card">
+            <article class="landing-panel landing-panel--bridge landing-space-card">
                 <div class="landing-card-heading">
                     <div>
                         <span class="landing-tag landing-tag--benchmark">Vision PCA</span>
@@ -155,7 +173,7 @@
                 </p>
             </article>
 
-            <aside class="landing-panel landing-leaderboard-preview" aria-labelledby="landing-leaderboard-title">
+            <aside class="landing-panel landing-panel--models landing-leaderboard-preview" aria-labelledby="landing-leaderboard-title">
                 <div class="landing-card-heading">
                     <div>
                         <span class="landing-tag landing-tag--platform">Live ranking</span>
