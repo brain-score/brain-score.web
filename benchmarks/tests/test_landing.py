@@ -24,7 +24,7 @@ def _model(model_id, values, rank=None):
 
 
 class BenchmarkSpaceTests(SimpleTestCase):
-    def test_projects_complete_models_onto_two_components(self):
+    def test_projects_complete_models_onto_three_components(self):
         models = [
             _model(1, [0.20, 0.24, 0.30, 0.35, 0.40]),
             _model(2, [0.23, 0.28, 0.31, 0.39, 0.42]),
@@ -40,8 +40,11 @@ class BenchmarkSpaceTests(SimpleTestCase):
         self.assertEqual(projection["benchmarks"], ["V1", "V2", "V4", "IT", "Behavior"])
         self.assertTrue(all(math.isfinite(point["x"]) for point in projection["points"]))
         self.assertTrue(all(math.isfinite(point["y"]) for point in projection["points"]))
+        self.assertTrue(all(math.isfinite(point["z"]) for point in projection["points"]))
+        self.assertEqual(len(projection["variance"]), 3)
         self.assertGreater(projection["variance"][0], 0)
         self.assertGreaterEqual(projection["variance"][0], projection["variance"][1])
+        self.assertGreaterEqual(projection["variance"][1], projection["variance"][2])
 
     def test_excludes_models_without_complete_nonzero_branch_scores(self):
         complete = _model(1, [0.20, 0.24, 0.30, 0.35, 0.40])
@@ -62,7 +65,7 @@ class LandingPageTests(SimpleTestCase):
             "news_items": [],
             "recent_models": [],
             "leaderboard_models": [],
-            "benchmark_space": {"points": [], "variance": [0, 0], "benchmarks": []},
+            "benchmark_space": {"points": [], "variance": [0, 0, 0], "benchmarks": []},
             "public_model_count": None,
             "benchmark_count": None,
         }
@@ -71,7 +74,8 @@ class LandingPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Latest updates")
-        self.assertContains(response, "The benchmark space")
+        self.assertContains(response, "The 2D benchmark space")
+        self.assertContains(response, 'data-space-mode="2d"')
         self.assertContains(response, "Compare benchmarks")
         self.assertContains(response, "Compare models")
         self.assertContains(response, "Run locally")

@@ -732,23 +732,91 @@ button.simple_button
     margin-top: 8px
 
 .landing-card-heading__hint
-  margin-top: 4px
   color: #7a8993
   font-size: 0.69rem
+
+.landing-card-heading__tools
+  display: flex
+  align-items: center
+  gap: 10px
+  margin-top: 2px
+
+.landing-space-toggle
+  display: inline-flex
+  padding: 2px
+  border: 1px solid #cfddd6
+  border-radius: 7px
+  background: #f6faf8
+
+  button
+    min-width: 34px
+    height: 24px
+    padding: 0 8px
+    cursor: pointer
+    border: 0
+    border-radius: 5px
+    background: transparent
+    color: #6b7d78
+    font: inherit
+    font-size: 0.66rem
+    font-weight: 800
+
+    &[aria-pressed="true"]
+      background: white
+      color: #168b4b
+      box-shadow: 0 1px 4px rgba(0, 45, 51, 0.12)
+
+    &:focus-visible
+      outline: 2px solid rgba(22, 139, 75, 0.35)
+      outline-offset: 1px
+
+.landing-icon-button
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 30px
+  height: 30px
+  padding: 0
+  cursor: pointer
+  border: 1px solid #cfddd6
+  border-radius: 6px
+  background: white
+  color: #58706b
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease
+
+  &[hidden]
+    display: none
+
+  &:hover, &:focus
+    border-color: #168b4b
+    background: #f2faf5
+    color: #168b4b
+    outline: none
 
 .landing-space
   position: relative
   min-height: 390px
   overflow: hidden
+  user-select: none
   border: 1px solid #e1ebe6
   border-radius: 8px
-  background: linear-gradient(rgba(240, 246, 243, 0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(240, 246, 243, 0.7) 1px, transparent 1px), #fcfefd
-  background-size: 54px 54px
+  background: radial-gradient(circle at 48% 42%, rgba(69, 198, 118, 0.09), transparent 34%), radial-gradient(circle at 58% 58%, rgba(71, 183, 222, 0.08), transparent 42%), #fbfdfc
 
   svg
     display: block
     width: 100%
     min-height: 390px
+    touch-action: none
+
+    &:focus
+      outline: 2px solid rgba(22, 139, 75, 0.32)
+      outline-offset: -2px
+
+    &.is-3d
+      cursor: grab
+
+    &.is-3d.is-dragging
+      cursor: grabbing
 
 .landing-space__empty
   display: flex
@@ -759,18 +827,31 @@ button.simple_button
   font-size: 0.84rem
 
 .landing-space__axis
-  stroke: #aebdb6
-  stroke-width: 1
+  stroke: #168b4b
+  stroke-linecap: round
+  stroke-width: 1.35
+
+  &.landing-space__axis--2
+    stroke: #279fc8
+
+  &.landing-space__axis--3
+    stroke: #778c97
+
+.landing-space__grid-line
+  stroke: #d9e4de
+  stroke-width: 0.75
 
 .landing-space__axis-label
-  fill: #687983
-  font-size: 11px
-  font-weight: 600
+  fill: #526a72
+  font-size: 10px
+  font-weight: 700
+  paint-order: stroke
+  stroke: rgba(255, 255, 255, 0.94)
+  stroke-linejoin: round
+  stroke-width: 3px
 
 .landing-space__point
   cursor: pointer
-  opacity: 0
-  animation: landing-point-in 400ms ease forwards
   transition: r 120ms ease, opacity 120ms ease, stroke-width 120ms ease
 
   &:hover, &:focus
@@ -779,11 +860,43 @@ button.simple_button
     stroke-width: 2.5
     outline: none
 
-@keyframes landing-point-in
-  from
-    opacity: 0
-  to
-    opacity: 0.76
+.landing-space__legend
+  position: absolute
+  right: 13px
+  bottom: 11px
+  z-index: 1
+  display: grid
+  grid-template-columns: auto 1fr auto
+  gap: 3px 6px
+  align-items: center
+  padding: 7px 9px
+  pointer-events: none
+  border: 1px solid rgba(207, 221, 214, 0.88)
+  border-radius: 6px
+  background: rgba(255, 255, 255, 0.88)
+  backdrop-filter: blur(4px)
+  color: #64757d
+
+  > span
+    grid-column: 1 / -1
+    font-size: 0.61rem
+    font-weight: 700
+
+  > i
+    display: block
+    grid-column: 1 / -1
+    width: 84px
+    height: 5px
+    border-radius: 999px
+    background: linear-gradient(90deg, $brainscore_blue, #5dbf9c, #168b4b)
+
+  > small
+    color: #7b8990
+    font-size: 0.52rem
+
+    &:last-child
+      grid-column: 3
+      text-align: right
 
 .landing-space__tooltip
   position: absolute

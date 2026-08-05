@@ -78,6 +78,25 @@ def _principal_vector(covariance, orthogonal_to=()):
     return vector, eigenvalue
 
 
+def _orthogonal_vector(dimension, orthogonal_to):
+    """Return a deterministic unused axis when a component has zero variance."""
+    best = None
+    best_length = 0
+    for axis in range(dimension):
+        candidate = [1 if index == axis else 0 for index in range(dimension)]
+        for basis in orthogonal_to:
+            projection = sum(candidate[index] * basis[index] for index in range(dimension))
+            candidate = [
+                candidate[index] - projection * basis[index]
+                for index in range(dimension)
+            ]
+        length = math.sqrt(sum(value * value for value in candidate))
+        if length > best_length:
+            best = candidate
+            best_length = length
+    return _normalize(best) if best is not None else None
+
+
 def _initials(display_name):
     if not display_name or display_name.lower() == "anonymous user":
         return "BS"
@@ -109,7 +128,7 @@ def _model_summary(model):
 
 
 def build_benchmark_space(models):
-    """Project complete high-level vision scores onto two principal components."""
+    """Project complete high-level vision scores onto three principal components."""
     identifiers = [identifier for identifier, _ in PCA_BENCHMARKS]
     rows = []
     for model in models:
@@ -120,7 +139,7 @@ def build_benchmark_space(models):
         rows.append((model, values))
 
     if len(rows) < 3:
-        return {"points": [], "variance": [0, 0], "benchmarks": []}
+        return {"points": [], "variance": [0, 0, 0], "benchmarks": []}
 
     columns = list(zip(*(values for _, values in rows)))
     means = [sum(column) / len(column) for column in columns]
@@ -146,13 +165,21 @@ def build_benchmark_space(models):
     ]
     first, first_value = _principal_vector(covariance)
     second, second_value = _principal_vector(covariance, (first,)) if first else (None, 0)
-    if first is None or second is None:
-        return {"points": [], "variance": [0, 0], "benchmarks": []}
+    if second is None and first is not None:
+        second = _orthogonal_vector(dimension, (first,))
+    third, third_value = (
+        _principal_vector(covariance, (first, second))
+        if first and second else (None, 0)
+    )
+    if third is None and first is not None and second is not None:
+        third = _orthogonal_vector(dimension, (first, second))
+    if first is None or second is None or third is None:
+        return {"points": [], "variance": [0, 0, 0], "benchmarks": []}
 
     total_variance = sum(covariance[index][index] for index in range(dimension))
     variance = [
         round(100 * value / total_variance, 1) if total_variance > 0 else 0
-        for value in (first_value, second_value)
+        for value in (first_value, second_value, third_value)
     ]
     points = []
     for (model, _), row in zip(rows, standardized):
@@ -164,6 +191,7 @@ def build_benchmark_space(models):
             "score": summary["score"],
             "x": round(sum(row[index] * first[index] for index in range(dimension)), 5),
             "y": round(sum(row[index] * second[index] for index in range(dimension)), 5),
+            "z": round(sum(row[index] * third[index] for index in range(dimension)), 5),
         })
 
     return {
@@ -194,13 +222,13 @@ def landing_context():
         "news_items": updates,
         "recent_models": [],
         "leaderboard_models": [],
-        "benchmark_space": {"points": [], "variance": [0, 0], "benchmarks": []},
+        "benchmark_space": {"points": [], "variance": [0, 0, 0], "benchmarks": []},
         "public_model_count": None,
         "benchmark_count": None,
     }
     cached_data = None
     try:
-        cached_data = cache.get("landing_dashboard_data_v1")
+        cached_data = cache.get("landing_dashboard_data_v2")
     except Exception as exc:
         _logger.warning("Could not read cached landing dashboard data: %s", exc)
     if cached_data:
@@ -230,7 +258,7 @@ def landing_context():
         }
         context.update(dashboard_data)
         try:
-            cache.set("landing_dashboard_data_v1", dashboard_data, 15 * 60)
+            cache.set("landing_dashboard_data_v2", dashboard_data, 15 * 60)
         except Exception as exc:
             _logger.warning("Could not cache landing dashboard data: %s", exc)
     except DatabaseError as exc:

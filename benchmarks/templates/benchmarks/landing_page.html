@@ -119,8 +119,8 @@
                 <p class="landing-eyebrow">Explore the field</p>
                 <h2 id="landing-explore-title">A map of benchmark performance</h2>
                 <p>
-                    Public vision models projected from their V1, V2, V4, IT, and behavioral scores.
-                    Nearby models have more similar benchmark profiles.
+                    Public vision models projected from their V1, V2, V4,
+                    IT, and behavioral scores. Nearby models have more similar benchmark profiles.
                 </p>
             </div>
             <a class="button landing-button landing-button--outline" href="/vision/compare/">Open Compare</a>
@@ -131,17 +131,27 @@
                 <div class="landing-card-heading">
                     <div>
                         <span class="landing-tag landing-tag--benchmark">Vision PCA</span>
-                        <h3>The benchmark space</h3>
+                        <h3 id="landing-space-title">The 2D benchmark space</h3>
                     </div>
-                    <span class="landing-card-heading__hint"><i class="fa-regular fa-hand-pointer" aria-hidden="true"></i> Hover to inspect</span>
+                    <div class="landing-card-heading__tools">
+                        <div class="landing-space-toggle" aria-label="Benchmark-space dimensions">
+                            <button type="button" data-space-mode="2d" aria-pressed="true">2D</button>
+                            <button type="button" data-space-mode="3d" aria-pressed="false">3D</button>
+                        </div>
+                        <span id="landing-space-hint" class="landing-card-heading__hint">PC1 &times; PC2</span>
+                        <button id="landing-space-reset" class="landing-icon-button" type="button"
+                                aria-label="Reset 3D view" title="Reset 3D view" hidden>
+                            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
-                <div id="landing-benchmark-space" class="landing-space" role="group"
-                     aria-label="Principal component map of public vision models">
+                <div id="landing-benchmark-space" class="landing-space" role="group" data-space-mode="2d"
+                     aria-label="Two-dimensional principal component map of public vision models">
                     <div class="landing-space__empty">Loading benchmark space&hellip;</div>
                 </div>
-                <p class="landing-method">
-                    A lightweight two-component preview of the highest-ranked public models with
-                    complete scores across the five displayed branches.
+                <p id="landing-space-method" class="landing-method">
+                    A two-component preview of the highest-ranked public models with complete scores
+                    across the five displayed branches. Hover or focus a point for model details.
                 </p>
             </article>
 
