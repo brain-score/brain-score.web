@@ -92,6 +92,10 @@
         line.setAttribute('y2', end.y);
     }
 
+    function setSvgElementVisible(element, visible) {
+        element.style.display = visible ? '' : 'none';
+    }
+
     function renderBenchmarkSpace() {
         var container = document.getElementById('landing-benchmark-space');
         var dataElement = document.getElementById('landing-benchmark-space-data');
@@ -237,13 +241,13 @@
 
         function renderTwoDimensionalScene() {
             gridLines3d.forEach(function (gridLine) {
-                gridLine.line.hidden = true;
+                setSvgElementVisible(gridLine.line, false);
             });
             var xAxisY = height - twoDimensionalMargin.bottom;
             axes.forEach(function (axis) {
                 var isVisible = axis.index < 2;
-                axis.line.hidden = !isVisible;
-                axis.label.hidden = !isVisible;
+                setSvgElementVisible(axis.line, isVisible);
+                setSvgElementVisible(axis.label, isVisible);
                 if (!isVisible) return;
                 axis.label.removeAttribute('transform');
                 if (axis.index === 0) {
@@ -290,7 +294,7 @@
 
         function renderThreeDimensionalScene() {
             gridLines3d.forEach(function (gridLine) {
-                gridLine.line.hidden = false;
+                setSvgElementVisible(gridLine.line, true);
                 setLine(
                     gridLine.line,
                     projectPoint(gridLine.start, camera, dimensions),
@@ -299,8 +303,8 @@
             });
             var origin = projectPoint(axisOrigin, camera, dimensions);
             axes.forEach(function (axis) {
-                axis.line.hidden = false;
-                axis.label.hidden = false;
+                setSvgElementVisible(axis.line, true);
+                setSvgElementVisible(axis.label, true);
                 axis.label.removeAttribute('transform');
                 axis.label.textContent = axisDefinitions[axis.index].label;
                 var endpoint = projectPoint(axis.end, camera, dimensions);
