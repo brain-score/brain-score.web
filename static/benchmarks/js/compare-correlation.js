@@ -64,6 +64,13 @@
             prefixes: ['allen2022', 'li2026', 'zerbe2026']
         },
         {
+            id: 'laion-stimuli',
+            label: 'LAION stimuli',
+            description: 'Compare all active Zerbe2026 benchmark leaves.',
+            kind: 'families',
+            prefixes: ['zerbe2026']
+        },
+        {
             id: 'things-stimuli',
             label: 'THINGS stimuli',
             description: 'Compare Papale, Hebart fMRI, and Gifford benchmark leaves.',
