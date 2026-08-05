@@ -218,10 +218,19 @@
       background: transparent
 
     &.collapsed
-      > a, > .dropdown > a
+      > a:not(.brainscore-logo), > .dropdown > a
+        display: flex
+        align-items: center
+        justify-content: center
+        height: 46px
         margin-right: 8px
         margin-left: 8px
-        padding-left: 0
+        padding: 0
+        line-height: normal
+        text-align: center
+
+        img.menu-icon
+          margin-right: 0
 
     .dropdown-content, .nested-dropdown-content
       overflow: hidden
@@ -245,10 +254,19 @@
 
   @media (max-width: 1024px)
     .left-sidebar
-      > a, > .dropdown > a
+      > a:not(.brainscore-logo), > .dropdown > a
+        display: flex
+        align-items: center
+        justify-content: center
+        height: 46px
         margin-right: 8px
         margin-left: 8px
-        padding-left: 0
+        padding: 0
+        line-height: normal
+        text-align: center
+
+        img.menu-icon
+          margin-right: 0
 
     .banner.box.gradient
       padding: 23px 25px
