@@ -42,6 +42,22 @@
                 Contributed by: {{ model|display_submitter:user|default:"" }}
             </button>
         </p>
+        {% if model_metadata %}
+            {% if model_metadata.architecture_family_display or model_metadata.parameter_count_display or model_metadata.supervision_type or model_metadata.license %}
+            <div class="model-metadata-tags" aria-label="Model metadata summary">
+                {% if model_metadata.architecture_family_display %}
+                <span class="tag">{{ model_metadata.architecture_family_display }}</span>
+                {% endif %}
+                {% if model_metadata.parameter_count_display %}
+                    <span class="tag">{{ model_metadata.parameter_count_display }} parameters</span>
+                {% endif %}
+                {% if model_metadata.supervision_type %}
+                    <span class="tag">{{ model_metadata.supervision_type|title }}</span>
+                {% endif %}
+                {% if model_metadata.license %}<span class="tag">{{ model_metadata.license }}</span>{% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
         {% if model.competition is None %}
@@ -55,9 +71,12 @@
 
 {# Right-hand info #}
 {% block info_section %}
-    <div class="box">
+    {% include "benchmarks/_model_metadata_provenance.html" %}
+    {% include "benchmarks/_model_metadata_lineage.html" %}
+
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
+            <p class="subtitle is-5 model-sidebar-title">
                 Layer Commitment
                 <a href="https://{{ request.get_host }}/brain_model#region_layer_map">
                     <i class="fa-solid fa-circle-info"> </i>
@@ -90,15 +109,19 @@
         </div>
     </div>
 
-    <div class="box">
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
+            <p class="subtitle is-5 model-sidebar-title">
                 Visual Angle
                 <a href="https://{{ request.get_host }}/brain_model#visual_degrees">
                     <i class="fa-solid fa-circle-info"></i>
                 </a>
             </p>
-            <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% if visual_degrees is not None %}
+                <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% else %}
+                <span class="has-text-grey">Not documented</span>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
@@ -106,9 +129,11 @@
 {# Center content #}
 {% block content %}
     <section class="individual_model container center">
-        <div class="content">
+        {% include "benchmarks/_model_metadata.html" %}
+
+        <div class="content box model-page-card">
             {# Scores #}
-            <h3 id="scores" class="title is-3">Scores on benchmarks</h3>
+            <h3 id="scores" class="title is-3 model-section-title">Scores on benchmarks</h3>
             <span class='fine_print'>
                Model rank shown below is with respect to all public models.<br>
             </span>
@@ -247,8 +272,8 @@
         </div>
 
         {# Usage #}
-        <div class="box">
-            <h4 class="subtitle is-4">
+        <div class="box model-page-card">
+            <h4 class="subtitle is-4 model-section-title">
                 How to use
             </h4>
             <div class="columns">
@@ -289,8 +314,8 @@ model.look_at(...)</pre>
         </div>
 
         {# BERG info box #}
-        <div class="box" id="berg-box">
-            <h4 class="subtitle is-4">
+        <div class="box model-page-card" id="berg-box">
+            <h4 class="subtitle is-4 model-section-title">
                 Brain Encoding Response Generator (BERG)
             </h4>
             <p>
@@ -313,8 +338,8 @@ model.look_at(...)</pre>
         {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
 
         {# Benchmarks bibtex #}
-        <div class="box">
-            <h2 class="subtitle is-4">
+        <div class="box model-page-card">
+            <h2 class="subtitle is-4 model-section-title">
             <span class="want_to_click collapsible_control is_collapsible"
                   data-initial="hidden" data-target="bibtex_collapsible"></span>
                 Benchmarks bibtex
@@ -329,6 +354,7 @@ model.look_at(...)</pre>
     </section>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>
+    <script src="{% static 'benchmarks/js/model-lineage.js' %}"></script>
     <script>
     trackLinks({
         selectors: {

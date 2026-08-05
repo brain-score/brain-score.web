@@ -1,0 +1,54 @@
+{% if model_metadata.lineage.has_relationships %}
+<div class="box model-sidebar-card model-lineage-card" data-model-lineage>
+    <div class="card-content">
+        <p class="subtitle is-5 model-sidebar-title">Model lineage &amp; genealogy</p>
+
+        <ol class="model-lineage-tree" aria-label="Model ancestry">
+            {% for ancestor in model_metadata.lineage.ancestors %}
+            <li class="model-lineage-ancestor{% if ancestor.has_metadata %} has-metadata{% endif %}">
+                <i class="fa-solid fa-code-branch" aria-hidden="true"></i>
+                {% if ancestor.model_card_id %}
+                <a href="/model/{{ model_metadata.domain }}/{{ ancestor.model_card_id }}">
+                    {{ ancestor.display_name }}
+                </a>
+                {% else %}
+                <span>{{ ancestor.display_name }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            <li class="model-lineage-current">
+                <span aria-hidden="true"></span>
+                <strong>{{ model_metadata.lineage.current.display_name }}</strong>
+            </li>
+        </ol>
+
+        {% if model_metadata.lineage.related_models %}
+        <hr>
+        <p class="model-lineage-label">Related variants</p>
+        <ul class="model-lineage-related" id="model-lineage-related-variants">
+            {% for related in model_metadata.lineage.related_models %}
+            <li data-related-variant{% if forloop.counter > 3 %} hidden{% endif %}>
+                {% if related.model_card_id %}
+                <a class="model-lineage-related-name" href="/model/{{ model_metadata.domain }}/{{ related.model_card_id }}">
+                    {{ related.display_name }}
+                </a>
+                {% else %}
+                <span class="model-lineage-related-name">{{ related.display_name }}</span>
+                {% endif %}
+                <span class="tag is-light">{{ related.relationship_display }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if model_metadata.lineage.hidden_related_count %}
+        <button class="model-lineage-toggle" type="button" data-lineage-toggle
+                aria-controls="model-lineage-related-variants" aria-expanded="false">
+            <span data-lineage-toggle-label>
+                +{{ model_metadata.lineage.hidden_related_count }} more metadata-covered variants
+            </span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}

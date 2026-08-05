@@ -9,6 +9,7 @@ from django.template.defaulttags import register
 from .index import get_context, display_model, display_submitter, get_visibility
 from .leaderboard import get_ag_grid_context
 from .model_trends import load_and_build_score_trend, load_and_build_rank_trend
+from ..model_metadata import get_model_metadata, with_model_card_ids
 from ..models import FinalModelContext, BenchmarkMeta
 from time import time
 _logger = logging.getLogger(__name__)
@@ -387,6 +388,39 @@ def view(request, id: int, domain: str):
         score_trend_sidebar_lines = _score_tm.get('defaultLines') or []
         rank_trend_sidebar_lines = _rank_tm.get('defaultLines') or []
 
+        model_metadata = None
+        if model.public:
+            try:
+                model_metadata = get_model_metadata(domain, model.name)
+                if model_metadata:
+                    lineage_identifiers = {
+                        related["identifier"]
+                        for related in model_metadata["lineage"]["related_models"]
+                    }
+                    lineage_identifiers.update(
+                        ancestor["identifier"]
+                        for ancestor in model_metadata["lineage"]["ancestors"]
+                        if ancestor["identifier"]
+                    )
+                    lineage_model_ids = dict(
+                        FinalModelContext.objects.filter(
+                            domain=domain,
+                            public=True,
+                            name__in=lineage_identifiers,
+                        )
+                        .order_by("model_id")
+                        .values_list("name", "model_id")
+                    )
+                    model_metadata = with_model_card_ids(
+                        model_metadata, lineage_model_ids
+                    )
+            except (KeyError, OSError, ValueError) as error:
+                _logger.warning("Could not load metadata for %s: %s", model.name, error)
+
+        visual_degrees = model.visual_degrees
+        if visual_degrees is None and model_metadata:
+            visual_degrees = model_metadata.get('visual_degrees')
+
         # Prepare the context for the template
         model_context = {
             'model': model,
@@ -401,8 +435,9 @@ def view(request, id: int, domain: str):
             'visibility': visibility,
             'model_name': display_model(model_obj, user),
             'submitter_name': display_submitter(model_obj, user),
-            'visual_degrees': model.visual_degrees,
+            'visual_degrees': visual_degrees,
             'layers': getattr(model, 'layers', None),
+            'model_metadata': model_metadata,
             'benchmark_lookup': benchmark_lookup,
             'score_trend_plot_json': score_trend_plot_json,
             'rank_trend_plot_json': rank_trend_plot_json,
