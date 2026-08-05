@@ -370,7 +370,7 @@ button.simple_button
   padding-top: 114px
   color: $brainscore_gray4
   font-family: "Open Sans", sans-serif
-  background: radial-gradient(circle at 8% 4%, rgba(69, 198, 118, 0.08), transparent 25rem), radial-gradient(circle at 92% 28%, rgba(71, 183, 222, 0.07), transparent 28rem), #fbfdfc
+  background: radial-gradient(circle at 8% 4%, rgba(69, 198, 118, 0.1), transparent 25rem), radial-gradient(circle at 92% 28%, rgba(71, 183, 222, 0.09), transparent 28rem), linear-gradient(180deg, #fbfdfc 0%, #f1faf5 48%, #fbfdfc 100%)
 
   h1, h2, h3, p
     margin: 0
@@ -397,18 +397,126 @@ button.simple_button
     color: inherit
 
 .landing-dashboard__intro
-  display: flex
-  align-items: flex-end
-  justify-content: space-between
-  gap: 56px
-  padding: 54px 0 38px
+  position: relative
+  display: grid
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr)
+  min-height: 390px
+  margin-top: 32px
+  margin-bottom: 26px
+  overflow: hidden
+  border: 1px solid rgba(69, 198, 118, 0.16)
+  border-radius: 32px
+  background: linear-gradient(118deg, rgba(211, 246, 224, 0.98) 0%, rgba(207, 242, 232, 0.94) 44%, rgba(199, 236, 247, 0.96) 100%)
+  box-shadow: 0 20px 54px rgba(20, 103, 78, 0.1)
 
-  > p
-    max-width: 470px
-    padding-bottom: 4px
-    color: #506272
-    font-size: 1.03rem
-    line-height: 1.7
+  &::after
+    content: ""
+    position: absolute
+    right: 27%
+    bottom: -84px
+    width: 240px
+    height: 240px
+    border: 1px solid rgba(255, 255, 255, 0.46)
+    border-radius: 50%
+
+.landing-hero__copy
+  position: relative
+  z-index: 2
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  justify-content: center
+  padding: 58px 24px 54px 7%
+
+.landing-hero__wordmark
+  width: clamp(245px, 30vw, 410px)
+  max-width: 88%
+  height: auto
+  margin-bottom: 18px
+
+.landing-hero__summary
+  max-width: 600px
+  margin-top: 19px !important
+  color: #405f6c
+  font-size: 1rem
+  line-height: 1.7
+
+.landing-hero__art
+  position: relative
+  z-index: 1
+  min-height: 390px
+
+  &::before
+    content: ""
+    position: absolute
+    inset: 28px 30px 28px 0
+    border: 1px solid rgba(255, 255, 255, 0.45)
+    border-radius: 50%
+
+  img
+    position: absolute
+    right: -12%
+    bottom: -6%
+    width: auto
+    height: 112%
+    max-width: none
+    opacity: 0.94
+
+.landing-bridge
+  display: grid
+  grid-template-columns: auto minmax(116px, 190px) auto
+  gap: 11px
+  align-items: center
+  width: min(100%, 510px)
+  margin-top: 32px
+
+.landing-bridge__endpoint
+  font-size: 0.67rem
+  font-weight: 800
+  letter-spacing: 0.08em
+  text-transform: uppercase
+
+  &.landing-bridge__endpoint--models
+    color: #1689b1
+
+  &.landing-bridge__endpoint--brain
+    color: #168b4b
+    text-align: right
+
+.landing-bridge__line
+  position: relative
+  display: block
+  height: 2px
+  background: linear-gradient(90deg, $brainscore_blue, #55c5a2 54%, $brainscore_green)
+
+  &::before, &::after
+    content: ""
+    position: absolute
+    top: 50%
+    width: 8px
+    height: 8px
+    border-radius: 50%
+    transform: translateY(-50%)
+
+  &::before
+    left: 0
+    background: $brainscore_blue
+
+  &::after
+    right: 0
+    background: $brainscore_green
+
+  img
+    position: absolute
+    top: 50%
+    left: 50%
+    width: 29px
+    height: 29px
+    padding: 5px
+    border-radius: 50%
+    background: rgba(255, 255, 255, 0.92)
+    transform: translate(-50%, -50%)
+    box-shadow: 0 4px 12px rgba(14, 92, 75, 0.14)
 
 .landing-eyebrow
   margin-bottom: 10px !important
@@ -421,20 +529,20 @@ button.simple_button
 .landing-button.button
   min-height: 42px
   padding: 0.65rem 1.15rem
-  border: 1px solid #168b4b
+  border: 1px solid transparent
   border-radius: 8px
-  background: #168b4b
+  background: linear-gradient(105deg, #35bf79, #36a9c8)
   color: white
   font-weight: 700
   box-shadow: none
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease
 
   &:hover, &:focus
-    border-color: #10783e
-    background: #10783e
+    border-color: transparent
+    background: linear-gradient(105deg, #24aa68, #2797b7)
     color: white
     transform: translateY(-1px)
-    box-shadow: 0 7px 18px rgba(22, 139, 75, 0.2)
+    box-shadow: 0 7px 18px rgba(31, 143, 139, 0.22)
 
   &.landing-button--compact
     min-height: 34px
@@ -443,13 +551,13 @@ button.simple_button
 
   &.landing-button--outline
     border-color: #b7c7c0
-    background: white
-    color: #116b3b
+    background: rgba(255, 255, 255, 0.74)
+    color: #1b708a
 
     &:hover, &:focus
-      border-color: #168b4b
-      background: #f4fbf7
-      color: #116b3b
+      border-color: #47b7de
+      background: rgba(255, 255, 255, 0.94)
+      color: #15647c
 
   &.landing-button--full
     width: 100%
@@ -467,11 +575,28 @@ button.simple_button
     text-decoration: underline
 
 .landing-panel
+  position: relative
+  overflow: hidden
   border: 1px solid #dce8e2
-  border-top: 4px solid $brainscore_green
   border-radius: 12px
   background: rgba(255, 255, 255, 0.94)
   box-shadow: 0 12px 32px rgba(0, 27, 54, 0.07)
+
+  &::before
+    content: ""
+    position: absolute
+    z-index: 2
+    top: 0
+    right: 0
+    left: 0
+    height: 4px
+    background: linear-gradient(90deg, $brainscore_green, $brainscore_blue)
+
+  &.landing-panel--models::before
+    background: $brainscore_blue
+
+  &.landing-panel--benchmarks::before
+    background: $brainscore_green
 
 .landing-opening
   display: grid
@@ -579,6 +704,7 @@ button.simple_button
   border-top: 1px solid #e4ece8
 
   h3
+    color: #1689b1
     font-size: 0.93rem
 
   a
@@ -602,7 +728,7 @@ button.simple_button
   text-decoration: none
 
   &:hover
-    background: #f2f8f5
+    background: #f1f8fb
 
   > time
     color: #83909a
@@ -614,10 +740,10 @@ button.simple_button
   justify-content: center
   width: 34px
   height: 34px
-  border: 1px solid #bce3ca
+  border: 1px solid #b9dfec
   border-radius: 50%
-  background: linear-gradient(145deg, #e6f8ec, #e4f4fb)
-  color: #12683a
+  background: #e9f6fb
+  color: #137d9f
   font-size: 0.67rem
   font-weight: 800
 
@@ -640,9 +766,11 @@ button.simple_button
     font-size: 0.67rem
 
 .landing-onboarding
+  position: relative
   display: flex
   flex-direction: column
   min-height: 100%
+  overflow: hidden
   padding: 30px
   border-radius: 12px
   background: linear-gradient(150deg, #082f2b 0%, #0a4a48 56%, #116879 100%)
@@ -650,30 +778,42 @@ button.simple_button
   box-shadow: 0 12px 32px rgba(0, 45, 51, 0.16)
 
   .landing-eyebrow
+    position: relative
+    z-index: 1
     color: #80e6a7
 
   h2
+    position: relative
+    z-index: 1
     max-width: 300px
     font-size: 1.85rem
 
   > p:not(.landing-eyebrow)
+    position: relative
+    z-index: 1
     margin-top: 15px
     color: #d4e9e6
     font-size: 0.88rem
     line-height: 1.65
 
   .landing-button
+    position: relative
+    z-index: 1
     margin-top: auto
     border-color: #6ed89a
     background: #6ed89a
     color: #07372a
 
   .landing-text-link
+    position: relative
+    z-index: 1
     justify-content: center
     margin-top: 15px
     color: #b8eaf1 !important
 
 .landing-onboarding__icon
+  position: relative
+  z-index: 1
   display: inline-flex
   align-items: center
   justify-content: center
@@ -709,6 +849,23 @@ button.simple_button
       color: #8aebaf
       font-size: 0.68rem
       font-weight: 800
+
+.landing-onboarding__network
+  position: absolute
+  right: -92px
+  bottom: -58px
+  width: 300px
+  pointer-events: none
+  opacity: 0.13
+  transform: rotate(-8deg)
+
+  img
+    display: block
+    width: 100%
+
+.landing-onboarding__steps
+  position: relative
+  z-index: 1
 
 .landing-explore, .landing-compare
   padding-top: 92px
@@ -965,8 +1122,8 @@ button.simple_button
   width: 24px
   height: 24px
   border-radius: 50%
-  background: #edf7f0
-  color: #147240
+  background: #eaf6fb
+  color: #137f9f
   font-size: 0.69rem
   font-weight: 800
 
@@ -989,7 +1146,7 @@ button.simple_button
     font-size: 0.63rem
 
 .landing-leaderboard-row__score
-  color: #147240
+  color: #137f9f
   font-size: 0.82rem
   font-variant-numeric: tabular-nums
   font-weight: 800
@@ -1004,6 +1161,8 @@ button.simple_button
   font-size: 0.66rem
 
 .landing-compare__grid
+  position: relative
+  z-index: 1
   display: grid
   grid-template-columns: repeat(2, minmax(0, 1fr))
   gap: 22px
@@ -1031,6 +1190,9 @@ button.simple_button
   &.landing-compare-card--models
     border-top-color: $brainscore_blue
 
+    .landing-card-link
+      color: #087da6
+
 .landing-compare-card__copy
   h3
     margin-top: 14px
@@ -1046,7 +1208,7 @@ button.simple_button
 .landing-card-link
   display: inline-block
   margin-top: 24px
-  color: #087da6
+  color: #168b4b
   font-size: 0.82rem
   font-weight: 800
 
@@ -1137,14 +1299,16 @@ button.simple_button
       left: 48%
 
 .landing-participate
+  position: relative
+  overflow: hidden
   display: grid
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr)
   gap: 64px
   align-items: center
   margin-top: 92px
   padding: 56px
-  border-radius: 14px
-  background: #092f31
+  border-radius: 24px
+  background: linear-gradient(125deg, #073b36 0%, #0b5254 54%, #126e82 100%)
   color: white
 
 .landing-participate__code
@@ -1212,7 +1376,8 @@ button.simple_button
   align-items: center
   margin-top: 26px
   padding: 35px 42px
-  background: linear-gradient(110deg, #168b4b, #1598ba)
+  border-radius: 24px 24px 0 0
+  background: linear-gradient(110deg, #2dbd74, #37aaca)
   color: white
 
   img
@@ -1253,9 +1418,15 @@ button.simple_button
 
 @media (max-width: 1023px)
   .landing-dashboard__intro
-    align-items: flex-start
-    flex-direction: column
-    gap: 18px
+    grid-template-columns: minmax(0, 1fr) minmax(285px, 0.72fr)
+
+  .landing-hero__copy
+    padding-left: 9%
+
+  .landing-hero__art img
+    right: -12%
+    width: auto
+    height: 108%
 
   .landing-opening, .landing-explore__grid, .landing-participate
     grid-template-columns: 1fr
@@ -1274,3 +1445,62 @@ button.simple_button
 
     nav
       grid-column: 1 / -1
+
+@media (max-width: 760px)
+  .landing-dashboard
+    padding-top: 88px
+
+  .landing-dashboard__intro
+    grid-template-columns: 1fr
+    min-height: 640px
+    margin-top: 18px
+    border-radius: 22px
+
+  .landing-hero__copy
+    justify-content: flex-start
+    padding: 38px 7% 265px
+
+  .landing-hero__wordmark
+    width: 275px
+
+  .landing-hero__summary
+    font-size: 0.9rem
+
+  .landing-hero__art
+    position: absolute
+    right: 0
+    bottom: 0
+    left: 0
+    min-height: 295px
+
+    img
+      right: -2%
+      bottom: -8%
+      width: auto
+      height: 112%
+
+  .landing-bridge
+    grid-template-columns: auto minmax(70px, 1fr) auto
+
+  .landing-opening
+    grid-template-columns: 1fr
+
+  .landing-update-grid, .landing-submission-list
+    grid-template-columns: 1fr
+
+  .landing-compare-card
+    grid-template-columns: 1fr
+
+  .landing-mini-matrix, .landing-mini-differences
+    display: none
+
+  .landing-participate
+    gap: 35px
+    padding: 34px 24px
+
+  .landing-footer
+    grid-template-columns: 1fr
+    padding: 32px 24px
+
+    nav
+      grid-column: auto
