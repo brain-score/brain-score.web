@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build the model-card CSV catalog from metadata.yml files."""
+"""Build the model-card CSV catalog from metadata.yml files.
+
+See benchmarks/model_metadata/README.md for the complete workbook-to-web
+pipeline.
+"""
 
 import argparse
 import csv
