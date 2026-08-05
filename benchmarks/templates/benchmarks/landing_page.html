@@ -1,159 +1,293 @@
 {% extends 'benchmarks/base.html' %}
 {% load static %}
-{% load compress %}
 
+{% block third_party_viz_libs %}{% endblock %}
+
+{% block page_head_scripts %}
+<script defer src="{% static 'benchmarks/js/landing-dashboard.js' %}"></script>
+{% endblock %}
 
 {% block main %}
-<nav class="navbar updated is-fixed-top is-transparent">
-    <div class= "container my_container nav-container">
+<nav class="navbar updated is-fixed-top is-transparent landing-nav" aria-label="Primary navigation">
+    <div class="container my_container nav-container">
         <div class="navbar-brand">
-            <a class="navbar-item" href="https://www.brain-score.org">
-                    <img class="navbar_element image" id="navbar-logo-colored" src="/static/benchmarks/img/colored_logo.png"/>
+            <a class="navbar-item" href="/" aria-label="Brain-Score home">
+                <img class="navbar_element image" id="navbar-logo-colored"
+                     src="{% static 'benchmarks/img/colored_logo.png' %}" alt="Brain-Score">
             </a>
-            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+            <a role="button" class="navbar-burger" data-target="navMenu" aria-label="Open navigation" aria-expanded="false">
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
                 <span aria-hidden="true"></span>
             </a>
         </div>
         <div id="navMenu" class="navbar-menu">
-                <div class="navbar-end">
-                    <div class="navbar-item">
-                        <button onclick="location.href='../profile'" type="button" class="button new_design" >Log In</button>
-                        <a class="social_icon navbar-item " href="https://www.github.com/brain-score">
-                            <img class="navbar_element image" id="github_icon" src="/static/benchmarks/img/github_icon.png" />
-                        </a>
-                        <a class="social_icon navbar-item" href="https://www.twitter.com/brain_score">
-                            <img class="navbar_element image" id="twitter_icon" src="/static/benchmarks/img/twitter_icon.png"/>
-                        </a>
-                    </div>
+            <div class="navbar-end landing-nav__links">
+                <a class="navbar-item" href="/vision/explore/">Explore</a>
+                <a class="navbar-item" href="/vision/leaderboard/">Leaderboard</a>
+                <a class="navbar-item" href="/vision/compare/">Compare</a>
+                <a class="navbar-item" href="/tutorials/">Tutorials</a>
+                <div class="navbar-item">
+                    <a class="button landing-button landing-button--compact" href="/profile/">Log in</a>
                 </div>
+            </div>
         </div>
     </div>
 </nav>
-{% include "benchmarks/components/news-bar.html" %}
-<div class=" container my_container landing{% if news_items %} landing--has-news{% endif %}">
-    <div class="columns">
-        <div class="left_side column is-half has-text-centered-mobile">
-            <img class="logo_green image is-inline-block"  src="{% static "/benchmarks/img/logo_name_full.png" %}" />
-            <h3 class="landing_heading is-size-5 is-size-4-widescreen ">Integrative Benchmarks | Models at Scale </h3>
-            <p class="text-default-small is-size-6  has-text-justified-mobile">
-                The Brain-Score platform aims to yield accurate, machine-executable computational models of
-                how the brain gives rise to the mind. We enable researchers to quickly get a sense of the alignment of their model(s) to
-                currently dozens of neural and behavioral measurements, and provide these
-                models to experimentalists to prototype new experiments and make sense of biological data. </p>
-            <div class="domain_buttons container">
-                <button onclick="location.href='../vision/leaderboard'" type="button" class="button new_design domain_button is-size-7 is-size-6-widescreen" >Vision</button>
-                <button onclick="location.href='../language/leaderboard'" type="button" class="button new_design domain_button is-size-7 is-size-6-widescreen" >Language</button>
-            </div>
-        </div>
-        <div class="column is-half">
-            <picture>
-                <source srcset="{% static 'benchmarks/img/head_art_1.avif' %}" type="image/avif">
-                <source srcset="{% static 'benchmarks/img/head_art_1.webp' %}" type="image/webp">
-                <img class="head_art image" src="{% static 'benchmarks/img/head_art_1.png' %}" alt="Brain-Score hero illustration" decoding="async" fetchpriority="high" />
-            </picture>
-        </div>
-    </div>
-</div>
-<div class="container my_container main_body">
-    <div class="about container">
-        <div class="columns">
-            <div class="column is-half">
-                <img class="collab_graphic image"  src="{% static "/benchmarks/img/collaboration.png" %}" />
-            </div>
-            <div class="column is-half">
-                <h1 class="heading_green">Democratizing the Search for Scientific Models of Natural Intelligence</h1>
-                <p class=text-default>We believe in synergy between computational modeling and experimental brain
-                    and cognitive science. Brain-Score improves the efficiency of communication between experimentalists
-                    and modelers by providing experimental data as accessible benchmarks, and providing computational
-                    models in a unified form to experimentalists. All code is open-source and many community members
-                    have chosen to make their data or model weights fully public.</p>
-            </div>
-        </div>
-    </div>
-     <div class="benefits container ">
-         <img class="b-w_logo image"  src="{% static "/benchmarks/img/b-w_logo.png" %}" />
-         <div class="columns is-tablet is-variable is-1-tablet">
-             <div class="column is-one-third">
-                 <div class="benefits_card container">
-                     <img class="benefit_icon image"  src="{% static "/benchmarks/img/collab_icon.png" %}" />
-                     <h3 class="benefits_heading is-size-3-mobile ">Collaborative</h3>
-                     <p class="benefits_info is-size-5-mobile">Join the active and growing Brain-Score community.</p>
-                     <button onclick="location.href='../community'" type="button" class="button new_design benefit_button is-size-7
-                     is-size-6-widescreen" >Get Involved</button>
 
-                 </div>
-             </div>
-             <div class="column is-one-third">
-                 <div class="benefits_card container">
-                     <img class="benefit_icon image"  src="{% static "/benchmarks/img/book_icon.png" %}" />
-                     <h3 class="benefits_heading is-size-3-mobile">Open Source</h3>
-                     <p class="benefits_info is-size-5-mobile">Download and experiment. Completely free.</p>
-                    <button onclick="location.href='https://www.github.com/brain-score'" type="button" class="button
-                     new_design benefit_button is-size-7 is-size-6-widescreen " >Github</button>
-                 </div>
-             </div>
-             <div class="column is-one-third">
-                 <div class="benefits_card container">
-                    <img class="benefit_icon image"  src="{% static "/benchmarks/img/access_icon.png" %}" />
-                    <h3 class="benefits_heading is-size-3-mobile">Accessible</h3>
-                    <p class="benefits_info is-size-5-mobile">Interact seamlessly with our curated leaderboard.</p>
-                    <button onclick="location.href='../profile'" type="button" class="button new_design benefit_button is-size-7 is-size-6-widescreen" >Submit</button>
-                 </div>
+<div class="landing-dashboard">
+    <header class="landing-dashboard__intro container my_container">
+        <div class="landing-hero__copy">
+            <img class="landing-hero__wordmark" src="{% static 'benchmarks/img/logo_name_full.png' %}"
+                 alt="Brain-Score">
+            <p class="landing-eyebrow">Integrative benchmarks <span aria-hidden="true">|</span> Models at scale</p>
+            <p class="landing-hero__summary">
+                Brain-Score brings models and neural and behavioral measurements into one
+                transparent, continuously evolving platform.
+            </p>
+            <div class="landing-bridge" aria-label="Brain-Score bridges computational models and brain measurements">
+                <span class="landing-bridge__endpoint landing-bridge__endpoint--models">Models</span>
+                <span class="landing-bridge__line" aria-hidden="true">
+                    <img src="{% static 'benchmarks/img/colored_logo.png' %}" alt="">
+                </span>
+                <span class="landing-bridge__endpoint landing-bridge__endpoint--brain">Brain and behavior</span>
             </div>
         </div>
-    </div>
-    <div class="landing_leaderboard container">
-        <div class="columns has-text-centered-mobile">
-            <div class="column is-half">
-                <h1 class=heading_green>Leaderboard</h1>
-                <p class="text-default ">At the core of Brain-Score is a leaderboard showing the latest evaluations of
-                    all available models on all available benchmarks. Models are ranked according to their average
-                    score across all the benchmarks because we believe the best model of a domain should explain all
-                    neural and behavioral data. The leaderboard also provides finer-grain per-benchmark and per-model
-                    scores for a more detailed view into where current models most need to improve on and which
-                    benchmarks are the most challenging.
+        <picture class="landing-hero__art" aria-hidden="true">
+            <source srcset="{% static 'benchmarks/img/head_art_1.avif' %}" type="image/avif">
+            <source srcset="{% static 'benchmarks/img/head_art_1.webp' %}" type="image/webp">
+            <img src="{% static 'benchmarks/img/head_art_1.png' %}" alt="" decoding="async" fetchpriority="high">
+        </picture>
+    </header>
+
+    <section class="landing-opening container my_container" aria-label="Latest Brain-Score activity">
+        <div class="landing-panel landing-panel--bridge landing-activity">
+            <div class="landing-section-heading">
+                <div>
+                    <p class="landing-eyebrow">Live from the community</p>
+                    <h2>Latest updates</h2>
+                </div>
+                <a href="/blog/">Read the blog <span aria-hidden="true">&rarr;</span></a>
+            </div>
+
+            <div class="landing-update-grid">
+                {% for item in news_items|slice:":3" %}
+                <article class="landing-update-card">
+                    <div class="landing-update-card__meta">
+                        <span class="landing-tag landing-tag--{{ item.kind|lower }}">{{ item.kind }}</span>
+                        {% if item.date %}<time datetime="{{ item.date|date:'Y-m-d' }}">{{ item.date|date:"M j" }}</time>{% endif %}
+                    </div>
+                    {% if item.link %}
+                    <a href="{{ item.link }}">{{ item.text }}</a>
+                    {% else %}
+                    <span>{{ item.text }}</span>
+                    {% endif %}
+                </article>
+                {% empty %}
+                <p class="landing-empty">New platform updates will appear here.</p>
+                {% endfor %}
+            </div>
+
+            <div class="landing-submissions-heading">
+                <h3>New model submissions</h3>
+                <a href="/vision/leaderboard/">View all models</a>
+            </div>
+            <div class="landing-submission-list">
+                {% for model in recent_models %}
+                <a class="landing-submission" href="/model/vision/{{ model.id }}">
+                    <span class="landing-avatar" aria-hidden="true">{{ model.initials }}</span>
+                    <span class="landing-submission__body">
+                        <strong>{{ model.name }}</strong>
+                        <span>{{ model.submitter }}</span>
+                    </span>
+                    {% if model.timestamp %}<time datetime="{{ model.timestamp|date:'c' }}">{{ model.timestamp|date:"M j" }}</time>{% endif %}
+                </a>
+                {% empty %}
+                <p class="landing-empty">Recent public submissions will appear here.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <aside class="landing-onboarding" aria-labelledby="landing-onboarding-title">
+            <picture class="landing-onboarding__network" aria-hidden="true">
+                <source srcset="{% static 'benchmarks/img/CNN_abstract.avif' %}" type="image/avif">
+                <source srcset="{% static 'benchmarks/img/CNN_abstract.webp' %}" type="image/webp">
+                <img src="{% static 'benchmarks/img/CNN_abstract.png' %}" alt="" decoding="async">
+            </picture>
+            <span class="landing-onboarding__icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></span>
+            <p class="landing-eyebrow">New here?</p>
+            <h2 id="landing-onboarding-title">Learn how Brain-Score works</h2>
+            <p>
+                Start with the scientific idea, then explore how benchmarks turn experimental
+                measurements into executable tests for models.
+            </p>
+            <ol class="landing-onboarding__steps">
+                <li><span>1</span>Choose a model or benchmark</li>
+                <li><span>2</span>Inspect its scores and metadata</li>
+                <li><span>3</span>Compare it with the field</li>
+            </ol>
+            <a class="button landing-button" href="/tutorials/">Start with Brain-Score</a>
+            <a class="landing-text-link" href="/faq/">What is a Brain-Score?</a>
+        </aside>
+    </section>
+
+    <section class="landing-explore container my_container" aria-labelledby="landing-explore-title">
+        <div class="landing-section-heading landing-section-heading--wide">
+            <div>
+                <p class="landing-eyebrow">Explore the field</p>
+                <h2 id="landing-explore-title">A map of benchmark performance</h2>
+                <p>
+                    Public vision models projected from their V1, V2, V4,
+                    IT, and behavioral scores. Nearby models have more similar benchmark profiles.
                 </p>
             </div>
-            <div class="column has-text-centered-mobile">
-                <div class="benefits_card container">
-                    <img class="benefit_icon image"  src="{% static "/benchmarks/img/upload_icon.png" %}" />
-                    <h3 class=benefits_heading>Ready to Submit?</h3>
-                    <p class="leaderboard_info">Below you will find links on how to prepare a model for submission and
-                        receive a Brain-Score! You will also find the same for submitting a benchmark, with detailed
-                        tutorials available for both modelers and experimentalists. </p>
-                    <button onclick="location.href='../tutorials'"
-                            type="button" class="button new_design tutorial_button" >Tutorials</button>
-                    <button onclick="location.href='../profile/'" type="button" class="button new_design hollow_button" >Submit</button>
-                 </div>
+            <a class="button landing-button landing-button--outline" href="/vision/compare/">Open Compare</a>
+        </div>
+
+        <div class="landing-explore__grid">
+            <article class="landing-panel landing-panel--bridge landing-space-card">
+                <div class="landing-card-heading">
+                    <div>
+                        <span class="landing-tag landing-tag--benchmark">Vision PCA</span>
+                        <h3 id="landing-space-title">The 2D benchmark space</h3>
+                    </div>
+                    <div class="landing-card-heading__tools">
+                        <div class="landing-space-toggle" aria-label="Benchmark-space dimensions">
+                            <button type="button" data-space-mode="2d" aria-pressed="true">2D</button>
+                            <button type="button" data-space-mode="3d" aria-pressed="false">3D</button>
+                        </div>
+                        <span id="landing-space-hint" class="landing-card-heading__hint">PC1 &times; PC2</span>
+                        <button id="landing-space-reset" class="landing-icon-button" type="button"
+                                aria-label="Reset 3D view" title="Reset 3D view" hidden>
+                            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="landing-benchmark-space" class="landing-space" role="group" data-space-mode="2d"
+                     aria-label="Two-dimensional principal component map of public vision models">
+                    <div class="landing-space__empty">Loading benchmark space&hellip;</div>
+                </div>
+                <p id="landing-space-method" class="landing-method">
+                    A two-component preview of the highest-ranked public models with complete scores
+                    across the five displayed branches. Hover or focus a point for model details.
+                </p>
+            </article>
+
+            <aside class="landing-panel landing-panel--models landing-leaderboard-preview" aria-labelledby="landing-leaderboard-title">
+                <div class="landing-card-heading">
+                    <div>
+                        <span class="landing-tag landing-tag--platform">Live ranking</span>
+                        <h3 id="landing-leaderboard-title">Leaderboard preview</h3>
+                    </div>
+                </div>
+                <div class="landing-leaderboard-list">
+                    {% for model in leaderboard_models %}
+                    <a class="landing-leaderboard-row" href="/model/vision/{{ model.id }}">
+                        <span class="landing-leaderboard-row__rank">{{ model.rank }}</span>
+                        <span class="landing-leaderboard-row__model">
+                            <strong>{{ model.name }}</strong>
+                            <span>{{ model.submitter }}</span>
+                        </span>
+                        <span class="landing-leaderboard-row__score">
+                            {% if model.score is not None %}{{ model.score|floatformat:3 }}{% else %}&mdash;{% endif %}
+                        </span>
+                    </a>
+                    {% empty %}
+                    <p class="landing-empty">Leaderboard data is temporarily unavailable.</p>
+                    {% endfor %}
+                </div>
+                <div class="landing-leaderboard-preview__footer">
+                    {% if public_model_count %}
+                    <span>{{ public_model_count }} public models</span>
+                    {% endif %}
+                    {% if benchmark_count %}
+                    <span>{{ benchmark_count }} active benchmark entries</span>
+                    {% endif %}
+                </div>
+                <a class="button landing-button landing-button--full" href="/vision/leaderboard/">Explore the full leaderboard</a>
+            </aside>
+        </div>
+    </section>
+
+    <section class="landing-compare container my_container" aria-labelledby="landing-compare-title">
+        <div class="landing-section-heading landing-section-heading--wide">
+            <div>
+                <p class="landing-eyebrow">Look beyond a single score</p>
+                <h2 id="landing-compare-title">Compare the evidence</h2>
+                <p>Move from ranking to analysis with the new comparison dashboards.</p>
             </div>
         </div>
-    </div>
-    <div class="container my_container main_footer">
-        <div class="columns has-text-centered-mobile">
-            <div class="column has-text-centered ">
-                <img class="white_logo image is-inline-block"  src="{% static "/benchmarks/img/White_logo_full.png" %}" />
+        <div class="landing-compare__grid">
+            <a class="landing-compare-card" href="/vision/compare/">
+                <div class="landing-compare-card__copy">
+                    <span class="landing-tag landing-tag--benchmark">Benchmarks</span>
+                    <h3>Which measurements move together?</h3>
+                    <p>Build a benchmark cohort, inspect correlations, and follow their stability through time.</p>
+                    <span class="landing-card-link">Compare benchmarks <span aria-hidden="true">&rarr;</span></span>
+                </div>
+                <div class="landing-mini-matrix" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </a>
+            <a class="landing-compare-card landing-compare-card--models" href="/vision/compare/?tab=models">
+                <div class="landing-compare-card__copy">
+                    <span class="landing-tag landing-tag--model">Models</span>
+                    <h3>Where do two models meaningfully differ?</h3>
+                    <p>Compare scores, benchmark branches, ranks, and historical trajectories side by side.</p>
+                    <span class="landing-card-link">Compare models <span aria-hidden="true">&rarr;</span></span>
+                </div>
+                <div class="landing-mini-differences" aria-hidden="true">
+                    <span><i></i><b></b></span>
+                    <span><i></i><b></b></span>
+                    <span><i></i><b></b></span>
+                    <span><i></i><b></b></span>
+                    <span><i></i><b></b></span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="landing-participate container my_container" aria-labelledby="landing-participate-title">
+        <div class="landing-participate__code">
+            <div class="landing-code-heading">
+                <span><i class="fa-solid fa-terminal" aria-hidden="true"></i> Run locally</span>
+                <span>Python 3.11</span>
             </div>
-            <div class="footer_middle column has-text-centered">
-                <div class="column">
-                    <button onclick="location.href='../community'" type="button" class="button  simple_button" >Support</button>
-                    <button onclick="location.href='../faq'" type="button" class="button simple_button" >FAQ</button>
-                </div>
-                <div class="column">
-                    <button onclick="location.href='../tutorials'" type="button" class="button simple_button" >Tutorials</button>
-                    <button onclick="location.href='{% static "benchmarks/terms_and_conditions.pdf" %}'" type="button" class="button simple_button" >Terms of Use</button>
-                </div>
-                 <div class="column">
-                    <button onclick="location.href='https://github.com/brain-score/brain-score#references'" type="button" class="button simple_button" >Citations</button>
-                    <button onclick="location.href='https://github.com/brain-score/brain-score#license'" type="button" class="button simple_button" >License</button>
-                </div>
-                <div class="column">
-                    <button onclick="location.href='../sponsors'" type="button" class="button simple_button" >Sponsors</button>
-                    <button onclick="location.href='https://github.com/orgs/brain-score/people'" type="button" class="button simple_button" >Contributors</button>
-                </div>
+            <pre><code><span>git clone</span> https://github.com/brain-score/vision.git
+<span>pip install</span> ./vision
+<span>python brainscore_vision score</span> \
+  --model_identifier=pixels \
+  --benchmark_identifier=MajajHong2015public.IT-pls</code></pre>
+        </div>
+        <div class="landing-participate__copy">
+            <p class="landing-eyebrow">Build with us</p>
+            <h2 id="landing-participate-title">Use it locally. Add to it openly.</h2>
+            <p>
+                Run models against benchmarks on your own machine, contribute a new model or
+                measurement, and help define what the next generation of brain models should explain.
+            </p>
+            <div class="landing-participate__actions">
+                <a class="button landing-button" href="/tutorials/models/quickstart">Local quickstart</a>
+                <a class="button landing-button landing-button--outline" href="/community">Get involved</a>
+                <a class="landing-text-link" href="https://github.com/brain-score">View on GitHub</a>
             </div>
         </div>
-    </div>
+    </section>
+
+    <footer class="landing-footer container my_container">
+        <img src="{% static 'benchmarks/img/White_logo_full.png' %}" alt="Brain-Score">
+        <p>Community-built benchmarks for models of natural intelligence.</p>
+        <nav aria-label="Footer navigation">
+            <a href="/sponsors/">Sponsors</a>
+            <a href="/faq/">FAQ</a>
+            <a href="/tutorials/">Tutorials</a>
+            <a href="https://github.com/brain-score/brain-score#references">Citations</a>
+        </nav>
+    </footer>
 </div>
+
+{{ benchmark_space|json_script:"landing-benchmark-space-data" }}
 {% endblock %}
