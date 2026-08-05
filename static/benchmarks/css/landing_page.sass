@@ -802,6 +802,19 @@ button.simple_button
   border-radius: 8px
   background: radial-gradient(circle at 48% 42%, rgba(69, 198, 118, 0.09), transparent 34%), radial-gradient(circle at 58% 58%, rgba(71, 183, 222, 0.08), transparent 42%), #fbfdfc
 
+  &.is-2d
+    background: linear-gradient(rgba(240, 246, 243, 0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(240, 246, 243, 0.7) 1px, transparent 1px), #fcfefd
+    background-size: 54px 54px
+
+    .landing-space__axis
+      stroke: #aebdb6
+      stroke-width: 1
+
+    .landing-space__axis-label
+      fill: #687983
+      font-size: 11px
+      font-weight: 600
+
   svg
     display: block
     width: 100%
@@ -876,6 +889,9 @@ button.simple_button
   background: rgba(255, 255, 255, 0.88)
   backdrop-filter: blur(4px)
   color: #64757d
+
+  &[hidden]
+    display: none
 
   > span
     grid-column: 1 / -1

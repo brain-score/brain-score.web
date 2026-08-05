@@ -20,6 +20,21 @@
         return Math.max(minimum, Math.min(maximum, value));
     }
 
+    function paddedExtent(values) {
+        var sorted = values.slice().sort(function (left, right) { return left - right; });
+        var trim = sorted.length >= 20 ? Math.floor(sorted.length * 0.025) : 0;
+        var bounds = [sorted[trim], sorted[sorted.length - trim - 1]];
+        var range = bounds[1] - bounds[0];
+        var padding = range > 0 ? range * 0.12 : 1;
+        return [bounds[0] - padding, bounds[1] + padding];
+    }
+
+    function scale(value, domain, output) {
+        if (domain[0] === domain[1]) return (output[0] + output[1]) / 2;
+        var ratio = clamp((value - domain[0]) / (domain[1] - domain[0]), 0, 1);
+        return output[0] + ratio * (output[1] - output[0]);
+    }
+
     function pointColor(score, scoreExtent) {
         if (!Number.isFinite(score)) return '#7eb7a0';
         var ratio = scoreExtent[0] === scoreExtent[1]
@@ -104,10 +119,10 @@
         var dimensions = {centerX: 377, centerY: 194, scale: 120};
         var camera = {yaw: DEFAULT_CAMERA.yaw, pitch: DEFAULT_CAMERA.pitch};
         var mode = container.dataset.spaceMode === '3d' ? '3d' : '2d';
-        var coordinateLimits = {
-            '2d': robustCoordinateLimit(points, '2d'),
-            '3d': robustCoordinateLimit(points, '3d')
-        };
+        var coordinateLimit3d = robustCoordinateLimit(points, '3d');
+        var twoDimensionalMargin = {top: 24, right: 26, bottom: 49, left: 54};
+        var xDomain = paddedExtent(points.map(function (point) { return point.x; }));
+        var yDomain = paddedExtent(points.map(function (point) { return point.y; }));
         var finiteScores = points
             .map(function (point) { return Number(point.score); })
             .filter(Number.isFinite);
@@ -143,18 +158,6 @@
                 var line = svgElement('line', {class: 'landing-space__grid-line'});
                 gridGroup.appendChild(line);
                 gridLines3d.push({line: line, start: endpoints[0], end: endpoints[1]});
-            });
-        });
-
-        var gridLines2d = [];
-        [-1, -0.5, 0, 0.5, 1].forEach(function (position) {
-            [
-                [{x: -1, y: position, z: 0}, {x: 1, y: position, z: 0}],
-                [{x: position, y: -1, z: 0}, {x: position, y: 1, z: 0}]
-            ].forEach(function (endpoints) {
-                var line = svgElement('line', {class: 'landing-space__grid-line'});
-                gridGroup.appendChild(line);
-                gridLines2d.push({line: line, start: endpoints[0], end: endpoints[1]});
             });
         });
 
@@ -208,15 +211,10 @@
             return {
                 point: point,
                 circle: circle,
-                coordinates2d: {
-                    x: normalizedCoordinate(point.x, coordinateLimits['2d']),
-                    y: normalizedCoordinate(point.y, coordinateLimits['2d']),
-                    z: 0
-                },
                 coordinates3d: {
-                    x: normalizedCoordinate(point.x, coordinateLimits['3d']),
-                    y: normalizedCoordinate(point.y, coordinateLimits['3d']),
-                    z: normalizedCoordinate(point.z, coordinateLimits['3d'])
+                    x: normalizedCoordinate(point.x, coordinateLimit3d),
+                    y: normalizedCoordinate(point.y, coordinateLimit3d),
+                    z: normalizedCoordinate(point.z, coordinateLimit3d)
                 }
             };
         });
@@ -237,46 +235,75 @@
             tooltip.style.top = top + 'px';
         }
 
-        function sceneProjection(point) {
-            if (mode === '2d') {
-                var twoDimensionalScale = 150;
-                return {
-                    x: dimensions.centerX + point.x * twoDimensionalScale,
-                    y: dimensions.centerY - point.y * twoDimensionalScale,
-                    z: 0,
-                    perspective: 1
-                };
-            }
-            return projectPoint(point, camera, dimensions);
-        }
-
-        function renderScene() {
-            gridLines2d.forEach(function (gridLine) {
-                gridLine.line.hidden = mode !== '2d';
-                setLine(gridLine.line, sceneProjection(gridLine.start), sceneProjection(gridLine.end));
-            });
+        function renderTwoDimensionalScene() {
             gridLines3d.forEach(function (gridLine) {
-                gridLine.line.hidden = mode !== '3d';
-                setLine(
-                    gridLine.line,
-                    sceneProjection(gridLine.start),
-                    sceneProjection(gridLine.end)
-                );
+                gridLine.line.hidden = true;
             });
-            var activeOrigin = mode === '2d' ? {x: -1, y: -1, z: 0} : axisOrigin;
-            var origin = sceneProjection(activeOrigin);
+            var xAxisY = height - twoDimensionalMargin.bottom;
             axes.forEach(function (axis) {
-                var endpointDefinition = mode === '2d'
-                    ? [
-                        {x: 1.08, y: -1, z: 0},
-                        {x: -1, y: 1.08, z: 0}
-                    ][axis.index]
-                    : axis.end;
-                var isVisible = mode === '3d' || axis.index < 2;
+                var isVisible = axis.index < 2;
                 axis.line.hidden = !isVisible;
                 axis.label.hidden = !isVisible;
                 if (!isVisible) return;
-                var endpoint = sceneProjection(endpointDefinition);
+                axis.label.removeAttribute('transform');
+                if (axis.index === 0) {
+                    setLine(
+                        axis.line,
+                        {x: twoDimensionalMargin.left, y: xAxisY},
+                        {x: width - twoDimensionalMargin.right, y: xAxisY}
+                    );
+                    axis.label.textContent = 'PC1 (' + variance[0] + '% variance)';
+                    axis.label.setAttribute('x', width / 2);
+                    axis.label.setAttribute('y', height - 12);
+                } else {
+                    setLine(
+                        axis.line,
+                        {x: twoDimensionalMargin.left, y: twoDimensionalMargin.top},
+                        {x: twoDimensionalMargin.left, y: xAxisY}
+                    );
+                    axis.label.textContent = 'PC2 (' + variance[1] + '% variance)';
+                    axis.label.setAttribute('x', 15);
+                    axis.label.setAttribute('y', height / 2);
+                    axis.label.setAttribute('transform', 'rotate(-90 15 ' + (height / 2) + ')');
+                }
+            });
+
+            scenePoints.slice().sort(function (left, right) {
+                return right.point.rank - left.point.rank;
+            }).forEach(function (scenePoint) {
+                var point = scenePoint.point;
+                scenePoint.circle.setAttribute('cx', scale(
+                    point.x,
+                    xDomain,
+                    [twoDimensionalMargin.left, width - twoDimensionalMargin.right]
+                ));
+                scenePoint.circle.setAttribute('cy', scale(
+                    point.y,
+                    yDomain,
+                    [xAxisY, twoDimensionalMargin.top]
+                ));
+                scenePoint.circle.setAttribute('r', point.rank <= 5 ? 6 : 4.5);
+                scenePoint.circle.setAttribute('opacity', 0.78);
+                pointsGroup.appendChild(scenePoint.circle);
+            });
+        }
+
+        function renderThreeDimensionalScene() {
+            gridLines3d.forEach(function (gridLine) {
+                gridLine.line.hidden = false;
+                setLine(
+                    gridLine.line,
+                    projectPoint(gridLine.start, camera, dimensions),
+                    projectPoint(gridLine.end, camera, dimensions)
+                );
+            });
+            var origin = projectPoint(axisOrigin, camera, dimensions);
+            axes.forEach(function (axis) {
+                axis.line.hidden = false;
+                axis.label.hidden = false;
+                axis.label.removeAttribute('transform');
+                axis.label.textContent = axisDefinitions[axis.index].label;
+                var endpoint = projectPoint(axis.end, camera, dimensions);
                 setLine(axis.line, origin, endpoint);
                 var xOffset = axis.index === 0 ? 7 : axis.index === 2 ? -5 : 0;
                 var yOffset = axis.index === 1 ? -8 : 15;
@@ -287,9 +314,7 @@
             var projectedPoints = scenePoints.map(function (scenePoint) {
                 return {
                     scenePoint: scenePoint,
-                    projected: sceneProjection(
-                        mode === '2d' ? scenePoint.coordinates2d : scenePoint.coordinates3d
-                    )
+                    projected: projectPoint(scenePoint.coordinates3d, camera, dimensions)
                 };
             }).sort(function (left, right) {
                 return left.projected.z - right.projected.z;
@@ -298,14 +323,19 @@
             projectedPoints.forEach(function (item) {
                 var point = item.scenePoint.point;
                 var projected = item.projected;
-                var depthRatio = mode === '2d' ? 0.72 : clamp((projected.z + 1.4) / 2.8, 0, 1);
+                var depthRatio = clamp((projected.z + 1.4) / 2.8, 0, 1);
                 var baseRadius = point.rank <= 5 ? 5.8 : 4.2;
                 item.scenePoint.circle.setAttribute('cx', projected.x);
                 item.scenePoint.circle.setAttribute('cy', projected.y);
                 item.scenePoint.circle.setAttribute('r', baseRadius * projected.perspective * (0.82 + depthRatio * 0.32));
-                item.scenePoint.circle.setAttribute('opacity', mode === '2d' ? 0.78 : 0.48 + depthRatio * 0.43);
+                item.scenePoint.circle.setAttribute('opacity', 0.48 + depthRatio * 0.43);
                 pointsGroup.appendChild(item.scenePoint.circle);
             });
+        }
+
+        function renderScene() {
+            if (mode === '2d') renderTwoDimensionalScene();
+            else renderThreeDimensionalScene();
         }
 
         scenePoints.forEach(function (scenePoint) {
@@ -420,6 +450,8 @@
                 ? 'Interactive three-dimensional principal component map. Drag or use the arrow keys to rotate. Select a point to open its model page.'
                 : 'Two-dimensional principal component map. Select a point to open its model page.');
             svg.classList.toggle('is-3d', mode === '3d');
+            container.classList.toggle('is-2d', mode === '2d');
+            legend.hidden = mode === '2d';
             renderScene();
         }
 
