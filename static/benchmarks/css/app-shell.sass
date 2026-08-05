@@ -43,10 +43,19 @@
     margin: 14px 0 24px
     padding: 27px 30px
     border: 1px solid #dce8e2
-    border-top: 4px solid $brainscore_green
     border-radius: 12px
     background: rgba(255, 255, 255, 0.94)
     box-shadow: 0 12px 32px rgba(0, 27, 54, 0.07)
+
+    &::before
+      content: ''
+      position: absolute
+      top: 0
+      right: 0
+      left: 0
+      z-index: 2
+      height: 4px
+      background: linear-gradient(90deg, $brainscore_blue, $brainscore_green)
 
     &::after
       content: ''
@@ -79,6 +88,12 @@
       color: #5b6b78
       font-size: 0.9rem
       line-height: 1.6
+
+  &.app-shell-page--model .banner.box.gradient::before
+    background: $brainscore_blue
+
+  &.app-shell-page--brain .banner.box.gradient::before
+    background: $brainscore_green
 
   .box:not(.banner)
     border: 1px solid #dce8e2

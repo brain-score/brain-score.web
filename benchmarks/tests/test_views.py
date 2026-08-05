@@ -61,6 +61,7 @@ class TestWebsitePages(BaseTestCase):
         response = self.client.get('/vision/', follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Leaderboard', response.content)
+        self.assertIn(b'<body class="app-shell-page app-shell-page--model">', response.content)
 
     def test_language_leaderboard(self):
         """Test the language leaderboard page"""
