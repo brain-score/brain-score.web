@@ -347,3 +347,801 @@ button.simple_button
     margin: auto
   .text-default-small
     font-size: 100%
+
+// Dashboard landing page
+.landing-nav
+  border-bottom: 1px solid rgba(0, 27, 54, 0.08)
+  box-shadow: 0 4px 20px rgba(0, 27, 54, 0.04)
+
+  .landing-nav__links
+    align-items: center
+
+    > .navbar-item
+      color: $brainscore_gray4
+      font-size: 0.9rem
+      font-weight: 600
+
+      &:hover
+        color: $brainscore_sky
+        background: transparent
+
+.landing-dashboard
+  min-height: 100vh
+  padding-top: 114px
+  color: $brainscore_gray4
+  font-family: "Open Sans", sans-serif
+  background: radial-gradient(circle at 8% 4%, rgba(69, 198, 118, 0.08), transparent 25rem), radial-gradient(circle at 92% 28%, rgba(71, 183, 222, 0.07), transparent 28rem), #fbfdfc
+
+  h1, h2, h3, p
+    margin: 0
+
+  h1
+    max-width: 720px
+    font-size: clamp(2.35rem, 4vw, 4.25rem)
+    line-height: 1.04
+    letter-spacing: -0.045em
+    font-weight: 700
+
+  h2
+    font-size: clamp(1.65rem, 2.3vw, 2.45rem)
+    line-height: 1.15
+    letter-spacing: -0.03em
+    font-weight: 700
+
+  h3
+    font-size: 1.15rem
+    line-height: 1.25
+    font-weight: 700
+
+  a
+    color: inherit
+
+.landing-dashboard__intro
+  display: flex
+  align-items: flex-end
+  justify-content: space-between
+  gap: 56px
+  padding: 54px 0 38px
+
+  > p
+    max-width: 470px
+    padding-bottom: 4px
+    color: #506272
+    font-size: 1.03rem
+    line-height: 1.7
+
+.landing-eyebrow
+  margin-bottom: 10px !important
+  color: #168b4b
+  font-size: 0.72rem
+  font-weight: 800
+  letter-spacing: 0.13em
+  text-transform: uppercase
+
+.landing-button.button
+  min-height: 42px
+  padding: 0.65rem 1.15rem
+  border: 1px solid #168b4b
+  border-radius: 8px
+  background: #168b4b
+  color: white
+  font-weight: 700
+  box-shadow: none
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease
+
+  &:hover, &:focus
+    border-color: #10783e
+    background: #10783e
+    color: white
+    transform: translateY(-1px)
+    box-shadow: 0 7px 18px rgba(22, 139, 75, 0.2)
+
+  &.landing-button--compact
+    min-height: 34px
+    padding: 0.4rem 1rem
+    font-size: 0.82rem
+
+  &.landing-button--outline
+    border-color: #b7c7c0
+    background: white
+    color: #116b3b
+
+    &:hover, &:focus
+      border-color: #168b4b
+      background: #f4fbf7
+      color: #116b3b
+
+  &.landing-button--full
+    width: 100%
+    margin-top: 20px
+
+.landing-text-link
+  display: inline-flex
+  align-items: center
+  color: #087da6 !important
+  font-size: 0.86rem
+  font-weight: 700
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+.landing-panel
+  border: 1px solid #dce8e2
+  border-top: 4px solid $brainscore_green
+  border-radius: 12px
+  background: rgba(255, 255, 255, 0.94)
+  box-shadow: 0 12px 32px rgba(0, 27, 54, 0.07)
+
+.landing-opening
+  display: grid
+  grid-template-columns: minmax(0, 2.15fr) minmax(290px, 0.85fr)
+  gap: 22px
+  align-items: stretch
+
+.landing-activity
+  padding: 28px
+
+.landing-section-heading
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 28px
+
+  > a
+    flex: 0 0 auto
+    margin-top: 8px
+    color: #087da6
+    font-size: 0.83rem
+    font-weight: 700
+
+  &.landing-section-heading--wide
+    align-items: flex-end
+    margin-bottom: 26px
+
+    > div > p:not(.landing-eyebrow)
+      max-width: 700px
+      margin-top: 10px
+      color: #5b6b78
+      line-height: 1.65
+
+.landing-update-grid
+  display: grid
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+  gap: 12px
+  margin-top: 22px
+
+.landing-update-card
+  min-height: 132px
+  padding: 15px
+  border: 1px solid #e3ece7
+  border-radius: 9px
+  background: #f8fbf9
+
+  > a, > span
+    display: -webkit-box
+    overflow: hidden
+    color: $brainscore_gray4
+    font-size: 0.88rem
+    font-weight: 700
+    line-height: 1.45
+    text-decoration: none
+    -webkit-box-orient: vertical
+    -webkit-line-clamp: 3
+
+  > a:hover
+    color: #087da6
+
+.landing-update-card__meta
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 8px
+  margin-bottom: 14px
+
+  time
+    color: #7c8b96
+    font-size: 0.72rem
+    font-weight: 600
+
+.landing-tag
+  display: inline-flex
+  align-items: center
+  width: fit-content
+  padding: 3px 8px
+  border-radius: 999px
+  background: #e8f7ed
+  color: #137340
+  font-size: 0.65rem
+  font-weight: 800
+  letter-spacing: 0.05em
+  text-transform: uppercase
+
+  &.landing-tag--model
+    background: #e5f5fb
+    color: #087da6
+
+  &.landing-tag--story
+    background: #f1ebf7
+    color: #75508c
+
+  &.landing-tag--platform
+    background: #e8effc
+    color: #3f67a7
+
+.landing-submissions-heading
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  gap: 20px
+  margin: 28px 0 8px
+  padding-top: 20px
+  border-top: 1px solid #e4ece8
+
+  h3
+    font-size: 0.93rem
+
+  a
+    color: #087da6
+    font-size: 0.76rem
+    font-weight: 700
+
+.landing-submission-list
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 6px 22px
+
+.landing-submission
+  display: grid
+  grid-template-columns: 34px minmax(0, 1fr) auto
+  gap: 10px
+  align-items: center
+  min-width: 0
+  padding: 8px 5px
+  border-radius: 7px
+  text-decoration: none
+
+  &:hover
+    background: #f2f8f5
+
+  > time
+    color: #83909a
+    font-size: 0.68rem
+
+.landing-avatar
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 34px
+  height: 34px
+  border: 1px solid #bce3ca
+  border-radius: 50%
+  background: linear-gradient(145deg, #e6f8ec, #e4f4fb)
+  color: #12683a
+  font-size: 0.67rem
+  font-weight: 800
+
+.landing-submission__body
+  min-width: 0
+
+  strong, span
+    display: block
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  strong
+    color: #203442
+    font-size: 0.77rem
+
+  span
+    margin-top: 2px
+    color: #71808b
+    font-size: 0.67rem
+
+.landing-onboarding
+  display: flex
+  flex-direction: column
+  min-height: 100%
+  padding: 30px
+  border-radius: 12px
+  background: linear-gradient(150deg, #082f2b 0%, #0a4a48 56%, #116879 100%)
+  color: white
+  box-shadow: 0 12px 32px rgba(0, 45, 51, 0.16)
+
+  .landing-eyebrow
+    color: #80e6a7
+
+  h2
+    max-width: 300px
+    font-size: 1.85rem
+
+  > p:not(.landing-eyebrow)
+    margin-top: 15px
+    color: #d4e9e6
+    font-size: 0.88rem
+    line-height: 1.65
+
+  .landing-button
+    margin-top: auto
+    border-color: #6ed89a
+    background: #6ed89a
+    color: #07372a
+
+  .landing-text-link
+    justify-content: center
+    margin-top: 15px
+    color: #b8eaf1 !important
+
+.landing-onboarding__icon
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 44px
+  height: 44px
+  margin-bottom: 30px
+  border: 1px solid rgba(255, 255, 255, 0.2)
+  border-radius: 10px
+  color: #80e6a7
+  background: rgba(255, 255, 255, 0.08)
+
+.landing-onboarding__steps
+  margin: 23px 0 28px
+  padding: 0
+  list-style: none
+
+  li
+    display: flex
+    align-items: center
+    gap: 10px
+    margin: 10px 0
+    color: #e3f0ee
+    font-size: 0.79rem
+
+    span
+      display: inline-flex
+      align-items: center
+      justify-content: center
+      width: 22px
+      height: 22px
+      border-radius: 50%
+      background: rgba(128, 230, 167, 0.13)
+      color: #8aebaf
+      font-size: 0.68rem
+      font-weight: 800
+
+.landing-explore, .landing-compare
+  padding-top: 92px
+
+.landing-explore__grid
+  display: grid
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.75fr)
+  gap: 22px
+
+.landing-space-card, .landing-leaderboard-preview
+  padding: 24px
+
+.landing-card-heading
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 20px
+  margin-bottom: 15px
+
+  h3
+    margin-top: 8px
+
+.landing-card-heading__hint
+  margin-top: 4px
+  color: #7a8993
+  font-size: 0.69rem
+
+.landing-space
+  position: relative
+  min-height: 390px
+  overflow: hidden
+  border: 1px solid #e1ebe6
+  border-radius: 8px
+  background: linear-gradient(rgba(240, 246, 243, 0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(240, 246, 243, 0.7) 1px, transparent 1px), #fcfefd
+  background-size: 54px 54px
+
+  svg
+    display: block
+    width: 100%
+    min-height: 390px
+
+.landing-space__empty
+  display: flex
+  align-items: center
+  justify-content: center
+  min-height: 390px
+  color: #7f8c95
+  font-size: 0.84rem
+
+.landing-space__axis
+  stroke: #aebdb6
+  stroke-width: 1
+
+.landing-space__axis-label
+  fill: #687983
+  font-size: 11px
+  font-weight: 600
+
+.landing-space__point
+  cursor: pointer
+  opacity: 0
+  animation: landing-point-in 400ms ease forwards
+  transition: r 120ms ease, opacity 120ms ease, stroke-width 120ms ease
+
+  &:hover, &:focus
+    r: 7
+    opacity: 1
+    stroke-width: 2.5
+    outline: none
+
+@keyframes landing-point-in
+  from
+    opacity: 0
+  to
+    opacity: 0.76
+
+.landing-space__tooltip
+  position: absolute
+  z-index: 2
+  max-width: 245px
+  padding: 9px 11px
+  pointer-events: none
+  border: 1px solid #cbdad3
+  border-radius: 6px
+  background: rgba(255, 255, 255, 0.97)
+  color: #263a47
+  font-size: 0.7rem
+  line-height: 1.45
+  box-shadow: 0 7px 22px rgba(0, 27, 54, 0.13)
+
+  strong
+    display: block
+    max-width: 220px
+    overflow: hidden
+    margin-bottom: 3px
+    text-overflow: ellipsis
+    white-space: nowrap
+
+.landing-method
+  margin-top: 12px !important
+  color: #77858e
+  font-size: 0.7rem
+  line-height: 1.5
+
+.landing-leaderboard-list
+  border-top: 1px solid #e4ece8
+
+.landing-leaderboard-row
+  display: grid
+  grid-template-columns: 28px minmax(0, 1fr) 48px
+  gap: 9px
+  align-items: center
+  min-width: 0
+  padding: 13px 0
+  border-bottom: 1px solid #e4ece8
+  text-decoration: none
+
+  &:hover .landing-leaderboard-row__model strong
+    color: #087da6
+
+.landing-leaderboard-row__rank
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 24px
+  height: 24px
+  border-radius: 50%
+  background: #edf7f0
+  color: #147240
+  font-size: 0.69rem
+  font-weight: 800
+
+.landing-leaderboard-row__model
+  min-width: 0
+
+  strong, span
+    display: block
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  strong
+    font-size: 0.73rem
+    transition: color 120ms ease
+
+  span
+    margin-top: 3px
+    color: #7a8892
+    font-size: 0.63rem
+
+.landing-leaderboard-row__score
+  color: #147240
+  font-size: 0.82rem
+  font-variant-numeric: tabular-nums
+  font-weight: 800
+  text-align: right
+
+.landing-leaderboard-preview__footer
+  display: flex
+  flex-wrap: wrap
+  gap: 6px 15px
+  margin-top: 14px
+  color: #7b8992
+  font-size: 0.66rem
+
+.landing-compare__grid
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 22px
+
+.landing-compare-card
+  display: grid
+  grid-template-columns: minmax(0, 1fr) 210px
+  gap: 30px
+  align-items: center
+  min-height: 285px
+  padding: 32px
+  overflow: hidden
+  border: 1px solid #dce8e2
+  border-top: 4px solid $brainscore_green
+  border-radius: 12px
+  background: white
+  text-decoration: none
+  box-shadow: 0 10px 28px rgba(0, 27, 54, 0.055)
+  transition: transform 180ms ease, box-shadow 180ms ease
+
+  &:hover
+    transform: translateY(-3px)
+    box-shadow: 0 17px 34px rgba(0, 27, 54, 0.1)
+
+  &.landing-compare-card--models
+    border-top-color: $brainscore_blue
+
+.landing-compare-card__copy
+  h3
+    margin-top: 14px
+    font-size: 1.45rem
+    line-height: 1.28
+
+  p
+    margin-top: 12px
+    color: #64747f
+    font-size: 0.83rem
+    line-height: 1.65
+
+.landing-card-link
+  display: inline-block
+  margin-top: 24px
+  color: #087da6
+  font-size: 0.82rem
+  font-weight: 800
+
+.landing-mini-matrix
+  display: grid
+  grid-template-columns: repeat(4, 37px)
+  grid-template-rows: repeat(4, 37px)
+  gap: 4px
+  justify-content: center
+  padding: 22px
+  border-radius: 14px
+  background: #f4f8f6
+  transform: rotate(-3deg)
+
+  span
+    border-radius: 4px
+    background: #f5efe4
+
+    &:nth-child(1), &:nth-child(6), &:nth-child(11), &:nth-child(16)
+      background: #168b4b
+    &:nth-child(2), &:nth-child(5), &:nth-child(12), &:nth-child(15)
+      background: #74c997
+    &:nth-child(3), &:nth-child(9), &:nth-child(8), &:nth-child(14)
+      background: #b8e3c8
+    &:nth-child(4), &:nth-child(7), &:nth-child(10), &:nth-child(13)
+      background: #e5d9d0
+
+.landing-mini-differences
+  display: flex
+  flex-direction: column
+  gap: 21px
+  padding: 25px 14px
+
+  span
+    position: relative
+    display: block
+    height: 2px
+    background: #d4ded9
+
+    &::before, &::after
+      content: ""
+      position: absolute
+      top: 50%
+      width: 7px
+      height: 7px
+      border-radius: 50%
+      background: #d4ded9
+      transform: translateY(-50%)
+
+    &::before
+      left: 0
+    &::after
+      right: 0
+
+    i, b
+      position: absolute
+      top: 50%
+      width: 13px
+      height: 13px
+      border: 3px solid white
+      border-radius: 50%
+      transform: translate(-50%, -50%)
+      box-shadow: 0 0 0 1px rgba(0, 27, 54, 0.08)
+
+    i
+      left: 28%
+      background: $brainscore_blue
+
+    b
+      left: 66%
+      background: $brainscore_green
+
+    &:nth-child(2) i
+      left: 45%
+    &:nth-child(2) b
+      left: 78%
+    &:nth-child(3) i
+      left: 67%
+    &:nth-child(3) b
+      left: 36%
+    &:nth-child(4) i
+      left: 22%
+    &:nth-child(4) b
+      left: 55%
+    &:nth-child(5) i
+      left: 75%
+    &:nth-child(5) b
+      left: 48%
+
+.landing-participate
+  display: grid
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr)
+  gap: 64px
+  align-items: center
+  margin-top: 92px
+  padding: 56px
+  border-radius: 14px
+  background: #092f31
+  color: white
+
+.landing-participate__code
+  overflow: hidden
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 10px
+  background: #061f21
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15)
+
+  pre
+    overflow-x: auto
+    margin: 0
+    padding: 26px
+    background: transparent
+    color: #d7e7e4
+    font-size: 0.75rem
+    line-height: 1.8
+
+  code span
+    color: #7cdda2
+
+.landing-code-heading
+  display: flex
+  justify-content: space-between
+  gap: 20px
+  padding: 11px 16px
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  color: #9cb8b5
+  font-size: 0.66rem
+
+  i
+    margin-right: 7px
+    color: #7cdda2
+
+.landing-participate__copy
+  .landing-eyebrow
+    color: #7cdda2
+
+  > p:not(.landing-eyebrow)
+    margin-top: 16px
+    color: #c6dbd8
+    font-size: 0.9rem
+    line-height: 1.7
+
+.landing-participate__actions
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+  margin-top: 25px
+
+  .landing-button--outline
+    border-color: rgba(255, 255, 255, 0.35)
+    background: transparent
+    color: white
+
+  .landing-text-link
+    margin-left: 5px
+    color: #9de5f3 !important
+
+.landing-footer
+  display: grid
+  grid-template-columns: 180px minmax(0, 1fr) auto
+  gap: 30px
+  align-items: center
+  margin-top: 26px
+  padding: 35px 42px
+  background: linear-gradient(110deg, #168b4b, #1598ba)
+  color: white
+
+  img
+    width: 155px
+
+  p
+    color: rgba(255, 255, 255, 0.84)
+    font-size: 0.76rem
+
+  nav
+    display: flex
+    flex-wrap: wrap
+    gap: 19px
+
+    a
+      color: white
+      font-size: 0.72rem
+      font-weight: 700
+
+.landing-empty
+  padding: 22px 0
+  color: #7d8a93
+  font-size: 0.8rem
+
+@media (max-width: 1215px)
+  .landing-opening, .landing-explore__grid
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr)
+
+  .landing-compare-card
+    grid-template-columns: minmax(0, 1fr) 145px
+    gap: 18px
+    padding: 26px
+
+  .landing-mini-matrix
+    grid-template-columns: repeat(4, 28px)
+    grid-template-rows: repeat(4, 28px)
+    padding: 15px
+
+@media (max-width: 1023px)
+  .landing-dashboard__intro
+    align-items: flex-start
+    flex-direction: column
+    gap: 18px
+
+  .landing-opening, .landing-explore__grid, .landing-participate
+    grid-template-columns: 1fr
+
+  .landing-onboarding
+    min-height: 450px
+
+  .landing-compare__grid
+    grid-template-columns: 1fr
+
+  .landing-compare-card
+    grid-template-columns: minmax(0, 1fr) 210px
+
+  .landing-footer
+    grid-template-columns: 160px 1fr
+
+    nav
+      grid-column: 1 / -1

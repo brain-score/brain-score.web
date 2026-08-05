@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import user, model, competition2022, competition2024, compare, community, \
+from .views import user, model, competition2022, competition2024, compare, community, landing, \
     release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
 from .utils import show_token, refresh_cache, refresh_score_trends
 
@@ -12,8 +12,8 @@ supported_domains = ["vision", "language"]
 
 non_domain_urls = [
     # landing
-    path('', user.LandingPage.as_view(), name='landing_page'),
-    path('/', user.LandingPage.as_view(), name='landing_page'),
+    path('', landing.LandingPage.as_view(), name='landing_page'),
+    path('/', landing.LandingPage.as_view(), name='landing_page'),
 
     # global pages - default to vision domain
     path('explore/', RedirectView.as_view(url='/vision/explore/', permanent=False), name='default-explore'),
