@@ -30,6 +30,11 @@ DEFAULT_SCHEMA_PATH = (
     / "schema"
     / "model-metadata-v2.schema.json"
 )
+SCHEMA_URL = (
+    "https://raw.githubusercontent.com/brain-score/brain-score.web/refs/pull/"
+    "539/head/benchmarks/model_metadata/schema/"
+    "model-metadata-v2.schema.json"
+)
 CURATED_FIELD_ROWS = range(1, 34)
 REGISTRY_PATTERN = re.compile(r"model_registry\[\s*(['\"])(.*?)\1\s*\]")
 UNKNOWN_VALUES = {
@@ -627,7 +632,7 @@ def build_metadata(
 
     metadata: dict[str, Any] = {
         "schema_version": "2.0.0",
-        "schema_url": "https://raw.githubusercontent.com/brain-score/vision/master/docs/model_metadata/model-metadata-v2.schema.json",
+        "schema_url": SCHEMA_URL,
         "model": model,
     }
     if architecture:

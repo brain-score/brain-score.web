@@ -14,3 +14,4 @@ a repo that controls the Brain-Score `website <https://www.brain-score.org>`_, b
 
    modules/brain-score_web
    modules/deployment
+   modules/model_metadata

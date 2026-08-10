@@ -1,0 +1,240 @@
+schema_version: "2.0.0"
+schema_url: "https://raw.githubusercontent.com/brain-score/brain-score.web/refs/pull/539/head/benchmarks/model_metadata/schema/model-metadata-v2.schema.json"
+model:
+  identifier: "example-model"
+  display_name: "ExampleNet"
+  domain: "vision"
+  version: "v1"
+  aliases:
+    - "ExampleNet"
+architecture:
+  family: "convolutional_neural_network"
+  description: "Convolutional Neural Network"
+  parameter_count:
+    value: 12345678
+    exact: true
+  trainable_layers:
+    description: "5 weighted layers"
+  recurrent: false
+interface:
+  inputs:
+    -
+      modality: "image"
+      shape:
+        channels: 3
+        height: 224
+        width: 224
+  description: "image -> classification_logits"
+  tokenizer: false
+  visual_degrees: 8.0
+  visual_degrees_description: "8 degrees"
+preprocessing:
+  description: "Resize to 256, center crop to 224, normalize"
+training:
+  process: "Single-stage supervised training"
+  datasets:
+    -
+      identifier: "imagenet-1k"
+      name: "ImageNet-1k"
+      role: "training"
+      sample_count: 1281167
+      sample_unit: "images"
+  supervision:
+    type: "supervised"
+    description: "Fully supervised"
+  objectives:
+    -
+      type: "classification"
+      description: "1,000-class image classification"
+  hyperparameters:
+    learning_rate:
+      description: "0.1"
+    batch_size:
+      value: 256
+  loss:
+    description: "Cross-entropy"
+evaluation:
+  test_datasets:
+    -
+      description: "ImageNet-1k validation"
+  validation_datasets:
+    -
+      description: "ImageNet-1k validation"
+artifacts:
+  -
+    role: "weights"
+    provider: "Example weights registry"
+    identifier: "example-v1"
+  -
+    role: "source_code"
+    provider: "Brain-Score"
+    url: "https://github.com/brain-score/vision/tree/master/brainscore_vision/models/example_model"
+    path: "brainscore_vision/models/example_model"
+intended_use:
+  applications:
+    - "Representation learning"
+    - "benchmarking"
+  users:
+    - "Researchers"
+    - "students"
+  limitations:
+    - "Synthetic example only"
+  biases:
+    - "Inherits biases from ImageNet"
+authorship:
+  creators:
+    - "Brain-Score maintainers"
+  organizations:
+    - "Brain-Score"
+licenses:
+  -
+    scope: "unspecified"
+    name: "Apache-2.0"
+    spdx: "Apache-2.0"
+references:
+  -
+    role: "primary"
+    url: "https://example.org/example-model"
+provenance:
+  sources:
+    curation_workbook:
+      type: "curation"
+      title: "Brainscore Model Metadata.xlsx"
+    implementation:
+      type: "source_code"
+      url: "https://github.com/brain-score/vision/tree/master/brainscore_vision/models/example_model"
+      path: "brainscore_vision/models/example_model"
+  assertions:
+    -
+      path: "/model/display_name"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/lineage/base_models"
+      status: "undocumented"
+      source: "curation_workbook"
+    -
+      path: "/model/version"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/model/identifier"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/architecture/family"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/process"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/architecture/parameter_count"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/architecture/trainable_layers"
+      status: "inferred"
+      source: "curation_workbook"
+    -
+      path: "/interface/inputs/0/shape"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/architecture/recurrent"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/datasets"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/dataset_summary"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/supervision"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/objectives"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/artifacts/0/provider"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/artifacts/0/identifier"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/preprocessing"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/hyperparameters/learning_rate"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/hyperparameters/batch_size"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/evaluation/test_datasets"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/evaluation/validation_datasets"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/training/loss"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/intended_use/applications"
+      status: "inferred"
+      source: "curation_workbook"
+    -
+      path: "/intended_use/users"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/intended_use/limitations"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/intended_use/biases"
+      status: "inferred"
+      source: "curation_workbook"
+    -
+      path: "/interface/description"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/interface/tokenizer"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/authorship/creators"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/authorship/organizations"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/licenses"
+      status: "verified"
+      source: "curation_workbook"
+    -
+      path: "/provenance/curation_confidence"
+      status: "inferred"
+      source: "curation_workbook"
+    -
+      path: "/interface/visual_degrees"
+      status: "verified"
+      source: "curation_workbook"
+  curation_confidence: "high"

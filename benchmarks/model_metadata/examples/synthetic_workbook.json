@@ -1,0 +1,172 @@
+{
+  "identifier": "example-model",
+  "plugin": "example_model",
+  "reference_url": "https://example.org/example-model",
+  "fields": [
+    {
+      "name": "model_name",
+      "value": "ExampleNet",
+      "status": "verified"
+    },
+    {
+      "name": "base model",
+      "value": null,
+      "status": "undocumented"
+    },
+    {
+      "name": "model_version",
+      "value": "v1",
+      "status": "verified"
+    },
+    {
+      "name": "model_ID",
+      "value": "example-model",
+      "status": "verified"
+    },
+    {
+      "name": "architecture_family",
+      "value": "Convolutional Neural Network",
+      "status": "verified"
+    },
+    {
+      "name": "model_recipe/model_process (steps that model takes)",
+      "value": "Single-stage supervised training",
+      "status": "verified"
+    },
+    {
+      "name": "parameter_count",
+      "value": 12345678,
+      "status": "verified"
+    },
+    {
+      "name": "trainable_layer_count",
+      "value": "5 weighted layers",
+      "status": "inferred"
+    },
+    {
+      "name": "input_resolution",
+      "value": "224 x 224",
+      "status": "verified"
+    },
+    {
+      "name": "recurrent",
+      "value": false,
+      "status": "verified"
+    },
+    {
+      "name": "Dataset_source (training_data)",
+      "value": "ImageNet-1k",
+      "status": "verified"
+    },
+    {
+      "name": "dataset_size",
+      "value": 1281167,
+      "status": "verified"
+    },
+    {
+      "name": "supervision_type",
+      "value": "Fully supervised",
+      "status": "verified"
+    },
+    {
+      "name": "training_objective",
+      "value": "1,000-class image classification",
+      "status": "verified"
+    },
+    {
+      "name": "weights_provider",
+      "value": "Example weights registry",
+      "status": "verified"
+    },
+    {
+      "name": "checkpoint_identifier",
+      "value": "example-v1",
+      "status": "verified"
+    },
+    {
+      "name": "preprocessing_recipe (Maybe reconsider how we store this)",
+      "value": "Resize to 256, center crop to 224, normalize",
+      "status": "verified"
+    },
+    {
+      "name": "learning rate",
+      "value": 0.1,
+      "status": "verified"
+    },
+    {
+      "name": "Batch size",
+      "value": 256,
+      "status": "verified"
+    },
+    {
+      "name": "Test dataset",
+      "value": "ImageNet-1k validation",
+      "status": "verified"
+    },
+    {
+      "name": "Validation dataset",
+      "value": "ImageNet-1k validation",
+      "status": "verified"
+    },
+    {
+      "name": "Loss function",
+      "value": "Cross-entropy",
+      "status": "verified"
+    },
+    {
+      "name": "Recommended applications",
+      "value": "Representation learning; benchmarking",
+      "status": "inferred"
+    },
+    {
+      "name": "Target users",
+      "value": "Researchers; students",
+      "status": "verified"
+    },
+    {
+      "name": "Known weaknesses",
+      "value": "Synthetic example only",
+      "status": "verified"
+    },
+    {
+      "name": "Biases",
+      "value": "Inherits biases from ImageNet",
+      "status": "inferred"
+    },
+    {
+      "name": "Expected input and output format",
+      "value": "image -> classification_logits",
+      "status": "verified"
+    },
+    {
+      "name": "Tokenizer?",
+      "value": false,
+      "status": "verified"
+    },
+    {
+      "name": "Creator",
+      "value": "Brain-Score maintainers",
+      "status": "verified"
+    },
+    {
+      "name": "Organization",
+      "value": "Brain-Score",
+      "status": "verified"
+    },
+    {
+      "name": "License",
+      "value": "Apache-2.0",
+      "status": "verified"
+    },
+    {
+      "name": "Confidence",
+      "value": "High",
+      "status": "inferred"
+    },
+    {
+      "name": "Visual Degrees",
+      "value": "8 degrees",
+      "status": "verified"
+    }
+  ]
+}

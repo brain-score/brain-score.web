@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/brain-score/vision/master/docs/model_metadata/model-metadata-v2.schema.json",
+  "$id": "https://raw.githubusercontent.com/brain-score/brain-score.web/refs/pull/539/head/benchmarks/model_metadata/schema/model-metadata-v2.schema.json",
   "title": "Brain-Score Model Metadata",
   "description": "Canonical metadata document for one Brain-Score model registry identifier.",
   "type": "object",
@@ -19,7 +19,7 @@
       "const": "2.0.0"
     },
     "schema_url": {
-      "const": "https://raw.githubusercontent.com/brain-score/vision/master/docs/model_metadata/model-metadata-v2.schema.json"
+      "const": "https://raw.githubusercontent.com/brain-score/brain-score.web/refs/pull/539/head/benchmarks/model_metadata/schema/model-metadata-v2.schema.json"
     },
     "model": {
       "$ref": "#/$defs/model"

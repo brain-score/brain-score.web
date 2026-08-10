@@ -1,22 +1,38 @@
 import json
 import runpy
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 from unittest import TestCase
 
 import yaml
 
 
-GENERATOR = runpy.run_path(
-    Path(__file__).parents[2] / "scripts" / "generate_model_metadata.py"
-)
-DEFAULT_SCHEMA_PATH = GENERATOR["DEFAULT_SCHEMA_PATH"]
-EXAMPLE_PATH = (
-    Path(__file__).parents[1]
+REPO_ROOT = Path(__file__).parents[2]
+GENERATOR_PATH = REPO_ROOT / "scripts" / "generate_model_metadata.py"
+CATALOG_BUILDER_PATH = REPO_ROOT / "scripts" / "build_model_metadata_catalog.py"
+EXAMPLE_BUILDER_PATH = (
+    REPO_ROOT
+    / "benchmarks"
     / "model_metadata"
     / "examples"
-    / "alexnet"
+    / "create_example_workbook.py"
+)
+EXAMPLE_GOLDEN_PATH = (
+    REPO_ROOT
+    / "benchmarks"
+    / "model_metadata"
+    / "examples"
+    / "synthetic"
     / "metadata.yml"
 )
+SOURCE_ROOT = REPO_ROOT / "benchmarks" / "model_metadata" / "source"
+DATA_DIR = REPO_ROOT / "benchmarks" / "model_metadata" / "data"
+
+GENERATOR = runpy.run_path(GENERATOR_PATH)
+CATALOG_BUILDER = runpy.run_path(CATALOG_BUILDER_PATH)
+DEFAULT_SCHEMA_PATH = GENERATOR["DEFAULT_SCHEMA_PATH"]
 model_columns = GENERATOR["model_columns"]
 merge_model_columns = GENERATOR["merge_model_columns"]
 parse_datasets = GENERATOR["parse_datasets"]
@@ -25,6 +41,7 @@ parse_visual_degrees = GENERATOR["parse_visual_degrees"]
 parse_base_model = GENERATOR["parse_base_model"]
 validate_generated = GENERATOR["validate_generated"]
 validate_json_schema = GENERATOR["validate_json_schema"]
+build_catalog = CATALOG_BUILDER["build_catalog"]
 
 
 def workbook_rows():
@@ -40,12 +57,71 @@ class TestBundledAssets(TestCase):
     def test_default_schema_is_bundled_with_web_metadata(self):
         self.assertTrue(DEFAULT_SCHEMA_PATH.is_file())
 
-    def test_example_matches_bundled_schema(self):
+    def test_all_source_records_match_bundled_schema(self):
         schema = json.loads(DEFAULT_SCHEMA_PATH.read_text(encoding="utf-8"))
-        metadata = yaml.safe_load(EXAMPLE_PATH.read_text(encoding="utf-8"))
+        metadata_paths = sorted(SOURCE_ROOT.rglob("metadata.yml"))
 
-        validate_generated(metadata)
-        validate_json_schema(metadata, schema, schema)
+        self.assertEqual(len(metadata_paths), 43)
+        for metadata_path in metadata_paths:
+            metadata = yaml.safe_load(metadata_path.read_text(encoding="utf-8"))
+            validate_generated(metadata)
+            validate_json_schema(metadata, schema, schema)
+
+    def test_source_snapshot_rebuilds_committed_catalog(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output_dir = Path(temporary_directory) / "catalog"
+
+            self.assertEqual(build_catalog(SOURCE_ROOT, output_dir), 43)
+            for expected_path in sorted(DATA_DIR.glob("*.csv")):
+                actual_path = output_dir / expected_path.name
+                self.assertEqual(
+                    actual_path.read_bytes(),
+                    expected_path.read_bytes(),
+                    expected_path.name,
+                )
+
+    def test_workbook_cli_matches_golden_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_root = Path(temporary_directory)
+            workbook_path = temporary_root / "synthetic-metadata.xlsx"
+            vision_root = temporary_root / "vision"
+            plugin_root = (
+                vision_root
+                / "brainscore_vision"
+                / "models"
+                / "example_model"
+            )
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(EXAMPLE_BUILDER_PATH),
+                    str(workbook_path),
+                    "--repo-root",
+                    str(vision_root),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(GENERATOR_PATH),
+                    str(workbook_path),
+                    "--repo-root",
+                    str(vision_root),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            generated_path = plugin_root / "metadata.yml"
+            self.assertEqual(
+                generated_path.read_bytes(),
+                EXAMPLE_GOLDEN_PATH.read_bytes(),
+            )
 
 
 class TestModelColumns(TestCase):

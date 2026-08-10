@@ -1,41 +1,91 @@
 # Model metadata pipeline
 
-The model metadata shown on a Brain-Score model page is built in two stages:
+This directory is a self-contained reference for converting curated workbook
+records into version 2 model metadata and rendering them on Brain-Score model
+pages. The production curator workbook is not committed, but a synthetic
+workbook definition, workbook builder, golden YAML output, all 43 production
+source records, and the derived web catalog are included.
+
+No LLM is invoked by this pipeline. Both conversion stages are deterministic
+Python programs.
 
 ```text
 Brainscore Model Metadata.xlsx
-    -> brain-score/vision metadata generator
-    -> brainscore_vision/models/**/metadata.yml
-    -> brain-score.web catalog builder
+    -> scripts/generate_model_metadata.py
+    -> **/metadata.yml (schema version 2.0.0)
+    -> scripts/build_model_metadata_catalog.py
     -> benchmarks/model_metadata/data/*.csv
-    -> Django view and templates
+    -> repository.py -> Django view -> templates and JavaScript
 ```
 
-The initial metadata in this catalog was batch-generated from the curation
-workbook. It was not entered through the website or copied into the CSV files
-by hand.
+## Start from a fresh checkout
 
-## File naming
+Install the repository dependencies first. `PyYAML` is pinned in both
+`requirements.txt` and `environment.yml`; the workbook generator itself uses
+only the Python standard library.
 
-The version 2 source file is named `metadata.yml`. Some model plugins also have
-an older `metadata.yaml`; that is a different format. The catalog builder only
-reads files named `metadata.yml` whose `schema_version` is `2.0.0`.
+### Run the complete synthetic example
 
-## 1. Convert the workbook to `metadata.yml`
+The example builder creates both a real `.xlsx` file and the minimal
+vision-style model registry needed by the generator:
 
-The source workbook and generated YAML belong to the
-[`brain-score/vision`](https://github.com/brain-score/vision) repository. This
-web repository includes the conversion and rendering assets needed to inspect
-and reproduce the complete pipeline:
+```shell
+EXAMPLE_ROOT=/tmp/brain-score-model-metadata-example
 
-- `scripts/generate_model_metadata.py`
-- `benchmarks/model_metadata/schema/model-metadata-v2.schema.json`
-- `benchmarks/model_metadata/examples/alexnet/metadata.yml`
-- `scripts/build_model_metadata_catalog.py`
-- `benchmarks/tests/test_model_metadata_generator.py`
+python benchmarks/model_metadata/examples/create_example_workbook.py \
+    "$EXAMPLE_ROOT/metadata.xlsx" \
+    --repo-root "$EXAMPLE_ROOT/vision"
 
-From the root of `brain-score.web`, preview the files that will be generated
-in a checkout of `brain-score/vision`:
+python scripts/generate_model_metadata.py \
+    "$EXAMPLE_ROOT/metadata.xlsx" \
+    --repo-root "$EXAMPLE_ROOT/vision"
+
+diff \
+    "$EXAMPLE_ROOT/vision/brainscore_vision/models/example_model/metadata.yml" \
+    benchmarks/model_metadata/examples/synthetic/metadata.yml
+```
+
+An empty `diff` means the workbook-to-YAML pipeline reproduced the committed
+golden file exactly. The example exercises typed values, lists, dataset
+normalization, artifacts, provenance colors, schema validation, and output
+placement.
+
+The human-readable workbook inputs are in
+`examples/synthetic_workbook.json`. `examples/create_example_workbook.py`
+packages that definition as a standards-compatible `.xlsx` file.
+
+### Rebuild the complete web catalog
+
+All 43 production source YAML records are bundled under `source`. Rebuild the
+six checked-in CSV files without any external repository:
+
+```shell
+python scripts/build_model_metadata_catalog.py
+git diff --exit-code -- benchmarks/model_metadata/data
+```
+
+The catalog builder defaults to `benchmarks/model_metadata/source` and
+`benchmarks/model_metadata/data`. Both paths can still be supplied explicitly
+when building from a different metadata checkout.
+
+### Run the focused tests
+
+```shell
+python -m unittest \
+    benchmarks.tests.test_model_metadata_generator \
+    benchmarks.tests.test_model_metadata_repository \
+    benchmarks.tests.test_model_metadata_template
+```
+
+The tests run a real synthetic `.xlsx` through the generator CLI, compare the
+result with the golden YAML, validate all 43 source records, reproduce every
+catalog CSV byte for byte, and test repository and template rendering.
+
+## Production workbook conversion
+
+Production `metadata.yml` files belong beside their model implementations in
+[`brain-score/vision`](https://github.com/brain-score/vision). From a
+`brain-score.web` checkout, first preview the output:
 
 ```shell
 python scripts/generate_model_metadata.py \
@@ -44,7 +94,7 @@ python scripts/generate_model_metadata.py \
     --dry-run
 ```
 
-Remove `--dry-run` to write the files:
+Remove `--dry-run` to write the validated files:
 
 ```shell
 python scripts/generate_model_metadata.py \
@@ -52,37 +102,47 @@ python scripts/generate_model_metadata.py \
     --repo-root /path/to/vision
 ```
 
-By default, the generator validates against the JSON schema bundled in this
-repository. Pass `--schema /path/to/schema.json` to validate against a
-different compatible copy. The emitted `schema_url` continues to identify the
-canonical schema in `brain-score/vision`.
+The real curator workbook is maintained outside the source repositories.
+Maintainers updating production facts need access to that workbook and a
+checkout of `brain-score/vision`. The bundled synthetic workbook is the public
+fixture for learning, development, and end-to-end testing.
 
-The generator reads the first worksheet directly from the `.xlsx` archive. In
-the workbook used for the initial import:
+## Workbook contract
 
-- column A contains the 33 curated field names;
-- model records begin in column E;
-- `model_name` or `model_ID` makes a column eligible for import; and
-- the optional row after the curated fields contains a primary reference URL.
+The generator reads the first worksheet directly from the `.xlsx` archive:
 
-Each eligible workbook column must match exactly one identifier registered in
-a model plugin's `model_registry`. This ensures that the output is attached to
-an implemented Brain-Score model rather than only to a display name.
+- Column A contains exactly 33 curated field names.
+- Model records begin in column E.
+- `model_name` or `model_ID` makes a model column eligible.
+- The optional row after the 33 fields contains a primary reference URL.
+- Each eligible column must match exactly one `model_registry` identifier in
+  the target vision checkout.
 
-If a model occurs in more than one workbook column, the rightmost column is
-treated as the latest record. Blank or explicitly unknown cells are backfilled
-from earlier columns for that model.
+The complete ordered field list and representative values are visible in
+`examples/synthetic_workbook.json`.
 
-The generator normalizes workbook values into typed version 2 fields. Examples
-include parameter counts as integers, resolutions as channel/height/width
-records, dataset names and training roles, lineage relationships, Boolean
-values, licenses, and semicolon-separated lists. Values such as `N/A`,
-`unknown`, and `not documented` are omitted from the typed section rather than
-being stored as literal values.
+If a model occurs in multiple workbook columns, the rightmost column is the
+latest record. Blank or explicitly unknown cells are backfilled from earlier
+columns. Values including `N/A`, `unknown`, and `not documented` are omitted
+from typed metadata instead of being stored literally.
 
-Workbook fill colors are preserved as field-level provenance:
+The generator applies explicit parsing rules for architecture families,
+parameter counts, resolutions, Booleans, datasets and training stages,
+lineage, licenses, and semicolon-separated lists. A new value that cannot be
+handled deterministically must be supported in the script or curated into a
+recognized representation; there is no LLM fallback.
 
-| Workbook state | Provenance status |
+## Schema and provenance
+
+Every generated record is validated against
+`schema/model-metadata-v2.schema.json`. The generator uses that local file by
+default; `--schema /path/to/schema.json` selects another compatible copy. The
+schema's `$id` and every generated `schema_url` point to the live schema served
+from GitHub's PR #539 ref.
+
+Workbook fill colors become field-level provenance assertions:
+
+| Workbook state | Assertion status |
 | --- | --- |
 | Green (`FF93C47D`) | `verified` |
 | Yellow (`FFFFE599`) | `inferred` |
@@ -90,94 +150,72 @@ Workbook fill colors are preserved as field-level provenance:
 | Blank, unknown, or unclassified | `undocumented` |
 
 Text containing `assumed`, `presumed`, `inferred`, or `unconfirmed` is also
-classified as `inferred`. Every curated field receives an assertion whose
-source is `curation_workbook`, including fields that are undocumented.
+classified as `inferred`. All 33 fields receive an assertion, including fields
+without a typed value.
 
-Before writing a file, the generator checks its own invariants and validates
-the result against `model-metadata-v2.schema.json`. Output location depends on
-the plugin:
+Before writing, the generator validates its invariants and the full JSON
+schema. Output placement follows the target plugin registry:
 
 - A plugin with one registered model gets
   `brainscore_vision/models/<plugin>/metadata.yml`.
-- A plugin with multiple registered models gets
+- A plugin with multiple models gets
   `brainscore_vision/models/<plugin>/metadata/<identifier>/metadata.yml`.
-  The identifier is URL-encoded when necessary.
+  Identifiers are URL-encoded when necessary.
 
-The generated YAML is the reviewed source of truth. Correcting factual
-metadata should start in the workbook and be followed by regeneration and
-review of the YAML diff. The schema can verify structure and types, but it
-cannot establish that a claim about a model is factually correct.
+Schema validation proves structure and types, not factual correctness. All
+curated claims still require human review against implementations and
+authoritative sources.
 
-`benchmarks/model_metadata/examples/alexnet/metadata.yml` is a complete output
-example. It is documentation only and is not read by the website catalog.
+## Bundled source snapshot
 
-## 2. Build the web catalog
+`source` contains the 43 version 2 records used by this branch. It preserves
+the model-plugin layout from `brain-score/vision` commit `5349f13b` on branch
+`kp/model-metadata-v2`. See `source/README.md` for synchronization rules.
 
-After the version 2 YAML files are present in `brain-score/vision`, run the
-catalog builder from the root of `brain-score.web`:
+The version 2 filename is `metadata.yml`. Legacy model-plugin files named
+`metadata.yaml` use a different schema and are ignored by the catalog builder.
 
-```shell
-python scripts/build_model_metadata_catalog.py \
-    /path/to/vision/brainscore_vision/models \
-    benchmarks/model_metadata/data
-```
-
-The builder recursively discovers `metadata.yml`, keeps schema version
-`2.0.0`, sorts records by `(domain, identifier)`, and rewrites six deterministic
-CSV tables:
+The catalog contains six deterministic tables:
 
 | File | Content |
 | --- | --- |
 | `models.csv` | One row per model with scalar card fields |
-| `model_datasets.csv` | Training datasets and their roles |
+| `model_datasets.csv` | Training datasets and roles |
 | `intended_use.csv` | Applications, users, limitations, and biases |
 | `contributors.csv` | Creators and organizations |
 | `model_relationships.csv` | Direct base-model relationships |
 | `assertions.csv` | Per-field provenance status and source |
 
-These CSV files are a web deployment artifact. Do not edit them directly;
-regenerate them from the reviewed `metadata.yml` files instead.
+The YAML snapshot is source; the CSV files are deployment artifacts. Do not
+edit derived CSVs directly.
 
-## 3. Render metadata on the website
+## Website rendering
 
-The website does not import this catalog into the application database. It is
-rendered from the checked-in CSV files at request time:
+The website does not import the catalog into the application database:
 
-1. `benchmarks/model_metadata/repository.py` loads and joins the six tables on
-   `(domain, identifier)`. The result is cached once per web process, and the
-   loader also formats values, counts provenance statuses, and constructs
-   lineage data.
-2. `benchmarks/views/model.py` requests metadata with the public model's exact
-   domain and registry identifier. It looks up public model-card IDs for known
-   ancestors and related variants so their lineage labels can become links.
+1. `repository.py` loads and joins the six CSVs on `(domain, identifier)`. The
+   result is cached once per web process. It formats values, counts provenance
+   statuses, and constructs model lineage.
+2. `benchmarks/views/model.py` looks up metadata for a public model's exact
+   domain and registry identifier. It resolves public model-card IDs for known
+   ancestors and variants.
 3. `benchmarks/templates/benchmarks/model.html` renders summary tags and
-   includes the metadata, provenance, and lineage partials. Models without a
-   matching catalog record continue to render without those sections.
-4. `static/benchmarks/js/model-lineage.js` progressively reveals additional
-   related variants. Presentation styles live in
-   `static/benchmarks/css/model.sass`.
+   includes the metadata, provenance, and lineage partials.
+4. `static/benchmarks/js/model-lineage.js` reveals additional variants, with
+   presentation styles in `static/benchmarks/css/model.sass`.
 
-Metadata is only attached to public model pages. A model's registry identifier
-must exactly match the `identifier` in `models.csv`; a display name or alias is
-not used as a fallback. When the model database has no visual-degrees value,
-the view uses the catalog value if one is available.
+Models without a matching metadata record render normally without those
+sections. Metadata is attached only to public model pages. If the model
+database has no visual-degrees value, the view uses the catalog value.
 
-## Updating the catalog
+## Production update checklist
 
-For a routine metadata update:
-
-1. Update and review the curation workbook.
-2. Run the vision generator with `--dry-run`, then without it.
-3. Review the generated `metadata.yml` diff.
-4. Run the web catalog builder and review all changed CSV rows.
-5. Run the focused conversion and rendering tests:
-
-   ```shell
-   python -m unittest \
-       benchmarks.tests.test_model_metadata_generator \
-       benchmarks.tests.test_model_metadata_repository \
-       benchmarks.tests.test_model_metadata_template
-   ```
-
-Commit the source YAML in `brain-score/vision` and the derived CSV catalog in
-`brain-score.web` in their respective changes.
+1. Update and review the curator workbook.
+2. Generate the vision YAML with `--dry-run`, then write it.
+3. Review schema, provenance, and factual diffs in `brain-score/vision`.
+4. Synchronize all version 2 YAML records into `source` and record the vision
+   commit in `source/README.md`.
+5. Run `python scripts/build_model_metadata_catalog.py`.
+6. Review the derived CSV diff and run the focused tests above.
+7. Commit source YAML changes in `brain-score/vision` and the synchronized
+   source snapshot plus derived catalog in `brain-score.web`.

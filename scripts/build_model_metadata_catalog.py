@@ -12,6 +12,10 @@ from pathlib import Path
 import yaml
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_METADATA_ROOT = REPO_ROOT / "benchmarks" / "model_metadata" / "source"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "benchmarks" / "model_metadata" / "data"
+
 MODEL_FIELDS = (
     "domain",
     "identifier",
@@ -215,8 +219,10 @@ def build_catalog(metadata_root, output_dir):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("metadata_root", type=Path)
-    parser.add_argument("output_dir", type=Path)
+    parser.add_argument(
+        "metadata_root", type=Path, nargs="?", default=DEFAULT_METADATA_ROOT
+    )
+    parser.add_argument("output_dir", type=Path, nargs="?", default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
     count = build_catalog(args.metadata_root, args.output_dir)
     print(f"Generated metadata for {count} models")
