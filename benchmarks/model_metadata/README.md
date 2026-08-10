@@ -23,21 +23,24 @@ reads files named `metadata.yml` whose `schema_version` is `2.0.0`.
 
 ## 1. Convert the workbook to `metadata.yml`
 
-The source workbook and generator belong to the
-[`brain-score/vision`](https://github.com/brain-score/vision) repository. The
-relevant files are:
+The source workbook and generated YAML belong to the
+[`brain-score/vision`](https://github.com/brain-score/vision) repository. This
+web repository includes the conversion and rendering assets needed to inspect
+and reproduce the complete pipeline:
 
 - `scripts/generate_model_metadata.py`
-- `docs/model_metadata/model-metadata-v2.schema.json`
-- `tests/test_model_metadata_generator.py`
+- `benchmarks/model_metadata/schema/model-metadata-v2.schema.json`
+- `benchmarks/model_metadata/examples/alexnet/metadata.yml`
+- `scripts/build_model_metadata_catalog.py`
+- `benchmarks/tests/test_model_metadata_generator.py`
 
-From a checkout of `brain-score/vision`, preview the files that will be
-generated:
+From the root of `brain-score.web`, preview the files that will be generated
+in a checkout of `brain-score/vision`:
 
 ```shell
 python scripts/generate_model_metadata.py \
     "/path/to/Brainscore Model Metadata.xlsx" \
-    --repo-root . \
+    --repo-root /path/to/vision \
     --dry-run
 ```
 
@@ -46,8 +49,13 @@ Remove `--dry-run` to write the files:
 ```shell
 python scripts/generate_model_metadata.py \
     "/path/to/Brainscore Model Metadata.xlsx" \
-    --repo-root .
+    --repo-root /path/to/vision
 ```
+
+By default, the generator validates against the JSON schema bundled in this
+repository. Pass `--schema /path/to/schema.json` to validate against a
+different compatible copy. The emitted `schema_url` continues to identify the
+canonical schema in `brain-score/vision`.
 
 The generator reads the first worksheet directly from the `.xlsx` archive. In
 the workbook used for the initial import:
@@ -99,6 +107,9 @@ The generated YAML is the reviewed source of truth. Correcting factual
 metadata should start in the workbook and be followed by regeneration and
 review of the YAML diff. The schema can verify structure and types, but it
 cannot establish that a claim about a model is factually correct.
+
+`benchmarks/model_metadata/examples/alexnet/metadata.yml` is a complete output
+example. It is documentation only and is not read by the website catalog.
 
 ## 2. Build the web catalog
 
@@ -157,17 +168,13 @@ For a routine metadata update:
 
 1. Update and review the curation workbook.
 2. Run the vision generator with `--dry-run`, then without it.
-3. Review the generated `metadata.yml` diff and run:
-
-   ```shell
-   python -m unittest tests.test_model_metadata_generator
-   ```
-
+3. Review the generated `metadata.yml` diff.
 4. Run the web catalog builder and review all changed CSV rows.
-5. Run the focused web tests:
+5. Run the focused conversion and rendering tests:
 
    ```shell
    python -m unittest \
+       benchmarks.tests.test_model_metadata_generator \
        benchmarks.tests.test_model_metadata_repository \
        benchmarks.tests.test_model_metadata_template
    ```
