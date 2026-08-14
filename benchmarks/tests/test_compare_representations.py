@@ -31,13 +31,37 @@ class TestRepresentationsData(TestCase):
         """They dominate the payload; the table alone is what the tab first needs."""
         assert 'embeddings' not in self._get()
 
+    def _a_set_with_embeddings(self):
+        """Not every comparison has an embedding -- only some sets are precomputed.
+        Picking row 0 tied this test to sort order and broke when region-layer
+        rows were added above the readout ones."""
+        artifacts = cr._load_artifacts()
+        available = set(artifacts.get('embeddings', {}))
+        for row in self._get()['comparisons']:
+            if row['stimulus_set'] in available:
+                return row['stimulus_set']
+        self.skipTest('fixture ships no embeddings')
+
     def test_embeddings_returned_for_a_selected_set(self):
-        first = self._get()['comparisons'][0]['stimulus_set']
-        payload = self._get(stimulus_set=first)
-        assert payload['selected'] == first
+        chosen = self._a_set_with_embeddings()
+        payload = self._get(stimulus_set=chosen)
+        assert payload['selected'] == chosen
         assert payload['embeddings'], "expected per-model coordinates"
         for coords in payload['embeddings'].values():
             assert all(len(p) == 2 for p in coords), "embeddings must be 2D"
+
+    def test_a_row_without_embeddings_is_empty_not_an_error(self):
+        """Most rows have a similarity score but no precomputed embedding; the
+        panel must treat that as 'nothing to plot', not a failure."""
+        artifacts = cr._load_artifacts()
+        available = set(artifacts.get('embeddings', {}))
+        without = [r['stimulus_set'] for r in self._get()['comparisons']
+                   if r['stimulus_set'] not in available]
+        if not without:
+            self.skipTest('every row has embeddings')
+        payload = self._get(stimulus_set=without[0])
+        assert payload['embeddings'] == {}
+        assert payload['selected'] == without[0]
 
     def test_unknown_stimulus_set_is_empty_not_an_error(self):
         payload = self._get(stimulus_set='does-not-exist')
