@@ -1,0 +1,39 @@
+{% if model_metadata %}
+<section class="box model-card-section model-intended-use">
+    <h2 class="title is-4 mc-title">Intended use and limits</h2>
+    <div class="mc-use-grid">
+        <div class="mc-use-cell is-recommended">
+            <h4>Recommended applications</h4>
+            {% if model_metadata.intended_use.applications %}
+                <ul>{% for item in model_metadata.intended_use.applications %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p class="not-documented">Not documented</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-users">
+            <h4>Target users</h4>
+            {% if model_metadata.intended_use.users %}
+                <ul>{% for item in model_metadata.intended_use.users %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p class="not-documented">Not documented</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-limitation">
+            <h4>Known limitations</h4>
+            {% if model_metadata.intended_use.limitations %}
+                <ul>{% for item in model_metadata.intended_use.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p class="not-documented">Not documented</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-bias">
+            <h4>Biases</h4>
+            {% if model_metadata.intended_use.biases %}
+                <ul>{% for item in model_metadata.intended_use.biases %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p class="not-documented">Not documented</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}

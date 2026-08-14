@@ -14,34 +14,68 @@
 
 {% block banner %}
     {% if model.public %}
-        <h1 class="title">{{ model.name }}</h1>
-        <p>
-            {# Paper #}
-            {% if model.reference_identifier %}
-                <button class="button">
-                    <a href="{{ model.reference_link }}" target="_blank">
+        <div class="model-card-hero">
+            <h1 class="title">{{ model.name }}</h1>
+            <div class="mc-hero-pills">
+                {# Paper #}
+                {% if model.reference_identifier %}
+                    <a class="mc-hero-pill is-paper" href="{{ model.reference_link }}" target="_blank">
                         <i class="fas fa-file-alt"></i> {{ model.reference_identifier }}
                     </a>
-                </button>
-            {% else %}
-                <button class="button disabled">
-                    No reference provided
-                </button>
-            {% endif %}
+                {% else %}
+                    <span class="mc-hero-pill is-muted">No reference provided</span>
+                {% endif %}
 
-            {# Code #}
-            <button class="button">
-                <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ model.domain }}%20{{ model.name }}&type=code"
+                {# Code #}
+                <a class="mc-hero-pill is-source"
+                   href="https://github.com/search?q=repo%3Abrain-score%2F{{ model.domain }}%20{{ model.name }}&type=code"
                    target="_blank">
-                    <i class="fa-brands fa-github"></i> Find on GitHub
+                    <i class="fa-brands fa-github"></i> Find on GitHub <span class="mc-hero-pill-note">source</span>
                 </a>
-            </button>
+            </div>
+            <div class="mc-hero-pills">
+                {# Contributor #}
+                <span class="mc-hero-pill is-contributor">
+                    <i class="fa-solid fa-user"></i> Contributed by <strong>{{ model|display_submitter:user|default:"" }}</strong>
+                </span>
+            </div>
 
-            {# Contributor #}
-            <button class="button">
-                Contributed by: {{ model|display_submitter:user|default:"" }}
-            </button>
-        </p>
+            {# Key-stat chips #}
+            {% if model_metadata %}
+                <div class="mc-hero-stats">
+                    {% if model_metadata.architecture_description %}
+                        <div class="mc-hero-stat is-architecture">
+                            <span class="mc-hero-stat-label">Architecture</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.architecture_description }}</span>
+                        </div>
+                    {% endif %}
+                    {% if model_metadata.parameter_count_display %}
+                        <div class="mc-hero-stat is-parameters">
+                            <span class="mc-hero-stat-label">Parameters</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
+                        </div>
+                    {% endif %}
+                    {% if model_metadata.input_resolution_display %}
+                        <div class="mc-hero-stat is-input">
+                            <span class="mc-hero-stat-label">Input</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.input_resolution_display }}</span>
+                        </div>
+                    {% endif %}
+                    {% if model_metadata.supervision_description %}
+                        <div class="mc-hero-stat is-supervision">
+                            <span class="mc-hero-stat-label">Supervision</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.supervision_description }}</span>
+                        </div>
+                    {% endif %}
+                    {% if model_metadata.license %}
+                        <div class="mc-hero-stat is-license">
+                            <span class="mc-hero-stat-label">License</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.license }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
         {% if model.competition is None %}
@@ -55,17 +89,20 @@
 
 {# Right-hand info #}
 {% block info_section %}
-    <div class="box">
+    {% include "benchmarks/_model_metadata_provenance.html" %}
+    {% include "benchmarks/_model_metadata_lineage.html" %}
+
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
-                Layer Commitment
+            <p class="subtitle is-5 model-sidebar-title">
+                Layer commitment
                 <a href="https://{{ request.get_host }}/brain_model#region_layer_map">
                     <i class="fa-solid fa-circle-info"> </i>
                 </a>
             </p>
 
             {% if layers %}
-                <table class="table">
+                <table class="table mc-layer-table">
                     <thead>
                     <tr>
                         <th>Region</th>
@@ -76,29 +113,37 @@
                     {% for region, layer in layers|order_layers %}
                         <tr>
                             <th>{{ region }}</th>
-                            <td>{{ layer }}</td>
+                            <td><code>{{ layer }}</code></td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <div class="notification">
+                <p class="not-documented">Not documented</p>
+                <p class="mc-sidebar-note">
                     No layer commitments found for this model. Older submissions might not have stored this
                     information but will be updated when evaluated on new benchmarks.
-                </div>
+                </p>
             {% endif %}
         </div>
     </div>
 
-    <div class="box">
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
-                Visual Angle
+            <p class="subtitle is-5 model-sidebar-title">
+                Visual angle
                 <a href="https://{{ request.get_host }}/brain_model#visual_degrees">
                     <i class="fa-solid fa-circle-info"></i>
                 </a>
             </p>
-            <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% if visual_degrees %}
+                <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% else %}
+                <p class="not-documented">Not documented</p>
+            {% endif %}
+            <p class="mc-sidebar-note">
+                Drives stimulus scaling. A null here means benchmarks run on the default.
+            </p>
         </div>
     </div>
 {% endblock %}
@@ -106,9 +151,18 @@
 {# Center content #}
 {% block content %}
     <section class="individual_model container center">
-        <div class="content">
+        {# Curated metadata: at-a-glance #}
+        {% include "benchmarks/_model_metadata.html" %}
+
+        {# Intended use and limits #}
+        {% include "benchmarks/_model_metadata_intended_use.html" %}
+
+        <div class="content box model-card-section model-card-scores">
             {# Scores #}
-            <h3 id="scores" class="title is-3">Scores on benchmarks</h3>
+            <div class="mc-heading">
+                <h3 id="scores" class="title is-3 mc-title">Scores on benchmarks</h3>
+                <span class="mc-badge is-api">from scoring API</span>
+            </div>
             <span class='fine_print'>
                Model rank shown below is with respect to all public models.<br>
             </span>
@@ -247,10 +301,13 @@
         </div>
 
         {# Usage #}
-        <div class="box">
-            <h4 class="subtitle is-4">
-                How to use
-            </h4>
+        <div class="box model-card-section">
+            <div class="mc-heading">
+                <h4 class="subtitle is-4 mc-title">
+                    How to use
+                </h4>
+                <span class="mc-badge">from metadata</span>
+            </div>
             <div class="columns">
                 <div class="column">
                     <pre class="mt-0">
@@ -273,6 +330,10 @@ model.look_at(...)</pre>
                             <i class="fa-brands fa-github"></i> Code examples
                         </a>
                     </div>
+                    <p class="mc-note">
+                        The snippet is generated from <code>model_id</code> &mdash; the only part of this
+                        section the record supplies.
+                    </p>
                     {% comment "BERG link + tooltip disabled in favor of the BERG info box below. To re-enable, remove comment tags and rename data-tooltip-html-disabled back to data-tooltip-html" %}
                     <div class="block">
                         <a href="https://gifale95.github.io/BERG/"
@@ -325,6 +386,9 @@ model.look_at(...)</pre>
             </div>
         </div>
         {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
+
+        {# Evaluation and I/O #}
+        {% include "benchmarks/_model_metadata_eval_io.html" %}
     </section>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>

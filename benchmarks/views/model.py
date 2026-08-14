@@ -271,6 +271,127 @@ def calculate_representative_color(value, min_value, max_value, is_engineering):
     return f'rgba({r}, {g}, {b}, {alpha:.2f})'
 
 
+# Fields the model card surfaces in the at-a-glance grid. Also drives the
+# provenance tally (documented vs. undocumented) until per-field assertions
+# from the metadata workbook (assertions.csv of the six-table schema) land.
+_CARD_FIELD_KEYS = (
+    'architecture_description', 'parameter_count_display', 'input_resolution_display',
+    'recurrent_display', 'supervision_description', 'weights_provider',
+    'trainable_layers_display', 'checkpoint', 'training_process', 'license',
+)
+
+
+def _format_metadata_count(value):
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        return None
+    if value >= 1_000_000_000:
+        return f'{value / 1_000_000_000:.1f}'.rstrip('0').rstrip('.') + 'B'
+    if value >= 1_000_000:
+        return f'{value / 1_000_000:.1f}'.rstrip('0').rstrip('.') + 'M'
+    if value >= 1_000:
+        return f'{value / 1_000:.1f}'.rstrip('0').rstrip('.') + 'K'
+    return str(value)
+
+
+def build_model_card_metadata(model):
+    """Assemble the model-card metadata context.
+
+    Mirrors the shape produced by the six-table metadata schema (models,
+    model_datasets, assertions, contributors, intended_use,
+    model_relationships -- see PR #539) so the card can switch to that backend
+    without template changes. Until those tables land, fields are filled from
+    the legacy ``model_meta`` JSON where possible and left None (rendered as
+    "Not documented") otherwise.
+    """
+    meta = getattr(model, 'model_meta', None) or {}
+    if not isinstance(meta, dict):
+        meta = {}
+
+    architecture = meta.get('architecture')
+    family = meta.get('model_family')
+    if architecture and family and family.lower() not in architecture.lower():
+        architecture_description = f'{architecture} ({family})'
+    else:
+        architecture_description = architecture or family
+
+    parameter_count_display = _format_metadata_count(meta.get('total_parameter_count'))
+    if parameter_count_display:
+        # legacy table has no exactness flag; counts are typically rounded
+        parameter_count_display = f'≈{parameter_count_display}'
+
+    trainable_layers_display = None
+    if meta.get('trainable_layers') is not None:
+        total = meta.get('total_layers')
+        trainable_layers_display = (
+            f"{meta['trainable_layers']} of {total} layers" if total
+            else f"{meta['trainable_layers']} layers")
+
+    datasets = []
+    if meta.get('training_dataset'):
+        datasets.append({
+            'role_display': 'Training',
+            'dataset_name': meta['training_dataset'],
+            'sample_count_display': None,
+        })
+
+    metadata = {
+        'schema_version': '2.0',
+        'architecture_description': architecture_description,
+        'parameter_count_display': parameter_count_display,
+        'input_resolution_display': None,
+        'recurrent_display': None,
+        'supervision_description': None,
+        'weights_provider': 'Hugging Face Hub' if meta.get('hugging_face_link') else None,
+        'weights_provider_url': meta.get('hugging_face_link'),
+        'trainable_layers_display': trainable_layers_display,
+        'checkpoint': None,
+        'training_process': None,
+        'objective': None,
+        'loss': None,
+        'learning_rate': None,
+        'batch_size': None,
+        'preprocessing_description': None,
+        'datasets': datasets,
+        'contributors': {},
+        'license': None,
+        'license_nuance': None,
+        'intended_use': {
+            'applications': [meta['task_specialization']] if meta.get('task_specialization') else [],
+            'users': [],
+            'limitations': [],
+            'biases': [],
+        },
+        'eval_io': {
+            'test_datasets': None,
+            'validation_datasets': None,
+            'input_format': None,
+            'output_format': None,
+            'tokenizer': None,
+            'model_version': None,
+        },
+        'lineage': {
+            'ancestors': [],
+            'current': None,
+            'related_models': [],
+            'hidden_related_count': 0,
+            'has_relationships': False,
+        },
+        'extra_notes': meta.get('extra_notes'),
+    }
+
+    documented = sum(1 for key in _CARD_FIELD_KEYS if metadata.get(key))
+    metadata['verification'] = {
+        'verified': documented,
+        'inferred': 0,
+        'undocumented': len(_CARD_FIELD_KEYS) - documented,
+        'total': len(_CARD_FIELD_KEYS),
+    }
+    metadata['has_card_content'] = True
+    return metadata
+
+
 def view(request, id: int, domain: str):
     start_time = time()
     # Check if user is logged in
@@ -390,6 +511,7 @@ def view(request, id: int, domain: str):
         # Prepare the context for the template
         model_context = {
             'model': model,
+            'model_metadata': build_model_card_metadata(model),
             'benchmark_parents': context['benchmark_parents'],
             'uniform_parents': context['uniform_parents'],
             'not_shown_set': context['not_shown_set'],

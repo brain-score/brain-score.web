@@ -1,0 +1,34 @@
+{% if model_metadata %}
+<section class="box model-card-section model-eval-io">
+    <div class="mc-heading">
+        <h2 class="title is-4 mc-title">Evaluation and I/O</h2>
+        <span class="mc-badge">from metadata</span>
+    </div>
+    <dl class="mc-specs">
+        <div>
+            <dt>Test datasets</dt>
+            <dd>{% if model_metadata.eval_io.test_datasets %}{{ model_metadata.eval_io.test_datasets }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Validation datasets</dt>
+            <dd>{% if model_metadata.eval_io.validation_datasets %}{{ model_metadata.eval_io.validation_datasets }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Input format</dt>
+            <dd>{% if model_metadata.eval_io.input_format %}{{ model_metadata.eval_io.input_format }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Output format</dt>
+            <dd>{% if model_metadata.eval_io.output_format %}{{ model_metadata.eval_io.output_format }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Tokenizer</dt>
+            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}<span class="not-documented">not applicable</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Model version</dt>
+            <dd>{% if model_metadata.eval_io.model_version %}{{ model_metadata.eval_io.model_version }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+    </dl>
+</section>
+{% endif %}

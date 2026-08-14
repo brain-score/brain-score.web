@@ -1,0 +1,449 @@
+// Model card page (model.html + _model_metadata*.html partials).
+// Visual language from the Figma model-card design: white cards with a green
+// top accent, uppercase gray field labels, muted italic empties, pills/chips,
+// and a gradient hero.
+
+$mc-border: #e3e8f0
+$mc-label: #7a869c
+$mc-muted: $brainscore_gray3
+$mc-panel-bg: #f7f9fc
+$mc-verified: $brainscore_green
+$mc-inferred: #f0a24b
+$mc-undocumented: #c3cbd9
+
+// ---------- shared card chrome ----------
+
+.model-card-section
+  border: 1px solid $mc-border
+  border-top: 3px solid $brainscore_green
+  border-radius: 10px
+  box-shadow: 0 1px 3px rgba(0, 27, 54, 0.06)
+  padding: 1.5rem
+
+  .mc-heading
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 0.75rem
+    margin-bottom: 1rem
+
+    .mc-title
+      margin-bottom: 0
+
+.mc-kicker
+  text-transform: uppercase
+  letter-spacing: 0.08em
+  font-size: 0.7rem
+  font-weight: 700
+  color: $mc-label
+  margin-bottom: 0.15rem
+
+.mc-badge
+  display: inline-block
+  flex-shrink: 0
+  font-size: 0.7rem
+  font-weight: 600
+  padding: 0.2rem 0.6rem
+  border-radius: 999px
+  background: rgba($brainscore_green, 0.12)
+  color: darken($brainscore_green, 18%)
+  border: 1px solid rgba($brainscore_green, 0.35)
+  white-space: nowrap
+
+  &.is-api
+    background: rgba($brainscore_sky, 0.1)
+    color: darken($brainscore_sky, 12%)
+    border-color: rgba($brainscore_sky, 0.35)
+
+.not-documented
+  color: $mc-muted
+  font-style: italic
+  font-weight: 400
+
+.mc-note
+  font-size: 0.8rem
+  color: $mc-label
+  margin-top: 0.75rem
+
+// ---------- hero ----------
+
+.model-card-hero
+  h1.title
+    color: white
+    word-break: break-all
+    margin-bottom: 0.75rem
+
+  .mc-hero-pills
+    display: flex
+    flex-wrap: wrap
+    gap: 0.5rem
+    margin-bottom: 0.6rem
+
+  .mc-hero-pill
+    display: inline-flex
+    align-items: center
+    gap: 0.4rem
+    padding: 0.3rem 0.8rem
+    border-radius: 999px
+    background: rgba(255, 255, 255, 0.92)
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    font-weight: 600
+    border: 1px solid rgba(255, 255, 255, 0.6)
+    max-width: 100%
+
+    &:hover
+      background: white
+
+    strong
+      color: inherit
+
+    &.is-paper
+      border-color: $brainscore_pollen
+      box-shadow: 0 0 0 1px $brainscore_pollen
+
+    &.is-muted
+      background: rgba(255, 255, 255, 0.55)
+      color: rgba(0, 27, 54, 0.65)
+
+    .mc-hero-pill-note
+      font-size: 0.65rem
+      text-transform: lowercase
+      color: $mc-label
+      font-weight: 500
+
+  .mc-hero-stats
+    display: flex
+    flex-wrap: wrap
+    gap: 0.5rem
+    margin-top: 0.9rem
+
+  .mc-hero-stat
+    background: white
+    border-radius: 8px
+    padding: 0.45rem 0.8rem
+    border-left: 3px solid $brainscore_green
+    box-shadow: 0 1px 2px rgba(0, 27, 54, 0.15)
+    display: flex
+    flex-direction: column
+    min-width: 0
+
+    &.is-parameters
+      border-left-color: $brainscore_sky
+    &.is-input
+      border-left-color: $brainscore_lunar
+    &.is-supervision
+      border-left-color: $mc-inferred
+    &.is-license
+      border-left-color: $brainscore_gray3
+
+    .mc-hero-stat-label
+      text-transform: uppercase
+      letter-spacing: 0.08em
+      font-size: 0.6rem
+      font-weight: 700
+      color: $mc-label
+
+    .mc-hero-stat-value
+      font-size: 0.85rem
+      font-weight: 700
+      color: $brainscore_gray4
+
+// ---------- at-a-glance specs grid ----------
+
+.mc-specs
+  display: grid
+  grid-template-columns: 1fr 1fr
+  column-gap: 2rem
+
+  > div
+    padding: 0.6rem 0
+    border-bottom: 1px solid lighten($mc-border, 3%)
+
+    dt
+      text-transform: uppercase
+      letter-spacing: 0.08em
+      font-size: 0.65rem
+      font-weight: 700
+      color: $mc-label
+      margin-bottom: 0.1rem
+
+    dd
+      margin-left: 0
+      font-size: 0.9rem
+      color: $brainscore_gray4
+
+  @media screen and (max-width: 768px)
+    grid-template-columns: 1fr
+
+// ---------- training / creators panels ----------
+
+.mc-grid
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 1rem
+  margin-top: 1.25rem
+
+  @media screen and (max-width: 900px)
+    grid-template-columns: 1fr
+
+.mc-panel
+  background: $mc-panel-bg
+  border: 1px solid lighten($mc-border, 2%)
+  border-radius: 8px
+  padding: 1rem 1.15rem
+
+  .mc-panel-title
+    margin-bottom: 0.75rem
+
+  .mc-panel-lede
+    font-size: 0.85rem
+    color: darken($mc-label, 12%)
+    margin-bottom: 0.75rem
+
+.mc-datasets
+  display: flex
+  flex-direction: column
+  gap: 0.4rem
+  margin-bottom: 0.75rem
+
+.mc-dataset-chip
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  background: white
+  border: 1px solid $mc-border
+  border-radius: 999px
+  padding: 0.25rem 0.75rem 0.25rem 0.3rem
+  font-size: 0.85rem
+  align-self: flex-start
+  max-width: 100%
+
+  .mc-dataset-role
+    background: rgba($brainscore_green, 0.15)
+    color: darken($brainscore_green, 20%)
+    border-radius: 999px
+    padding: 0.1rem 0.55rem
+    font-size: 0.65rem
+    font-weight: 700
+    text-transform: lowercase
+
+  .mc-dataset-count
+    color: $mc-label
+    font-size: 0.75rem
+
+.mc-facts
+  > div
+    display: flex
+    gap: 0.4rem
+    padding: 0.25rem 0
+    font-size: 0.85rem
+
+    dt
+      font-weight: 700
+      color: $brainscore_gray4
+      flex-shrink: 0
+
+    dd
+      margin-left: 0
+      color: darken($mc-label, 10%)
+
+// ---------- intended use ----------
+
+.mc-use-grid
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 1rem
+
+  @media screen and (max-width: 768px)
+    grid-template-columns: 1fr
+
+.mc-use-cell
+  border: 1px solid $mc-border
+  border-left-width: 3px
+  border-radius: 8px
+  padding: 0.9rem 1.1rem
+
+  h4
+    text-transform: uppercase
+    letter-spacing: 0.08em
+    font-size: 0.7rem
+    font-weight: 700
+    color: $mc-label
+    margin-bottom: 0.5rem
+
+  ul
+    margin: 0 0 0 1.1rem
+    font-size: 0.85rem
+
+    li
+      margin-bottom: 0.25rem
+
+  &.is-recommended
+    border-left-color: $brainscore_green
+  &.is-users
+    border-left-color: $brainscore_sky
+  &.is-limitation
+    border-left-color: $mc-inferred
+  &.is-bias
+    border-left-color: #d4737e
+
+// ---------- scores section tweaks ----------
+
+.model-card-scores
+  .fine_print
+    display: block
+    margin-bottom: 1rem
+
+// ---------- sidebar cards ----------
+
+.model-sidebar-card
+  border: 1px solid $mc-border
+  border-top: 3px solid $brainscore_green
+  border-radius: 10px
+  box-shadow: 0 1px 3px rgba(0, 27, 54, 0.06)
+
+  .model-sidebar-title
+    margin-bottom: 0.75rem
+
+  .mc-sidebar-note
+    font-size: 0.75rem
+    color: $mc-label
+    margin-top: 0.5rem
+
+  .mc-layer-table
+    background: transparent
+    font-size: 0.85rem
+
+    code
+      background: $mc-panel-bg
+      color: $brainscore_gray4
+
+// provenance
+.mc-verification-bar
+  display: flex
+  height: 8px
+  border-radius: 999px
+  overflow: hidden
+  background: $mc-panel-bg
+  margin-bottom: 0.75rem
+
+  span
+    flex-grow: var(--metadata-count, 1)
+
+    &.is-verified
+      background: $mc-verified
+    &.is-inferred
+      background: $mc-inferred
+    &.is-undocumented
+      background: $mc-undocumented
+
+.mc-verification-counts
+  > div
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    font-size: 0.85rem
+    padding: 0.15rem 0
+
+    dt
+      width: 9px
+      height: 9px
+      border-radius: 50%
+      flex-shrink: 0
+
+      &.is-verified
+        background: $mc-verified
+      &.is-inferred
+        background: $mc-inferred
+      &.is-undocumented
+        background: $mc-undocumented
+
+    dd
+      margin-left: 0
+      color: darken($mc-label, 10%)
+
+      strong
+        color: $brainscore_gray4
+
+// lineage
+.mc-lineage-tree
+  list-style: none
+  margin: 0 0 0.5rem 0
+  padding-left: 0
+
+  li
+    position: relative
+    padding-left: 1.1rem
+    font-size: 0.85rem
+    margin-bottom: 0.35rem
+
+    &::before
+      content: ""
+      position: absolute
+      left: 0.25rem
+      top: 0.45em
+      width: 7px
+      height: 7px
+      border-radius: 50%
+      background: $mc-undocumented
+
+  .mc-lineage-ancestor
+    color: $mc-label
+
+    a
+      color: darken($mc-label, 15%)
+      text-decoration: underline
+
+  .mc-lineage-current
+    &::before
+      background: $brainscore_green
+
+    strong
+      color: $brainscore_gray4
+      word-break: break-all
+
+.mc-lineage-label
+  text-transform: uppercase
+  letter-spacing: 0.08em
+  font-size: 0.65rem
+  font-weight: 700
+  color: $mc-label
+  margin: 0.75rem 0 0.4rem
+
+.mc-lineage-related
+  list-style: none
+  margin: 0
+  padding-left: 0
+
+  li
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 0.5rem
+    font-size: 0.8rem
+    padding: 0.2rem 0
+
+    .mc-lineage-related-name
+      word-break: break-all
+
+.mc-tag
+  flex-shrink: 0
+  font-size: 0.65rem
+  font-weight: 600
+  background: $mc-panel-bg
+  border: 1px solid $mc-border
+  border-radius: 999px
+  padding: 0.05rem 0.5rem
+  color: darken($mc-label, 10%)
+
+.mc-lineage-toggle
+  background: none
+  border: none
+  color: $brainscore_sky
+  font-size: 0.75rem
+  cursor: pointer
+  padding: 0.35rem 0
+  display: inline-flex
+  align-items: center
+  gap: 0.35rem

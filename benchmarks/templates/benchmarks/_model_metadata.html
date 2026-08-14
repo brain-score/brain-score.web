@@ -1,0 +1,106 @@
+{% if model_metadata and model_metadata.has_card_content %}
+<section class="box model-card-section model-metadata" data-model-metadata>
+    <div class="mc-heading">
+        <div>
+            <p class="mc-kicker">Curated model metadata</p>
+            <h2 class="title is-4 mc-title">At-a-glance</h2>
+        </div>
+        <span class="mc-badge">Schema v{{ model_metadata.schema_version }}</span>
+    </div>
+
+    <dl class="mc-specs">
+        <div>
+            <dt>Architecture</dt>
+            <dd>{% if model_metadata.architecture_description %}{{ model_metadata.architecture_description }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Parameters</dt>
+            <dd>{% if model_metadata.parameter_count_display %}{{ model_metadata.parameter_count_display }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Input resolution</dt>
+            <dd>{% if model_metadata.input_resolution_display %}{{ model_metadata.input_resolution_display }} pixels{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Recurrent</dt>
+            <dd>{% if model_metadata.recurrent_display %}{{ model_metadata.recurrent_display }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Supervision</dt>
+            <dd>{% if model_metadata.supervision_description %}{{ model_metadata.supervision_description }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Weights provider</dt>
+            <dd>
+                {% if model_metadata.weights_provider %}
+                    {% if model_metadata.weights_provider_url %}<a href="{{ model_metadata.weights_provider_url }}" target="_blank" rel="noopener noreferrer">{{ model_metadata.weights_provider }}</a>
+                    {% else %}{{ model_metadata.weights_provider }}{% endif %}
+                {% else %}<span class="not-documented">Not documented</span>{% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt>Trainable layers</dt>
+            <dd>{% if model_metadata.trainable_layers_display %}{{ model_metadata.trainable_layers_display }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Checkpoint</dt>
+            <dd>{% if model_metadata.checkpoint %}{{ model_metadata.checkpoint }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+        </div>
+    </dl>
+
+    <div class="mc-grid">
+        <section class="mc-panel">
+            <h3 class="title is-5 mc-panel-title">Training and data</h3>
+            {% if model_metadata.training_process %}
+                <p class="mc-panel-lede">{{ model_metadata.training_process }}</p>
+            {% endif %}
+            {% if model_metadata.datasets %}
+                <div class="mc-datasets">
+                    {% for dataset in model_metadata.datasets %}
+                        <div class="mc-dataset-chip">
+                            <span class="mc-dataset-role">{{ dataset.role_display }}</span>
+                            <strong>{{ dataset.dataset_name|default:dataset.dataset_identifier }}</strong>
+                            {% if dataset.sample_count_display %}
+                                <span class="mc-dataset-count">{{ dataset.sample_count_display }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="not-documented">Training datasets not documented</p>
+            {% endif %}
+            <dl class="mc-facts">
+                <div><dt>Objective:</dt><dd>{% if model_metadata.objective %}{{ model_metadata.objective }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd></div>
+                <div><dt>Loss:</dt><dd>{% if model_metadata.loss %}{{ model_metadata.loss }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd></div>
+                <div><dt>Learning rate:</dt><dd>{% if model_metadata.learning_rate %}{{ model_metadata.learning_rate }}{% else %}<span class="not-documented">Not publicly documented</span>{% endif %}</dd></div>
+                <div><dt>Batch size:</dt><dd>{% if model_metadata.batch_size %}{{ model_metadata.batch_size }}{% else %}<span class="not-documented">Not publicly documented</span>{% endif %}</dd></div>
+                <div><dt>Preprocessing:</dt><dd>{% if model_metadata.preprocessing_description %}{{ model_metadata.preprocessing_description }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd></div>
+            </dl>
+        </section>
+
+        <section class="mc-panel">
+            <h3 class="title is-5 mc-panel-title">Creators and licensing</h3>
+            <dl class="mc-facts">
+                <div>
+                    <dt>Organization:</dt>
+                    <dd>{% if model_metadata.contributors.organizations %}{{ model_metadata.contributors.organizations|join:"; " }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>Creators:</dt>
+                    <dd>{% if model_metadata.contributors.creators %}{{ model_metadata.contributors.creators|join:"; " }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>License:</dt>
+                    <dd>{% if model_metadata.license %}{{ model_metadata.license }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+                </div>
+            </dl>
+            {% if model_metadata.license_nuance %}
+                <p class="mc-note">{{ model_metadata.license_nuance }}</p>
+            {% endif %}
+            {% if model_metadata.extra_notes %}
+                <p class="mc-note">{{ model_metadata.extra_notes }}</p>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endif %}
