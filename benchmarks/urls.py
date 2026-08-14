@@ -3,7 +3,8 @@ from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
 from .views import user, model, competition2022, competition2024, compare, community, \
-    release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
+    release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials, \
+    compare_representations
 from .utils import show_token, refresh_cache, refresh_score_trends
 
 
@@ -118,6 +119,9 @@ for domain in supported_domains:
              name=f'{domain}-compare-data'),
         path(f'{domain}/compare/trend_pair/', partial(compare.trend_pair, domain=domain),
              name=f'{domain}-compare-trend-pair'),
+        path(f'{domain}/compare/representations/data/',
+             partial(compare_representations.data, domain=domain),
+             name=f'{domain}-compare-representations-data'),
     ]
     all_domain_urls.append(domain_urls)
 

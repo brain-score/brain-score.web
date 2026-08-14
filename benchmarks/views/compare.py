@@ -28,6 +28,8 @@ def view(request, domain: str):
         _build_benchmark_url_map(context["benchmarks"], domain)
     )
     context["compare_dashboard_data_url"] = reverse(f'{domain}-compare-data')
+    context["compare_representations_data_url"] = reverse(
+        f'{domain}-compare-representations-data')
     # The dashboard payload is fetched after the page shell renders. Keep the
     # legacy matrix empty; the dashboard initializes it when the fetch resolves.
     context["comparison_data"] = "[]"
