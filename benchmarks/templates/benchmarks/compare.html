@@ -263,6 +263,12 @@
                 }
             }
         });
+
+        // Deep link: ?tab=models opens the model-compare tab directly
+        // (model-card "Compare this model" links use this).
+        if (new URLSearchParams(window.location.search).get('tab') === 'models') {
+            tabModels.click();
+        }
     })();
     </script>
     </div>

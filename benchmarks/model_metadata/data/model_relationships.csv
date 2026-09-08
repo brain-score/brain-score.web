@@ -1,0 +1,72 @@
+domain,identifier,ordinal,base_identifier,base_name,relationship
+vision,AdvProp_efficientnet-b2,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b4,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b6,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b7,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b8,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AlexNet_SIN,0,alexnet,AlexNet,variant_of
+vision,AlexNet_SIN_fov12,0,alexnet,AlexNet,variant_of
+vision,AlexNet_SIN_fov16,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_01,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_02,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_03,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_06,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_07,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_09,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_10,0,alexnet,AlexNet,variant_of
+vision,antialiased-r50,0,standard-torchvision-resnet-50,Standard torchvision ResNet-50,fine_tuned_from
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,0,clip-convnext-base-image-tower,CLIP-ConvNeXt-Base image tower,fine_tuned_from
+vision,convnext_base_imagenet_full_seed-0,0,convnext-base,ConvNeXt-Base,fine_tuned_from
+vision,convnext_tiny:in12k_ft_in1k,0,convnext-tiny-pretrained-on-imagenet-12k,ConvNeXt-Tiny pretrained on ImageNet-12k,fine_tuned_from
+vision,convnext_tiny_imagenet_full_seed-0,0,convnext-tiny,ConvNeXt-Tiny,fine_tuned_from
+vision,convnext_tiny_sup,0,convnext-tiny,ConvNeXt-Tiny,variant_of
+vision,convnext_xlarge:fb_in22k_ft_in1k,0,convnext-xlarge-pretrained-on-imagenet-22k-by-the-original-convnext-paper-authors,ConvNeXt-XLarge pretrained on ImageNet-22k by the original ConvNeXt paper authors,fine_tuned_from
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,0,clip-convnext-xxlarge-image-tower-from-openclip,CLIP-ConvNeXt-XXLarge image tower from OpenCLIP,fine_tuned_from
+vision,effnetb1_cutmixpatch_augmix_robust32_avge4e7_manylayers_324x288,0,efficientnet-b1-noisy-student,EfficientNet-B1 Noisy Student,fine_tuned_from
+vision,effnetb1_cutmixpatch_SAM_robust32_avge6e8e9e10_manylayers_324x288,0,efficientnet-b1-noisy-student,EfficientNet-B1 Noisy Student,fine_tuned_from
+vision,focalnet_tiny_lrf_in1k,0,focalnet-tiny,FocalNet-Tiny,fine_tuned_from
+vision,grcnn,0,grcnn-55,GRCNN-55,variant_of
+vision,mobilenet_v2_1_4_224,0,mobilenetv2,MobileNetV2,variant_of
+vision,pnasnet_large_halfPrecision,0,pnasnet-5-large,PNASNet-5-Large,variant_of
+vision,ReAlnet01_cornet,0,CORnet-S,CORnet-S,fine_tuned_from
+vision,ReAlnet01_cornet_fov4,0,CORnet-S,CORnet-S,variant_of
+vision,ReAlnet03_cornet,0,CORnet-S,CORnet-S,fine_tuned_from
+vision,ReAlnet04_cornet,0,CORnet-S,CORnet-S,fine_tuned_from
+vision,Res2Net50_26w_4s,0,res2net-50,Res2Net-50,variant_of
+vision,resnet-50-robust,0,resnet-50,ResNet-50,variant_of
+vision,resnet152_imagenet_full,0,resnet-152,ResNet-152,variant_of
+vision,resnet50-moclr8deg,0,resnet-50,ResNet-50,variant_of
+vision,resnet50-SIN,0,resnet-50,ResNet-50,variant_of
+vision,resnet50-SIN_IN,0,resnet-50,ResNet-50,variant_of
+vision,resnet50-SIN_IN_IN,0,resnet-50,ResNet-50,fine_tuned_from
+vision,resnet50-sup,0,resnet-50,ResNet-50,variant_of
+vision,resnet50-VITO-8deg-cc,0,resnet-50,ResNet-50,variant_of
+vision,resnet50-vitoimagevidnet8,0,resnet-50,ResNet-50,variant_of
+vision,resnet50_ewconplus_wzc,0,resnet-50,ResNet-50,variant_of
+vision,resnet50_imagenet_full,0,resnet-50,ResNet-50,variant_of
+vision,resnet50_robust_l2_eps1,0,resnet-50,ResNet-50,variant_of
+vision,resnet50_tutorial,0,resnet-50,ResNet-50,variant_of
+vision,resnet_50_v1,0,resnet-50,ResNet-50,variant_of
+vision,resnet_50_v1_spiking,0,resnet-50,ResNet-50,variant_of
+vision,resnet_50_v2,0,resnet-50,ResNet-50,variant_of
+vision,resnet_SIN_IN_FT_IN,0,resnet-50,ResNet-50,fine_tuned_from
+vision,resnext101_32x16d_wsl,0,resnext-101,ResNeXt-101,fine_tuned_from
+vision,resnext101_32x32d_wsl,0,resnext-101,ResNeXt-101,fine_tuned_from
+vision,resnext101_32x48d_wsl,0,resnext-101,ResNeXt-101,fine_tuned_from
+vision,resnext101_32x8d_wsl,0,resnext-101,ResNeXt-101,fine_tuned_from
+vision,shufflenet_v2_x1_0,0,shufflenet-v2,ShuffleNet V2,variant_of
+vision,swin_small_patch4_window7_224:ms_in22k_ft_in1k,0,swin-transformer-small,Swin Transformer Small,fine_tuned_from
+vision,vit_base_patch16_clip_224:openai_ft_in1k,0,openai-clip-vit-b-16-image-encoder,OpenAI CLIP ViT-B/16 image encoder,fine_tuned_from
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,0,openclip-vit-h-14-image-encoder,OpenCLIP ViT-H/14 image encoder,fine_tuned_from
+vision,ViT_L_32_imagenet1k,0,vision-transformer-architecture,Vision Transformer architecture,variant_of
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,0,clip-vit-l-14-via-openclip,CLIP ViT-L/14 via OpenCLIP,fine_tuned_from
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,0,clip-vit-l-14-via-openclip,CLIP ViT-L/14 via OpenCLIP,fine_tuned_from
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,0,clip-vit-l-14,CLIP ViT-L/14,fine_tuned_from
+vision,vit_large_patch14_clip_224:openai_ft_in1k,0,clip-vit-l-14,CLIP ViT-L/14,fine_tuned_from
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,0,clip-vit-l-14,CLIP ViT-L/14,fine_tuned_from
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,0,vision-transformer,Vision Transformer,variant_of
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,0,vision-transformer,Vision Transformer,variant_of
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,0,hybrid-resnet-stem,Hybrid ResNet-stem,variant_of
+vision,VOneCORnet-S,0,CORnet-S,CORnet-S,variant_of
+vision,voneresnet-50,0,resnet-50,ResNet-50,variant_of
+vision,voneresnet-50-non_stochastic,0,resnet-50,ResNet-50,variant_of

@@ -1,33 +1,48 @@
 {% if model_metadata %}
 <section class="box model-card-section model-eval-io">
     <div class="mc-heading">
-        <h2 class="title is-4 mc-title">Evaluation and I/O</h2>
-        <span class="mc-badge">from metadata</span>
+        <h2 class="title is-4 mc-title">
+            {% if model_metadata.section_summary.eval_io.documented == 0 %}
+                <span class="want_to_click collapsible_control is_collapsible"
+                      data-initial="hidden" data-target="mc-eval-io-body"></span>
+            {% endif %}
+            Evaluation and I/O
+        </h2>
+        <div class="mc-heading-actions">
+            <button class="mc-edit-button" type="button" disabled
+                    title="Metadata editing is coming soon — for now, updates go through the curation workbook">
+                <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            <span class="mc-badge">from metadata</span>
+        </div>
     </div>
-    <dl class="mc-specs">
+    {% if model_metadata.section_summary.eval_io.documented == 0 %}
+        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.eval_io.total }} fields documented — this model hasn't been curated yet.</p>
+    {% endif %}
+    <dl class="mc-specs" id="mc-eval-io-body">
         <div>
-            <dt>Test datasets</dt>
-            <dd>{% if model_metadata.eval_io.test_datasets %}{{ model_metadata.eval_io.test_datasets }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+            <dt>Test datasets{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_test_datasets %}</dt>
+            <dd>{% if model_metadata.eval_io.test_datasets %}{{ model_metadata.eval_io.test_datasets }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Validation datasets</dt>
-            <dd>{% if model_metadata.eval_io.validation_datasets %}{{ model_metadata.eval_io.validation_datasets }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+            <dt>Validation datasets{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_validation_datasets %}</dt>
+            <dd>{% if model_metadata.eval_io.validation_datasets %}{{ model_metadata.eval_io.validation_datasets }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Input format</dt>
-            <dd>{% if model_metadata.eval_io.input_format %}{{ model_metadata.eval_io.input_format }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+            <dt>Input format{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_input_format %}</dt>
+            <dd>{% if model_metadata.eval_io.input_format %}{{ model_metadata.eval_io.input_format }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Output format</dt>
-            <dd>{% if model_metadata.eval_io.output_format %}{{ model_metadata.eval_io.output_format }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+            <dt>Output format{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_output_format %}</dt>
+            <dd>{% if model_metadata.eval_io.output_format %}{{ model_metadata.eval_io.output_format }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Tokenizer</dt>
-            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}<span class="not-documented">not applicable</span>{% endif %}</dd>
+            <dt>Tokenizer{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_tokenizer %}</dt>
+            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}{% include "benchmarks/_mc_empty_value.html" with not_applicable=True %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Model version</dt>
-            <dd>{% if model_metadata.eval_io.model_version %}{{ model_metadata.eval_io.model_version }}{% else %}<span class="not-documented">Not documented</span>{% endif %}</dd>
+            <dt>Model version{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_model_version %}</dt>
+            <dd>{% if model_metadata.eval_io.model_version %}{{ model_metadata.eval_io.model_version }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
     </dl>
 </section>

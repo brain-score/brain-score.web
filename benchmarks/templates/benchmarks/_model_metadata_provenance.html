@@ -7,8 +7,11 @@
                 {% if model_metadata.verification.verified %}
                     <span class="is-verified" style="--metadata-count: {{ model_metadata.verification.verified }}"></span>
                 {% endif %}
-                {% if model_metadata.verification.inferred %}
-                    <span class="is-inferred" style="--metadata-count: {{ model_metadata.verification.inferred }}"></span>
+                {% if model_metadata.verification.probable %}
+                    <span class="is-probable" style="--metadata-count: {{ model_metadata.verification.probable }}"></span>
+                {% endif %}
+                {% if model_metadata.verification.uncertain %}
+                    <span class="is-uncertain" style="--metadata-count: {{ model_metadata.verification.uncertain }}"></span>
                 {% endif %}
                 {% if model_metadata.verification.undocumented %}
                     <span class="is-undocumented" style="--metadata-count: {{ model_metadata.verification.undocumented }}"></span>
@@ -16,11 +19,17 @@
             </div>
             <dl class="mc-verification-counts">
                 <div><dt class="is-verified"></dt><dd><strong>{{ model_metadata.verification.verified }}</strong> verified</dd></div>
-                <div><dt class="is-inferred"></dt><dd><strong>{{ model_metadata.verification.inferred }}</strong> inferred</dd></div>
+                <div><dt class="is-probable"></dt><dd><strong>{{ model_metadata.verification.probable }}</strong> probable</dd></div>
+                {% if model_metadata.verification.uncertain %}
+                    <div><dt class="is-uncertain"></dt><dd><strong>{{ model_metadata.verification.uncertain }}</strong> uncertain</dd></div>
+                {% endif %}
                 <div><dt class="is-undocumented"></dt><dd><strong>{{ model_metadata.verification.undocumented }}</strong> undocumented</dd></div>
             </dl>
+            {% if model_metadata.source == 'legacy' %}
+                <p class="mc-sidebar-note">Auto-extracted from the submission record — not yet human-verified.</p>
+            {% endif %}
         {% else %}
-            <p class="not-documented">Not recorded</p>
+            <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
         {% endif %}
     </div>
 </div>

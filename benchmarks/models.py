@@ -513,7 +513,7 @@ class FinalBenchmarkContext(models.Model):
     identifier = models.CharField(max_length=255)
     short_name = models.CharField(max_length=255)
     benchmark_id = models.IntegerField(null=True, blank=True)
-    # Metadata related fields that returns a JSON object of the above metadata objects. 
+    # Metadata related fields that returns a JSON object of the above metadata objects.
     # Columns become keys in the JSON object.
     benchmark_data_meta = JSONBField(null=True, blank=True)
     benchmark_metric_meta = JSONBField(null=True, blank=True)
@@ -572,7 +572,7 @@ class FinalModelContext(models.Model):
         public (bool): Whether the model is publicly visible
         model_meta (dict, optional): JSON object containing model metadata including (see modelmeta table; attributes become keys)
     """
-    
+
     model_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     reference_identifier = models.CharField(max_length=255, null=True, blank=True)
@@ -627,7 +627,7 @@ class BenchmarkMinMax(models.Model):
     class Meta:
         managed = False
         db_table = 'mv_benchmark_minmax'
-        
+
 class FileUploadTracker(models.Model):
     id = models.AutoField(primary_key=True, serialize=False)
     filename = models.CharField(max_length=1000)
@@ -642,3 +642,102 @@ class FileUploadTracker(models.Model):
     class Meta:
         db_table = 'brainscore_fileuploadtracker'
 
+class ModelMetadataRecord(models.Model):
+    id = models.AutoField(primary_key=True)
+    domain = models.CharField(max_length=200, default="vision")
+    identifier = models.CharField(max_length=200)
+    display_name = models.CharField(max_length=200, null=True, default=None)
+    version = models.CharField(max_length=200, null=True, default=None)
+    architecture_family = models.CharField(max_length=100, null=True, default=None)
+    architecture_description = models.TextField(null=True, default=None)
+    parameter_count = models.BigIntegerField(null=True, default=None)
+    parameter_count_exact = models.BooleanField(null=True, default=None)
+    trainable_layers = models.TextField(null=True, default=None)  # free text, e.g. "all 88 layers"
+    recurrent = models.BooleanField(null=True, default=None)
+    input_modality = models.CharField(max_length=50, null=True, default=None)
+    input_channels = models.IntegerField(null=True, default=None)
+    input_height = models.IntegerField(null=True, default=None)
+    input_width = models.IntegerField(null=True, default=None)
+    visual_degrees = models.FloatField(null=True, default=None)
+    visual_degrees_description = models.TextField(null=True, default=None)
+    supervision_type = models.CharField(max_length=100, null=True, default=None)
+    supervision_description = models.TextField(null=True, default=None)
+    interface_description = models.TextField(null=True, default=None)
+    preprocessing_description = models.TextField(null=True, default=None)
+    training_process = models.TextField(null=True, default=None)
+    dataset_summary = models.TextField(null=True, default=None)
+    weights_provider = models.CharField(max_length=500, null=True, default=None)
+    checkpoint_identifier = models.CharField(max_length=500, null=True, default=None)
+    source_url = models.CharField(max_length=1000, null=True, default=None)
+    license = models.CharField(max_length=500, null=True, default=None)
+    curation_confidence = models.CharField(max_length=50, null=True, default=None)
+
+    def __repr__(self):
+        return generic_repr(self)
+
+    class Meta:
+        db_table = 'brainscore_model_metadata'
+        unique_together = (('domain', 'identifier'),)
+
+
+class ModelMetadataDataset(models.Model):
+    record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='datasets')
+    ordinal = models.IntegerField()
+    dataset_identifier = models.CharField(max_length=200, null=True, default=None)
+    dataset_name = models.CharField(max_length=200)
+    role = models.CharField(max_length=50)  # e.g. training, fine_tuning, pre_training
+    description = models.TextField(null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_dataset'
+        unique_together = (('record', 'ordinal'),)
+        ordering = ('ordinal',)
+
+
+class ModelMetadataIntendedUse(models.Model):
+    record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='intended_use')
+    category = models.CharField(max_length=50)  # applications | users | limitations | biases
+    ordinal = models.IntegerField()
+    value = models.TextField()
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_intended_use'
+        unique_together = (('record', 'category', 'ordinal'),)
+        ordering = ('category', 'ordinal')
+
+
+class ModelMetadataContributor(models.Model):
+    record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='contributors')
+    kind = models.CharField(max_length=50)  # creators | organizations
+    ordinal = models.IntegerField()
+    name = models.TextField()
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_contributor'
+        unique_together = (('record', 'kind', 'ordinal'),)
+        ordering = ('kind', 'ordinal')
+
+
+class ModelMetadataRelationship(models.Model):
+    record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='relationships')
+    ordinal = models.IntegerField()
+    # base model may not have a metadata record (or site model) of its own
+    base_identifier = models.CharField(max_length=200, null=True, default=None)
+    base_name = models.CharField(max_length=200)
+    relationship = models.CharField(max_length=50)  # variant_of | fine_tuned_from | derived_from
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_relationship'
+        unique_together = (('record', 'ordinal'),)
+        ordering = ('ordinal',)
+
+
+class ModelMetadataAssertion(models.Model):
+    record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='assertions')
+    path = models.CharField(max_length=200)  # JSON pointer into the v2 schema, e.g. /model/display_name
+    status = models.CharField(max_length=20)  # verified | inferred | undocumented
+    source = models.CharField(max_length=100, null=True, default=None)
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_assertion'
+        unique_together = (('record', 'path'),)

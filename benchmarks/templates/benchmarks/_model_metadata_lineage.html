@@ -30,6 +30,10 @@
                                 <span class="mc-lineage-related-name">{{ related.display_name }}</span>
                             {% endif %}
                             <span class="mc-tag">{{ related.relationship_display }}</span>
+                            {% if domain == 'vision' and related.model_card_id %}
+                                <a class="mc-lineage-compare" title="Compare with {{ related.display_name }}"
+                                   href="/vision/compare/?tab=models&model_a={{ model.name|urlencode }}&model_b={{ related.identifier|urlencode }}">&#8646;</a>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ul>
@@ -42,7 +46,7 @@
                 {% endif %}
             {% endif %}
         {% else %}
-            <p class="not-documented">No lineage recorded</p>
+            <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
             <p class="mc-sidebar-note">Parent and sibling models appear here once model relationships are documented.</p>
         {% endif %}
     </div>

@@ -738,9 +738,20 @@ $(document).ready(function () {
     var modelNames = extractModelNames(comparison_data);
     initDropdowns(modelNames);
 
-    if (modelNames.indexOf(DEFAULT_MODEL_A) !== -1 && modelNames.indexOf(DEFAULT_MODEL_B) !== -1) {
-        $('#model-x-select').val(DEFAULT_MODEL_A).trigger('change.select2');
-        $('#model-y-select').val(DEFAULT_MODEL_B).trigger('change.select2');
+    // Deep links: /vision/compare/?tab=models&model_a=<name>&model_b=<name>
+    // (model cards link here). Unknown names fall back to the defaults.
+    var urlParams = new URLSearchParams(window.location.search);
+    var initialA = urlParams.get('model_a');
+    var initialB = urlParams.get('model_b');
+    if (modelNames.indexOf(initialA) === -1) initialA = DEFAULT_MODEL_A;
+    if (modelNames.indexOf(initialB) === -1 || initialB === initialA) {
+        // also fixes the A==B collision when model_a is the default B
+        initialB = (initialA !== DEFAULT_MODEL_B) ? DEFAULT_MODEL_B : DEFAULT_MODEL_A;
+    }
+
+    if (modelNames.indexOf(initialA) !== -1 && modelNames.indexOf(initialB) !== -1) {
+        $('#model-x-select').val(initialA).trigger('change.select2');
+        $('#model-y-select').val(initialB).trigger('change.select2');
         updateAllCharts();
     }
 

@@ -38,22 +38,44 @@
                 <span class="mc-hero-pill is-contributor">
                     <i class="fa-solid fa-user"></i> Contributed by <strong>{{ model|display_submitter:user|default:"" }}</strong>
                 </span>
+                {% if model.domain == 'vision' and model.public %}
+                    <a class="mc-hero-pill is-compare"
+                       href="/vision/compare/?tab=models&model_a={{ model.name|urlencode }}">
+                        <i class="fa-solid fa-scale-balanced"></i> Compare this model
+                    </a>
+                {% endif %}
             </div>
 
             {# Key-stat chips #}
             {% if model_metadata %}
                 <div class="mc-hero-stats">
                     {% if model_metadata.architecture_description %}
-                        <div class="mc-hero-stat is-architecture">
-                            <span class="mc-hero-stat-label">Architecture</span>
-                            <span class="mc-hero-stat-value">{{ model_metadata.architecture_description }}</span>
-                        </div>
+                        {% if hero_filter_links.architecture %}
+                            <a class="mc-hero-stat is-architecture is-filter" href="{{ hero_filter_links.architecture }}"
+                               title="Show leaderboard models with this architecture">
+                                <span class="mc-hero-stat-label">Architecture <i class="fa-solid fa-filter"></i></span>
+                                <span class="mc-hero-stat-value">{{ model_metadata.architecture_description }}</span>
+                            </a>
+                        {% else %}
+                            <div class="mc-hero-stat is-architecture">
+                                <span class="mc-hero-stat-label">Architecture</span>
+                                <span class="mc-hero-stat-value">{{ model_metadata.architecture_description }}</span>
+                            </div>
+                        {% endif %}
                     {% endif %}
                     {% if model_metadata.parameter_count_display %}
-                        <div class="mc-hero-stat is-parameters">
-                            <span class="mc-hero-stat-label">Parameters</span>
-                            <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
-                        </div>
+                        {% if hero_filter_links.parameters %}
+                            <a class="mc-hero-stat is-parameters is-filter" href="{{ hero_filter_links.parameters }}"
+                               title="Show leaderboard models of similar size (±20%)">
+                                <span class="mc-hero-stat-label">Parameters <i class="fa-solid fa-filter"></i></span>
+                                <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
+                            </a>
+                        {% else %}
+                            <div class="mc-hero-stat is-parameters">
+                                <span class="mc-hero-stat-label">Parameters</span>
+                                <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
+                            </div>
+                        {% endif %}
                     {% endif %}
                     {% if model_metadata.input_resolution_display %}
                         <div class="mc-hero-stat is-input">
@@ -119,7 +141,7 @@
                     </tbody>
                 </table>
             {% else %}
-                <p class="not-documented">Not documented</p>
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
                 <p class="mc-sidebar-note">
                     No layer commitments found for this model. Older submissions might not have stored this
                     information but will be updated when evaluated on new benchmarks.
@@ -139,7 +161,7 @@
             {% if visual_degrees %}
                 <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
             {% else %}
-                <p class="not-documented">Not documented</p>
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
             {% endif %}
             <p class="mc-sidebar-note">
                 Drives stimulus scaling. A null here means benchmarks run on the default.
@@ -390,6 +412,7 @@ model.look_at(...)</pre>
         {# Evaluation and I/O #}
         {% include "benchmarks/_model_metadata_eval_io.html" %}
     </section>
+    <script src="{% static 'benchmarks/js/model-card.js' %}"></script>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>
     <script>

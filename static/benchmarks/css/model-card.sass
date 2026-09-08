@@ -8,7 +8,8 @@ $mc-label: #7a869c
 $mc-muted: $brainscore_gray3
 $mc-panel-bg: #f7f9fc
 $mc-verified: $brainscore_green
-$mc-inferred: #f0a24b
+$mc-probable: #f0a24b
+$mc-uncertain: #e06666
 $mc-undocumented: #c3cbd9
 
 // ---------- shared card chrome ----------
@@ -29,6 +30,31 @@ $mc-undocumented: #c3cbd9
 
     .mc-title
       margin-bottom: 0
+
+.mc-heading-actions
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  flex-shrink: 0
+
+// Placeholder for the future metadata-editing interface: visible so the card
+// communicates that fields are editable, disabled until the backend exists.
+.mc-edit-button
+  display: inline-flex
+  align-items: center
+  gap: 0.35rem
+  font-size: 0.7rem
+  font-weight: 600
+  padding: 0.2rem 0.65rem
+  border-radius: 999px
+  background: white
+  color: $mc-label
+  border: 1px solid $mc-border
+  white-space: nowrap
+
+  &:disabled
+    cursor: not-allowed
+    opacity: 0.75
 
 .mc-kicker
   text-transform: uppercase
@@ -55,15 +81,51 @@ $mc-undocumented: #c3cbd9
     color: darken($brainscore_sky, 12%)
     border-color: rgba($brainscore_sky, 0.35)
 
-.not-documented
+// Unified empty-state slot (_mc_empty_value.html). The dashed outline marks
+// the field as documentable — a hook for the future editing interface.
+.mc-empty
+  display: inline-block
   color: $mc-muted
   font-style: italic
   font-weight: 400
+  font-size: 0.85em
+  border: 1px dashed $mc-border
+  border-radius: 4px
+  padding: 0 0.45rem
+  line-height: 1.5
+
+  &.is-na  // "Not applicable" is a fact, not a documentation gap
+    border: none
+    padding: 0
+
+// One-line summary shown in place of a fully-undocumented section's body
+.mc-empty-summary
+  font-size: 0.85rem
+  color: $mc-label
+  margin-bottom: 0.5rem
+
+// Confidence dot: yellow = probable (medium), red = uncertain (low)
+.mc-field-dot
+  display: inline-block
+  width: 8px
+  height: 8px
+  border-radius: 50%
+  background: $mc-probable
+  margin-left: 0.35rem
+  vertical-align: middle
+  cursor: help
+
+  &.is-uncertain
+    background: $mc-uncertain
 
 .mc-note
   font-size: 0.8rem
   color: $mc-label
   margin-top: 0.75rem
+
+.mc-doc-hint
+  .mc-empty
+    margin: 0 0.15rem
 
 // ---------- hero ----------
 
@@ -106,6 +168,10 @@ $mc-undocumented: #c3cbd9
       background: rgba(255, 255, 255, 0.55)
       color: rgba(0, 27, 54, 0.65)
 
+    &.is-compare
+      border-color: rgba($brainscore_sky, 0.7)
+      box-shadow: 0 0 0 1px rgba($brainscore_sky, 0.7)
+
     .mc-hero-pill-note
       font-size: 0.65rem
       text-transform: lowercase
@@ -133,9 +199,27 @@ $mc-undocumented: #c3cbd9
     &.is-input
       border-left-color: $brainscore_lunar
     &.is-supervision
-      border-left-color: $mc-inferred
+      border-left-color: $mc-probable
     &.is-license
       border-left-color: $brainscore_gray3
+
+    // chips that deep-link into a pre-filtered leaderboard
+    &.is-filter
+      text-decoration: none
+      color: inherit
+      cursor: pointer
+      transition: box-shadow 0.15s, transform 0.15s
+
+      .mc-hero-stat-label .fa-filter
+        font-size: 0.55rem
+        opacity: 0.6
+
+      &:hover, &:focus-visible
+        box-shadow: 0 2px 6px rgba(0, 27, 54, 0.25)
+        transform: translateY(-1px)
+
+        .mc-hero-stat-label .fa-filter
+          opacity: 1
 
     .mc-hero-stat-label
       text-transform: uppercase
@@ -284,7 +368,7 @@ $mc-undocumented: #c3cbd9
   &.is-users
     border-left-color: $brainscore_sky
   &.is-limitation
-    border-left-color: $mc-inferred
+    border-left-color: $mc-probable
   &.is-bias
     border-left-color: #d4737e
 
@@ -333,8 +417,10 @@ $mc-undocumented: #c3cbd9
 
     &.is-verified
       background: $mc-verified
-    &.is-inferred
-      background: $mc-inferred
+    &.is-probable
+      background: $mc-probable
+    &.is-uncertain
+      background: $mc-uncertain
     &.is-undocumented
       background: $mc-undocumented
 
@@ -354,8 +440,10 @@ $mc-undocumented: #c3cbd9
 
       &.is-verified
         background: $mc-verified
-      &.is-inferred
-        background: $mc-inferred
+      &.is-probable
+        background: $mc-probable
+      &.is-uncertain
+        background: $mc-uncertain
       &.is-undocumented
         background: $mc-undocumented
 
@@ -436,6 +524,16 @@ $mc-undocumented: #c3cbd9
   border-radius: 999px
   padding: 0.05rem 0.5rem
   color: darken($mc-label, 10%)
+
+.mc-lineage-compare
+  flex-shrink: 0
+  font-size: 0.7rem
+  text-decoration: none
+  color: $mc-label
+  padding: 0 0.25rem
+
+  &:hover, &:focus-visible
+    color: darken($brainscore_sky, 10%)
 
 .mc-lineage-toggle
   background: none
