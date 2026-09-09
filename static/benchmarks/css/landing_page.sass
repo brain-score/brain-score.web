@@ -347,3 +347,1160 @@ button.simple_button
     margin: auto
   .text-default-small
     font-size: 100%
+
+// Dashboard landing page
+.landing-nav
+  border-bottom: 1px solid rgba(0, 27, 54, 0.08)
+  box-shadow: 0 4px 20px rgba(0, 27, 54, 0.04)
+
+  .landing-nav__links
+    align-items: center
+
+    > .navbar-item
+      color: $brainscore_gray4
+      font-size: 0.9rem
+      font-weight: 600
+
+      &:hover
+        color: $brainscore_sky
+        background: transparent
+
+.landing-dashboard
+  min-height: 100vh
+  padding-top: 114px
+  color: $brainscore_gray4
+  font-family: "Open Sans", sans-serif
+  background: radial-gradient(circle at 8% 4%, rgba(69, 198, 118, 0.1), transparent 25rem), radial-gradient(circle at 92% 28%, rgba(71, 183, 222, 0.09), transparent 28rem), linear-gradient(180deg, #fbfdfc 0%, #f1faf5 48%, #fbfdfc 100%)
+
+  h1, h2, h3, p
+    margin: 0
+
+  h1
+    max-width: 720px
+    font-size: clamp(2.35rem, 4vw, 4.25rem)
+    line-height: 1.04
+    letter-spacing: -0.045em
+    font-weight: 700
+
+  h2
+    font-size: clamp(1.65rem, 2.3vw, 2.45rem)
+    line-height: 1.15
+    letter-spacing: -0.03em
+    font-weight: 700
+
+  h3
+    font-size: 1.15rem
+    line-height: 1.25
+    font-weight: 700
+
+  a
+    color: inherit
+
+.landing-dashboard__intro
+  position: relative
+  display: grid
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr)
+  min-height: 390px
+  margin-top: 32px
+  margin-bottom: 26px
+  overflow: hidden
+  border: 1px solid rgba(69, 198, 118, 0.16)
+  border-radius: 32px
+  background: linear-gradient(118deg, rgba(211, 246, 224, 0.98) 0%, rgba(207, 242, 232, 0.94) 44%, rgba(199, 236, 247, 0.96) 100%)
+  box-shadow: 0 20px 54px rgba(20, 103, 78, 0.1)
+
+  &::after
+    content: ""
+    position: absolute
+    right: 27%
+    bottom: -84px
+    width: 240px
+    height: 240px
+    border: 1px solid rgba(255, 255, 255, 0.46)
+    border-radius: 50%
+
+.landing-hero__copy
+  position: relative
+  z-index: 2
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  justify-content: center
+  padding: 58px 24px 54px 7%
+
+.landing-hero__wordmark
+  width: clamp(245px, 30vw, 410px)
+  max-width: 88%
+  height: auto
+  margin-bottom: 18px
+
+.landing-hero__summary
+  max-width: 600px
+  margin-top: 19px !important
+  color: #405f6c
+  font-size: 1rem
+  line-height: 1.7
+
+.landing-hero__art
+  position: relative
+  z-index: 1
+  min-height: 390px
+
+  &::before
+    content: ""
+    position: absolute
+    inset: 28px 30px 28px 0
+    border: 1px solid rgba(255, 255, 255, 0.45)
+    border-radius: 50%
+
+  img
+    position: absolute
+    right: -12%
+    bottom: -6%
+    width: auto
+    height: 112%
+    max-width: none
+    opacity: 0.94
+
+.landing-bridge
+  display: grid
+  grid-template-columns: auto minmax(116px, 190px) auto
+  gap: 11px
+  align-items: center
+  width: min(100%, 510px)
+  margin-top: 32px
+
+.landing-bridge__endpoint
+  font-size: 0.67rem
+  font-weight: 800
+  letter-spacing: 0.08em
+  text-transform: uppercase
+
+  &.landing-bridge__endpoint--models
+    color: #1689b1
+
+  &.landing-bridge__endpoint--brain
+    color: #168b4b
+    text-align: right
+
+.landing-bridge__line
+  position: relative
+  display: block
+  height: 2px
+  background: linear-gradient(90deg, $brainscore_blue, #55c5a2 54%, $brainscore_green)
+
+  &::before, &::after
+    content: ""
+    position: absolute
+    top: 50%
+    width: 8px
+    height: 8px
+    border-radius: 50%
+    transform: translateY(-50%)
+
+  &::before
+    left: 0
+    background: $brainscore_blue
+
+  &::after
+    right: 0
+    background: $brainscore_green
+
+  img
+    position: absolute
+    top: 50%
+    left: 50%
+    width: 29px
+    height: 29px
+    padding: 5px
+    border-radius: 50%
+    background: rgba(255, 255, 255, 0.92)
+    transform: translate(-50%, -50%)
+    box-shadow: 0 4px 12px rgba(14, 92, 75, 0.14)
+
+.landing-eyebrow
+  margin-bottom: 10px !important
+  color: #168b4b
+  font-size: 0.72rem
+  font-weight: 800
+  letter-spacing: 0.13em
+  text-transform: uppercase
+
+.landing-button.button
+  min-height: 42px
+  padding: 0.65rem 1.15rem
+  border: 1px solid transparent
+  border-radius: 8px
+  background: linear-gradient(105deg, #35bf79, #36a9c8)
+  color: white
+  font-weight: 700
+  box-shadow: none
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease
+
+  &:hover, &:focus
+    border-color: transparent
+    background: linear-gradient(105deg, #24aa68, #2797b7)
+    color: white
+    transform: translateY(-1px)
+    box-shadow: 0 7px 18px rgba(31, 143, 139, 0.22)
+
+  &.landing-button--compact
+    min-height: 34px
+    padding: 0.4rem 1rem
+    font-size: 0.82rem
+
+  &.landing-button--outline
+    border-color: #b7c7c0
+    background: rgba(255, 255, 255, 0.74)
+    color: #1b708a
+
+    &:hover, &:focus
+      border-color: #47b7de
+      background: rgba(255, 255, 255, 0.94)
+      color: #15647c
+
+  &.landing-button--full
+    width: 100%
+    margin-top: 20px
+
+.landing-text-link
+  display: inline-flex
+  align-items: center
+  color: #087da6 !important
+  font-size: 0.86rem
+  font-weight: 700
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+.landing-panel
+  position: relative
+  overflow: hidden
+  border: 1px solid #dce8e2
+  border-radius: 12px
+  background: rgba(255, 255, 255, 0.94)
+  box-shadow: 0 12px 32px rgba(0, 27, 54, 0.07)
+
+  &::before
+    content: ""
+    position: absolute
+    z-index: 2
+    top: 0
+    right: 0
+    left: 0
+    height: 4px
+    background: linear-gradient(90deg, $brainscore_green, $brainscore_blue)
+
+  &.landing-panel--models::before
+    background: $brainscore_blue
+
+  &.landing-panel--benchmarks::before
+    background: $brainscore_green
+
+.landing-opening
+  display: grid
+  grid-template-columns: minmax(0, 2.15fr) minmax(290px, 0.85fr)
+  gap: 22px
+  align-items: stretch
+
+.landing-activity
+  padding: 28px
+
+.landing-section-heading
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 28px
+
+  > a
+    flex: 0 0 auto
+    margin-top: 8px
+    color: #087da6
+    font-size: 0.83rem
+    font-weight: 700
+
+  &.landing-section-heading--wide
+    align-items: flex-end
+    margin-bottom: 26px
+
+    > div > p:not(.landing-eyebrow)
+      max-width: 700px
+      margin-top: 10px
+      color: #5b6b78
+      line-height: 1.65
+
+.landing-update-grid
+  display: grid
+  grid-template-columns: repeat(3, minmax(0, 1fr))
+  gap: 12px
+  margin-top: 22px
+
+.landing-update-card
+  min-height: 132px
+  padding: 15px
+  border: 1px solid #e3ece7
+  border-radius: 9px
+  background: #f8fbf9
+
+  > a, > span
+    display: -webkit-box
+    overflow: hidden
+    color: $brainscore_gray4
+    font-size: 0.88rem
+    font-weight: 700
+    line-height: 1.45
+    text-decoration: none
+    -webkit-box-orient: vertical
+    -webkit-line-clamp: 3
+
+  > a:hover
+    color: #087da6
+
+.landing-update-card__meta
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 8px
+  margin-bottom: 14px
+
+  time
+    color: #7c8b96
+    font-size: 0.72rem
+    font-weight: 600
+
+.landing-tag
+  display: inline-flex
+  align-items: center
+  width: fit-content
+  padding: 3px 8px
+  border-radius: 999px
+  background: #e8f7ed
+  color: #137340
+  font-size: 0.65rem
+  font-weight: 800
+  letter-spacing: 0.05em
+  text-transform: uppercase
+
+  &.landing-tag--model
+    background: #e5f5fb
+    color: #087da6
+
+  &.landing-tag--story
+    background: #f1ebf7
+    color: #75508c
+
+  &.landing-tag--platform
+    background: #e8effc
+    color: #3f67a7
+
+.landing-submissions-heading
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  gap: 20px
+  margin: 28px 0 8px
+  padding-top: 20px
+  border-top: 1px solid #e4ece8
+
+  h3
+    color: #1689b1
+    font-size: 0.93rem
+
+  a
+    color: #087da6
+    font-size: 0.76rem
+    font-weight: 700
+
+.landing-submission-list
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 6px 22px
+
+.landing-submission
+  display: grid
+  grid-template-columns: 34px minmax(0, 1fr) auto
+  gap: 10px
+  align-items: center
+  min-width: 0
+  padding: 8px 5px
+  border-radius: 7px
+  text-decoration: none
+
+  &:hover
+    background: #f1f8fb
+
+  > time
+    color: #83909a
+    font-size: 0.68rem
+
+.landing-avatar
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 34px
+  height: 34px
+  border: 1px solid #b9dfec
+  border-radius: 50%
+  background: #e9f6fb
+  color: #137d9f
+  font-size: 0.67rem
+  font-weight: 800
+
+.landing-submission__body
+  min-width: 0
+
+  strong, span
+    display: block
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  strong
+    color: #203442
+    font-size: 0.77rem
+
+  span
+    margin-top: 2px
+    color: #71808b
+    font-size: 0.67rem
+
+.landing-onboarding
+  position: relative
+  display: flex
+  flex-direction: column
+  min-height: 100%
+  overflow: hidden
+  padding: 30px
+  border-radius: 12px
+  background: linear-gradient(150deg, #082f2b 0%, #0a4a48 56%, #116879 100%)
+  color: white
+  box-shadow: 0 12px 32px rgba(0, 45, 51, 0.16)
+
+  .landing-eyebrow
+    position: relative
+    z-index: 1
+    color: #80e6a7
+
+  h2
+    position: relative
+    z-index: 1
+    max-width: 300px
+    font-size: 1.85rem
+
+  > p:not(.landing-eyebrow)
+    position: relative
+    z-index: 1
+    margin-top: 15px
+    color: #d4e9e6
+    font-size: 0.88rem
+    line-height: 1.65
+
+  .landing-button
+    position: relative
+    z-index: 1
+    margin-top: auto
+    border-color: #6ed89a
+    background: #6ed89a
+    color: #07372a
+
+  .landing-text-link
+    position: relative
+    z-index: 1
+    justify-content: center
+    margin-top: 15px
+    color: #b8eaf1 !important
+
+.landing-onboarding__icon
+  position: relative
+  z-index: 1
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 44px
+  height: 44px
+  margin-bottom: 30px
+  border: 1px solid rgba(255, 255, 255, 0.2)
+  border-radius: 10px
+  color: #80e6a7
+  background: rgba(255, 255, 255, 0.08)
+
+.landing-onboarding__steps
+  margin: 23px 0 28px
+  padding: 0
+  list-style: none
+
+  li
+    display: flex
+    align-items: center
+    gap: 10px
+    margin: 10px 0
+    color: #e3f0ee
+    font-size: 0.79rem
+
+    span
+      display: inline-flex
+      align-items: center
+      justify-content: center
+      width: 22px
+      height: 22px
+      border-radius: 50%
+      background: rgba(128, 230, 167, 0.13)
+      color: #8aebaf
+      font-size: 0.68rem
+      font-weight: 800
+
+.landing-onboarding__network
+  position: absolute
+  right: -92px
+  bottom: -58px
+  width: 300px
+  pointer-events: none
+  opacity: 0.13
+  transform: rotate(-8deg)
+
+  img
+    display: block
+    width: 100%
+
+.landing-onboarding__steps
+  position: relative
+  z-index: 1
+
+.landing-explore, .landing-compare
+  padding-top: 92px
+
+.landing-explore__grid
+  display: grid
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.75fr)
+  gap: 22px
+
+.landing-space-card, .landing-leaderboard-preview
+  padding: 24px
+
+.landing-card-heading
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 20px
+  margin-bottom: 15px
+
+  h3
+    margin-top: 8px
+
+.landing-card-heading__hint
+  color: #7a8993
+  font-size: 0.69rem
+
+.landing-card-heading__tools
+  display: flex
+  align-items: center
+  gap: 10px
+  margin-top: 2px
+
+.landing-space-toggle
+  display: inline-flex
+  padding: 2px
+  border: 1px solid #cfddd6
+  border-radius: 7px
+  background: #f6faf8
+
+  button
+    min-width: 34px
+    height: 24px
+    padding: 0 8px
+    cursor: pointer
+    border: 0
+    border-radius: 5px
+    background: transparent
+    color: #6b7d78
+    font: inherit
+    font-size: 0.66rem
+    font-weight: 800
+
+    &[aria-pressed="true"]
+      background: white
+      color: #168b4b
+      box-shadow: 0 1px 4px rgba(0, 45, 51, 0.12)
+
+    &:focus-visible
+      outline: 2px solid rgba(22, 139, 75, 0.35)
+      outline-offset: 1px
+
+.landing-icon-button
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 30px
+  height: 30px
+  padding: 0
+  cursor: pointer
+  border: 1px solid #cfddd6
+  border-radius: 6px
+  background: white
+  color: #58706b
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease
+
+  &[hidden]
+    display: none
+
+  &:hover, &:focus
+    border-color: #168b4b
+    background: #f2faf5
+    color: #168b4b
+    outline: none
+
+.landing-space
+  position: relative
+  min-height: 390px
+  overflow: hidden
+  user-select: none
+  border: 1px solid #e1ebe6
+  border-radius: 8px
+  background: radial-gradient(circle at 48% 42%, rgba(69, 198, 118, 0.09), transparent 34%), radial-gradient(circle at 58% 58%, rgba(71, 183, 222, 0.08), transparent 42%), #fbfdfc
+
+  &.is-2d
+    background: linear-gradient(rgba(240, 246, 243, 0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(240, 246, 243, 0.7) 1px, transparent 1px), #fcfefd
+    background-size: 54px 54px
+
+    .landing-space__axis
+      stroke: #aebdb6
+      stroke-width: 1
+
+    .landing-space__axis-label
+      fill: #687983
+      font-size: 11px
+      font-weight: 600
+
+  svg
+    display: block
+    width: 100%
+    min-height: 390px
+    touch-action: none
+
+    &:focus
+      outline: 2px solid rgba(22, 139, 75, 0.32)
+      outline-offset: -2px
+
+    &.is-3d
+      cursor: grab
+
+    &.is-3d.is-dragging
+      cursor: grabbing
+
+.landing-space__empty
+  display: flex
+  align-items: center
+  justify-content: center
+  min-height: 390px
+  color: #7f8c95
+  font-size: 0.84rem
+
+.landing-space__axis
+  stroke: #168b4b
+  stroke-linecap: round
+  stroke-width: 1.35
+
+  &.landing-space__axis--2
+    stroke: #279fc8
+
+  &.landing-space__axis--3
+    stroke: #778c97
+
+.landing-space__grid-line
+  stroke: #d9e4de
+  stroke-width: 0.75
+
+.landing-space__axis-label
+  fill: #526a72
+  font-size: 10px
+  font-weight: 700
+  paint-order: stroke
+  stroke: rgba(255, 255, 255, 0.94)
+  stroke-linejoin: round
+  stroke-width: 3px
+
+.landing-space__point
+  cursor: pointer
+  transition: r 120ms ease, opacity 120ms ease, stroke-width 120ms ease
+
+  &:hover, &:focus
+    r: 7
+    opacity: 1
+    stroke-width: 2.5
+    outline: none
+
+.landing-space__legend
+  position: absolute
+  right: 13px
+  bottom: 11px
+  z-index: 1
+  display: grid
+  grid-template-columns: auto 1fr auto
+  gap: 3px 6px
+  align-items: center
+  padding: 7px 9px
+  pointer-events: none
+  border: 1px solid rgba(207, 221, 214, 0.88)
+  border-radius: 6px
+  background: rgba(255, 255, 255, 0.88)
+  backdrop-filter: blur(4px)
+  color: #64757d
+
+  &[hidden]
+    display: none
+
+  > span
+    grid-column: 1 / -1
+    font-size: 0.61rem
+    font-weight: 700
+
+  > i
+    display: block
+    grid-column: 1 / -1
+    width: 84px
+    height: 5px
+    border-radius: 999px
+    background: linear-gradient(90deg, $brainscore_blue, #5dbf9c, #168b4b)
+
+  > small
+    color: #7b8990
+    font-size: 0.52rem
+
+    &:last-child
+      grid-column: 3
+      text-align: right
+
+.landing-space__tooltip
+  position: absolute
+  z-index: 2
+  max-width: 245px
+  padding: 9px 11px
+  pointer-events: none
+  border: 1px solid #cbdad3
+  border-radius: 6px
+  background: rgba(255, 255, 255, 0.97)
+  color: #263a47
+  font-size: 0.7rem
+  line-height: 1.45
+  box-shadow: 0 7px 22px rgba(0, 27, 54, 0.13)
+
+  strong
+    display: block
+    max-width: 220px
+    overflow: hidden
+    margin-bottom: 3px
+    text-overflow: ellipsis
+    white-space: nowrap
+
+.landing-method
+  margin-top: 12px !important
+  color: #77858e
+  font-size: 0.7rem
+  line-height: 1.5
+
+.landing-leaderboard-list
+  border-top: 1px solid #e4ece8
+
+.landing-leaderboard-row
+  display: grid
+  grid-template-columns: 28px minmax(0, 1fr) 48px
+  gap: 9px
+  align-items: center
+  min-width: 0
+  padding: 13px 0
+  border-bottom: 1px solid #e4ece8
+  text-decoration: none
+
+  &:hover .landing-leaderboard-row__model strong
+    color: #087da6
+
+.landing-leaderboard-row__rank
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 24px
+  height: 24px
+  border-radius: 50%
+  background: #eaf6fb
+  color: #137f9f
+  font-size: 0.69rem
+  font-weight: 800
+
+.landing-leaderboard-row__model
+  min-width: 0
+
+  strong, span
+    display: block
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+  strong
+    font-size: 0.73rem
+    transition: color 120ms ease
+
+  span
+    margin-top: 3px
+    color: #7a8892
+    font-size: 0.63rem
+
+.landing-leaderboard-row__score
+  color: #137f9f
+  font-size: 0.82rem
+  font-variant-numeric: tabular-nums
+  font-weight: 800
+  text-align: right
+
+.landing-leaderboard-preview__footer
+  display: flex
+  flex-wrap: wrap
+  gap: 6px 15px
+  margin-top: 14px
+  color: #7b8992
+  font-size: 0.66rem
+
+.landing-compare__grid
+  position: relative
+  z-index: 1
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 22px
+
+.landing-compare-card
+  display: grid
+  grid-template-columns: minmax(0, 1fr) 210px
+  gap: 30px
+  align-items: center
+  min-height: 285px
+  padding: 32px
+  overflow: hidden
+  border: 1px solid #dce8e2
+  border-top: 4px solid $brainscore_green
+  border-radius: 12px
+  background: white
+  text-decoration: none
+  box-shadow: 0 10px 28px rgba(0, 27, 54, 0.055)
+  transition: transform 180ms ease, box-shadow 180ms ease
+
+  &:hover
+    transform: translateY(-3px)
+    box-shadow: 0 17px 34px rgba(0, 27, 54, 0.1)
+
+  &.landing-compare-card--models
+    border-top-color: $brainscore_blue
+
+    .landing-card-link
+      color: #087da6
+
+.landing-compare-card__copy
+  h3
+    margin-top: 14px
+    font-size: 1.45rem
+    line-height: 1.28
+
+  p
+    margin-top: 12px
+    color: #64747f
+    font-size: 0.83rem
+    line-height: 1.65
+
+.landing-card-link
+  display: inline-block
+  margin-top: 24px
+  color: #168b4b
+  font-size: 0.82rem
+  font-weight: 800
+
+.landing-mini-matrix
+  display: grid
+  grid-template-columns: repeat(4, 37px)
+  grid-template-rows: repeat(4, 37px)
+  gap: 4px
+  justify-content: center
+  padding: 22px
+  border-radius: 14px
+  background: #f4f8f6
+  transform: rotate(-3deg)
+
+  span
+    border-radius: 4px
+    background: #f5efe4
+
+    &:nth-child(1), &:nth-child(6), &:nth-child(11), &:nth-child(16)
+      background: #168b4b
+    &:nth-child(2), &:nth-child(5), &:nth-child(12), &:nth-child(15)
+      background: #74c997
+    &:nth-child(3), &:nth-child(9), &:nth-child(8), &:nth-child(14)
+      background: #b8e3c8
+    &:nth-child(4), &:nth-child(7), &:nth-child(10), &:nth-child(13)
+      background: #e5d9d0
+
+.landing-mini-differences
+  display: flex
+  flex-direction: column
+  gap: 21px
+  padding: 25px 14px
+
+  span
+    position: relative
+    display: block
+    height: 2px
+    background: #d4ded9
+
+    &::before, &::after
+      content: ""
+      position: absolute
+      top: 50%
+      width: 7px
+      height: 7px
+      border-radius: 50%
+      background: #d4ded9
+      transform: translateY(-50%)
+
+    &::before
+      left: 0
+    &::after
+      right: 0
+
+    i, b
+      position: absolute
+      top: 50%
+      width: 13px
+      height: 13px
+      border: 3px solid white
+      border-radius: 50%
+      transform: translate(-50%, -50%)
+      box-shadow: 0 0 0 1px rgba(0, 27, 54, 0.08)
+
+    i
+      left: 28%
+      background: $brainscore_blue
+
+    b
+      left: 66%
+      background: $brainscore_green
+
+    &:nth-child(2) i
+      left: 45%
+    &:nth-child(2) b
+      left: 78%
+    &:nth-child(3) i
+      left: 67%
+    &:nth-child(3) b
+      left: 36%
+    &:nth-child(4) i
+      left: 22%
+    &:nth-child(4) b
+      left: 55%
+    &:nth-child(5) i
+      left: 75%
+    &:nth-child(5) b
+      left: 48%
+
+.landing-participate
+  position: relative
+  overflow: hidden
+  display: grid
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr)
+  gap: 64px
+  align-items: center
+  margin-top: 92px
+  padding: 56px
+  border-radius: 24px
+  background: linear-gradient(125deg, #073b36 0%, #0b5254 54%, #126e82 100%)
+  color: white
+
+.landing-participate__code
+  overflow: hidden
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 10px
+  background: #061f21
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15)
+
+  pre
+    overflow-x: auto
+    margin: 0
+    padding: 26px
+    background: transparent
+    color: #d7e7e4
+    font-size: 0.75rem
+    line-height: 1.8
+
+  code span
+    color: #7cdda2
+
+.landing-code-heading
+  display: flex
+  justify-content: space-between
+  gap: 20px
+  padding: 11px 16px
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  color: #9cb8b5
+  font-size: 0.66rem
+
+  i
+    margin-right: 7px
+    color: #7cdda2
+
+.landing-participate__copy
+  .landing-eyebrow
+    color: #7cdda2
+
+  > p:not(.landing-eyebrow)
+    margin-top: 16px
+    color: #c6dbd8
+    font-size: 0.9rem
+    line-height: 1.7
+
+.landing-participate__actions
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+  margin-top: 25px
+
+  .landing-button--outline
+    border-color: rgba(255, 255, 255, 0.35)
+    background: transparent
+    color: white
+
+  .landing-text-link
+    margin-left: 5px
+    color: #9de5f3 !important
+
+.landing-footer
+  display: grid
+  grid-template-columns: 180px minmax(0, 1fr) auto
+  gap: 30px
+  align-items: center
+  margin-top: 26px
+  padding: 35px 42px
+  border-radius: 24px 24px 0 0
+  background: linear-gradient(110deg, #2dbd74, #37aaca)
+  color: white
+
+  img
+    width: 155px
+
+  p
+    color: rgba(255, 255, 255, 0.84)
+    font-size: 0.76rem
+
+  nav
+    display: flex
+    flex-wrap: wrap
+    gap: 19px
+
+    a
+      color: white
+      font-size: 0.72rem
+      font-weight: 700
+
+.landing-empty
+  padding: 22px 0
+  color: #7d8a93
+  font-size: 0.8rem
+
+@media (max-width: 1215px)
+  .landing-opening, .landing-explore__grid
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr)
+
+  .landing-compare-card
+    grid-template-columns: minmax(0, 1fr) 145px
+    gap: 18px
+    padding: 26px
+
+  .landing-mini-matrix
+    grid-template-columns: repeat(4, 28px)
+    grid-template-rows: repeat(4, 28px)
+    padding: 15px
+
+@media (max-width: 1023px)
+  .landing-dashboard__intro
+    grid-template-columns: minmax(0, 1fr) minmax(285px, 0.72fr)
+
+  .landing-hero__copy
+    padding-left: 9%
+
+  .landing-hero__art img
+    right: -12%
+    width: auto
+    height: 108%
+
+  .landing-opening, .landing-explore__grid, .landing-participate
+    grid-template-columns: 1fr
+
+  .landing-onboarding
+    min-height: 450px
+
+  .landing-compare__grid
+    grid-template-columns: 1fr
+
+  .landing-compare-card
+    grid-template-columns: minmax(0, 1fr) 210px
+
+  .landing-footer
+    grid-template-columns: 160px 1fr
+
+    nav
+      grid-column: 1 / -1
+
+@media (max-width: 760px)
+  .landing-dashboard
+    padding-top: 88px
+
+  .landing-dashboard__intro
+    grid-template-columns: 1fr
+    min-height: 640px
+    margin-top: 18px
+    border-radius: 22px
+
+  .landing-hero__copy
+    justify-content: flex-start
+    padding: 38px 7% 265px
+
+  .landing-hero__wordmark
+    width: 275px
+
+  .landing-hero__summary
+    font-size: 0.9rem
+
+  .landing-hero__art
+    position: absolute
+    right: 0
+    bottom: 0
+    left: 0
+    min-height: 295px
+
+    img
+      right: -2%
+      bottom: -8%
+      width: auto
+      height: 112%
+
+  .landing-bridge
+    grid-template-columns: auto minmax(70px, 1fr) auto
+
+  .landing-opening
+    grid-template-columns: 1fr
+
+  .landing-update-grid, .landing-submission-list
+    grid-template-columns: 1fr
+
+  .landing-compare-card
+    grid-template-columns: 1fr
+
+  .landing-mini-matrix, .landing-mini-differences
+    display: none
+
+  .landing-participate
+    gap: 35px
+    padding: 34px 24px
+
+  .landing-footer
+    grid-template-columns: 1fr
+    padding: 32px 24px
+
+    nav
+      grid-column: auto
