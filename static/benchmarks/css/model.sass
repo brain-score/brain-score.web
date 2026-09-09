@@ -1,6 +1,180 @@
 @use "sass:math"
 
 section.individual_model
+  &.container
+    max-width: none
+    width: 100%
+
+  > .model-metadata:first-child
+    margin-top: 0
+
+  .model-metadata
+    border: 1px solid $brainscore_gray2
+    border-top: 4px solid $brainscore_green
+    box-shadow: 0 8px 24px rgba($brainscore_gray4, 0.08)
+    padding: 24px
+
+    .model-metadata-heading .title
+      margin-bottom: 0
+
+  .model-metadata-heading
+    align-items: center
+    display: flex
+    justify-content: space-between
+    margin-bottom: 20px
+
+  .model-metadata-kicker
+    color: darken($brainscore_green, 25%)
+    font-size: 0.74rem
+    font-weight: 700
+    letter-spacing: 0.08em
+    margin-bottom: 3px
+    text-transform: uppercase
+
+  .model-metadata-specs
+    display: grid
+    gap: 0 24px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    margin-bottom: 24px
+
+    > div
+      border-bottom: 1px solid $brainscore_gray1
+      padding: 11px 0
+
+    dt
+      color: $brainscore_gray3
+      font-size: 0.72rem
+      font-weight: 700
+      letter-spacing: 0.04em
+      text-transform: uppercase
+
+    dd
+      color: $brainscore_gray4
+      font-size: 0.95rem
+      line-height: 1.45
+      margin-top: 3px
+
+  .model-metadata-grid
+    display: grid
+    gap: 16px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  .model-metadata-panel
+    background: #fbfcff
+    border: 1px solid $brainscore_gray2
+    border-radius: 8px
+    padding: 20px
+
+    .title
+      color: $brainscore_gray4
+      font-weight: 600
+      margin-bottom: 8px
+
+    p, li
+      color: darken($brainscore_gray3, 18%)
+      font-size: 0.92rem
+      line-height: 1.45
+
+    ul
+      margin: 5px 0 12px 18px
+
+  .model-metadata-label
+    color: $brainscore_gray3
+    font-size: 0.7rem !important
+    font-weight: 700
+    letter-spacing: 0.05em
+    margin: 12px 0 0
+    text-transform: uppercase
+
+  .model-metadata-datasets
+    display: flex
+    flex-wrap: wrap
+    gap: 8px
+    margin-top: 16px
+
+  .model-metadata-dataset
+    align-items: center
+    background: white
+    border: 1px solid $brainscore_gray2
+    border-radius: 5px
+    display: flex
+    gap: 8px
+    color: $brainscore_gray4
+    padding: 8px 10px
+
+    .tag
+      background: rgba($brainscore_green, 0.14)
+      color: darken($brainscore_green, 27%)
+      font-size: 0.62rem
+
+  .model-metadata-note
+    border-top: 1px solid $brainscore_gray2
+    margin-top: 16px
+    padding-top: 12px
+
+  .model-metadata-use
+    margin-top: 24px
+
+    > .title
+      color: $brainscore_gray4
+      margin-bottom: 12px
+
+  .model-metadata-use-grid
+    display: grid
+    gap: 10px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+    > div
+      background: #fbfcff
+      border: 1px solid $brainscore_gray1
+      border-left: 3px solid $brainscore_gray3
+      padding: 14px 16px
+
+    .is-recommended
+      border-left-color: $brainscore_green
+
+    .is-limitation, .is-bias
+      border-left-color: #d97841
+
+    h4
+      color: $brainscore_gray4
+      font-size: 0.78rem
+      font-weight: 700
+      letter-spacing: 0.03em
+      text-transform: uppercase
+
+    ul
+      margin: 6px 0 0 18px
+
+    li
+      color: darken($brainscore_gray3, 18%)
+      font-size: 0.9rem
+      line-height: 1.45
+
+  .model-page-card
+    border: 1px solid $brainscore_gray2
+    border-top: 3px solid $brainscore_green
+    box-shadow: 0 8px 24px rgba($brainscore_gray4, 0.08)
+    margin-top: 20px
+    padding: 24px
+
+  .model-section-title
+    color: $brainscore_gray4
+    font-size: 1.5rem
+    font-weight: 600
+    line-height: 1.25
+    margin-bottom: 8px
+
+  @media (max-width: 1100px)
+    .model-metadata-grid, .model-metadata-use-grid
+      grid-template-columns: 1fr
+
+    .model-metadata-specs
+      grid-template-columns: 1fr
+
+    .model-page-card
+      padding: 20px
+
   .no_reference
     color: gray
     font-size: 10pt
@@ -130,3 +304,168 @@ section.individual_model
 
 .build_failed
   color: red
+
+.model-metadata-tags
+  display: flex
+  flex-wrap: wrap
+  gap: 6px
+  margin-top: 14px
+
+  .tag
+    background: rgba(white, 0.9)
+    border: 1px solid rgba(white, 0.65)
+    box-shadow: 0 1px 3px rgba($brainscore_gray4, 0.1)
+    color: $brainscore_gray4
+    font-size: 0.76rem
+    font-weight: 600
+    padding: 0.35rem 0.65rem
+
+.model-metadata-provenance
+  .model-metadata-verification
+    display: flex
+    height: 7px
+    margin: 12px 0 14px
+    overflow: hidden
+
+    span
+      flex-basis: 0
+      flex-grow: var(--metadata-count)
+
+  .is-verified
+    background: $brainscore_green
+
+  .is-inferred
+    background: #e3a43b
+
+  .is-undocumented
+    background: $brainscore_gray3
+
+  .model-metadata-counts
+    display: grid
+    gap: 6px
+
+    div
+      align-items: center
+      display: flex
+      gap: 7px
+
+    dt
+      border-radius: 50%
+      height: 7px
+      width: 7px
+
+    dd
+      font-size: 0.82rem
+
+.model-lineage-card
+  .model-lineage-tree
+    list-style: none
+    margin: 0
+
+    li
+      align-items: center
+      display: grid
+      gap: 9px
+      grid-template-columns: 14px minmax(0, 1fr)
+      overflow-wrap: anywhere
+      padding: 5px 0
+
+  .model-lineage-ancestor
+    color: $brainscore_gray3
+    font-size: 0.84rem
+    margin-left: 3px
+
+    i
+      font-size: 0.72rem
+
+    &.has-metadata
+      color: $brainscore_gray4
+
+  .model-lineage-current
+    color: darken($brainscore_green, 24%)
+    font-size: 0.86rem
+
+    > span
+      background: $brainscore_green
+      border-radius: 50%
+      height: 7px
+      justify-self: center
+      width: 7px
+
+  hr
+    background: $brainscore_gray1
+    height: 1px
+    margin: 15px 0
+
+  .model-lineage-label
+    color: $brainscore_gray3
+    font-size: 0.7rem
+    font-weight: 700
+    letter-spacing: 0.06em
+    margin-bottom: 8px
+    text-transform: uppercase
+
+  .model-lineage-related
+    list-style: none
+    margin: 0
+
+    li
+      align-items: center
+      display: flex
+      gap: 8px
+      justify-content: space-between
+      padding: 5px 0
+
+      &[hidden]
+        display: none
+
+      .model-lineage-related-name
+        font-size: 0.78rem
+        min-width: 0
+        overflow-wrap: anywhere
+
+      a.model-lineage-related-name:hover
+        text-decoration: underline
+
+    .tag
+      flex: none
+      font-size: 0.62rem
+      height: auto
+      padding: 0.2rem 0.4rem
+
+  .model-lineage-toggle
+    align-items: center
+    background: none
+    border: 0
+    color: $brainscore_gray3
+    cursor: pointer
+    display: flex
+    font-size: 0.74rem
+    gap: 6px
+    margin-top: 8px
+    padding: 0
+
+    &:hover
+      color: darken($brainscore_green, 24%)
+
+    &:focus-visible
+      outline: 2px solid $brainscore_green
+      outline-offset: 3px
+
+.info-section .model-sidebar-card
+  border: 1px solid $brainscore_gray2
+  border-top: 3px solid $brainscore_green
+  box-shadow: 0 7px 20px rgba($brainscore_gray4, 0.08)
+  padding: 0
+
+  .card-content
+    padding: 22px
+
+  .model-sidebar-title
+    align-items: center
+    color: $brainscore_gray4
+    display: flex
+    font-size: 1.05rem
+    font-weight: 600
+    gap: 6px
+    margin-bottom: 14px

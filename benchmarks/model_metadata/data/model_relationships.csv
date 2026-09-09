@@ -1,0 +1,38 @@
+domain,identifier,ordinal,base_identifier,base_name,relationship
+vision,AdvProp_efficientnet-b2,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b4,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b6,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b7,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AdvProp_efficientnet-b8,0,advprop-efficientnet,AdvProp EfficientNet,variant_of
+vision,AlexNet_SIN,0,alexnet,AlexNet,variant_of
+vision,AlexNet_SIN_fov12,0,AlexNet_SIN,AlexNet SIN,variant_of
+vision,AlexNet_SIN_fov16,0,AlexNet_SIN,AlexNet SIN,variant_of
+vision,VOneCORnet-S,0,CORnet-S,CORnet-S,derived_from
+vision,ViT_L_32_imagenet1k,0,vit-l32,Vision Transformer L/32,variant_of
+vision,alexnet_training_seed_01,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_02,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_03,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_06,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_07,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_09,0,alexnet,AlexNet,variant_of
+vision,alexnet_training_seed_10,0,alexnet,AlexNet,variant_of
+vision,antialiased-r50,0,torchvision-resnet50,Torchvision ResNet-50,variant_of
+vision,convnext_base:clip_laiona_augreg_ft_in1k_384,0,clip-convnext-base,CLIP ConvNeXt-Base,fine_tuned_from
+vision,convnext_base_imagenet_full_seed-0,0,convnext-base,ConvNeXt-Base,variant_of
+vision,convnext_tiny:in12k_ft_in1k,0,convnext-tiny,ConvNeXt-Tiny,fine_tuned_from
+vision,convnext_tiny_imagenet_full_seed-0,0,convnext-tiny,ConvNeXt-Tiny,variant_of
+vision,convnext_tiny_sup,0,convnext-tiny,ConvNeXt-Tiny,variant_of
+vision,convnext_xlarge:fb_in22k_ft_in1k,0,convnext-xlarge,ConvNeXt-XLarge,fine_tuned_from
+vision,convnext_xxlarge:clip_laion2b_soup_ft_in1k,0,clip-convnext-xxlarge,CLIP ConvNeXt-XXLarge,fine_tuned_from
+vision,vit_base_patch16_clip_224:openai_ft_in1k,0,openai-clip-vit-b16,OpenAI CLIP ViT-B/16,fine_tuned_from
+vision,vit_huge_patch14_clip_224:laion2b_ft_in12k_in1k,0,openclip-vit-h14-laion2b,OpenCLIP ViT-H/14 (LAION-2B),fine_tuned_from
+vision,vit_large_patch14_clip_224:laion2b_ft_in12k_in1k,0,openclip-vit-l14-laion2b,OpenCLIP ViT-L/14 (LAION-2B),fine_tuned_from
+vision,vit_large_patch14_clip_224:laion2b_ft_in1k,0,openclip-vit-l14-laion2b,OpenCLIP ViT-L/14 (LAION-2B),fine_tuned_from
+vision,vit_large_patch14_clip_224:openai_ft_in12k_in1k,0,openai-clip-vit-l14,OpenAI CLIP ViT-L/14,fine_tuned_from
+vision,vit_large_patch14_clip_224:openai_ft_in1k,0,openai-clip-vit-l14,OpenAI CLIP ViT-L/14,fine_tuned_from
+vision,vit_large_patch14_clip_336:laion2b_ft_in1k,0,openai-clip-vit-l14,OpenAI CLIP ViT-L/14,fine_tuned_from
+vision,vit_relpos_base_patch16_clsgap_224:sw_in1k,0,relative-position-vit,Relative-position Vision Transformer,variant_of
+vision,vit_relpos_base_patch32_plus_rpn_256:sw_in1k,0,relative-position-vit,Relative-position Vision Transformer,variant_of
+vision,vit_tiny_r_s16_p8_384:augreg_in21k_ft_in1k,0,hybrid-resnet-vit-tiny,Hybrid ResNet-stem + ViT-Tiny,derived_from
+vision,voneresnet-50,0,resnet-50,ResNet-50,derived_from
+vision,voneresnet-50-non_stochastic,0,resnet-50,ResNet-50,derived_from

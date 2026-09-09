@@ -11,4 +11,8 @@ details of the website submission system, and both the front and back end infras
 
 See the [Developer Documentation](https://brain-scoreweb.readthedocs.io) for more details.
 
+See the [model metadata pipeline](benchmarks/model_metadata/README.md) for the
+workbook-to-YAML conversion, schema, reproducible source catalog, and website
+rendering flow.
+
 Brain-Score is made by and for the community. To contribute, please [send in a pull request](https://github.com/brain-score/brain-score.web/pulls).
