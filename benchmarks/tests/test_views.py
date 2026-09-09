@@ -61,6 +61,7 @@ class TestWebsitePages(BaseTestCase):
         response = self.client.get('/vision/', follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Leaderboard', response.content)
+        self.assertIn(b'<body class="app-shell-page app-shell-page--model">', response.content)
 
     def test_language_leaderboard(self):
         """Test the language leaderboard page"""
@@ -81,6 +82,7 @@ class TestWebsitePages(BaseTestCase):
         """Test the compare page loads"""
         response = self.client.get('/vision/compare/')
         self.assertEqual(response.status_code, 200)
+        self.assertIn(b'<body class="app-shell-page">', response.content)
 
     def test_tutorials_home(self):
         """Test the tutorials home page loads"""

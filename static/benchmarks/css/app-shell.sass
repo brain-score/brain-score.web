@@ -1,0 +1,287 @@
+// Shared visual language for the primary Brain-Score application pages.
+.app-shell-page
+  min-height: 100vh
+  color: #263a47
+  background: radial-gradient(circle at 9% 4%, rgba(69, 198, 118, 0.08), transparent 26rem), radial-gradient(circle at 92% 25%, rgba(71, 183, 222, 0.07), transparent 30rem), #fbfdfc
+
+  #main-content
+    min-height: 100vh
+
+  .content-container
+    padding-top: 1px
+    padding-bottom: 48px
+
+  .social-icons
+    align-items: center
+    min-height: 34px
+
+    a
+      display: inline-flex
+      align-items: center
+      justify-content: center
+      width: 30px
+      height: 30px
+      margin-left: 8px
+      border: 1px solid #d7e4de
+      border-radius: 7px
+      background: rgba(255, 255, 255, 0.9)
+      color: #58706b
+      transition: color 150ms ease, border-color 150ms ease, transform 150ms ease
+
+      &:hover, &:focus
+        border-color: #168b4b
+        color: #168b4b
+        outline: none
+        transform: translateY(-1px)
+
+      i.fa-brands
+        font-size: 1.15rem
+
+  .banner.box.gradient
+    position: relative
+    overflow: hidden
+    margin: 14px 0 24px
+    padding: 27px 30px
+    border: 1px solid #dce8e2
+    border-radius: 12px
+    background: rgba(255, 255, 255, 0.94)
+    box-shadow: 0 12px 32px rgba(0, 27, 54, 0.07)
+
+    &::before
+      content: ''
+      position: absolute
+      top: 0
+      right: 0
+      left: 0
+      z-index: 2
+      height: 4px
+      background: linear-gradient(90deg, $brainscore_blue, $brainscore_green)
+
+    &::after
+      content: ''
+      position: absolute
+      top: -70px
+      right: -45px
+      width: 220px
+      height: 180px
+      pointer-events: none
+      border-radius: 50%
+      background: radial-gradient(circle, rgba(71, 183, 222, 0.12), transparent 68%)
+
+    h1, h2, h3, h4, h5
+      position: relative
+      z-index: 1
+      margin: 0
+      color: #203442
+      line-height: 1.15
+      letter-spacing: -0.025em
+
+    h1
+      font-size: clamp(1.8rem, 2.5vw, 2.55rem)
+      font-weight: 700
+
+    p
+      position: relative
+      z-index: 1
+      max-width: 850px
+      margin-top: 8px
+      color: #5b6b78
+      font-size: 0.9rem
+      line-height: 1.6
+
+  &.app-shell-page--model .banner.box.gradient::before
+    background: $brainscore_blue
+
+  &.app-shell-page--brain .banner.box.gradient::before
+    background: $brainscore_green
+
+  .box:not(.banner)
+    border: 1px solid #dce8e2
+    border-radius: 12px
+    background-color: rgba(255, 255, 255, 0.96)
+    box-shadow: 0 10px 28px rgba(0, 27, 54, 0.055)
+
+  .title, .subtitle
+    color: #263a47
+    letter-spacing: -0.015em
+
+  a:not(.button):not(.tag)
+    transition: color 140ms ease
+
+  .button
+    border-radius: 8px
+    font-weight: 700
+    box-shadow: none
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease
+
+    &:hover, &:focus
+      transform: translateY(-1px)
+
+    &.is-primary, &.button-primary
+      border-color: #168b4b
+      background: #168b4b
+      color: white
+
+      &:hover, &:focus
+        border-color: #10783e
+        background: #10783e
+        box-shadow: 0 7px 18px rgba(22, 139, 75, 0.18)
+
+    &.is-outlined, &.button-ghost
+      border-color: #b7c7c0
+      background: white
+      color: #116b3b
+
+      &:hover, &:focus
+        border-color: #168b4b
+        background: #f4fbf7
+        color: #116b3b
+
+  .input, .textarea, .select select, select
+    border-color: #cbdad3
+    border-radius: 7px
+    color: #334a55
+    box-shadow: none
+
+    &:hover
+      border-color: #9ebbb0
+
+    &:focus
+      border-color: #168b4b
+      box-shadow: 0 0 0 2px rgba(22, 139, 75, 0.12)
+
+  .tabs
+    margin-bottom: 22px
+
+    a
+      color: #65767f
+      font-weight: 700
+
+    li.is-active a
+      border-color: #168b4b
+      color: #116b3b
+
+    &.is-boxed li.is-active a
+      border-bottom-color: white
+      background: white
+
+  .notification
+    border: 1px solid #dce8e2
+    border-radius: 9px
+    box-shadow: none
+
+  .tag
+    border-radius: 999px
+
+  .table
+    border-radius: 9px
+    color: #344b57
+
+    thead th
+      border-color: #dfe9e4
+      color: #52656f
+      font-size: 0.72rem
+      letter-spacing: 0.04em
+      text-transform: uppercase
+
+    td
+      border-color: #e8efeb
+
+  .info-section .box .title
+    color: #168b4b
+
+  .left-sidebar
+    border-right: 1px solid rgba(128, 230, 167, 0.16)
+    background: linear-gradient(180deg, #062d32 0%, #083b42 58%, #0b4e56 100%)
+    box-shadow: 8px 0 28px rgba(0, 27, 54, 0.1)
+
+    .sidebar-toggle
+      border-bottom-color: rgba(255, 255, 255, 0.12)
+
+      .toggle-btn
+        border-radius: 7px
+        color: #d5ebe7
+
+        &:hover, &:focus
+          background: rgba(128, 230, 167, 0.12)
+          color: #8aebaf
+          outline: none
+
+    > a, > .dropdown > a
+      margin: 3px 10px
+      padding-left: 14px
+      border-radius: 8px
+      color: #d9e9e7
+      line-height: 46px
+      transition: color 140ms ease, background 140ms ease
+
+      &:hover
+        background: rgba(255, 255, 255, 0.07)
+        color: white
+
+      &.selected
+        border-right: 0
+        background: rgba(128, 230, 167, 0.14)
+        color: #8aebaf
+
+      img.menu-icon
+        width: 31px
+        opacity: 0.9
+
+    > a.brainscore-logo
+      margin: 23px 10px 25px
+      background: transparent
+
+    &.collapsed
+      > a:not(.brainscore-logo), > .dropdown > a
+        display: flex
+        align-items: center
+        justify-content: center
+        height: 46px
+        margin-right: 8px
+        margin-left: 8px
+        padding: 0
+        line-height: normal
+        text-align: center
+
+        img.menu-icon
+          margin-right: 0
+
+    .dropdown-content, .nested-dropdown-content
+      overflow: hidden
+      border: 1px solid #dce8e2
+      border-radius: 9px
+      background: white
+      box-shadow: 0 14px 34px rgba(0, 27, 54, 0.14)
+
+      a
+        color: #344b57
+
+        &:hover
+          background: #f1f8f4
+          color: #116b3b
+
+  #reportIssueText
+    color: #b9d1ce
+
+    &:hover
+      color: #8aebaf
+
+  @media (max-width: 1024px)
+    .left-sidebar
+      > a:not(.brainscore-logo), > .dropdown > a
+        display: flex
+        align-items: center
+        justify-content: center
+        height: 46px
+        margin-right: 8px
+        margin-left: 8px
+        padding: 0
+        line-height: normal
+        text-align: center
+
+        img.menu-icon
+          margin-right: 0
+
+    .banner.box.gradient
+      padding: 23px 25px

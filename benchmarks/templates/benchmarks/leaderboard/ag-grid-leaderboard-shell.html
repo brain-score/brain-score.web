@@ -1,6 +1,8 @@
 {% extends 'benchmarks/components/app-view.html' %}
 {% load static %}
 
+{% block body_class %}app-shell-page app-shell-page--model{% endblock %}
+
 {% block page_title %}Brain-Score - Leaderboard{% endblock %}
 
 {# The leaderboard uses none of the viz libs (Plotly/d3/Chart/select2/jstat/countdown). #}

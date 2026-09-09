@@ -1,6 +1,8 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block body_class %}app-shell-page app-shell-page--model{% endblock %}
+
 {% block page_title %}Brain-Score - {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
 
 {% block og_title %}{% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
