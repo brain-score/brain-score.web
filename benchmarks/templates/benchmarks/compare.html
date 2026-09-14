@@ -8,6 +8,7 @@
     <script defer src="{% static '/benchmarks/js/compare-model-difference-tree.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-model-branch-ranks.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-analysis-expand.js' %}" charset="utf-8"></script>
+    <script defer src="{% static '/benchmarks/js/compare-representations.js' %}" charset="utf-8"></script>
 {% endblock %}
 
 {% block banner %}
@@ -25,6 +26,7 @@
         var benchmark_url_map = {{ benchmark_url_map|safe }};
         var compare_dashboard_data = null;
         var compare_dashboard_data_url = "{{ compare_dashboard_data_url|escapejs }}";
+        var compare_representations_data_url = "{{ compare_representations_data_url|escapejs }}";
     </script>
 
     <div class="compare-layout">
@@ -32,6 +34,7 @@
         <ul>
             <li id="tab-benchmarks" class="is-active"><a>Compare Benchmarks</a></li>
             <li id="tab-models"><a>Compare Models</a></li>
+            <li id="tab-representations"><a>Compare Representations</a></li>
         </ul>
     </div>
 
@@ -494,31 +497,73 @@
         </div>
     </div>
 
+    {# ==================== Tab 3: Compare Representations ==================== #}
+    <div id="panel-representations" style="display:none">
+        <section class="box compare-analysis-panel" aria-labelledby="representations-title">
+            <h2 id="representations-title" class="subtitle is-4">Representational similarity</h2>
+            <p class="help">
+                How similarly two models <em>represent</em> the same stimuli, independent of how they
+                score. Computed from activations cached during scoring, so no model is re-run.
+                Linear CKA: 1.0 is identical representational geometry, 0 is unrelated.
+            </p>
+            <div id="representations-status" class="notification is-light" style="margin-top:0.75rem">
+                Loading&hellip;
+            </div>
+            <div id="representations-content" style="display:none">
+                <div class="table-container">
+                    <table class="table is-striped is-hoverable is-fullwidth" id="representations-table">
+                        <thead>
+                            <tr>
+                                <th>Stimulus set</th>
+                                <th class="has-text-right">Stimuli</th>
+                                <th class="has-text-right">CKA</th>
+                                <th class="has-text-right">Effective dim.</th>
+                                <th class="has-text-right">Cached</th>
+                                <th class="has-text-right">Derived</th>
+                                <th>Layer</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="help" id="representations-provenance"></p>
+            </div>
+        </section>
+    </div>
+
     <script>
     (function() {
-        var tabBenchmarks = document.getElementById('tab-benchmarks');
-        var tabModels = document.getElementById('tab-models');
-        var panelBenchmarks = document.getElementById('panel-benchmarks');
-        var panelModels = document.getElementById('panel-models');
+        // Tab registry. Was a two-way boolean; a third tab made that shape
+        // untenable, so panels and tabs are looked up by name instead.
+        var TABS = ['benchmarks', 'models', 'representations'];
+        var DEFAULT_TAB = 'benchmarks';
+        function tabEl(name) { return document.getElementById('tab-' + name); }
+        function panelEl(name) { return document.getElementById('panel-' + name); }
 
         function rememberTab(tab) {
             if (window.CompareDashboard) {
-                window.CompareDashboard.setUrlParam('tab', tab === 'benchmarks' ? null : tab);
+                window.CompareDashboard.setUrlParam('tab', tab === DEFAULT_TAB ? null : tab);
                 return;
             }
             var url = new URL(window.location.href);
-            if (tab === 'benchmarks') url.searchParams.delete('tab');
+            if (tab === DEFAULT_TAB) url.searchParams.delete('tab');
             else url.searchParams.set('tab', tab);
             window.history.replaceState({}, '', url.pathname + url.search + url.hash);
         }
 
         function activateTab(tab, remember) {
-            var showModels = tab === 'models';
-            tabBenchmarks.classList.toggle('is-active', !showModels);
-            tabModels.classList.toggle('is-active', showModels);
-            panelBenchmarks.style.display = showModels ? 'none' : '';
-            panelModels.style.display = showModels ? '' : 'none';
+            if (TABS.indexOf(tab) === -1) tab = DEFAULT_TAB;
+            for (var t = 0; t < TABS.length; t++) {
+                var name = TABS[t], active = (name === tab);
+                var el = tabEl(name), panel = panelEl(name);
+                if (el) el.classList.toggle('is-active', active);
+                if (panel) panel.style.display = active ? '' : 'none';
+            }
             if (remember) rememberTab(tab);
+            if (tab === 'representations' && window.CompareRepresentations) {
+                window.CompareRepresentations.load();
+            }
+            var showModels = tab === 'models';
             if (showModels && typeof Plotly !== 'undefined') {
                 var ids = ['difference-bar-chart', 'domain-summary-chart',
                            'compare-score-trend-plot', 'compare-rank-trend-plot'];
@@ -529,11 +574,13 @@
             }
         }
 
-        tabBenchmarks.addEventListener('click', function() { activateTab('benchmarks', true); });
-        tabModels.addEventListener('click', function() { activateTab('models', true); });
+        TABS.forEach(function(name) {
+            var el = tabEl(name);
+            if (el) el.addEventListener('click', function() { activateTab(name, true); });
+        });
 
         var requestedTab = new URLSearchParams(window.location.search).get('tab');
-        activateTab(requestedTab === 'models' ? 'models' : 'benchmarks', false);
+        activateTab(requestedTab, false);
     })();
     </script>
     </div>
