@@ -1,10 +1,7 @@
 {% load static %}
 {# Element ids hardcoded -- model-score-trend.js keys off them. #}
-<div class="columns">
-  <div class="column">
-    <div class="box">
-      <div class="card-content" data-trend-resize-scope>
-        <p class="subtitle is-5">Trends over time</p>
+<div class="box" data-trend-resize-scope>
+        <h4 class="subtitle is-4">Historical Trend</h4>
         <p class="is-size-7 has-text-grey mb-3">Hover the line for a preview; <strong>click the chart</strong> to pin that month in the sidebar. While pinned, hover does not change it -- use <strong>Release</strong> or <kbd>Esc</kbd> to clear.</p>
         {% if score_trend_plot_json or rank_trend_plot_json %}
         <div class="tabs is-boxed" id="trend-tabs">
@@ -70,8 +67,5 @@
         <script defer src="{% static 'benchmarks/js/model-score-trend.js' %}"></script>
         {% else %}
         <p class="help">Score trend is shown when this model has vision benchmark scores with timestamps.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+{% endif %}
 </div>

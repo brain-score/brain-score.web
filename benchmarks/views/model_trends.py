@@ -12,85 +12,93 @@ from ..models import Model, ModelMonthlyAggregate, MonthBenchmarkEdge, Score
 _logger = logging.getLogger(__name__)
 
 
-# Keyed on (kind, domain, max-month) so a new month naturally invalidates.
+# Cache is keyed on (kind, domain, data-version). data-version is the max
+# ModelMonthlyAggregate row id for the domain: recompute deletes and re-creates
+# each month's rows, so the max id increases on *every* run -- including a
+# same-month rerun -- and every worker (and every instance) reads that shared
+# value from the DB. So a recompute in any process invalidates all workers'
+# caches within the TTL, not just the one that ran it.
 _TREND_CACHE = {}
 _TREND_CACHE_LOCK = threading.Lock()
 
 # Hover list cap for new-leaf / coverage-completion bullets on the model card.
 _COVERAGE_BULLET_CAP = 12
 
-# The max-month lookup runs on every cache access; memoize it briefly so a
-# single page render (which touches several loaders) hits the DB once, not once
-# per loader. A new month is picked up within the TTL; recompute clears it.
-_MAX_MONTH_TTL_SECONDS = 60
-_max_month_memo = {}  # domain -> (max_month, expires_at)
+# The version lookup runs on every cache access; memoize it briefly so a single
+# page render (which touches several loaders) hits the DB once, not once per
+# loader. A recompute is picked up within the TTL; a same-process recompute
+# clears the memo immediately via clear_trend_cache().
+_VERSION_TTL_SECONDS = 60
+_version_memo = {}  # domain -> (version, expires_at)
 
 
-def _trend_cache_key(domain):
+def _trend_data_version(domain):
     now = time.time()
-    hit = _max_month_memo.get(domain)
+    hit = _version_memo.get(domain)
     if hit is not None and hit[1] > now:
         return hit[0]
-    max_month = (ModelMonthlyAggregate.objects
-                 .filter(domain=domain)
-                 .order_by('-month')
-                 .values_list('month', flat=True)
-                 .first())
-    _max_month_memo[domain] = (max_month, now + _MAX_MONTH_TTL_SECONDS)
-    return max_month
+    version = (ModelMonthlyAggregate.objects
+               .filter(domain=domain)
+               .order_by('-id')
+               .values_list('id', flat=True)
+               .first())
+    _version_memo[domain] = (version, now + _VERSION_TTL_SECONDS)
+    return version
 
 
 def _trend_cache_get(kind, domain):
-    max_month = _trend_cache_key(domain)
-    return _TREND_CACHE.get((kind, domain, max_month)), max_month
+    version = _trend_data_version(domain)
+    return _TREND_CACHE.get((kind, domain, version)), version
 
 
-def _trend_cache_put(kind, domain, max_month, value):
+def _trend_cache_put(kind, domain, version, value):
     with _TREND_CACHE_LOCK:
         for k in list(_TREND_CACHE):
             if k[0] == kind and k[1] == domain:
                 del _TREND_CACHE[k]
-        _TREND_CACHE[(kind, domain, max_month)] = value
+        _TREND_CACHE[(kind, domain, version)] = value
 
 
 def clear_trend_cache():
-    """Per-process bust. Same-month recomputes don't change ``max(month)`` so
-    natural invalidation doesn't fire; multi-worker deploys need a cross-worker
-    strategy (cache-version row, Redis pub/sub)."""
+    """Immediate local bust for the process that just recomputed. Cross-worker
+    invalidation is handled by the data-version cache key (max
+    ``ModelMonthlyAggregate`` id) -- other workers pick up the new version
+    within the TTL on their own. This just lets the recomputing process see it
+    right away instead of waiting out the TTL."""
     with _TREND_CACHE_LOCK:
         _TREND_CACHE.clear()
-    _max_month_memo.clear()
+    _version_memo.clear()
 
 
 def _load_month_benchmark_edges(domain='vision'):
     """Maps ``'YYYY-MM|YYYY-MM' -> [leaf_ids]`` newly eligible between the pair."""
-    cached, max_month = _trend_cache_get('edges', domain)
+    cached, version = _trend_cache_get('edges', domain)
     if cached is not None:
         return cached
     rows = MonthBenchmarkEdge.objects.filter(domain=domain).values(
         'month_prev', 'month_curr', 'leaf_benchmarks',
     )
     edges = {f"{r['month_prev']}|{r['month_curr']}": list(r['leaf_benchmarks'] or []) for r in rows}
-    _trend_cache_put('edges', domain, max_month, edges)
+    _trend_cache_put('edges', domain, version, edges)
     return edges
 
 
 def _load_all_months(domain):
-    cached, max_month = _trend_cache_get('all_months', domain)
+    cached, version = _trend_cache_get('all_months', domain)
     if cached is not None:
         return cached
     months = sorted({m for m in ModelMonthlyAggregate.objects
                      .filter(domain=domain)
                      .values_list('month', flat=True).distinct()})
-    _trend_cache_put('all_months', domain, max_month, months)
+    _trend_cache_put('all_months', domain, version, months)
     return months
 
 
 def _load_public_wide_scores(domain):
     """``model_id`` column + one ``YYYY-MM`` column per month, public models only."""
-    cached, max_month = _trend_cache_get('public_wide', domain)
+    cached, version = _trend_cache_get('public_wide', domain)
     if cached is not None:
-        return cached.copy(), max_month
+        return cached.copy(), version
     qs = (ModelMonthlyAggregate.objects
           .filter(domain=domain, model__public=True)
           .values('model_id', 'month', 'score'))
@@ -100,49 +108,49 @@ def _load_public_wide_scores(domain):
     else:
         wide = df.pivot(index='model_id', columns='month', values='score').reset_index()
         wide.columns.name = None
-    _trend_cache_put('public_wide', domain, max_month, wide)
-    return wide.copy(), max_month
+    _trend_cache_put('public_wide', domain, version, wide)
+    return wide.copy(), version
 
 
 def _load_public_rank_df(domain):
     """Cached public-only rank frame (same index as ``_load_public_wide_scores``).
     Recomputed only when a new month lands; the model card would otherwise rebuild
     the full model x month rank matrix on every page load."""
-    cached, max_month = _trend_cache_get('public_rank', domain)
+    cached, version = _trend_cache_get('public_rank', domain)
     if cached is not None:
-        return cached.copy(), max_month
+        return cached.copy(), version
     public_wide, _ = _load_public_wide_scores(domain)
     month_cols = [c for c in public_wide.columns if c != 'model_id']
     if not month_cols:
         rank_df = public_wide[['model_id']].copy()
     else:
         _, rank_df = wide_scores_and_rank_df(public_wide, month_cols)
-    _trend_cache_put('public_rank', domain, max_month, rank_df)
-    return rank_df.copy(), max_month
+    _trend_cache_put('public_rank', domain, version, rank_df)
+    return rank_df.copy(), version
 
 
 def _load_model_names(domain):
     """``{model_id: name}`` for all models in the domain."""
-    cached, max_month = _trend_cache_get('names', domain)
+    cached, version = _trend_cache_get('names', domain)
     if cached is not None:
-        return cached, max_month
+        return cached, version
     names = dict(Model.objects.filter(domain=domain).values_list('id', 'name'))
-    _trend_cache_put('names', domain, max_month, names)
-    return names, max_month
+    _trend_cache_put('names', domain, version, names)
+    return names, version
 
 
 def _load_focal_coverage_deltas(model_id, domain):
     """``{'YYYY-MM': [leaf_ids]}`` of leaves the focal model newly scored on
     each month. Populated by ``recompute_score_trends``."""
     kind = f'focal_coverage:{model_id}'
-    cached, max_month = _trend_cache_get(kind, domain)
+    cached, version = _trend_cache_get(kind, domain)
     if cached is not None:
         return cached
     rows = (ModelMonthlyAggregate.objects
             .filter(model_id=model_id, domain=domain)
             .values_list('month', 'coverage_leaves_added_vs_prev'))
     result = {m: (leaves or []) for m, leaves in rows}
-    _trend_cache_put(kind, domain, max_month, result)
+    _trend_cache_put(kind, domain, version, result)
     return result
 
 
@@ -159,7 +167,7 @@ def _load_focal_scored_new_leaves(model_id, domain, edges_map):
     aggregate this month, which ones did this model actually get a nonzero
     non-NaN score on by month-end?"""
     kind = f'focal_scored_new:{model_id}'
-    cached, max_month = _trend_cache_get(kind, domain)
+    cached, version = _trend_cache_get(kind, domain)
     if cached is not None:
         return cached
     result = {}
@@ -187,14 +195,39 @@ def _load_focal_scored_new_leaves(model_id, domain, edges_map):
                              if ident in earliest and earliest[ident] <= month_end})
             if scored:
                 result[curr] = scored
-    _trend_cache_put(kind, domain, max_month, result)
+    _trend_cache_put(kind, domain, version, result)
     return result # -> {'YYYY-MM': [leaf_ids]}
+
+
+def _load_scored_new_leaf_values(model_id, domain, edges_map):
+    """``{leaf_id: score_ceiled}`` at the leaf's first qualifying score, so the
+    compare narrative can say which of two models scored higher on it."""
+    kind = f'focal_scored_new_values:{model_id}'
+    cached, version = _trend_cache_get(kind, domain)
+    if cached is not None:
+        return cached
+    result = {}
+    all_added = sorted({leaf for added in edges_map.values() for leaf in (added or [])}) if edges_map else []
+    if all_added:
+        earliest = {}
+        rows = (Score.objects
+                .filter(model_id=model_id, benchmark__benchmark_type__identifier__in=all_added,
+                        end_timestamp__isnull=False, score_ceiled__isnull=False, score_ceiled__gt=0)
+                .values_list('benchmark__benchmark_type__identifier', 'score_ceiled', 'end_timestamp'))
+        for ident, sc, ts in rows:
+            if sc is None or (isinstance(sc, float) and np.isnan(sc)):
+                continue
+            if ident not in earliest or ts < earliest[ident][0]:
+                earliest[ident] = (ts, float(sc))
+        result = {ident: sc for ident, (_ts, sc) in earliest.items()}
+    _trend_cache_put(kind, domain, version, result)
+    return result
 
 
 def _load_new_models_by_month(domain):
     """``{'YYYY-MM': int}`` -> count of models entering the leaderboard each month
     (first non-zero MMA score lands in that month)."""
-    cached, max_month = _trend_cache_get('new_models_by_month', domain)
+    cached, version = _trend_cache_get('new_models_by_month', domain)
     if cached is not None:
         return cached
     rows = list(ModelMonthlyAggregate.objects
@@ -206,7 +239,7 @@ def _load_new_models_by_month(domain):
         df = pd.DataFrame(rows, columns=['model_id', 'month'])
         first_month = df.groupby('model_id')['month'].min()
         result = {m: int(c) for m, c in first_month.value_counts().to_dict().items()}
-    _trend_cache_put('new_models_by_month', domain, max_month, result)
+    _trend_cache_put('new_models_by_month', domain, version, result)
     return result
 
 
@@ -662,7 +695,7 @@ def load_and_build_rank_trend(model_id, domain, focal_is_public=True):
     if domain != 'vision':
         return None
     try:
-        public_wide, _max_month = _load_public_wide_scores(domain)
+        public_wide, _version = _load_public_wide_scores(domain)
         month_cols = [c for c in public_wide.columns if c != 'model_id']
         if not month_cols:
             return None
@@ -838,25 +871,51 @@ def _compare_focal_change_lines(i, dates, values, kind, display_name, edges_map,
 
     cap = _COMPARE_COVERAGE_BULLET_CAP
     if coverage_added:
-        if len(coverage_added) <= 3:
-            lines.append(f'{display_name} newly scored: ' + ', '.join(coverage_added) + '.')
-        else:
-            lines.append(f'{display_name} newly scored on {_plural(len(coverage_added), "benchmark")}:')
-            for b in coverage_added[:cap]:
-                lines.append(f'  - {b}')
-            if len(coverage_added) > cap:
-                lines.append(f'  ... and {len(coverage_added) - cap} more.')
+        lines.append(f'{display_name} newly scored on {_plural(len(coverage_added), "benchmark")}:')
+        lines.extend(_bullets_with_more(coverage_added, cap, indent='  '))
     elif not model_lines and not added:
         lines.append(f'{display_name}: no new benchmarks this month; change from score updates or other models.')
 
     return lines
 
 
+def _bullets_with_more(items, cap, render=str, indent=''):
+    """First ``cap`` bullets, then a ``... and N more.`` marker followed by the
+    rest. The client collapses everything after the marker behind a toggle, so
+    the overflow stays reachable without lengthening the panel by default."""
+    lines = [f'{indent}- {render(x)}' for x in items[:cap]]
+    if len(items) > cap:
+        lines.append(f'{indent}... and {len(items) - cap} more.')
+        lines.extend(f'{indent}- {render(x)}' for x in items[cap:])
+    return lines
+
+
+def _scored_by_label(leaf, name_a, name_b, scored_a, scored_b, values_a, values_b):
+    """Who got a score on this newly added benchmark. When both did, order them
+    by their score on it (``A > B``) instead of listing them as ``A + B``."""
+    in_a, in_b = leaf in scored_a, leaf in scored_b
+    if not in_a and not in_b:
+        return 'neither'
+    if not in_b:
+        return name_a
+    if not in_a:
+        return name_b
+    va = (values_a or {}).get(leaf)
+    vb = (values_b or {}).get(leaf)
+    if va is None or vb is None:
+        return f'{name_a} + {name_b}'
+    if abs(va - vb) < 1e-9:
+        return f'{name_a} = {name_b}'
+    # Higher scorer first, so the relation always reads ">".
+    return f'{name_a} > {name_b}' if va > vb else f'{name_b} > {name_a}'
+
+
 def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
                              coverage_a=None, coverage_b=None,
                              new_leaf_counts=None, new_model_counts=None,
                              edges_map=None, mid_a=None, mid_b=None, rank_df=None,
-                             scored_new_a=None, scored_new_b=None):
+                             scored_new_a=None, scored_new_b=None,
+                             scored_values_a=None, scored_values_b=None):
     """Hover narrative at month index ``i`` comparing A and B at that point.
     When ``i > 0``, appends month-over-month change reasons per model (mirroring
     the single-model trend panel)."""
@@ -922,13 +981,10 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
             scored_b_set = set((scored_new_b or {}).get(ym, []) or []) & set(added)
             lines.append(f'{_plural(len(added), "new benchmark")} added this month (unscored count as 0):')
             cap = _COMPARE_COVERAGE_BULLET_CAP
-            for b in added[:cap]:
-                who = []
-                if b in scored_a_set: who.append(name_a)
-                if b in scored_b_set: who.append(name_b)
-                lines.append(f'- {b} ({" + ".join(who) if who else "neither"})')
-            if len(added) > cap:
-                lines.append(f'... and {len(added) - cap} more.')
+            lines.extend(_bullets_with_more(
+                added, cap,
+                lambda b: f'{b} ({_scored_by_label(b, name_a, name_b, scored_a_set, scored_b_set, scored_values_a, scored_values_b)})',
+            ))
         elif not any_focal:
             cov_a = (coverage_a or {}).get(ym, []) or []
             cov_b = (coverage_b or {}).get(ym, []) or []
@@ -941,15 +997,8 @@ def _comparison_point_lines(i, dates, kind, series_a, series_b, name_a, name_b,
         def _emit_coverage(name, cov):
             if not cov:
                 return
-            if len(cov) <= 3:
-                lines.append(f'{name} newly scored: ' + ', '.join(cov) + '.')
-                return
             lines.append(f'{name} newly scored on {_plural(len(cov), "benchmark")}:')
-            cap = _COMPARE_COVERAGE_BULLET_CAP
-            for b in cov[:cap]:
-                lines.append(f'  - {b}')
-            if len(cov) > cap:
-                lines.append(f'  ... and {len(cov) - cap} more.')
+            lines.extend(_bullets_with_more(cov, _COMPARE_COVERAGE_BULLET_CAP, indent='  '))
 
         _emit_coverage(name_a, cov_a)
         _emit_coverage(name_b, cov_b)
@@ -984,7 +1033,8 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
                                   coverage_a=None, coverage_b=None,
                                   new_leaf_counts=None, new_model_counts=None,
                                   edges_map=None, mid_a=None, mid_b=None, rank_df=None,
-                                  scored_new_a=None, scored_new_b=None):
+                                  scored_new_a=None, scored_new_b=None,
+                                  scored_values_a=None, scored_values_b=None):
     # Truncate the display copy only, so callers keep their full identifiers.
     name_a_disp = _truncate_sidebar_name(name_a)
     name_b_disp = _truncate_sidebar_name(name_b)
@@ -1014,6 +1064,7 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
             new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
             edges_map=edges_map, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
             scored_new_a=scored_new_a, scored_new_b=scored_new_b,
+            scored_values_a=scored_values_a, scored_values_b=scored_values_b,
         ),
     } for i in range(len(dates))]
     list_el = ('compare-score-attribution-list' if kind == 'score'
@@ -1023,6 +1074,9 @@ def _build_comparison_trend_meta(dates, kind, series_a, series_b, name_a, name_b
         'attributionListId': list_el,
         'defaultLines': overall,
         'points': points,
+        # Names as they appear in the narrative, so the client can tint them to
+        # match each model's trace in the legend.
+        'nameColors': [[name_a_disp, _COMPARE_COLOR_A], [name_b_disp, _COMPARE_COLOR_B]],
     }
 
 
@@ -1167,6 +1221,8 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
         rank_df = _load_comparison_rank_df(mid_a, mid_b, domain)
         scored_new_a = _load_focal_scored_new_leaves(mid_a, domain, edges)
         scored_new_b = _load_focal_scored_new_leaves(mid_b, domain, edges)
+        scored_values_a = _load_scored_new_leaf_values(mid_a, domain, edges)
+        scored_values_b = _load_scored_new_leaf_values(mid_b, domain, edges)
 
         for kind in ('score', 'rank'):
             pair = _aligned_pair_series(mid_a, mid_b, domain, kind)
@@ -1187,6 +1243,7 @@ def load_and_build_comparison_trend(mid_a, mid_b, domain):
                 new_leaf_counts=new_leaf_counts, new_model_counts=new_model_counts,
                 edges_map=edges, mid_a=mid_a, mid_b=mid_b, rank_df=rank_df,
                 scored_new_a=scored_new_a, scored_new_b=scored_new_b,
+                scored_values_a=scored_values_a, scored_values_b=scored_values_b,
             )
             out[kind] = plot_json
         return out

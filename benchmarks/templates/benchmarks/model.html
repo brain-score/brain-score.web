@@ -40,7 +40,7 @@
                 </span>
                 {% if model.domain == 'vision' and model.public %}
                     <a class="mc-hero-pill is-compare"
-                       href="/vision/compare/?tab=models&model_a={{ model.name|urlencode }}">
+                       href="/vision/compare/?tab=models&model_a={{ model.model_id }}">
                         <i class="fa-solid fa-scale-balanced"></i> Compare this model
                     </a>
                 {% endif %}
@@ -393,6 +393,8 @@ model.look_at(...)</pre>
             </p>
         </div>
 
+        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
+
         {# Benchmarks bibtex #}
         <div class="box">
             <h2 class="subtitle is-4">
@@ -407,8 +409,6 @@ model.look_at(...)</pre>
                 </div>
             </div>
         </div>
-        {% if model.domain == 'vision' %}{% include "benchmarks/_model_trend_panel.html" %}{% endif %}
-
         {# Evaluation and I/O #}
         {% include "benchmarks/_model_metadata_eval_io.html" %}
     </section>

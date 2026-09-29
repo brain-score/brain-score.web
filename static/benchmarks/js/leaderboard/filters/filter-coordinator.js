@@ -186,9 +186,9 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   // Initialize finalData
   let finalData = timestampFilteredData;
 
-  // Update filtered scores
-  if (typeof updateFilteredScores === 'function') {
-    const updatedData = updateFilteredScores(timestampFilteredData);
+  // Update filtered scores (compute only; the grid is set once below)
+  if (typeof computeFilteredScores === 'function') {
+    const updatedData = computeFilteredScores(timestampFilteredData);
     if (updatedData) {
       finalData = updatedData;
     }
@@ -738,8 +738,10 @@ function resetAllFilters() {
   }
 }
 
-// Update filtered scores based on current filters
-function updateFilteredScores(rowData) {
+// Compute filtered scores based on current filters (returns data; does not touch the grid).
+// Named distinctly from ag-grid-leaderboard.js's updateFilteredScores stub to avoid a global
+// name collision (which recurses when the modules are concatenated/bundled).
+function computeFilteredScores(rowData) {
   if (!window.originalRowData || !window.benchmarkTree) return;
 
   const excludedBenchmarks = new Set(window.filteredOutBenchmarks || []);
@@ -1327,13 +1329,14 @@ function toggleFilteredScoreColumn(gridApi) {
 window.LeaderboardFilterCoordinator = {
   applyCombinedFilters,
   resetAllFilters,
-  updateFilteredScores,
+  updateFilteredScores: computeFilteredScores,
   toggleFilteredScoreColumn,
   isColumnHiddenByWaybackFiltering
 };
 
-// Make main functions globally available for compatibility
+// Make main functions globally available for compatibility.
+// The bare `updateFilteredScores` global is owned by ag-grid-leaderboard.js (compute + set grid);
+// this module exposes its compute-only version through LeaderboardFilterCoordinator only.
 window.applyCombinedFilters = applyCombinedFilters;
 window.resetAllFilters = resetAllFilters;
-window.updateFilteredScores = updateFilteredScores;
 window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;

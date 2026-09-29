@@ -18,6 +18,8 @@ class BlogPost:
         self.excerpt = metadata.get('excerpt', '')
         self.created_at = datetime.strptime(metadata.get('date', '2024-01-01'), '%Y-%m-%d')
         self.author_name = metadata.get('author', 'Brain-Score Team')
+        self.author_role = metadata.get('author_role', 'Member of the Brain-Score team')
+        self.author_url = metadata.get('author_url', '')
         self.category = metadata.get('category', '')
         self.tags = metadata.get('tags', '')
         self.featured = metadata.get('featured', 'false').lower() == 'true'

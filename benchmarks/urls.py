@@ -2,7 +2,7 @@ from functools import partial
 from django.conf import settings
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import index, user, model, competition2022, competition2024, compare, community, \
+from .views import user, model, competition2022, competition2024, compare, community, \
     release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
 from .utils import show_token, refresh_cache, refresh_score_trends
 
@@ -114,6 +114,8 @@ for domain in supported_domains:
         path(f'model/<str:domain>/<int:id>', partial(model.view, domain=domain), name='model-view'),
         path(f'benchmark/<str:domain>/<int:id>', partial(benchmark.view, domain=domain), name='benchmark-view'),
         path(f'{domain}/compare/', partial(compare.view, domain=domain), name='{domain}-compare'),
+        path(f'{domain}/compare/data/', partial(compare.dashboard_data, domain=domain),
+             name=f'{domain}-compare-data'),
         path(f'{domain}/compare/trend_pair/', partial(compare.trend_pair, domain=domain),
              name=f'{domain}-compare-trend-pair'),
     ]

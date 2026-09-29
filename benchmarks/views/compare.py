@@ -1,12 +1,15 @@
 import json
+from datetime import datetime
 
 from django.http import JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from .index import get_context
+from .index import get_context, get_datetime_range
 from .compare_models import (
     _build_benchmark_domain_map,
+    _build_compare_dashboard_payload,
     _build_model_metadata,
     _build_benchmark_url_map,
 )
@@ -24,7 +27,38 @@ def view(request, domain: str):
     context["benchmark_url_map"] = json.dumps(
         _build_benchmark_url_map(context["benchmarks"], domain)
     )
+    context["compare_dashboard_data_url"] = reverse(f'{domain}-compare-data')
+    # The dashboard payload is fetched after the page shell renders. Keep the
+    # legacy matrix empty; the dashboard initializes it when the fetch resolves.
+    context["comparison_data"] = "[]"
     return render(request, 'benchmarks/compare.html', context)
+
+
+def _serialized_datetime_range(domain: str):
+    datetime_range = get_datetime_range(domain=domain)
+    min_timestamp = datetime.fromisoformat(datetime_range["min"])
+    max_timestamp = datetime.fromisoformat(datetime_range["max"])
+    return {
+        "min": datetime_range["min"],
+        "max": datetime_range["max"],
+        "min_unix": int(min_timestamp.timestamp()),
+        "max_unix": int(max_timestamp.timestamp()),
+    }
+
+
+@require_GET
+def dashboard_data(request, domain: str):
+    context = get_context(show_public=True, domain=domain)
+    payload = _build_compare_dashboard_payload(
+        context["benchmarks"],
+        context["models"],
+        domain,
+        _serialized_datetime_range(domain),
+    )
+    return JsonResponse(
+        payload,
+        json_dumps_params={"separators": (",", ":")},
+    )
 
 
 @require_GET

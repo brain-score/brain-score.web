@@ -1,14 +1,6 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
-{% block table_library_dependencies %}
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
-{% endblock %}
-
 {% block banner %}
 <h1>{{ formatted }} Profile</h1>
 <p>Here you can view your {{ domain }} model submissions, as well as resubmit models.</p>

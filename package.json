@@ -11,7 +11,8 @@
     "sass": "1.69.5"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:compare-dashboard": "node --test static/benchmarks/js/tests/*.test.js"
   },
   "repository": {
     "type": "git",

@@ -575,103 +575,12 @@ function setInitialColumnState() {
   });
 }
 
-// Placeholder functions that will delegate to modular components
-function populateFilterDropdowns(filterOptions) {
-  if (typeof window.LeaderboardModelFilters?.populateFilterDropdowns === 'function') {
-    window.LeaderboardModelFilters.populateFilterDropdowns(filterOptions);
-  }
-}
-
-function setupDropdownHandlers() {
-  if (typeof window.LeaderboardModelFilters?.setupDropdownHandlers === 'function') {
-    window.LeaderboardModelFilters.setupDropdownHandlers();
-  }
-}
-
-function applyCombinedFilters(skipColumnToggle = false) {
-  if (typeof window.LeaderboardFilterCoordinator?.applyCombinedFilters === 'function') {
-    window.LeaderboardFilterCoordinator.applyCombinedFilters(skipColumnToggle);
-  }
-}
-
-function resetAllFilters() {
-  if (typeof window.LeaderboardFilterCoordinator?.resetAllFilters === 'function') {
-    window.LeaderboardFilterCoordinator.resetAllFilters();
-  }
-}
-
-function initializeDualHandleSliders() {
-  if (typeof window.LeaderboardRangeFilters?.initializeDualHandleSliders === 'function') {
-    window.LeaderboardRangeFilters.initializeDualHandleSliders();
-  }
-}
-
-function parseURLFilters() {
-  if (typeof window.LeaderboardURLState?.parseURLFilters === 'function') {
-    window.LeaderboardURLState.parseURLFilters();
-  }
-}
-
-function updateURLFromFilters() {
-  if (typeof window.LeaderboardURLState?.updateURLFromFilters === 'function') {
-    window.LeaderboardURLState.updateURLFromFilters();
-  }
-}
-
-function encodeBenchmarkFilters() {
-  if (typeof window.LeaderboardURLState?.encodeBenchmarkFilters === 'function') {
-    return window.LeaderboardURLState.encodeBenchmarkFilters();
-  }
-  return null;
-}
-
-function decodeBenchmarkFilters(encodedFilters) {
-  if (typeof window.LeaderboardURLState?.decodeBenchmarkFilters === 'function') {
-    return window.LeaderboardURLState.decodeBenchmarkFilters(encodedFilters);
-  }
-  return [];
-}
-
-function buildHierarchyFromTree(tree, hierarchyMap = new Map()) {
-  if (typeof window.LeaderboardHeaderComponents?.buildHierarchyFromTree === 'function') {
-    return window.LeaderboardHeaderComponents.buildHierarchyFromTree(tree, hierarchyMap);
-  }
-  // Fallback implementation
-  tree.forEach(node => {
-    const children = node.children ? node.children.map(child => child.id) : [];
-    hierarchyMap.set(node.id, children);
-    if (node.children && node.children.length > 0) {
-      buildHierarchyFromTree(node.children, hierarchyMap);
-    }
-  });
-  return hierarchyMap;
-}
-
-function updateColumnVisibility() {
-  if (typeof window.LeaderboardHeaderComponents?.updateColumnVisibility === 'function') {
-    window.LeaderboardHeaderComponents.updateColumnVisibility();
-  }
-}
-
-function copyBibtexToClipboard() {
-  if (typeof window.LeaderboardCitationExport?.copyBibtexToClipboard === 'function') {
-    window.LeaderboardCitationExport.copyBibtexToClipboard();
-  }
-}
-
-function updateAllCountBadges() {
-  if (typeof window.LeaderboardHierarchyUtils?.updateAllCountBadges === 'function') {
-    window.LeaderboardHierarchyUtils.updateAllCountBadges();
-  }
-}
-
-function getFilteredLeafCount(parentField) {
-  if (typeof window.LeaderboardHierarchyUtils?.getFilteredLeafCount === 'function') {
-    return window.LeaderboardHierarchyUtils.getFilteredLeafCount(parentField);
-  }
-  return 0;
-}
-
+// Filters, hierarchy, URL state, citation export and header helpers are owned by the
+// modular leaderboard/ files, which declare these as globals. The delegating stubs that
+// used to live here shadowed those globals and recursed when the modules were concatenated
+// (a stub delegates to the module, whose own bare self-call resolved back to the stub).
+// updateFilteredScores stays: it wraps the coordinator's compute step with the grid update
+// and is the sole owner of that global (the coordinator's is named computeFilteredScores).
 function updateFilteredScores(rowData) {
   if (typeof window.LeaderboardFilterCoordinator?.updateFilteredScores === 'function') {
     const updatedData = window.LeaderboardFilterCoordinator.updateFilteredScores(rowData);
@@ -683,50 +592,8 @@ function updateFilteredScores(rowData) {
   return rowData;
 }
 
-function toggleFilteredScoreColumn(gridApi) {
-  if (typeof window.LeaderboardFilterCoordinator?.toggleFilteredScoreColumn === 'function') {
-    window.LeaderboardFilterCoordinator.toggleFilteredScoreColumn(gridApi);
-  }
-}
-
-function setupBenchmarkCheckboxes(filterOptions) {
-  if (typeof window.LeaderboardBenchmarkFilters?.setupBenchmarkCheckboxes === 'function') {
-    window.LeaderboardBenchmarkFilters.setupBenchmarkCheckboxes(filterOptions);
-  }
-}
-
-function renderBenchmarkTree(container, benchmarkTree) {
-  if (typeof window.LeaderboardBenchmarkFilters?.renderBenchmarkTree === 'function') {
-    window.LeaderboardBenchmarkFilters.renderBenchmarkTree(container, benchmarkTree);
-  }
-}
-
-function getAllDescendantsFromHierarchy(parentId, hierarchyMap) {
-  if (typeof window.LeaderboardHeaderComponents?.getAllDescendantsFromHierarchy === 'function') {
-    return window.LeaderboardHeaderComponents.getAllDescendantsFromHierarchy(parentId, hierarchyMap);
-  }
-  return [];
-}
-
-// Make all functions available globally
+// This file owns the grid core; expose only that. The helpers above are owned by the
+// modular leaderboard/ files, which register their own globals.
 window.initializeGrid = initializeGrid;
-window.populateFilterDropdowns = populateFilterDropdowns;
-window.setupDropdownHandlers = setupDropdownHandlers;
-window.applyCombinedFilters = applyCombinedFilters;
-window.resetAllFilters = resetAllFilters;
-window.initializeDualHandleSliders = initializeDualHandleSliders;
-window.parseURLFilters = parseURLFilters;
-window.updateURLFromFilters = updateURLFromFilters;
-window.encodeBenchmarkFilters = encodeBenchmarkFilters;
-window.decodeBenchmarkFilters = decodeBenchmarkFilters;
-window.buildHierarchyFromTree = buildHierarchyFromTree;
-window.updateColumnVisibility = updateColumnVisibility;
 window.setInitialColumnState = setInitialColumnState;
-window.copyBibtexToClipboard = copyBibtexToClipboard;
-window.updateAllCountBadges = updateAllCountBadges;
-window.getFilteredLeafCount = getFilteredLeafCount;
 window.updateFilteredScores = updateFilteredScores;
-window.toggleFilteredScoreColumn = toggleFilteredScoreColumn;
-window.setupBenchmarkCheckboxes = setupBenchmarkCheckboxes;
-window.renderBenchmarkTree = renderBenchmarkTree;
-window.getAllDescendantsFromHierarchy = getAllDescendantsFromHierarchy;

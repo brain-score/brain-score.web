@@ -32,7 +32,7 @@
                             <span class="mc-tag">{{ related.relationship_display }}</span>
                             {% if domain == 'vision' and related.model_card_id %}
                                 <a class="mc-lineage-compare" title="Compare with {{ related.display_name }}"
-                                   href="/vision/compare/?tab=models&model_a={{ model.name|urlencode }}&model_b={{ related.identifier|urlencode }}">&#8646;</a>
+                                   href="/vision/compare/?tab=models&model_a={{ model.model_id }}&model_b={{ related.model_card_id }}">&#8646;</a>
                             {% endif %}
                         </li>
                     {% endfor %}

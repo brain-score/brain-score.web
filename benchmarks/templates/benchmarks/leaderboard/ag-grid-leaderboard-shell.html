@@ -3,12 +3,8 @@
 
 {% block page_title %}Brain-Score - Leaderboard{% endblock %}
 
-{% block table_library_dependencies %}
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-grid.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/styles/ag-theme-alpine.css">
-{% endblock %}
+{# The leaderboard uses none of the viz libs (Plotly/d3/Chart/select2/jstat/countdown). #}
+{% block third_party_viz_libs %}{% endblock %}
 
 {% block banner %}
 <h1>{{ domain_display }} Leaderboard</h1>

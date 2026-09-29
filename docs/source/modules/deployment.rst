@@ -41,8 +41,8 @@ AWS and Elastic Beanstalk
      Usually, in the past, Mike has chosen either ``Environment Issue`` or ``Application Deployment Issue``.
    * Choose ``Production System Down`` for the ``Severity`` dropdown.
    * Fill in the ``Subject`` and ``Description`` fields, and attach any logs that you want (optional).
-   * For the three fields at the bottom: ``Application Name`` is ``brain-score.web``, ``Environment Name`` is the instance
-     itself (the one containing ``updated``), and ``Region`` is ``US-14-East``. Then click ``Next Step: Solve now or contact us``
+   * For the three fields at the bottom: ``Application Name`` is ``brain-score.web``, ``Environment Name`` is the target
+     environment named in the relevant deployment command below, and ``Region`` is ``US-14-East``. Then click ``Next Step: Solve now or contact us``
      at the bottom right in orange to move on to the next page.
    * Finally, click the ``Contact us`` icon in the middle of the page to open the corresponding tab, and select ``Chat``
      as the contact method. **IMPORTANT**: Add your email/whoever else needs to be looped in into the ``Additional Contacts``
@@ -54,8 +54,8 @@ Website Staging Flow/Operations (Via Command Line/PR)
 
 1. Test any changes on LocalHost to make sure they appear and function correctly.
 2. Open a PR with your changes on Brain-Score.web's GitHub.
-3. Once PR tests pass, deploy to Dev: ``eb deploy Brain-score-web-dev-updated``.
-4. Test out changes on Dev: i.e., make sure everything looks good on dev using the dev `website <https://brain-score-web-dev-updated.kmk2mcntkw.us-east-2.elasticbeanstalk.com>`_.
+3. Once PR tests pass, deploy to Dev: ``eb deploy Brain-score-web-development``.
+4. Test out changes on Dev: i.e., make sure everything looks good on dev using the dev `website <http://Brain-score-web-development.eba-e8pevjnc.us-east-2.elasticbeanstalk.com>`_.
 
    * The Dev site and LocalHost DO NOT use HTTPS, only HTTP. Do not get spooked if you get weird CSRF errors.
 5. If Dev looks good, then merge PR into master upon approval.
@@ -90,12 +90,12 @@ To Deploy (if migrations are made)
 
 1. If there are changes to Django models, make sure makemigrations has been run and the migration checked into git.
 
-2. Deploy the latest Git commit to the development environment:  ``eb deploy Brain-score-web-dev-updated --timeout 20``.
+2. Deploy the latest Git commit to the development environment:  ``eb deploy Brain-score-web-development --timeout 20``.
 
    * This can take around 15 minutes.
 3. If there are database migrations, apply them from within the container:
 
-   * ``eb ssh Brain-score-web-dev-updated``
+   * ``eb ssh Brain-score-web-development``
 
       * Reply "yes" to the fingerprint question.
       * You should get an EC2 instance prompt like ``[ec2-user@ip-172-31-32-98 ~]$``.
@@ -116,7 +116,7 @@ To Deploy (if migrations are made)
    * Exit the container:  ``exit``.
    * Exit the EC2 host:  ``exit``.
 
-4. Check the dev website:  ``Brain-score-web-dev-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com ``.
+4. Check the dev website:  ``Brain-score-web-development.eba-e8pevjnc.us-east-2.elasticbeanstalk.com ``.
 5. If the dev website passes tests, deploy to production:  ``eb deploy brain-score-web-prod --timeout 20``.
 6. If necessary, repeat migrations, but this time begin with ``eb ssh brain-score-web-prod``.
 
@@ -128,4 +128,3 @@ If the Elastic Beanstalk environments do not exist or need to be recreated::
     eb create brain-score-web-dev -c brain-score-web-dev -r us-east-2 -p Docker --envvars DEBUG=True,DOMAIN=localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com,DB_CRED=brainscore-1-ohio-cred
 
     eb create brain-score-web-prod -c brain-score-web-prod -r us-east-2 -p Docker --envvars DEBUG=False,DOMAIN=localhost:brain-score-web-prod.us-east-2.elasticbeanstalk.com:www.brain-score.org,DB_CRED=brainscore-prod-ohio-cred
-

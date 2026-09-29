@@ -52,8 +52,13 @@ const ProgressiveLoader = {
         if (mainContent) {
             mainContent.innerHTML = html;
             
-            // Execute any scripts in the loaded content
-            const scripts = mainContent.querySelectorAll('script');
+            // Execute any scripts in the loaded content. Skip data islands
+            // (e.g. <script type="application/json">): innerHTML already placed them in
+            // the DOM and re-creating them as executable scripts would run JSON as JS.
+            const scripts = Array.from(mainContent.querySelectorAll('script')).filter(s => {
+                const t = (s.type || '').toLowerCase();
+                return t === '' || t === 'text/javascript' || t === 'module';
+            });
             let scriptsLoaded = 0;
             const totalScripts = scripts.length;
             
