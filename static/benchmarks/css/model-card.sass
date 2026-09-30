@@ -181,57 +181,39 @@ $mc-undocumented: #c3cbd9
   .mc-hero-stats
     display: flex
     flex-wrap: wrap
-    gap: 0.5rem
-    margin-top: 0.9rem
+    align-items: center
+    gap: 0.35rem 1.15rem
+    width: fit-content
+    max-width: 100%
+    padding: 0.4rem 0.75rem
+    margin-top: 0.8rem
+    border-radius: 8px
+    background: rgba(255, 255, 255, 0.65)
 
   .mc-hero-stat
-    background: white
-    border-radius: 8px
-    padding: 0.45rem 0.8rem
-    border-left: 3px solid $brainscore_green
-    box-shadow: 0 1px 2px rgba(0, 27, 54, 0.15)
-    display: flex
-    flex-direction: column
+    display: inline-flex
+    align-items: center
+    gap: 0.35rem
+    padding: 0.25rem 0
     min-width: 0
+    max-width: 100%
+    flex-wrap: wrap
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    text-decoration: none
 
-    &.is-parameters
-      border-left-color: $brainscore_sky
-    &.is-input
-      border-left-color: $brainscore_lunar
-    &.is-supervision
-      border-left-color: $mc-probable
-    &.is-license
-      border-left-color: $brainscore_gray3
-
-    // chips that deep-link into a pre-filtered leaderboard
-    &.is-filter
-      text-decoration: none
-      color: inherit
-      cursor: pointer
-      transition: box-shadow 0.15s, transform 0.15s
-
-      .mc-hero-stat-label .fa-filter
-        font-size: 0.55rem
-        opacity: 0.6
-
-      &:hover, &:focus-visible
-        box-shadow: 0 2px 6px rgba(0, 27, 54, 0.25)
-        transform: translateY(-1px)
-
-        .mc-hero-stat-label .fa-filter
-          opacity: 1
+    > i
+      width: 1rem
+      text-align: center
+      opacity: 0.75
 
     .mc-hero-stat-label
-      text-transform: uppercase
-      letter-spacing: 0.08em
-      font-size: 0.6rem
-      font-weight: 700
-      color: $mc-label
+      font-size: inherit
+      font-weight: 400
 
     .mc-hero-stat-value
-      font-size: 0.85rem
+      font-size: inherit
       font-weight: 700
-      color: $brainscore_gray4
 
 // ---------- at-a-glance specs grid ----------
 
@@ -545,3 +527,183 @@ $mc-undocumented: #c3cbd9
   display: inline-flex
   align-items: center
   gap: 0.35rem
+
+// Preserve the model-card design while fixing disclosure and overflow behavior.
+.model-page
+  [hidden]
+    display: none !important
+  .model-card-section, .model-card-section .mc-heading
+    margin-top: 0
+  .model-card-hero .title, .model-card-section, .model-sidebar-card
+    overflow-wrap: anywhere
+    min-width: 0
+  .benchmark_scores
+    max-width: 100%
+    overflow-x: auto
+  .mc-section-toggle
+    border: 0
+    padding: 0
+    background: transparent
+    color: inherit
+    font: inherit
+    cursor: pointer
+  .mc-section-toggle.is_expandable::before
+    content: "\229E"
+  .mc-section-toggle.is_collapsible::before
+    content: "\229F"
+  .mc-section-toggle:focus-visible, .mc-confidence summary:focus-visible
+    outline: 2px solid $brainscore_sky
+    outline-offset: 3px
+
+  @media screen and (max-width: 1024px)
+    .content-container, .content-container.sidebar-collapsed
+      width: calc(100% - 104px)
+      margin-left: 92px
+      margin-right: 12px
+    .main-content
+      display: flex
+      flex-direction: column
+      margin: 0
+    .column.is-three-quarters.main-cell
+      width: 100%
+      position: static
+      padding: 0
+    .info-section
+      display: block
+      width: 100%
+      max-width: none
+      padding: 0
+    .banner.box.gradient
+      width: 100%
+      margin-left: 0
+    .mc-hero-stat
+      max-width: 100%
+    .mc-heading, .mc-facts > div, .mc-lineage-related li
+      flex-wrap: wrap
+    .model-card-section
+      padding: 1rem
+    .mc-lineage-related-name
+      flex-basis: 100%
+
+.mc-confidence
+  display: inline-block
+  position: relative
+  vertical-align: middle
+  summary
+    list-style: none
+    cursor: pointer
+    &::-webkit-details-marker
+      display: none
+  .mc-confidence-source
+    position: absolute
+    z-index: 10
+    top: 1rem
+    left: 0
+    width: 16rem
+    padding: 0.6rem
+    border: 1px solid $mc-border
+    border-radius: 4px
+    background: white
+    color: #3f4c60
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+    font-size: 0.8rem
+    font-weight: normal
+    text-transform: none
+    letter-spacing: normal
+    overflow-wrap: anywhere
+    @media screen and (max-width: 768px)
+      position: fixed
+      top: auto
+      bottom: 1rem
+      left: 92px
+      right: 12px
+      width: auto
+
+.mc-sr-only
+  position: absolute
+  width: 1px
+  height: 1px
+  padding: 0
+  margin: -1px
+  overflow: hidden
+  clip: rect(0, 0, 0, 0)
+  white-space: nowrap
+  border: 0
+
+// Header tags summarize metadata; full descriptions stay in the cards below.
+.model-card-hero
+  .mc-hero-detail-link
+    text-decoration: none
+    &:hover
+      text-decoration: underline
+      text-underline-offset: 3px
+    &:focus-visible
+      outline: 2px solid white
+      outline-offset: 3px
+  .mc-hero-stat-value
+    white-space: nowrap
+
+#mc-supervision, #mc-license, #mc-at-a-glance-body
+  scroll-margin-top: 1.5rem
+
+.mc-schema-trigger
+  font-family: inherit
+  cursor: pointer
+  &:hover
+    text-decoration: underline
+  &:focus-visible
+    outline: 2px solid $brainscore_gray4
+    outline-offset: 3px
+
+.mc-schema-dialog
+  width: min(960px, calc(100vw - 2rem))
+  max-width: calc(100vw - 2rem)
+  max-height: calc(100dvh - 2rem)
+  margin: auto
+  padding: 1.5rem
+  border: 1px solid $mc-border
+  border-radius: 12px
+  color: $brainscore_gray4
+  background: white
+  font-size: 0.9rem
+  overflow: auto
+  &::backdrop
+    background: rgba(0, 27, 54, 0.55)
+  p
+    margin: 0.75rem 0
+  .mc-schema-heading
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 1rem
+    h2
+      font-size: 1.25rem
+      font-weight: 700
+  .mc-schema-heading form
+    flex-shrink: 0
+  .mc-schema-close
+    white-space: nowrap
+    word-break: normal
+    padding: 0.4rem 0.75rem
+    background: white
+    border: 1px solid $mc-border
+    border-radius: 6px
+    color: inherit
+    cursor: pointer
+  .mc-schema-yaml
+    max-width: 100%
+    overflow: auto
+    padding: 1rem
+    margin-top: 1rem
+    border: 1px solid $mc-border
+    border-radius: 8px
+    background: #f5f7fa
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    line-height: 1.65
+    white-space: pre
+    word-break: normal
+    overflow-wrap: normal
+  code
+    color: inherit
+    background: transparent

@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 import json
 
@@ -665,6 +666,13 @@ class ModelMetadataRecord(models.Model):
     interface_description = models.TextField(null=True, default=None)
     preprocessing_description = models.TextField(null=True, default=None)
     training_process = models.TextField(null=True, default=None)
+    training_objective = models.TextField(null=True, default=None)
+    loss_function = models.TextField(null=True, default=None)
+    learning_rate = models.TextField(null=True, default=None)
+    batch_size = models.TextField(null=True, default=None)
+    input_format = models.TextField(null=True, default=None)
+    output_format = models.TextField(null=True, default=None)
+    tokenizer = models.TextField(null=True, default=None)
     dataset_summary = models.TextField(null=True, default=None)
     weights_provider = models.CharField(max_length=500, null=True, default=None)
     checkpoint_identifier = models.CharField(max_length=500, null=True, default=None)
@@ -678,13 +686,17 @@ class ModelMetadataRecord(models.Model):
     class Meta:
         db_table = 'brainscore_model_metadata'
         unique_together = (('domain', 'identifier'),)
+        constraints = [
+            models.UniqueConstraint(Lower('domain'), Lower('identifier'),
+                                    name='metadata_domain_identifier_ci'),
+        ]
 
 
 class ModelMetadataDataset(models.Model):
     record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='datasets')
     ordinal = models.IntegerField()
     dataset_identifier = models.CharField(max_length=200, null=True, default=None)
-    dataset_name = models.CharField(max_length=200)
+    dataset_name = models.TextField()
     role = models.CharField(max_length=50)  # e.g. training, fine_tuning, pre_training
     description = models.TextField(null=True, default=None)
 
@@ -735,8 +747,11 @@ class ModelMetadataRelationship(models.Model):
 class ModelMetadataAssertion(models.Model):
     record = models.ForeignKey(ModelMetadataRecord, on_delete=models.CASCADE, related_name='assertions')
     path = models.CharField(max_length=200)  # JSON pointer into the v2 schema, e.g. /model/display_name
-    status = models.CharField(max_length=20)  # verified | inferred | undocumented
-    source = models.CharField(max_length=100, null=True, default=None)
+    status = models.CharField(max_length=20, choices=[
+        (value, value) for value in (
+            "verified", "probable", "uncertain", "undocumented")
+    ])
+    source = models.TextField(null=True, default=None)
 
     class Meta:
         db_table = 'brainscore_model_metadata_assertion'

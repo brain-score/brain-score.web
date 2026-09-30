@@ -1,9 +1,10 @@
 import logging
 import threading
-from urllib.parse import urlencode
 from decimal import Decimal, ROUND_HALF_UP
 import numpy as np
 from django.http import Http404
+from django.db.models import Min
+from django.db.models.functions import Lower
 from django.shortcuts import render
 from django.template.defaulttags import register
 
@@ -273,37 +274,6 @@ def calculate_representative_color(value, min_value, max_value, is_engineering):
     return f'rgba({r}, {g}, {b}, {alpha:.2f})'
 
 
-def _hero_filter_links(model, domain):
-    """Leaderboard deep links for the hero stat chips.
-
-    Only chips with a real leaderboard filter get a link. Filter tokens must
-    come from the legacy ``model_meta`` vocabulary — that is what the
-    leaderboard's ``?architecture=`` filter matches against (see
-    leaderboard.py filter_options / url-state.js parseURLFilters); catalog
-    slugs like ``vision_transformer`` would match nothing.
-    """
-    meta = getattr(model, 'model_meta', None) or {}
-    if not isinstance(meta, dict):
-        return {}
-    links = {}
-    # architecture: comma-joined tokens (URL param is an OR list on the grid)
-    tokens = [part.strip() for part in str(meta.get('architecture') or '').split(',')
-              if part.strip()]
-    if tokens:
-        links['architecture'] = f'/{domain}/leaderboard/?{urlencode({"architecture": ",".join(tokens)})}'
-    # parameters: ±20% range; the grid's param filter works in millions
-    count = meta.get('total_parameter_count')
-    try:
-        millions = float(count) / 1_000_000
-    except (TypeError, ValueError):
-        millions = None
-    if millions:
-        links['parameters'] = (f'/{domain}/leaderboard/'
-                               f'?min_param_count={millions * 0.8:.1f}'
-                               f'&max_param_count={millions * 1.2:.1f}')
-    return links
-
-
 def _format_metadata_count(value):
     try:
         value = int(value)
@@ -321,11 +291,8 @@ def _format_metadata_count(value):
 def build_model_card_metadata(model, domain='vision'):
     """Assemble the model-card metadata context.
 
-    Primary source: the six-table CSV catalog in ``benchmarks/model_metadata/data``
-    (models, model_datasets, intended_use, contributors, model_relationships,
-    assertions — the same schema as migration 0027, which will later replace the
-    CSVs without template changes). Models absent from the catalog fall back to
-    the legacy ``model_meta`` JSON.
+    Curated database records take precedence; models without a record use their
+    submission metadata. Database failures must remain visible to monitoring.
     """
     catalog_entry = metadata_repository.get_model_metadata(
         domain, getattr(model, 'name', None))
@@ -336,13 +303,15 @@ def build_model_card_metadata(model, domain='vision'):
             try:
                 model_card_ids = dict(
                     FinalModelContext.objects
-                    .filter(domain=domain, name__in=identifiers, public=True)
-                    .values_list('name', 'model_id'))
+                    .annotate(metadata_name=Lower('name'))
+                    .filter(domain=domain, metadata_name__in=[name.lower() for name in identifiers], public=True)
+                    .values('metadata_name').annotate(card_id=Min('model_id'))
+                    .values_list('metadata_name', 'card_id'))
             except Exception:  # lineage links degrade to plain text without the DB
                 _logger.exception("Could not resolve model-card ids for lineage links")
         return metadata_repository.finalize_card_context(
             metadata_repository.with_model_card_ids(catalog_entry, model_card_ids),
-            'catalog')
+            'database')
     return _legacy_model_card_metadata(model)
 
 
@@ -552,8 +521,8 @@ def view(request, id: int, domain: str):
         # Prepare the context for the template
         model_context = {
             'model': model,
-            'model_metadata': build_model_card_metadata(model, domain=domain),
-            'hero_filter_links': _hero_filter_links(model, domain) if domain == 'vision' else {},
+            'model_metadata': build_model_card_metadata(model, domain=domain)
+                if model_obj.public or submission_details_visible else None,
             'benchmark_parents': context['benchmark_parents'],
             'uniform_parents': context['uniform_parents'],
             'not_shown_set': context['not_shown_set'],

@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Detect if the user is on a mobile device
-  if (isMobileDevice()) {
+  if (isMobileDevice() && !document.body.classList.contains('model-page')) {
     const modal = document.getElementById('mobile-warning-modal');
     const mainContent = document.querySelector('main');
     const dismissBtn = document.getElementById('dismiss-modal-btn');

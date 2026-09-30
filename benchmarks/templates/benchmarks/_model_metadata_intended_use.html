@@ -3,8 +3,7 @@
     <div class="mc-heading">
         <h2 class="title is-4 mc-title">
             {% if model_metadata.section_summary.intended_use.documented == 0 %}
-                <span class="want_to_click collapsible_control is_collapsible"
-                      data-initial="hidden" data-target="mc-intended-use-body"></span>
+                <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-intended-use-body" aria-label="Toggle section details"></button>
             {% endif %}
             Intended use and limits
         </h2>
@@ -14,7 +13,7 @@
         </button>
     </div>
     {% if model_metadata.section_summary.intended_use.documented == 0 %}
-        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.intended_use.total }} fields documented — this model hasn't been curated yet.</p>
+        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.intended_use.total }} fields documented — no values are available for this section.</p>
     {% endif %}
     <div class="mc-use-grid" id="mc-intended-use-body">
         <div class="mc-use-cell is-recommended">

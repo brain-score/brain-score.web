@@ -12,7 +12,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from botocore.exceptions import NoCredentialsError
 
-from web.settings import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +162,7 @@ class ReportIssueView(View):
         """Get GitHub token from AWS secrets or settings"""
         try:
             # Try to get from AWS secrets first
+            from web.settings import get_secret
             secrets = get_secret("web-access-github", settings.REGION_NAME)
             return secrets.get('github-token', '')
         except NoCredentialsError:

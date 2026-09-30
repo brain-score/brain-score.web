@@ -23,3 +23,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// Empty metadata sections retain their original layout and use keyboard buttons.
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-metadata-toggle]').forEach(function (button) {
+        const target = document.getElementById(button.getAttribute('aria-controls'));
+        if (!target) return;
+        function setExpanded(expanded) {
+            target.hidden = !expanded;
+            button.setAttribute('aria-expanded', String(expanded));
+            button.classList.toggle('is_collapsible', expanded);
+            button.classList.toggle('is_expandable', !expanded);
+        }
+        setExpanded(false);
+        button.addEventListener('click', function () {
+            setExpanded(button.getAttribute('aria-expanded') !== 'true');
+        });
+    });
+});
+
+// Native dialogs provide focus containment, Escape, and focus restoration.
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-schema-open]').forEach(function (button) {
+        const dialog = document.getElementById(button.getAttribute('aria-controls'));
+        if (!dialog) return;
+        button.addEventListener('click', function () { dialog.showModal(); });
+    });
+});

@@ -1,0 +1,60 @@
+name: Model metadata
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: metadata_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      METADATA_TEST_DB: metadata_ci
+      METADATA_TEST_HOST: 127.0.0.1
+      METADATA_TEST_PORT: '5432'
+      METADATA_TEST_USER: postgres
+      METADATA_TEST_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt beautifulsoup4
+      - name: Check schema and run PostgreSQL tests
+        run: |
+          python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings
+          python manage.py test benchmarks.tests.test_model_metadata benchmarks.tests.test_compare_dashboard benchmarks.tests.test_migrations benchmarks.tests.test_models benchmarks.tests.test_ratelimit benchmarks.tests.test_score_trends --settings=web.metadata_test_settings --noinput
+      - name: Rehearse both existing migration histories
+        env:
+          PGPASSWORD: postgres
+        run: |
+          for history in metadata views; do
+            export METADATA_TEST_DB="metadata_history_${history}"
+            if [ "$history" = metadata ]; then
+              migration=0027_modelmetadatarecord_modelmetadatarelationship_and_more
+            else
+              migration=0027_refresh_materialized_view_definitions
+            fi
+            createdb --host=127.0.0.1 --username=postgres "$METADATA_TEST_DB"
+            python manage.py migrate benchmarks "$migration" --settings=web.metadata_test_settings --noinput
+            python manage.py migrate --settings=web.metadata_test_settings --noinput
+            python manage.py import_model_metadata --settings=web.metadata_test_settings
+          done

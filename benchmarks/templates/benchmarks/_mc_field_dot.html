@@ -1,7 +1,6 @@
-{% comment %}
-Confidence dot for a field whose value is not fully verified.
-  {% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.<slot> %}
-`source` is {'status': 'probable'|'uncertain', 'source': <where it came from>};
-yellow dot = probable (medium confidence), red dot = uncertain (low confidence),
-from the curation workbook's cell colors. Renders nothing for verified/undocumented.
-{% endcomment %}{% if source %}<span class="mc-field-dot{% if source.status == 'uncertain' %} is-uncertain{% endif %}" title="{% if source.status == 'uncertain' %}Uncertain{% else %}Probable{% endif %} — {{ source.source }}"></span>{% endif %}
+{% if source.status == 'probable' or source.status == 'uncertain' %}
+<details class="mc-confidence">
+    <summary class="mc-field-dot{% if source.status == 'uncertain' %} is-uncertain{% endif %}" title="{{ source.status|capfirst }} — {{ source.source }}"><span class="mc-sr-only">{{ source.status|capfirst }}: show confidence source</span></summary>
+    <span class="mc-confidence-source">{{ source.status|capfirst }} — {{ source.source }}</span>
+</details>
+{% endif %}

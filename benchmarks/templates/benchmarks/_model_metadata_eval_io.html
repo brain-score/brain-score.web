@@ -3,8 +3,7 @@
     <div class="mc-heading">
         <h2 class="title is-4 mc-title">
             {% if model_metadata.section_summary.eval_io.documented == 0 %}
-                <span class="want_to_click collapsible_control is_collapsible"
-                      data-initial="hidden" data-target="mc-eval-io-body"></span>
+                <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-eval-io-body" aria-label="Toggle section details"></button>
             {% endif %}
             Evaluation and I/O
         </h2>
@@ -17,7 +16,7 @@
         </div>
     </div>
     {% if model_metadata.section_summary.eval_io.documented == 0 %}
-        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.eval_io.total }} fields documented — this model hasn't been curated yet.</p>
+        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.eval_io.total }} fields documented — no values are available for this section.</p>
     {% endif %}
     <dl class="mc-specs" id="mc-eval-io-body">
         <div>
@@ -38,7 +37,7 @@
         </div>
         <div>
             <dt>Tokenizer{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_tokenizer %}</dt>
-            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}{% include "benchmarks/_mc_empty_value.html" with not_applicable=True %}{% endif %}</dd>
+            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}{% include "benchmarks/_mc_empty_value.html"  %}{% endif %}</dd>
         </div>
         <div>
             <dt>Model version{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_model_version %}</dt>

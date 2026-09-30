@@ -11,7 +11,7 @@ mirror the ``ModelMetadata*`` Django models of migration 0027 (see
     intended_use.csv         applications / users / limitations / biases
     contributors.csv         creators / organizations
     model_relationships.csv  direct base-model links (lineage)
-    assertions.csv           per-field provenance: verified / inferred / undocumented
+    assertions.csv           per-field provenance: verified / probable / uncertain / undocumented
 
 Usage:
     python scripts/build_model_metadata_catalog.py <workbook.csv> \
@@ -72,21 +72,13 @@ UNDOCUMENTED_RE = re.compile(
 # Recurrent/tokenizer answers legitimately start with "No"/"None (0)".
 LITERAL_FIELDS = {'recurrent', 'tokenizer'}
 
-# Markers that the value was derived rather than read off the primary source.
-# Fallback only — the workbook's cell colors (see --colors) are the primary
-# confidence signal.
-INFERRED_RE = re.compile(
-    r'\b(inferred|assumed|presumed|likely|probably|per naming convention|'
-    r'general knowledge|not explicit|implied|unofficial|commonly)\b|\?',
-    re.IGNORECASE)
-
 # Curator cell-color convention in the Sheets workbook:
-#   green = verified / high confidence, yellow = medium (inferred),
-#   red = low confidence, uncolored = no annotation (fall back to text).
+#   green = verified / high confidence, yellow = probable,
+#   red = uncertain, uncolored = no annotation (fall back to text).
 COLOR_STATUSES = (
     ({'FF93C47D', 'FFB6D7A8', 'FF6AA84F', 'FF38761D', 'FFD9EAD3'}, 'verified'),
-    ({'FFFFE599', 'FFFFD966', 'FFF1C232', 'FFBF9000', 'FFFFF2CC'}, 'inferred'),
-    ({'FFFF0000', 'FFE06666', 'FFCC0000', 'FF990000', 'FFF4CCCC'}, 'low'),
+    ({'FFFFE599', 'FFFFD966', 'FFF1C232', 'FFBF9000', 'FFFFF2CC'}, 'probable'),
+    ({'FFFF0000', 'FFE06666', 'FFCC0000', 'FF990000', 'FFF4CCCC'}, 'uncertain'),
 )
 
 
@@ -104,9 +96,9 @@ def _classify_fill(rgb):
     if green > red and green > blue:
         return 'verified'
     if red > 180 and green > 150 and blue < 140:
-        return 'inferred'
+        return 'probable'
     if red > green and red > blue:
-        return 'low'
+        return 'uncertain'
     return None
 
 
@@ -133,7 +125,7 @@ def load_cell_statuses(xlsx_path):
     return statuses
 
 # Assertion path -> workbook field feeding it. Drives the provenance meter on
-# the model card (verified / inferred / undocumented counts).
+# the model card (verified / probable / uncertain / undocumented counts).
 ASSERTION_PATHS = (
     ('/model/display_name', 'model_name'),
     ('/model/version', 'version'),
@@ -340,7 +332,7 @@ def classify_confidence(text):
         return ''
     head = re.split(r'[(\-–]', text.replace('/', '-'), maxsplit=1)[0].strip().lower()
     return {'high': 'high', 'medium-high': 'medium_high', 'medium high': 'medium_high',
-            'medium': 'medium', 'low': 'low'}.get(head.replace('/', '-'), _slug(text[:20]))
+            'medium': 'medium', 'uncertain': 'uncertain'}.get(head.replace('/', '-'), _slug(text[:20]))
 
 
 def parse_interface(text):
@@ -422,16 +414,15 @@ def split_list(text):
 
 def assertion_status(raw_value, field, color_status=None):
     """Per-field provenance. An empty/'N/A' cell is undocumented no matter its
-    color; otherwise the curator's cell color wins, and only uncolored cells
-    fall back to the hedge-word heuristic."""
+    color; otherwise the curator's cell color wins. Uncolored values remain
+    probable until explicitly verified."""
     cleaned = _clean(raw_value, field)
     if cleaned is None:
         return 'undocumented'
     if color_status:
         return color_status
-    if INFERRED_RE.search(cleaned):
-        return 'inferred'
-    return 'verified'
+    # Without an explicit curator confidence annotation, a value is unverified.
+    return 'probable'
 
 
 def build_relationship(model, identifier_lookup):
@@ -463,7 +454,7 @@ def main():
     parser.add_argument('--colors', metavar='XLSX', default=None,
                         help='Matching .xlsx export of the same sheet; its cell fill '
                              'colors set per-field confidence (green=verified, '
-                             'yellow=inferred, red=low). Requires openpyxl.')
+                             'yellow=probable, red=uncertain). Requires openpyxl.')
     args = parser.parse_args()
     cell_statuses = load_cell_statuses(args.colors) if args.colors else {}
 

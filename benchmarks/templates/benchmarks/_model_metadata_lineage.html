@@ -1,4 +1,4 @@
-{% if model_metadata %}
+{% if model_metadata.lineage.has_relationships %}
 <div class="box model-sidebar-card model-lineage-card" data-model-lineage>
     <div class="card-content">
         <p class="subtitle is-5 model-sidebar-title">Model lineage</p>
@@ -31,7 +31,7 @@
                             {% endif %}
                             <span class="mc-tag">{{ related.relationship_display }}</span>
                             {% if domain == 'vision' and related.model_card_id %}
-                                <a class="mc-lineage-compare" title="Compare with {{ related.display_name }}"
+                                <a class="mc-lineage-compare" title="Compare with {{ related.display_name }}" aria-label="Compare with {{ related.display_name }}"
                                    href="/vision/compare/?tab=models&model_a={{ model.model_id }}&model_b={{ related.model_card_id }}">&#8646;</a>
                             {% endif %}
                         </li>

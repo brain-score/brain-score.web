@@ -2,11 +2,10 @@
 <section class="box model-card-section model-metadata" data-model-metadata>
     <div class="mc-heading">
         <div>
-            <p class="mc-kicker">Curated model metadata</p>
+            <p class="mc-kicker">{{ model_metadata.source_label }}</p>
             <h2 class="title is-4 mc-title">
                 {% if not model_metadata.has_card_content %}
-                    <span class="want_to_click collapsible_control is_collapsible"
-                          data-initial="hidden" data-target="mc-at-a-glance-body"></span>
+                    <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-at-a-glance-body" aria-label="Toggle section details"></button>
                 {% endif %}
                 At-a-glance
             </h2>
@@ -16,9 +15,11 @@
                     title="Metadata editing is coming soon — for now, updates go through the curation workbook">
                 <i class="fa-solid fa-pen"></i> Edit
             </button>
-            <span class="mc-badge">Schema v{{ model_metadata.schema_version }}</span>
+            <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
         </div>
     </div>
+
+    {% include "benchmarks/_model_metadata_schema.html" %}
 
     {% if not model_metadata.has_card_content %}
         <p class="mc-empty-summary">This model has no curated metadata yet — expand to see the undocumented fields.</p>
@@ -43,7 +44,7 @@
             <dd>{% if model_metadata.recurrent_display %}{{ model_metadata.recurrent_display }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
-            <dt>Supervision{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.supervision_description %}</dt>
+            <dt id="mc-supervision">Supervision{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.supervision_description %}</dt>
             <dd>{% if model_metadata.supervision_description %}{{ model_metadata.supervision_description }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
         </div>
         <div>
@@ -107,7 +108,7 @@
                     <dd>{% if model_metadata.contributors.creators %}{{ model_metadata.contributors.creators|join:"; " }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
                 </div>
                 <div>
-                    <dt>License:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.license %}</dt>
+                    <dt id="mc-license">License:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.license %}</dt>
                     <dd>{% if model_metadata.license %}{{ model_metadata.license }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
                 </div>
             </dl>
