@@ -260,8 +260,8 @@ class ModelMeta(models.Model):
     model = models.OneToOneField(Model, on_delete=models.CASCADE, primary_key=True)
     architecture = models.CharField(max_length=100, null=True, default=None)
     model_family = models.CharField(max_length=100, null=True, default=None)
-    total_parameter_count = models.IntegerField(null=True, default=None)
-    trainable_parameter_count = models.IntegerField(null=True, default=None)
+    total_parameter_count = models.BigIntegerField(null=True, default=None)
+    trainable_parameter_count = models.BigIntegerField(null=True, default=None)
     total_layers = models.IntegerField(null=True, default=None)
     trainable_layers = models.IntegerField(null=True, default=None)
     model_size_mb = models.FloatField(null=True, default=None)
@@ -756,3 +756,34 @@ class ModelMetadataAssertion(models.Model):
     class Meta:
         db_table = 'brainscore_model_metadata_assertion'
         unique_together = (('record', 'path'),)
+
+
+class ModelMetadataPublication(models.Model):
+    """Last repository-approved document for one model; written by the publisher."""
+    domain = models.CharField(max_length=200)
+    identifier = models.CharField(max_length=200)
+    repository = models.CharField(max_length=200)
+    path = models.CharField(max_length=1000)
+    commit_sha = models.CharField(max_length=40)
+    blob_sha = models.CharField(max_length=40)
+    pull_request = models.PositiveIntegerField()
+    document = models.JSONField()
+    published_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_publication'
+        constraints = [models.UniqueConstraint(Lower('domain'), Lower('identifier'), name='metadata_publication_model_ci')]
+
+
+class ModelMetadataRevision(models.Model):
+    """Immutable successful publication audit, including reviewed source overrides."""
+    publication = models.ForeignKey(ModelMetadataPublication, on_delete=models.PROTECT, related_name='revisions')
+    commit_sha = models.CharField(max_length=40)
+    pull_request = models.PositiveIntegerField()
+    document = models.JSONField()
+    override_reviewer = models.CharField(max_length=100, blank=True)
+    published_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'brainscore_model_metadata_revision'
+        unique_together = (('publication', 'commit_sha'),)

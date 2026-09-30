@@ -3,8 +3,9 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError, transaction
 
-from benchmarks.model_metadata.catalog import TABLES, model_key, read_catalog
-from benchmarks.models import ModelMetadataRecord, FinalModelContext
+from benchmarks.model_metadata.catalog import model_key, read_catalog
+from benchmarks.model_metadata.writer import write_tables, lock_metadata_publication
+from benchmarks.models import ModelMetadataRecord, ModelMetadataPublication, FinalModelContext
 
 
 class Command(BaseCommand):
@@ -18,8 +19,15 @@ class Command(BaseCommand):
                             help='Report catalog identifiers without a public model page')
         parser.add_argument('--wipe', action='store_true', help='Replace all metadata with this nonempty catalog')
 
+    @transaction.atomic
     def handle(self, *args, **options):
+        lock_metadata_publication()
         tables = read_catalog(options['data_dir'])
+        published = {model_key(domain, identifier) for domain, identifier in
+                     ModelMetadataPublication.objects.values_list('domain', 'identifier')}
+        imported = {model_key(row['domain'], row['identifier']) for row in tables['models']}
+        if published & imported or (options['wipe'] and published):
+            raise CommandError('Repository-published metadata cannot be overwritten by CSV. Submit a metadata PR instead.')
         summary = ', '.join(f'{len(rows)} {name}' for name, rows in tables.items())
         if options['check_public']:
             public_keys = {model_key(domain, name) for domain, name in
@@ -44,32 +52,7 @@ class Command(BaseCommand):
                 self.stdout.write('Import would update these model keys and preserve all other models.')
             return
         try:
-            with transaction.atomic():
-                if options['wipe']:
-                    ModelMetadataRecord.objects.all().delete()
-                records = {}
-                for row in tables['models']:
-                    values = dict(row)
-                    domain, identifier = values.pop('domain'), values.pop('identifier')
-                    record = ModelMetadataRecord.objects.select_for_update().filter(
-                        domain__iexact=domain, identifier__iexact=identifier).first()
-                    if record is None:
-                        record = ModelMetadataRecord(domain=domain, identifier=identifier)
-                    record.domain, record.identifier = domain, identifier
-                    for field, value in values.items():
-                        setattr(record, field, value)
-                    record.save()
-                    records[model_key(domain, identifier)] = record
-                for name, (model, _) in TABLES.items():
-                    if name == 'models':
-                        continue
-                    model.objects.filter(record__in=records.values()).delete()
-                    children = []
-                    for row in tables[name]:
-                        values = dict(row)
-                        key = model_key(values.pop('domain'), values.pop('identifier'))
-                        children.append(model(record=records[key], **values))
-                    model.objects.bulk_create(children)
+            write_tables(tables, wipe=options['wipe'])
         except IntegrityError as exc:
             raise CommandError(f'Import rolled back because of a database constraint: {exc}') from exc
         self.stdout.write(self.style.SUCCESS(f'Imported {summary}'))

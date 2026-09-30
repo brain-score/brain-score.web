@@ -1,0 +1,10 @@
+<section class="metadata-editor" data-metadata-stage="review">
+    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    <p>Your proposal will update the metadata file through a GitHub pull request. Paper- and Hugging Face-backed fields cannot be changed through this form.</p>
+    <p><strong>Reason:</strong> {{ draft.reason }}</p>
+    <p><strong>Brain-Score user ID:</strong> {{ draft.user_id }}</p>
+    <pre tabindex="0" aria-label="Proposed metadata changes">{{ diff }}</pre>
+    <button type="button" class="button" data-metadata-back>Back to editing</button>
+    <form method="post" action="{{ review_url }}" data-metadata-authorize>{% csrf_token %}<button type="submit" class="button is-primary">Create pull request</button></form>
+    <p>GitHub sign-in confirms your contributor identity. The Brain-Score Contributions App creates the branch and pull request in the model repository, recording your Brain-Score user ID and GitHub username. No personal fork is needed.</p>
+</section>

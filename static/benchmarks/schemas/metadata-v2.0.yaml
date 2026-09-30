@@ -1,89 +1,95 @@
 # metadata.yaml — proposed schema v2.0
 # Example values below are illustrative, not metadata for a real model.
-# Required: schema_version, model.domain, and model.identifier.
+# Required: schema_version, domain, and models keyed by exact model identifier.
 # Other fields may be omitted or set to null when undocumented.
 # Use [] for an empty list. Do not use "unknown" as a numeric/boolean value.
 # Keep identifiers exact, including checkpoint suffixes.
 
 schema_version: "2.0"  # String; quote the version.
 
-model:
-  domain: vision  # vision | language
-  identifier: example-model  # Stable model identifier; unique within its domain.
-  display_name: Example model
-  version: null  # String, e.g. "1.0".
-  architecture:
-    family: convolutional_neural_network  # String describing the architecture family.
-    description: A convolutional model trained for image classification.
-  parameter_count: 25000000  # Nonnegative integer; count, not "25M".
-  parameter_count_exact: false  # Boolean; false means the count is approximate.
-  trainable_layers: "All layers"  # Text; can describe partial fine-tuning.
-  recurrent: false  # Boolean.
-  input_resolution:
-    channels: 3  # Nonnegative integer.
-    height: 224  # Nonnegative integer, pixels.
-    width: 224  # Nonnegative integer, pixels.
-  visual_degrees: null  # Nonnegative number; vision models only.
-  visual_degrees_description: null  # Text explaining the field of view.
-  supervision:
-    type: supervised  # String, e.g. supervised, self_supervised, weakly_supervised.
-    description: Trained using class labels.
+domain: vision  # Must match the repository's registered domain.
+models:
+  example-model:
+    sources:
+      example-source:
+        kind: other  # paper | huggingface | other | unreviewed
+        url: https://example.org/model-card
+        citation: Illustrative source, not evidence for a real model.
+    model:
+      display_name: Example model
+      version: null  # String, e.g. "1.0".
+      architecture:
+        family: convolutional_neural_network  # String describing the architecture family.
+        description: A convolutional model trained for image classification.
+      parameter_count: 25000000  # Nonnegative integer; count, not "25M".
+      parameter_count_exact: false  # Boolean; false means the count is approximate.
+      trainable_layers: "All layers"  # Text; can describe partial fine-tuning.
+      recurrent: false  # Boolean.
+      input_resolution:
+        channels: 3  # Nonnegative integer.
+        height: 224  # Nonnegative integer, pixels.
+        width: 224  # Nonnegative integer, pixels.
+      visual_degrees: null  # Nonnegative number; vision models only.
+      visual_degrees_description: null  # Text explaining the field of view.
+      supervision:
+        type: supervised  # String, e.g. supervised, self_supervised, weakly_supervised.
+        description: Trained using class labels.
 
-training:
-  process: null  # Text describing the training procedure.
-  objective: null  # Text describing what the model learns.
-  loss: null  # Text, e.g. "Cross-entropy".
-  learning_rate: null  # Text; supports schedules, e.g. "0.1 with cosine decay".
-  batch_size: null  # Text; supports different values across training stages.
-  preprocessing: null  # Text describing normalization and augmentation.
+    training:
+      process: null  # Text describing the training procedure.
+      objective: null  # Text describing what the model learns.
+      loss: null  # Text, e.g. "Cross-entropy".
+      learning_rate: null  # Text; supports schedules, e.g. "0.1 with cosine decay".
+      batch_size: null  # Text; supports different values across training stages.
+      preprocessing: null  # Text describing normalization and augmentation.
 
-data:
-  summary: null  # Text summarizing the data used.
-  training_datasets:
-    - identifier: example-training-set  # Optional dataset identifier.
-      name: Example training set  # Required for each dataset entry.
-      role: training  # training | pretraining | fine_tuning
-      description: null  # Text describing this dataset's use.
+    data:
+      summary: null  # Text summarizing the data used.
+      training_datasets:
+        - identifier: example-training-set  # Optional dataset identifier.
+          name: Example training set  # Required for each dataset entry.
+          role: training  # training | pretraining | fine_tuning
+          description: null  # Text describing this dataset's use.
 
-eval:
-  test_datasets: []  # Entries: {identifier: optional, name: required, description: optional}.
-  validation_datasets: []  # Same entry structure; role is implied by the list.
+    eval:
+      test_datasets: []  # Entries: {identifier: optional, name: required, description: optional}.
+      validation_datasets: []  # Same entry structure; role is implied by the list.
 
-io:
-  modality: image  # String, e.g. image or text.
-  interface: null  # Text describing the model's interface.
-  input_format: null  # Text describing accepted inputs and their shape.
-  output_format: null  # Text describing returned values and their shape.
-  tokenizer: null  # Text; language models, where applicable.
+    io:
+      modality: image  # String, e.g. image or text.
+      interface: null  # Text describing the model's interface.
+      input_format: null  # Text describing accepted inputs and their shape.
+      output_format: null  # Text describing returned values and their shape.
+      tokenizer: null  # Text; language models, where applicable.
 
-provenance:
-  weights_provider: null  # Organization or repository providing the weights.
-  checkpoint: null  # Exact checkpoint identifier.
-  source_url: null  # Link to the original code or model card.
-  curation_confidence: null  # Text summarizing confidence in the curated record.
+    provenance:
+      weights_provider: null  # Organization or repository providing the weights.
+      checkpoint: null  # Exact checkpoint identifier.
+      source_url: null  # Link to the original code or model card.
+      curation_confidence: null  # Text summarizing confidence in the curated record.
 
-legal:
-  license: null  # License identifier or full terms; distinguish code and weights.
+    legal:
+      license: null  # License identifier or full terms; distinguish code and weights.
 
-people:
-  creators: []  # List of names, e.g. ["Example Researcher"].
-  organizations: []  # List of organization names.
+    people:
+      creators: []  # List of names, e.g. ["Example Researcher"].
+      organizations: []  # List of organization names.
 
-use:
-  applications: []  # List of intended applications (strings).
-  users: []  # List of intended user groups (strings).
-  limitations: []  # List of known limitations (strings).
-  biases: []  # List of known biases (strings).
+    use:
+      applications: []  # List of intended applications (strings).
+      users: []  # List of intended user groups (strings).
+      limitations: []  # List of known limitations (strings).
+      biases: []  # List of known biases (strings).
 
-lineage:
-  base_models:
-    - identifier: example-base  # Optional; exact identifier in the same domain.
-      name: Example base model  # Required for each base-model entry.
-      relationship: fine_tuned_from  # variant_of | fine_tuned_from | derived_from
+    lineage:
+      base_models:
+        - identifier: example-base  # Optional; exact identifier in the same domain.
+          name: Example base model  # Required for each base-model entry.
+          relationship: fine_tuned_from  # variant_of | fine_tuned_from | derived_from
 
-# Optional verification records. Omit this section if no verification is recorded.
-# Paths refer to fields in this YAML document, not database columns.
-assertions:
-  - path: /model/architecture
-    status: probable  # verified | probable | uncertain | undocumented
-    source: null  # Citation or URL supporting the assessment; do not invent one.
+    # Optional verification records. Omit this section if no verification is recorded.
+    # Paths refer to fields in this YAML document, not database columns.
+    assertions:
+      - path: /model/architecture
+        status: probable  # verified | probable | uncertain | undocumented
+        sources: [example-source]  # References the structured sources above.

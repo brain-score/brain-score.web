@@ -1,0 +1,28 @@
+<section class="metadata-editor" data-metadata-stage="edit">
+    <p>Changes become a pull request for repository review. Published metadata stays unchanged until the PR is merged and synchronized.</p>
+    {% if error %}<p role="alert">{{ error }}</p>{% else %}
+    <form method="post" action="{{ edit_url }}" data-metadata-form>
+        {% csrf_token %}<input type="hidden" name="base_blob" value="{{ base_blob }}">
+        {{ form.non_field_errors }}
+        {% for field in form %}
+        <div class="metadata-editor-field{% if field.field.disabled %} is-locked{% endif %}">
+            {{ field.label_tag }}{{ field.errors }}{{ field }}
+            <p class="help">{{ field.help_text }}</p>
+            {% for source in field.field.metadata_sources %}<p class="help">Source: {% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.kind }} reference</a>{% endif %} {{ source.citation }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+        {% for group in groups %}
+        <fieldset class="metadata-editor-list" data-formset>
+            <legend>{{ group.label }}</legend><p>{{ group.help }}</p>
+            {{ group.formset.management_form }}{{ group.formset.non_form_errors }}
+            <div data-rows>{% for row in group.formset %}<div class="metadata-editor-row">{{ row.as_p }}</div>{% endfor %}</div>
+            {% if group.editable %}
+            <template data-empty-row><div class="metadata-editor-row">{{ group.formset.empty_form.as_p }}</div></template>
+            <button type="button" data-add-row>Add entry</button>
+            {% endif %}
+        </fieldset>
+        {% endfor %}
+        <button type="submit" class="button is-primary">Review changes</button>
+    </form>
+    {% endif %}
+</section>

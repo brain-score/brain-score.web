@@ -707,3 +707,107 @@ $mc-undocumented: #c3cbd9
   code
     color: inherit
     background: transparent
+
+.metadata-editor
+  max-width: 100%
+  overflow-wrap: anywhere
+  .metadata-editor-field, .metadata-editor-list
+    margin: 1.25rem 0
+    padding: 1rem
+    border: 1px solid $mc-border
+    border-radius: 8px
+  label, legend
+    display: block
+    font-weight: 600
+  textarea, input:not([type=checkbox]):not([type=hidden]), select
+    width: 100%
+    max-width: 100%
+    padding: 0.5rem
+    box-sizing: border-box
+  .is-locked
+    background: #f5f7fa
+  .metadata-editor-row
+    margin-bottom: 1rem
+    padding-bottom: 0.5rem
+    border-bottom: 1px solid $mc-border
+  .help
+    font-size: 0.85rem
+  .errorlist, [role=alert]
+    color: #a12424
+  pre
+    overflow-x: auto
+
+  .button
+    max-width: 100%
+    height: auto
+    white-space: normal
+
+// The editor uses the same native dialog behavior as the schema popup.
+body:has(.mc-metadata-editor-dialog[open])
+  overflow: hidden
+
+.mc-metadata-editor-dialog
+  width: min(900px, calc(100vw - 32px))
+  max-width: none
+  max-height: calc(100dvh - 32px)
+  margin: auto
+  padding: 0
+  border: 1px solid $mc-border
+  border-radius: 12px
+  color: $brainscore_gray4
+  box-shadow: 0 20px 70px rgba(0, 22, 40, 0.25)
+  &[open]
+    display: flex
+    flex-direction: column
+  &::backdrop
+    background: rgba(0, 22, 40, 0.48)
+  .metadata-dialog-heading
+    display: flex
+    justify-content: space-between
+    align-items: flex-start
+    gap: 16px
+    padding: 20px 24px
+    border-bottom: 1px solid $mc-border
+    h2
+      margin: 0
+      font-size: 1.4rem
+      font-weight: 600
+    p
+      margin: 4px 0 0
+      overflow-wrap: anywhere
+  .metadata-dialog-close
+    flex-shrink: 0
+    padding: 7px 12px
+    border: 1px solid $mc-border
+    border-radius: 6px
+    background: white
+    color: inherit
+    cursor: pointer
+  .metadata-dialog-body
+    overflow-y: auto
+    min-height: 0
+    padding: 4px 24px 24px
+    overscroll-behavior: contain
+  .metadata-dialog-status
+    margin: 0
+    padding: 0 24px 12px
+    &:empty
+      display: none
+  .metadata-editor
+    padding-top: 16px
+    p
+      margin-bottom: 8px
+    pre
+      max-height: 50dvh
+    [data-metadata-authorize]
+      display: inline-block
+      margin: 12px 0
+  @media (max-width: 600px)
+    width: calc(100vw - 16px)
+    max-height: calc(100dvh - 16px)
+    .metadata-dialog-heading
+      padding: 16px
+      h2
+        font-size: 1.15rem
+    .metadata-dialog-body
+      padding: 0 16px 16px

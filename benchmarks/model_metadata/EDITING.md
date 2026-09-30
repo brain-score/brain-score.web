@@ -1,0 +1,228 @@
+# Repository-backed metadata editing
+
+Status: implemented behind disabled flags. The brain-score-contributions App
+exists, and its credentials are stored in AWS Secrets Manager under
+Brain-Score_Contributions_GitHub_App in us-east-2. Installation authentication,
+repository access, and branch creation from master have been verified with a
+signed-in Brain-Score contributor. Real PR creation and database publication
+still need verification. The shared package has not been released, and converted
+plugin files have not been merged. Keep deployed PR submission and publication
+workflows disabled until the rollout prerequisites are met.
+
+## Behavior
+
+The website edits schema 2.0 YAML in the model's registered repository. The form
+and diff review open in a modal on the model card; Back preserves entered values,
+and Close or Escape returns to the card. Contributions require an active,
+signed-in Brain-Score account. A visitor reviews a diff and authorizes GitHub to
+verify their GitHub username. The Contributions App then creates a branch and PR
+directly in the domain repository using a repository-scoped installation token.
+No personal fork or personal App installation is required.
+
+The PR title uses `(user:123)`, matching model/plugin submissions. Its description
+records `Brain-Score user_id: 123` and the verified GitHub username. The ID comes
+from `request.user.pk`, never from submitted form data. Drafts and OAuth requests
+are bound to both the browser session and that account; switching accounts or
+logging out blocks submission. Branch names use
+`web_metadata_<user-id>_<github-login>_<nonce-hash>/update_metadata`.
+A proposal expires after 30 minutes. OAuth states are single-use and independently
+bound so concurrent sign-ins cannot replace one another. User and installation
+tokens are used in memory; they are not saved in cookies, the database, or cache.
+The website never publishes the proposed metadata.
+
+Paper and Hugging Face sources protect their fields, including mixed sources and
+section-level assertions. Populated fields without classified evidence remain
+locked. Empty undocumented fields can be filled with a supporting source.
+The form cannot edit model identity, scoring configuration, or legacy adapters.
+Protections are computed from approved evidence, not user-supplied source labels.
+
+All publication requires a merged PR and a human maintainer's approval on its
+current head revision. Changing protected values or evidence, or converting an
+existing curated record for the first time, additionally requires the
+`metadata-source-override` label. The reviewer must differ from the PR author and, for App-created metadata
+branches, the contributor identified in the branch name.
+Publication is transactional across all affected files. Retries are idempotent;
+an event whose file has since changed on the default branch is skipped.
+Removing/moving a published file or downgrading its schema requires a separate
+migration. The CSV importer refuses to overwrite repository-published records.
+
+Generated PRs include a link to their preview. Previews are read-only at
+`/model/<domain>/<model_id>/metadata/preview/<pr_number>/`, with the PR head SHA
+displayed. Preview data is never stored in canonical metadata tables.
+Repository mappings must be published before a model's Edit link appears.
+
+## Components
+
+- Core: `packages/metadata` is the lightweight `brainscore-metadata` package.
+  It owns YAML validation, source policy, table conversion, and PR checks.
+- Website: form, OAuth callback, previews, publication journal and worker.
+- Vision and language: trusted `model-metadata-v2.yml` workflows validate PR
+  data without checking out PR code and dispatch publication after merge.
+- The existing core metadata endpoint rejects v2 writes; its adapter validates
+  v2 files without publishing them. The legacy writer also refuses identifiers
+  already owned by the publication journal, using the publisher's transaction
+  lock. V2 changes are excluded from plugin auto-merge.
+
+Schema 2.0 uses a document with `schema_version: "2.0"`, `domain`, and a
+`models` mapping. Each model has grouped facts, structured `sources`, and
+`assertions` referencing source IDs. Optional `legacy` values preserve existing
+plugin metadata during conversion. The website's schema dialog uses the same
+contract. The YAML download button remains disabled.
+
+## Rollout order
+
+1. Review and release `brainscore-metadata==0.1.0` from core's
+   `packages/metadata`. Install it with `requirements-metadata.txt` on the web
+   worker and website. Release the core v2 adapter and auto-merge guards before
+   converting any plugin files.
+2. Back up the target database and rehearse migrations 0030 and 0031 with a
+   production-shaped copy. 0030 adds publication/revision history; 0031 widens
+   legacy parameter counts for language models. 0031 transactionally rebuilds
+   the dependent final model context, preserving its definition, indexes,
+   owner, explicit grants and comment. It takes table/view locks, so schedule
+   the migration. It does not rewrite score rows. Rollback rejects counts
+   that no longer fit a 32-bit integer.
+3. Create/configure the GitHub App and worker environments described below.
+   Deploy trusted workflows from the default branches. Keep all flags off.
+4. Export the curated CSVs to a separate review directory:
+
+   ```sh
+   python scripts/export_model_metadata_yaml.py --domain vision \
+     --checkout /path/to/vision --output /path/to/conversion-review
+   ```
+
+   This reads local files, preserves sibling model entries, and writes no
+   repository or database changes. Review the report and classifications.
+   The current rehearsal maps 61 of 78 curated models into 41 plugin files;
+   17 identifiers have no exact metadata-file match. Resolve those mappings
+   explicitly. Existing workbook evidence is marked unreviewed, never guessed
+   to be a paper, Hugging Face, or another source.
+5. Submit converted YAML through domain-repository PRs. Require the source
+   override label and current-head maintainer approval for initial publication.
+   Enable validation and the dev publisher, merge reviewed conversion PRs, then
+   verify all metadata fields/child records against the CSV and the live cards.
+6. Exercise one real contributor OAuth/App-branch/PR flow in dev, including a
+   contributor outside the organization, source protection, stale edits,
+   current-head approval, retries, and an open-PR preview. Confirm the website
+   and worker use the same cache prefix and that leaderboard scores/ranks are
+   unchanged. Only then set `MODEL_METADATA_EDIT_ENABLED=1`.
+7. Repeat the reviewed deployment in staging/production. Retain the CSV catalog
+   until complete YAML parity is verified. The plans folder is removed; this
+   file is the operational documentation.
+
+No feature migrations or workflow configuration have been applied to shared dev
+by this implementation. Local tests use a disposable PostgreSQL database.
+
+## GitHub App
+
+Use a public GitHub App so external contributors can install it. Configure an
+exact HTTPS callback URL ending in `/metadata/github/callback/`. Enable the
+user authorization flow, with expiring user tokens. Store the client secret
+through the deployment secret mechanism, never in repository files.
+
+The contributor App needs Contents read/write and Pull requests read/write,
+installed on the registered domain repositories. Store its App ID and private
+key in AWS Secrets Manager as `GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY` (full
+PEM text). The server discovers the installation ID for the selected repository,
+signs an RS256 JWT, and requests a token limited to that repository and these
+permissions. The OAuth client secret identifies the user; it cannot replace the
+App private key for installation authentication. Private keys and tokens must
+never appear in logs or error messages.
+
+References:
+- [App installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation)
+- [User access token permissions](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app)
+
+The workflow app needs Actions write on the web repository for dispatch and
+Contents/Pull requests read on domain repositories for publication. Prefer a
+separate automation app to avoid giving the contributor app Actions write.
+Each workflow's `METADATA_APP_ID` and private key can refer to that automation app.
+The source-policy check uses the workflow token with Checks write; it executes
+only the released validator, not plugin or PR code.
+
+Website environment:
+
+Set `METADATA_GITHUB_SECRET_NAME=Brain-Score_Contributions_GitHub_App` and
+`METADATA_GITHUB_SECRET_REGION=us-east-2` to retrieve credentials at startup.
+The loader maps `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`,
+`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`,
+`GITHUB_APP_SLUG`, and `GITHUB_CALLBACK_URL` to the website variables below.
+If the stored slug is a display name, it derives the slug from
+`GITHUB_PUBLIC_LINK`. Individual environment variables override secret values.
+Credential retrieval does not enable submission. Without a secret name, the
+website continues to support environment-only configuration and makes no new
+AWS request.
+
+The current secret contains a local callback on port 8767. Override it with the
+exact registered HTTPS callback when deploying to dev or production.
+The website's IAM role needs GetSecretValue access to this secret; credentials
+are kept in process memory and must not be printed.
+
+- `MODEL_METADATA_EDIT_ENABLED`: default off; set `1` only after rehearsal.
+- `METADATA_GITHUB_APP_SLUG`: public app slug for installation links.
+- `METADATA_GITHUB_APP_ID`, `METADATA_GITHUB_APP_PRIVATE_KEY`: installation authentication.
+- `METADATA_GITHUB_CLIENT_ID`, `METADATA_GITHUB_CLIENT_SECRET`: contributor identity.
+- `METADATA_GITHUB_CALLBACK_URL`: exact registered URL.
+- `MODEL_METADATA_REPOSITORIES`: JSON registry of domain to repository, branch,
+  and model_root. Defaults are vision/master/brainscore_vision/models and
+  language/main/brainscore_language/models.
+
+Use shared Redis for the website's draft/OAuth cache across workers, secure
+session/CSRF cookies, HTTPS, and normal edge request limits. Do not use a
+per-process memory cache in deployment. Logs must not record callback query
+strings or authorization headers.
+
+## Publication environments
+
+Create protected GitHub environments `metadata-dev`, `metadata-staging`, and
+`metadata-production` in the web repository. Restrict deployment refs to reviewed
+trusted code; require environment approval for production. Set the repository
+variable `METADATA_V2_ENABLED=true` only after the shared package is released.
+
+Environment variables/secrets:
+
+- `METADATA_PUBLISH_ROLE_ARN`: AWS role assumed through GitHub OIDC, restricted
+  to this repository/environment and the required secrets/network.
+- `METADATA_APP_ID`, secret `METADATA_APP_PRIVATE_KEY`.
+- `METADATA_DOMAIN_REPOSITORIES`: newline-separated repository names accessible
+  to the automation app, initially `vision` and `language`.
+- `MODEL_METADATA_REPOSITORIES`: explicit JSON registry.
+- `METADATA_DATABASE_SECRET`: AWS secret name. For dev,
+  `brainscore-1-ohio-cred-migrated`; set `METADATA_DATABASE_NAME=dev` separately.
+  The instance identifier is never used as the database name.
+- `METADATA_CACHE_SECRET`: the existing cache endpoint secret with host/port;
+  `METADATA_CACHE_PREFIX`: exactly the website deployment's prefix.
+
+The supplied worker cache adapter expects the existing TLS Redis endpoint
+without password authentication. If the deployment requires an auth token,
+configure the worker cache identically to the website before rollout.
+The runner must reach PostgreSQL and Redis; use a trusted runner in the required
+network if GitHub-hosted runners cannot. Do not expose the database to the public
+internet just for this workflow.
+
+Each domain repository also needs `METADATA_V2_ENABLED`, `METADATA_APP_ID`,
+`METADATA_APP_PRIVATE_KEY`, `METADATA_WEB_PUBLISH_REF` (trusted web branch),
+and `METADATA_PUBLISH_ENVIRONMENT`. Require the
+`Metadata v2 source policy` check and a maintainer review in branch protection.
+After an override approval, rerun the check with workflow_dispatch and the PR
+number, or reapply the label. A new head commit invalidates the prior approval.
+
+To retry publication, dispatch `publish-model-metadata.yml` with domain, merged
+PR number, and environment. Publication journal rows make retries safe. If
+context refresh fails after publication, rerunning also refreshes the context
+and invalidates caches. Inspect failures; disabling the editor alone does not
+disable publication. Disable the repository workflow flag to stop publication.
+
+## Verification
+
+With the lightweight package installed and isolated PostgreSQL settings:
+
+```sh
+python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings
+python manage.py test benchmarks.tests.test_metadata_edit benchmarks.tests.test_model_metadata benchmarks.tests.test_compare_dashboard benchmarks.tests.test_migrations benchmarks.tests.test_models benchmarks.tests.test_ratelimit benchmarks.tests.test_score_trends --settings=web.metadata_test_settings --noinput
+```
+
+Core contract tests: `python -m unittest discover -s packages/metadata/tests`.
+Web JavaScript tests: `npm run test:compare-dashboard`.
+The unrelated full website suite requires its own populated benchmark fixtures
+and full URL settings; the isolated metadata settings intentionally omit them.

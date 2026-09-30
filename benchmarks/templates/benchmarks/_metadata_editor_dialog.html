@@ -1,0 +1,18 @@
+{% if metadata_edit_url %}
+<dialog id="mc-metadata-editor-dialog" class="mc-metadata-editor-dialog"
+        aria-labelledby="mc-metadata-editor-title" data-metadata-dialog
+        data-edit-url="{{ metadata_edit_url }}"
+        data-review-url="{% url 'metadata-review' key='PROPOSAL' %}">
+    <header class="metadata-dialog-heading">
+        <div>
+            <h2 id="mc-metadata-editor-title" tabindex="-1">Propose metadata changes</h2>
+            <p>{{ model.name }}</p>
+        </div>
+        <button type="button" class="metadata-dialog-close" data-metadata-close aria-label="Close metadata editor">Close</button>
+    </header>
+    <div class="metadata-dialog-body" data-metadata-dialog-body>
+        <p role="status">Loading metadata…</p>
+    </div>
+    <p class="metadata-dialog-status" role="status" data-metadata-status></p>
+</dialog>
+{% endif %}

@@ -518,9 +518,18 @@ def view(request, id: int, domain: str):
         score_trend_sidebar_lines = _score_tm.get('defaultLines') or []
         rank_trend_sidebar_lines = _rank_tm.get('defaultLines') or []
 
+        metadata_edit_url = None
+        from benchmarks.model_metadata.github import configured, domains
+        if model_obj.public and domain in domains() and configured():
+            from benchmarks.models import ModelMetadataPublication
+            from django.urls import reverse
+            if ModelMetadataPublication.objects.filter(domain__iexact=domain, identifier__iexact=model.name).exists():
+                metadata_edit_url = reverse('metadata-edit', kwargs={'domain': domain, 'id': id})
+
         # Prepare the context for the template
         model_context = {
             'model': model,
+            'metadata_edit_url': metadata_edit_url,
             'model_metadata': build_model_card_metadata(model, domain=domain)
                 if model_obj.public or submission_details_visible else None,
             'benchmark_parents': context['benchmark_parents'],

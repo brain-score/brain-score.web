@@ -1,0 +1,3 @@
+# Optional: enable only after publishing the shared core/packages/metadata package.
+# For local integration, install that directory with pip install -e instead.
+brainscore-metadata==0.1.0

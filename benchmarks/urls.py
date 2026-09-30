@@ -4,6 +4,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from .views import user, model, competition2022, competition2024, compare, community, \
     release2_0, brain_model, content_utils, benchmark, explore, leaderboard, report_issue, blog, tutorials
+from .views import metadata_edit
 from .utils import show_token, refresh_cache, refresh_score_trends
 
 
@@ -11,6 +12,10 @@ from .utils import show_token, refresh_cache, refresh_score_trends
 supported_domains = ["vision", "language"]
 
 non_domain_urls = [
+    path('model/<str:domain>/<int:id>/metadata/edit/', metadata_edit.edit, name='metadata-edit'),
+    path('model/<str:domain>/<int:id>/metadata/preview/<int:number>/', metadata_edit.preview, name='metadata-preview'),
+    path('metadata/proposals/<str:key>/', metadata_edit.review, name='metadata-review'),
+    path('metadata/github/callback/', metadata_edit.callback, name='metadata-github-callback'),
     # landing
     path('', user.LandingPage.as_view(), name='landing_page'),
     path('/', user.LandingPage.as_view(), name='landing_page'),

@@ -11,10 +11,11 @@
             </h2>
         </div>
         <div class="mc-heading-actions">
-            <button class="mc-edit-button" type="button" disabled
-                    title="Metadata editing is coming soon — for now, updates go through the curation workbook">
-                <i class="fa-solid fa-pen"></i> Edit
-            </button>
+            {% if metadata_edit_url %}
+                <button type="button" class="mc-edit-button" data-metadata-edit-open aria-haspopup="dialog" aria-controls="mc-metadata-editor-dialog"><i class="fa-solid fa-pen" aria-hidden="true"></i> Propose an edit</button>
+            {% else %}
+                <button class="mc-edit-button" type="button" disabled title="Repository-reviewed metadata editing is not available for this model yet."><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit</button>
+            {% endif %}
             <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
         </div>
     </div>
