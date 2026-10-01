@@ -2,7 +2,7 @@
 
 Lineage rules (implemented in ``_attach_lineage``):
 
-* **Parent** — a model's single direct base, from ``model_relationships.csv``
+* **Parent** — a model's single direct base, from its stored relationships
   (``base_identifier``/``base_name``). Ancestors are found by walking parent
   links upward until a model has no base, the base has no catalog record, or
   a cycle would form. A parent does not need its own catalog record: the
@@ -15,14 +15,11 @@ Lineage rules (implemented in ``_attach_lineage``):
 * A model is never its own relative; relationship labels (variant / fine-tuned
   / derived) always describe the related model's link to *its* base.
 """
-import csv
 from collections import Counter, defaultdict
 from copy import deepcopy
-from pathlib import Path
 
 from .licenses import license_labels
 
-DATA_DIR = Path(__file__).parent / 'data'
 SCHEMA_VERSION = '2.0'
 INITIAL_RELATED_MODELS = 3
 
@@ -44,7 +41,7 @@ CARD_CONTENT_FIELDS = (
     'trainable_layers_display', 'checkpoint', 'training_process', 'license',
 )
 
-# assertions.csv path -> template field slot(s). Slots are the keys templates
+# Assertion path -> template field slot(s). Slots are the keys templates
 # look up in ``field_badges`` (prefixes eval_/intended_use_/contributors_ are
 # resolved into the nested context dicts by ``_slot_value``). Paths without a
 # card slot (/model/display_name, /lineage/base_models, /data/dataset_size)
@@ -80,14 +77,6 @@ ASSERTION_PATH_SLOTS = {
     '/use/biases': ('intended_use_biases',),
 }
 ALL_FIELD_SLOTS = sorted({slot for slots in ASSERTION_PATH_SLOTS.values() for slot in slots})
-
-
-def _read_csv(name):
-    path = DATA_DIR / name
-    if not path.exists():
-        return []
-    with path.open(newline='', encoding='utf-8') as stream:
-        return list(csv.DictReader(stream))
 
 
 def _optional(value):
@@ -227,13 +216,6 @@ def _attach_lineage(models, relationships, model_keys=None):
             'hidden_related_count': max(0, len(related) - INITIAL_RELATED_MODELS),
             'has_relationships': bool(ancestors or related),
         }
-
-
-def _load_catalog():
-    """Read CSVs for offline parity checks, never for serving model pages."""
-    names = ('models', 'model_datasets', 'intended_use', 'contributors',
-             'model_relationships', 'assertions')
-    return _build_catalog({name: _read_csv(f'{name}.csv') for name in names})
 
 
 def _build_catalog(tables):

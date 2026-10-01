@@ -61,7 +61,11 @@ class MetadataTests(TestCase):
                 self.assertCountEqual(actual, tables[name])
 
     def test_all_cards_match_csv_context(self):
-        expected = repository._load_catalog()
+        tables = {}
+        for name in TABLES:
+            with (DATA / f'{name}.csv').open(newline='', encoding='utf-8') as stream:
+                tables[name] = list(csv.DictReader(stream))
+        expected = repository._build_catalog(tables)
         for (domain, identifier), card in expected.items():
             with self.subTest(identifier=identifier):
                 actual = repository.get_model_metadata(domain, identifier)
@@ -168,7 +172,7 @@ class MetadataTests(TestCase):
         repository.get_model_metadata(record.domain, record.identifier)
         record.training_objective = 'Updated objective'
         record.save()
-        with patch.object(repository, '_read_csv', side_effect=AssertionError('runtime CSV read')):
+        with patch('csv.DictReader', side_effect=AssertionError('runtime CSV read')):
             self.assertEqual(repository.get_model_metadata(record.domain, record.identifier)['objective'],
                              'Updated objective')
 
