@@ -277,6 +277,61 @@ class ConverterConfidenceTests(SimpleTestCase):
         self.assertIn('50K validation', rows[0]['count'])
         self.assertEqual(self.converter.parse_training_datasets('No training data - hand-crafted', ''), [])
 
+    def test_unknown_dataset_claims_are_not_dataset_names(self):
+        for text in ['training_dataset field is null in metadata; identifier implies ImageNet',
+                     'Unconfirmed - checkpoint training data not stated',
+                     'N/A - untrained, no training data']:
+            self.assertEqual(self.converter.parse_training_datasets(text, ''), [])
+        rows = self.converter.parse_training_datasets(
+            'Base CrossViT: ImageNet; adversarial fine-tuning dataset not specified', '')
+        self.assertEqual([(r['name'], r['role']) for r in rows], [('ImageNet', 'pretraining')])
+        self.assertIn('not specified', rows[0]['count'])
+
+    def test_dataset_stage_arrows_and_parenthetical_notes(self):
+        rows = self.converter.parse_training_datasets(
+            'ImageNet-22k (pretrain; original release) -> ImageNet-1k (fine-tune)', '')
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]['name'], 'ImageNet-22k (pretrain; original release)')
+        self.assertEqual(rows[1]['role'], 'fine_tuning')
+        rows = self.converter.parse_training_datasets(
+            'ImageNet-22k (pretrain) → ImageNet-1k (fine-tune)', '')
+        self.assertEqual([r['role'] for r in rows], ['pretraining', 'fine_tuning'])
+        rows = self.converter.parse_training_datasets(
+            'Stage 1: ImageNet-22k Stage 2: ImageNet-1k', '')
+        self.assertEqual([r['role'] for r in rows], ['pretraining', 'fine_tuning'])
+        self.assertEqual([r['name'] for r in rows], ['ImageNet-22k', 'ImageNet-1k'])
+
+    def test_final_crop_is_input_resolution(self):
+        self.assertEqual(self.converter.parse_resolution(
+            'Resize to 256x256, center crop to 224x224'), (224, 224, 3))
+
+    def test_conversion_preserves_original_notes_in_evidence(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            workbook = root / 'workbook.csv'
+            notes = 'ImageNet-22k ~14M; ImageNet-1k ~1.28M; checkpoint scale unconfirmed'
+            with workbook.open('w', newline='') as stream:
+                writer = csv.writer(stream)
+                writer.writerow(['Field', 'Type', 'Source', 'Question', 'example'])
+                for label, value in [
+                    ('model_ID', 'example'), ('base model', 'parent'),
+                    ('Dataset_source (training_data)',
+                     'Pretrain: ImageNet-22k; Fine-tune: ImageNet-1k'),
+                    ('dataset_size', notes), ('Creator', 'Example author'),
+                    ('Recommended applications', 'Classification'),
+                ]:
+                    writer.writerow([label, '', '', '', value])
+            with patch('sys.argv', ['converter', str(workbook), '--out', str(root / 'out')]):
+                self.converter.main()
+            import json
+            evidence = json.loads((root / 'out/workbook-claims.json').read_text())
+            self.assertEqual(evidence['models'][0]['raw']['dataset_size'], notes)
+            self.assertEqual(evidence['models'][0]['identifier'], 'example')
+            with (root / 'out/model_datasets.csv').open() as stream:
+                datasets = list(csv.DictReader(stream))
+            self.assertEqual([row['role'] for row in datasets], ['pretraining', 'fine_tuning'])
+            self.assertTrue(all('all stages' not in row['description'] for row in datasets))
+
     def test_colors_and_unannotated_values_use_shared_vocabulary(self):
         path = Path(__file__).resolve().parents[2] / 'scripts/build_model_metadata_catalog.py'
         spec = importlib.util.spec_from_file_location('metadata_converter', path)

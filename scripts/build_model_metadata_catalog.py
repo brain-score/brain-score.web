@@ -22,6 +22,8 @@ The output is deterministic (sorted rows) so reruns produce clean git diffs.
 import argparse
 import csv
 from decimal import Decimal
+import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -255,6 +257,11 @@ def parse_parameter_count(text):
 def parse_resolution(text):
     if not text:
         return None, None, None
+    crop = re.search(r'(?:center[ -]?)?crop(?:\s+to)?\s*\(?\s*(\d{2,4})'
+                     r'(?:\s*[x×,]\s*(\d{2,4}))?', text, re.IGNORECASE)
+    if crop:
+        width = int(crop.group(1))
+        return width, int(crop.group(2) or width), 3
     match = re.search(r'(\d{2,4})\s*[x×]\s*(\d{2,4})(?:\s*[x×]\s*(\d))?', text)
     if match:
         return int(match.group(1)), int(match.group(2)), int(match.group(3) or 3)
@@ -358,9 +365,37 @@ def parse_interface(text):
 
 
 ROLE_KEYWORDS = (
-    (re.compile(r'^(pre-?train(?:ing)?|stage\s*1)\s*[:\-]\s*', re.IGNORECASE), 'pretraining'),
+    (re.compile(r'^(pre-?train(?:ing)?|stage\s*1|base(?:\s+[^:]+)?)\s*[:\-]\s*', re.IGNORECASE), 'pretraining'),
     (re.compile(r'^(fine-?tun\w*|stage\s*[2-9])\s*[:\-]\s*', re.IGNORECASE), 'fine_tuning'),
 )
+
+
+def _dataset_segments(text):
+    """Separate stages without splitting semicolons inside qualifications."""
+    depth, start = 0, 0
+    for index, char in enumerate(text):
+        if char == '(':
+            depth += 1
+        elif char == ')':
+            depth = max(0, depth - 1)
+        elif depth == 0 and char == ';':
+            yield text[start:index]
+            start = index + 1
+        elif depth == 0 and (char == '→' or text[index:index + 2] == '->'):
+            yield text[start:index]
+            start = index + (2 if char == '-' else 1)
+        elif depth == 0 and index > start and re.match(r'Stage\s*\d\s*:', text[index:], re.IGNORECASE):
+            yield text[start:index]
+            start = index
+    yield text[start:]
+
+
+DATASET_COMMENT_RE = re.compile(
+    r'^(?:n/?a\b|unconfirmed\b|unknown\b|not (?:stated|specified|given|known)\b|'
+    r'training_dataset\b|identifier implies\b|confirmed only\b|exact variant\b|'
+    r'single-stage training\b|no separate\b|not a dataset\b|'
+    r'(?:adversarial |further )?fine-tun\w*.*(?:not specified|unconfirmed))',
+    re.IGNORECASE)
 
 
 def parse_training_datasets(source_text, size_text):
@@ -368,13 +403,13 @@ def parse_training_datasets(source_text, size_text):
     if not source_text or re.match(r'^no training (?:data|dataset)', source_text, re.IGNORECASE):
         return []
     rows = []
-    for segment in re.split(r';|(?=Stage\s*\d\s*:)', source_text):
+    for segment in _dataset_segments(source_text):
         segment = segment.strip(' ;')
         if not segment:
             continue
-        if re.match(r'^(?:single-stage training|no separate|not a dataset)\b', segment, re.IGNORECASE):
+        if DATASET_COMMENT_RE.match(segment):
             if rows:
-                rows[-1]['count'] = segment
+                rows[-1]['count'] = '; '.join(filter(None, [rows[-1].get('count'), segment]))
             continue
         role = 'training'
         for pattern, mapped_role in ROLE_KEYWORDS:
@@ -383,6 +418,11 @@ def parse_training_datasets(source_text, size_text):
                 role = mapped_role
                 segment = segment[match.end():].strip()
                 break
+        annotation = re.search(r'\((pretrain|fine-tune)\b', segment, re.IGNORECASE)
+        if annotation:
+            role = 'pretraining' if annotation.group(1).lower() == 'pretrain' else 'fine_tuning'
+            segment = re.sub(r'\((?:pretrain|fine-tune)\)', '', segment,
+                             flags=re.IGNORECASE).strip()
         if segment:
             rows.append({'role': role, 'name': segment})
     if rows and size_text:
@@ -405,11 +445,8 @@ def parse_training_datasets(source_text, size_text):
                     if count:
                         row['count'] = count.group().strip()
                     break
-            # Do not discard unmatched qualifications or assign ambiguous counts
-            # to an individual training stage.
-            for row in rows:
-                note = 'Workbook size notes (all stages): ' + size_text
-                row['count'] = '; '.join(filter(None, [row.get('count'), note]))
+            # Ambiguous all-stage notes belong in the reconciliation evidence,
+            # rather than being repeated in every stage's dataset description.
     return rows
 
 
@@ -495,6 +532,16 @@ def main():
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Keep the original claims available when a qualification cannot be attached
+    # to one typed field or one training stage without changing its meaning.
+    claims = {
+        'source': {
+            'filename': Path(args.workbook).name,
+            'sha256': hashlib.sha256(Path(args.workbook).read_bytes()).hexdigest(),
+        },
+        'models': models,
+    }
+    (out_dir / 'workbook-claims.json').write_text(json.dumps(claims, indent=2) + '\n')
 
     model_rows, dataset_rows, use_rows = [], [], []
     contributor_rows, relationship_rows, assertion_rows = [], [], []

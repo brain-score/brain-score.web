@@ -96,6 +96,11 @@ def export(catalog, domain, checkout, output, include_registered=False):
         entry["legacy"] = legacy["models"][key]
         files[relative]["models"][key] = entry
     output.mkdir(parents=True, exist_ok=True)
+    claims_path = catalog / 'workbook-claims.json'
+    if claims_path.exists():
+        evidence_dir = output / 'evidence'
+        evidence_dir.mkdir(exist_ok=True)
+        (evidence_dir / claims_path.name).write_bytes(claims_path.read_bytes())
     for relative, value in files.items():
         validate(value, domain)
         path = output / relative

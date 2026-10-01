@@ -23,11 +23,14 @@ class MetadataExportTests(SimpleTestCase):
             plugin.mkdir(parents=True)
             (plugin / '__init__.py').write_text(
                 "raise RuntimeError('must not execute')\nmodel_registry['exact-id'] = lambda: None\n")
+            claims = b'{"models": [{"identifier": "exact-id", "raw": {"dataset_size": "Unconfirmed"}}]}\n'
+            (root / 'workbook-claims.json').write_bytes(claims)
             with patch('scripts.export_model_metadata_yaml.read_catalog', return_value=to_tables(document)):
                 report = export(root, 'vision', root / 'checkout', root / 'out', include_registered=True)
             self.assertEqual(report, {'files': 1, 'unmatched': []})
             result = load((root / 'out/brainscore_vision/models/example/metadata.yaml').read_text())
             self.assertIn('exact-id', result['models'])
+            self.assertEqual((root / 'out/evidence/workbook-claims.json').read_bytes(), claims)
 
     def test_missing_entry_preserves_existing_yaml_extension_and_sibling(self):
         from scripts.export_model_metadata_yaml import export
