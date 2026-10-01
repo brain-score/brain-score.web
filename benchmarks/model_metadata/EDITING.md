@@ -6,8 +6,9 @@ Brain-Score_Contributions_GitHub_App in us-east-2. Installation authentication,
 repository access, and branch creation from master have been verified with a
 signed-in Brain-Score contributor. The contributor has tested local PR submission;
 merged-PR database publication still needs a dev rehearsal. The shared contract
-now lives in `brainscore_core.metadata`; its core merge and consumer commit pins
-are pending, and converted plugin files have not been merged. Keep deployed PR submission and publication
+lives in `brainscore_core.metadata`. Core #172 is merged, and repository-level
+consumer pins are configured; website build configuration and converted plugin
+files remain pending. Keep deployed PR submission and publication
 workflows disabled until the rollout prerequisites are met.
 
 ## Behavior
@@ -157,8 +158,38 @@ Keep this framework upgrade separate from enabling metadata contributions.
    file is the operational documentation.
 
 Migrations 0028 and 0029 and the CSV import were previously applied to shared dev.
-The publication migrations 0030 through 0032 and workflow configuration remain
-pending. Local regression tests use a disposable PostgreSQL database.
+The publication migrations 0030 through 0032 remain pending on dev, as does
+workflow configuration. Shared `web_tests` was backed up, rehearsed and migrated
+through 0032 on October 1, 2026. Stored models/scores and displayed leaderboard
+ranks were preserved. Its historical trend migration names were reconciled only
+after checking the existing schema. See the infrastructure metadata rollout
+record for the operation details and ordinary Jenkins test commands. Keep the
+disposable PostgreSQL metadata suite for catalog tests that assume empty tables.
+
+## Updating the core dependency intentionally
+
+The initial approved core revision is
+`30318623bae9846ca9d2dd7ae4573ad8d99ded9f` (core #172). This is configured as
+repository variable `METADATA_CORE_REF` in web, vision, and language. It does not
+automatically configure a deployed website build or create publisher environments.
+
+Keep deployed consumers pinned rather than following core's `main` branch.
+When intentionally adopting a metadata contract, policy, dependency, or other
+needed core change, include a pin update in that change's rollout checklist:
+
+1. Review/merge the core change and test its full SHA in a clean installation.
+2. Rehearse compatible schema/database changes, metadata tests, and publication
+   in dev before changing any defaults shared with production.
+3. Update `METADATA_CORE_REF` in all three repositories and any web publishing
+   environment overrides. Revalidate affected open metadata PRs.
+4. Pass that same SHA to the website build, rebuild/redeploy, and verify the
+   website, publisher, and validators agree. Updating a GitHub variable alone
+   does not upgrade the running website.
+5. Record the old/new SHAs and results. A rollback must also account for any
+   database or YAML changes; reverting the pin alone does not undo those changes.
+
+Unrelated core merges do not require advancing the metadata pin. The detailed
+procedure is maintained in infrastructure's `web/metadata/rollout.md`.
 
 ## GitHub App
 
