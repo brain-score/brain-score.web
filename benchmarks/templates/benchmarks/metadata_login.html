@@ -1,5 +1,11 @@
 <section class="metadata-editor" data-metadata-stage="login">
-    <p>Sign in to Brain-Score to propose metadata changes. Your Brain-Score user ID will be recorded in the pull request.</p>
-    <p><a class="button is-primary" href="/profile/" target="_blank" rel="noopener">Sign in to Brain-Score</a></p>
-    <button type="button" class="button" data-metadata-login-retry>Continue after signing in</button>
+    <div class="metadata-editor-scroll" data-metadata-scroll>
+        <p class="metadata-login-intro">Use your Brain-Score account to propose a change to this model.</p>
+        <p class="metadata-review-note">Sign-in opens in a new tab. Once you’re signed in, return here to continue.</p>
+        <button type="button" class="metadata-login-continue" data-metadata-login-retry>Continue after signing in</button>
+    </div>
+    <footer class="metadata-editor-actions">
+        <button type="button" class="button" data-metadata-close>Cancel</button>
+        <a class="button is-primary" href="/profile/" target="_blank" rel="noopener" aria-label="Sign in to Brain-Score (opens in a new tab)">Sign in to Brain-Score</a>
+    </footer>
 </section>

@@ -13,10 +13,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateHeading() {
         const reviewing = Boolean(body.querySelector('[data-metadata-stage="review"]'));
-        title.textContent = reviewing ? 'Review metadata changes' : 'Propose metadata changes';
+        const signingIn = Boolean(body.querySelector('[data-metadata-stage="login"]'));
+        dialog.classList.toggle('is-signing-in', signingIn);
+        title.textContent = signingIn ? 'Sign in to edit metadata' : reviewing ? 'Review metadata changes' : 'Propose metadata changes';
         const back = body.querySelector('[data-metadata-back]');
         if (back) back.hidden = !savedEdit;
-        body.scrollTop = 0;
+        const scroll = body.querySelector('[data-metadata-scroll]');
+        if (scroll) scroll.scrollTop = 0;
         title.focus();
     }
 
@@ -55,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateHeading();
             const error = body.querySelector('.errorlist, [role="alert"]');
             if (error) {
+                reveal(error);
                 error.setAttribute('tabindex', '-1');
                 error.focus();
             }
@@ -79,8 +83,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-metadata-edit-open]').forEach(function (button) {
         button.addEventListener('click', function () { open(button); });
     });
-    dialog.querySelector('[data-metadata-close]').addEventListener('click', function () { dialog.close(); });
+    dialog.addEventListener('click', function (event) {
+        if (event.target.closest('[data-metadata-close]')) dialog.close();
+    });
     dialog.addEventListener('close', function () { if (opener) opener.focus(); });
+
+    function reveal(element) {
+        for (let parent = element.parentElement; parent && parent !== body; parent = parent.parentElement) {
+            if (parent.tagName === 'DETAILS') parent.open = true;
+        }
+    }
+    body.addEventListener('invalid', function (event) { reveal(event.target); }, true);
 
     body.addEventListener('submit', function (event) {
         const form = event.target.closest('[data-metadata-form], [data-metadata-authorize]');

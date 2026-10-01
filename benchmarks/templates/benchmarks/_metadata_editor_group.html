@@ -1,0 +1,10 @@
+<fieldset class="metadata-editor-list" data-formset>
+    <legend>{{ group.label }}</legend>
+    {% if not group.editable %}<p class="help">{{ group.help }}</p>{% endif %}
+    {{ group.formset.management_form }}{{ group.formset.non_form_errors }}
+    <div data-rows>{% for row in group.formset %}<div class="metadata-editor-row">{{ row.as_p }}</div>{% endfor %}</div>
+    {% if group.editable %}
+    <template data-empty-row><div class="metadata-editor-row">{{ group.formset.empty_form.as_p }}</div></template>
+    <button type="button" class="button is-small" data-add-row>Add entry</button>
+    {% endif %}
+</fieldset>

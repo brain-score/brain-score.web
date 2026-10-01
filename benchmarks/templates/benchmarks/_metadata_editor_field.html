@@ -1,0 +1,12 @@
+<div class="metadata-editor-field{% if field.field.disabled %} is-locked{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.field.metadata_label|default:field.label }}</label>
+    {{ field.errors }}{{ field }}
+    {% if field.field.disabled %}<p class="help">{{ field.help_text }}</p>{% endif %}
+    {% if field.field.metadata_lines and not field.field.disabled %}<p class="help">One entry per line.</p>{% endif %}
+    {% if field.field.metadata_sources %}
+    <details class="metadata-field-sources">
+        <summary>Current sources</summary>
+        {% for source in field.field.metadata_sources %}<p class="help">{% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.kind }} reference</a>{% else %}{{ source.kind|capfirst }}{% endif %} {{ source.citation }}</p>{% endfor %}
+    </details>
+    {% endif %}
+</div>

@@ -1,10 +1,32 @@
 <section class="metadata-editor" data-metadata-stage="review">
-    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-    <p>Your proposal will update the metadata file through a GitHub pull request. Paper- and Hugging Face-backed fields cannot be changed through this form.</p>
-    <p><strong>Reason:</strong> {{ draft.reason }}</p>
-    <p><strong>Brain-Score user ID:</strong> {{ draft.user_id }}</p>
-    <pre tabindex="0" aria-label="Proposed metadata changes">{{ diff }}</pre>
-    <button type="button" class="button" data-metadata-back>Back to editing</button>
-    <form method="post" action="{{ review_url }}" data-metadata-authorize>{% csrf_token %}<button type="submit" class="button is-primary">Create pull request</button></form>
-    <p>GitHub sign-in confirms your contributor identity. The Brain-Score Contributions App creates the branch and pull request in the model repository, recording your Brain-Score user ID and GitHub username. No personal fork is needed.</p>
+    <div class="metadata-editor-scroll" data-metadata-scroll>
+        {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+        <p class="metadata-editor-intro">Check your changes before continuing to GitHub.</p>
+        {% if draft.changes %}
+        <div class="metadata-change-list">
+            {% for change in draft.changes %}
+            <article class="metadata-change">
+                <h3>{{ change.label }} <span>{{ change.section }}</span></h3>
+                <div class="metadata-change-values">
+                    <div><span class="metadata-value-label">Current</span><pre>{{ change.before }}</pre></div>
+                    <div class="metadata-proposed-value"><span class="metadata-value-label">Proposed</span><pre>{{ change.after }}</pre></div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="metadata-review-reason"><strong>Reason for change</strong><p>{{ draft.reason|linebreaksbr }}</p></div>
+        <details class="metadata-field-section metadata-full-diff"{% if not draft.changes %} open{% endif %}>
+            <summary>View full file diff</summary>
+            <pre tabindex="0" aria-label="Proposed metadata changes">{{ diff }}</pre>
+        </details>
+        <p class="metadata-review-note">GitHub will confirm your account. The PR records your GitHub username and Brain-Score user ID {{ draft.user_id }}. Published metadata stays unchanged until review and merge.</p>
+    </div>
+    <form method="post" action="{{ review_url }}" data-metadata-authorize>
+        {% csrf_token %}
+        <footer class="metadata-editor-actions">
+            <button type="button" class="button" data-metadata-back>Back to editing</button>
+            <button type="submit" class="button is-primary">Create pull request</button>
+        </footer>
+    </form>
 </section>

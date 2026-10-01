@@ -710,12 +710,13 @@ $mc-undocumented: #c3cbd9
 
 .metadata-editor
   max-width: 100%
+  padding: 0
   overflow-wrap: anywhere
+  > :first-child, section > :first-child
+    margin-top: 0
   .metadata-editor-field, .metadata-editor-list
-    margin: 1.25rem 0
-    padding: 1rem
-    border: 1px solid $mc-border
-    border-radius: 8px
+    margin: 0 0 16px
+    min-width: 0
   label, legend
     display: block
     font-weight: 600
@@ -724,23 +725,154 @@ $mc-undocumented: #c3cbd9
     max-width: 100%
     padding: 0.5rem
     box-sizing: border-box
+    border: 1px solid #c7d3dc
+    border-radius: 6px
+    font: inherit
+    background: white
+  textarea
+    resize: vertical
+    min-height: 64px
+  label
+    margin-bottom: 6px
+    font-size: 0.9rem
   .is-locked
-    background: #f5f7fa
+    opacity: 0.85
   .metadata-editor-row
     margin-bottom: 1rem
     padding-bottom: 0.5rem
     border-bottom: 1px solid $mc-border
   .help
     font-size: 0.85rem
+    color: #526577
   .errorlist, [role=alert]
     color: #a12424
   pre
     overflow-x: auto
+    width: 100%
+    max-width: 100%
+    border: 0
 
   .button
     max-width: 100%
     height: auto
     white-space: normal
+
+  .metadata-field-section
+    border: 1px solid $mc-border
+    border-radius: 8px
+    margin-bottom: 12px
+    > summary
+      padding: 14px 16px
+      cursor: pointer
+      font-weight: 600
+      font-size: 0.95rem
+      span
+        float: right
+        margin-left: 12px
+        font-weight: 400
+        color: #526577
+        font-size: 0.8rem
+    &[open] > summary
+      border-bottom: 1px solid $mc-border
+  .metadata-section-content
+    padding: 16px 16px 0
+  .metadata-field-sources
+    font-size: 0.8rem
+    margin-top: 6px
+    summary
+      cursor: pointer
+      color: #526577
+  .metadata-evidence
+    margin: 24px 0
+    padding: 0
+    h3
+      font-size: 1rem
+      font-weight: 600
+      margin-bottom: 12px
+  .metadata-source-fields
+    display: grid
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)
+    gap: 16px
+  .metadata-locked-section
+    background: #f7f9fb
+  .metadata-editor-actions
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 12px
+    padding: 16px 24px
+    border-top: 1px solid $mc-border
+    background: white
+    flex-shrink: 0
+    .button
+      border-radius: 6px
+      min-height: 40px
+      padding: 8px 16px
+      font-size: 0.9rem
+      line-height: 1.4
+  .metadata-change
+    border: 1px solid $mc-border
+    border-radius: 8px
+    overflow: hidden
+    margin: 0 0 16px
+    h3
+      padding: 12px 16px
+      font-size: 0.95rem
+      font-weight: 600
+      border-bottom: 1px solid $mc-border
+      span
+        float: right
+        font-size: 0.8rem
+        font-weight: 400
+        color: #526577
+  .metadata-change-values
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    > div
+      padding: 12px 16px
+    pre
+      font-family: inherit
+      padding: 0
+      margin: 8px 0 0
+      white-space: pre-wrap
+      overflow-wrap: anywhere
+      background: transparent
+    .metadata-proposed-value
+      background: #f0f8f4
+      border-left: 1px solid $mc-border
+  .metadata-value-label
+    color: #526577
+    font-size: 0.8rem
+  .metadata-review-reason
+    margin: 20px 0
+  .metadata-full-diff pre
+    margin: 0
+    max-height: 40dvh
+    white-space: pre
+    font-size: 0.8rem
+    padding: 16px
+  .metadata-review-note, .metadata-editor-intro
+    font-size: 0.9rem
+    color: #526577
+    line-height: 1.6
+  .metadata-login-intro
+    font-size: 1rem
+    line-height: 1.6
+  .metadata-login-continue
+    display: inline-block
+    margin: 12px 0 0
+    padding: 0
+    border: 0
+    background: transparent
+    color: #08718e
+    font: inherit
+    font-size: 0.9rem
+    text-decoration: underline
+    text-underline-offset: 3px
+    cursor: pointer
+    &:focus-visible
+      outline: 2px solid #08718e
+      outline-offset: 4px
 
 // The editor uses the same native dialog behavior as the schema popup.
 body:has(.mc-metadata-editor-dialog[open])
@@ -756,6 +888,8 @@ body:has(.mc-metadata-editor-dialog[open])
   border-radius: 12px
   color: $brainscore_gray4
   box-shadow: 0 20px 70px rgba(0, 22, 40, 0.25)
+  &.is-signing-in
+    width: min(600px, calc(100vw - 32px))
   &[open]
     display: flex
     flex-direction: column
@@ -784,24 +918,36 @@ body:has(.mc-metadata-editor-dialog[open])
     color: inherit
     cursor: pointer
   .metadata-dialog-body
-    overflow-y: auto
+    overflow: hidden
     min-height: 0
-    padding: 4px 24px 24px
+    display: flex
+    flex-direction: column
+  .metadata-editor-scroll
+    min-height: 0
+    overflow-y: auto
     overscroll-behavior: contain
+    padding: 20px 24px
+    flex: 1 1 auto
   .metadata-dialog-status
     margin: 0
     padding: 0 24px 12px
     &:empty
       display: none
   .metadata-editor
-    padding-top: 16px
+    display: flex
+    flex-direction: column
+    min-height: 0
+    [data-metadata-form]
+      display: flex
+      flex-direction: column
+      min-height: 0
     p
       margin-bottom: 8px
-    pre
-      max-height: 50dvh
+    .metadata-editor-intro
+      margin-bottom: 20px
     [data-metadata-authorize]
-      display: inline-block
-      margin: 12px 0
+      margin: 0
+      flex-shrink: 0
   @media (max-width: 600px)
     width: calc(100vw - 16px)
     max-height: calc(100dvh - 16px)
@@ -809,5 +955,16 @@ body:has(.mc-metadata-editor-dialog[open])
       padding: 16px
       h2
         font-size: 1.15rem
-    .metadata-dialog-body
-      padding: 0 16px 16px
+    .metadata-editor-scroll, .metadata-editor-actions
+      padding: 16px
+    .metadata-source-fields, .metadata-change-values
+      grid-template-columns: minmax(0, 1fr)
+    .metadata-source-fields
+      gap: 0
+    .metadata-change-values .metadata-proposed-value
+      border-left: 0
+      border-top: 1px solid $mc-border
+    .metadata-field-section > summary span
+      float: none
+      display: block
+      margin: 4px 0 0 16px
