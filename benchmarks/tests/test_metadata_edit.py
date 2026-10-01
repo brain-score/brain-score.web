@@ -106,7 +106,9 @@ class PublicationTests(TestCase):
         with self.assertRaises(ProposalError):
             publish_pull_request("vision", 10, api)
         self.assertFalse(ModelMetadataPublication.objects.exists())
-        self.assertEqual(ModelMeta.objects.get().total_parameter_count, 55)
+        self.assertEqual(
+            ModelMeta.objects.get(model=self.model).total_parameter_count, 55
+        )
 
     def test_unknown_models_and_changes_to_published_identities_rejected(self):
         unknown = document()
@@ -157,9 +159,19 @@ class PublicationTests(TestCase):
                 architecture="DCNN",
             )
         before = list(ModelMeta.objects.order_by("pk").values())
+        existing_model_ids = [row["model_id"] for row in before]
         models_before = list(Model.objects.order_by("pk").values())
         publish_pull_request("vision", 10, FakeGitHub(catalog))
-        self.assertEqual(list(ModelMeta.objects.order_by("pk").values()), before)
+        # Shared fixtures can contain registered models without legacy metadata;
+        # bootstrap may add those rows, but must preserve every existing row.
+        self.assertEqual(
+            list(
+                ModelMeta.objects.filter(model_id__in=existing_model_ids)
+                .order_by("pk")
+                .values()
+            ),
+            before,
+        )
         self.assertEqual(list(Model.objects.order_by("pk").values()), models_before)
         self.assertEqual(
             ModelMetadataPublication.objects.count(), len(catalog["models"])
@@ -181,7 +193,9 @@ class PublicationTests(TestCase):
         api.pr["merge_commit_sha"] = "c" * 40
         api.reviewer = ""
         publish_pull_request("vision", 10, api)
-        self.assertEqual(ModelMeta.objects.get().total_parameter_count, 200)
+        self.assertEqual(
+            ModelMeta.objects.get(model=self.model).total_parameter_count, 200
+        )
         revision = ModelMetadataRevision.objects.order_by("-pk").first()
         self.assertEqual(revision.reviewer, "maintainer")
         self.assertEqual(revision.override_reviewer, "")
