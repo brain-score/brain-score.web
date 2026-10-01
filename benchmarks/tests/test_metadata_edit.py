@@ -414,10 +414,13 @@ class EditorTests(TestCase):
                 "benchmarks.views.metadata_edit.cache.add",
                 side_effect=RuntimeError("cache unavailable"),
             ):
-                self.assertEqual(
-                    self.client.get("/model/vision/1/metadata/preview/10/").status_code,
-                    503,
-                )
+                with self.assertLogs("django.request", level="ERROR") as logs:
+                    self.assertEqual(
+                        self.client.get("/model/vision/1/metadata/preview/10/").status_code,
+                        503,
+                    )
+                self.assertEqual(len(logs.records), 1)
+                self.assertEqual(logs.records[0].status_code, 503)
             reader.assert_not_called()
 
     def test_anonymous_contributions_require_brainscore_login(self):
