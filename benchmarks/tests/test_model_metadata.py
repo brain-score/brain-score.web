@@ -334,6 +334,45 @@ class PublicLineageTests(TestCase):
         self.assertEqual(ModelMetadataRecord.objects.count(), 2)
 
 
+class MetadataEvidenceDisplayTests(SimpleTestCase):
+    def test_input_uncertainty_survives_interface_evidence_in_either_order(self):
+        from brainscore_core.metadata.storage import to_tables
+
+        document = {
+            'schema_version': '2.0', 'domain': 'vision',
+            'models': {'example': {
+                'io': {'interface': 'Classifier', 'input_format': 'Resolution disputed',
+                       'output_format': 'Class logits'},
+                'sources': {
+                    'loader': {'kind': 'other', 'citation': 'Loader code'},
+                    'processor': {'kind': 'huggingface', 'citation': 'Processor config'},
+                },
+                'assertions': [
+                    {'path': '/io/interface', 'status': 'probable', 'sources': ['loader']},
+                    {'path': '/io/input_format', 'status': 'uncertain',
+                     'sources': ['processor']},
+                    {'path': '/io/output_format', 'status': 'probable',
+                     'sources': ['loader']},
+                ],
+            }},
+        }
+        tables = to_tables(document)
+        tables = {name: [{key: '' if value is None else str(value)
+                          for key, value in row.items()} for row in rows]
+                  for name, rows in tables.items()}
+        for reverse in (False, True):
+            with self.subTest(reverse=reverse):
+                tables['assertions'] = sorted(tables['assertions'],
+                                              key=lambda row: row['path'], reverse=reverse)
+                card = repository._build_catalog(tables)[('vision', 'example')]
+                card = repository.finalize_card_context(card, 'database')
+                badges = card['field_badges']
+                self.assertEqual(badges['eval_input_format']['status'], 'uncertain')
+                self.assertIn('Processor config', badges['eval_input_format']['source'])
+                self.assertEqual(badges['eval_output_format']['status'], 'probable')
+                self.assertNotIn('Processor config', badges['eval_output_format']['source'])
+
+
 class LicenseLabelTests(SimpleTestCase):
     def test_aliases_and_applicable_license_are_selected(self):
         from benchmarks.model_metadata.licenses import license_labels

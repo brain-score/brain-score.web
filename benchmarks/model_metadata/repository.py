@@ -65,6 +65,8 @@ ASSERTION_PATH_SLOTS = {
     '/eval/test_datasets': ('eval_test_datasets',),
     '/eval/validation_datasets': ('eval_validation_datasets',),
     '/io/interface': ('eval_input_format', 'eval_output_format'),
+    '/io/input_format': ('eval_input_format',),
+    '/io/output_format': ('eval_output_format',),
     '/io/tokenizer': ('eval_tokenizer',),
     '/provenance/weights_provider': ('weights_provider',),
     '/provenance/checkpoint': ('checkpoint',),
@@ -262,6 +264,7 @@ def _build_catalog(tables):
 
     assertion_counts = defaultdict(Counter)
     badge_slots = defaultdict(dict)  # model key -> {slot: {'status', 'source'}}
+    status_priority = {'verified': 0, 'probable': 1, 'uncertain': 2}
     for row in tables['assertions']:
         key = _model_key(row)
         assertion_counts[key][row['status']] += 1
@@ -270,7 +273,13 @@ def _build_catalog(tables):
             if source == 'curation_workbook':
                 source = 'curation workbook'
             for slot in ASSERTION_PATH_SLOTS.get(row['path'], ()):
-                badge_slots[key][slot] = {'status': row['status'], 'source': source}
+                previous = badge_slots[key].get(slot)
+                status = row['status']
+                slot_source = source
+                if previous:
+                    status = max((previous['status'], status), key=status_priority.get)
+                    slot_source = '; '.join(sorted(set((previous['source'], source))))
+                badge_slots[key][slot] = {'status': status, 'source': slot_source}
 
     for key, model in models.items():
         counts = assertion_counts[key]
