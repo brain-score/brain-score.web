@@ -76,11 +76,13 @@
             {% if model_metadata.datasets %}
                 <div class="mc-datasets">
                     {% for dataset in model_metadata.datasets %}
-                        <div class="mc-dataset-chip">
-                            <span class="mc-dataset-role">{{ dataset.role_display }}</span>
-                            <strong>{{ dataset.dataset_name|default:dataset.dataset_identifier }}</strong>
+                        <div class="mc-dataset">
+                            <div class="mc-dataset-chip">
+                                <span class="mc-dataset-role">{{ dataset.role_display }}</span>
+                                <strong>{{ dataset.dataset_name|default:dataset.dataset_identifier }}</strong>
+                            </div>
                             {% if dataset.sample_count_display %}
-                                <span class="mc-dataset-count">{{ dataset.sample_count_display }}</span>
+                                <p class="mc-dataset-count">{{ dataset.sample_count_display }}</p>
                             {% endif %}
                         </div>
                     {% endfor %}

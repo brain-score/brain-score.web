@@ -285,7 +285,13 @@ $mc-undocumented: #c3cbd9
   align-self: flex-start
   max-width: 100%
 
+  strong
+    min-width: 0
+    overflow-wrap: anywhere
+
   .mc-dataset-role
+    flex: 0 0 auto
+    white-space: nowrap
     background: rgba($brainscore_green, 0.15)
     color: darken($brainscore_green, 20%)
     border-radius: 999px
@@ -294,9 +300,11 @@ $mc-undocumented: #c3cbd9
     font-weight: 700
     text-transform: lowercase
 
-  .mc-dataset-count
-    color: $mc-label
-    font-size: 0.75rem
+.mc-dataset-count
+  margin: 0.2rem 0.3rem 0
+  color: $mc-label
+  font-size: 0.75rem
+  overflow-wrap: anywhere
 
 .mc-facts
   > div
