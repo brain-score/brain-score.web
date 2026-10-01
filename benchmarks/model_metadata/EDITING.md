@@ -5,9 +5,9 @@ exists, and its credentials are stored in AWS Secrets Manager under
 Brain-Score_Contributions_GitHub_App in us-east-2. Installation authentication,
 repository access, and branch creation from master have been verified with a
 signed-in Brain-Score contributor. The contributor has tested local PR submission;
-merged-PR database publication still needs a dev rehearsal. The shared package
-has not been released, and converted
-plugin files have not been merged. Keep deployed PR submission and publication
+merged-PR database publication still needs a dev rehearsal. The shared contract
+now lives in `brainscore_core.metadata`; its core merge and consumer commit pins
+are pending, and converted plugin files have not been merged. Keep deployed PR submission and publication
 workflows disabled until the rollout prerequisites are met.
 
 ## Behavior
@@ -76,8 +76,10 @@ Repository mappings must be published before a model's Edit link appears.
 
 ## Components
 
-- Core: `packages/metadata` is the lightweight `brainscore-metadata` package.
-  It owns YAML validation, source policy, table conversion, and PR checks.
+- Core: `brainscore_core.metadata` owns YAML validation, source policy, table
+  conversion, and PR checks. It ships in the normal core distribution; there is
+  no separate metadata package or PyPI release. Core loads its public scoring
+  interfaces on demand, so metadata imports do not load scoring modules.
 - Website: form, OAuth callback, previews, publication journal and worker.
 - Vision and language: trusted `model-metadata-v2.yml` workflows validate PR
   data without checking out PR code and dispatch publication after merge.
@@ -100,10 +102,13 @@ release. Its current Django 4.1 dependency is unsupported; security support ende
 December 1, 2023. See the [Django support table](https://www.djangoproject.com/download/#supported-versions).
 Keep this framework upgrade separate from enabling metadata contributions.
 
-1. Review and release `brainscore-metadata==0.1.0` from core's
-   `packages/metadata`. Install it with `requirements-metadata.txt` on the web
-   worker and website. Release the core v2 adapter and auto-merge guards before
-   converting any plugin files.
+1. Review and merge core's metadata module, v2 adapter, and auto-merge guards.
+   Set `METADATA_CORE_REF` to the full approved 40-character core commit SHA in
+   the website build environment, web CI/publishing environments, and domain
+   repositories. Install core with `requirements-metadata.txt` on the website
+   and publisher; domain validation workflows install the same pinned revision.
+   Confirm scoring/submission workers have the core guards before converting
+   plugin files. No separate metadata release is required.
 2. Update `web_tests` before running the existing website unit-test suite. With
    `DJANGO_ENV=test`, `web.settings` explicitly selects `web_tests`, and
    `ExistingDatabaseTestRunner` skips database setup and migration entirely.
@@ -180,9 +185,26 @@ Contents/Pull requests read on domain repositories for publication. Prefer a
 separate automation app to avoid giving the contributor app Actions write.
 Each workflow's `METADATA_APP_ID` and private key can refer to that automation app.
 The source-policy check uses the workflow token with Checks write; it executes
-only the released validator, not plugin or PR code.
+only the pinned core validator, not plugin or PR code.
 
 Website environment:
+
+Use Python 3.11 and install the normal core distribution. For a pip deployment:
+
+```sh
+# METADATA_CORE_REF must be the full approved core commit SHA.
+python -m pip install -r requirements.txt -r requirements-metadata.txt
+python -c 'import brainscore_core.metadata'
+python -m pip check
+```
+
+For the Docker image, pass `--build-arg METADATA_CORE_REF="$METADATA_CORE_REF"`.
+Omitting the argument retains a website image without the optional editor
+dependency. Invalid nonempty refs fail the build. Core's dependencies are installed,
+but its scoring modules are not imported by metadata. The website and core use
+the same `psycopg2-binary` distribution; avoid installing `psycopg2` alongside it
+in new pip environments. Before the core changes are committed, local integration
+can install a wheel built from the reviewed core working tree instead.
 
 Set `METADATA_GITHUB_SECRET_NAME=Brain-Score_Contributions_GitHub_App` and
 `METADATA_GITHUB_SECRET_REGION=us-east-2` to retrieve credentials at startup.
@@ -219,7 +241,9 @@ strings or authorization headers.
 Create protected GitHub environments `metadata-dev`, `metadata-staging`, and
 `metadata-production` in the web repository. Restrict deployment refs to reviewed
 trusted code; require environment approval for production. Set the repository
-variable `METADATA_V2_ENABLED=true` only after the shared package is released.
+variable `METADATA_V2_ENABLED=true` only after the approved core revision is
+available and `METADATA_CORE_REF` is configured. The workflows reject missing,
+branch-name, or abbreviated refs before installing dependencies.
 The October 1, 2026 configuration review found no deployment environments in the
 web repository. It also found that vision/master did not require the metadata
 policy check, dismiss stale approvals, or require approval of the latest push.
@@ -228,6 +252,8 @@ enabling publication; application checks do not replace deployment protections.
 
 Environment variables/secrets:
 
+- `METADATA_CORE_REF`: full approved core commit SHA; use the same revision for
+  website, publisher, and domain validators. This is configuration, not a secret.
 - `METADATA_PUBLISH_ROLE_ARN`: AWS role assumed through GitHub OIDC, restricted
   to this repository/environment and the required secrets/network.
 - `METADATA_APP_ID`, secret `METADATA_APP_PRIVATE_KEY`.
@@ -247,7 +273,7 @@ The runner must reach PostgreSQL and Redis; use a trusted runner in the required
 network if GitHub-hosted runners cannot. Do not expose the database to the public
 internet just for this workflow.
 
-Each domain repository also needs `METADATA_V2_ENABLED`, `METADATA_APP_ID`,
+Each domain repository also needs `METADATA_CORE_REF`, `METADATA_V2_ENABLED`, `METADATA_APP_ID`,
 `METADATA_APP_PRIVATE_KEY`, `METADATA_WEB_PUBLISH_REF` (trusted web branch),
 and `METADATA_PUBLISH_ENVIRONMENT`. Require the
 `Metadata v2 source policy` check and a maintainer review in branch protection.
@@ -267,20 +293,21 @@ context refresh fails after publication, rerunning also refreshes the context
 and invalidates caches. Inspect failures; disabling the editor alone does not
 disable publication. Disable the repository workflow flag to stop publication.
 Measure materialized-view refresh duration with production-shaped data before
-rollout; the current refresh can block readers. Verify documentation builds
-after releasing the shared package, since the unreleased dependency is not yet
-available to deployment or documentation installers.
+rollout; the current refresh can block readers. Verify deployment and documentation
+builds against the approved core revision before enabling contributions.
 
 ## Verification
 
-With the lightweight package installed and isolated PostgreSQL settings:
+With core's metadata module installed and isolated PostgreSQL settings:
 
 ```sh
 python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings
 python manage.py test benchmarks.tests.test_metadata_edit benchmarks.tests.test_model_metadata benchmarks.tests.test_compare_dashboard benchmarks.tests.test_migrations benchmarks.tests.test_models benchmarks.tests.test_ratelimit benchmarks.tests.test_score_trends --settings=web.metadata_test_settings --noinput
 ```
 
-Core contract tests: `python -m unittest discover -s packages/metadata/tests`.
+Core contract tests: `python -m unittest discover -s tests/test_metadata` from the
+core checkout. Build core's wheel and test from outside that checkout as well, to
+verify the installed distribution includes metadata without a separate dependency.
 Web JavaScript tests: `npm run test:compare-dashboard`.
 The unrelated full website suite requires its own populated benchmark fixtures
 and full URL settings; the isolated metadata settings intentionally omit them.

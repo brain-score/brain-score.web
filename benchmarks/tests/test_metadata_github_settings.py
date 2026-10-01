@@ -2,10 +2,28 @@ from unittest.mock import Mock, patch
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 from web.metadata_github_settings import load_metadata_github_settings
-from benchmarks.model_metadata.github import GitHub, ProposalError
+from benchmarks.model_metadata.github import GitHub, ProposalError, metadata_available
 
 
 class MetadataGitHubSettingsTests(SimpleTestCase):
+    def test_metadata_probe_handles_core_not_installed(self):
+        with patch(
+            "importlib.util.find_spec",
+            side_effect=ModuleNotFoundError(name="brainscore_core"),
+        ):
+            self.assertFalse(metadata_available())
+
+    def test_metadata_probe_handles_core_before_metadata_was_added(self):
+        with patch("importlib.util.find_spec", return_value=None):
+            self.assertFalse(metadata_available())
+
+    def test_metadata_probe_does_not_hide_broken_installations(self):
+        with patch(
+            "importlib.util.find_spec", side_effect=ModuleNotFoundError(name="yaml")
+        ):
+            with self.assertRaises(ModuleNotFoundError):
+                metadata_available()
+
     def fixture(self):
         return {
             "GITHUB_CLIENT_ID": "client",

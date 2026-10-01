@@ -78,7 +78,7 @@ def editor_sections(form, groups):
 
 
 def describe_changes(before, after, paths):
-    from brainscore_metadata.contract import get_path
+    from brainscore_core.metadata.contract import get_path
     import yaml
 
     def display(value):
@@ -102,8 +102,8 @@ def describe_changes(before, after, paths):
 
 
 def make_editor(entry, data=None):
-    from brainscore_metadata.contract import FIELD_SPECS, LIST_PATHS, get_path, put_path
-    from brainscore_metadata.policy import editability, evidence
+    from brainscore_core.metadata.contract import FIELD_SPECS, LIST_PATHS, get_path, put_path
+    from brainscore_core.metadata.policy import editability, evidence
 
     def normalized(value):
         if isinstance(value, str):

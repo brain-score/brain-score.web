@@ -4,15 +4,15 @@ channels:
 - anaconda
 - pytorch
 dependencies:
-  - python>=3.6, <=3.11
+  - python=3.11
   - pip
   - django=4.1
   - numpy
-  - psycopg2
   - nodejs
   - boto3
   - pandas
   - pip:
+    - psycopg2-binary
     - gunicorn==23.0.0
     - whitenoise==6.6.0
     - django_compressor==4.4

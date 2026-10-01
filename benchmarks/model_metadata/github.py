@@ -40,11 +40,20 @@ def allowed_path(config, path):
     )
 
 
-def configured():
+def metadata_available():
     import importlib.util
 
+    try:
+        return importlib.util.find_spec("brainscore_core.metadata") is not None
+    except ModuleNotFoundError as exc:
+        if exc.name == "brainscore_core":
+            return False
+        raise
+
+
+def configured():
     return bool(
-        importlib.util.find_spec("brainscore_metadata")
+        metadata_available()
         and getattr(settings, "MODEL_METADATA_EDIT_ENABLED", False)
         and getattr(settings, "METADATA_GITHUB_CLIENT_ID", "")
         and getattr(settings, "METADATA_GITHUB_CLIENT_SECRET", "")
@@ -216,7 +225,7 @@ class GitHub:
             raise ProposalError("Metadata is not valid UTF-8.") from exc
 
     def approved_reviewer(self, repository, pr, require_override=False):
-        from brainscore_metadata.review import review_exclusions
+        from brainscore_core.metadata.review import review_exclusions
 
         if require_override and "metadata-source-override" not in {
             label["name"] for label in pr.get("labels", [])
@@ -289,7 +298,7 @@ class GitHub:
         github_login,
         preview_url=None,
     ):
-        from brainscore_metadata import load, protected_changes
+        from brainscore_core.metadata import load, protected_changes
 
         repository = config["repository"]
         if not allowed_path(config, path):

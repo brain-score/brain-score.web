@@ -14,8 +14,8 @@ from benchmarks.models import (
 
 @transaction.atomic
 def publish_pull_request(domain, number, github):
-    from brainscore_metadata import load, protected_changes
-    from brainscore_metadata.storage import to_tables, legacy_projection
+    from brainscore_core.metadata import load, protected_changes
+    from brainscore_core.metadata.storage import to_tables, legacy_projection
 
     config = target(domain)
     repo = config["repository"]
@@ -45,7 +45,7 @@ def publish_pull_request(domain, number, github):
         path = item["filename"]
         content, merged_blob = github.file(repo, path, pr["merge_commit_sha"])
         # Legacy files continue through their existing adapter until converted.
-        from brainscore_metadata.contract import read_yaml
+        from brainscore_core.metadata.contract import read_yaml
 
         header = read_yaml(content)
         old_header = {}

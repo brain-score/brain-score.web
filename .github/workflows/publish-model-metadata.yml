@@ -27,6 +27,8 @@ jobs:
     if: vars.METADATA_V2_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    env:
+      METADATA_CORE_REF: ${{ vars.METADATA_CORE_REF }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +36,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install -r requirements.txt -r requirements-metadata.txt
+      - name: Install the approved core metadata contract
+        run: |
+          [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Set METADATA_CORE_REF to a full approved core commit SHA'; exit 1; }
+          pip install -r requirements.txt -r requirements-metadata.txt
+          python -c "import brainscore_core.metadata"
+          pip check
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.METADATA_PUBLISH_ROLE_ARN }}

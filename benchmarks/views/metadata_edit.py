@@ -104,7 +104,7 @@ def draft_for(request, key):
 @contributor_required
 def edit(request, domain, id):
     model, publication, config = lookup(domain, id)
-    from brainscore_metadata import (
+    from brainscore_core.metadata import (
         load,
         dump,
         validate,
@@ -376,8 +376,8 @@ def callback(request):
 @require_GET
 def preview(request, domain, id, number):
     model, publication, config = lookup(domain, id)
-    from brainscore_metadata import load, MetadataError, protected_changes
-    from brainscore_metadata.storage import to_tables
+    from brainscore_core.metadata import load, MetadataError, protected_changes
+    from brainscore_core.metadata.storage import to_tables
     from benchmarks.model_metadata import repository
 
     visitor = (

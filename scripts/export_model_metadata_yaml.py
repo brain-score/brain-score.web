@@ -16,8 +16,8 @@ import django
 
 django.setup()
 from benchmarks.model_metadata.catalog import read_catalog
-from brainscore_metadata.contract import read_yaml, dump, validate
-from brainscore_metadata.storage import from_tables, from_legacy
+from brainscore_core.metadata.contract import read_yaml, dump, validate
+from brainscore_core.metadata.storage import from_tables, from_legacy
 
 
 def export(catalog, domain, checkout, output):

@@ -1,6 +1,5 @@
 """The editing boundary must never publish an unmerged or unreviewed change."""
 
-import importlib.util
 from copy import deepcopy
 from unittest import skipUnless
 from unittest.mock import patch, Mock
@@ -14,7 +13,7 @@ from benchmarks.models import (
     Model,
     ModelMeta,
 )
-from benchmarks.model_metadata.github import ProposalError, GitHub
+from benchmarks.model_metadata.github import ProposalError, GitHub, metadata_available
 from benchmarks.model_metadata.publishing import publish_pull_request
 
 REGISTRY = {
@@ -51,7 +50,7 @@ def document(value=100, kind="other"):
 
 class FakeGitHub:
     def __init__(self, doc=None, merged=True, blob="new"):
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
 
         self.content = dump(doc or document())
         self.blob = blob
@@ -89,8 +88,8 @@ class FakeGitHub:
 
 
 @skipUnless(
-    importlib.util.find_spec("brainscore_metadata"),
-    "Install the shared metadata package to run editing integration tests",
+    metadata_available(),
+    "Install core with metadata support to run editing integration tests",
 )
 @override_settings(MODEL_METADATA_REPOSITORIES=REGISTRY)
 class PublicationTests(TestCase):
@@ -123,7 +122,7 @@ class PublicationTests(TestCase):
         self.assertEqual(ModelMetadataPublication.objects.count(), 1)
 
     def test_unpublished_v2_identity_change_and_downgrade_rejected(self):
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
 
         initial = document()
         added = deepcopy(initial)
@@ -141,7 +140,7 @@ class PublicationTests(TestCase):
     def test_catalog_bootstrap_preserves_existing_leaderboard_fields(self):
         from pathlib import Path
         from benchmarks.model_metadata.catalog import read_catalog
-        from brainscore_metadata.storage import from_tables
+        from brainscore_core.metadata.storage import from_tables
 
         tables = read_catalog(
             Path(__file__).resolve().parents[1] / "model_metadata" / "data"
@@ -345,7 +344,7 @@ class PublicationTests(TestCase):
                 publish_pull_request("vision", 10, api)
         api = FakeGitHub()
         api.content = api.content.replace("domain: vision", "domain: language")
-        from brainscore_metadata import MetadataError
+        from brainscore_core.metadata import MetadataError
 
         with self.assertRaises(MetadataError):
             publish_pull_request("vision", 10, api)
@@ -353,8 +352,8 @@ class PublicationTests(TestCase):
 
 
 @skipUnless(
-    importlib.util.find_spec("brainscore_metadata"),
-    "Install the shared metadata package",
+    metadata_available(),
+    "Install core with metadata support",
 )
 @override_settings(
     MODEL_METADATA_REPOSITORIES=REGISTRY,
@@ -467,7 +466,7 @@ class EditorTests(TestCase):
         self.assertEqual(self.client.get("/metadata/proposals/one/").status_code, 404)
 
     def test_oauth_callback_creates_pr_without_metadata_writes(self):
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
 
         session = self.client.session
         session["metadata_owner"] = "owner"
@@ -662,7 +661,7 @@ class EditorTests(TestCase):
 
     def test_browser_form_roundtrip_and_preview_render_without_writes(self):
         from types import SimpleNamespace
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
         from bs4 import BeautifulSoup
 
         model = SimpleNamespace(
@@ -751,7 +750,7 @@ class EditorTests(TestCase):
         self.assertFalse(ModelMetadataPublication.objects.exists())
 
     def test_stale_file_rejected_before_branch_creation(self):
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
 
         api = GitHub("token")
         with (
@@ -774,15 +773,15 @@ class EditorTests(TestCase):
 
 
 @skipUnless(
-    importlib.util.find_spec("brainscore_metadata"),
-    "Install the shared metadata package",
+    metadata_available(),
+    "Install core with metadata support",
 )
 class ConversionTests(SimpleTestCase):
     def test_all_catalog_values_survive_yaml_roundtrip(self):
         from pathlib import Path
         from benchmarks.model_metadata.catalog import read_catalog
-        from brainscore_metadata import dump, load
-        from brainscore_metadata.storage import from_tables, to_tables
+        from brainscore_core.metadata import dump, load
+        from brainscore_core.metadata.storage import from_tables, to_tables
 
         tables = read_catalog(
             Path(__file__).resolve().parents[1] / "model_metadata" / "data"
@@ -803,8 +802,8 @@ class ConversionTests(SimpleTestCase):
 
 
 @skipUnless(
-    importlib.util.find_spec("brainscore_metadata"),
-    "Install the shared metadata package",
+    metadata_available(),
+    "Install core with metadata support",
 )
 class GitHubProposalTests(SimpleTestCase):
     def test_submission_attempts_are_shared_across_sessions_and_fail_closed(self):
@@ -886,7 +885,7 @@ class GitHubProposalTests(SimpleTestCase):
             second.session.close()
 
     def test_app_branch_commit_and_pr_payload_and_retry(self):
-        from brainscore_metadata import dump
+        from brainscore_core.metadata import dump
         import base64
 
         before, after = dump(document()), dump(document(200))
@@ -1020,7 +1019,7 @@ class GitHubProposalTests(SimpleTestCase):
                 )
 
     def test_app_pr_submitter_cannot_approve_own_change(self):
-        from brainscore_metadata.review import override
+        from brainscore_core.metadata.review import override
 
         api = GitHub()
         pr = {
@@ -1045,14 +1044,16 @@ class GitHubProposalTests(SimpleTestCase):
         ):
             self.assertEqual(api.approved_reviewer("brain-score/vision", pr), "")
         with (
-            patch("brainscore_metadata.review.pages", return_value=[review]),
+            patch("brainscore_core.metadata.review.pages", return_value=[review]),
             patch(
-                "brainscore_metadata.review.api", return_value={"permission": "admin"}
+                "brainscore_core.metadata.review.api",
+                return_value={"permission": "admin"},
             ),
         ):
             self.assertFalse(override(pr, "brain-score/vision"))
 
 
+@skipUnless(metadata_available(), "Install core with metadata support")
 class FormPreservationTests(SimpleTestCase):
     def test_roundtrip_preserves_whitespace_optional_keys_and_sibling_evidence(self):
         import hashlib

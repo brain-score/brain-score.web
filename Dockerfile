@@ -1,13 +1,14 @@
 FROM continuumio/miniconda3:24.7.1-0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential \
+        build-essential git \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY environment.yml /app/
+COPY requirements-metadata.txt /app/
 COPY manage.py /app/
 COPY package.json /app/
 COPY package-lock.json /app/
@@ -22,6 +23,15 @@ RUN /opt/conda/bin/conda env create -f environment.yml
 RUN echo "conda activate brain-score.web" >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c"]
+
+ARG METADATA_CORE_REF=""
+RUN if [ -n "$METADATA_CORE_REF" ]; then \
+      [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || exit 1; \
+      export METADATA_CORE_REF; \
+      /opt/conda/bin/conda run -n brain-score.web python -m pip install -r requirements-metadata.txt && \
+      /opt/conda/bin/conda run -n brain-score.web python -c "import brainscore_core.metadata" && \
+      /opt/conda/bin/conda run -n brain-score.web python -m pip check; \
+    fi
 
 RUN . ~/.bashrc && npm ci --no-optional
 RUN . ~/.bashrc && npm install -g sass@1.69.5

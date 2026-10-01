@@ -1,7 +1,7 @@
 # Pip equivalent of environment.yml (Docker/EB + CI conda env), plus test/dev tooling.
 Django>=4.1,<4.2
 numpy
-psycopg2
+psycopg2-binary
 boto3
 pandas
 gunicorn==23.0.0

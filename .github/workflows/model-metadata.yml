@@ -31,6 +31,7 @@ jobs:
       METADATA_TEST_PORT: '5432'
       METADATA_TEST_USER: postgres
       METADATA_TEST_PASSWORD: postgres
+      METADATA_CORE_REF: ${{ vars.METADATA_CORE_REF }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -38,9 +39,13 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.txt beautifulsoup4
-      - name: Install the released editor contract
+      - name: Install the approved core metadata contract
         if: vars.METADATA_V2_ENABLED == 'true'
-        run: pip install -r requirements-metadata.txt
+        run: |
+          [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Set METADATA_CORE_REF to a full approved core commit SHA'; exit 1; }
+          pip install -r requirements-metadata.txt
+          python -c "import brainscore_core.metadata"
+          pip check
       - name: Check schema and run PostgreSQL tests
         run: |
           python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings

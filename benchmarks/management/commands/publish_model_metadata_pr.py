@@ -11,7 +11,7 @@ class Command(BaseCommand):
         parser.add_argument("--pr", type=int, required=True)
 
     def handle(self, *args, **options):
-        from brainscore_metadata import MetadataError
+        from brainscore_core.metadata import MetadataError
         from benchmarks.model_metadata.publishing import publish_pull_request
 
         token = os.environ.get("METADATA_PUBLISH_GITHUB_TOKEN")
