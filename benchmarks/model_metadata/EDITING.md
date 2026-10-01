@@ -104,8 +104,19 @@ Keep this framework upgrade separate from enabling metadata contributions.
    `packages/metadata`. Install it with `requirements-metadata.txt` on the web
    worker and website. Release the core v2 adapter and auto-merge guards before
    converting any plugin files.
-2. Back up the target database and rehearse migrations 0030 through 0032 with a
-   production-shaped copy. 0030 adds publication/revision history; 0031 widens
+2. Update `web_tests` before running the existing website unit-test suite. With
+   `DJANGO_ENV=test`, `web.settings` explicitly selects `web_tests`, and
+   `ExistingDatabaseTestRunner` skips database setup and migration entirely.
+   Snapshot its fixtures, confirm the target database, inspect `showmigrations`
+   and `migrate --plan`, and apply every pending migration through 0032. Do not
+   assume it already has the metadata tables from 0027 through 0029. Run the
+   website suite against that migrated database. Keep the separate disposable
+   metadata CI tests and migration-history rehearsals as well; they do not update
+   the shared `web_tests` database.
+
+   Back up dev and rehearse migrations 0030 through 0032 with a
+   production-shaped copy before applying them to dev. Repeat this process for
+   each subsequent deployment database. 0030 adds publication/revision history; 0031 widens
    legacy parameter counts for language models. 0031 transactionally rebuilds
    the dependent final model context, preserving its definition, indexes,
    owner, explicit grants and comment. It takes table/view locks, so schedule
