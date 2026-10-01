@@ -5,6 +5,7 @@ normal repository PRs; this command does not publish metadata or create PRs.
 """
 
 import argparse
+import ast
 import json
 from pathlib import Path
 import os
@@ -20,7 +21,28 @@ from brainscore_core.metadata.contract import read_yaml, dump, validate
 from brainscore_core.metadata.storage import from_tables, from_legacy
 
 
-def export(catalog, domain, checkout, output):
+def registered_destinations(root):
+    """Read literal registry assignments without importing or executing plugins."""
+    locations = {}
+    for path in sorted(root.glob('*/__init__.py')):
+        try:
+            tree = ast.parse(path.read_text())
+        except (SyntaxError, UnicodeError):
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign):
+                continue
+            for target in node.targets:
+                if not (isinstance(target, ast.Subscript) and
+                        isinstance(target.value, ast.Name) and target.value.id == 'model_registry'):
+                    continue
+                key = target.slice
+                if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                    locations.setdefault(key.value.lower(), set()).add((key.value, path.parent))
+    return locations
+
+
+def export(catalog, domain, checkout, output, include_registered=False):
     document = from_tables(read_catalog(catalog), domain)
     root = checkout / f"brainscore_{domain}" / "models"
     destinations = {}
@@ -31,10 +53,26 @@ def export(catalog, domain, checkout, output):
             if key in destinations:
                 raise ValueError(f"Ambiguous metadata location: {identifier}")
             destinations[key] = (path, data)
+    registrations = registered_destinations(root) if include_registered else {}
     files = {}
     unmatched = []
     for identifier, entry in document["models"].items():
         destination = destinations.get(identifier.lower())
+        if not destination and identifier.lower() in registrations:
+            matches = registrations[identifier.lower()]
+            if len(matches) != 1:
+                raise ValueError(f"Ambiguous registered model: {identifier}")
+            registered, folder = next(iter(matches))
+            existing = list(folder.glob('metadata.y*ml'))
+            if len(existing) > 1:
+                raise ValueError(f"Ambiguous metadata files in {folder}")
+            path = existing[0] if existing else folder / 'metadata.yaml'
+            legacy = read_yaml(path.read_text()) if existing else {"models": {}}
+            if legacy.get('schema_version') == '2.0':
+                raise ValueError(f"{path} already uses v2; reconcile it instead of overwriting")
+            # An absent legacy entry has nothing to preserve from this file.
+            legacy['models'].setdefault(registered, {})
+            destination = (path, legacy)
         if not destination:
             unmatched.append(identifier)
             continue
@@ -78,9 +116,12 @@ if __name__ == "__main__":
     p.add_argument("--domain", required=True)
     p.add_argument("--checkout", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument('--include-registered', action='store_true',
+                   help='Also resolve exact literal model_registry assignments without importing plugins')
     args = p.parse_args()
     print(
         json.dumps(
-            export(args.catalog, args.domain, args.checkout, args.output), indent=2
+            export(args.catalog, args.domain, args.checkout, args.output,
+                   include_registered=args.include_registered), indent=2
         )
     )

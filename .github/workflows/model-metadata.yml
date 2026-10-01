@@ -48,7 +48,7 @@ jobs:
       - name: Check schema and run PostgreSQL tests
         run: |
           python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings
-          python manage.py test benchmarks.tests.test_metadata_github_settings benchmarks.tests.test_metadata_edit benchmarks.tests.test_model_metadata benchmarks.tests.test_compare_dashboard benchmarks.tests.test_migrations benchmarks.tests.test_models benchmarks.tests.test_ratelimit benchmarks.tests.test_score_trends --settings=web.metadata_test_settings --noinput
+          python manage.py test benchmarks.tests.test_metadata_github_settings benchmarks.tests.test_metadata_edit benchmarks.tests.test_metadata_export benchmarks.tests.test_model_metadata benchmarks.tests.test_compare_dashboard benchmarks.tests.test_migrations benchmarks.tests.test_models benchmarks.tests.test_ratelimit benchmarks.tests.test_score_trends --settings=web.metadata_test_settings --noinput
       - name: Rehearse both existing migration histories
         env:
           PGPASSWORD: postgres
