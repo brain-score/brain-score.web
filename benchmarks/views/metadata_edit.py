@@ -3,6 +3,8 @@
 import difflib
 import secrets
 import re
+import hashlib
+import base64
 from copy import deepcopy
 from functools import wraps
 from urllib.parse import urlencode
@@ -11,6 +13,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
@@ -19,10 +22,42 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 from django.views.decorators.cache import never_cache
+from django.views.decorators.debug import sensitive_variables
 from benchmarks.models import FinalModelContext, ModelMetadataPublication
 from benchmarks.model_metadata.github import GitHub, ProposalError, target, configured
 
 DRAFT_TTL = 1800
+
+
+def no_referrer(view):
+    @wraps(view)
+    def guarded(*args, **kwargs):
+        response = view(*args, **kwargs)
+        response["Referrer-Policy"] = "no-referrer"
+        return response
+
+    return guarded
+
+
+def claim_submission_attempt(user_id):
+    """Limit App write attempts across sessions and fail closed on cache errors."""
+    try:
+        for key, limit in [
+            (f"metadata-submit:user:{user_id}", 10),
+            ("metadata-submit:global", 100),
+        ]:
+            if cache.add(key, 1, 3600):
+                continue
+            if cache.incr(key) > limit:
+                raise ProposalError(
+                    "The metadata submission limit was reached. Please try again in an hour."
+                )
+    except ProposalError:
+        raise
+    except Exception:
+        raise ProposalError(
+            "Metadata submission is temporarily unavailable. Please retry later."
+        ) from None
 
 
 def contributor_required(view):
@@ -76,16 +111,21 @@ def edit(request, domain, id):
         MetadataError,
         protected_changes,
     )
-    from benchmarks.model_metadata.editor import make_editor
+    from benchmarks.model_metadata.editor import (
+        make_editor,
+        editor_sections,
+        describe_changes,
+    )
 
     if publication.repository != config["repository"]:
         raise Http404
     if request.method == "GET" and request.headers.get("X-Metadata-Modal") != "1":
         return HttpResponseRedirect(f"/model/{domain}/{id}?metadata_edit=1")
     try:
-        content, blob = GitHub().file(
-            publication.repository, publication.path, config["branch"]
-        )
+        with GitHub.reader(config) as github:
+            content, blob = github.file(
+                publication.repository, publication.path, config["branch"]
+            )
         document = load(content, domain)
         if publication.identifier not in document["models"]:
             raise ProposalError(
@@ -135,6 +175,7 @@ def edit(request, domain, id):
                             "after": dump(candidate),
                             "reason": form.cleaned_data["reason"],
                             "paths": paths,
+                            "changes": describe_changes(entry, updated, paths),
                         },
                         DRAFT_TTL,
                     )
@@ -150,6 +191,7 @@ def edit(request, domain, id):
                 "groups": groups,
                 "base_blob": blob,
                 "edit_url": request.path,
+                **editor_sections(form, groups),
             },
         )
     except (ProposalError, MetadataError) as exc:
@@ -177,15 +219,28 @@ def review(request, key):
         # Bound nonce plus server-side storage protects both the account flow and
         # the exact proposal the user reviewed. No token is stored in cookies.
         state = secrets.token_urlsafe(32)
+        verifier = secrets.token_urlsafe(32)
+        challenge = (
+            base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest())
+            .rstrip(b"=")
+            .decode()
+        )
         cache.set(
             "metadata-oauth:" + state,
-            {"key": key, "owner": draft["owner"], "user_id": request.user.pk},
+            {
+                "key": key,
+                "owner": draft["owner"],
+                "user_id": request.user.pk,
+                "code_verifier": verifier,
+            },
             600,
         )
         params = {
             "client_id": settings.METADATA_GITHUB_CLIENT_ID,
             "redirect_uri": settings.METADATA_GITHUB_CALLBACK_URL,
             "state": state,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
         }
         url = "https://github.com/login/oauth/authorize?" + urlencode(params)
         if request.headers.get("X-Metadata-Modal") == "1":
@@ -213,8 +268,10 @@ def review(request, key):
 
 
 @never_cache
+@no_referrer
 @require_GET
 @contributor_required
+@sensitive_variables()
 def callback(request):
     if not configured():
         raise Http404
@@ -228,6 +285,7 @@ def callback(request):
             flow["owner"], request.session.get("metadata_owner", "")
         )
         or flow.get("user_id") != request.user.pk
+        or not flow.get("code_verifier")
     ):
         return HttpResponseBadRequest("Invalid or expired GitHub sign-in request.")
     key = flow["key"]
@@ -240,6 +298,7 @@ def callback(request):
             raise ProposalError(
                 "GitHub authorization was not completed. Your proposal is still available."
             )
+        claim_submission_attempt(request.user.pk)
         response = requests.post(
             "https://github.com/login/oauth/access_token",
             json={
@@ -247,6 +306,7 @@ def callback(request):
                 "client_secret": settings.METADATA_GITHUB_CLIENT_SECRET,
                 "code": request.GET["code"],
                 "redirect_uri": settings.METADATA_GITHUB_CALLBACK_URL,
+                "code_verifier": flow["code_verifier"],
             },
             headers={"Accept": "application/json"},
             timeout=(5, 20),
@@ -320,16 +380,40 @@ def preview(request, domain, id, number):
     from brainscore_metadata.storage import to_tables
     from benchmarks.model_metadata import repository
 
-    github = GitHub()
+    visitor = (
+        str(request.user.pk)
+        if request.user.is_authenticated
+        else request.META.get("REMOTE_ADDR", "unknown")
+    )
     try:
-        pr = github.request("GET", f"/repos/{config['repository']}/pulls/{number}")
+        for label, limit in [
+            ("global", 120),
+            ("visitor:" + hashlib.sha256(visitor.encode()).hexdigest(), 30),
+        ]:
+            key = "metadata-preview-limit:" + label
+            if cache.add(key, 1, 60):
+                continue
+            if cache.incr(key) > limit:
+                response = HttpResponse(
+                    "Too many previews. Please retry in a minute.", status=429
+                )
+                response["Retry-After"] = "60"
+                return response
+    except Exception:
+        return HttpResponse(
+            "Metadata previews are temporarily unavailable.", status=503
+        )
+    github = None
+    try:
+        github = GitHub.reader(config)
+        pr = github.cached_request(f"/repos/{config['repository']}/pulls/{number}")
         if (
             pr["base"]["repo"]["full_name"] != config["repository"]
             or pr["base"]["ref"] != config["branch"]
         ):
             raise ProposalError("This PR does not target the model repository.")
         content, _ = github.file(
-            pr["head"]["repo"]["full_name"], publication.path, pr["head"]["sha"]
+            config["repository"], publication.path, pr["head"]["sha"]
         )
         document = load(content, domain)
         entry = document["models"].get(publication.identifier)
@@ -371,3 +455,6 @@ def preview(request, domain, id, number):
             {"model": model, "error": str(exc)},
             status=409,
         )
+    finally:
+        if github is not None:
+            github.session.close()

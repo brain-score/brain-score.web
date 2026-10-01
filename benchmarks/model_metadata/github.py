@@ -4,6 +4,8 @@ import base64
 import hashlib
 import re
 import time
+import threading
+from django.core.cache import cache
 from urllib.parse import quote
 import requests
 from django.conf import settings
@@ -53,7 +55,11 @@ def configured():
 
 
 class GitHub:
-    def __init__(self, token=None):
+    _read_tokens = {}
+    _token_lock = threading.Lock()
+
+    def __init__(self, token=None, *, read_only=False):
+        self.read_only = read_only
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -65,7 +71,7 @@ class GitHub:
             self.session.headers["Authorization"] = "Bearer " + token
 
     @classmethod
-    def installation(cls, config):
+    def installation(cls, config, *, read_only=False):
         """Mint a short-lived token restricted to one configured repository."""
         import jwt
 
@@ -99,16 +105,58 @@ class GitHub:
                 f"/app/installations/{installation_id}/access_tokens",
                 json={
                     "repositories": [config["repository"].split("/")[1]],
-                    "permissions": {"contents": "write", "pull_requests": "write"},
+                    "permissions": {
+                        "contents": "read" if read_only else "write",
+                        "pull_requests": "read" if read_only else "write",
+                    },
                 },
             )
             if not isinstance(result.get("token"), str) or not result["token"]:
                 raise ProposalError("GitHub did not issue an installation token.")
-            return cls(result["token"])
+            return cls(result["token"], read_only=read_only)
         finally:
             app.session.close()
 
+    @classmethod
+    def reader(cls, config):
+        # Tokens remain in process memory, separate from shared data caches.
+        identity = (
+            config["repository"],
+            getattr(settings, "METADATA_GITHUB_APP_ID", ""),
+            hashlib.sha256(
+                getattr(settings, "METADATA_GITHUB_APP_PRIVATE_KEY", "").encode()
+            ).hexdigest(),
+        )
+        with cls._token_lock:
+            token, expires = cls._read_tokens.get(identity, ("", 0))
+            if expires <= time.monotonic():
+                api = cls.installation(config, read_only=True)
+                try:
+                    token = api.session.headers["Authorization"].removeprefix("Bearer ")
+                finally:
+                    api.session.close()
+                if len(cls._read_tokens) >= 32:
+                    cls._read_tokens.clear()
+                cls._read_tokens[identity] = (token, time.monotonic() + 3000)
+        return cls(token, read_only=True)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.session.close()
+
+    def cached_request(self, path):
+        key = "metadata-github-read:" + hashlib.sha256(path.encode()).hexdigest()
+        value = cache.get(key)
+        if value is None:
+            value = self.request("GET", path)
+            cache.set(key, value, 30)
+        return value
+
     def request(self, method, path, **kwargs):
+        if self.read_only and method != "GET":
+            raise ProposalError("Metadata reads cannot write to GitHub.")
         if not path.startswith("/") or path.startswith("//"):
             raise ProposalError("Invalid GitHub API path.")
         try:
@@ -136,6 +184,15 @@ class GitHub:
         raise ProposalError("This PR is too large for the metadata workflow.")
 
     def file(self, repository, path, ref):
+        cache_key = None
+        if self.read_only and re.fullmatch(r"[a-f0-9]{40}", ref):
+            cache_key = (
+                "metadata-github-file:"
+                + hashlib.sha256(f"{repository}:{path}:{ref}".encode()).hexdigest()
+            )
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return cached
         value = self.request(
             "GET",
             f"/repos/{repository}/contents/{quote(path, safe='/')}",
@@ -148,20 +205,27 @@ class GitHub:
         ):
             raise ProposalError("Expected a metadata file smaller than 512 KB.")
         try:
-            return base64.b64decode(value["content"], validate=False).decode(
-                "utf-8"
-            ), value["sha"]
+            result = (
+                base64.b64decode(value["content"], validate=False).decode("utf-8"),
+                value["sha"],
+            )
+            if cache_key:
+                cache.set(cache_key, result, 3600)
+            return result
         except (ValueError, UnicodeError) as exc:
             raise ProposalError("Metadata is not valid UTF-8.") from exc
 
     def approved_reviewer(self, repository, pr, require_override=False):
-        from brainscore_metadata.review import submission_author
+        from brainscore_metadata.review import review_exclusions
 
         if require_override and "metadata-source-override" not in {
             label["name"] for label in pr.get("labels", [])
         }:
             return ""
         reviews = self.pages(f"/repos/{repository}/pulls/{pr['number']}/reviews")
+        excluded = review_exclusions(
+            pr, self.pages(f"/repos/{repository}/pulls/{pr['number']}/commits")
+        )
         latest = {}
         for review in reviews:
             if review["state"] in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
@@ -169,7 +233,7 @@ class GitHub:
         for user, review in latest.items():
             if (
                 review["user"].get("type") != "User"
-                or user.lower() in {pr["user"]["login"].lower(), submission_author(pr)}
+                or user.lower() in excluded
                 or review["state"] != "APPROVED"
                 or review.get("commit_id") != pr["head"]["sha"]
             ):

@@ -5,7 +5,6 @@ from django.db import connection, transaction
 from .github import ProposalError, target, allowed_path
 from .writer import write_tables, lock_metadata_publication
 from benchmarks.models import (
-    ModelMetadataRecord,
     ModelMetadataPublication,
     ModelMetadataRevision,
     Model,
@@ -49,16 +48,38 @@ def publish_pull_request(domain, number, github):
         from brainscore_metadata.contract import read_yaml
 
         header = read_yaml(content)
+        old_header = {}
+        if item["status"] != "added":
+            old_content, _ = github.file(repo, path, pr["base"]["sha"])
+            old_header = read_yaml(old_content)
+        was_v2 = (
+            isinstance(old_header, dict) and old_header.get("schema_version") == "2.0"
+        )
         if not isinstance(header, dict) or header.get("schema_version") != "2.0":
-            if ModelMetadataPublication.objects.filter(
-                repository=repo, path=path
-            ).exists():
+            if (
+                was_v2
+                or ModelMetadataPublication.objects.filter(
+                    repository=repo, path=path
+                ).exists()
+            ):
                 raise ProposalError(
                     "Published metadata cannot be downgraded to a legacy schema."
                 )
             continue
         document = load(content, domain)
-        if not github.approved_reviewer(repo, pr):
+        _, reviewed_blob = github.file(repo, path, pr["head"]["sha"])
+        if reviewed_blob != merged_blob:
+            raise ProposalError(
+                "Merged metadata differs from the reviewed PR revision. A new reviewed PR is required."
+            )
+        if was_v2 and set(load(old_content, domain)["models"]) != set(
+            document["models"]
+        ):
+            raise ProposalError(
+                "Model additions/removals require a separate registration migration."
+            )
+        approved_by = github.approved_reviewer(repo, pr)
+        if not approved_by:
             raise ProposalError(
                 "Publication requires maintainer approval on the current PR revision."
             )
@@ -91,11 +112,22 @@ def publish_pull_request(domain, number, github):
             ):
                 result.append({"path": path, "status": "unchanged"})
                 continue
-            if any(record.identifier not in document["models"] for record in existing):
+            if existing and {record.identifier for record in existing} != set(
+                document["models"]
+            ):
                 raise ProposalError(
-                    "Removing a published model requires a separate reviewed migration."
+                    "Adding or removing models in a published file requires a separate reviewed migration."
                 )
+            previous_documents = {
+                record.identifier: record.document for record in existing
+            }
             for identifier, entry in document["models"].items():
+                if not Model.objects.filter(
+                    domain__iexact=domain, name__iexact=identifier
+                ).exists():
+                    raise ProposalError(
+                        "Metadata must identify a registered model in the same domain."
+                    )
                 publication = (
                     ModelMetadataPublication.objects.select_for_update()
                     .filter(domain__iexact=domain, identifier__iexact=identifier)
@@ -109,12 +141,7 @@ def publish_pull_request(domain, number, github):
                     )
                 if publication and publication.blob_sha == merged_blob:
                     continue
-                bootstrap = (
-                    publication is None
-                    and ModelMetadataRecord.objects.filter(
-                        domain__iexact=domain, identifier__iexact=identifier
-                    ).exists()
-                )
+                bootstrap = publication is None
                 blocked = (
                     protected_changes(publication.document, entry)
                     if publication
@@ -125,20 +152,24 @@ def publish_pull_request(domain, number, github):
                         reviewer = github.override_reviewer(repo, pr)
                     if not reviewer:
                         raise ProposalError(
-                            "Protected changes or initial curated-data conversion require metadata-source-override and approval from a maintainer on the latest PR commit."
+                            "Protected changes or first publication require metadata-source-override and independent maintainer approval on the latest PR commit."
                         )
             # Validate the complete file and policy before any canonical writes.
             write_tables(to_tables(document))
             for identifier, entry in document["models"].items():
-                values = legacy_projection(entry)
+                previous = previous_documents.get(identifier)
+                values = legacy_projection(entry, previous)
                 if "huggingface_link" in values:
                     values["hugging_face_link"] = values.pop("huggingface_link")
                 for model in Model.objects.filter(
                     domain__iexact=domain, name__iexact=identifier
                 ):
-                    meta = ModelMeta.objects.filter(model=model).first() or ModelMeta(
-                        model=model
-                    )
+                    meta = ModelMeta.objects.filter(model=model).first()
+                    # Bootstrap adds descriptive metadata without changing the
+                    # existing fields used by leaderboard contexts and filters.
+                    if previous is None and meta is not None:
+                        continue
+                    meta = meta or ModelMeta(model=model)
                     for key, value in values.items():
                         setattr(meta, key, value)
                     for key, value in values.items():
@@ -169,6 +200,7 @@ def publish_pull_request(domain, number, github):
                         "pull_request": number,
                         "document": entry,
                         "override_reviewer": reviewer or "",
+                        "reviewer": reviewer or approved_by,
                     },
                 )
             result.append(

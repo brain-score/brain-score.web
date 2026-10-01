@@ -782,6 +782,7 @@ class ModelMetadataRevision(models.Model):
     pull_request = models.PositiveIntegerField()
     document = models.JSONField()
     override_reviewer = models.CharField(max_length=100, blank=True)
+    reviewer = models.CharField(max_length=100, blank=True)
     published_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

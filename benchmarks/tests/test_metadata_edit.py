@@ -11,6 +11,8 @@ from benchmarks.models import (
     ModelMetadataPublication,
     ModelMetadataRevision,
     User,
+    Model,
+    ModelMeta,
 )
 from benchmarks.model_metadata.github import ProposalError, GitHub
 from benchmarks.model_metadata.publishing import publish_pull_request
@@ -54,11 +56,17 @@ class FakeGitHub:
         self.content = dump(doc or document())
         self.blob = blob
         self.current = blob
-        self.reviewer = ""
+        self.reviewer = "maintainer"
+        self.base_content = "example: {}"
         self.pr = {
             "number": 10,
             "merged": merged,
-            "base": {"ref": "master", "repo": {"full_name": "brain-score/vision"}},
+            "head": {"sha": "e" * 40},
+            "base": {
+                "ref": "master",
+                "sha": "d" * 40,
+                "repo": {"full_name": "brain-score/vision"},
+            },
             "merge_commit_sha": "a" * 40,
         }
 
@@ -69,6 +77,8 @@ class FakeGitHub:
         return [{"filename": PATH, "status": "modified"}]
 
     def file(self, repository, path, ref):
+        if ref == "d" * 40:
+            return self.base_content, "old"
         return self.content, self.current if ref == "master" else self.blob
 
     def approved_reviewer(self, *args):
@@ -84,10 +94,116 @@ class FakeGitHub:
 )
 @override_settings(MODEL_METADATA_REPOSITORIES=REGISTRY)
 class PublicationTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create(email="registered@example.org")
+        self.model = Model.objects.create(
+            name="example", domain="vision", owner=self.owner
+        )
+
+    def test_first_publication_without_csv_requires_override(self):
+        ModelMeta.objects.create(model=self.model, total_parameter_count=55)
+        api = FakeGitHub()
+        api.reviewer = ""
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, api)
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+        self.assertEqual(ModelMeta.objects.get().total_parameter_count, 55)
+
+    def test_unknown_models_and_changes_to_published_identities_rejected(self):
+        unknown = document()
+        unknown["models"]["unknown"] = unknown["models"].pop("example")
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, FakeGitHub(unknown))
+        publish_pull_request("vision", 10, FakeGitHub())
+        Model.objects.create(name="second", domain="vision", owner=self.owner)
+        added = document()
+        added["models"]["second"] = deepcopy(added["models"]["example"])
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, FakeGitHub(added, blob="changed"))
+        self.assertEqual(ModelMetadataPublication.objects.count(), 1)
+
+    def test_unpublished_v2_identity_change_and_downgrade_rejected(self):
+        from brainscore_metadata import dump
+
+        initial = document()
+        added = deepcopy(initial)
+        added["models"]["second"] = deepcopy(added["models"]["example"])
+        Model.objects.create(name="second", domain="vision", owner=self.owner)
+        api = FakeGitHub(added)
+        api.base_content = dump(initial)
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, api)
+        api.content = "example: {}"
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, api)
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+
+    def test_catalog_bootstrap_preserves_existing_leaderboard_fields(self):
+        from pathlib import Path
+        from benchmarks.model_metadata.catalog import read_catalog
+        from brainscore_metadata.storage import from_tables
+
+        tables = read_catalog(
+            Path(__file__).resolve().parents[1] / "model_metadata" / "data"
+        )
+        catalog = from_tables(tables, "vision")
+        for identifier in catalog["models"]:
+            model = Model.objects.create(
+                name=identifier, domain="vision", owner=self.owner
+            )
+            ModelMeta.objects.create(
+                model=model,
+                total_parameter_count=55,
+                trainable_layers=7,
+                architecture="DCNN",
+            )
+        before = list(ModelMeta.objects.order_by("pk").values())
+        models_before = list(Model.objects.order_by("pk").values())
+        publish_pull_request("vision", 10, FakeGitHub(catalog))
+        self.assertEqual(list(ModelMeta.objects.order_by("pk").values()), before)
+        self.assertEqual(list(Model.objects.order_by("pk").values()), models_before)
+        self.assertEqual(
+            ModelMetadataPublication.objects.count(), len(catalog["models"])
+        )
+
+    def test_unrelated_edit_does_not_reset_previously_projected_values(self):
+        initial = document()
+        initial["models"]["example"]["legacy"] = {"total_parameter_count": 100}
+        publish_pull_request("vision", 10, FakeGitHub(initial))
+        changed = deepcopy(initial)
+        changed["models"]["example"]["model"]["parameter_count"] = 200
+        api = FakeGitHub(changed, blob="second")
+        api.pr["merge_commit_sha"] = "b" * 40
+        api.reviewer = ""
+        publish_pull_request("vision", 10, api)
+        unrelated = deepcopy(changed)
+        unrelated["models"]["example"]["training"] = {"loss": "Cross entropy"}
+        api = FakeGitHub(unrelated, blob="third")
+        api.pr["merge_commit_sha"] = "c" * 40
+        api.reviewer = ""
+        publish_pull_request("vision", 10, api)
+        self.assertEqual(ModelMeta.objects.get().total_parameter_count, 200)
+        revision = ModelMetadataRevision.objects.order_by("-pk").first()
+        self.assertEqual(revision.reviewer, "maintainer")
+        self.assertEqual(revision.override_reviewer, "")
+
     def test_open_pr_cannot_write(self):
         with self.assertRaises(ProposalError):
             publish_pull_request("vision", 10, FakeGitHub(merged=False))
         self.assertFalse(ModelMetadataRecord.objects.exists())
+
+    def test_merge_must_contain_exact_reviewed_metadata(self):
+        api = FakeGitHub()
+        original = api.file
+        api.file = lambda repo, path, ref: (
+            (api.content, "different-reviewed-blob")
+            if ref == "e" * 40
+            else original(repo, path, ref)
+        )
+        with self.assertRaises(ProposalError):
+            publish_pull_request("vision", 10, api)
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        self.assertFalse(ModelMetadataRevision.objects.exists())
 
     def test_merged_pr_without_current_maintainer_approval_cannot_write(self):
         api = FakeGitHub()
@@ -151,6 +267,9 @@ class PublicationTests(TestCase):
         from pathlib import Path
         from io import StringIO
 
+        Model.objects.create(
+            name="AdvProp_efficientnet-b2", domain="vision", owner=self.owner
+        )
         fixture = document()
         fixture["models"]["AdvProp_efficientnet-b2"] = fixture["models"].pop("example")
         publish_pull_request("vision", 10, FakeGitHub(fixture))
@@ -181,6 +300,7 @@ class PublicationTests(TestCase):
     def test_protected_sources_require_override_and_are_audited(self):
         publish_pull_request("vision", 10, FakeGitHub(document(kind="paper")))
         api = FakeGitHub(document(200))
+        api.reviewer = ""
         api.blob = api.current = "changed"
         api.pr["merge_commit_sha"] = "b" * 40
         with self.assertRaises(ProposalError):
@@ -198,8 +318,10 @@ class PublicationTests(TestCase):
         ModelMetadataRecord.objects.create(
             domain="vision", identifier="example", parameter_count=9
         )
+        api = FakeGitHub()
+        api.reviewer = ""
         with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, FakeGitHub())
+            publish_pull_request("vision", 10, api)
         self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 9)
 
     def test_failure_rolls_back_metadata_and_history(self):
@@ -250,6 +372,40 @@ class EditorTests(TestCase):
             "metadata@example.org", "test-password", is_active=True
         )
         self.client.force_login(self.user)
+        reader = patch(
+            "benchmarks.views.metadata_edit.GitHub.reader",
+            side_effect=lambda config: GitHub("read-token", read_only=True),
+        )
+        reader.start()
+        self.addCleanup(reader.stop)
+
+    def test_preview_limits_requests_before_reading_github(self):
+        from types import SimpleNamespace
+
+        publication = SimpleNamespace(
+            path=PATH, identifier="example", document=document()["models"]["example"]
+        )
+        with (
+            patch(
+                "benchmarks.views.metadata_edit.lookup",
+                return_value=(SimpleNamespace(), publication, REGISTRY["vision"]),
+            ),
+            patch("benchmarks.views.metadata_edit.GitHub.reader") as reader,
+        ):
+            cache.set("metadata-preview-limit:global", 120, 60)
+            response = self.client.get("/model/vision/1/metadata/preview/10/")
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(response["Retry-After"], "60")
+            reader.assert_not_called()
+            with patch(
+                "benchmarks.views.metadata_edit.cache.add",
+                side_effect=RuntimeError("cache unavailable"),
+            ):
+                self.assertEqual(
+                    self.client.get("/model/vision/1/metadata/preview/10/").status_code,
+                    503,
+                )
+            reader.assert_not_called()
 
     def test_anonymous_contributions_require_brainscore_login(self):
         self.client.logout()
@@ -333,7 +489,12 @@ class EditorTests(TestCase):
         )
         cache.set(
             "metadata-oauth:state",
-            {"key": "one", "owner": "owner", "user_id": self.user.pk},
+            {
+                "key": "one",
+                "owner": "owner",
+                "user_id": self.user.pk,
+                "code_verifier": "verifier",
+            },
             300,
         )
         response = Mock(status_code=200)
@@ -341,7 +502,7 @@ class EditorTests(TestCase):
         with (
             patch(
                 "benchmarks.views.metadata_edit.requests.post", return_value=response
-            ),
+            ) as exchange,
             patch(
                 "benchmarks.views.metadata_edit.GitHub.request",
                 return_value={"login": "contributor"},
@@ -356,6 +517,8 @@ class EditorTests(TestCase):
         self.assertEqual(result.status_code, 302)
         self.assertEqual(result.url, "https://github.com/brain-score/vision/pull/10")
         self.assertEqual(create.call_count, 1)
+        self.assertEqual(exchange.call_args.kwargs["json"]["code_verifier"], "verifier")
+        self.assertEqual(result["Referrer-Policy"], "no-referrer")
         self.assertEqual(create.call_args.kwargs["user_id"], self.user.pk)
         self.assertEqual(create.call_args.kwargs["github_login"], "contributor")
         self.assertFalse(ModelMetadataRecord.objects.exists())
@@ -396,7 +559,70 @@ class EditorTests(TestCase):
             )
         )
         self.assertIn("state=", response.json()["redirect"])
+        import base64
+        import hashlib
+        from urllib.parse import urlparse, parse_qs
+
+        params = parse_qs(urlparse(response.json()["redirect"]).query)
+        flow = cache.get("metadata-oauth:" + params["state"][0])
+        challenge = (
+            base64.urlsafe_b64encode(
+                hashlib.sha256(flow["code_verifier"].encode()).digest()
+            )
+            .rstrip(b"=")
+            .decode()
+        )
+        self.assertEqual(params["code_challenge"], [challenge])
+        self.assertEqual(params["code_challenge_method"], ["S256"])
         self.assertFalse(ModelMetadataRecord.objects.exists())
+
+    @override_settings(
+        MIDDLEWARE=[
+            "django.contrib.sessions.middleware.SessionMiddleware",
+            "django.middleware.csrf.CsrfViewMiddleware",
+            "django.contrib.auth.middleware.AuthenticationMiddleware",
+        ]
+    )
+    def test_edit_and_authorize_posts_require_csrf(self):
+        from django.test import Client
+
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        with patch("benchmarks.views.metadata_edit.GitHub.installation") as install:
+            for path in ["/model/vision/1/metadata/edit/", "/metadata/proposals/one/"]:
+                self.assertEqual(client.post(path).status_code, 403)
+            install.assert_not_called()
+
+    def test_review_escapes_contributor_text_and_diff(self):
+        session = self.client.session
+        session["metadata_owner"] = "owner"
+        session.save()
+        payload = '<script>alert("test")</script>'
+        cache.set(
+            "metadata-draft:one",
+            {
+                "owner": "owner",
+                "user_id": self.user.pk,
+                "before": "old",
+                "after": payload,
+                "reason": payload,
+                "changes": [
+                    {
+                        "label": payload,
+                        "section": "Model",
+                        "before": "old",
+                        "after": payload,
+                    }
+                ],
+            },
+            300,
+        )
+        response = self.client.get(
+            "/metadata/proposals/one/", HTTP_X_METADATA_MODAL="1"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<script>")
+        self.assertContains(response, "&lt;script&gt;")
 
     def test_form_does_not_accept_protected_posted_value(self):
         from benchmarks.model_metadata.editor import make_editor
@@ -478,6 +704,9 @@ class EditorTests(TestCase):
                         "option"
                     )
                     values[name] = choice.get("value", "")
+                elif field.name == "textarea":
+                    # HTML ignores the first newline immediately after <textarea>.
+                    values[name] = field.get_text().removeprefix("\n")
                 else:
                     values[name] = field.get("value", field.get_text())
             values.update(
@@ -490,8 +719,19 @@ class EditorTests(TestCase):
             response = self.client.post(
                 "/model/vision/1/metadata/edit/", values, HTTP_X_METADATA_MODAL="1"
             )
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, 302, response.content.decode())
             key = response.url.rstrip("/").rsplit("/", 1)[-1]
+            self.assertEqual(
+                cache.get("metadata-draft:" + key)["changes"],
+                [
+                    {
+                        "label": "Parameter count",
+                        "section": "Model details",
+                        "before": "100",
+                        "after": "200",
+                    }
+                ],
+            )
             self.assertEqual(
                 cache.get("metadata-draft:" + key)["user_id"], self.user.pk
             )
@@ -567,6 +807,84 @@ class ConversionTests(SimpleTestCase):
     "Install the shared metadata package",
 )
 class GitHubProposalTests(SimpleTestCase):
+    def test_submission_attempts_are_shared_across_sessions_and_fail_closed(self):
+        from benchmarks.views.metadata_edit import claim_submission_attempt
+
+        cache.clear()
+        for _ in range(10):
+            claim_submission_attempt(508)
+        with self.assertRaises(ProposalError):
+            claim_submission_attempt(508)
+        claim_submission_attempt(509)
+        cache.set("metadata-submit:global", 100, 3600)
+        with self.assertRaises(ProposalError):
+            claim_submission_attempt(509)
+        with patch(
+            "benchmarks.views.metadata_edit.cache.add",
+            side_effect=RuntimeError("cache failure"),
+        ):
+            with self.assertRaises(ProposalError) as error:
+                claim_submission_attempt(510)
+            self.assertNotIn("cache failure", str(error.exception))
+
+    def test_commit_author_and_committer_cannot_approve(self):
+        api = GitHub()
+        pr = {"number": 10, "user": {"login": "author"}, "head": {"sha": "current"}}
+        review = {
+            "user": {"login": "reviewer", "type": "User"},
+            "state": "APPROVED",
+            "commit_id": "current",
+        }
+        for role in ["author", "committer"]:
+            with (
+                patch.object(
+                    api,
+                    "pages",
+                    side_effect=lambda path: (
+                        [{role: {"login": "reviewer"}}]
+                        if path.endswith("/commits")
+                        else [review]
+                    ),
+                ),
+                patch.object(api, "request") as request,
+            ):
+                self.assertEqual(api.approved_reviewer("brain-score/vision", pr), "")
+                request.assert_not_called()
+
+    def test_reader_reuses_read_only_token_and_caches_only_immutable_files(self):
+        import base64
+
+        cache.clear()
+        with (
+            patch.object(GitHub, "_read_tokens", {}),
+            patch.object(
+                GitHub,
+                "installation",
+                return_value=GitHub("read-token", read_only=True),
+            ) as install,
+        ):
+            api = GitHub.reader(REGISTRY["vision"])
+            second = GitHub.reader(REGISTRY["vision"])
+            install.assert_called_once_with(REGISTRY["vision"], read_only=True)
+            self.assertTrue(second.read_only)
+            with self.assertRaises(ProposalError):
+                api.request("POST", "/repos/brain-score/vision/git/refs")
+            payload = {
+                "type": "file",
+                "encoding": "base64",
+                "size": 4,
+                "sha": "blob",
+                "content": base64.b64encode(b"test").decode(),
+            }
+            with patch.object(api, "request", return_value=payload) as request:
+                for ref in ["a" * 40, "a" * 40, "master", "master"]:
+                    self.assertEqual(
+                        api.file("brain-score/vision", PATH, ref), ("test", "blob")
+                    )
+                self.assertEqual(request.call_count, 3)
+            api.session.close()
+            second.session.close()
+
     def test_app_branch_commit_and_pr_payload_and_retry(self):
         from brainscore_metadata import dump
         import base64
@@ -733,3 +1051,69 @@ class GitHubProposalTests(SimpleTestCase):
             ),
         ):
             self.assertFalse(override(pr, "brain-score/vision"))
+
+
+class FormPreservationTests(SimpleTestCase):
+    def test_roundtrip_preserves_whitespace_optional_keys_and_sibling_evidence(self):
+        import hashlib
+        from benchmarks.model_metadata.editor import make_editor
+
+        entry = document()["models"]["example"]
+        entry["model"]["description"] = "  First line\nSecond line  "
+        entry["data"] = {"datasets": [{"name": "  Dataset  ", "role": "training"}]}
+        entry["assertions"] = [
+            {"path": "/model", "status": "verified", "sources": ["source"]}
+        ]
+        url = "https://example.org/source"
+        source_id = (
+            "proposal_" + hashlib.sha256(url.encode()).hexdigest()[:16] + "_other"
+        )
+        entry["sources"][source_id] = {
+            "kind": "other",
+            "url": url,
+            "label": "Existing evidence",
+        }
+        original = deepcopy(entry)
+        form, groups, _ = make_editor(entry)
+        values = {
+            name: field.initial if field.initial is not None else ""
+            for name, field in form.fields.items()
+        }
+        values.update(reason="Correct the count", source_url=url, source_kind="other")
+        for name, field in form.fields.items():
+            if field.initial == "  First line\nSecond line  ":
+                values[name] = "  First line\r\nSecond line  "
+        for group in groups:
+            formset = group["formset"]
+            count = len(formset.initial)
+            values.update(
+                {
+                    f"{formset.prefix}-TOTAL_FORMS": str(count),
+                    f"{formset.prefix}-INITIAL_FORMS": str(count),
+                }
+            )
+            for index, row in enumerate(formset.initial):
+                for key, value in row.items():
+                    values[f"{formset.prefix}-{index}-{key}"] = value or ""
+        bound, _, changes = make_editor(entry, values)
+        self.assertIsNone(changes())
+        self.assertIn("No metadata values have changed.", bound.non_field_errors())
+        count_key = next(
+            name for name, field in form.fields.items() if field.initial == 100
+        )
+        values[count_key] = "200"
+        bound, groups, changes = make_editor(entry, values)
+        result = changes()
+        self.assertIsNotNone(
+            result, (bound.errors, [group["formset"].errors for group in groups])
+        )
+        updated, paths = result
+        self.assertEqual(paths, ["/model/parameter_count"])
+        self.assertEqual(
+            updated["model"]["description"], original["model"]["description"]
+        )
+        self.assertEqual(updated["data"], original["data"])
+        self.assertEqual(updated["assertions"][0], original["assertions"][0])
+        self.assertEqual(updated["sources"][source_id], original["sources"][source_id])
+        self.assertEqual(updated["assertions"][-1]["status"], "probable")
+        self.assertEqual(entry, original)

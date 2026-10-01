@@ -46,6 +46,8 @@ jobs:
           private-key: ${{ secrets.METADATA_APP_PRIVATE_KEY }}
           owner: brain-score
           repositories: ${{ vars.METADATA_DOMAIN_REPOSITORIES }}
+          permission-contents: read
+          permission-pull-requests: read
       - name: Publish the verified merged revision
         env:
           METADATA_DOMAIN: ${{ inputs.domain }}

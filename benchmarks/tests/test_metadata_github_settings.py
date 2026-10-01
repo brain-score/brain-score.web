@@ -123,6 +123,14 @@ class InstallationTokenTests(SimpleTestCase):
             patch.object(GitHub, "request", request),
         ):
             api = GitHub.installation({"repository": "brain-score/vision"})
+            reader = GitHub.installation(
+                {"repository": "brain-score/vision"}, read_only=True
+            )
+        self.assertTrue(reader.read_only)
+        self.assertEqual(
+            calls[3][2]["json"]["permissions"],
+            {"contents": "read", "pull_requests": "read"},
+        )
         self.assertEqual(
             api.session.headers["Authorization"], "Bearer installation-token"
         )

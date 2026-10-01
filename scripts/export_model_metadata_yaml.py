@@ -51,7 +51,8 @@ def export(catalog, domain, checkout, output):
                 "schema_version": "2.0",
                 "domain": domain,
                 "models": {
-                    key: from_legacy(value) for key, value in legacy["models"].items()
+                    key: from_legacy(value, domain)
+                    for key, value in legacy["models"].items()
                 },
             }
         entry["legacy"] = legacy["models"][key]

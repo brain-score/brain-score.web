@@ -4,8 +4,9 @@ Status: implemented behind disabled flags. The brain-score-contributions App
 exists, and its credentials are stored in AWS Secrets Manager under
 Brain-Score_Contributions_GitHub_App in us-east-2. Installation authentication,
 repository access, and branch creation from master have been verified with a
-signed-in Brain-Score contributor. Real PR creation and database publication
-still need verification. The shared package has not been released, and converted
+signed-in Brain-Score contributor. The contributor has tested local PR submission;
+merged-PR database publication still needs a dev rehearsal. The shared package
+has not been released, and converted
 plugin files have not been merged. Keep deployed PR submission and publication
 workflows disabled until the rollout prerequisites are met.
 
@@ -28,6 +29,9 @@ logging out blocks submission. Branch names use
 A proposal expires after 30 minutes. OAuth states are single-use and independently
 bound so concurrent sign-ins cannot replace one another. User and installation
 tokens are used in memory; they are not saved in cookies, the database, or cache.
+Authorization uses S256 PKCE, and callback responses prohibit referrer leakage.
+Submission attempts are limited to 10 per account and 100 overall per hour
+through the shared cache; cache failures block submission.
 The website never publishes the proposed metadata.
 
 Paper and Hugging Face sources protect their fields, including mixed sources and
@@ -38,17 +42,36 @@ Protections are computed from approved evidence, not user-supplied source labels
 
 All publication requires a merged PR and a human maintainer's approval on its
 current head revision. Changing protected values or evidence, or converting an
-existing curated record for the first time, additionally requires the
-`metadata-source-override` label. The reviewer must differ from the PR author and, for App-created metadata
-branches, the contributor identified in the branch name.
+entry for the first time (including one without CSV data), additionally requires
+the `metadata-source-override` label. The reviewer must differ from the PR author,
+GitHub-linked commit authors/committers, and, for App-created metadata branches,
+the contributor identified in the branch name. Changed values cannot keep or
+claim verified status without an override. The editor marks changed fields
+probable using field-specific assertions, preserving sibling evidence and
+section assertions. Paper/Hugging Face protections still include section sources.
 Publication is transactional across all affected files. Retries are idempotent;
 an event whose file has since changed on the default branch is skipped.
 Removing/moving a published file or downgrading its schema requires a separate
 migration. The CSV importer refuses to overwrite repository-published records.
+The publisher requires registered models in the matching domain and rejects
+model additions/removals in existing v2 files. Initial publication preserves
+existing legacy model metadata exactly; later edits project only changed,
+representable facts. Unrelated edits cannot reset previously projected values.
+The revision journal records the approving reviewer for ordinary and override
+publications.
+The merged metadata blob must match the approved PR head. A merge that combines
+different metadata requires a fresh reviewed PR. Review independence fails closed
+for incomplete commit lists and PRs with 250 or more commits, because GitHub caps
+the commits API at 250 entries.
 
 Generated PRs include a link to their preview. Previews are read-only at
 `/model/<domain>/<model_id>/metadata/preview/<pr_number>/`, with the PR head SHA
 displayed. Preview data is never stored in canonical metadata tables.
+Editor and preview reads use repository-scoped App tokens with read permissions.
+Tokens are reused in process memory, PR reads are cached for 30 seconds, and
+immutable commit files for one hour. Mutable branch reads remain uncached for
+stale-edit detection. Previews allow 30 requests per visitor and 120 overall per
+minute through the shared cache and fail closed if that cache is unavailable.
 Repository mappings must be published before a model's Edit link appears.
 
 ## Components
@@ -61,7 +84,8 @@ Repository mappings must be published before a model's Edit link appears.
 - The existing core metadata endpoint rejects v2 writes; its adapter validates
   v2 files without publishing them. The legacy writer also refuses identifiers
   already owned by the publication journal, using the publisher's transaction
-  lock. V2 changes are excluded from plugin auto-merge.
+  lock. All metadata-file changes, including deletions and downgrades, are
+  excluded from plugin auto-merge.
 
 Schema 2.0 uses a document with `schema_version: "2.0"`, `domain`, and a
 `models` mapping. Each model has grouped facts, structured `sources`, and
@@ -71,17 +95,23 @@ contract. The YAML download button remains disabled.
 
 ## Rollout order
 
+Before production, upgrade and regression-test the website on a supported Django
+release. Its current Django 4.1 dependency is unsupported; security support ended
+December 1, 2023. See the [Django support table](https://www.djangoproject.com/download/#supported-versions).
+Keep this framework upgrade separate from enabling metadata contributions.
+
 1. Review and release `brainscore-metadata==0.1.0` from core's
    `packages/metadata`. Install it with `requirements-metadata.txt` on the web
    worker and website. Release the core v2 adapter and auto-merge guards before
    converting any plugin files.
-2. Back up the target database and rehearse migrations 0030 and 0031 with a
+2. Back up the target database and rehearse migrations 0030 through 0032 with a
    production-shaped copy. 0030 adds publication/revision history; 0031 widens
    legacy parameter counts for language models. 0031 transactionally rebuilds
    the dependent final model context, preserving its definition, indexes,
    owner, explicit grants and comment. It takes table/view locks, so schedule
    the migration. It does not rewrite score rows. Rollback rejects counts
-   that no longer fit a 32-bit integer.
+   that no longer fit a 32-bit integer. 0032 records the approving reviewer on
+   every new publication revision; historical rows keep an empty reviewer.
 3. Create/configure the GitHub App and worker environments described below.
    Deploy trusted workflows from the default branches. Keep all flags off.
 4. Export the curated CSVs to a separate review directory:
@@ -110,12 +140,13 @@ contract. The YAML download button remains disabled.
    until complete YAML parity is verified. The plans folder is removed; this
    file is the operational documentation.
 
-No feature migrations or workflow configuration have been applied to shared dev
-by this implementation. Local tests use a disposable PostgreSQL database.
+Migrations 0028 and 0029 and the CSV import were previously applied to shared dev.
+The publication migrations 0030 through 0032 and workflow configuration remain
+pending. Local regression tests use a disposable PostgreSQL database.
 
 ## GitHub App
 
-Use a public GitHub App so external contributors can install it. Configure an
+Use a public GitHub App so external contributors can authorize it. Configure an
 exact HTTPS callback URL ending in `/metadata/github/callback/`. Enable the
 user authorization flow, with expiring user tokens. Store the client secret
 through the deployment secret mechanism, never in repository files.
@@ -178,6 +209,11 @@ Create protected GitHub environments `metadata-dev`, `metadata-staging`, and
 `metadata-production` in the web repository. Restrict deployment refs to reviewed
 trusted code; require environment approval for production. Set the repository
 variable `METADATA_V2_ENABLED=true` only after the shared package is released.
+The October 1, 2026 configuration review found no deployment environments in the
+web repository. It also found that vision/master did not require the metadata
+policy check, dismiss stale approvals, or require approval of the latest push.
+Configure these protections and verify equivalent language settings before
+enabling publication; application checks do not replace deployment protections.
 
 Environment variables/secrets:
 
@@ -204,14 +240,25 @@ Each domain repository also needs `METADATA_V2_ENABLED`, `METADATA_APP_ID`,
 `METADATA_APP_PRIVATE_KEY`, `METADATA_WEB_PUBLISH_REF` (trusted web branch),
 and `METADATA_PUBLISH_ENVIRONMENT`. Require the
 `Metadata v2 source policy` check and a maintainer review in branch protection.
-After an override approval, rerun the check with workflow_dispatch and the PR
-number, or reapply the label. A new head commit invalidates the prior approval.
+Reviews submitted or dismissed on same-repository PRs rerun validation.
+For fork PRs, rerun with workflow_dispatch and the PR number, or reapply the
+label; fork review-event tokens cannot write checks. A new head commit
+invalidates the prior approval. Require approval of the most recent reviewable
+push in branch protection as well: commit attribution alone cannot identify
+every person who pushed a change. Do not grant the contribution App a bypass.
+Dismiss stale approvals when new commits are pushed.
+Restrict the publication environments and AWS trust policy to reviewed workflow
+refs. The publisher requests only Contents/Pull requests read permissions.
 
 To retry publication, dispatch `publish-model-metadata.yml` with domain, merged
 PR number, and environment. Publication journal rows make retries safe. If
 context refresh fails after publication, rerunning also refreshes the context
 and invalidates caches. Inspect failures; disabling the editor alone does not
 disable publication. Disable the repository workflow flag to stop publication.
+Measure materialized-view refresh duration with production-shaped data before
+rollout; the current refresh can block readers. Verify documentation builds
+after releasing the shared package, since the unreleased dependency is not yet
+available to deployment or documentation installers.
 
 ## Verification
 
