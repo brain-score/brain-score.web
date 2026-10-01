@@ -158,8 +158,11 @@ Keep this framework upgrade separate from enabling metadata contributions.
    file is the operational documentation.
 
 Migrations 0028 and 0029 and the CSV import were previously applied to shared dev.
-The publication migrations 0030 through 0032 remain pending on dev, as does
-workflow configuration. Shared `web_tests` was backed up, rehearsed and migrated
+Dev was backed up and migrated through 0032 on October 1, 2026 after a full local
+restore rehearsal. All existing table rows, leaderboard scores and displayed
+ranks, and the rebuilt view's definition/indexes/owner/grants/comment were
+preserved. Publication workflow configuration and its end-to-end dev rehearsal
+remain pending. Shared `web_tests` was backed up, rehearsed and migrated
 through 0032 on October 1, 2026. Stored models/scores and displayed leaderboard
 ranks were preserved. Its historical trend migration names were reconciled only
 after checking the existing schema. See the infrastructure metadata rollout
@@ -181,7 +184,10 @@ needed core change, include a pin update in that change's rollout checklist:
 2. Rehearse compatible schema/database changes, metadata tests, and publication
    in dev before changing any defaults shared with production.
 3. Update `METADATA_CORE_REF` in all three repositories and any web publishing
-   environment overrides. Revalidate affected open metadata PRs.
+   environment overrides. Update and merge infrastructure's
+   `ci/web/metadata-core-ref.txt` for the Jenkins PR and daily web runners.
+   Revalidate affected open metadata PRs; GitHub variables do not automatically
+   configure Jenkins workers.
 4. Pass that same SHA to the website build, rebuild/redeploy, and verify the
    website, publisher, and validators agree. Updating a GitHub variable alone
    does not upgrade the running website.
@@ -190,6 +196,12 @@ needed core change, include a pin update in that change's rollout checklist:
 
 Unrelated core merges do not require advancing the metadata pin. The detailed
 procedure is maintained in infrastructure's `web/metadata/rollout.md`.
+
+The web metadata CI job always installs the approved core revision and fails if
+the pin or import is invalid. It does not use the publication enable flag.
+Jenkins runners install the same contract for checkouts containing
+`requirements-metadata.txt`; older checkouts retain their existing test setup.
+Installing core for tests does not enable editing or database publication.
 
 ## GitHub App
 

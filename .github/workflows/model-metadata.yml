@@ -40,7 +40,6 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt beautifulsoup4
       - name: Install the approved core metadata contract
-        if: vars.METADATA_V2_ENABLED == 'true'
         run: |
           [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Set METADATA_CORE_REF to a full approved core commit SHA'; exit 1; }
           pip install -r requirements-metadata.txt
