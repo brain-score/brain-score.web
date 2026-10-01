@@ -228,6 +228,55 @@ class MetadataTests(TestCase):
 
 
 class ConverterConfidenceTests(SimpleTestCase):
+    def setUp(self):
+        path = Path(__file__).resolve().parents[2] / 'scripts/build_model_metadata_catalog.py'
+        spec = importlib.util.spec_from_file_location('metadata_converter', path)
+        self.converter = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.converter)
+
+    def test_parameter_counts_preserve_exactness_without_rounding(self):
+        for text, expected in [('61,100,840', (61100840, True)),
+                               ('about 61,100,840', (61100840, False)),
+                               ('61100840.0', (61100840, True)),
+                               ('~20M', (20000000, False))]:
+            with self.subTest(text=text):
+                self.assertEqual(self.converter.parse_parameter_count(text), expected)
+
+    def test_meaningful_negative_and_uncertainty_notes_are_preserved(self):
+        for text in ['No architecture; raw pixels', 'No training data - hand-crafted filters',
+                     'Not known for this checkpoint; paper reports another variant']:
+            self.assertEqual(self.converter._clean(text), text)
+        for text in ['N/A', 'unknown', 'not documented']:
+            self.assertIsNone(self.converter._clean(text))
+        self.assertEqual(self.converter.classify_confidence('Medium-High (weights uncertain)'),
+                         'medium_high')
+
+    def test_scratch_training_is_not_fine_tuning(self):
+        model = {'identifier': 'convnext_tiny_imagenet_full_seed-0', 'raw': {
+            'base_model': 'ConvNeXt-Tiny (trained from scratch, not fine-tuned)',
+            'training_process': 'Train from scratch'}}
+        rows = self.converter.build_relationships(model, {})
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['relationship'], 'variant_of')
+        model['raw']['base_model'] = 'None (purpose-built architecture)'
+        self.assertEqual(self.converter.build_relationships(model, {}), [])
+
+    def test_multiple_named_parents_are_preserved(self):
+        model = {'identifier': 'AlexNet_SIN_fov12',
+                 'raw': {'base_model': 'AlexNet, AlexNet-SIN'}}
+        rows = self.converter.build_relationships(model, {'alexnet': 'alexnet', 'alexnetsin': 'AlexNet_SIN'})
+        self.assertEqual([r['base_identifier'] for r in rows], ['alexnet', 'AlexNet_SIN'])
+
+    def test_dataset_notes_do_not_become_datasets_or_disappear(self):
+        rows = self.converter.parse_training_datasets(
+            'ImageNet-1k; single-stage training, no separate pretraining corpus',
+            '~1.28M training images / 50K validation images')
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['name'], 'ImageNet-1k')
+        self.assertIn('no separate pretraining corpus', rows[0]['count'])
+        self.assertIn('50K validation', rows[0]['count'])
+        self.assertEqual(self.converter.parse_training_datasets('No training data - hand-crafted', ''), [])
+
     def test_colors_and_unannotated_values_use_shared_vocabulary(self):
         path = Path(__file__).resolve().parents[2] / 'scripts/build_model_metadata_catalog.py'
         spec = importlib.util.spec_from_file_location('metadata_converter', path)

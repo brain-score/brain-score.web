@@ -21,6 +21,7 @@ The output is deterministic (sorted rows) so reruns produce clean git diffs.
 """
 import argparse
 import csv
+from decimal import Decimal
 import re
 from pathlib import Path
 
@@ -67,8 +68,10 @@ FIELD_ALIASES = {
 # Values in these families mean "the curator could not document this" -- they
 # become empty cells plus an `undocumented` assertion rather than card text.
 UNDOCUMENTED_RE = re.compile(
-    r'^\s*(n/?a\b|none\b|nonw\b|not\b|unconfirmed\b|unknown\b|uncertain\b|\?+\s*$|no\b)',
-    re.IGNORECASE)
+    r'(?:n/?a|none|nonw|not (?:known|specified|available|documented|applicable)|'
+    r'unconfirmed|unknown|uncertain|\?+|no)[.!]?', re.IGNORECASE)
+APPROXIMATE_RE = re.compile(r'[~≈]|\b(?:about|approximately|approx\.?|estimated|inferred|rounded)\b',
+                            re.IGNORECASE)
 # Recurrent/tokenizer answers legitimately start with "No"/"None (0)".
 LITERAL_FIELDS = {'recurrent', 'tokenizer'}
 
@@ -166,7 +169,7 @@ def _clean(value, field=None):
     value = re.sub(r'\s+', ' ', (value or '')).strip()
     if not value:
         return None
-    if field not in LITERAL_FIELDS and UNDOCUMENTED_RE.match(value):
+    if field not in LITERAL_FIELDS and UNDOCUMENTED_RE.fullmatch(value):
         return None
     return value
 
@@ -189,7 +192,7 @@ def parse_workbook(path):
     for row in field_rows:
         label = row[0].strip()
         if label in FIELD_ALIASES:
-            fields_by_key[FIELD_ALIASES[row[0].strip() and row[0].rstrip()]] = row
+            fields_by_key[FIELD_ALIASES[label]] = row
         elif not label and any(cell.strip() for cell in row[MODEL_COLUMNS_START:]):
             trailing_row = row  # unlabeled links row at the bottom of the sheet
 
@@ -239,13 +242,13 @@ def parse_parameter_count(text):
     exact_match = re.search(r'\d{1,3}(?:,\d{3})+', text)
     if exact_match:
         count = int(exact_match.group().replace(',', ''))
-        return count, not INFERRED_RE.search(text)
+        return count, not bool(APPROXIMATE_RE.search(text))
     scaled_match = re.search(r'[~≈]?\s*(\d+(?:\.\d+)?)\s*([KMB])\b', text)
     if scaled_match:
         scale = {'K': 1_000, 'M': 1_000_000, 'B': 1_000_000_000}[scaled_match.group(2)]
         return int(float(scaled_match.group(1)) * scale), False
-    if re.fullmatch(r'\d+', text):
-        return int(text), True
+    if re.fullmatch(r'\d+(?:\.0+)?', text):
+        return int(Decimal(text)), True
     return None, None
 
 
@@ -330,6 +333,8 @@ def classify_supervision(text):
 def classify_confidence(text):
     if not text:
         return ''
+    if re.match(r'^medium\s*[-/– ]\s*high\b', text, re.IGNORECASE):
+        return 'medium_high'
     head = re.split(r'[(\-–]', text.replace('/', '-'), maxsplit=1)[0].strip().lower()
     return {'high': 'high', 'medium-high': 'medium_high', 'medium high': 'medium_high',
             'medium': 'medium', 'uncertain': 'uncertain'}.get(head.replace('/', '-'), _slug(text[:20]))
@@ -360,12 +365,16 @@ ROLE_KEYWORDS = (
 
 def parse_training_datasets(source_text, size_text):
     """Split 'Pretrain: X; Fine-tune: Y' into per-role dataset rows."""
-    if not source_text:
+    if not source_text or re.match(r'^no training (?:data|dataset)', source_text, re.IGNORECASE):
         return []
     rows = []
     for segment in re.split(r';|(?=Stage\s*\d\s*:)', source_text):
         segment = segment.strip(' ;')
         if not segment:
+            continue
+        if re.match(r'^(?:single-stage training|no separate|not a dataset)\b', segment, re.IGNORECASE):
+            if rows:
+                rows[-1]['count'] = segment
             continue
         role = 'training'
         for pattern, mapped_role in ROLE_KEYWORDS:
@@ -378,9 +387,9 @@ def parse_training_datasets(source_text, size_text):
             rows.append({'role': role, 'name': segment})
     if rows and size_text:
         size_text = size_text.strip()
-        if re.fullmatch(r'[~≈]?[\d,]+(\s*images)?', size_text):
-            # a clean single number becomes the (single) chip's sample count
-            rows[0]['count'] = size_text
+        if len(rows) == 1:
+            # Retain units, split names, and uncertainty, not just the first number.
+            rows[0]['count'] = '; '.join(filter(None, [rows[0].get('count'), size_text]))
         else:
             # multi-dataset sizes ("WIT-400M ~400M pairs; ImageNet-1k 1.28M/50K"):
             # match each chip to its size segment by the dataset's head token
@@ -396,6 +405,11 @@ def parse_training_datasets(source_text, size_text):
                     if count:
                         row['count'] = count.group().strip()
                     break
+            # Do not discard unmatched qualifications or assign ambiguous counts
+            # to an individual training stage.
+            for row in rows:
+                note = 'Workbook size notes (all stages): ' + size_text
+                row['count'] = '; '.join(filter(None, [row.get('count'), note]))
     return rows
 
 
@@ -425,25 +439,37 @@ def assertion_status(raw_value, field, color_status=None):
     return 'probable'
 
 
-def build_relationship(model, identifier_lookup):
+def build_relationships(model, identifier_lookup):
     base_raw = _clean(model['raw'].get('base_model', ''))
-    if not base_raw:
-        return None
-    primary = re.split(r'[;,]| \+ ', base_raw)[0].strip()
-    # keep the readable head, drop trailing qualifiers
-    base_name = re.split(r'\s+[-(]', primary, maxsplit=1)[0].strip() or primary
-    base_identifier = identifier_lookup.get(_norm(base_name), _slug(base_name))
-    if _norm(base_identifier) == _norm(model['identifier']):
-        return None
+    if not base_raw or re.match(r'^(?:none|no base|not applicable)\b', base_raw, re.IGNORECASE):
+        return []
     context = f"{base_raw} {model['raw'].get('training_process', '')}".lower()
     if 'derivative' in base_raw.lower() or 'derived' in base_raw.lower():
         relationship = 'derived_from'
-    elif 'fine-tun' in context or 'finetun' in context:
+    elif (re.search(r'fine-?tun', context) and
+          not re.search(r'train(?:ed|ing) from scratch|(?:not|no) (?:\w+ )?fine-?tun', context)):
         relationship = 'fine_tuned_from'
     else:
         relationship = 'variant_of'
-    return {'base_identifier': base_identifier, 'base_name': base_name,
-            'relationship': relationship}
+    relationships = []
+    # Separate named parents only outside parenthesized qualifications.
+    parts = re.split(r'[,;](?![^()]*\))| \+ ', base_raw)
+    # A comma can introduce prose ("pretrained on X, then fine-tuned"), not
+    # another parent. Only split when every item names a recognizable model.
+    if len(parts) > 1 and not all(
+            _norm(part.strip()) in identifier_lookup or
+            re.fullmatch(r'[A-Za-z][A-Za-z0-9_.-]*', part.strip())
+            for part in parts):
+        parts = [base_raw]
+    for primary in parts:
+        base_name = re.split(r'\s+[-(]', primary.strip(), maxsplit=1)[0].strip()
+        base_identifier = identifier_lookup.get(_norm(base_name), _slug(base_name))
+        if base_name and _norm(base_identifier) != _norm(model['identifier']):
+            item = {'base_identifier': base_identifier, 'base_name': base_name,
+                    'relationship': relationship}
+            if item not in relationships:
+                relationships.append(item)
+    return relationships
 
 
 def main():
@@ -555,10 +581,9 @@ def main():
                 contributor_rows.append({'domain': DOMAIN, 'identifier': identifier,
                                          'kind': kind, 'ordinal': 0, 'name': value})
 
-        relationship = build_relationship(model, identifier_lookup)
-        if relationship:
+        for index, relationship in enumerate(build_relationships(model, identifier_lookup)):
             relationship_rows.append({'domain': DOMAIN, 'identifier': identifier,
-                                      'ordinal': 0, **relationship})
+                                      'ordinal': index, **relationship})
 
         for path, field in ASSERTION_PATHS:
             color_status = cell_statuses.get((field, model['column_name']))
