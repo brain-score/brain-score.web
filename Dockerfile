@@ -24,14 +24,13 @@ RUN echo "conda activate brain-score.web" >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c"]
 
-ARG METADATA_CORE_REF=""
-RUN if [ -n "$METADATA_CORE_REF" ]; then \
-      [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || exit 1; \
-      export METADATA_CORE_REF; \
-      /opt/conda/bin/conda run -n brain-score.web python -m pip install -r requirements-metadata.txt && \
-      /opt/conda/bin/conda run -n brain-score.web python -c "import brainscore_core.metadata" && \
-      /opt/conda/bin/conda run -n brain-score.web python -m pip check; \
-    fi
+# Keep the default aligned with infrastructure CI and METADATA_CORE_REF consumers.
+ARG METADATA_CORE_REF="94e220611961de2ceec6a1cdac324d39575c6040"
+RUN [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'METADATA_CORE_REF must be a full core commit SHA'; exit 1; }; \
+    export METADATA_CORE_REF; \
+    /opt/conda/bin/conda run -n brain-score.web python -m pip install -r requirements-metadata.txt && \
+    /opt/conda/bin/conda run -n brain-score.web python -c "import brainscore_core.metadata" && \
+    /opt/conda/bin/conda run -n brain-score.web python -m pip check
 
 RUN . ~/.bashrc && npm ci --no-optional
 RUN . ~/.bashrc && npm install -g sass@1.69.5
