@@ -1,4 +1,4 @@
-name: Publish reviewed model metadata
+name: Publish merged model metadata
 on:
   workflow_dispatch:
     inputs:
@@ -55,7 +55,7 @@ jobs:
           repositories: ${{ vars.METADATA_DOMAIN_REPOSITORIES }}
           permission-contents: read
           permission-pull-requests: read
-      - name: Publish the verified merged revision
+      - name: Publish the validated merged revision
         env:
           METADATA_DOMAIN: ${{ inputs.domain }}
           METADATA_PR: ${{ inputs.pr }}
