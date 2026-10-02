@@ -9,21 +9,41 @@ registered identities, repository bindings and matching metadata blobs, without
 requiring an approval or source-override label. Repository rules govern merges;
 paper and Hugging Face fields remain locked in the website editor. New revision
 rows record GitHub's merger; historical approval audit fields remain intact.
-Editing and publication remain disabled until the deployment passes rehearsal.
+Canonical production hosts enable editing by default using the Contributions
+App secret and `https://www.brain-score.org/metadata/github/callback/`.
+The callback uses the canonical `www` host: the bare-domain redirect drops query
+parameters required by GitHub authorization.
+`MODEL_METADATA_EDIT_ENABLED=0` disables editing. Dev, staging and test settings
+require explicit enablement. Apply the existing metadata migrations through 0033
+before deploying to production; register the production callback in the GitHub
+App settings. Manual publication imports merged PRs; automatic publication
+remains disabled until its deployment is configured.
 The shared contract is `brainscore_core.metadata`; the website schema dialog
 shows `static/benchmarks/schemas/metadata-v2.0.yaml`. Template download stays disabled.
+
+Empty model cards hide the header metadata strip and empty metadata sections,
+and retain Add metadata and Schema v2.0 actions. Contributions require the
+environment's GitHub App settings and a signed-in Brain-Score account.
+
+First-time contributions select the repository model folder in the modal.
+The server verifies its literal `model_registry` assignment without executing
+plugin code. A missing metadata file opens a blank form; existing v2 files open
+their current values. Legacy files convert to v2 while preserving every sibling
+and the original legacy values. Protected sources and scoring fields stay locked.
+Computed registrations and model additions to existing v2 files require maintainer
+curation. Submission rechecks the current file before creating the branch and PR;
+neither the editor nor PR preview publishes database changes.
 
 ## Code and documentation
 
 - `repository.py` formats database records for model cards.
 - `editor.py` and `github.py` prepare and submit contributor PRs.
+- `proposal_source.py` validates first-time destinations and preserves existing files.
 - `publishing.py` validates publication; `writer.py` persists related tables.
 - `catalog.py` validates the temporary CSV import format.
 
 Architecture, deployment settings, migration records, and recovery procedures
 live in [infrastructure/web/metadata](https://github.com/brain-score/infrastructure/tree/main/web/metadata).
-That documentation is being reviewed in
-[infrastructure PR #56](https://github.com/brain-score/infrastructure/pull/56).
 The merge-based policy requires a coordinated core-pin update and migration 0033
 before using this publisher. See the infrastructure deployment transition guide;
 an older pinned core validator still enforces the previous approval policy.
