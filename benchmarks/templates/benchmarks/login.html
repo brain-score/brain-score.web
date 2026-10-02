@@ -1,63 +1,49 @@
 {% extends 'benchmarks/base.html' %}
 {% load static %}
-{% load compress %}
+
+{% block page_title %}Sign in | Brain-Score{% endblock %}
+{% block body_class %}account-login-page{% endblock %}
+{% block viewport %}<meta name="viewport" content="width=device-width, initial-scale=1">{% endblock %}
 
 {% block main %}
 {% include 'benchmarks/components/nav-bar.html' %}
-<div class="container login" style="background-image: url({% static '/benchmarks/img/login_brain.png' %});">
-    <div class="column is-half has-text-centered-mobile">
-        <div class="container login-left">
+<div class="account-login-shell" style="--account-login-art: url('{% static 'benchmarks/img/login_brain.png' %}');">
+    <div class="account-login-card" aria-labelledby="account-login-title">
+        {% if activation_email or password_email %}
+            <h1 id="account-login-title">Check your email</h1>
             {% if activation_email %}
-                <article class="message">
-                    <div class="message-header">
-                        <p style="font-weight: bold">A confirmation email has been sent.</p>
-                    </div>
-                    <div class="message-body">
-                        Be sure to confirm your account via email before trying to log in!
-                        <p class="create-account"><a href="/profile">Return to Login</a></p>
-                    </div>
-                </article>
-            {% elif password_email %}
-                <article class="message">
-                    <div class="message-header">
-                         <p style="font-weight: bold">A password change email has been sent.</p>
-                    </div>
-                    <div class="message-body">
-                        Be sure to visit your emailed link to change your password!
-                        <p class="create-account"><a href="/profile">Return to Login</a></p>
-                    </div>
-                </article>
+                <p class="account-login-intro">We sent you a confirmation link. Activate your account before signing in.</p>
             {% else %}
-                <span class="green_log is-size-3 is-size-2-widescreen">Log</span><span class="gray_log is-size-3 is-size-2-widescreen"> In</span>
-                <p class="create-account"><a href="/signup">Create An Account</a></p>
-                <form method="post">
-                    {% csrf_token %}
-                    {% for field in form %}
-                        <div class="field">
-                            <label class="label label-green">{{ field.label_tag }}</label>
-                            <div class="control">
-                                 <input class="input is-normal gray" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}">
-                            </div>
-                            {% if field.help_text %}
-                                <small style="display: none">{{ field.help_text }}</small>
-                            {% endif %}
-                            {% for error in field.errors %}
-                                <p style="color: red">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
-                     {% if Incorrect %}
-                        <article id="wrong-password" class="message is-danger">
-                            <div class="message-body">
-                                The username or password was incorrect.
-                            </div>
-                        </article>
-                    {% endif %}
-                    <p class="forgot_password" style="font-size: 14px"><a href="/password">Forgot Your Password?</a></p>
-                    <button type="button submit" class="button new_design tutorial_button" >Login</button>
-                </form>
+                <p class="account-login-intro">We sent you a password reset link. Follow it to choose a new password.</p>
             {% endif %}
-         </div>
+            <a class="account-login-submit" href="/profile/">Return to sign in</a>
+        {% else %}
+            <h1 id="account-login-title"><span>Sign in</span> to Brain-Score</h1>
+            <p class="account-login-intro">Access your submissions and contribute to Brain-Score.</p>
+            <form method="post" class="account-login-form">
+                {% csrf_token %}
+                {% if Incorrect %}
+                    <p id="account-login-error" class="account-login-error" role="alert">The email or password was incorrect. Please try again.</p>
+                {% endif %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    <div class="account-login-field">
+                        <div class="account-login-label">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.name == 'password' %}<a href="/password">Forgot password?</a>{% endif %}
+                        </div>
+                        <input name="{{ field.name }}" id="{{ field.id_for_label }}" required
+                            {% if field.name == 'password' %}type="password" autocomplete="current-password"
+                            {% else %}type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="{{ field.field.max_length|default:254 }}" value="{% if field.value %}{{ field.value }}{% elif request.method == 'POST' %}{{ request.POST.username }}{% endif %}"{% endif %}
+                            {% if Incorrect or field.errors %}aria-invalid="true"{% endif %}
+                            {% if field.errors %}aria-describedby="{{ field.id_for_label }}_errors"{% elif Incorrect %}aria-describedby="account-login-error"{% endif %}>
+                        {% if field.errors %}<div id="{{ field.id_for_label }}_errors" class="account-login-error">{{ field.errors }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="account-login-submit">Sign in</button>
+            </form>
+            <p class="account-login-signup">New to Brain-Score? <a href="/signup">Create an account</a></p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

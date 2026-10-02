@@ -1,0 +1,48 @@
+{% if model_metadata %}
+<section class="box model-card-section model-eval-io">
+    <div class="mc-heading">
+        <h2 class="title is-4 mc-title">
+            {% if model_metadata.section_summary.eval_io.documented == 0 %}
+                <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-eval-io-body" aria-label="Toggle section details"></button>
+            {% endif %}
+            Evaluation and I/O
+        </h2>
+        <div class="mc-heading-actions">
+            <button class="mc-edit-button" type="button" disabled
+                    title="Metadata editing is coming soon — for now, updates go through the curation workbook">
+                <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
+        </div>
+    </div>
+    {% if model_metadata.section_summary.eval_io.documented == 0 %}
+        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.eval_io.total }} fields documented — no values are available for this section.</p>
+    {% endif %}
+    <dl class="mc-specs" id="mc-eval-io-body">
+        <div>
+            <dt>Test datasets{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_test_datasets %}</dt>
+            <dd>{% if model_metadata.eval_io.test_datasets %}{{ model_metadata.eval_io.test_datasets }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Validation datasets{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_validation_datasets %}</dt>
+            <dd>{% if model_metadata.eval_io.validation_datasets %}{{ model_metadata.eval_io.validation_datasets }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Input format{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_input_format %}</dt>
+            <dd>{% if model_metadata.eval_io.input_format %}{{ model_metadata.eval_io.input_format }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Output format{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_output_format %}</dt>
+            <dd>{% if model_metadata.eval_io.output_format %}{{ model_metadata.eval_io.output_format }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Tokenizer{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_tokenizer %}</dt>
+            <dd>{% if model_metadata.eval_io.tokenizer %}{{ model_metadata.eval_io.tokenizer }}{% else %}{% include "benchmarks/_mc_empty_value.html"  %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Model version{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.eval_model_version %}</dt>
+            <dd>{% if model_metadata.eval_io.model_version %}{{ model_metadata.eval_io.model_version }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+    </dl>
+</section>
+{% endif %}

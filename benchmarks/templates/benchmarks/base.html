@@ -29,7 +29,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <!-- Force desktop site, even on mobile -->
-    <meta name="viewport" content="width=1024">
+    {% block viewport %}<meta name="viewport" content="width=1024">{% endblock %}
 
     {% compress css %}
         <link type="text/x-sass" rel="stylesheet" href="{% static "/benchmarks/css/main.sass" %}" charset="utf-8">
@@ -53,7 +53,7 @@
 
     {# data #}
     <script type="text/javascript">
-        comparison_data = {{ comparison_data|safe }};
+        comparison_data = {{ comparison_data|default:"[]"|safe }};
         logo_url = "/static/benchmarks/img/logo.png";
     </script>
 
@@ -123,7 +123,7 @@
 
 </head>
 
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <div id="mobile-warning-modal" class="mobile-warning-modal is-hidden">
         <div class="modal-content">
           <p>You're viewing Brain-Score on a mobile device. For the best experience — featuring interactive benchmarks and

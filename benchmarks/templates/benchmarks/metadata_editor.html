@@ -1,0 +1,46 @@
+<section class="metadata-editor" data-metadata-stage="edit">
+    {% if error %}<div class="metadata-editor-scroll"><p role="alert">{{ error }}</p></div>{% else %}
+    <form method="post" action="{{ edit_url }}" data-metadata-form>
+        {% csrf_token %}<input type="hidden" name="base_blob" value="{{ base_blob }}">
+        <div class="metadata-editor-scroll" data-metadata-scroll>
+            <p class="metadata-editor-intro">Update the fields that need a correction. Your changes will be reviewed in a GitHub pull request.</p>
+            {{ form.non_field_errors }}
+            <div class="metadata-editable-sections">
+                {% for section in sections %}
+                <details class="metadata-field-section"{% if forloop.first or section.has_errors %} open{% endif %}>
+                    <summary>{{ section.label }} <span>{{ section.count }} field{{ section.count|pluralize }}</span></summary>
+                    <div class="metadata-section-content">
+                        {% for field in section.fields %}{% include "benchmarks/_metadata_editor_field.html" %}{% endfor %}
+                        {% for group in section.groups %}{% include "benchmarks/_metadata_editor_group.html" %}{% endfor %}
+                    </div>
+                </details>
+                {% empty %}<p>No fields are available to edit for this model.</p>{% endfor %}
+            </div>
+            {% if sections %}
+            <section class="metadata-evidence" aria-labelledby="metadata-evidence-title">
+                <h3 id="metadata-evidence-title">Support your changes</h3>
+                <div class="metadata-source-fields">
+                    <div class="metadata-editor-field">{{ form.source_url.label_tag }}{{ form.source_url.errors }}{{ form.source_url }}</div>
+                    <div class="metadata-editor-field">{{ form.source_kind.label_tag }}{{ form.source_kind.errors }}{{ form.source_kind }}</div>
+                </div>
+                <div class="metadata-editor-field">{{ form.reason.label_tag }}{{ form.reason.errors }}{{ form.reason }}</div>
+            </section>
+            {% endif %}
+            {% if locked_count %}
+            <details class="metadata-field-section metadata-locked-section">
+                <summary>View sourced metadata <span>{{ locked_count }} locked field{{ locked_count|pluralize }}</span></summary>
+                <div class="metadata-section-content">
+                    <p class="help">These fields have protected sources, need source review, or affect scoring. They cannot be changed here.</p>
+                    {% for field in locked_fields %}{% include "benchmarks/_metadata_editor_field.html" %}{% endfor %}
+                    {% for group in locked_groups %}{% include "benchmarks/_metadata_editor_group.html" %}{% endfor %}
+                </div>
+            </details>
+            {% endif %}
+        </div>
+        <footer class="metadata-editor-actions">
+            <button type="button" class="button" data-metadata-close>Cancel</button>
+            <button type="submit" class="button is-primary"{% if not sections %} disabled{% endif %}>Review changes</button>
+        </footer>
+    </form>
+    {% endif %}
+</section>

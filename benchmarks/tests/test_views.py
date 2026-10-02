@@ -134,30 +134,32 @@ class TestWebsitePages(BaseTestCase):
 
     def test_model_page(self):
         """Ensure the model detail page contains expected sections"""
-        # Adjust the model slug to match one you know exists in your test DB
-        response = self.client.get('/model/vision/2330')
+        from benchmarks.models import FinalModelContext
+        model = FinalModelContext.objects.filter(domain='vision', public=True).order_by('model_id').first()
+        self.assertIsNotNone(model, 'The page test requires a public vision model in the test database')
+        response = self.client.get(f'/model/vision/{model.model_id}')
         self.assertEqual(response.status_code, 200)
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
         # Check h3 title
-        h3 = soup.find('h3', {'id': 'scores', 'class': 'title is-3'})
+        h3 = soup.select_one('h3#scores')
         self.assertIsNotNone(h3, "Missing h3#scores title")
         self.assertIn('Scores on benchmarks', h3.text)
 
         # Check subtitle h4
-        h4 = soup.find('h4', class_='subtitle is-4')
+        h4 = soup.select_one('h4.subtitle.is-4')
         self.assertIsNotNone(h4, "Missing h4 subtitle")
         self.assertIn('How to use', h4.text)
 
         # Check for <p> with 'Layer Commitment'
-        layer_commitments = soup.find_all('p', class_='subtitle is-5')
-        layer_commitment_found = any('Layer Commitment' in p.get_text(strip=True) for p in layer_commitments)
+        layer_commitments = soup.select('p.subtitle.is-5')
+        layer_commitment_found = any('layer commitment' in p.get_text(strip=True).lower() for p in layer_commitments)
         self.assertTrue(layer_commitment_found, "Missing 'Layer Commitment' paragraph")
 
         # Check for 3 identical 'Visual Angle' sections
-        visual_angle = soup.find_all('p', class_='subtitle is-5')
-        visual_angle_found = any('Visual Angle' in p.get_text(strip=True) for p in visual_angle)
+        visual_angle = soup.select('p.subtitle.is-5')
+        visual_angle_found = any('visual angle' in p.get_text(strip=True).lower() for p in visual_angle)
         self.assertTrue(visual_angle_found, "Missing 'Visual Angle' paragraph")
 
 

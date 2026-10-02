@@ -1,0 +1,132 @@
+{% if model_metadata %}
+<section class="box model-card-section model-metadata" data-model-metadata>
+    <div class="mc-heading">
+        <div>
+            <p class="mc-kicker">{{ model_metadata.source_label }}</p>
+            <h2 class="title is-4 mc-title">
+                {% if not model_metadata.has_card_content %}
+                    <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-at-a-glance-body" aria-label="Toggle section details"></button>
+                {% endif %}
+                At-a-glance
+            </h2>
+        </div>
+        <div class="mc-heading-actions">
+            {% if metadata_edit_url %}
+                <button type="button" class="mc-edit-button" data-metadata-edit-open aria-haspopup="dialog" aria-controls="mc-metadata-editor-dialog"><i class="fa-solid fa-pen" aria-hidden="true"></i> Propose an edit</button>
+            {% else %}
+                <button class="mc-edit-button" type="button" disabled title="Repository-reviewed metadata editing is not available for this model yet."><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit</button>
+            {% endif %}
+            <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
+        </div>
+    </div>
+
+    {% include "benchmarks/_model_metadata_schema.html" %}
+
+    {% if not model_metadata.has_card_content %}
+        <p class="mc-empty-summary">This model has no curated metadata yet — expand to see the undocumented fields.</p>
+    {% endif %}
+
+    <div id="mc-at-a-glance-body">
+    <dl class="mc-specs">
+        <div>
+            <dt>Architecture{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.architecture_description %}</dt>
+            <dd>{% if model_metadata.architecture_description %}{{ model_metadata.architecture_description }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Parameters{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.parameter_count_display %}</dt>
+            <dd>{% if model_metadata.parameter_count_display %}{{ model_metadata.parameter_count_display }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Input resolution{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.input_resolution_display %}</dt>
+            <dd>{% if model_metadata.input_resolution_display %}{{ model_metadata.input_resolution_display }} pixels{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Recurrent{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.recurrent_display %}</dt>
+            <dd>{% if model_metadata.recurrent_display %}{{ model_metadata.recurrent_display }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt id="mc-supervision">Supervision{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.supervision_description %}</dt>
+            <dd>{% if model_metadata.supervision_description %}{{ model_metadata.supervision_description }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Weights provider{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.weights_provider %}</dt>
+            <dd>
+                {% if model_metadata.weights_provider %}
+                    {% if model_metadata.weights_provider_url %}<a href="{{ model_metadata.weights_provider_url }}" target="_blank" rel="noopener noreferrer">{{ model_metadata.weights_provider }}</a>
+                    {% else %}{{ model_metadata.weights_provider }}{% endif %}
+                {% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt>Trainable layers{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.trainable_layers_display %}</dt>
+            <dd>{% if model_metadata.trainable_layers_display %}{{ model_metadata.trainable_layers_display }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Checkpoint{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.checkpoint %}</dt>
+            <dd>{% if model_metadata.checkpoint %}{{ model_metadata.checkpoint }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+        </div>
+    </dl>
+
+    <div class="mc-grid">
+        <section class="mc-panel">
+            <h3 class="title is-5 mc-panel-title">Training and data</h3>
+            {% if model_metadata.training_process %}
+                <p class="mc-panel-lede">{{ model_metadata.training_process }}</p>
+            {% endif %}
+            {% if model_metadata.datasets %}
+                <div class="mc-datasets">
+                    {% for dataset in model_metadata.datasets %}
+                        <div class="mc-dataset">
+                            <div class="mc-dataset-chip">
+                                <span class="mc-dataset-role">{{ dataset.role_display }}</span>
+                                <strong>{{ dataset.dataset_name|default:dataset.dataset_identifier }}</strong>
+                            </div>
+                            {% if dataset.sample_count_display %}
+                                <p class="mc-dataset-count">{{ dataset.sample_count_display }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+            <dl class="mc-facts">
+                <div><dt>Objective:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.objective %}</dt><dd>{% if model_metadata.objective %}{{ model_metadata.objective }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd></div>
+                <div><dt>Loss:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.loss %}</dt><dd>{% if model_metadata.loss %}{{ model_metadata.loss }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd></div>
+                <div><dt>Learning rate:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.learning_rate %}</dt><dd>{% if model_metadata.learning_rate %}{{ model_metadata.learning_rate }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd></div>
+                <div><dt>Batch size:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.batch_size %}</dt><dd>{% if model_metadata.batch_size %}{{ model_metadata.batch_size }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd></div>
+                <div><dt>Preprocessing:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.preprocessing_description %}</dt><dd>{% if model_metadata.preprocessing_description %}{{ model_metadata.preprocessing_description }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd></div>
+            </dl>
+        </section>
+
+        <section class="mc-panel">
+            <h3 class="title is-5 mc-panel-title">Creators and licensing</h3>
+            <dl class="mc-facts">
+                <div>
+                    <dt>Organization:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.contributors_organizations %}</dt>
+                    <dd>{% if model_metadata.contributors.organizations %}{{ model_metadata.contributors.organizations|join:"; " }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>Creators:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.contributors_creators %}</dt>
+                    <dd>{% if model_metadata.contributors.creators %}{{ model_metadata.contributors.creators|join:"; " }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+                </div>
+                <div>
+                    <dt id="mc-license">License:{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.license %}</dt>
+                    <dd>{% if model_metadata.license %}{{ model_metadata.license }}{% else %}{% include "benchmarks/_mc_empty_value.html" %}{% endif %}</dd>
+                </div>
+            </dl>
+            {% if model_metadata.license_nuance %}
+                <p class="mc-note">{{ model_metadata.license_nuance }}</p>
+            {% endif %}
+            {% if model_metadata.extra_notes %}
+                <p class="mc-note">{{ model_metadata.extra_notes }}</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% if model_metadata.verification.undocumented %}
+        <p class="mc-note mc-doc-hint">Dashed <span class="mc-empty">Not documented</span> fields are awaiting curation.</p>
+    {% endif %}
+    </div>
+</section>
+{% endif %}

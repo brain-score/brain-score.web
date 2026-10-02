@@ -511,9 +511,7 @@ function createTutorialDropdown(tour) {
     }
   });
   
-  // Add dropdown arrow to button
-  const originalText = tutorialBtn.querySelector('.text-wrapper').textContent;
-  tutorialBtn.querySelector('.text-wrapper').innerHTML = `${originalText} <span style="font-size: 10px; margin-left: 4px;">▼</span>`;
+
 }
 
 // Export for potential use in other modules

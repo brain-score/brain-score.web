@@ -1,0 +1,7 @@
+{% comment %}
+Unified empty-state slot for model-card fields.
+  {% include "benchmarks/_mc_empty_value.html" %}                          -> "Not documented"
+  {% include "benchmarks/_mc_empty_value.html" with not_applicable=True %} -> "Not applicable"
+Dashed outline marks the field as a documentable slot (future editing interface);
+"Not applicable" fields are not gaps, so they render without the outline.
+{% endcomment %}{% if not_applicable %}<span class="mc-empty is-na">Not applicable</span>{% else %}<span class="mc-empty">Not documented</span>{% endif %}

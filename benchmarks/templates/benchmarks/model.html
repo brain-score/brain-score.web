@@ -1,5 +1,7 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
+{% block body_class %}model-page{% endblock %}
+{% block viewport %}<meta name="viewport" content="width=device-width, initial-scale=1">{% endblock %}
 
 {% block page_title %}Brain-Score - {% if model.public %}{{ model.name }}{% else %}Anonymous Model #{{ model.id }}{% endif %}{% endblock %}
 
@@ -14,34 +16,90 @@
 
 {% block banner %}
     {% if model.public %}
-        <h1 class="title">{{ model.name }}</h1>
-        <p>
-            {# Paper #}
-            {% if model.reference_identifier %}
-                <button class="button">
-                    <a href="{{ model.reference_link }}" target="_blank">
+        <div class="model-card-hero">
+            <h1 class="title">{{ model.name }}</h1>
+            <div class="mc-hero-pills">
+                <span class="mc-hero-pill is-contributor">
+                    <i class="fa-solid fa-user" aria-hidden="true"></i>
+                    Contributed by <strong>{{ model|display_submitter:user|default:"" }}</strong>
+                </span>
+                {# Paper #}
+                {% if model.reference_identifier %}
+                    <a class="mc-hero-pill is-paper" href="{{ model.reference_link }}" target="_blank">
                         <i class="fas fa-file-alt"></i> {{ model.reference_identifier }}
                     </a>
-                </button>
-            {% else %}
-                <button class="button disabled">
-                    No reference provided
-                </button>
-            {% endif %}
+                {% else %}
+                    <span class="mc-hero-pill is-muted">No reference provided</span>
+                {% endif %}
 
-            {# Code #}
-            <button class="button">
-                <a href="https://github.com/search?q=repo%3Abrain-score%2F{{ model.domain }}%20{{ model.name }}&type=code"
+                {# Code #}
+                <a class="mc-hero-pill is-source"
+                   href="https://github.com/search?q=repo%3Abrain-score%2F{{ model.domain }}%20{{ model.name }}&type=code"
                    target="_blank">
-                    <i class="fa-brands fa-github"></i> Find on GitHub
+                    <i class="fa-brands fa-github"></i> Find on GitHub <span class="mc-hero-pill-note">source</span>
                 </a>
-            </button>
+                {% if model.domain == 'vision' and model.public %}
+                    <a class="mc-hero-pill is-compare"
+                       href="/vision/compare/?tab=models&model_a={{ model.model_id }}">
+                        <i class="fa-solid fa-scale-balanced"></i> Compare this model
+                    </a>
+                {% endif %}
+            </div>
 
-            {# Contributor #}
-            <button class="button">
-                Contributed by: {{ model|display_submitter:user|default:"" }}
-            </button>
-        </p>
+            {# Compact metadata strip #}
+            {% if model_metadata %}
+                <div class="mc-hero-stats">
+                    {% if model_metadata.header_architecture %}
+                        <a class="mc-hero-stat is-architecture mc-hero-detail-link" href="#mc-at-a-glance-body" title="View full architecture details">
+                            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                            <span class="mc-sr-only">Architecture:</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.header_architecture }}</span>
+                        </a>
+                    {% endif %}
+                    {% if model_metadata.parameter_count_display %}
+                        {% if hero_filter_links.parameters %}
+                            <a class="mc-hero-stat is-parameters is-filter" href="{{ hero_filter_links.parameters }}"
+                               title="Show leaderboard models of similar size (±20%)">
+                                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                                <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
+                                <span class="mc-hero-stat-label">parameters</span>
+                            </a>
+                        {% else %}
+                            <div class="mc-hero-stat is-parameters">
+                                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                                <span class="mc-hero-stat-value">{{ model_metadata.parameter_count_display }}</span>
+                                <span class="mc-hero-stat-label">parameters</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    {% if model_metadata.input_resolution_display %}
+                        <div class="mc-hero-stat is-input">
+                            <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                            <span class="mc-hero-stat-value">{{ model_metadata.input_resolution_display }}</span>
+                            <span class="mc-hero-stat-label">input</span>
+                        </div>
+                    {% endif %}
+                    {% if model_metadata.header_supervision %}
+                        <a class="mc-hero-stat is-supervision mc-hero-detail-link" href="#mc-supervision" title="View full supervision details">
+                            <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
+                            <span class="mc-sr-only">Supervision:</span>
+                            <span class="mc-hero-stat-value">{{ model_metadata.header_supervision }}</span>
+                        </a>
+                    {% endif %}
+                    {% for license in model_metadata.header_licenses %}
+                        <a class="mc-hero-stat is-license mc-hero-detail-link" href="#mc-license" title="View license terms and qualifications">
+                            <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+                            {% if license.scope == 'License' %}
+                                <span class="mc-sr-only">License:</span>
+                            {% else %}
+                                <span class="mc-hero-stat-label">{% if license.scope == 'Code license' %}Code:{% elif license.scope == 'Weights license' %}Weights:{% else %}Code + weights:{% endif %}</span>
+                            {% endif %}
+                            <span class="mc-hero-stat-value">{{ license.label }}{% if license.uncertain %} <span class="mc-license-uncertain" title="License not confirmed" aria-label="License not confirmed">?</span>{% endif %}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
     {% else %}
         <h1 class="title">Anonymous Model #{{ model.id }}</h1>
         {% if model.competition is None %}
@@ -55,17 +113,17 @@
 
 {# Right-hand info #}
 {% block info_section %}
-    <div class="box">
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
-                Layer Commitment
+            <p class="subtitle is-5 model-sidebar-title">
+                Layer commitment
                 <a href="https://{{ request.get_host }}/brain_model#region_layer_map">
                     <i class="fa-solid fa-circle-info"> </i>
                 </a>
             </p>
 
             {% if layers %}
-                <table class="table">
+                <table class="table mc-layer-table">
                     <thead>
                     <tr>
                         <th>Region</th>
@@ -76,43 +134,56 @@
                     {% for region, layer in layers|order_layers %}
                         <tr>
                             <th>{{ region }}</th>
-                            <td>{{ layer }}</td>
+                            <td><code>{{ layer }}</code></td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <div class="notification">
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+                <p class="mc-sidebar-note">
                     No layer commitments found for this model. Older submissions might not have stored this
                     information but will be updated when evaluated on new benchmarks.
-                </div>
+                </p>
             {% endif %}
         </div>
     </div>
 
-    <div class="box">
+    <div class="box model-sidebar-card">
         <div class="card-content">
-            <p class="subtitle is-5">
-                Visual Angle
+            <p class="subtitle is-5 model-sidebar-title">
+                Visual angle
                 <a href="https://{{ request.get_host }}/brain_model#visual_degrees">
                     <i class="fa-solid fa-circle-info"></i>
                 </a>
             </p>
-            <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% if visual_degrees %}
+                <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+            <p class="mc-sidebar-note">
+                Drives stimulus scaling. A null here means benchmarks run on the default.
+            </p>
         </div>
     </div>
+    {% include "benchmarks/_model_metadata_lineage.html" %}
+    {% include "benchmarks/_model_metadata_provenance.html" %}
 {% endblock %}
 
 {# Center content #}
 {% block content %}
     <section class="individual_model container center">
-        <div class="content">
+        <div class="content box model-card-section model-card-scores">
             {# Scores #}
-            <h3 id="scores" class="title is-3">Scores on benchmarks</h3>
+            <div class="mc-heading">
+                <h3 id="scores" class="title is-3 mc-title">Scores on benchmarks</h3>
+                <span class="mc-badge is-api">from scoring API</span>
+            </div>
             <span class='fine_print'>
                Model rank shown below is with respect to all public models.<br>
             </span>
-            <div class="content benchmark_scores">
+            <div class="content benchmark_scores" tabindex="0" role="region" aria-label="Benchmark scores; scroll horizontally on small screens">
                 {% for score_row in model.scores %}
                     {% if score_row|has_valid_score %}
                         <div
@@ -247,10 +318,12 @@
         </div>
 
         {# Usage #}
-        <div class="box">
-            <h4 class="subtitle is-4">
-                How to use
-            </h4>
+        <div class="box model-card-section">
+            <div class="mc-heading">
+                <h4 class="subtitle is-4 mc-title">
+                    How to use
+                </h4>
+            </div>
             <div class="columns">
                 <div class="column">
                     <pre class="mt-0">
@@ -287,6 +360,12 @@ model.look_at(...)</pre>
                 </div>
             </div>
         </div>
+
+        {# Curated metadata: at-a-glance #}
+        {% include "benchmarks/_model_metadata.html" %}
+
+        {# Intended use and limits #}
+        {% include "benchmarks/_model_metadata_intended_use.html" %}
 
         {# BERG info box #}
         <div class="box" id="berg-box">
@@ -326,7 +405,12 @@ model.look_at(...)</pre>
                 </div>
             </div>
         </div>
+        {# Evaluation and I/O #}
+        {% include "benchmarks/_model_metadata_eval_io.html" %}
     </section>
+    {% include "benchmarks/_metadata_editor_dialog.html" %}
+    <script src="{% static 'benchmarks/js/metadata-editor.js' %}"></script>
+    <script src="{% static 'benchmarks/js/model-card.js' %}"></script>
     <script src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
     <script src="{% static 'benchmarks/js/link-tracking.js' %}"></script>
     <script>

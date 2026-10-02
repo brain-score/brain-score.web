@@ -390,3 +390,15 @@ except Exception as e:  # Catch all exceptions, not just NoCredentialsError
         CACHE_REFRESH_TOKEN = secrets.token_hex(16)
         print(f"Generated CACHE_REFRESH_TOKEN: {CACHE_REFRESH_TOKEN}")
         # If in DEBUG mode, visit http://localhost:8000/debug/show_token/ to see the token
+
+# Metadata proposals remain disabled until the shared contract, repository files,
+# GitHub App, and trusted publication worker are configured.
+MODEL_METADATA_EDIT_ENABLED = os.getenv('MODEL_METADATA_EDIT_ENABLED') == '1'
+from .metadata_github_settings import load_metadata_github_settings
+METADATA_GITHUB_SECRET_NAME = os.getenv('METADATA_GITHUB_SECRET_NAME', '')
+METADATA_GITHUB_SECRET_REGION = os.getenv('METADATA_GITHUB_SECRET_REGION', 'us-east-2')
+globals().update(load_metadata_github_settings(os.environ))
+MODEL_METADATA_REPOSITORIES = json.loads(os.getenv('MODEL_METADATA_REPOSITORIES', json.dumps({
+    'vision': {'repository': 'brain-score/vision', 'branch': 'master', 'model_root': 'brainscore_vision/models'},
+    'language': {'repository': 'brain-score/language', 'branch': 'main', 'model_root': 'brainscore_language/models'},
+})))

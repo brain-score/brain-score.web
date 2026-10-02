@@ -1,0 +1,978 @@
+// Model card page (model.html + _model_metadata*.html partials).
+// Visual language from the Figma model-card design: white cards with a green
+// top accent, uppercase gray field labels, muted italic empties, pills/chips,
+// and a gradient hero.
+
+$mc-border: #e3e8f0
+$mc-label: #7a869c
+$mc-muted: $brainscore_gray3
+$mc-panel-bg: #f7f9fc
+$mc-verified: $brainscore_green
+$mc-probable: #f0a24b
+$mc-uncertain: #e06666
+$mc-undocumented: #c3cbd9
+
+// ---------- shared card chrome ----------
+
+.model-card-section
+  border: 1px solid $mc-border
+  border-top: 3px solid $brainscore_green
+  border-radius: 10px
+  box-shadow: 0 1px 3px rgba(0, 27, 54, 0.06)
+  padding: 1.5rem
+
+  .mc-heading
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 0.75rem
+    margin-bottom: 1rem
+
+    .mc-title
+      margin-bottom: 0
+
+.mc-heading-actions
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  flex-shrink: 0
+
+// Placeholder for the future metadata-editing interface: visible so the card
+// communicates that fields are editable, disabled until the backend exists.
+.mc-edit-button
+  display: inline-flex
+  align-items: center
+  gap: 0.35rem
+  font-size: 0.7rem
+  font-weight: 600
+  padding: 0.2rem 0.65rem
+  border-radius: 999px
+  background: white
+  color: $mc-label
+  border: 1px solid $mc-border
+  white-space: nowrap
+
+  &:disabled
+    cursor: not-allowed
+    opacity: 0.75
+
+.mc-kicker
+  text-transform: uppercase
+  letter-spacing: 0.08em
+  font-size: 0.7rem
+  font-weight: 700
+  color: $mc-label
+  margin-bottom: 0.15rem
+
+.mc-badge
+  display: inline-block
+  flex-shrink: 0
+  font-size: 0.7rem
+  font-weight: 600
+  padding: 0.2rem 0.6rem
+  border-radius: 999px
+  background: rgba($brainscore_green, 0.12)
+  color: darken($brainscore_green, 18%)
+  border: 1px solid rgba($brainscore_green, 0.35)
+  white-space: nowrap
+
+  &.is-api
+    background: rgba($brainscore_sky, 0.1)
+    color: darken($brainscore_sky, 12%)
+    border-color: rgba($brainscore_sky, 0.35)
+
+// Unified empty-state slot (_mc_empty_value.html). The dashed outline marks
+// the field as documentable — a hook for the future editing interface.
+.mc-empty
+  display: inline-block
+  color: $mc-muted
+  font-style: italic
+  font-weight: 400
+  font-size: 0.85em
+  border: 1px dashed $mc-border
+  border-radius: 4px
+  padding: 0 0.45rem
+  line-height: 1.5
+
+  &.is-na  // "Not applicable" is a fact, not a documentation gap
+    border: none
+    padding: 0
+
+// One-line summary shown in place of a fully-undocumented section's body
+.mc-empty-summary
+  font-size: 0.85rem
+  color: $mc-label
+  margin-bottom: 0.5rem
+
+// Confidence dot: yellow = probable (medium), red = uncertain (low)
+.mc-field-dot
+  display: inline-block
+  width: 8px
+  height: 8px
+  border-radius: 50%
+  background: $mc-probable
+  margin-left: 0.35rem
+  vertical-align: middle
+  cursor: help
+
+  &.is-uncertain
+    background: $mc-uncertain
+
+.mc-note
+  font-size: 0.8rem
+  color: $mc-label
+  margin-top: 0.75rem
+
+.mc-doc-hint
+  .mc-empty
+    margin: 0 0.15rem
+
+// ---------- hero ----------
+
+.model-card-hero
+  h1.title
+    color: white
+    word-break: break-all
+    margin-bottom: 0.75rem
+
+  .mc-hero-pills
+    display: flex
+    flex-wrap: wrap
+    gap: 0.5rem
+    margin-bottom: 0.6rem
+
+  .mc-hero-pill
+    display: inline-flex
+    align-items: center
+    gap: 0.4rem
+    padding: 0.3rem 0.8rem
+    border-radius: 999px
+    background: rgba(255, 255, 255, 0.92)
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    font-weight: 600
+    border: 1px solid rgba(255, 255, 255, 0.6)
+    max-width: 100%
+
+    &:hover
+      background: white
+
+    strong
+      color: inherit
+
+    &.is-paper
+      border-color: $brainscore_pollen
+      box-shadow: 0 0 0 1px $brainscore_pollen
+
+    &.is-muted
+      background: rgba(255, 255, 255, 0.55)
+      color: rgba(0, 27, 54, 0.65)
+
+    &.is-compare
+      border-color: rgba($brainscore_sky, 0.7)
+      box-shadow: 0 0 0 1px rgba($brainscore_sky, 0.7)
+
+    .mc-hero-pill-note
+      font-size: 0.65rem
+      text-transform: lowercase
+      color: $mc-label
+      font-weight: 500
+
+  .mc-hero-stats
+    display: flex
+    flex-wrap: wrap
+    align-items: center
+    gap: 0.35rem 1.15rem
+    width: fit-content
+    max-width: 100%
+    padding: 0.4rem 0.75rem
+    margin-top: 0.8rem
+    border-radius: 8px
+    background: rgba(255, 255, 255, 0.65)
+
+  .mc-hero-stat
+    display: inline-flex
+    align-items: center
+    gap: 0.35rem
+    padding: 0.25rem 0
+    min-width: 0
+    max-width: 100%
+    flex-wrap: wrap
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    text-decoration: none
+
+    > i
+      width: 1rem
+      text-align: center
+      opacity: 0.75
+
+    .mc-hero-stat-label
+      font-size: inherit
+      font-weight: 400
+
+    .mc-hero-stat-value
+      font-size: inherit
+      font-weight: 700
+
+// ---------- at-a-glance specs grid ----------
+
+.mc-specs
+  display: grid
+  grid-template-columns: 1fr 1fr
+  column-gap: 2rem
+
+  > div
+    padding: 0.6rem 0
+    border-bottom: 1px solid lighten($mc-border, 3%)
+
+    dt
+      text-transform: uppercase
+      letter-spacing: 0.08em
+      font-size: 0.65rem
+      font-weight: 700
+      color: $mc-label
+      margin-bottom: 0.1rem
+
+    dd
+      margin-left: 0
+      font-size: 0.9rem
+      color: $brainscore_gray4
+
+  @media screen and (max-width: 768px)
+    grid-template-columns: 1fr
+
+// ---------- training / creators panels ----------
+
+.mc-grid
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 1rem
+  margin-top: 1.25rem
+
+  @media screen and (max-width: 900px)
+    grid-template-columns: 1fr
+
+.mc-panel
+  background: $mc-panel-bg
+  border: 1px solid lighten($mc-border, 2%)
+  border-radius: 8px
+  padding: 1rem 1.15rem
+
+  .mc-panel-title
+    margin-bottom: 0.75rem
+
+  .mc-panel-lede
+    font-size: 0.85rem
+    color: darken($mc-label, 12%)
+    margin-bottom: 0.75rem
+
+.mc-datasets
+  display: flex
+  flex-direction: column
+  gap: 0.4rem
+  margin-bottom: 0.75rem
+
+.mc-dataset-chip
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  background: white
+  border: 1px solid $mc-border
+  border-radius: 999px
+  padding: 0.25rem 0.75rem 0.25rem 0.3rem
+  font-size: 0.85rem
+  align-self: flex-start
+  max-width: 100%
+
+  strong
+    min-width: 0
+    overflow-wrap: anywhere
+
+  .mc-dataset-role
+    flex: 0 0 auto
+    white-space: nowrap
+    background: rgba($brainscore_green, 0.15)
+    color: darken($brainscore_green, 20%)
+    border-radius: 999px
+    padding: 0.1rem 0.55rem
+    font-size: 0.65rem
+    font-weight: 700
+    text-transform: lowercase
+
+.mc-dataset-count
+  margin: 0.2rem 0.3rem 0
+  color: $mc-label
+  font-size: 0.75rem
+  overflow-wrap: anywhere
+
+.mc-facts
+  > div
+    display: flex
+    gap: 0.4rem
+    padding: 0.25rem 0
+    font-size: 0.85rem
+
+    dt
+      font-weight: 700
+      color: $brainscore_gray4
+      flex-shrink: 0
+
+    dd
+      margin-left: 0
+      color: darken($mc-label, 10%)
+
+// ---------- intended use ----------
+
+.mc-use-grid
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 1rem
+
+  @media screen and (max-width: 768px)
+    grid-template-columns: 1fr
+
+.mc-use-cell
+  border: 1px solid $mc-border
+  border-left-width: 3px
+  border-radius: 8px
+  padding: 0.9rem 1.1rem
+
+  h4
+    text-transform: uppercase
+    letter-spacing: 0.08em
+    font-size: 0.7rem
+    font-weight: 700
+    color: $mc-label
+    margin-bottom: 0.5rem
+
+  ul
+    margin: 0 0 0 1.1rem
+    font-size: 0.85rem
+
+    li
+      margin-bottom: 0.25rem
+
+  &.is-recommended
+    border-left-color: $brainscore_green
+  &.is-users
+    border-left-color: $brainscore_sky
+  &.is-limitation
+    border-left-color: $mc-probable
+  &.is-bias
+    border-left-color: #d4737e
+
+// ---------- scores section tweaks ----------
+
+.model-card-scores
+  .fine_print
+    display: block
+    margin-bottom: 1rem
+
+// ---------- sidebar cards ----------
+
+.model-sidebar-card
+  border: 1px solid $mc-border
+  border-top: 3px solid $brainscore_green
+  border-radius: 10px
+  box-shadow: 0 1px 3px rgba(0, 27, 54, 0.06)
+
+  .model-sidebar-title
+    margin-bottom: 0.75rem
+
+  .mc-sidebar-note
+    font-size: 0.75rem
+    color: $mc-label
+    margin-top: 0.5rem
+
+  .mc-layer-table
+    background: transparent
+    font-size: 0.85rem
+
+    code
+      background: $mc-panel-bg
+      color: $brainscore_gray4
+
+// provenance
+.mc-verification-bar
+  display: flex
+  height: 8px
+  border-radius: 999px
+  overflow: hidden
+  background: $mc-panel-bg
+  margin-bottom: 0.75rem
+
+  span
+    flex-grow: var(--metadata-count, 1)
+
+    &.is-verified
+      background: $mc-verified
+    &.is-probable
+      background: $mc-probable
+    &.is-uncertain
+      background: $mc-uncertain
+    &.is-undocumented
+      background: $mc-undocumented
+
+.mc-verification-counts
+  > div
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    font-size: 0.85rem
+    padding: 0.15rem 0
+
+    dt
+      width: 9px
+      height: 9px
+      border-radius: 50%
+      flex-shrink: 0
+
+      &.is-verified
+        background: $mc-verified
+      &.is-probable
+        background: $mc-probable
+      &.is-uncertain
+        background: $mc-uncertain
+      &.is-undocumented
+        background: $mc-undocumented
+
+    dd
+      margin-left: 0
+      color: darken($mc-label, 10%)
+
+      strong
+        color: $brainscore_gray4
+
+// lineage
+.mc-lineage-tree
+  list-style: none
+  margin: 0 0 0.5rem 0
+  padding-left: 0
+
+  li
+    position: relative
+    padding-left: 1.1rem
+    font-size: 0.85rem
+    margin-bottom: 0.35rem
+
+    &::before
+      content: ""
+      position: absolute
+      left: 0.25rem
+      top: 0.45em
+      width: 7px
+      height: 7px
+      border-radius: 50%
+      background: $mc-undocumented
+
+  .mc-lineage-ancestor
+    color: $mc-label
+
+    a
+      color: darken($mc-label, 15%)
+      text-decoration: underline
+
+  .mc-lineage-current
+    &::before
+      background: $brainscore_green
+
+    strong
+      color: $brainscore_gray4
+      word-break: break-all
+
+.mc-lineage-label
+  text-transform: uppercase
+  letter-spacing: 0.08em
+  font-size: 0.65rem
+  font-weight: 700
+  color: $mc-label
+  margin: 0.75rem 0 0.4rem
+
+.mc-lineage-related
+  list-style: none
+  margin: 0
+  padding-left: 0
+
+  li
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 0.5rem
+    font-size: 0.8rem
+    padding: 0.2rem 0
+
+    .mc-lineage-related-name
+      word-break: break-all
+
+.mc-tag
+  flex-shrink: 0
+  font-size: 0.65rem
+  font-weight: 600
+  background: $mc-panel-bg
+  border: 1px solid $mc-border
+  border-radius: 999px
+  padding: 0.05rem 0.5rem
+  color: darken($mc-label, 10%)
+
+.mc-lineage-compare
+  flex-shrink: 0
+  font-size: 0.7rem
+  text-decoration: none
+  color: $mc-label
+  padding: 0 0.25rem
+
+  &:hover, &:focus-visible
+    color: darken($brainscore_sky, 10%)
+
+.mc-lineage-toggle
+  background: none
+  border: none
+  color: $brainscore_sky
+  font-size: 0.75rem
+  cursor: pointer
+  padding: 0.35rem 0
+  display: inline-flex
+  align-items: center
+  gap: 0.35rem
+
+// Preserve the model-card design while fixing disclosure and overflow behavior.
+.model-page
+  [hidden]
+    display: none !important
+  .model-card-section, .model-card-section .mc-heading
+    margin-top: 0
+  .model-card-hero .title, .model-card-section, .model-sidebar-card
+    overflow-wrap: anywhere
+    min-width: 0
+  .benchmark_scores
+    max-width: 100%
+    overflow-x: auto
+  .mc-section-toggle
+    border: 0
+    padding: 0
+    background: transparent
+    color: inherit
+    font: inherit
+    cursor: pointer
+  .mc-section-toggle.is_expandable::before
+    content: "\229E"
+  .mc-section-toggle.is_collapsible::before
+    content: "\229F"
+  .mc-section-toggle:focus-visible, .mc-confidence summary:focus-visible
+    outline: 2px solid $brainscore_sky
+    outline-offset: 3px
+
+  @media screen and (max-width: 1024px)
+    .content-container, .content-container.sidebar-collapsed
+      width: calc(100% - 104px)
+      margin-left: 92px
+      margin-right: 12px
+    .main-content
+      display: flex
+      flex-direction: column
+      margin: 0
+    .column.is-three-quarters.main-cell
+      width: 100%
+      position: static
+      padding: 0
+    .info-section
+      display: block
+      width: 100%
+      max-width: none
+      padding: 0
+    .banner.box.gradient
+      width: 100%
+      margin-left: 0
+    .mc-hero-stat
+      max-width: 100%
+    .mc-heading, .mc-facts > div, .mc-lineage-related li
+      flex-wrap: wrap
+    .model-card-section
+      padding: 1rem
+    .mc-lineage-related-name
+      flex-basis: 100%
+
+.mc-confidence
+  display: inline-block
+  position: relative
+  vertical-align: middle
+  summary
+    list-style: none
+    cursor: pointer
+    &::-webkit-details-marker
+      display: none
+  .mc-confidence-source
+    position: absolute
+    z-index: 10
+    top: 1rem
+    left: 0
+    width: 16rem
+    padding: 0.6rem
+    border: 1px solid $mc-border
+    border-radius: 4px
+    background: white
+    color: #3f4c60
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+    font-size: 0.8rem
+    font-weight: normal
+    text-transform: none
+    letter-spacing: normal
+    overflow-wrap: anywhere
+    @media screen and (max-width: 768px)
+      position: fixed
+      top: auto
+      bottom: 1rem
+      left: 92px
+      right: 12px
+      width: auto
+
+.mc-sr-only
+  position: absolute
+  width: 1px
+  height: 1px
+  padding: 0
+  margin: -1px
+  overflow: hidden
+  clip: rect(0, 0, 0, 0)
+  white-space: nowrap
+  border: 0
+
+// Header tags summarize metadata; full descriptions stay in the cards below.
+.model-card-hero
+  .mc-hero-detail-link
+    text-decoration: none
+    &:hover
+      text-decoration: underline
+      text-underline-offset: 3px
+    &:focus-visible
+      outline: 2px solid white
+      outline-offset: 3px
+  .mc-hero-stat-value
+    white-space: nowrap
+
+#mc-supervision, #mc-license, #mc-at-a-glance-body
+  scroll-margin-top: 1.5rem
+
+.mc-schema-trigger
+  font-family: inherit
+  cursor: pointer
+  &:hover
+    text-decoration: underline
+  &:focus-visible
+    outline: 2px solid $brainscore_gray4
+    outline-offset: 3px
+
+.mc-schema-dialog
+  width: min(960px, calc(100vw - 2rem))
+  max-width: calc(100vw - 2rem)
+  max-height: calc(100dvh - 2rem)
+  margin: auto
+  padding: 1.5rem
+  border: 1px solid $mc-border
+  border-radius: 12px
+  color: $brainscore_gray4
+  background: white
+  font-size: 0.9rem
+  overflow: auto
+  &::backdrop
+    background: rgba(0, 27, 54, 0.55)
+  p
+    margin: 0.75rem 0
+  .mc-schema-heading
+    display: flex
+    align-items: flex-start
+    justify-content: space-between
+    gap: 1rem
+    h2
+      font-size: 1.25rem
+      font-weight: 700
+  .mc-schema-heading form
+    flex-shrink: 0
+  .mc-schema-close
+    white-space: nowrap
+    word-break: normal
+    padding: 0.4rem 0.75rem
+    background: white
+    border: 1px solid $mc-border
+    border-radius: 6px
+    color: inherit
+    cursor: pointer
+  .mc-schema-yaml
+    max-width: 100%
+    overflow: auto
+    padding: 1rem
+    margin-top: 1rem
+    border: 1px solid $mc-border
+    border-radius: 8px
+    background: #f5f7fa
+    color: $brainscore_gray4
+    font-size: 0.8rem
+    line-height: 1.65
+    white-space: pre
+    word-break: normal
+    overflow-wrap: normal
+  code
+    color: inherit
+    background: transparent
+
+.metadata-editor
+  max-width: 100%
+  padding: 0
+  overflow-wrap: anywhere
+  > :first-child, section > :first-child
+    margin-top: 0
+  .metadata-editor-field, .metadata-editor-list
+    margin: 0 0 16px
+    min-width: 0
+  label, legend
+    display: block
+    font-weight: 600
+  textarea, input:not([type=checkbox]):not([type=hidden]), select
+    width: 100%
+    max-width: 100%
+    padding: 0.5rem
+    box-sizing: border-box
+    border: 1px solid #c7d3dc
+    border-radius: 6px
+    font: inherit
+    background: white
+  textarea
+    resize: vertical
+    min-height: 64px
+  label
+    margin-bottom: 6px
+    font-size: 0.9rem
+  .is-locked
+    opacity: 0.85
+  .metadata-editor-row
+    margin-bottom: 1rem
+    padding-bottom: 0.5rem
+    border-bottom: 1px solid $mc-border
+  .help
+    font-size: 0.85rem
+    color: #526577
+  .errorlist, [role=alert]
+    color: #a12424
+  pre
+    overflow-x: auto
+    width: 100%
+    max-width: 100%
+    border: 0
+
+  .button
+    max-width: 100%
+    height: auto
+    white-space: normal
+
+  .metadata-field-section
+    border: 1px solid $mc-border
+    border-radius: 8px
+    margin-bottom: 12px
+    > summary
+      padding: 14px 16px
+      cursor: pointer
+      font-weight: 600
+      font-size: 0.95rem
+      span
+        float: right
+        margin-left: 12px
+        font-weight: 400
+        color: #526577
+        font-size: 0.8rem
+    &[open] > summary
+      border-bottom: 1px solid $mc-border
+  .metadata-section-content
+    padding: 16px 16px 0
+  .metadata-field-sources
+    font-size: 0.8rem
+    margin-top: 6px
+    summary
+      cursor: pointer
+      color: #526577
+  .metadata-evidence
+    margin: 24px 0
+    padding: 0
+    h3
+      font-size: 1rem
+      font-weight: 600
+      margin-bottom: 12px
+  .metadata-source-fields
+    display: grid
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr)
+    gap: 16px
+  .metadata-locked-section
+    background: #f7f9fb
+  .metadata-editor-actions
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 12px
+    padding: 16px 24px
+    border-top: 1px solid $mc-border
+    background: white
+    flex-shrink: 0
+    .button
+      border-radius: 6px
+      min-height: 40px
+      padding: 8px 16px
+      font-size: 0.9rem
+      line-height: 1.4
+  .metadata-change
+    border: 1px solid $mc-border
+    border-radius: 8px
+    overflow: hidden
+    margin: 0 0 16px
+    h3
+      padding: 12px 16px
+      font-size: 0.95rem
+      font-weight: 600
+      border-bottom: 1px solid $mc-border
+      span
+        float: right
+        font-size: 0.8rem
+        font-weight: 400
+        color: #526577
+  .metadata-change-values
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    > div
+      padding: 12px 16px
+    pre
+      font-family: inherit
+      padding: 0
+      margin: 8px 0 0
+      white-space: pre-wrap
+      overflow-wrap: anywhere
+      background: transparent
+    .metadata-proposed-value
+      background: #f0f8f4
+      border-left: 1px solid $mc-border
+  .metadata-value-label
+    color: #526577
+    font-size: 0.8rem
+  .metadata-review-reason
+    margin: 20px 0
+  .metadata-full-diff pre
+    margin: 0
+    max-height: 40dvh
+    white-space: pre
+    font-size: 0.8rem
+    padding: 16px
+  .metadata-review-note, .metadata-editor-intro
+    font-size: 0.9rem
+    color: #526577
+    line-height: 1.6
+  .metadata-login-intro
+    font-size: 1rem
+    line-height: 1.6
+  .metadata-login-continue
+    display: inline-block
+    margin: 12px 0 0
+    padding: 0
+    border: 0
+    background: transparent
+    color: #08718e
+    font: inherit
+    font-size: 0.9rem
+    text-decoration: underline
+    text-underline-offset: 3px
+    cursor: pointer
+    &:focus-visible
+      outline: 2px solid #08718e
+      outline-offset: 4px
+
+// The editor uses the same native dialog behavior as the schema popup.
+body:has(.mc-metadata-editor-dialog[open])
+  overflow: hidden
+
+.mc-metadata-editor-dialog
+  width: min(900px, calc(100vw - 32px))
+  max-width: none
+  max-height: calc(100dvh - 32px)
+  margin: auto
+  padding: 0
+  border: 1px solid $mc-border
+  border-radius: 12px
+  color: $brainscore_gray4
+  box-shadow: 0 20px 70px rgba(0, 22, 40, 0.25)
+  &.is-signing-in
+    width: min(600px, calc(100vw - 32px))
+  &[open]
+    display: flex
+    flex-direction: column
+  &::backdrop
+    background: rgba(0, 22, 40, 0.48)
+  .metadata-dialog-heading
+    display: flex
+    justify-content: space-between
+    align-items: flex-start
+    gap: 16px
+    padding: 20px 24px
+    border-bottom: 1px solid $mc-border
+    h2
+      margin: 0
+      font-size: 1.4rem
+      font-weight: 600
+    p
+      margin: 4px 0 0
+      overflow-wrap: anywhere
+  .metadata-dialog-close
+    flex-shrink: 0
+    padding: 7px 12px
+    border: 1px solid $mc-border
+    border-radius: 6px
+    background: white
+    color: inherit
+    cursor: pointer
+  .metadata-dialog-body
+    overflow: hidden
+    min-height: 0
+    display: flex
+    flex-direction: column
+  .metadata-editor-scroll
+    min-height: 0
+    overflow-y: auto
+    overscroll-behavior: contain
+    padding: 20px 24px
+    flex: 1 1 auto
+  .metadata-dialog-status
+    margin: 0
+    padding: 0 24px 12px
+    &:empty
+      display: none
+  .metadata-editor
+    display: flex
+    flex-direction: column
+    min-height: 0
+    [data-metadata-form]
+      display: flex
+      flex-direction: column
+      min-height: 0
+    p
+      margin-bottom: 8px
+    .metadata-editor-intro
+      margin-bottom: 20px
+    [data-metadata-authorize]
+      margin: 0
+      flex-shrink: 0
+  @media (max-width: 600px)
+    width: calc(100vw - 16px)
+    max-height: calc(100dvh - 16px)
+    .metadata-dialog-heading
+      padding: 16px
+      h2
+        font-size: 1.15rem
+    .metadata-editor-scroll, .metadata-editor-actions
+      padding: 16px
+    .metadata-source-fields, .metadata-change-values
+      grid-template-columns: minmax(0, 1fr)
+    .metadata-source-fields
+      gap: 0
+    .metadata-change-values .metadata-proposed-value
+      border-left: 0
+      border-top: 1px solid $mc-border
+    .metadata-field-section > summary span
+      float: none
+      display: block
+      margin: 4px 0 0 16px

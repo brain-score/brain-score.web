@@ -1,0 +1,68 @@
+name: Publish reviewed model metadata
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: Registered domain
+        required: true
+        type: string
+      pr:
+        description: Merged PR number in that domain repository
+        required: true
+        type: string
+      environment:
+        description: Configured publication environment
+        required: true
+        type: choice
+        default: metadata-dev
+        options: [metadata-dev, metadata-staging, metadata-production]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: metadata-publication-${{ inputs.environment }}-${{ inputs.domain }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: vars.METADATA_V2_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      METADATA_CORE_REF: ${{ vars.METADATA_CORE_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the approved core metadata contract
+        run: |
+          [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Set METADATA_CORE_REF to a full approved core commit SHA'; exit 1; }
+          pip install -r requirements.txt -r requirements-metadata.txt
+          python -c "import brainscore_core.metadata"
+          pip check
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.METADATA_PUBLISH_ROLE_ARN }}
+          aws-region: us-east-2
+      - uses: actions/create-github-app-token@v2
+        id: app
+        with:
+          app-id: ${{ vars.METADATA_APP_ID }}
+          private-key: ${{ secrets.METADATA_APP_PRIVATE_KEY }}
+          owner: brain-score
+          repositories: ${{ vars.METADATA_DOMAIN_REPOSITORIES }}
+          permission-contents: read
+          permission-pull-requests: read
+      - name: Publish the verified merged revision
+        env:
+          METADATA_DOMAIN: ${{ inputs.domain }}
+          METADATA_PR: ${{ inputs.pr }}
+          METADATA_PUBLISH_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          METADATA_DATABASE_SECRET: ${{ vars.METADATA_DATABASE_SECRET }}
+          METADATA_DATABASE_NAME: ${{ vars.METADATA_DATABASE_NAME }}
+          MODEL_METADATA_REPOSITORIES: ${{ vars.MODEL_METADATA_REPOSITORIES }}
+          METADATA_CACHE_SECRET: ${{ vars.METADATA_CACHE_SECRET }}
+          METADATA_CACHE_PREFIX: ${{ vars.METADATA_CACHE_PREFIX }}
+        run: python manage.py publish_model_metadata_pr --domain "$METADATA_DOMAIN" --pr "$METADATA_PR" --settings=web.metadata_publisher_settings

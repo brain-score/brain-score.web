@@ -1,0 +1,19 @@
+{% extends "benchmarks/components/app-view.html" %}
+{% load static %}
+{% block third_party_viz_libs %}{% endblock %}
+{% block body_class %}model-page{% endblock %}
+{% block viewport %}<meta name="viewport" content="width=device-width, initial-scale=1">{% endblock %}
+{% block page_title %}Metadata PR preview{% endblock %}
+{% block banner %}<h1 class="title">Metadata proposal preview</h1><p>{{ model.name }}</p>{% endblock %}
+{% block main_content %}
+{% if error %}<div class="box" role="alert">{{ error }}</div>{% else %}
+<div class="box">
+    <p><strong>Unpublished proposal.</strong> These values are from <a href="{{ pr_url }}">PR #{{ number }}</a> at <code>{{ revision }}</code>. The live model card has not been changed.</p>
+    {% if protected %}<p>Protected fields require a maintainer override before publication:</p><ul>{% for field in protected %}<li>{{ field }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% include "benchmarks/_model_metadata.html" %}
+{% include "benchmarks/_model_metadata_intended_use.html" %}
+{% include "benchmarks/_model_metadata_eval_io.html" %}
+<script src="{% static 'benchmarks/js/model-card.js' %}"></script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% if model_metadata %}
+<section class="box model-card-section model-intended-use">
+    <div class="mc-heading">
+        <h2 class="title is-4 mc-title">
+            {% if model_metadata.section_summary.intended_use.documented == 0 %}
+                <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-intended-use-body" aria-label="Toggle section details"></button>
+            {% endif %}
+            Intended use and limits
+        </h2>
+        <button class="mc-edit-button" type="button" disabled
+                title="Metadata editing is coming soon — for now, updates go through the curation workbook">
+            <i class="fa-solid fa-pen"></i> Edit
+        </button>
+    </div>
+    {% if model_metadata.section_summary.intended_use.documented == 0 %}
+        <p class="mc-empty-summary">0 of {{ model_metadata.section_summary.intended_use.total }} fields documented — no values are available for this section.</p>
+    {% endif %}
+    <div class="mc-use-grid" id="mc-intended-use-body">
+        <div class="mc-use-cell is-recommended">
+            <h4>Recommended applications{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.intended_use_applications %}</h4>
+            {% if model_metadata.intended_use.applications %}
+                <ul>{% for item in model_metadata.intended_use.applications %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-users">
+            <h4>Target users{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.intended_use_users %}</h4>
+            {% if model_metadata.intended_use.users %}
+                <ul>{% for item in model_metadata.intended_use.users %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-limitation">
+            <h4>Known limitations{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.intended_use_limitations %}</h4>
+            {% if model_metadata.intended_use.limitations %}
+                <ul>{% for item in model_metadata.intended_use.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+        </div>
+        <div class="mc-use-cell is-bias">
+            <h4>Biases{% include "benchmarks/_mc_field_dot.html" with source=model_metadata.field_badges.intended_use_biases %}</h4>
+            {% if model_metadata.intended_use.biases %}
+                <ul>{% for item in model_metadata.intended_use.biases %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+                <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}

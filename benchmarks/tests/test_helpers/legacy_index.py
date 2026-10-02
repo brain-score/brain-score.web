@@ -366,7 +366,9 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                                  'model': score.model.id,
                                  'score_ceiled': score_ceiled, 'score_raw': score.score_raw, 'error': score.error,
                                  'comment': score.comment, 'is_complete': 1})
-                benchmark_scores = pd.DataFrame(rows)
+                benchmark_scores = pd.DataFrame(rows).astype({
+                    column: float for column in ('score_ceiled', 'score_raw', 'error')
+                })
                 scores = benchmark_scores if scores is None else pd.concat((scores, benchmark_scores))
         else:  # hierarchy level, we need to aggregate the scores in the hierarchy below
             if scores is not None:
@@ -384,13 +386,18 @@ def _collect_models(domain: str, benchmarks, show_public, user=None, score_filte
                     missing_scores['is_complete'] = 0
                     children_scores = pd.concat((children_scores, missing_scores))
                 # compute average of children scores -- treat missing scores as 0 for averaging
-                benchmark_scores = children_scores.fillna(0).groupby('model').mean(numeric_only=True)
+                numeric_scores = children_scores.select_dtypes(include='number').copy()
+                # All-null score/error columns can have object dtype. Include
+                # them explicitly rather than relying on pandas downcasting.
+                for value_column in ['score_ceiled', 'score_raw', 'error']:
+                    numeric_scores[value_column] = pd.to_numeric(children_scores[value_column])
+                benchmark_scores = numeric_scores.fillna(0).groupby('model').mean()
                 # for children scores that are all nan, set average to nan as well (rather than 0 from `fillna`)
                 if len(benchmark_scores) > 0:
                     all_children_nan = children_scores.groupby('model').apply(
                         lambda group: all(group['score_raw'].isna()))
                     for value_column in ['score_ceiled', 'score_raw', 'error']:
-                        benchmark_scores[value_column][all_children_nan] = np.nan
+                        benchmark_scores.loc[all_children_nan, value_column] = np.nan
                 # restore model index
                 benchmark_scores = benchmark_scores.reset_index()
                 # add meta

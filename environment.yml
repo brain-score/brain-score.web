@@ -4,21 +4,22 @@ channels:
 - anaconda
 - pytorch
 dependencies:
-  - python>=3.6, <=3.11
+  - python=3.11
   - pip
   - django=4.1
   - numpy
-  - psycopg2
   - nodejs
   - boto3
   - pandas
   - pip:
+    - psycopg2-binary
     - gunicorn==23.0.0
     - whitenoise==6.6.0
     - django_compressor==4.4
     - colour
     - tqdm
     - requests
+    - PyJWT[crypto]>=2.10,<3
     - django-redis==5.3.0
     - Markdown==3.8.2
     - Pygments==2.17.2

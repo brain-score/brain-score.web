@@ -150,3 +150,17 @@ Run Playwright in headed mode with slow motion if you want to see the tests in a
 
     p.chromium.launch(headless=False, slow_mo=300)
 
+
+Model metadata and migration tests
+*********************************
+
+The metadata database suite uses disposable PostgreSQL rather than the shared
+``web_tests`` database. Run it with ``web.metadata_test_settings``; connection
+options are supplied through ``METADATA_TEST_*`` environment variables. The
+``Model metadata`` GitHub Actions workflow provisions PostgreSQL and runs the
+suite on a freshly migrated test database.
+
+See ``benchmarks/model_metadata/README.md`` for local test commands and the
+infrastructure repository's ``web/metadata/`` guides for bootstrap and rollout.
+Apply reviewed metadata migrations to the shared Jenkins test database before
+running tests that need them; the test runner does not apply migrations.
