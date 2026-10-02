@@ -776,13 +776,14 @@ class ModelMetadataPublication(models.Model):
 
 
 class ModelMetadataRevision(models.Model):
-    """Immutable successful publication audit, including reviewed source overrides."""
+    """Immutable successful publication audit, including merge attribution."""
     publication = models.ForeignKey(ModelMetadataPublication, on_delete=models.PROTECT, related_name='revisions')
     commit_sha = models.CharField(max_length=40)
     pull_request = models.PositiveIntegerField()
     document = models.JSONField()
     override_reviewer = models.CharField(max_length=100, blank=True)
     reviewer = models.CharField(max_length=100, blank=True)
+    merged_by = models.CharField(max_length=100, blank=True)
     published_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

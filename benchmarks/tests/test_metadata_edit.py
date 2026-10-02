@@ -1,4 +1,4 @@
-"""The editing boundary must never publish an unmerged or unreviewed change."""
+"""The editing boundary must never publish an unmerged change."""
 
 from copy import deepcopy
 from unittest import skipUnless
@@ -55,10 +55,12 @@ class FakeGitHub:
         self.content = dump(doc or document())
         self.blob = blob
         self.current = blob
-        self.reviewer = "maintainer"
         self.base_content = "example: {}"
         self.pr = {
             "number": 10,
+            "labels": [],
+            "user": {"login": "merger"},
+            "merged_by": {"login": "merger"},
             "merged": merged,
             "head": {"sha": "e" * 40},
             "base": {
@@ -80,13 +82,6 @@ class FakeGitHub:
             return self.base_content, "old"
         return self.content, self.current if ref == "master" else self.blob
 
-    def approved_reviewer(self, *args):
-        return "maintainer"
-
-    def override_reviewer(self, *args):
-        return self.reviewer
-
-
 @skipUnless(
     metadata_available(),
     "Install core with metadata support to run editing integration tests",
@@ -99,16 +94,15 @@ class PublicationTests(TestCase):
             name="example", domain="vision", owner=self.owner
         )
 
-    def test_first_publication_without_csv_requires_override(self):
+    def test_first_publication_preserves_legacy_without_review_or_label(self):
         ModelMeta.objects.create(model=self.model, total_parameter_count=55)
-        api = FakeGitHub()
-        api.reviewer = ""
-        with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, api)
-        self.assertFalse(ModelMetadataPublication.objects.exists())
-        self.assertEqual(
-            ModelMeta.objects.get(model=self.model).total_parameter_count, 55
-        )
+        publish_pull_request("vision", 10, FakeGitHub())
+        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 100)
+        self.assertEqual(ModelMeta.objects.get(model=self.model).total_parameter_count, 55)
+        revision = ModelMetadataRevision.objects.get()
+        self.assertEqual(revision.merged_by, "merger")
+        self.assertEqual(revision.reviewer, "")
+        self.assertEqual(revision.override_reviewer, "")
 
     def test_unknown_models_and_changes_to_published_identities_rejected(self):
         unknown = document()
@@ -185,19 +179,18 @@ class PublicationTests(TestCase):
         changed["models"]["example"]["model"]["parameter_count"] = 200
         api = FakeGitHub(changed, blob="second")
         api.pr["merge_commit_sha"] = "b" * 40
-        api.reviewer = ""
         publish_pull_request("vision", 10, api)
         unrelated = deepcopy(changed)
         unrelated["models"]["example"]["training"] = {"loss": "Cross entropy"}
         api = FakeGitHub(unrelated, blob="third")
         api.pr["merge_commit_sha"] = "c" * 40
-        api.reviewer = ""
         publish_pull_request("vision", 10, api)
         self.assertEqual(
             ModelMeta.objects.get(model=self.model).total_parameter_count, 200
         )
         revision = ModelMetadataRevision.objects.order_by("-pk").first()
-        self.assertEqual(revision.reviewer, "maintainer")
+        self.assertEqual(revision.reviewer, "")
+        self.assertEqual(revision.merged_by, "merger")
         self.assertEqual(revision.override_reviewer, "")
 
     def test_open_pr_cannot_write(self):
@@ -205,11 +198,11 @@ class PublicationTests(TestCase):
             publish_pull_request("vision", 10, FakeGitHub(merged=False))
         self.assertFalse(ModelMetadataRecord.objects.exists())
 
-    def test_merge_must_contain_exact_reviewed_metadata(self):
+    def test_merge_must_contain_exact_pr_head_metadata(self):
         api = FakeGitHub()
         original = api.file
         api.file = lambda repo, path, ref: (
-            (api.content, "different-reviewed-blob")
+            (api.content, "different-head-blob")
             if ref == "e" * 40
             else original(repo, path, ref)
         )
@@ -218,12 +211,19 @@ class PublicationTests(TestCase):
         self.assertFalse(ModelMetadataRecord.objects.exists())
         self.assertFalse(ModelMetadataRevision.objects.exists())
 
-    def test_merged_pr_without_current_maintainer_approval_cannot_write(self):
+    def test_merged_author_can_publish_without_approval(self):
         api = FakeGitHub()
-        api.approved_reviewer = lambda *args: ""
-        with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, api)
-        self.assertFalse(ModelMetadataRecord.objects.exists())
+        # No review API methods exist on the fake: merge is the authorization.
+        publish_pull_request("vision", 10, api)
+        revision = ModelMetadataRevision.objects.get()
+        self.assertEqual(revision.merged_by, api.pr["user"]["login"])
+        self.assertEqual(revision.reviewer, "")
+
+    def test_missing_merge_identity_is_not_fabricated(self):
+        api = FakeGitHub()
+        api.pr["merged_by"] = None
+        publish_pull_request("vision", 10, api)
+        self.assertEqual(ModelMetadataRevision.objects.get().merged_by, "")
 
     def test_schema_downgrade_and_move_outside_model_directory_rejected(self):
         publish_pull_request("vision", 10, FakeGitHub())
@@ -310,32 +310,24 @@ class PublicationTests(TestCase):
         )
         self.assertEqual(ModelMetadataRevision.objects.count(), 1)
 
-    def test_protected_sources_require_override_and_are_audited(self):
+    def test_merged_protected_changes_are_published_and_audited(self):
         publish_pull_request("vision", 10, FakeGitHub(document(kind="paper")))
-        api = FakeGitHub(document(200))
-        api.reviewer = ""
+        api = FakeGitHub(document(200, kind="paper"))
         api.blob = api.current = "changed"
         api.pr["merge_commit_sha"] = "b" * 40
-        with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, api)
-        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 100)
-        api.reviewer = "maintainer"
+        api.pr["merged_by"] = {"login": "admin-author"}
         publish_pull_request("vision", 10, api)
         self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 200)
-        self.assertEqual(
-            ModelMetadataRevision.objects.order_by("-pk").first().override_reviewer,
-            "maintainer",
-        )
+        revision = ModelMetadataRevision.objects.order_by("-pk").first()
+        self.assertEqual(revision.merged_by, "admin-author")
+        self.assertEqual(revision.reviewer, "")
+        self.assertEqual(revision.override_reviewer, "")
+        self.assertEqual(revision.document["sources"]["source"]["kind"], "paper")
 
-    def test_bootstrap_existing_data_requires_review(self):
-        ModelMetadataRecord.objects.create(
-            domain="vision", identifier="example", parameter_count=9
-        )
-        api = FakeGitHub()
-        api.reviewer = ""
-        with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, api)
-        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 9)
+    def test_merged_bootstrap_updates_canonical_data_without_review(self):
+        ModelMetadataRecord.objects.create(domain="vision", identifier="example", parameter_count=9)
+        publish_pull_request("vision", 10, FakeGitHub())
+        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 100)
 
     def test_failure_rolls_back_metadata_and_history(self):
         with patch(
@@ -843,30 +835,6 @@ class GitHubProposalTests(SimpleTestCase):
                 claim_submission_attempt(510)
             self.assertNotIn("cache failure", str(error.exception))
 
-    def test_commit_author_and_committer_cannot_approve(self):
-        api = GitHub()
-        pr = {"number": 10, "user": {"login": "author"}, "head": {"sha": "current"}}
-        review = {
-            "user": {"login": "reviewer", "type": "User"},
-            "state": "APPROVED",
-            "commit_id": "current",
-        }
-        for role in ["author", "committer"]:
-            with (
-                patch.object(
-                    api,
-                    "pages",
-                    side_effect=lambda path: (
-                        [{role: {"login": "reviewer"}}]
-                        if path.endswith("/commits")
-                        else [review]
-                    ),
-                ),
-                patch.object(api, "request") as request,
-            ):
-                self.assertEqual(api.approved_reviewer("brain-score/vision", pr), "")
-                request.assert_not_called()
-
     def test_reader_reuses_read_only_token_and_caches_only_immutable_files(self):
         import base64
 
@@ -1003,72 +971,6 @@ class GitHubProposalTests(SimpleTestCase):
                 for method, path, kw in calls
             )
         )
-
-    def test_approval_must_be_current_human_non_author_and_not_revoked(self):
-        api = GitHub()
-        pr = {"number": 10, "user": {"login": "author"}, "head": {"sha": "current"}}
-        approval = {
-            "user": {"login": "reviewer", "type": "User"},
-            "state": "APPROVED",
-            "commit_id": "current",
-        }
-        with patch.object(api, "request", return_value={"permission": "write"}):
-            for changed in (
-                {"commit_id": "old"},
-                {"user": {"login": "author", "type": "User"}},
-                {"user": {"login": "bot", "type": "Bot"}},
-            ):
-                with patch.object(
-                    api, "pages", return_value=[dict(approval, **changed)]
-                ):
-                    self.assertEqual(
-                        api.approved_reviewer("brain-score/vision", pr), ""
-                    )
-            with patch.object(
-                api,
-                "pages",
-                return_value=[approval, dict(approval, state="CHANGES_REQUESTED")],
-            ):
-                self.assertEqual(api.approved_reviewer("brain-score/vision", pr), "")
-            with patch.object(api, "pages", return_value=[approval]):
-                self.assertEqual(
-                    api.approved_reviewer("brain-score/vision", pr), "reviewer"
-                )
-
-    def test_app_pr_submitter_cannot_approve_own_change(self):
-        from brainscore_core.metadata.review import override
-
-        api = GitHub()
-        pr = {
-            "number": 10,
-            "user": {"login": "contributions[bot]", "type": "Bot"},
-            "base": {"repo": {"full_name": "brain-score/vision"}},
-            "head": {
-                "sha": "current",
-                "repo": {"full_name": "brain-score/vision"},
-                "ref": api.proposal_branch("nonce", 12, "contributor"),
-            },
-            "labels": [{"name": "metadata-source-override"}],
-        }
-        review = {
-            "user": {"login": "contributor", "type": "User"},
-            "state": "APPROVED",
-            "commit_id": "current",
-        }
-        with (
-            patch.object(api, "pages", return_value=[review]),
-            patch.object(api, "request", return_value={"permission": "admin"}),
-        ):
-            self.assertEqual(api.approved_reviewer("brain-score/vision", pr), "")
-        with (
-            patch("brainscore_core.metadata.review.pages", return_value=[review]),
-            patch(
-                "brainscore_core.metadata.review.api",
-                return_value={"permission": "admin"},
-            ),
-        ):
-            self.assertFalse(override(pr, "brain-score/vision"))
-
 
 @skipUnless(metadata_available(), "Install core with metadata support")
 class FormPreservationTests(SimpleTestCase):

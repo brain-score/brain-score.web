@@ -4,7 +4,7 @@ from benchmarks.model_metadata.github import GitHub, ProposalError
 
 
 class Command(BaseCommand):
-    help = "Publish validated model metadata from a merged domain-repository PR."
+    help = "Publish validated model metadata authorized by a merged domain-repository PR."
 
     def add_arguments(self, parser):
         parser.add_argument("--domain", required=True)
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             )
         try:
             results = publish_pull_request(
-                options["domain"], options["pr"], GitHub(token)
+                options["domain"], options["pr"], GitHub(token, read_only=True)
             )
         except (ProposalError, MetadataError) as exc:
             raise CommandError(str(exc)) from exc

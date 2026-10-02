@@ -224,39 +224,6 @@ class GitHub:
         except (ValueError, UnicodeError) as exc:
             raise ProposalError("Metadata is not valid UTF-8.") from exc
 
-    def approved_reviewer(self, repository, pr, require_override=False):
-        from brainscore_core.metadata.review import review_exclusions
-
-        if require_override and "metadata-source-override" not in {
-            label["name"] for label in pr.get("labels", [])
-        }:
-            return ""
-        reviews = self.pages(f"/repos/{repository}/pulls/{pr['number']}/reviews")
-        excluded = review_exclusions(
-            pr, self.pages(f"/repos/{repository}/pulls/{pr['number']}/commits")
-        )
-        latest = {}
-        for review in reviews:
-            if review["state"] in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
-                latest[review["user"]["login"]] = review
-        for user, review in latest.items():
-            if (
-                review["user"].get("type") != "User"
-                or user.lower() in excluded
-                or review["state"] != "APPROVED"
-                or review.get("commit_id") != pr["head"]["sha"]
-            ):
-                continue
-            access = self.request(
-                "GET", f"/repos/{repository}/collaborators/{quote(user)}/permission"
-            )
-            if access.get("permission") in {"admin", "maintain", "write"}:
-                return user
-        return ""
-
-    def override_reviewer(self, repository, pr):
-        return self.approved_reviewer(repository, pr, require_override=True)
-
     def create_branch(self, config, nonce, user_id, github_login):
         branch = self.proposal_branch(nonce, user_id, github_login)
         repo = config["repository"]

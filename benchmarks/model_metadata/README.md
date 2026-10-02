@@ -3,8 +3,12 @@
 Model pages read structured metadata from PostgreSQL. Models without a curated
 record use their submission metadata. Database failures do not fall back to CSVs.
 
-Contributions edit schema 2.0 YAML through reviewed PRs in the model's domain
-repository. Only merged, independently approved PRs can publish database changes.
+Contributions edit schema 2.0 YAML through PRs in the model's domain repository.
+Only merged PRs can publish database changes. Publication validates schema,
+registered identities, repository bindings and matching metadata blobs, without
+requiring an approval or source-override label. Repository rules govern merges;
+paper and Hugging Face fields remain locked in the website editor. New revision
+rows record GitHub's merger; historical approval audit fields remain intact.
 Editing and publication remain disabled until the deployment passes rehearsal.
 The shared contract is `brainscore_core.metadata`; the website schema dialog
 shows `static/benchmarks/schemas/metadata-v2.0.yaml`. Template download stays disabled.
@@ -20,6 +24,9 @@ Architecture, deployment settings, migration records, and recovery procedures
 live in [infrastructure/web/metadata](https://github.com/brain-score/infrastructure/tree/main/web/metadata).
 That documentation is being reviewed in
 [infrastructure PR #56](https://github.com/brain-score/infrastructure/pull/56).
+The merge-based policy requires a coordinated core-pin update and migration 0033
+before using this publisher. See the infrastructure deployment transition guide;
+an older pinned core validator still enforces the previous approval policy.
 
 ## Temporary bootstrap data
 

@@ -14,7 +14,7 @@ from benchmarks.models import (
 
 @transaction.atomic
 def publish_pull_request(domain, number, github):
-    from brainscore_core.metadata import load, protected_changes
+    from brainscore_core.metadata import load
     from brainscore_core.metadata.storage import to_tables, legacy_projection
 
     config = target(domain)
@@ -67,10 +67,10 @@ def publish_pull_request(domain, number, github):
                 )
             continue
         document = load(content, domain)
-        _, reviewed_blob = github.file(repo, path, pr["head"]["sha"])
-        if reviewed_blob != merged_blob:
+        _, head_blob = github.file(repo, path, pr["head"]["sha"])
+        if head_blob != merged_blob:
             raise ProposalError(
-                "Merged metadata differs from the reviewed PR revision. A new reviewed PR is required."
+                "Merged metadata differs from the PR head. A new merged PR is required."
             )
         if was_v2 and set(load(old_content, domain)["models"]) != set(
             document["models"]
@@ -78,12 +78,6 @@ def publish_pull_request(domain, number, github):
             raise ProposalError(
                 "Model additions/removals require a separate registration migration."
             )
-        approved_by = github.approved_reviewer(repo, pr)
-        if not approved_by:
-            raise ProposalError(
-                "Publication requires maintainer approval on the current PR revision."
-            )
-        reviewer = None
         with transaction.atomic():
             if connection.vendor != "postgresql":
                 raise ProposalError(
@@ -141,20 +135,7 @@ def publish_pull_request(domain, number, github):
                     )
                 if publication and publication.blob_sha == merged_blob:
                     continue
-                bootstrap = publication is None
-                blocked = (
-                    protected_changes(publication.document, entry)
-                    if publication
-                    else []
-                )
-                if blocked or bootstrap:
-                    if reviewer is None:
-                        reviewer = github.override_reviewer(repo, pr)
-                    if not reviewer:
-                        raise ProposalError(
-                            "Protected changes or first publication require metadata-source-override and independent maintainer approval on the latest PR commit."
-                        )
-            # Validate the complete file and policy before any canonical writes.
+            # Validate the complete file and repository mapping before canonical writes.
             write_tables(to_tables(document))
             for identifier, entry in document["models"].items():
                 previous = previous_documents.get(identifier)
@@ -199,8 +180,7 @@ def publish_pull_request(domain, number, github):
                     defaults={
                         "pull_request": number,
                         "document": entry,
-                        "override_reviewer": reviewer or "",
-                        "reviewer": reviewer or approved_by,
+                        "merged_by": (pr.get("merged_by") or {}).get("login", ""),
                     },
                 )
             result.append(
