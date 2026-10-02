@@ -65,6 +65,27 @@ Website Staging Flow/Operations (Via Command Line/PR)
 Deployment Account Setup
 ************************
 
+Metadata dependency in Docker builds
+===================================
+
+The Dockerfile installs core's metadata module at the reviewed commit
+``94e220611961de2ceec6a1cdac324d39575c6040`` by default. Normal ``eb deploy``
+commands include this dependency without an additional build argument.
+Dependency installation, metadata import or compatibility failures stop the build.
+An empty or invalid ``METADATA_CORE_REF`` also stops the build.
+
+When intentionally adopting another core revision, update the Dockerfile default
+together with infrastructure's ``ci/web/metadata-core-ref.txt`` and the
+``METADATA_CORE_REF`` repository variables in web, vision and language. Explicit
+Docker builds can override the default with ``--build-arg METADATA_CORE_REF=<full-SHA>``.
+An EB runtime environment variable does not override a Docker build argument.
+
+Including the dependency does not enable metadata editing, import merged YAML,
+or activate automatic publication. Those remain separate operations.
+
+Account configuration
+=====================
+
 If you have not already done so:
 
 1. Clone this repo
