@@ -393,6 +393,11 @@ def finalize_card_context(metadata, source):
         'contrastive_pretrain_supervised_finetune': 'Contrastive + supervised',
         'supervised_neural_alignment': 'Supervised + alignment',
     }
+    for field, kind, labels in (
+            ('architecture_description', 'architecture_family', architecture_labels),
+            ('supervision_description', 'supervision_type', supervision_labels)):
+        if not metadata.get(field) and metadata.get(kind):
+            metadata[field] = labels.get(metadata[kind], metadata[kind].replace('_', ' '))
     def short_label(kind, description, labels):
         if kind in labels:
             return labels[kind]
@@ -405,11 +410,20 @@ def finalize_card_context(metadata, source):
     metadata['header_supervision'] = short_label(
         metadata.get('supervision_type'), metadata.get('supervision_description'), supervision_labels)
     metadata['header_licenses'] = license_labels(metadata.get('license'))
+    metadata['has_header_content'] = bool(
+        metadata['header_architecture'] or metadata['header_supervision']
+        or metadata['header_licenses'] or metadata.get('parameter_count_display')
+        or metadata.get('input_resolution_display'))
     metadata['source'] = source
     metadata['source_label'] = 'Submission metadata' if source == 'legacy' else 'Curated metadata'
     metadata.setdefault('assertions', [])
     badges = metadata.setdefault('field_badges', {})
     documented = [slot for slot in ALL_FIELD_SLOTS if _slot_value(metadata, slot)]
+    metadata['has_card_content'] = any(
+        not slot.startswith(('eval_', 'intended_use_')) and slot != 'visual_degrees'
+        for slot in documented) or bool(metadata.get('extra_notes') or metadata.get('license_nuance'))
+    metadata['has_metadata_content'] = bool(
+        documented or metadata['has_card_content'] or metadata.get('lineage', {}).get('has_relationships'))
     for slot in documented:
         if source == 'legacy' or slot not in badges:
             badges[slot] = {'status': 'probable', 'source': (

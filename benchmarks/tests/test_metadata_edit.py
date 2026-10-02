@@ -384,6 +384,88 @@ class EditorTests(TestCase):
         reader.start()
         self.addCleanup(reader.stop)
 
+    def test_first_time_modal_creates_a_draft_without_database_writes(self):
+        from types import SimpleNamespace
+        from bs4 import BeautifulSoup
+        from brainscore_core.metadata import load
+
+        def file(repository, path, ref):
+            if path.endswith('/__init__.py'):
+                return "model_registry['example'] = lambda: build_model()", 'registration'
+            raise ProposalError('Not found', 404)
+
+        model = SimpleNamespace(name='example', model_id=1, domain='vision', public=True)
+        with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
+                patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=file):
+            url = '/model/vision/1/metadata/edit/'
+            response = self.client.get(url, HTTP_X_METADATA_MODAL='1')
+            self.assertContains(response, 'Model folder')
+            response = self.client.post(url, {'model_folder': 'example'}, HTTP_X_METADATA_MODAL='1')
+            self.assertContains(response, 'Add the information you can support')
+            soup = BeautifulSoup(response.content, 'html.parser')
+            values = {}
+            for field in soup.select('form input, form textarea, form select'):
+                name = field.get('name')
+                if not name or field.has_attr('disabled'):
+                    continue
+                if field.get('type') == 'checkbox':
+                    if field.has_attr('checked'):
+                        values[name] = field.get('value', 'on')
+                elif field.name == 'select':
+                    choice = field.select_one('option[selected]') or field.select_one('option')
+                    values[name] = choice.get('value', '')
+                elif field.name == 'textarea':
+                    values[name] = field.get_text().removeprefix('\n')
+                else:
+                    values[name] = field.get('value', '')
+            values.update(field_4='200', reason='Add a sourced count',
+                          source_url='https://example.org/model', source_kind='other')
+            response = self.client.post(soup.select_one('form')['action'], values, HTTP_X_METADATA_MODAL='1')
+            self.assertEqual(response.status_code, 302, response.content.decode())
+            key = response.url.rstrip('/').rsplit('/', 1)[-1]
+            draft = cache.get('metadata-draft:' + key)
+            self.assertTrue(draft['initial'])
+            self.assertIsNone(draft['base_blob'])
+            self.assertEqual(draft['path'], PATH)
+            self.assertEqual(draft['user_id'], self.user.pk)
+            self.assertEqual(load(draft['after'])['models']['example']['model']['parameter_count'], 200)
+            self.assertContains(self.client.get(response.url, HTTP_X_METADATA_MODAL='1'), '200')
+            pr = {'base': {'repo': {'full_name': 'brain-score/vision'}, 'ref': 'master'},
+                  'head': {'sha': 'a' * 40}}
+            original_file = file
+
+            def preview_file(repository, path, ref):
+                if ref == 'a' * 40:
+                    return draft['after'], 'proposal'
+                return original_file(repository, path, ref)
+
+            with patch('benchmarks.views.metadata_edit.GitHub.request', return_value=pr), \
+                    patch('benchmarks.views.metadata_edit.GitHub.pages', return_value=[{'filename': PATH, 'status': 'added'}]), \
+                    patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=preview_file):
+                self.assertContains(self.client.get('/model/vision/1/metadata/preview/10/'), 'Unpublished proposal.')
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+
+    def test_first_time_destination_rejects_paths_and_wrong_registrations(self):
+        from types import SimpleNamespace
+
+        model = SimpleNamespace(name='example', model_id=1, domain='vision', public=True)
+        with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
+                patch('benchmarks.views.metadata_edit.GitHub.file') as file:
+            response = self.client.post('/model/vision/1/metadata/edit/', {'model_folder': '../elsewhere'}, HTTP_X_METADATA_MODAL='1')
+            self.assertContains(response, 'Model folder')
+            file.assert_not_called()
+
+            def wrong_model(repository, path, ref):
+                if path.endswith('/__init__.py'):
+                    return "model_registry['another'] = lambda: model()", 'registration'
+                raise ProposalError('Not found', 404)
+
+            file.side_effect = wrong_model
+            response = self.client.post('/model/vision/1/metadata/edit/', {'model_folder': 'example'}, HTTP_X_METADATA_MODAL='1')
+            self.assertContains(response, 'does not explicitly register', status_code=409)
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+
     def test_preview_limits_requests_before_reading_github(self):
         from types import SimpleNamespace
 
@@ -815,6 +897,94 @@ class ConversionTests(SimpleTestCase):
     "Install core with metadata support",
 )
 class GitHubProposalTests(SimpleTestCase):
+    def test_initial_file_creation_omits_sha_and_preserves_identity(self):
+        from brainscore_core.metadata import dump
+
+        api = GitHub('token')
+        calls = []
+
+        def file(repository, path, ref):
+            if path.endswith('/__init__.py'):
+                return "model_registry['example'] = lambda: model()", 'registration'
+            raise ProposalError('Not found', 404)
+
+        def request(method, path, **kwargs):
+            calls.append((method, path, kwargs))
+            if path.endswith('/pulls') and method == 'GET':
+                return []
+            if path.endswith('/pulls') and method == 'POST':
+                return {'html_url': 'https://github.com/brain-score/vision/pull/10'}
+            return {}
+
+        with patch.object(api, 'file', side_effect=file), \
+                patch.object(api, 'create_branch') as create_branch, \
+                patch.object(api, 'request', side_effect=request):
+            result = api.create_proposal(REGISTRY['vision'], PATH, None, dump(document()),
+                                         'example', 'Add metadata', 'nonce',
+                                         user_id=12, github_login='contributor', initial=True)
+            self.assertEqual(result, 'https://github.com/brain-score/vision/pull/10')
+            create_branch.assert_called_once()
+            payload = next(kwargs['json'] for method, path, kwargs in calls if method == 'PUT')
+            self.assertNotIn('sha', payload)
+            calls.clear()
+            malicious = document()
+            malicious['models']['another'] = {}
+            with self.assertRaises(ProposalError):
+                api.create_proposal(REGISTRY['vision'], PATH, None, dump(malicious),
+                                    'example', 'Add metadata', 'nonce', user_id=12,
+                                    github_login='contributor', initial=True)
+            self.assertEqual(calls, [])
+
+    def test_initial_source_preserves_siblings_and_locks_legacy_values(self):
+        from brainscore_core.metadata import dump, protected_changes
+        from benchmarks.model_metadata.proposal_source import proposal_document
+
+        api = GitHub('token')
+        legacy = 'models:\n  example:\n    total_parameter_count: 55\n  sibling:\n    architecture: DCNN\n'
+
+        def file(repository, path, ref):
+            if path.endswith('/__init__.py'):
+                return "model_registry['example'] = lambda: model()", 'registration'
+            if path == PATH:
+                return legacy, 'blob'
+            raise ProposalError('Not found', 404)
+
+        with patch.object(api, 'file', side_effect=file), patch.object(api, 'request') as request:
+            baseline, content, blob = proposal_document(api, REGISTRY['vision'], 'vision', PATH, 'example')
+            self.assertEqual(content, legacy)
+            self.assertEqual(blob, 'blob')
+            self.assertEqual(set(baseline['models']), {'example', 'sibling'})
+            modified = deepcopy(baseline)
+            modified['models']['example']['model']['parameter_count'] = 999
+            self.assertIn('/model/parameter_count', protected_changes(baseline['models']['example'], modified['models']['example']))
+            with self.assertRaises(ProposalError):
+                api.create_proposal(REGISTRY['vision'], PATH, blob, dump(modified), 'example',
+                                    'Change legacy', 'nonce', user_id=12, github_login='contributor', initial=True)
+            request.assert_not_called()
+
+    def test_new_file_rejects_stale_revision_and_github_permission_failure(self):
+        from brainscore_core.metadata import dump
+
+        api = GitHub('token')
+
+        def existing(repository, path, ref):
+            if path.endswith('/__init__.py'):
+                return "model_registry['example'] = lambda: model()", 'registration'
+            if path == PATH:
+                return dump(document()), 'new-blob'
+            raise ProposalError('Not found', 404)
+
+        with patch.object(api, 'file', side_effect=existing), patch.object(api, 'request') as request:
+            with self.assertRaises(ProposalError):
+                api.create_proposal(REGISTRY['vision'], PATH, None, dump(document()), 'example',
+                                    'Add', 'nonce', user_id=12, github_login='contributor', initial=True)
+            request.assert_not_called()
+            with patch.object(api, 'file', side_effect=ProposalError('Forbidden', 403)):
+                with self.assertRaises(ProposalError):
+                    api.create_proposal(REGISTRY['vision'], PATH, None, dump(document()), 'example',
+                                        'Add', 'nonce', user_id=12, github_login='contributor', initial=True)
+            request.assert_not_called()
+
     def test_submission_attempts_are_shared_across_sessions_and_fail_closed(self):
         from benchmarks.views.metadata_edit import claim_submission_attempt
 
