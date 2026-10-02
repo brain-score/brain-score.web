@@ -26,6 +26,9 @@ import hashlib
 import json
 import re
 from pathlib import Path
+import posixpath
+import xml.etree.ElementTree as ET
+from zipfile import ZipFile
 
 DOMAIN = 'vision'
 MODEL_COLUMNS_START = 4  # columns 0-3 are Field / Type / Preferred source / Question answered
@@ -78,13 +81,20 @@ APPROXIMATE_RE = re.compile(r'[~≈]|\b(?:about|approximately|approx\.?|estimate
 LITERAL_FIELDS = {'recurrent', 'tokenizer'}
 
 # Curator cell-color convention in the Sheets workbook:
-#   green = verified / high confidence, yellow = probable,
-#   red = uncertain, uncolored = no annotation (fall back to text).
+#   green = curator verified; yellow = Claude inference from source material;
+#   red = Claude inference without source material; gray = undocumented.
 COLOR_STATUSES = (
     ({'FF93C47D', 'FFB6D7A8', 'FF6AA84F', 'FF38761D', 'FFD9EAD3'}, 'verified'),
     ({'FFFFE599', 'FFFFD966', 'FFF1C232', 'FFBF9000', 'FFFFF2CC'}, 'probable'),
     ({'FFFF0000', 'FFE06666', 'FFCC0000', 'FF990000', 'FFF4CCCC'}, 'uncertain'),
+    ({'FFF6F8F9'}, 'undocumented'),
 )
+COLOR_DERIVATIONS = {
+    'verified': 'Curator verified',
+    'probable': 'Inferred by Claude from source material',
+    'uncertain': 'Inferred by Claude without source material',
+    'undocumented': 'Undocumented',
+}
 
 
 def _classify_fill(rgb):
@@ -107,27 +117,71 @@ def _classify_fill(rgb):
     return None
 
 
-def load_cell_statuses(xlsx_path):
-    """Read the color-coded workbook and return {(field_key, column_name): status}."""
-    import openpyxl  # optional dependency, only needed with --colors
-    worksheet = openpyxl.load_workbook(xlsx_path).active
-    headers = {column: (worksheet.cell(1, column).value or '').strip()
-               for column in range(MODEL_COLUMNS_START + 1, worksheet.max_column + 1)}
-    statuses = {}
-    for row in range(2, worksheet.max_row + 1):
-        label = (worksheet.cell(row, 1).value or '').strip()
-        field = FIELD_ALIASES.get(label)
-        if not field:
-            continue
-        for column, column_name in headers.items():
-            if not column_name:
+def load_cell_annotations(xlsx_path):
+    """Retain original cell locations, fills and the curator's provenance legend."""
+    ns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+    with ZipFile(xlsx_path) as archive:
+        workbook = ET.fromstring(archive.read('xl/workbook.xml'))
+        view = workbook.find('m:bookViews/m:workbookView', ns)
+        active = int(view.get('activeTab', '0')) if view is not None else 0
+        sheet = workbook.find('m:sheets', ns)[active]
+        relationship = sheet.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')
+        links = ET.fromstring(archive.read('xl/_rels/workbook.xml.rels'))
+        target = next(link.get('Target') for link in links if link.get('Id') == relationship)
+        path = target.lstrip('/') if target.startswith('/') else posixpath.normpath('xl/' + target)
+        strings = []
+        if 'xl/sharedStrings.xml' in archive.namelist():
+            strings = [''.join(t.text or '' for t in s.findall('.//m:t', ns))
+                       for s in ET.fromstring(archive.read('xl/sharedStrings.xml'))]
+        styles = ET.fromstring(archive.read('xl/styles.xml'))
+        fills, formats = styles.find('m:fills', ns), styles.find('m:cellXfs', ns)
+        cells = {}
+        for cell in ET.fromstring(archive.read(path)).findall('.//m:c', ns):
+            value = cell.find('m:v', ns)
+            text = (value.text or '') if value is not None else ''
+            if cell.get('t') == 's':
+                text = strings[int(text)]
+            elif cell.get('t') == 'inlineStr':
+                text = ''.join(t.text or '' for t in cell.findall('.//m:t', ns))
+            pattern = fills[int(formats[int(cell.get('s', '0'))].get('fillId', '0'))].find('m:patternFill', ns)
+            color = pattern.find('m:fgColor', ns) if pattern is not None else None
+            cells[cell.get('r')] = (text, pattern, color)
+        headers = {re.sub(r'\d+$', '', address): value[0].strip()
+                   for address, value in cells.items() if re.fullmatch(r'[A-Z]+1', address)}
+        annotations = {}
+        for address, (text, pattern, color) in cells.items():
+            match = re.fullmatch(r'A([2-9]|\d{2,})', address)
+            if not match:
                 continue
-            fill = worksheet.cell(row, column).fill
-            if fill and fill.fill_type == 'solid':
-                status = _classify_fill(getattr(fill.start_color, 'rgb', None))
-                if status:
-                    statuses[(field, column_name)] = status
-    return statuses
+            field = FIELD_ALIASES.get(text.strip())
+            if not field and not text.strip() and any(
+                    value[0].startswith('http') for key, value in cells.items()
+                    if re.sub(r'^[A-Z]+', '', key) == match.group(1)):
+                field = 'source_url'
+            if not field:
+                continue
+            for column, name in headers.items():
+                if len(column) == 1 and ord(column) - ord('A') < MODEL_COLUMNS_START:
+                    continue
+                if not name:
+                    continue
+                location = column + match.group(1)
+                _, fill, foreground = cells.get(location, ('', None, None))
+                fill_type = fill.get('patternType') if fill is not None else 'none'
+                rgb = foreground.get('rgb') if foreground is not None else None
+                status = _classify_fill(rgb) if fill_type == 'solid' else None
+                annotations[(field, name)] = {
+                    'sheet': sheet.get('name'), 'address': location,
+                    'fill_pattern': fill_type,
+                    'fill_color': dict(foreground.attrib) if foreground is not None else None,
+                    'status': status, 'derivation': COLOR_DERIVATIONS.get(status, 'Unannotated'),
+                }
+        return annotations
+
+
+def load_cell_statuses(xlsx_path):
+    return {key: value['status'] for key, value in load_cell_annotations(xlsx_path).items()
+            if value['status'] is not None}
 
 # Assertion path -> workbook field feeding it. Drives the provenance meter on
 # the model card (verified / probable / uncertain / undocumented counts).
@@ -517,12 +571,20 @@ def main():
     parser.add_argument('--colors', metavar='XLSX', default=None,
                         help='Matching .xlsx export of the same sheet; its cell fill '
                              'colors set per-field confidence (green=verified, '
-                             'yellow=probable, red=uncertain). Requires openpyxl.')
+                             'yellow=source-based inference, red=unsupported inference, '
+                             'gray=undocumented).')
     args = parser.parse_args()
-    cell_statuses = load_cell_statuses(args.colors) if args.colors else {}
+    cell_annotations = load_cell_annotations(args.colors) if args.colors else {}
+    cell_statuses = {key: value['status'] for key, value in cell_annotations.items()
+                     if value['status'] is not None}
 
     models = dedupe(parse_workbook(args.workbook))
     models.sort(key=lambda m: m['identifier'].casefold())
+    for model in models:
+        if args.colors:
+            model['cell_annotations'] = {
+                field: cell_annotations[(field, model['column_name'])]
+                for field in model['raw'] if (field, model['column_name']) in cell_annotations}
     identifier_lookup = {}
     for model in models:
         for alias in (model['identifier'], model['column_name'],
@@ -541,13 +603,20 @@ def main():
         },
         'models': models,
     }
+    if args.colors:
+        claims['source']['color_workbook'] = {
+            'filename': Path(args.colors).name,
+            'sha256': hashlib.sha256(Path(args.colors).read_bytes()).hexdigest(),
+            'legend': COLOR_DERIVATIONS,
+        }
     (out_dir / 'workbook-claims.json').write_text(json.dumps(claims, indent=2) + '\n')
 
     model_rows, dataset_rows, use_rows = [], [], []
     contributor_rows, relationship_rows, assertion_rows = [], [], []
 
     for model in models:
-        raw = model['raw']
+        raw = {field: '' if cell_statuses.get((field, model['column_name'])) == 'undocumented'
+               else value for field, value in model['raw'].items()}
         identifier = model['identifier']
         get = lambda key: _clean(raw.get(key, ''), key)
 
@@ -628,7 +697,7 @@ def main():
                 contributor_rows.append({'domain': DOMAIN, 'identifier': identifier,
                                          'kind': kind, 'ordinal': 0, 'name': value})
 
-        for index, relationship in enumerate(build_relationships(model, identifier_lookup)):
+        for index, relationship in enumerate(build_relationships({**model, 'raw': raw}, identifier_lookup)):
             relationship_rows.append({'domain': DOMAIN, 'identifier': identifier,
                                       'ordinal': index, **relationship})
 

@@ -19,6 +19,7 @@ django.setup()
 from benchmarks.model_metadata.catalog import read_catalog
 from brainscore_core.metadata.contract import read_yaml, dump, validate
 from brainscore_core.metadata.storage import from_tables, from_legacy
+from scripts.build_model_metadata_catalog import ASSERTION_PATHS
 
 
 def registered_destinations(root):
@@ -44,6 +45,29 @@ def registered_destinations(root):
 
 def export(catalog, domain, checkout, output, include_registered=False):
     document = from_tables(read_catalog(catalog), domain)
+    claims_path = catalog / 'workbook-claims.json'
+    if claims_path.exists():
+        claims = json.loads(claims_path.read_text())
+        field_by_path = dict(ASSERTION_PATHS)
+        field_by_path['/data/summary'] = 'dataset_size'
+        for model in claims.get('models', []):
+            entry = document['models'].get(model['identifier'])
+            if entry is None:
+                continue
+            for assertion in entry['assertions']:
+                field = field_by_path.get(assertion['path'])
+                annotation = model.get('cell_annotations', {}).get(field)
+                if not annotation or 'curation_workbook' not in assertion['sources']:
+                    continue
+                source_id = 'workbook_' + field
+                entry['sources'][source_id] = {
+                    'kind': 'unreviewed',
+                    'citation': '{} {}!{}: {}. Original workbook claim; checkpoint review remains separate.'.format(
+                        claims['source'].get('color_workbook', claims['source'])['filename'],
+                        annotation['sheet'], annotation['address'], annotation['derivation']),
+                }
+                assertion['sources'] = [source_id if ref == 'curation_workbook' else ref
+                                        for ref in assertion['sources']]
     root = checkout / f"brainscore_{domain}" / "models"
     destinations = {}
     for path in sorted(root.glob("*/metadata.y*ml")):
@@ -96,7 +120,6 @@ def export(catalog, domain, checkout, output, include_registered=False):
         entry["legacy"] = legacy["models"][key]
         files[relative]["models"][key] = entry
     output.mkdir(parents=True, exist_ok=True)
-    claims_path = catalog / 'workbook-claims.json'
     if claims_path.exists():
         evidence_dir = output / 'evidence'
         evidence_dir.mkdir(exist_ok=True)

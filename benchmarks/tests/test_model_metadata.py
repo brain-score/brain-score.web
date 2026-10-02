@@ -339,9 +339,13 @@ class ConverterConfidenceTests(SimpleTestCase):
         spec.loader.exec_module(converter)
         self.assertEqual(converter._classify_fill('FFFFE599'), 'probable')
         self.assertEqual(converter._classify_fill('FFFF0000'), 'uncertain')
+        self.assertEqual(converter._classify_fill('FFF6F8F9'), 'undocumented')
+        self.assertIsNone(converter._classify_fill('FFFFFFFF'))
         self.assertEqual(converter.assertion_status('supervised', 'supervision'), 'probable')
         self.assertEqual(converter.assertion_status('', 'supervision', 'verified'), 'undocumented')
         self.assertEqual(converter.assertion_status('supervised', 'supervision', 'verified'), 'verified')
+        self.assertEqual(converter.assertion_status('61100840', 'parameter_count', 'undocumented'),
+                         'undocumented')
 
 
 @skipIf(settings.TEST_RUNNER.endswith('ExistingDatabaseTestRunner'),
