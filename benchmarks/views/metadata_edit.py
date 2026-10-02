@@ -151,6 +151,15 @@ def edit(request, domain, id):
         return HttpResponseRedirect(f"/model/{domain}/{id}?metadata_edit=1")
     try:
         folder = request.GET.get("folder", "")
+        discovery_message = ""
+        if publication is None and not folder and request.method == "GET":
+            from benchmarks.model_metadata.proposal_source import discover_model_folder
+
+            try:
+                with GitHub.reader(config) as github:
+                    folder, discovery_message = discover_model_folder(github, config, model.name)
+            except ProposalError:
+                discovery_message = "Automatic folder lookup is temporarily unavailable. Choose the model folder below."
         choosing = publication is None and not folder
         if choosing:
             location_form = ModelFolderForm(request.POST if request.method == "POST" else None)
@@ -158,6 +167,7 @@ def edit(request, domain, id):
                 return render(request, "benchmarks/metadata_destination.html", {
                     "form": location_form, "edit_url": request.path, "model": model,
                     "repository": config["repository"], "model_root": config["model_root"],
+                    "discovery_message": discovery_message,
                 })
             folder = location_form.cleaned_data["model_folder"]
         with GitHub.reader(config) as github:
