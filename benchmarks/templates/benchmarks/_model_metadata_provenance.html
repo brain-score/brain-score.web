@@ -1,4 +1,4 @@
-{% if model_metadata %}
+{% if model_metadata.verification.documented or model_metadata.lineage.has_relationships %}
 <div class="box model-sidebar-card model-metadata-provenance">
     <div class="card-content">
         <p class="subtitle is-5 model-sidebar-title">Metadata provenance</p>

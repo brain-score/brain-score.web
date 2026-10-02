@@ -47,7 +47,7 @@
             </div>
 
             {# Compact metadata strip #}
-            {% if model_metadata %}
+            {% if model_metadata.has_header_content %}
                 <div class="mc-hero-stats">
                     {% if model_metadata.header_architecture %}
                         <a class="mc-hero-stat is-architecture mc-hero-detail-link" href="#mc-at-a-glance-body" title="View full architecture details">
@@ -362,6 +362,12 @@ model.look_at(...)</pre>
         </div>
 
         {# Curated metadata: at-a-glance #}
+        {% if model_metadata and not model_metadata.has_card_content %}
+            <div class="mc-metadata-empty-actions" aria-label="Model metadata">
+                <span>{% if model_metadata.has_metadata_content %}Model metadata{% else %}Metadata has not been added yet.{% endif %}</span>
+                {% include "benchmarks/_metadata_actions.html" %}
+            </div>
+        {% endif %}
         {% include "benchmarks/_model_metadata.html" %}
 
         {# Intended use and limits #}
@@ -408,6 +414,7 @@ model.look_at(...)</pre>
         {# Evaluation and I/O #}
         {% include "benchmarks/_model_metadata_eval_io.html" %}
     </section>
+    {% if model_metadata %}{% include "benchmarks/_model_metadata_schema.html" %}{% endif %}
     {% include "benchmarks/_metadata_editor_dialog.html" %}
     <script src="{% static 'benchmarks/js/metadata-editor.js' %}"></script>
     <script src="{% static 'benchmarks/js/model-card.js' %}"></script>

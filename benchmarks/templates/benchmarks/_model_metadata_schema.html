@@ -3,8 +3,8 @@
         <h2 id="mc-schema-title">metadata.yaml · Schema v{{ model_metadata.schema_version }}</h2>
         <form method="dialog"><button type="submit" class="mc-schema-close" autofocus>Close</button></form>
     </div>
-    <p>This annotated template shows the proposed structure of a model’s <code>metadata.yaml</code>. Each section groups related information; comments explain the expected types and allowed values.</p>
+    <p>This annotated template shows the structure of a model’s <code>metadata.yaml</code>. Each section groups related information; comments explain the expected types and allowed values.</p>
     <p><strong>Required:</strong> <code>schema_version</code>, <code>domain</code>, and <code>models</code> keyed by model identifier. Other fields may be omitted or set to <code>null</code> when undocumented. Use <code>[]</code> for empty lists.</p>
-    <p>The values below are illustrative, not this model’s metadata. YAML import is planned; the current importer accepts CSV files.</p>
+    <p>The values below are illustrative, not this model’s metadata. Metadata changes are proposed in repository pull requests and published after merge.</p>
     <pre class="mc-schema-yaml" tabindex="0" role="region" aria-label="Annotated metadata YAML template"><code>{{ model_metadata.schema_yaml }}</code></pre>
 </dialog>

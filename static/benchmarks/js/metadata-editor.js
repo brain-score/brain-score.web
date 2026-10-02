@@ -14,8 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateHeading() {
         const reviewing = Boolean(body.querySelector('[data-metadata-stage="review"]'));
         const signingIn = Boolean(body.querySelector('[data-metadata-stage="login"]'));
+        const choosing = Boolean(body.querySelector('[data-metadata-stage="destination"]'));
+        const adding = choosing || Boolean(body.querySelector('[data-metadata-adding="1"]'));
         dialog.classList.toggle('is-signing-in', signingIn);
-        title.textContent = signingIn ? 'Sign in to edit metadata' : reviewing ? 'Review metadata changes' : 'Propose metadata changes';
+        title.textContent = signingIn ? 'Sign in to contribute metadata' : reviewing ? 'Review metadata changes' : adding ? 'Add model metadata' : 'Propose metadata changes';
         const back = body.querySelector('[data-metadata-back]');
         if (back) back.hidden = !savedEdit;
         const scroll = body.querySelector('[data-metadata-scroll]');

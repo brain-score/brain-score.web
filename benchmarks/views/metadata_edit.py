@@ -10,6 +10,7 @@ from functools import wraps
 from urllib.parse import urlencode
 import requests
 from django.conf import settings
+from django import forms
 from django.core.cache import cache
 from django.http import (
     Http404,
@@ -24,7 +25,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_variables
 from benchmarks.models import FinalModelContext, ModelMetadataPublication
-from benchmarks.model_metadata.github import GitHub, ProposalError, target, configured
+from benchmarks.model_metadata.github import GitHub, ProposalError, target, configured, allowed_path
 
 DRAFT_TTL = 1800
 
@@ -75,6 +76,10 @@ def contributor_required(view):
 def lookup(domain, id):
     if not configured():
         raise Http404("Metadata editing is not available yet.")
+    try:
+        config = target(domain)
+    except ProposalError:
+        raise Http404("Metadata editing is not available for this domain.") from None
     model = FinalModelContext.objects.filter(
         model_id=id, domain=domain, public=True
     ).first()
@@ -83,9 +88,32 @@ def lookup(domain, id):
     publication = ModelMetadataPublication.objects.filter(
         domain__iexact=domain, identifier__iexact=model.name
     ).first()
-    if publication is None:
-        raise Http404("Repository metadata is not ready for this model.")
-    return model, publication, target(domain)
+    return model, publication, config
+
+
+class ModelFolderForm(forms.Form):
+    model_folder = forms.RegexField(
+        regex=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,199}$",
+        label="Model folder",
+        help_text="The folder containing this model's registration in the repository models directory.",
+    )
+
+
+def unpublished_source(github, config, domain, folder, identifier):
+    from benchmarks.model_metadata.proposal_source import optional_file, proposal_document
+
+    form = ModelFolderForm({"model_folder": folder})
+    if not form.is_valid():
+        raise ProposalError("Choose a valid model folder.")
+    path = config["model_root"].strip("/") + "/" + form.cleaned_data["model_folder"] + "/metadata.yaml"
+    _, blob = optional_file(github, config["repository"], path, config["branch"])
+    if blob is None:
+        alternate = path[:-4] + "yml"
+        _, alternate_blob = optional_file(github, config["repository"], alternate, config["branch"])
+        if alternate_blob is not None:
+            path = alternate
+    document, content, blob = proposal_document(github, config, domain, path, identifier)
+    return path, document, content, blob
 
 
 def draft_for(request, key):
@@ -117,36 +145,50 @@ def edit(request, domain, id):
         describe_changes,
     )
 
-    if publication.repository != config["repository"]:
+    if publication is not None and publication.repository != config["repository"]:
         raise Http404
     if request.method == "GET" and request.headers.get("X-Metadata-Modal") != "1":
         return HttpResponseRedirect(f"/model/{domain}/{id}?metadata_edit=1")
     try:
+        folder = request.GET.get("folder", "")
+        choosing = publication is None and not folder
+        if choosing:
+            location_form = ModelFolderForm(request.POST if request.method == "POST" else None)
+            if request.method != "POST" or not location_form.is_valid():
+                return render(request, "benchmarks/metadata_destination.html", {
+                    "form": location_form, "edit_url": request.path, "model": model,
+                    "repository": config["repository"], "model_root": config["model_root"],
+                })
+            folder = location_form.cleaned_data["model_folder"]
         with GitHub.reader(config) as github:
-            content, blob = github.file(
-                publication.repository, publication.path, config["branch"]
-            )
-        document = load(content, domain)
-        if publication.identifier not in document["models"]:
+            if publication is None:
+                path, document, content, blob = unpublished_source(github, config, domain, folder, model.name)
+                identifier = model.name
+            else:
+                path, identifier = publication.path, publication.identifier
+                content, blob = github.file(publication.repository, path, config["branch"])
+                document = load(content, domain)
+        if identifier not in document["models"]:
             raise ProposalError(
                 "The model moved in its repository. Its metadata mapping must be updated first."
             )
-        entry = document["models"][publication.identifier]
+        entry = document["models"][identifier]
         # Bind the submitted form to its starting revision without trusting a
         # client-supplied snapshot of field protections.
-        if request.method == "POST" and request.POST.get("base_blob") != blob:
+        submitting = request.method == "POST" and not choosing
+        if submitting and request.POST.get("base_blob") != (blob or ""):
             raise ProposalError(
                 "Metadata changed while you were editing. Reload before submitting."
             )
         form, groups, changes = make_editor(
-            entry, request.POST if request.method == "POST" else None
+            entry, request.POST if submitting else None
         )
-        if request.method == "POST":
+        if submitting:
             changed = changes()
             if changed:
                 updated, paths = changed
                 candidate = deepcopy(document)
-                candidate["models"][publication.identifier] = updated
+                candidate["models"][identifier] = updated
                 try:
                     validate(candidate, domain)
                     if protected_changes(entry, updated):
@@ -168,8 +210,9 @@ def edit(request, domain, id):
                             "user_id": request.user.pk,
                             "domain": domain,
                             "model_id": id,
-                            "identifier": publication.identifier,
-                            "path": publication.path,
+                            "identifier": identifier,
+                            "path": path,
+                            "initial": publication is None,
                             "base_blob": blob,
                             "before": content,
                             "after": dump(candidate),
@@ -189,12 +232,19 @@ def edit(request, domain, id):
                 "model": model,
                 "form": form,
                 "groups": groups,
-                "base_blob": blob,
-                "edit_url": request.path,
+                "base_blob": blob or "",
+                "adding": blob is None,
+                "edit_url": request.path + ("?" + urlencode({"folder": folder}) if publication is None else ""),
                 **editor_sections(form, groups),
             },
         )
     except (ProposalError, MetadataError) as exc:
+        if choosing:
+            location_form.add_error(None, str(exc))
+            return render(request, "benchmarks/metadata_destination.html", {
+                "form": location_form, "edit_url": request.path, "model": model,
+                "repository": config["repository"], "model_root": config["model_root"],
+            }, status=409)
         return render(
             request,
             "benchmarks/metadata_editor.html",
@@ -350,6 +400,7 @@ def callback(request):
                 user_id=draft["user_id"],
                 github_login=github_login,
                 preview_url=preview_url,
+                initial=draft.get("initial", False),
             )
         finally:
             app.session.close()
@@ -412,11 +463,26 @@ def preview(request, domain, id, number):
             or pr["base"]["ref"] != config["branch"]
         ):
             raise ProposalError("This PR does not target the model repository.")
-        content, _ = github.file(
-            config["repository"], publication.path, pr["head"]["sha"]
-        )
+        identifier = publication.identifier if publication is not None else model.name
+        if publication is None:
+            candidates = []
+            for item in github.pages(f"/repos/{config['repository']}/pulls/{number}/files"):
+                if not allowed_path(config, item["filename"]) or item["status"] in {"removed", "renamed"}:
+                    continue
+                candidate_content, _ = github.file(config["repository"], item["filename"], pr["head"]["sha"])
+                if identifier in load(candidate_content, domain)["models"]:
+                    candidates.append((item["filename"], candidate_content))
+            if len(candidates) != 1:
+                raise ProposalError("This PR must contain one metadata file for the selected model.")
+            path, content = candidates[0]
+            from benchmarks.model_metadata.proposal_source import proposal_document
+            baseline, _, _ = proposal_document(github, config, domain, path, identifier)
+            previous_entry = baseline["models"][identifier]
+        else:
+            content, _ = github.file(config["repository"], publication.path, pr["head"]["sha"])
+            previous_entry = publication.document
         document = load(content, domain)
-        entry = document["models"].get(publication.identifier)
+        entry = document["models"].get(identifier)
         if entry is None:
             raise ProposalError("This PR removes the selected model.")
 
@@ -432,7 +498,7 @@ def preview(request, domain, id, number):
             for name, rows in to_tables(document).items()
         }
         card = repository._build_catalog(tables)[
-            (domain.lower(), publication.identifier.lower())
+            (domain.lower(), identifier.lower())
         ]
         card = repository.finalize_card_context(card, "proposal")
         card["source_label"] = "Unpublished proposal"
@@ -445,7 +511,7 @@ def preview(request, domain, id, number):
                 "number": number,
                 "revision": pr["head"]["sha"],
                 "pr_url": f"https://github.com/{config['repository']}/pull/{number}",
-                "protected": protected_changes(publication.document, entry),
+                "protected": protected_changes(previous_entry, entry),
             },
         )
     except (ProposalError, MetadataError) as exc:

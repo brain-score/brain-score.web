@@ -1,0 +1,18 @@
+<section class="metadata-editor" data-metadata-stage="destination">
+    <form method="post" action="{{ edit_url }}" data-metadata-form>
+        {% csrf_token %}
+        <div class="metadata-editor-scroll" data-metadata-scroll>
+            <p class="metadata-editor-intro">Choose the folder that registers this model in <strong>{{ repository }}</strong>. The metadata form opens next. Existing metadata in this folder is preserved.</p>
+            {{ form.non_field_errors }}
+            <div class="metadata-editor-field">
+                {{ form.model_folder.label_tag }}{{ form.model_folder.errors }}{{ form.model_folder }}
+                <p class="help">Enter only the folder name under <code>{{ model_root }}/</code>.</p>
+            </div>
+            <p><a href="https://github.com/search?q=repo%3A{{ repository|urlencode }}%20{{ model.name|urlencode }}&amp;type=code" target="_blank" rel="noopener noreferrer">Find this model's registration on GitHub</a></p>
+        </div>
+        <footer class="metadata-editor-actions">
+            <button type="button" class="button" data-metadata-close>Cancel</button>
+            <button type="submit" class="button is-primary">Continue</button>
+        </footer>
+    </form>
+</section>

@@ -1,0 +1,7 @@
+<div class="mc-heading-actions">
+    <button type="button" class="mc-edit-button"{% if metadata_edit_url %} data-metadata-edit-open aria-haspopup="dialog" aria-controls="mc-metadata-editor-dialog"{% else %} disabled title="GitHub metadata contributions are not enabled in this environment."{% endif %}>
+        <i class="fa-solid {% if adding or not model_metadata.has_metadata_content %}fa-plus{% else %}fa-pen{% endif %}" aria-hidden="true"></i>
+        {% if adding or not model_metadata.has_metadata_content %}Add metadata{% else %}Propose an edit{% endif %}
+    </button>
+    <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
+</div>

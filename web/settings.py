@@ -49,6 +49,9 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # AWS fix to add the IP of the AWS Instance to ALLOWED_HOSTS
 hosts_list = os.getenv("DOMAIN", "localhost:brain-score-web-dev.us-east-2.elasticbeanstalk.com").split(":")
+from .metadata_github_settings import production_site, PRODUCTION_HOSTS
+if production_site(os.environ):
+    hosts_list.extend(sorted(PRODUCTION_HOSTS))
 if os.getenv("DJANGO_ENV") == 'development': hosts_list.append('127.0.0.1')
 hosts_list.append("Brain-score-web-prod-updated.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # migrated prod site
 hosts_list.append("Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com")  # staging site
@@ -391,12 +394,9 @@ except Exception as e:  # Catch all exceptions, not just NoCredentialsError
         print(f"Generated CACHE_REFRESH_TOKEN: {CACHE_REFRESH_TOKEN}")
         # If in DEBUG mode, visit http://localhost:8000/debug/show_token/ to see the token
 
-# Metadata proposals remain disabled until the shared contract, repository files,
-# GitHub App, and trusted publication worker are configured.
-MODEL_METADATA_EDIT_ENABLED = os.getenv('MODEL_METADATA_EDIT_ENABLED') == '1'
+# Canonical production hosts enable the configured Contributions App by default.
+# Other environments require explicit enablement; setting 0 disables any site.
 from .metadata_github_settings import load_metadata_github_settings
-METADATA_GITHUB_SECRET_NAME = os.getenv('METADATA_GITHUB_SECRET_NAME', '')
-METADATA_GITHUB_SECRET_REGION = os.getenv('METADATA_GITHUB_SECRET_REGION', 'us-east-2')
 globals().update(load_metadata_github_settings(os.environ))
 MODEL_METADATA_REPOSITORIES = json.loads(os.getenv('MODEL_METADATA_REPOSITORIES', json.dumps({
     'vision': {'repository': 'brain-score/vision', 'branch': 'master', 'model_root': 'brainscore_vision/models'},

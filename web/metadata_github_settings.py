@@ -15,6 +15,18 @@ SECRET_FIELDS = {
     "METADATA_GITHUB_CALLBACK_URL": "GITHUB_CALLBACK_URL",
 }
 
+PRODUCTION_HOSTS = {"brain-score.org", "www.brain-score.org"}
+PRODUCTION_CALLBACK = "https://www.brain-score.org/metadata/github/callback/"
+CONTRIBUTIONS_SECRET = "Brain-Score_Contributions_GitHub_App"
+
+
+def production_site(environ):
+    """Recognize deployment configuration, never an incoming request hostname."""
+    if environ.get("DJANGO_ENV") in {"development", "staging", "test"}:
+        return False
+    hosts = {host.strip().lower() for host in environ.get("DOMAIN", "").split(":")}
+    return bool(hosts & PRODUCTION_HOSTS)
+
 
 def read_secret(name, region):
     import boto3
@@ -29,7 +41,11 @@ def read_secret(name, region):
 
 
 def load_metadata_github_settings(environ, secret_reader=None):
-    name = environ.get("METADATA_GITHUB_SECRET_NAME", "")
+    production = production_site(environ)
+    enabled = environ.get("MODEL_METADATA_EDIT_ENABLED", "1" if production else "0") == "1"
+    name = environ.get(
+        "METADATA_GITHUB_SECRET_NAME", CONTRIBUTIONS_SECRET if production and enabled else ""
+    )
     region = environ.get("METADATA_GITHUB_SECRET_REGION", "us-east-2")
     values = {}
     if name:
@@ -44,7 +60,12 @@ def load_metadata_github_settings(environ, secret_reader=None):
 
     config = {}
     for setting, field in SECRET_FIELDS.items():
-        value = environ.get(setting, values.get(field, ""))
+        default = (
+            PRODUCTION_CALLBACK
+            if setting == "METADATA_GITHUB_CALLBACK_URL" and production and enabled
+            else values.get(field, "")
+        )
+        value = environ.get(setting, default)
         if not isinstance(value, str):
             raise ImproperlyConfigured(f"{setting} must be text.")
         config[setting] = value.strip()
@@ -59,12 +80,11 @@ def load_metadata_github_settings(environ, secret_reader=None):
         )
         if match:
             config["METADATA_GITHUB_APP_SLUG"] = match.group(1).lower()
-        elif name or environ.get("MODEL_METADATA_EDIT_ENABLED") == "1":
+        elif name or enabled:
             raise ImproperlyConfigured(
                 "Metadata GitHub App needs a valid App slug or public link."
             )
 
-    enabled = environ.get("MODEL_METADATA_EDIT_ENABLED") == "1"
     if name or enabled:
         for setting, value in config.items():
             if not enabled and setting in {
@@ -101,4 +121,9 @@ def load_metadata_github_settings(environ, secret_reader=None):
             raise ImproperlyConfigured(
                 "Metadata GitHub callback must be an HTTPS callback URL, or HTTP on loopback for local testing."
             )
+    config.update(
+        MODEL_METADATA_EDIT_ENABLED=enabled,
+        METADATA_GITHUB_SECRET_NAME=name,
+        METADATA_GITHUB_SECRET_REGION=region,
+    )
     return config

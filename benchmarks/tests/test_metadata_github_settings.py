@@ -49,7 +49,45 @@ class MetadataGitHubSettingsTests(SimpleTestCase):
             config["METADATA_GITHUB_APP_SLUG"], "brain-score-contributions"
         )
         self.assertEqual(config["METADATA_GITHUB_CLIENT_SECRET"], "credential")
-        self.assertNotIn("MODEL_METADATA_EDIT_ENABLED", config)
+        self.assertFalse(config["MODEL_METADATA_EDIT_ENABLED"])
+
+    def test_canonical_production_enables_existing_app_and_https_callback(self):
+        values = dict(self.fixture(), GITHUB_APP_ID="123", GITHUB_APP_PRIVATE_KEY="private-key")
+        for domain in ["brain-score.org", "localhost:www.brain-score.org", "WWW.BRAIN-SCORE.ORG"]:
+            reader = Mock(return_value=values)
+            config = load_metadata_github_settings({"DOMAIN": domain}, reader)
+            reader.assert_called_once_with("Brain-Score_Contributions_GitHub_App", "us-east-2")
+            self.assertTrue(config["MODEL_METADATA_EDIT_ENABLED"])
+            self.assertEqual(config["METADATA_GITHUB_CALLBACK_URL"], "https://www.brain-score.org/metadata/github/callback/")
+
+    def test_production_can_be_disabled_without_loading_credentials(self):
+        reader = Mock()
+        config = load_metadata_github_settings({"DOMAIN": "brain-score.org", "MODEL_METADATA_EDIT_ENABLED": "0"}, reader)
+        reader.assert_not_called()
+        self.assertFalse(config["MODEL_METADATA_EDIT_ENABLED"])
+
+    def test_dev_staging_and_local_tests_never_inherit_production_enablement(self):
+        for environ in [
+            {"DOMAIN": "localhost:Brain-score-web-development.eba-e8pevjnc.us-east-2.elasticbeanstalk.com"},
+            {"DOMAIN": "localhost:Brain-score-web-staging.eba-e8pevjnc.us-east-2.elasticbeanstalk.com"},
+            {"DOMAIN": "brain-score.org", "DJANGO_ENV": "development"},
+            {"DOMAIN": "brain-score.org", "DJANGO_ENV": "staging"},
+            {"DOMAIN": "www.brain-score.org", "DJANGO_ENV": "test"},
+        ]:
+            reader = Mock()
+            config = load_metadata_github_settings(environ, reader)
+            reader.assert_not_called()
+            self.assertFalse(config["MODEL_METADATA_EDIT_ENABLED"])
+
+    def test_production_enablement_rejects_incomplete_app_configuration(self):
+        with self.assertRaises(ImproperlyConfigured):
+            load_metadata_github_settings({"DOMAIN": "brain-score.org"}, lambda *args: self.fixture())
+
+    def test_explicit_production_callback_overrides_default(self):
+        values = dict(self.fixture(), GITHUB_APP_ID="123", GITHUB_APP_PRIVATE_KEY="private-key")
+        callback = "https://brain-score.org/metadata/github/callback/"
+        config = load_metadata_github_settings({"DOMAIN": "brain-score.org", "METADATA_GITHUB_CALLBACK_URL": callback}, lambda *args: values)
+        self.assertEqual(config["METADATA_GITHUB_CALLBACK_URL"], callback)
 
     def test_environment_can_override_callback_for_deployment(self):
         callback = "https://dev.example.org/metadata/github/callback/"

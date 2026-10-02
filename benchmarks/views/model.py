@@ -521,10 +521,8 @@ def view(request, id: int, domain: str):
         metadata_edit_url = None
         from benchmarks.model_metadata.github import configured, domains
         if model_obj.public and domain in domains() and configured():
-            from benchmarks.models import ModelMetadataPublication
             from django.urls import reverse
-            if ModelMetadataPublication.objects.filter(domain__iexact=domain, identifier__iexact=model.name).exists():
-                metadata_edit_url = reverse('metadata-edit', kwargs={'domain': domain, 'id': id})
+            metadata_edit_url = reverse('metadata-edit', kwargs={'domain': domain, 'id': id})
 
         # Prepare the context for the template
         model_context = {

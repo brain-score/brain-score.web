@@ -264,18 +264,24 @@ class GitHub:
         user_id,
         github_login,
         preview_url=None,
+        initial=False,
     ):
         from brainscore_core.metadata import load, protected_changes
 
         repository = config["repository"]
         if not allowed_path(config, path):
             raise ProposalError("This file is not an allowed metadata file.")
-        current, blob = self.file(repository, path, config["branch"])
+        after = load(content)
+        if initial:
+            from .proposal_source import proposal_document
+            before, current, blob = proposal_document(self, config, after["domain"], path, identifier)
+        else:
+            current, blob = self.file(repository, path, config["branch"])
+            before = load(current)
         if blob != base_blob:
             raise ProposalError(
                 "The metadata changed while you were editing. Reload and review your changes against the new version."
             )
-        before, after = load(current), load(content)
         if (
             set(before["models"]) != set(after["models"])
             or before["domain"] != after["domain"]
@@ -317,21 +323,24 @@ class GitHub:
         if existing:
             return finish(existing[0])
         self.create_branch(config, nonce, user_id, github_login)
-        branch_content, branch_blob = self.file(repository, path, branch)
+        from .proposal_source import optional_file
+        branch_content, branch_blob = optional_file(self, repository, path, branch)
         if branch_content != content:
             if branch_blob != base_blob:
                 raise ProposalError(
                     "The proposal branch changed. Create a fresh proposal to avoid overwriting it."
                 )
+            payload = {
+                "message": "docs(metadata): update model metadata",
+                "branch": branch,
+                "content": base64.b64encode(content.encode()).decode(),
+            }
+            if branch_blob is not None:
+                payload["sha"] = branch_blob
             self.request(
                 "PUT",
                 f"/repos/{repository}/contents/{quote(path, safe='/')}",
-                json={
-                    "message": "docs(metadata): update model metadata",
-                    "branch": branch,
-                    "sha": branch_blob,
-                    "content": base64.b64encode(content.encode()).decode(),
-                },
+                json=payload,
             )
         pr = self.request(
             "POST",

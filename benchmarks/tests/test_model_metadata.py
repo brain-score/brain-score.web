@@ -186,6 +186,61 @@ class MetadataTests(TestCase):
             self.assertEqual(card['source_label'], 'Submission metadata')
             self.assertEqual(card['verification']['verified'], 0)
             self.assertEqual(card['verification']['total'], len(repository.ALL_FIELD_SLOTS))
+            self.assertEqual(card['has_header_content'], bool(meta))
+            self.assertEqual(card['has_card_content'], bool(meta))
+
+    def test_empty_page_hides_metadata_containers_and_keeps_actions(self):
+        model = SimpleNamespace(name='not-curated', domain='vision', public=True,
+                                model_id=1, id=1, user=None, submitter=None, scores=[],
+                                model_meta={}, visual_degrees=8, layers={})
+        request = RequestFactory().get('/model/vision/1')
+        request.user = AnonymousUser()
+        context = dict(models=[model], benchmarks=[], benchmark_parents={},
+                       uniform_parents={}, not_shown_set=set(), BASE_DEPTH=1)
+        with patch('benchmarks.views.model.FinalModelContext.objects.get', return_value=model), \
+                patch('benchmarks.views.model.get_context', return_value=context), \
+                patch('benchmarks.views.model.load_and_build_score_trend', return_value=None), \
+                patch('benchmarks.views.model.load_and_build_rank_trend', return_value=None), \
+                patch('benchmarks.model_metadata.github.configured', return_value=True), \
+                patch('benchmarks.model_metadata.github.domains', return_value={'vision': {}}):
+            response = view(request, 1, 'vision')
+        soup = BeautifulSoup(response.content, 'html.parser')
+        for selector in ('.mc-hero-stats', '.model-metadata', '.model-intended-use',
+                         '.model-eval-io', '.model-metadata-provenance'):
+            self.assertIsNone(soup.select_one(selector), selector)
+        self.assertEqual(soup.select_one('[data-metadata-edit-open]').get_text(' ', strip=True), 'Add metadata')
+        self.assertEqual(soup.select_one('[data-schema-open]').get_text(strip=True), 'Schema v2.0')
+        self.assertEqual(len(soup.select('#mc-schema-dialog')), 1)
+        self.assertEqual(soup.select_one('[data-metadata-dialog]')['data-edit-url'], '/model/vision/1/metadata/edit/')
+
+    def test_partial_metadata_hides_only_empty_sections(self):
+        from django.template.loader import render_to_string
+
+        card = build_model_card_metadata(SimpleNamespace(name='not-curated', model_meta={
+            'architecture': 'CNN', 'total_parameter_count': 0}))
+        html = ''.join(render_to_string('benchmarks/' + name, {'model_metadata': card})
+                       for name in ('_model_metadata.html', '_model_metadata_intended_use.html',
+                                    '_model_metadata_eval_io.html'))
+        soup = BeautifulSoup(html, 'html.parser')
+        self.assertIsNotNone(soup.select_one('.model-metadata'))
+        self.assertIsNone(soup.select_one('.model-intended-use'))
+        self.assertIsNone(soup.select_one('.model-eval-io'))
+        self.assertEqual(card['parameter_count_display'], '≈0')
+
+    def test_family_and_supervision_only_metadata_keep_header_targets_visible(self):
+        from django.template.loader import render_to_string
+
+        card = build_model_card_metadata(SimpleNamespace(name='not-curated', model_meta={}))
+        card.update(architecture_family='vision_transformer', supervision_type='supervised')
+        card = repository.finalize_card_context(card, 'repository')
+        self.assertTrue(card['has_header_content'])
+        self.assertTrue(card['has_card_content'])
+        self.assertTrue(card['has_metadata_content'])
+        html = render_to_string('benchmarks/_model_metadata.html', {'model_metadata': card})
+        soup = BeautifulSoup(html, 'html.parser')
+        self.assertIsNotNone(soup.select_one('#mc-at-a-glance-body'))
+        self.assertIn('Vision transformer', soup.get_text())
+        self.assertIn('Supervised', soup.get_text())
 
     def test_lineage_casing_cycles_and_external_base(self):
         for name in ('test-parent', 'test-child', 'test-sibling'):

@@ -1,30 +1,14 @@
-{% if model_metadata %}
+{% if model_metadata.has_card_content %}
 <section class="box model-card-section model-metadata" data-model-metadata>
     <div class="mc-heading">
         <div>
             <p class="mc-kicker">{{ model_metadata.source_label }}</p>
             <h2 class="title is-4 mc-title">
-                {% if not model_metadata.has_card_content %}
-                    <button type="button" class="want_to_click is_collapsible mc-section-toggle" data-metadata-toggle aria-expanded="true" aria-controls="mc-at-a-glance-body" aria-label="Toggle section details"></button>
-                {% endif %}
                 At-a-glance
             </h2>
         </div>
-        <div class="mc-heading-actions">
-            {% if metadata_edit_url %}
-                <button type="button" class="mc-edit-button" data-metadata-edit-open aria-haspopup="dialog" aria-controls="mc-metadata-editor-dialog"><i class="fa-solid fa-pen" aria-hidden="true"></i> Propose an edit</button>
-            {% else %}
-                <button class="mc-edit-button" type="button" disabled title="Repository-reviewed metadata editing is not available for this model yet."><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit</button>
-            {% endif %}
-            <button type="button" class="mc-badge mc-schema-trigger" data-schema-open aria-haspopup="dialog" aria-controls="mc-schema-dialog">Schema v{{ model_metadata.schema_version }}</button>
-        </div>
+        {% include "benchmarks/_metadata_actions.html" %}
     </div>
-
-    {% include "benchmarks/_model_metadata_schema.html" %}
-
-    {% if not model_metadata.has_card_content %}
-        <p class="mc-empty-summary">This model has no curated metadata yet — expand to see the undocumented fields.</p>
-    {% endif %}
 
     <div id="mc-at-a-glance-body">
     <dl class="mc-specs">
