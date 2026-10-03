@@ -159,11 +159,17 @@
             </p>
             {% if visual_degrees %}
                 <span class="has-text-weight-bold">{{ visual_degrees }}</span> degrees
+            {% elif model_metadata.visual_degrees %}
+                <span class="has-text-weight-bold">{{ model_metadata.visual_degrees|floatformat:"-1" }}</span> degrees
             {% else %}
                 <p>{% include "benchmarks/_mc_empty_value.html" %}</p>
             {% endif %}
             <p class="mc-sidebar-note">
+                {% if not visual_degrees and model_metadata.visual_degrees %}
+                    Declared in Schema v2.0 metadata.
+                {% else %}
                 Drives stimulus scaling. A null here means benchmarks run on the default.
+                {% endif %}
             </p>
         </div>
     </div>
