@@ -213,6 +213,34 @@ class MetadataTests(TestCase):
         self.assertEqual(len(soup.select('#mc-schema-dialog')), 1)
         self.assertEqual(soup.select_one('[data-metadata-dialog]')['data-edit-url'], '/model/vision/1/metadata/edit/')
 
+    def test_visual_angle_uses_metadata_when_evaluation_value_is_missing(self):
+        record = ModelMetadataRecord.objects.get(identifier='resnet-50-robust')
+        for evaluation_angle, metadata_angle, expected in (
+                (None, 8, '8 degrees'), (12, 8, '12 degrees'),
+                (None, None, 'Not documented')):
+            with self.subTest(evaluation_angle=evaluation_angle, metadata_angle=metadata_angle):
+                record.visual_degrees = metadata_angle
+                record.save()
+                model = SimpleNamespace(name=record.identifier, domain='vision', public=True,
+                                        model_id=1, id=1, user=None, submitter=None, scores=[],
+                                        model_meta={}, visual_degrees=evaluation_angle, layers={})
+                request = RequestFactory().get('/model/vision/1')
+                request.user = AnonymousUser()
+                context = dict(models=[model], benchmarks=[], benchmark_parents={},
+                               uniform_parents={}, not_shown_set=set(), BASE_DEPTH=1)
+                with patch('benchmarks.views.model.FinalModelContext.objects.get', return_value=model), \
+                        patch('benchmarks.views.model.get_context', return_value=context), \
+                        patch('benchmarks.views.model.load_and_build_score_trend', return_value=None), \
+                        patch('benchmarks.views.model.load_and_build_rank_trend', return_value=None):
+                    response = view(request, 1, 'vision')
+                soup = BeautifulSoup(response.content, 'html.parser')
+                angle_card = next(card for card in soup.select('.model-sidebar-card')
+                                  if card.select_one('.model-sidebar-title').get_text(' ', strip=True) == 'Visual angle')
+                text = angle_card.get_text(' ', strip=True)
+                self.assertIn(expected, text)
+                self.assertEqual('Declared in Schema v2.0 metadata.' in text,
+                                 evaluation_angle is None and metadata_angle is not None)
+
     def test_partial_metadata_hides_only_empty_sections(self):
         from django.template.loader import render_to_string
 
