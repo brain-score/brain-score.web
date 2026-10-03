@@ -33,6 +33,8 @@ class Command(BaseCommand):
 
             with connection.cursor() as cursor:
                 cursor.execute("REFRESH MATERIALIZED VIEW mv_final_model_context")
-            invalidate_domain_cache(options["domain"])
+            refresh = invalidate_domain_cache(options["domain"])
+            if refresh.get("status") != "success":
+                raise CommandError("Metadata is published, but shared cache refresh failed. Retry publication.")
         for result in results:
             self.stdout.write(f"{result['path']}: {result['status']}")

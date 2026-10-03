@@ -402,3 +402,6 @@ MODEL_METADATA_REPOSITORIES = json.loads(os.getenv('MODEL_METADATA_REPOSITORIES'
     'vision': {'repository': 'brain-score/vision', 'branch': 'master', 'model_root': 'brainscore_vision/models'},
     'language': {'repository': 'brain-score/language', 'branch': 'main', 'model_root': 'brainscore_language/models'},
 })))
+MODEL_METADATA_SYNC_ENABLED = os.getenv('MODEL_METADATA_SYNC_ENABLED', '0') == '1'
+MODEL_METADATA_SYNC_START_AT = os.getenv('MODEL_METADATA_SYNC_START_AT', '')
+MODEL_METADATA_SYNC_EXPECTED_DATABASE = os.getenv('MODEL_METADATA_SYNC_EXPECTED_DATABASE', '')

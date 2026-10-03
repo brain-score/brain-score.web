@@ -9,6 +9,10 @@ registered identities, repository bindings and matching metadata blobs, without
 requiring an approval or source-override label. Repository rules govern merges;
 only verified metadata fields remain locked in the website editor. New revision
 rows record GitHub's merger; historical approval audit fields remain intact.
+Five-minute EB synchronization invokes the existing publication command in the
+deployed container. It is disabled by default; explicit enablement, a UTC start
+time, expected database, and working shared Redis are required. Failed PRs retain
+their checkpoint for retry. See the infrastructure synchronization runbook.
 Canonical production hosts enable editing by default using the Contributions
 App secret and `https://www.brain-score.org/metadata/github/callback/`.
 The callback uses the canonical `www` host: the bare-domain redirect drops query
