@@ -396,12 +396,16 @@ class EditorTests(TestCase):
 
         model = SimpleNamespace(name='example', model_id=1, domain='vision', public=True)
         with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
-                patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=file):
+                patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=file), \
+                patch('benchmarks.views.metadata_edit.GitHub.cached_request', side_effect=[
+                    {'incomplete_results': False, 'total_count': 1,
+                     'items': [{'path': PATH.replace('metadata.yaml', '__init__.py')}]},
+                    {'object': {'sha': 'a' * 40}},
+                ]):
             url = '/model/vision/1/metadata/edit/'
             response = self.client.get(url, HTTP_X_METADATA_MODAL='1')
-            self.assertContains(response, 'Model folder')
-            response = self.client.post(url, {'model_folder': 'example'}, HTTP_X_METADATA_MODAL='1')
             self.assertContains(response, 'Add the information you can support')
+            self.assertNotContains(response, 'name="model_folder"')
             soup = BeautifulSoup(response.content, 'html.parser')
             values = {}
             for field in soup.select('form input, form textarea, form select'):
@@ -440,11 +444,56 @@ class EditorTests(TestCase):
                 return original_file(repository, path, ref)
 
             with patch('benchmarks.views.metadata_edit.GitHub.request', return_value=pr), \
+                    patch('benchmarks.views.metadata_edit.GitHub.cached_request', return_value=pr), \
                     patch('benchmarks.views.metadata_edit.GitHub.pages', return_value=[{'filename': PATH, 'status': 'added'}]), \
                     patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=preview_file):
                 self.assertContains(self.client.get('/model/vision/1/metadata/preview/10/'), 'Unpublished proposal.')
         self.assertFalse(ModelMetadataRecord.objects.exists())
         self.assertFalse(ModelMetadataPublication.objects.exists())
+
+    def test_automatic_destination_populates_current_yaml_and_preserves_protections(self):
+        from types import SimpleNamespace
+        from brainscore_core.metadata import dump
+
+        model = SimpleNamespace(name='example', model_id=1)
+        for kind, locked in [('other', False), ('paper', True), ('huggingface', True)]:
+            with self.subTest(kind=kind):
+                def file(repository, path, ref):
+                    if path.endswith('/__init__.py'):
+                        return "model_registry['example'] = lambda: build_model()", 'registration'
+                    if path == PATH:
+                        return dump(document(123, kind)), 'current-blob'
+                    raise ProposalError('Not found', 404)
+
+                with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
+                        patch('benchmarks.model_metadata.proposal_source.discover_model_folder', return_value=('example', '')), \
+                        patch('benchmarks.views.metadata_edit.GitHub.file', side_effect=file):
+                    response = self.client.get('/model/vision/1/metadata/edit/', HTTP_X_METADATA_MODAL='1')
+                self.assertContains(response, 'data-metadata-stage="edit"')
+                self.assertEqual(response.context['edit_url'], '/model/vision/1/metadata/edit/?folder=example')
+                self.assertEqual(response.context['base_blob'], 'current-blob')
+                field = next(field for field in response.context['form'].fields.values()
+                             if getattr(field, 'metadata_path', None) == '/model/parameter_count')
+                self.assertEqual(field.initial, 123)
+                self.assertEqual(field.disabled, locked)
+                if locked:
+                    self.assertIn('/model/parameter_count', [field.field.metadata_path
+                                  for field in response.context['locked_fields']])
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+
+    def test_unresolved_destination_keeps_manual_selection(self):
+        from types import SimpleNamespace
+
+        model = SimpleNamespace(name='example', model_id=1)
+        with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
+                patch('benchmarks.model_metadata.proposal_source.discover_model_folder',
+                      return_value=(None, 'More than one folder registers this model.')), \
+                patch('benchmarks.views.metadata_edit.GitHub.file') as file:
+            response = self.client.get('/model/vision/1/metadata/edit/', HTTP_X_METADATA_MODAL='1')
+        self.assertContains(response, 'More than one folder registers this model.')
+        self.assertContains(response, 'name="model_folder"')
+        file.assert_not_called()
 
     def test_first_time_destination_rejects_paths_and_wrong_registrations(self):
         from types import SimpleNamespace
@@ -773,6 +822,7 @@ class EditorTests(TestCase):
                 "benchmarks.views.metadata_edit.GitHub.file",
                 return_value=(dump(document()), "blob"),
             ),
+            patch("benchmarks.model_metadata.proposal_source.discover_model_folder") as discover,
         ):
             direct = self.client.get("/model/vision/1/metadata/edit/")
             self.assertEqual(direct.url, "/model/vision/1?metadata_edit=1")
@@ -780,6 +830,7 @@ class EditorTests(TestCase):
                 "/model/vision/1/metadata/edit/", HTTP_X_METADATA_MODAL="1"
             )
             self.assertContains(response, "Review changes")
+            discover.assert_not_called()
             soup = BeautifulSoup(response.content, "html.parser")
             values = {}
             for field in soup.select("form input, form textarea, form select"):

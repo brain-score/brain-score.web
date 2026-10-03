@@ -2,6 +2,7 @@
     <form method="post" action="{{ edit_url }}" data-metadata-form>
         {% csrf_token %}
         <div class="metadata-editor-scroll" data-metadata-scroll>
+            {% if discovery_message %}<p class="metadata-editor-intro">{{ discovery_message }}</p>{% endif %}
             <p class="metadata-editor-intro">Choose the folder that registers this model in <strong>{{ repository }}</strong>. The metadata form opens next. Existing metadata in this folder is preserved.</p>
             {{ form.non_field_errors }}
             <div class="metadata-editor-field">
