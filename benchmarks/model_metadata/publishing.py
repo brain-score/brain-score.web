@@ -136,6 +136,9 @@ def publish_pull_request(domain, number, github):
                 if publication and publication.blob_sha == merged_blob:
                     continue
             # Validate the complete file and repository mapping before canonical writes.
+            if not was_v2:
+                from .bootstrap import require_complete_bootstrap
+                require_complete_bootstrap(document)
             write_tables(to_tables(document))
             for identifier, entry in document["models"].items():
                 previous = previous_documents.get(identifier)

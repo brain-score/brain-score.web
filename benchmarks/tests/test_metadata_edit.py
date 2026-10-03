@@ -456,13 +456,18 @@ class EditorTests(TestCase):
         from brainscore_core.metadata import dump
 
         model = SimpleNamespace(name='example', model_id=1)
-        for kind, locked in [('other', False), ('paper', True), ('huggingface', True)]:
-            with self.subTest(kind=kind):
+        for kind, status in [('other', 'probable'), ('paper', 'probable'),
+                             ('huggingface', 'uncertain'), ('unreviewed', 'undocumented'),
+                             ('paper', 'verified'), ('other', 'verified')]:
+            with self.subTest(kind=kind, status=status):
+                current = document(123, kind)
+                current['models']['example']['assertions'][0]['status'] = status
+                locked = status == 'verified'
                 def file(repository, path, ref):
                     if path.endswith('/__init__.py'):
                         return "model_registry['example'] = lambda: build_model()", 'registration'
                     if path == PATH:
-                        return dump(document(123, kind)), 'current-blob'
+                        return dump(current), 'current-blob'
                     raise ProposalError('Not found', 404)
 
                 with patch('benchmarks.views.metadata_edit.lookup', return_value=(model, None, REGISTRY['vision'])), \
@@ -767,6 +772,7 @@ class EditorTests(TestCase):
         from benchmarks.model_metadata.editor import make_editor
 
         entry = document(kind="paper")["models"]["example"]
+        entry['assertions'][0]['status'] = 'verified'
         form, groups, changes = make_editor(entry)
         values = {
             name: field.initial
@@ -948,6 +954,13 @@ class ConversionTests(SimpleTestCase):
     "Install core with metadata support",
 )
 class GitHubProposalTests(SimpleTestCase):
+    def setUp(self):
+        # Pure API tests have no bootstrap database. Database-backed proposals
+        # and their stale-baseline checks have separate integration coverage.
+        reader = patch("benchmarks.model_metadata.bootstrap.read_bootstrap_entries", return_value={})
+        reader.start()
+        self.addCleanup(reader.stop)
+
     def test_initial_file_creation_omits_sha_and_preserves_identity(self):
         from brainscore_core.metadata import dump
 
@@ -986,8 +999,10 @@ class GitHubProposalTests(SimpleTestCase):
                                     github_login='contributor', initial=True)
             self.assertEqual(calls, [])
 
-    def test_initial_source_preserves_siblings_and_locks_legacy_values(self):
-        from brainscore_core.metadata import dump, protected_changes
+    def test_initial_source_preserves_siblings_and_allows_unverified_legacy_edits(self):
+        import base64
+        from brainscore_core.metadata import dump, load
+        from benchmarks.model_metadata.policy import protected_changes
         from benchmarks.model_metadata.proposal_source import proposal_document
 
         api = GitHub('token')
@@ -1000,18 +1015,28 @@ class GitHubProposalTests(SimpleTestCase):
                 return legacy, 'blob'
             raise ProposalError('Not found', 404)
 
-        with patch.object(api, 'file', side_effect=file), patch.object(api, 'request') as request:
+        def request(method, path, **kwargs):
+            if method == 'GET' and path.endswith('/pulls'):
+                return []
+            return {'html_url': 'https://github.com/brain-score/vision/pull/10'}
+
+        with patch.object(api, 'file', side_effect=file), \
+                patch.object(api, 'request', side_effect=request) as calls, \
+                patch.object(api, 'create_branch'):
             baseline, content, blob = proposal_document(api, REGISTRY['vision'], 'vision', PATH, 'example')
             self.assertEqual(content, legacy)
             self.assertEqual(blob, 'blob')
             self.assertEqual(set(baseline['models']), {'example', 'sibling'})
             modified = deepcopy(baseline)
             modified['models']['example']['model']['parameter_count'] = 999
-            self.assertIn('/model/parameter_count', protected_changes(baseline['models']['example'], modified['models']['example']))
-            with self.assertRaises(ProposalError):
-                api.create_proposal(REGISTRY['vision'], PATH, blob, dump(modified), 'example',
-                                    'Change legacy', 'nonce', user_id=12, github_login='contributor', initial=True)
-            request.assert_not_called()
+            self.assertEqual(protected_changes(baseline['models']['example'], modified['models']['example']), [])
+            result = api.create_proposal(REGISTRY['vision'], PATH, blob, dump(modified), 'example',
+                                         'Change legacy', 'nonce', user_id=12, github_login='contributor', initial=True)
+            self.assertEqual(result, 'https://github.com/brain-score/vision/pull/10')
+            payload = next(call.kwargs['json'] for call in calls.call_args_list if call.args[0] == 'PUT')
+            proposed = load(base64.b64decode(payload['content']).decode())
+            self.assertEqual(proposed['models']['example']['model']['parameter_count'], 999)
+            self.assertEqual(proposed['models']['sibling'], baseline['models']['sibling'])
 
     def test_new_file_rejects_stale_revision_and_github_permission_failure(self):
         from brainscore_core.metadata import dump
@@ -1203,7 +1228,7 @@ class FormPreservationTests(SimpleTestCase):
         entry["model"]["description"] = "  First line\nSecond line  "
         entry["data"] = {"datasets": [{"name": "  Dataset  ", "role": "training"}]}
         entry["assertions"] = [
-            {"path": "/model", "status": "verified", "sources": ["source"]}
+            {"path": "/model", "status": "probable", "sources": ["source"]}
         ]
         url = "https://example.org/source"
         source_id = (

@@ -9,7 +9,7 @@
 {% if error %}<div class="box" role="alert">{{ error }}</div>{% else %}
 <div class="box">
     <p><strong>Unpublished proposal.</strong> These values are from <a href="{{ pr_url }}">PR #{{ number }}</a> at <code>{{ revision }}</code>. The live model card has not been changed.</p>
-    {% if protected %}<p>Protected fields require a maintainer override before publication:</p><ul>{% for field in protected %}<li>{{ field }}</li>{% endfor %}</ul>{% endif %}
+    {% if protected %}<p>This PR changes verified metadata. A maintainer should check these fields before merging:</p><ul>{% for field in protected %}<li>{{ field }}</li>{% endfor %}</ul>{% endif %}
 </div>
 {% include "benchmarks/_model_metadata.html" %}
 {% include "benchmarks/_model_metadata_intended_use.html" %}
