@@ -7,7 +7,7 @@ Contributions edit schema 2.0 YAML through PRs in the model's domain repository.
 Only merged PRs can publish database changes. Publication validates schema,
 registered identities, repository bindings and matching metadata blobs, without
 requiring an approval or source-override label. Repository rules govern merges;
-paper and Hugging Face fields remain locked in the website editor. New revision
+only verified metadata fields remain locked in the website editor. New revision
 rows record GitHub's merger; historical approval audit fields remain intact.
 Canonical production hosts enable editing by default using the Contributions
 App secret and `https://www.brain-score.org/metadata/github/callback/`.
@@ -25,11 +25,15 @@ Empty model cards hide the header metadata strip and empty metadata sections,
 and retain Add metadata and Schema v2.0 actions. Contributions require the
 environment's GitHub App settings and a signed-in Brain-Score account.
 
-First-time contributions select the repository model folder in the modal.
+First-time contributions resolve the repository model folder automatically,
+with manual selection in the modal when lookup is unavailable or ambiguous.
 The server verifies its literal `model_registry` assignment without executing
 plugin code. A missing metadata file opens a blank form; existing v2 files open
 their current values. Legacy files convert to v2 while preserving every sibling
-and the original legacy values. Protected sources and scoring fields stay locked.
+and the original legacy values. Verification status determines field locks;
+source type alone does not prevent editing. Verified values and their evidence
+stay protected, including inherited verification. Other metadata fields can be
+changed with a supporting source.
 Computed registrations and model additions to existing v2 files require maintainer
 curation. Submission rechecks the current file before creating the branch and PR;
 neither the editor nor PR preview publishes database changes.
@@ -65,7 +69,7 @@ Use disposable PostgreSQL configured with `METADATA_TEST_HOST`,
 `METADATA_TEST_DB`. These settings do not retrieve production credentials.
 
 ```sh
-python manage.py test benchmarks.tests.test_metadata_github_settings benchmarks.tests.test_metadata_edit benchmarks.tests.test_model_metadata --settings=web.metadata_test_settings --noinput
+python manage.py test benchmarks.tests.test_metadata_github_settings benchmarks.tests.test_metadata_bootstrap benchmarks.tests.test_metadata_edit benchmarks.tests.test_model_metadata --settings=web.metadata_test_settings --noinput
 python manage.py makemigrations --check --dry-run --settings=web.metadata_test_settings
 ```
 

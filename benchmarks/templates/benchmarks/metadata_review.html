@@ -2,6 +2,9 @@
     <div class="metadata-editor-scroll" data-metadata-scroll>
         {% if error %}<p role="alert">{{ error }}</p>{% endif %}
         <p class="metadata-editor-intro">Check your changes before continuing to GitHub.</p>
+        {% if draft.legacy_conversion_models %}
+        <p class="metadata-review-note">This proposal converts a file containing {{ draft.legacy_conversion_models }} model{{ draft.legacy_conversion_models|pluralize }} to Schema v2.0 and preserves its existing metadata. Your edits apply to <code>{{ draft.identifier }}</code>.</p>
+        {% endif %}
         {% if draft.changes %}
         <div class="metadata-change-list">
             {% for change in draft.changes %}

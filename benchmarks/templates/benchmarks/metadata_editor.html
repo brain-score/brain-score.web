@@ -2,6 +2,7 @@
     {% if error %}<div class="metadata-editor-scroll"><p role="alert">{{ error }}</p></div>{% else %}
     <form method="post" action="{{ edit_url }}" data-metadata-form>
         {% csrf_token %}<input type="hidden" name="base_blob" value="{{ base_blob }}">
+        <input type="hidden" name="base_document_hash" value="{{ base_document_hash }}">
         <div class="metadata-editor-scroll" data-metadata-scroll>
             <p class="metadata-editor-intro">{% if adding %}Add the information you can support with a source.{% else %}Update the fields that need a correction.{% endif %} Your changes will be reviewed in a GitHub pull request.</p>
             {{ form.non_field_errors }}
@@ -28,9 +29,9 @@
             {% endif %}
             {% if locked_count %}
             <details class="metadata-field-section metadata-locked-section">
-                <summary>View sourced metadata <span>{{ locked_count }} locked field{{ locked_count|pluralize }}</span></summary>
+                <summary>View verified metadata <span>{{ locked_count }} locked field{{ locked_count|pluralize }}</span></summary>
                 <div class="metadata-section-content">
-                    <p class="help">These fields have protected sources, need source review, or affect scoring. They cannot be changed here.</p>
+                    <p class="help">These fields are verified and cannot be changed here.</p>
                     {% for field in locked_fields %}{% include "benchmarks/_metadata_editor_field.html" %}{% endfor %}
                     {% for group in locked_groups %}{% include "benchmarks/_metadata_editor_group.html" %}{% endfor %}
                 </div>

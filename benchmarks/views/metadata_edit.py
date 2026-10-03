@@ -101,6 +101,7 @@ class ModelFolderForm(forms.Form):
 
 def unpublished_source(github, config, domain, folder, identifier):
     from benchmarks.model_metadata.proposal_source import optional_file, proposal_document
+    from benchmarks.model_metadata.bootstrap import proposal_baseline
 
     form = ModelFolderForm({"model_folder": folder})
     if not form.is_valid():
@@ -113,6 +114,7 @@ def unpublished_source(github, config, domain, folder, identifier):
         if alternate_blob is not None:
             path = alternate
     document, content, blob = proposal_document(github, config, domain, path, identifier)
+    document = proposal_baseline(document, content)
     return path, document, content, blob
 
 
@@ -137,8 +139,10 @@ def edit(request, domain, id):
         dump,
         validate,
         MetadataError,
-        protected_changes,
     )
+    from benchmarks.model_metadata.policy import protected_changes
+    from benchmarks.model_metadata.bootstrap import document_revision
+    from brainscore_core.metadata.contract import read_yaml
     from benchmarks.model_metadata.editor import (
         make_editor,
         editor_sections,
@@ -183,10 +187,16 @@ def edit(request, domain, id):
                 "The model moved in its repository. Its metadata mapping must be updated first."
             )
         entry = document["models"][identifier]
+        conversion_models = (len(document["models"]) if publication is None and content
+                             and read_yaml(content).get("schema_version") != "2.0" else 0)
         # Bind the submitted form to its starting revision without trusting a
         # client-supplied snapshot of field protections.
         submitting = request.method == "POST" and not choosing
         if submitting and request.POST.get("base_blob") != (blob or ""):
+            raise ProposalError(
+                "Metadata changed while you were editing. Reload before submitting."
+            )
+        if submitting and publication is None and request.POST.get("base_document_hash") != document_revision(document):
             raise ProposalError(
                 "Metadata changed while you were editing. Reload before submitting."
             )
@@ -224,6 +234,8 @@ def edit(request, domain, id):
                             "path": path,
                             "initial": publication is None,
                             "base_blob": blob,
+                            "base_document_hash": document_revision(document) if publication is None else None,
+                            "legacy_conversion_models": conversion_models,
                             "before": content,
                             "after": dump(candidate),
                             "reason": form.cleaned_data["reason"],
@@ -243,6 +255,7 @@ def edit(request, domain, id):
                 "form": form,
                 "groups": groups,
                 "base_blob": blob or "",
+                "base_document_hash": document_revision(document) if publication is None else "",
                 "adding": blob is None,
                 "edit_url": request.path + ("?" + urlencode({"folder": folder}) if publication is None else ""),
                 **editor_sections(form, groups),
@@ -408,6 +421,7 @@ def callback(request):
                 draft["reason"],
                 key,
                 user_id=draft["user_id"],
+                base_document_hash=draft.get("base_document_hash"),
                 github_login=github_login,
                 preview_url=preview_url,
                 initial=draft.get("initial", False),
@@ -437,7 +451,8 @@ def callback(request):
 @require_GET
 def preview(request, domain, id, number):
     model, publication, config = lookup(domain, id)
-    from brainscore_core.metadata import load, MetadataError, protected_changes
+    from brainscore_core.metadata import load, MetadataError
+    from benchmarks.model_metadata.policy import protected_changes
     from brainscore_core.metadata.storage import to_tables
     from benchmarks.model_metadata import repository
 
@@ -486,7 +501,9 @@ def preview(request, domain, id, number):
                 raise ProposalError("This PR must contain one metadata file for the selected model.")
             path, content = candidates[0]
             from benchmarks.model_metadata.proposal_source import proposal_document
-            baseline, _, _ = proposal_document(github, config, domain, path, identifier)
+            from benchmarks.model_metadata.bootstrap import proposal_baseline
+            baseline, baseline_content, _ = proposal_document(github, config, domain, path, identifier)
+            baseline = proposal_baseline(baseline, baseline_content)
             previous_entry = baseline["models"][identifier]
         else:
             content, _ = github.file(config["repository"], publication.path, pr["head"]["sha"])

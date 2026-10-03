@@ -265,16 +265,34 @@ class GitHub:
         github_login,
         preview_url=None,
         initial=False,
+        base_document_hash=None,
     ):
-        from brainscore_core.metadata import load, protected_changes
+        from brainscore_core.metadata import load
+        from .policy import protected_changes
 
         repository = config["repository"]
         if not allowed_path(config, path):
             raise ProposalError("This file is not an allowed metadata file.")
         after = load(content)
+        conversion_note = ""
         if initial:
             from .proposal_source import proposal_document
+            from .bootstrap import proposal_baseline, document_revision
             before, current, blob = proposal_document(self, config, after["domain"], path, identifier)
+            baseline = proposal_baseline(before, current)
+            if ((base_document_hash is not None and base_document_hash != document_revision(baseline))
+                    or (base_document_hash is None and baseline != before)):
+                raise ProposalError(
+                    "Published metadata changed or this proposal predates the current editor. "
+                    "Reload and review your changes before submitting."
+                )
+            before = baseline
+            from brainscore_core.metadata.contract import read_yaml
+            if current and read_yaml(current).get("schema_version") != "2.0":
+                conversion_note = (
+                    f"\n\nThis proposal converts a file containing {len(before['models'])} models "
+                    f"to Schema v2.0 and preserves its existing metadata. Field edits apply to `{identifier}`."
+                )
         else:
             current, blob = self.file(repository, path, config["branch"])
             before = load(current)
@@ -349,7 +367,7 @@ class GitHub:
                 "title": f"Update metadata for {identifier[:180]} (user:{user_id})",
                 "head": branch,
                 "base": config["branch"],
-                "body": f"Model: `{identifier}`\n\nBrain-Score user_id: {user_id}\nGitHub contributor: @{github_login}\n\n{reason}\n\nPlease review the field changes and supporting sources. Live metadata updates only after merge.",
+                "body": f"Model: `{identifier}`\n\nBrain-Score user_id: {user_id}\nGitHub contributor: @{github_login}\n\n{reason}{conversion_note}\n\nPlease review the field changes and supporting sources. Live metadata updates only after merge.",
             },
         )
         return finish(pr)
