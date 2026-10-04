@@ -1,7 +1,8 @@
 """The editing boundary must never publish an unmerged change."""
 
 from copy import deepcopy
-from unittest import skipUnless
+from unittest import skipIf, skipUnless
+from django.conf import settings
 from unittest.mock import patch, Mock
 from django.test import TestCase, SimpleTestCase, override_settings
 from django.core.cache import cache
@@ -1283,3 +1284,114 @@ class FormPreservationTests(SimpleTestCase):
         self.assertEqual(updated["sources"][source_id], original["sources"][source_id])
         self.assertEqual(updated["assertions"][-1]["status"], "probable")
         self.assertEqual(entry, original)
+
+
+@skipUnless(metadata_available(), 'Install core with metadata support')
+@skipIf(settings.TEST_RUNNER.endswith('ExistingDatabaseTestRunner'),
+        'Run contributor publication rehearsal on disposable PostgreSQL')
+@override_settings(
+    MODEL_METADATA_REPOSITORIES={'language': {'repository': 'brain-score/language',
+        'branch': 'main', 'model_root': 'brainscore_language/models'}},
+    MODEL_METADATA_EDIT_ENABLED=True, METADATA_GITHUB_CLIENT_ID='client',
+    METADATA_GITHUB_CLIENT_SECRET='secret', METADATA_GITHUB_APP_ID='1',
+    METADATA_GITHUB_APP_PRIVATE_KEY='test-key',
+    METADATA_GITHUB_CALLBACK_URL='http://testserver/metadata/github/callback/',
+)
+class FirstLanguageContributionTests(TestCase):
+    def test_blank_form_to_app_pr_to_merged_publication(self):
+        import base64
+        from types import SimpleNamespace
+        from urllib.parse import urlparse, parse_qs
+        from brainscore_core.metadata import load
+        from benchmarks.tests.test_metadata_bootstrap import form_values
+
+        cache.clear()
+        user = User.objects._create_user('outside@example.org', 'password', is_active=True)
+        self.client.force_login(user)
+        model = Model.objects.create(name='gpt2', domain='language', owner=user)
+        config = {'repository': 'brain-score/language', 'branch': 'main',
+                  'model_root': 'brainscore_language/models'}
+        path = 'brainscore_language/models/gpt/metadata.yaml'
+        page_model = SimpleNamespace(name='gpt2', model_id=model.pk, domain='language', public=True)
+        writes = []
+        content = []
+
+        def missing_file(repository, filename, ref):
+            if filename.endswith('/__init__.py'):
+                return "model_registry['gpt2'] = build\nmodel_registry['gpt2-xl'] = build", 'registry'
+            raise ProposalError('Not found', 404)
+
+        def app_request(method, endpoint, **kwargs):
+            if method == 'GET' and endpoint.endswith('/pulls'):
+                return []
+            if '/git/ref/heads/' in endpoint:
+                return {'object': {'sha': 'a' * 40}}
+            if '/git/matching-refs/' in endpoint:
+                return []
+            if method != 'GET':
+                writes.append((method, endpoint, kwargs['json']))
+            if method == 'PUT':
+                content.append(base64.b64decode(kwargs['json']['content']).decode())
+            if method == 'POST' and endpoint.endswith('/pulls'):
+                return {'number': 10, 'html_url': 'https://github.com/brain-score/language/pull/10',
+                        'body': kwargs['json']['body']}
+            return {}
+
+        app = GitHub('app-test-token')
+        oauth_response = Mock(status_code=200)
+        oauth_response.json.return_value = {'access_token': 'identity-only-test-token'}
+        with patch('benchmarks.views.metadata_edit.lookup', return_value=(page_model, None, config)), \
+                patch('benchmarks.model_metadata.proposal_source.discover_model_folder', return_value=('gpt', '')), \
+                patch('benchmarks.views.metadata_edit.GitHub.reader',
+                      side_effect=lambda config: GitHub('read-test-token', read_only=True)), \
+                patch.object(GitHub, 'file', side_effect=missing_file):
+            response = self.client.get('/model/language/%s/metadata/edit/' % model.pk, HTTP_X_METADATA_MODAL='1')
+            self.assertEqual(response.status_code, 200)
+            action, values = form_values(response)
+            fields = response.context['form'].fields
+            count = next(name for name, field in fields.items()
+                         if getattr(field, 'metadata_path', None) == '/model/parameter_count')
+            self.assertFalse(fields[count].disabled)
+            values.update({count: '124000000', 'reason': 'Add the documented small checkpoint',
+                           'source_url': 'https://example.org/model-card', 'source_kind': 'other'})
+            response = self.client.post(action, values, HTTP_X_METADATA_MODAL='1')
+            self.assertEqual(response.status_code, 302)
+            key = response.url.rstrip('/').rsplit('/', 1)[-1]
+            draft = cache.get('metadata-draft:' + key)
+            self.assertEqual(draft['path'], path)
+            self.assertEqual(set(load(draft['after'])['models']), {'gpt2'})
+            authorization = self.client.post('/metadata/proposals/%s/' % key, HTTP_X_METADATA_MODAL='1')
+            state = parse_qs(urlparse(authorization.json()['redirect']).query)['state'][0]
+            with patch('benchmarks.views.metadata_edit.requests.post', return_value=oauth_response), \
+                    patch.object(GitHub, 'request', return_value={'login': 'outside-contributor'}) as identity, \
+                    patch.object(app, 'request', side_effect=app_request), \
+                    patch('benchmarks.views.metadata_edit.GitHub.installation', return_value=app):
+                response = self.client.get('/metadata/github/callback/', {'state': state, 'code': 'test-code'})
+                identity.assert_called_once_with('GET', '/user')
+        self.assertEqual(response.url, 'https://github.com/brain-score/language/pull/10')
+        branch = next(payload['ref'] for method, endpoint, payload in writes if endpoint.endswith('/git/refs'))
+        self.assertTrue(branch.startswith('refs/heads/web_metadata_%s_outside-contributor_' % user.pk))
+        pr = next(payload for method, endpoint, payload in writes if method == 'POST' and endpoint.endswith('/pulls'))
+        self.assertEqual(pr['base'], 'main')
+        self.assertIn('Brain-Score user_id: %s' % user.pk, pr['body'])
+        self.assertIn('GitHub contributor: @outside-contributor', pr['body'])
+        self.assertTrue(all(endpoint.startswith('/repos/brain-score/language/') for _, endpoint, _ in writes))
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+        self.assertFalse(ModelMetadataRevision.objects.exists())
+
+        api = FakeGitHub()
+        api.content = content[0]
+        api.pr['base'].update(ref='main', repo={'full_name': 'brain-score/language'})
+        api.pr['merged'] = False
+        api.pages = lambda *args: [{'filename': path, 'status': 'added'}]
+        api.file = lambda repository, filename, ref: (api.content, api.blob)
+        with self.assertRaises(ProposalError):
+            publish_pull_request('language', 10, api)
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        api.pr['merged'] = True
+        self.assertEqual(publish_pull_request('language', 10, api)[0]['status'], 'published')
+        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 124000000)
+        self.assertEqual(ModelMetadataPublication.objects.get().identifier, 'gpt2')
+        self.assertEqual(publish_pull_request('language', 10, api)[0]['status'], 'unchanged')
+        self.assertEqual(ModelMetadataRevision.objects.count(), 1)
