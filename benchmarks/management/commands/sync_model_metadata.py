@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 
 from benchmarks.model_metadata.github import GitHub, ProposalError, domains
+from benchmarks.model_metadata.monitoring import report_run
 from benchmarks.model_metadata.synchronization import DryRunState, RedisState, sync_domain, timestamp
 
 LOCK_ID = 67256021
@@ -29,6 +30,8 @@ class Command(BaseCommand):
             return
         if options["since"] and not options["dry_run"]:
             raise CommandError("Use --since only with --dry-run; activation sets the persistent start time.")
+        monitor = not options["dry_run"]
+        success = False
         try:
             start = timestamp(options["since"] or getattr(settings, "MODEL_METADATA_SYNC_START_AT", ""))
             now = datetime.now(timezone.utc)
@@ -46,6 +49,7 @@ class Command(BaseCommand):
                 cursor.execute("SELECT pg_try_advisory_lock(%s)", [LOCK_ID])
                 acquired = cursor.fetchone()[0]
             if not acquired:
+                monitor = False
                 self.stdout.write("Another metadata synchronization is running.")
                 return
             try:
@@ -68,10 +72,14 @@ class Command(BaseCommand):
             finally:
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT pg_advisory_unlock(%s)", [LOCK_ID])
+            success = True
         except CommandError:
             raise
         except Exception as exc:
             raise CommandError("Metadata synchronization failed: " + type(exc).__name__) from None
+        finally:
+            if monitor:
+                report_run(success)
 
     @staticmethod
     def publish(domain, number, github):
