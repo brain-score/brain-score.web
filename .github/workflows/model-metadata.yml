@@ -63,5 +63,6 @@ jobs:
             createdb --host=127.0.0.1 --username=postgres "$METADATA_TEST_DB"
             python manage.py migrate benchmarks "$migration" --settings=web.metadata_test_settings --noinput
             python manage.py migrate --settings=web.metadata_test_settings --noinput
-            python manage.py import_model_metadata --settings=web.metadata_test_settings
+            DJANGO_SETTINGS_MODULE=web.metadata_test_settings python -c "import django; django.setup(); from benchmarks.tests.metadata_fixtures import write_catalog_fixture; write_catalog_fixture('/tmp/metadata-history-fixture')"
+            python manage.py import_model_metadata /tmp/metadata-history-fixture --settings=web.metadata_test_settings
           done

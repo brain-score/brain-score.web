@@ -17,15 +17,6 @@ function initializeLeaderboardFromTemplate() {
       benchmarkMetadata = window.DJANGO_DATA.benchmark_metadata;
       benchmarkIds = window.DJANGO_DATA.benchmark_ids;
 
-      let modelMetadataMap, benchmarkMetadataMap;
-      modelMetadataMap = window.DJANGO_DATA.model_metadata_map || {};
-      benchmarkMetadataMap = {};
-      benchmarkMetadata.forEach(entry => {
-        benchmarkMetadataMap[entry.identifier] = entry;
-      });
-      window.modelMetadataMap = modelMetadataMap;
-      window.benchmarkMetadataMap = benchmarkMetadataMap;
-
     } catch (e) {
       console.error('Error parsing data:', e);
       // Hide loading animation on error
@@ -49,9 +40,6 @@ function initializeLeaderboardFromTemplate() {
     window.benchmarkMetadata = benchmarkMetadata;
 
     window.benchmarkIds = benchmarkIds;
-    window.benchmarkStimuliMetaMap = window.DJANGO_DATA.benchmarkStimuliMetaMap;
-    window.benchmarkDataMetaMap = window.DJANGO_DATA.benchmarkDataMetaMap;
-    window.benchmarkMetricMetaMap = window.DJANGO_DATA.benchmarkMetricMetaMap;
     window.benchmarkBibtexMap = window.DJANGO_DATA.benchmark_bibtex_map;
 
     // Set up range sliders with correct max values

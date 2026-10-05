@@ -124,136 +124,20 @@ python manage.py audit_payload language
 **Options:**
 - `domain` - Which domain to audit: `vision` or `language` (default: vision)
 
-### Example Output
+### Interpreting the output
 
-```
-=== ENVIRONMENT CHECK ===
-Database Host: ***.***.us-east-1.rds.amazonaws.com
-Cache Backend: django.core.cache.backends.locmem.LocMemCache
-✓ Using local memory cache (dev environment)
+The command reports context generation time and estimated serialized sizes for
+`row_data`, `column_defs` and `benchmark_bibtex_map`. Run it against the intended
+environment; model counts and benchmark coverage change over time.
 
-=== PROFILING DOMAIN: VISION ===
+`row_data` contains model identities and scores and is usually the largest
+component. Profile database queries and serialization before choosing an
+optimization. `column_defs` describes the grid columns, and
+`benchmark_bibtex_map` supports citation export.
 
-Context generation time: 4.123s
-
-=== PAYLOAD SIZE BREAKDOWN ===
-
-row_data:
-  Size: 6.89 MB (7,223,456 bytes)
-  Models: 493
-  Fields per model: 206
-    - Score fields: ~200
-    - Base fields: 6 (id, rank, model, public, metadata, is_owner)
-  Sample score object keys: ['score_ceiled', 'error', 'benchmark_type_id']
-  Estimated score data size: ~6.45 MB
-
-column_defs:
-  Size: 0.12 MB (125,678 bytes)
-  Columns: 200
-
-metadata_maps:
-  benchmarkStimuliMetaMap: 0.15 MB (157,824 bytes)
-  benchmarkDataMetaMap: 0.08 MB (83,968 bytes)
-  benchmarkMetricMetaMap: 0.05 MB (52,480 bytes)
-  model_metadata_map: 0.24 MB (251,904 bytes)
-  benchmark_bibtex_map: 0.06 MB (62,976 bytes)
-
-TOTAL ESTIMATED PAYLOAD: 7.59 MB
-
-=== OPTIMIZATION OPPORTUNITIES ===
-
-Score object fields found:
-  - score_ceiled: float
-  - error: float
-  - benchmark_type_id: int
-
-Potential optimizations:
-  2. [HIGH IMPACT] Move optional fields to on-demand API: error
-     Estimated savings: ~30% of score data
-  3. [MEDIUM IMPACT] Lazy-load metadata maps on demand
-     Estimated savings: 0.58 MB
-
-=== SUMMARY ===
-
-Current payload: 7.59 MB
-Target (Phase 1): < 10 MB
-Reduction needed: 0.00 MB (0.0%)
-
-Next steps:
-  1. Profile with: python -m cProfile -o leaderboard.prof manage.py shell
-  2. Implement payload reduction (remove color, move optional fields)
-  3. Re-run this audit to measure improvements
-```
-
-### How to Interpret
-
-**1. Payload Size Breakdown**
-
-The payload has three main components:
-
-```
-row_data: 6.89 MB          ← MODEL SCORES (biggest component)
-├─ 493 models
-├─ ~200 score fields per model
-└─ 3 keys per score object
-
-column_defs: 0.12 MB       ← COLUMN DEFINITIONS (small)
-└─ 200 columns with headers, formatters
-
-metadata_maps: 0.58 MB     ← METADATA LOOKUPS (medium)
-├─ benchmarkStimuliMetaMap
-├─ model_metadata_map
-└─ etc.
-```
-
-**What to optimize first:** Always start with the largest component (row_data).
-
-**2. Understanding Score Object Structure**
-
-```
-Sample score object keys: ['score_ceiled', 'error', 'benchmark_type_id']
-                          └─ 3 fields × 200 benchmarks × 493 models = ~296,400 values
-```
-
-**Each field has a cost:**
-- `score_ceiled` (float) - **Essential** - The actual score value
-- `error` (float) - **Optional** - Can be loaded on-demand for error bars
-- `benchmark_type_id` (int) - **Essential** - Links score to benchmark
-
-**3. Optimization Impact Estimates**
-
-The command suggests optimizations with impact ratings:
-
-| Priority | Optimization | Savings | Trade-off |
-|----------|--------------|---------|-----------|
-| HIGH IMPACT | Move `error` to on-demand API | ~30% of score data (~2 MB) | Error bars load on hover instead of immediately |
-| MEDIUM IMPACT | Lazy-load metadata maps | ~0.6 MB | Metadata loads when user expands tree nodes |
-| LOW IMPACT | Compress column_defs | ~50 KB | Minimal gain, not worth complexity |
-
-**4. Target Analysis**
-
-```
-Current payload: 7.59 MB
-Target (Phase 1): < 10 MB    ← Already achieved!
-Reduction needed: 0.00 MB
-```
-
-If you're **above target**, focus on HIGH IMPACT optimizations first.
-
-**5. When Payload is Too Large**
-
-If payload exceeds target:
-
-```
-Current payload: 14.28 MB
-Target (Phase 1): < 10 MB
-Reduction needed: 4.28 MB (30.0%)
-```
-
-**Action plan:**
-1. Remove pre-computed colors (if present) - saves ~50% of score data
-2. Move `error` field to on-demand API - saves ~30% more
-3. Lazy-load metadata maps - saves ~0.5-1 MB
+Leaderboard downloads contain only `leaderboard.csv`. Legacy model/stimuli/data/
+metric export maps and the `plugin-info.csv` sidecar are no longer included in
+the browser payload. Metadata needed for filtering and tooltips remains available.
 
 ---
 

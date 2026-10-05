@@ -139,7 +139,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--catalog",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "benchmarks/model_metadata/data",
+        required=True,
     )
     p.add_argument("--domain", required=True)
     p.add_argument("--checkout", type=Path, required=True)

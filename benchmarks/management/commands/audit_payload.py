@@ -121,10 +121,6 @@ class Command(BaseCommand):
         # Analyze metadata maps
         self.stdout.write(f"metadata_maps:")
         metadata_keys = [
-            'benchmarkStimuliMetaMap',
-            'benchmarkDataMetaMap',
-            'benchmarkMetricMetaMap',
-            'model_metadata_map',
             'benchmark_bibtex_map'
         ]
 

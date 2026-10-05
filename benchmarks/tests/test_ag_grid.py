@@ -1,6 +1,7 @@
 import pytest
 from playwright.sync_api import sync_playwright
-import zipfile
+import csv
+from io import StringIO
 
 
 # ---- invariant helpers ----
@@ -1139,32 +1140,24 @@ class TestFilter:
 
 class TestExtraFunctionality:
 
-    def test_csv_export_contains_expected_files(self, page, tmp_path):
-        """
-        Verifies that clicking the CSV export button:
-        1) Triggers a ZIP download.
-        2) The ZIP contains both `leaderboard.csv` and `plugin-info.csv`.
-        """
-
-        # Wait for the button to appear and click it
+    def test_csv_export_downloads_only_leaderboard_scores(self, page, tmp_path):
+        """Export downloads a standalone score CSV with database model IDs."""
         assert page.locator('#exportCsvButton').is_visible(), "Export CSV button not visible"
-
         with page.expect_download() as download_info:
             page.click('#exportCsvButton')
 
         download = download_info.value
-        zip_path = tmp_path / download.suggested_filename
-        download.save_as(zip_path)
-
-        # Read and inspect ZIP contents
-        with zipfile.ZipFile(zip_path, 'r') as zip_file:
-            file_list = zip_file.namelist()
-
-            assert "plugin-info.csv" in file_list, \
-                "plugin-info.csv not found in ZIP"
-            assert "leaderboard.csv" in file_list, \
-                "leaderboard.csv not found in ZIP"
-
+        assert download.suggested_filename == 'leaderboard.csv'
+        csv_path = tmp_path / download.suggested_filename
+        download.save_as(csv_path)
+        contents = csv_path.read_text(encoding='utf-8')
+        lines = contents.splitlines()
+        assert lines[0].startswith('# Generated on ')
+        assert lines[1].startswith('# Date from ')
+        rows = list(csv.reader(StringIO('\n'.join(lines[2:]))))
+        assert 'Model ID' in rows[0]
+        assert len(rows) > 1, "Leaderboard export contains no model scores"
+        assert all(len(row) == len(rows[0]) for row in rows[1:])
 
     def test_search_bar_filters_models_by_name(self, page):
         """

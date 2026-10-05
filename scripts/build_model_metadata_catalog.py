@@ -15,7 +15,7 @@ mirror the ``ModelMetadata*`` Django models of migration 0027 (see
 
 Usage:
     python scripts/build_model_metadata_catalog.py <workbook.csv> \
-        [--out benchmarks/model_metadata/data]
+        --out /path/to/recovery-catalog
 
 The output is deterministic (sorted rows) so reruns produce clean git diffs.
 """
@@ -566,7 +566,7 @@ def build_relationships(model, identifier_lookup):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('workbook', help='Path to the curation workbook CSV (transposed sheet)')
-    parser.add_argument('--out', default='benchmarks/model_metadata/data',
+    parser.add_argument('--out', required=True,
                         help='Output directory for the six catalog CSVs')
     parser.add_argument('--colors', metavar='XLSX', default=None,
                         help='Matching .xlsx export of the same sheet; its cell fill '

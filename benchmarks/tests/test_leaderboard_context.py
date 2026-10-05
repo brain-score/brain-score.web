@@ -20,8 +20,11 @@ class TestAgGridContext(BaseTestCase):
         ctx = self._ctx()
         for key in ["row_data", "column_defs", "benchmark_tree", "filter_options",
                     "benchmark_metadata", "benchmark_ids", "benchmark_bibtex_map",
-                    "model_metadata_map", "domain"]:
+                    "domain"]:
             self.assertIn(key, ctx)
+        for key in ("model_metadata_map", "benchmarkStimuliMetaMap",
+                    "benchmarkDataMetaMap", "benchmarkMetricMetaMap"):
+            self.assertNotIn(key, ctx)
         # comparison_data belongs to the compare page, not the leaderboard payload
         self.assertNotIn("comparison_data", ctx)
 
