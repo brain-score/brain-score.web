@@ -1,5 +1,5 @@
 // export CSV logic:
-document.getElementById('exportCsvButton')?.addEventListener('click', async function () {
+document.getElementById('exportCsvButton')?.addEventListener('click', function () {
   if (!window.globalGridApi || !window.benchmarkTree) {
     console.warn('Grid or benchmark tree not ready');
     return;
@@ -112,60 +112,10 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   });
   const leaderboardCsv = rows.join('\n');
 
-  // Create plugins CSV (includes model_id for database cross-referencing)
-  const pluginRows = [['plugin_name', 'plugin_type', 'model_id', 'metadata']];
-
-  // Add model rows
-  window.globalGridApi.forEachNodeAfterFilter(node => {
-    const modelName = node.data?.model?.name;
-    const modelId = node.data?.id || node.data?.model?.id || '';
-    if (!modelName) return;
-    // grab per‐model metadata from the map we created
-    const meta = window.modelMetadataMap[modelName] || node.data.metadata || {};
-    const modelJson = JSON.stringify(meta).replace(/"/g, '""');
-    const modelCell = `"${modelJson}"`;
-    pluginRows.push([
-      modelName,
-      'model',
-      modelId,
-      modelCell
-    ]);
-  });
-
-  // Add benchmark leaf nodes that are *not excluded* (including wayback-hidden ones)
-  const benchmarkLeafIds = [];
-  const queue2 = [...window.benchmarkTree];
-  while (queue2.length) {
-    const node = queue2.shift();
-    if (node.children && node.children.length) {
-      queue2.push(...node.children);
-    } else {
-      if (!allExcludedBenchmarks.has(node.id)) {
-        benchmarkLeafIds.push(node.id);
-      }
-    }
-  }
-
-  benchmarkLeafIds.forEach(id => {
-    // look up the metadata entry for this benchmark
-    const stimuliMeta = (window.benchmarkStimuliMetaMap || {})[id] || {};
-    const dataMeta    = (window.benchmarkDataMetaMap    || {})[id] || {};
-    const metricMeta  = (window.benchmarkMetricMetaMap  || {})[id] || {};
-    const combined    = { Stimuli: stimuliMeta, Data: dataMeta, Metric: metricMeta };
-    const jsonStr     = JSON.stringify(combined).replace(/"/g,'""');
-    pluginRows.push([ id, 'benchmark', '', `"${jsonStr}"` ]);  // empty model_id for benchmarks
-  });
-
-  const pluginCsv = pluginRows
-    .map(row => row.join(','))
-    .join('\n');
-
   // Get local timestamp
   const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
   const tz = Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
     .formatToParts(now).find(part => part.type === 'timeZoneName')?.value || 'local';
-  const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}_${tz}`;
 
   // Create datetime comment for CSV files
   const datetimeComment = `# Generated on ${now.toISOString()} (${tz})`;
@@ -199,17 +149,13 @@ document.getElementById('exportCsvButton')?.addEventListener('click', async func
   // Add datetime comment to leaderboard CSV
   const leaderboardCsvWithComment = `${datetimeComment}\n${waybackComment}\n${leaderboardCsv}`;
 
-  // Add datetime comment to plugin CSV
-  const pluginCsvWithComment = `${datetimeComment}\n${waybackComment}\n${pluginCsv}`;
-
-  // Create ZIP
-  const zip = new JSZip();
-  zip.file('leaderboard.csv', leaderboardCsvWithComment);
-  zip.file('plugin-info.csv', pluginCsvWithComment);
-
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const blob = new Blob([leaderboardCsvWithComment], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(zipBlob);
-  link.download = `leaderboard_export_${timestamp}.zip`;
+  link.href = url;
+  link.download = 'leaderboard.csv';
+  document.body.appendChild(link);
   link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 });

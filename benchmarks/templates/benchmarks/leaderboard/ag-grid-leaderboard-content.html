@@ -30,7 +30,7 @@
     </button>
   {% endif %}
 
-  <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard data and plugin metadata">
+  <button id="exportCsvButton" class="btn-secondary" style="background-color: #47B7DE; color: white; border: none; white-space: nowrap" title="Export leaderboard scores as CSV">
     <i class="fa-solid fa-download"></i>  Export
   </button>
 
@@ -312,11 +312,7 @@
     benchmark_metadata: {{ benchmark_metadata|safe }},
     benchmark_ids: {{ benchmark_ids|safe }},
     benchmark_bibtex_map: {{ benchmark_bibtex_map|safe }},
-    model_metadata_map: {{ model_metadata_map|safe }},
-    domain: '{{ domain }}',
-    benchmarkStimuliMetaMap: {{ benchmarkStimuliMetaMap|safe }},
-    benchmarkDataMetaMap: {{ benchmarkDataMetaMap|safe }},
-    benchmarkMetricMetaMap: {{ benchmarkMetricMetaMap|safe }}
+    domain: '{{ domain }}'
   };
 </script>
 
