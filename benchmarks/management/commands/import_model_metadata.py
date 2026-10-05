@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError, transaction
 
@@ -12,8 +10,7 @@ class Command(BaseCommand):
     help = 'Validate and import model metadata; preserve models outside the supplied catalog.'
 
     def add_arguments(self, parser):
-        parser.add_argument('data_dir', nargs='?', default=str(
-            Path(__file__).resolve().parents[2] / 'model_metadata' / 'data'))
+        parser.add_argument('data_dir', help='Explicit reviewed recovery catalog directory')
         parser.add_argument('--dry-run', action='store_true', help='Validate and report without writing')
         parser.add_argument('--check-public', action='store_true',
                             help='Report catalog identifiers without a public model page')

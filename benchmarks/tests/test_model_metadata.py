@@ -20,7 +20,7 @@ from benchmarks.model_metadata.catalog import TABLES, read_catalog, scalar_field
 from benchmarks.models import ModelMetadataRecord, ModelMetadataRelationship
 from benchmarks.views.model import build_model_card_metadata, view
 
-DATA = Path(__file__).resolve().parents[1] / 'model_metadata' / 'data'
+from benchmarks.tests.metadata_fixtures import write_catalog_fixture
 
 
 @skipIf(settings.TEST_RUNNER.endswith('ExistingDatabaseTestRunner'),
@@ -28,15 +28,22 @@ DATA = Path(__file__).resolve().parents[1] / 'model_metadata' / 'data'
 class MetadataTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command('import_model_metadata', DATA, stdout=StringIO())
+        directory = TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.data = write_catalog_fixture(directory.name)
+        call_command('import_model_metadata', cls.data, stdout=StringIO())
 
-    def import_catalog(self, directory=DATA, **options):
-        call_command('import_model_metadata', directory, stdout=StringIO(), **options)
+    def import_catalog(self, directory=None, **options):
+        call_command('import_model_metadata', directory or self.data, stdout=StringIO(), **options)
+
+    def test_recovery_import_requires_an_explicit_catalog_path(self):
+        with self.assertRaises(CommandError):
+            call_command('import_model_metadata', dry_run=True)
 
     def modified_catalog(self, table, change):
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        for path in DATA.glob('*.csv'):
+        for path in self.data.glob('*.csv'):
             with path.open(newline='') as stream:
                 reader = csv.DictReader(stream)
                 fields, rows = reader.fieldnames, list(reader)
@@ -49,7 +56,7 @@ class MetadataTests(TestCase):
         return directory.name
 
     def test_every_imported_scalar_and_child_value_matches_catalog(self):
-        tables = read_catalog(DATA)
+        tables = read_catalog(self.data)
         for name, (model, ordering) in TABLES.items():
             with self.subTest(table=name):
                 actual = []
@@ -63,7 +70,7 @@ class MetadataTests(TestCase):
     def test_all_cards_match_csv_context(self):
         tables = {}
         for name in TABLES:
-            with (DATA / f'{name}.csv').open(newline='', encoding='utf-8') as stream:
+            with (self.data / f'{name}.csv').open(newline='', encoding='utf-8') as stream:
                 tables[name] = list(csv.DictReader(stream))
         expected = repository._build_catalog(tables)
         for (domain, identifier), card in expected.items():
@@ -82,7 +89,7 @@ class MetadataTests(TestCase):
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         selected = ModelMetadataRecord.objects.order_by('identifier').first().identifier
-        for path in DATA.glob('*.csv'):
+        for path in self.data.glob('*.csv'):
             with path.open(newline='') as stream:
                 reader = csv.DictReader(stream)
                 fields, rows = reader.fieldnames, [row for row in reader if row['identifier'] == selected]
@@ -91,16 +98,16 @@ class MetadataTests(TestCase):
                 writer.writeheader()
                 writer.writerows(rows)
         self.import_catalog(directory.name)
-        self.assertEqual(ModelMetadataRecord.objects.count(), 78)
+        self.assertEqual(ModelMetadataRecord.objects.count(), 3)
 
     def test_dry_run_and_empty_catalog_never_delete(self):
         self.import_catalog(dry_run=True, wipe=True)
-        self.assertEqual(ModelMetadataRecord.objects.count(), 78)
+        self.assertEqual(ModelMetadataRecord.objects.count(), 3)
         directory = self.modified_catalog('models', lambda rows: [])
         for wipe in (False, True):
             with self.subTest(wipe=wipe), self.assertRaises(CommandError):
                 self.import_catalog(directory, wipe=wipe)
-            self.assertEqual(ModelMetadataRecord.objects.count(), 78)
+            self.assertEqual(ModelMetadataRecord.objects.count(), 3)
 
     def test_invalid_input_leaves_database_unchanged(self):
         cases = [
@@ -121,7 +128,7 @@ class MetadataTests(TestCase):
                 directory = self.modified_catalog(table, change)
                 with self.assertRaises(CommandError):
                     self.import_catalog(directory, wipe=True)
-                self.assertEqual(ModelMetadataRecord.objects.count(), 78)
+                self.assertEqual(ModelMetadataRecord.objects.count(), 3)
 
     def test_duplicate_case_and_child_keys_are_rejected(self):
         for table in ('models', 'assertions', 'model_datasets'):
@@ -144,8 +151,8 @@ class MetadataTests(TestCase):
                    side_effect=IntegrityError('simulated failure')):
             with self.assertRaisesMessage(CommandError, 'rolled back'):
                 self.import_catalog(wipe=True)
-        self.assertEqual(ModelMetadataRecord.objects.count(), 78)
-        self.assertEqual(TABLES['model_datasets'][0].objects.count(), 225)
+        self.assertEqual(ModelMetadataRecord.objects.count(), 3)
+        self.assertEqual(TABLES['model_datasets'][0].objects.count(), 12)
 
     def test_upgrade_normalizes_legacy_confidence_statuses(self):
         from django.apps import apps
@@ -471,7 +478,9 @@ class PublicLineageTests(TestCase):
 
     def test_public_check_reports_unmatched_identifiers_without_writes(self):
         output = StringIO()
-        call_command('import_model_metadata', DATA, dry_run=True, check_public=True, stdout=output)
+        with TemporaryDirectory() as directory:
+            call_command('import_model_metadata', write_catalog_fixture(directory),
+                         dry_run=True, check_public=True, stdout=output)
         self.assertIn('No public model page:', output.getvalue())
         self.assertEqual(ModelMetadataRecord.objects.count(), 2)
 

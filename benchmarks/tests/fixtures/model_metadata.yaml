@@ -1,0 +1,664 @@
+# Representative metadata fixture for database, editor, and recovery tests.
+schema_version: '2.0'
+domain: vision
+models:
+  resnet-50-robust:
+    sources:
+      curation_workbook:
+        kind: unreviewed
+        citation: curation_workbook
+    assertions:
+    - path: /model/display_name
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/version
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /model/architecture
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /model/parameter_count
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/trainable_layers
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/input_resolution
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/recurrent
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/visual_degrees
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /model/supervision
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/process
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/objective
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/loss
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/learning_rate
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /training/batch_size
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /training/preprocessing
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /data/training_datasets
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /data/summary
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /eval/test_datasets
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /eval/validation_datasets
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /io/interface
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /io/tokenizer
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /provenance/weights_provider
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /provenance/checkpoint
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /legal/license
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /people/creators
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /people/organizations
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /lineage/base_models
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /use/applications
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/users
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/limitations
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/biases
+      status: probable
+      sources:
+      - curation_workbook
+    model:
+      display_name: resnet-50-robust
+      version: Checkpoint ImageNet.pt, MadryLab robustness-library pattern (exact
+        eps/norm not stated in file)
+      architecture:
+        family: convolutional_neural_network
+        description: CNN (ResNet-50), adversarially robust (norm/eps unconfirmed)
+      parameter_count: 25600000
+      parameter_count_exact: false
+      trainable_layers: All ResNet-50 layers trained during external adversarial training;
+        loaded frozen for inference
+      recurrent: false
+      input_resolution:
+        channels: 3
+        height: 224
+        width: 224
+      visual_degrees: null
+      visual_degrees_description: null
+      supervision:
+        type: supervised
+        description: Supervised (adversarial training is still label-supervised)
+    training:
+      process: torchvision resnet50() with randomly-init weights, loaded from a DataParallel-saved
+        MadryLab-style checkpoint (module.model. prefix stripped, first 2 keys dropped)
+        - robust training setting unconfirmed
+      objective: Adversarial + cross-entropy classification loss (exact norm/eps unconfirmed)
+      loss: Cross-entropy (adversarial, exact variant unconfirmed)
+      learning_rate: null
+      batch_size: null
+      preprocessing: Standard torchvision-style preprocessing implied; not explicit
+        in this file (uses load_preprocess_images via functools import but preprocessing
+        partial not shown)
+    data:
+      summary: ImageNet-1k (MadryLab-style adversarial training; exact variant unconfirmed)
+      training_datasets:
+      - identifier: imagenet-1k-madrylab-style-adversarial
+        name: ImageNet-1k (MadryLab-style adversarial training
+        description: null
+        role: training
+      - identifier: exact-variant-unconfirmed
+        name: exact variant unconfirmed)
+        description: null
+        role: training
+    io:
+      modality: image
+      interface: RGB tensor 3x224x224 -> intermediate activations (avgpool is final
+        scored layer, no fc)
+      input_format: RGB tensor 3x224x224
+      output_format: intermediate activations (avgpool is final scored layer, no fc)
+      tokenizer: null
+    provenance:
+      weights_provider: Brain-Score S3 storage; original training pattern matches
+        MadryLab robustness library (exact authors unconfirmed for this specific checkpoint)
+      checkpoint: ImageNet.pt, SHA1 cc6e4441...
+      source_url: null
+      curation_confidence: medium
+    legal:
+      license: 'Submission code: MIT; underlying weights license unconfirmed'
+    eval:
+      test_datasets:
+      - identifier: brain-score-neural-behavioral-benchmark
+        name: Brain-Score neural/behavioral benchmark stimulus sets (confirmed via
+          ModelCommitment/metadata registration)
+        description: null
+      validation_datasets:
+      - identifier: imagenet-1k-standard-validation-split
+        name: ImageNet-1K standard validation split
+        description: null
+    use:
+      applications:
+      - Adversarial-robustness research
+      - Brain-Score benchmarking
+      users:
+      - Robustness researchers
+      - vision neuroscientists
+      limitations:
+      - Same trade-off as above
+      - exact severity depends on unconfirmed eps/norm setting
+      biases:
+      - Same as above
+    people:
+      creators:
+      - Likely MadryLab robustness-library lineage (exact authors/paper for this checkpoint
+        unconfirmed)
+      organizations:
+      - Likely MIT (MadryLab) by pattern; unconfirmed
+    lineage:
+      base_models:
+      - identifier: resnet-50
+        name: ResNet-50
+        relationship: variant_of
+  vit_base_patch16_clip_224:openai_ft_in1k:
+    sources:
+      curation_workbook:
+        kind: unreviewed
+        citation: curation_workbook
+    assertions:
+    - path: /model/display_name
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/version
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/architecture
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/parameter_count
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/trainable_layers
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/input_resolution
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/recurrent
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/visual_degrees
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /model/supervision
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/process
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/objective
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/loss
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/learning_rate
+      status: uncertain
+      sources:
+      - curation_workbook
+    - path: /training/batch_size
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/preprocessing
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /data/training_datasets
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /data/summary
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /eval/test_datasets
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /eval/validation_datasets
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /io/interface
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /io/tokenizer
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /provenance/weights_provider
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /provenance/checkpoint
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /legal/license
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /people/creators
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /people/organizations
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /lineage/base_models
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /use/applications
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/users
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/limitations
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/biases
+      status: verified
+      sources:
+      - curation_workbook
+    model:
+      display_name: vit_base_patch16_clip_224:openai_ft_in1k
+      version: openai_ft_in1k (timm tag)
+      architecture:
+        family: vision_transformer
+        description: Vision Transformer / CLIP image encoder
+      parameter_count: 86600000
+      parameter_count_exact: false
+      trainable_layers: 12 transformer layers, 12 heads, hidden_dim 768 (standard
+        ViT-B/16 config)
+      recurrent: false
+      input_resolution:
+        channels: 3
+        height: 224
+        width: 224
+      visual_degrees: null
+      visual_degrees_description: null
+      supervision:
+        type: weakly_supervised
+        description: 'Pretrain: weakly-supervised contrastive (natural-language supervision,
+          no manual class labels); Fine-tune: fully supervised classification'
+    training:
+      process: OpenAI contrastive image-text pretrain on WIT-400M (CLIP) -> fine-tuned
+        on ImageNet-1k in timm (Cherti et al. 2022 scaling-laws recipe)
+      objective: 'Pretrain: symmetric contrastive InfoNCE loss between image/text
+        embeddings; Fine-tune: cross-entropy classification'
+      loss: CLIP symmetric contrastive cross-entropy over cosine similarities w/ learned
+        temperature (pretrain) + cross-entropy (fine-tune)
+      learning_rate: 'Pretrain (CLIP paper, ViT variants): ~5e-4 w/ cosine decay +
+        2000-step warmup; fine-tune-stage LR not publicly documented'
+      batch_size: 'Pretrain (CLIP paper): 32,768 global batch; fine-tune-stage batch
+        size not publicly documented'
+      preprocessing: 224x224 resize/crop, CLIP normalization mean=[0.4815,0.4578,0.4082]
+        std=[0.2686,0.2613,0.2758]
+    data:
+      summary: 'Pretrain: WIT-400M (OpenAI''s private ''WebImageText'', 400M image-text
+        pairs); Fine-tune: ImageNet-1k'
+      training_datasets:
+      - identifier: wit-400m-openai-s-private-webimagetext
+        name: WIT-400M (OpenAI's private 'WebImageText', 400M image-text pairs)
+        description: ~400M image-text pairs
+        role: pretraining
+      - identifier: imagenet-1k
+        name: ImageNet-1k
+        description: 1.28M training images
+        role: fine_tuning
+    io:
+      modality: image
+      interface: 'Input: RGB (3,224,224) normalized; Output: 1000-way logits or (1,197,768)
+        unpooled feature tensor'
+      input_format: RGB (3,224,224) normalized
+      output_format: 1000-way logits or (1,197,768) unpooled feature tensor
+      tokenizer: null
+    provenance:
+      weights_provider: OpenAI (pretrain) + timm/Ross Wightman (fine-tune), hosted
+        on Hugging Face
+      checkpoint: timm/vit_base_patch16_clip_224.openai_ft_in1k (HF Hub, safetensors)
+      source_url: null
+      curation_confidence: null
+    legal:
+      license: Apache-2.0 (as distributed by timm on HF); original OpenAI CLIP GitHub
+        repo code is MIT-licensed (distinct from this checkpoint's stated license)
+    eval:
+      test_datasets:
+      - identifier: imagenet-1k-validation-set
+        name: ImageNet-1k validation set
+        description: null
+      validation_datasets:
+      - identifier: imagenet-1k-validation-set
+        name: ImageNet-1k validation set
+        description: null
+    use:
+      applications:
+      - General image classification
+      - compact transfer-learning backbone
+      - feature/embedding extraction
+      users:
+      - Researchers/developers wanting a compact (86M param) CLIP-initialized ViT
+        classifier
+      limitations:
+      - Original CLIP documented weaknesses - fine-grained classification, counting,
+        abstract/systematic and some geo/OOD tasks (CLIP paper Limitations)
+      - fine-tuning trades away zero-shot versatility
+      biases:
+      - Extensively documented in CLIP paper Sec.7 Broader Impacts - race/gender association
+        biases, surveillance-use risk, biases from uncurated internet data
+    people:
+      creators:
+      - OpenAI (Radford, Kim, Hallacy et al., pretrain) + Ross Wightman/timm (fine-tune)
+      organizations:
+      - OpenAI + timm/Hugging Face
+    lineage:
+      base_models:
+      - identifier: openai-clip-vit-b-16-image-encoder
+        name: OpenAI CLIP ViT-B/16 image encoder
+        relationship: fine_tuned_from
+  vit_large_patch14_clip_224:openai_ft_in1k:
+    sources:
+      curation_workbook:
+        kind: unreviewed
+        citation: curation_workbook
+    assertions:
+    - path: /model/display_name
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/version
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /model/architecture
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/parameter_count
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/trainable_layers
+      status: uncertain
+      sources:
+      - curation_workbook
+    - path: /model/input_resolution
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/recurrent
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /model/visual_degrees
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /model/supervision
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/process
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /training/objective
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/loss
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /training/learning_rate
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /training/batch_size
+      status: undocumented
+      sources:
+      - curation_workbook
+    - path: /training/preprocessing
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /data/training_datasets
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /data/summary
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /eval/test_datasets
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /eval/validation_datasets
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /io/interface
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /io/tokenizer
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /provenance/weights_provider
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /provenance/checkpoint
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /legal/license
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /people/creators
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /people/organizations
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /lineage/base_models
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /use/applications
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /use/users
+      status: probable
+      sources:
+      - curation_workbook
+    - path: /use/limitations
+      status: verified
+      sources:
+      - curation_workbook
+    - path: /use/biases
+      status: verified
+      sources:
+      - curation_workbook
+    model:
+      display_name: vit_large_patch14_clip_224:openai_ft_in1k
+      version: Original OpenAI CLIP ViT-L/14 (224px), released January 2022
+      architecture:
+        family: vision_transformer
+        description: Vision Transformer (ViT-L/14), CLIP image encoder
+      parameter_count: 304200000
+      parameter_count_exact: false
+      trainable_layers: 24 transformer blocks; full fine-tune assumed
+      recurrent: false
+      input_resolution:
+        channels: 3
+        height: 224
+        width: 224
+      visual_degrees: null
+      visual_degrees_description: null
+      supervision:
+        type: contrastive_pretrain_supervised_finetune
+        description: Contrastive pretrain + supervised fine-tune
+    training:
+      process: CLIP contrastive pretrain on WIT-400M -> direct supervised fine-tune
+        on ImageNet-1k (no IN-12k stage)
+      objective: CLIP contrastive loss + classification loss (fine-tune)
+      loss: Contrastive (pretrain) + cross-entropy (fine-tune, inferred)
+      learning_rate: null
+      batch_size: null
+      preprocessing: 224x224, crop_pct 1.0, bicubic; OpenAI CLIP normalization stats
+    data:
+      summary: 'Stage1: WIT-400M (OpenAI); Stage2: ImageNet-1k'
+      training_datasets:
+      - identifier: wit-400m-openai
+        name: WIT-400M (OpenAI)
+        description: ~400M pairs
+        role: pretraining
+      - identifier: imagenet-1k
+        name: ImageNet-1k
+        description: 1.28M train/50K val
+        role: fine_tuning
+    io:
+      modality: image
+      interface: 'Input: RGB (B,3,224,224); Output: 1000-way logits or (B,257,1024)
+        unpooled tokens / pooled embedding'
+      input_format: RGB (B,3,224,224)
+      output_format: 1000-way logits or (B,257,1024) unpooled tokens / pooled embedding
+      tokenizer: null
+    provenance:
+      weights_provider: Hugging Face Hub, timm org
+      checkpoint: timm/vit_large_patch14_clip_224.openai_ft_in1k
+      source_url: null
+      curation_confidence: null
+    legal:
+      license: Apache-2.0 (HF tag), same OpenAI MIT-code / research-intent nuance
+    eval:
+      test_datasets:
+      - identifier: imagenet-1k-val-top-1-87-86-top-5-98
+        name: ImageNet-1k val - top-1 87.86%, top-5 98.43% (results-imagenet.csv)
+        description: null
+      validation_datasets:
+      - identifier: imagenet-1k-val
+        name: ImageNet-1k val
+        description: null
+    use:
+      applications:
+      - ImageNet classification
+      - transfer-learning backbone/embeddings, lower-compute 224px option
+      users:
+      - CV researchers/engineers needing compact (224px, lower-compute) ViT-L classifier
+      limitations:
+      - Same CLIP-inherited weaknesses (fine-grained classification, counting)
+      - slightly lower top-1 than IN12k->IN1k variant (87.86% vs 88.16%)
+      biases:
+      - Same FairFace-documented racial/gender disparities & WIT-400M demographic
+        skew as OpenAI CLIP model card
+    people:
+      creators:
+      - OpenAI (base CLIP); Ross Wightman (fine-tune)
+      organizations:
+      - OpenAI (base pretrain); Ross Wightman/timm (fine-tune, hosting)
+    lineage:
+      base_models:
+      - identifier: clip-vit-l-14
+        name: CLIP ViT-L/14
+        relationship: fine_tuned_from

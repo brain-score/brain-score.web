@@ -135,13 +135,10 @@ class PublicationTests(TestCase):
         self.assertFalse(ModelMetadataPublication.objects.exists())
 
     def test_catalog_bootstrap_preserves_existing_leaderboard_fields(self):
-        from pathlib import Path
-        from benchmarks.model_metadata.catalog import read_catalog
+        from benchmarks.tests.metadata_fixtures import fixture_tables
         from brainscore_core.metadata.storage import from_tables
 
-        tables = read_catalog(
-            Path(__file__).resolve().parents[1] / "model_metadata" / "data"
-        )
+        tables = fixture_tables()
         catalog = from_tables(tables, "vision")
         for identifier in catalog["models"]:
             model = Model.objects.create(
@@ -927,14 +924,11 @@ class EditorTests(TestCase):
 )
 class ConversionTests(SimpleTestCase):
     def test_all_catalog_values_survive_yaml_roundtrip(self):
-        from pathlib import Path
-        from benchmarks.model_metadata.catalog import read_catalog
+        from benchmarks.tests.metadata_fixtures import fixture_tables
         from brainscore_core.metadata import dump, load
         from brainscore_core.metadata.storage import from_tables, to_tables
 
-        tables = read_catalog(
-            Path(__file__).resolve().parents[1] / "model_metadata" / "data"
-        )
+        tables = fixture_tables()
         restored = to_tables(load(dump(from_tables(tables, "vision"))))
         for name, rows in tables.items():
             expected = deepcopy([row for row in rows if row["domain"] == "vision"])
