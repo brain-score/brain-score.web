@@ -6,6 +6,10 @@
 # identifiers). The news link auto-points to /vision/leaderboard?new=<slug>, which highlights
 # exactly those benchmarks with the "+N NEW" indicators. `leaderboard_default: false` keeps an
 # update out of the default (no-param) leaderboard view, so it only highlights when clicked.
+- date: 2026-10-05
+  text: Behavior under image perturbations (Kato2026) benchmarks added
+  slug: kato2026
+  benchmarks: ["Kato2026*"]
 - date: 2026-09-09
   text: V4 single-unit (Cowley2026) benchmark added
   slug: cowley2026
