@@ -302,7 +302,7 @@ class MetadataTests(TestCase):
             response = view(request, 1, 'vision')
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, 'html.parser')
-        self.assertIsNotNone(soup.select_one('h3#scores'))
+        self.assertIsNotNone(soup.select_one('#scores'))
         for selector in ('.mc-hero-stats', '.mc-specs', '.mc-grid', '.mc-use-grid',
                          '.model-eval-io', '.mc-verification-bar'):
             self.assertIsNotNone(soup.select_one(selector), selector)

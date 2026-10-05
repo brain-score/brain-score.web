@@ -142,15 +142,12 @@ class TestWebsitePages(BaseTestCase):
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        # Check h3 title
-        h3 = soup.select_one('h3#scores')
-        self.assertIsNotNone(h3, "Missing h3#scores title")
-        self.assertIn('Scores on benchmarks', h3.text)
+        score_heading = soup.select_one('#scores')
+        self.assertIsNotNone(score_heading, "Missing scores heading")
+        self.assertIn('Scores on benchmarks', score_heading.text)
 
-        # Check subtitle h4
-        h4 = soup.select_one('h4.subtitle.is-4')
-        self.assertIsNotNone(h4, "Missing h4 subtitle")
-        self.assertIn('How to use', h4.text)
+        section_titles = [heading.get_text(strip=True) for heading in soup.select('h2')]
+        self.assertIn('How to use', section_titles)
 
         # Check for <p> with 'Layer Commitment'
         layer_commitments = soup.select('p.subtitle.is-5')
