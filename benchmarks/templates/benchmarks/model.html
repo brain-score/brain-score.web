@@ -297,7 +297,7 @@
                                                 <div class="samples_container is-overflow-wrap"
                                                      id="samples-{{ score_row.versioned_benchmark_identifier }}">
                                                     {% for sample in '0123456789'|make_list %}
-                                                        <img class="stimulus_sample"
+                                                        <img class="stimulus_sample" loading="lazy"
                                                              src="/static/benchmarks/img/benchmark_samples/{{ score_row.versioned_benchmark_identifier }}/{{ sample }}.png"
                                                              alt="sample {{ sample }}"
                                                              onerror="this.style.display='none'; this.dataset.failed='true';
