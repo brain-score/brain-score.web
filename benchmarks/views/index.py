@@ -1,13 +1,11 @@
-import json
 import logging
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Union, List, Dict, Any, Tuple
+from typing import Union, List, Dict, Any
 from django.contrib.auth.models import User
 from django.utils.functional import wraps
 from django.db.models import Q
 from django.core.cache import cache
 import numpy as np
-import pandas as pd
 from colour import Color
 from django.shortcuts import render
 from django.template.defaulttags import register
@@ -134,10 +132,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
     # Add submittable benchmarks for authenticated users
     submittable_benchmarks = _collect_submittable_benchmarks(benchmarks=benchmarks, user=user) if user else None
 
-    # Build CSV data and comparison data
-    # Combined to a single pass through models to avoid redundant calculations.
-    csv_data, comparison_data = _build_model_data(benchmarks, model_rows_reranked)
-
     # ------------------------------------------------------------------
     # 3) PREPARE FINAL CONTEXT
     # ------------------------------------------------------------------
@@ -152,7 +146,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
         'not_shown_set': not_shown_set,
         'BASE_DEPTH': BASE_DEPTH,
         'has_user': user is not None,
-        'comparison_data': json.dumps(comparison_data),
         'citation_general_url': 'https://www.cell.com/neuron/fulltext/S0896-6273(20)30605-X',
         'citation_general_title': 'Integrative Benchmarking to Advance Neurally Mechanistic Models of Human Intelligence',
         'citation_general_bibtex': (
@@ -204,7 +197,6 @@ def get_context(user=None, domain="vision", benchmark_filter=None, model_filter=
             'citation_domain_bibtex': ''
         })
 
-    context['csv_downloadable'] = csv_data
     # PERF: Commented out - not currently used by any view/template
     # context['model_leaf_benchmark_scores_df'] = model_score_df
     # context['model_leaf_benchmark_timestamps_df'] = model_timestamp_df
@@ -291,72 +283,6 @@ def filter_and_rank_models(models, domain: str = "vision"):
     ranked_models.sort(key=lambda model: model.rank)
     return ranked_models
 
-
-def _build_model_data(benchmarks: List[FinalBenchmarkContext], 
-                      models: List[FinalModelContext]
-                      ) -> Tuple[Union[str, pd.DataFrame], List[Dict[str, Any]]]:
-    """
-    Build both comparison data and scores dataframe in a single pass through models.
-    Returns: (csv_data, comparison_data) tuple
-    comparison_data: Build an array object for use by the JavaScript frontend to dynamically compare trends across benchmarks.
-        ```
-        [
-            {"dicarlo.Rajalingham2018-i2n_v2-score": .521,
-             "dicarlo.Rajalingham2018-i2n_v2-error": 0.00391920504344273,
-             "behavior_v0-score": ".521",
-             ...,
-             "model": "mobilenet_v2_1.0_224",
-            },
-            ...
-        ]
-        ```
-    csv_data: Build a dataframe of model scores for download as CSV.
-    """
-    # Pre-compute benchmark names set
-    benchmark_names = {benchmark.benchmark_type_id for benchmark in benchmarks}
-
-    # Initialize lists of dictionaries to store data
-    records = []  # For CSV download
-    comparison_data = []  # For comparison page
-
-    # Single pass through models
-    for model in models:
-        # Initialize both data structures for this model
-        record = {
-            "model_name": model.name,
-            "layers": json.dumps(model.layers) if model.layers else ""  # Add layer map information to CSV download as a column
-        }
-        model_data = {
-            "model": model.name
-        }
-
-        # Process all scores for this model
-        if model.scores is not None:
-            for score in model.scores:
-                benchmark_id = score["benchmark_type_id"]
-                versioned_benchmark_id = score["versioned_benchmark_identifier"]
-                # Add to scores dataframe if it's a relevant benchmark
-                if benchmark_id in benchmark_names:
-                    record[benchmark_id] = score["score_ceiled"]
-
-                model_data.update({
-                    f"{versioned_benchmark_id}-score": score['score_ceiled'],
-                    f"{versioned_benchmark_id}-error": score.get('error', None),
-                    f"{versioned_benchmark_id}-is_complete": score['is_complete']
-                })
-
-            # Add to both result sets
-            records.append(record)
-            comparison_data.append(model_data)
-
-    # Create DataFrame and convert to CSV
-    csv_data = "No models submitted yet."
-    if records:
-        df = pd.DataFrame.from_records(records)
-        df.set_index('model_name', inplace=True)
-        csv_data = df.to_csv(index=True)
-
-    return csv_data, comparison_data
 
 # Resubmissions are currently not supported. Retaining for future use.
 def _collect_submittable_benchmarks(benchmarks: List[FinalBenchmarkContext], user: User) -> Dict:
