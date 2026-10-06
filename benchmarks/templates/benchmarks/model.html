@@ -1,5 +1,9 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
+{% block third_party_viz_libs %}
+    <script defer src="https://cdn.plot.ly/plotly-3.3.0.min.js" integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+{% endblock %}
+
 {% block body_class %}model-page{% endblock %}
 {% block viewport %}<meta name="viewport" content="width=device-width, initial-scale=1">{% endblock %}
 
