@@ -436,6 +436,25 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
             rd[vid] = cell
         row_data.append(rd)
 
+    # A benchmark version's validity window is the same for every model, so columns where
+    # all cells agree ship it once in `version_windows`; the template re-attaches it per cell.
+    version_windows = {}
+    for key in ('version_valid_from', 'version_valid_to'):
+        seen = {}
+        for rd in row_data:
+            for vid, cell in rd.items():
+                if isinstance(cell, dict) and 'value' in cell:
+                    seen.setdefault(vid, set()).add(cell.get(key))
+        for vid, values in seen.items():
+            if len(values) == 1 and None not in values:
+                version_windows.setdefault(vid, {})[key] = values.pop()
+    for rd in row_data:
+        for vid, window in version_windows.items():
+            cell = rd.get(vid)
+            if cell is not None:
+                for key in window:
+                    del cell[key]
+
     # Build `column_defs` to show only root-level parents first,
     # then grouping rows and leaves hidden by default.
     # Rank & Model pinned columns
@@ -658,6 +677,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
         'benchmark_metadata': context['benchmark_metadata'],
         'benchmark_tree': context['benchmark_tree'],
         'benchmark_ids': json.dumps(benchmark_ids),
+        'version_windows': json.dumps(json_serializable(version_windows)),
         'benchmark_bibtex_map': context['benchmark_bibtex_map'],
 
         # Essential metadata
@@ -677,7 +697,7 @@ def get_ag_grid_context(user=None, domain="vision", benchmark_filter=None, model
     # (e.g. a model or submitter name) cannot break out of the inline <script> that assigns
     # window.DJANGO_DATA. The \uXXXX forms are valid JSON and parse back to the same data.
     script_blob_keys = (
-        'row_data', 'column_defs', 'benchmark_groups', 'filter_options',
+        'row_data', 'version_windows', 'column_defs', 'benchmark_groups', 'filter_options',
         'benchmark_metadata', 'benchmark_tree', 'benchmark_ids', 'benchmark_bibtex_map',
     )
     for key in script_blob_keys:
