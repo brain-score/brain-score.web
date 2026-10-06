@@ -10,6 +10,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.cache import cache_page
+from django.views.decorators.gzip import gzip_page
 from django.http import JsonResponse, HttpRequest
 import time
 import pickle
@@ -67,8 +68,8 @@ def cache_page_for_public_only(timeout: int):
         timeout: Cache timeout in seconds
     """
     def decorator(view_func):
-        # Pre-create the cached version
-        cached_view = cache_page(timeout)(view_func)
+        # Gzip before caching so cache hits skip re-compressing the response.
+        cached_view = cache_page(timeout)(gzip_page(view_func))
 
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
