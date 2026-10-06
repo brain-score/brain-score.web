@@ -13,6 +13,7 @@ from .leaderboard import get_ag_grid_context
 from .model_trends import load_and_build_score_trend, load_and_build_rank_trend
 from ..models import FinalModelContext, BenchmarkMeta
 from ..model_metadata import repository as metadata_repository
+from ..utils import cache_page_for_anonymous
 from time import time
 _logger = logging.getLogger(__name__)
 
@@ -402,6 +403,8 @@ def _legacy_model_card_metadata(model):
     return metadata_repository.finalize_card_context(metadata, 'legacy')
 
 
+# Short TTL: model-card metadata syncs every 5 min without bumping the cache version.
+@cache_page_for_anonymous(timeout=5 * 60)
 def view(request, id: int, domain: str):
     start_time = time()
     # Check if user is logged in

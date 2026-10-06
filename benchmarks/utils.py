@@ -86,6 +86,19 @@ def cache_page_for_public_only(timeout: int):
         return wrapper
     return decorator
 
+def cache_page_for_anonymous(timeout: int):
+    """Gzipped page cache for anonymous visitors; logged-in users always get a fresh render."""
+    def decorator(view_func):
+        cached_view = cache_page(timeout)(gzip_page(view_func))
+
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if request.user.is_authenticated:
+                return view_func(request, *args, **kwargs)
+            return cached_view(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
 # Compression utilities for cache
 def compress_data(data: Any) -> bytes:
     """Compress data using pickle + gzip for cache storage"""
