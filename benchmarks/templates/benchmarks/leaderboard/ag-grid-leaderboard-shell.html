@@ -1,5 +1,5 @@
 {% extends 'benchmarks/components/app-view.html' %}
-{% load static %}
+{% load static compress %}
 
 {% block page_title %}Brain-Score - Leaderboard{% endblock %}
 
@@ -20,6 +20,7 @@
   <!-- jQuery already loaded via base.html -->
   <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.2.4/dist/ag-grid-community.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+  {% compress js %}
   <script defer src="{% static 'benchmarks/js/components/tooltip.js' %}"></script>
   <script defer src="{% static 'benchmarks/js/tour-driver/tour-driver.js' %}"></script>
   <script defer src="{% static 'benchmarks/js/tour-driver/tour-state-manager.js' %}"></script>
@@ -28,6 +29,7 @@
   <script defer src="{% static 'benchmarks/js/tour-configs/basic-tour-steps.js' %}"></script>
   <script defer src="{% static 'benchmarks/js/tour-configs/interactive-tour-steps.js' %}"></script>
   <script defer src="{% static 'benchmarks/js/leaderboard-tour.js' %}"></script>
+  {% endcompress %}
 
   <!-- Progressive loading script -->
   <script src="{% static 'benchmarks/js/progressive-loader.js' %}"></script>
