@@ -341,6 +341,8 @@ COMPRESS_PRECOMPILERS = (
 
 # Offline in prod (assets built via manage.py compress); tests skip that step, so stay online there.
 COMPRESS_OFFLINE = os.getenv("DJANGO_ENV") != "test"
+# Compressor bundles carry a content hash in their name, so browsers may keep them for a year.
+WHITENOISE_IMMUTABLE_FILE_TEST = r'^/static/CACHE/(css|js)/[^/]+\.[0-9a-f]{12}\.(css|js)$'
 
 AUTH_USER_MODEL = 'benchmarks.User'
 
