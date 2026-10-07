@@ -4,6 +4,7 @@ from datetime import datetime
 from django.http import JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.urls import reverse
+from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 
 from .index import get_context, get_datetime_range
@@ -15,6 +16,7 @@ from .compare_models import (
 )
 from .model_trends import load_and_build_comparison_trend
 from ..models import FinalModelContext
+from ..utils import cache_page_for_public_only
 
 
 def view(request, domain: str):
@@ -47,6 +49,8 @@ def _serialized_datetime_range(domain: str):
 
 
 @require_GET
+@cache_control(max_age=0)  # server cache only; refresh_cache must reach browsers
+@cache_page_for_public_only(timeout=7 * 24 * 60 * 60)
 def dashboard_data(request, domain: str):
     context = get_context(show_public=True, domain=domain)
     payload = _build_compare_dashboard_payload(

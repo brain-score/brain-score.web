@@ -2,6 +2,7 @@ import os
 import re
 import unicodedata
 import json
+from functools import lru_cache
 from django.shortcuts import render
 from django.http import Http404, JsonResponse
 from django.conf import settings
@@ -170,14 +171,19 @@ class Tutorial:
 
 
 def load_benchmark_tutorials():
-    """Load all benchmark tutorials from markdown files."""
+    """Load all benchmark tutorials from markdown files, re-rendering only when a file changes."""
     tutorial_dir = os.path.join(settings.BASE_DIR, 'tutorial_content', 'benchmarks')
-    tutorials = []
-    
     if not os.path.exists(tutorial_dir):
-        return tutorials
-    
-    for filename in os.listdir(tutorial_dir):
+        return []
+    stamp = tuple(sorted((f, os.path.getmtime(os.path.join(tutorial_dir, f)))
+                         for f in os.listdir(tutorial_dir) if f.endswith('.md')))
+    return list(_render_benchmark_tutorials(tutorial_dir, stamp))
+
+
+@lru_cache(maxsize=1)
+def _render_benchmark_tutorials(tutorial_dir, stamp):
+    tutorials = []
+    for filename, _ in stamp:
         if filename.endswith('.md'):
             # Remove .md extension and leading number prefix for slug
             raw_slug = filename[:-3]
@@ -208,7 +214,7 @@ def load_benchmark_tutorials():
     
     # Sort by order
     tutorials.sort(key=lambda t: t.order)
-    return tutorials
+    return tuple(tutorials)
 
 
 def benchmark_tutorial_list(request):

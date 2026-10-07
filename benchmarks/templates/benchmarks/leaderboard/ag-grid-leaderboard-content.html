@@ -304,7 +304,15 @@
 <script type="application/json" id="ld-row-data">{{ row_data|safe }}</script>
 <script>
   window.DJANGO_DATA = {
-    row_data: JSON.parse(document.getElementById('ld-row-data').textContent),
+    // Re-attach per-column benchmark version windows that the server sends once per column.
+    row_data: (function (rows, windows) {
+      for (const row of rows) {
+        for (const vid in windows) {
+          if (row[vid]) Object.assign(row[vid], windows[vid]);
+        }
+      }
+      return rows;
+    })(JSON.parse(document.getElementById('ld-row-data').textContent), {{ version_windows|safe }}),
     column_defs: {{ column_defs|safe }},
     benchmark_groups: {{ benchmark_groups|safe }},
     benchmark_tree: {{ benchmark_tree|safe }},

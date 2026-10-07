@@ -142,7 +142,11 @@ class TestCompareDashboardPayload(SimpleTestCase):
 
         from benchmarks.views.compare import dashboard_data
 
-        response = dashboard_data(SimpleNamespace(method="GET"), "vision")
+        from django.core.cache import cache
+        from django.test import RequestFactory
+
+        cache.clear()  # the endpoint is page-cached
+        response = dashboard_data(RequestFactory().get("/vision/compare/data/"), "vision")
         payload = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)

@@ -1,6 +1,11 @@
 {% extends "benchmarks/components/app-view.html" %}
 {% load static %}
 
+{% block third_party_viz_libs %}
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.4/jstat.min.js"></script>
+    <script defer src="https://cdn.plot.ly/plotly-3.3.0.min.js" integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+{% endblock %}
+
 {% block page_head_scripts %}
     <script defer src="{% static '/benchmarks/js/compare-dashboard.js' %}" charset="utf-8"></script>
     <script defer src="{% static '/benchmarks/js/compare-correlation.js' %}" charset="utf-8"></script>

@@ -10,6 +10,7 @@ from django.conf import settings
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
+from django.core.cache import cache
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import IntegrityError, transaction
@@ -32,6 +33,9 @@ class MetadataTests(TestCase):
         cls.addClassCleanup(directory.cleanup)
         cls.data = write_catalog_fixture(directory.name)
         call_command('import_model_metadata', cls.data, stdout=StringIO())
+
+    def setUp(self):
+        cache.clear()  # anonymous model-card renders are page-cached
 
     def import_catalog(self, directory=None, **options):
         call_command('import_model_metadata', directory or self.data, stdout=StringIO(), **options)
@@ -228,6 +232,7 @@ class MetadataTests(TestCase):
             with self.subTest(evaluation_angle=evaluation_angle, metadata_angle=metadata_angle):
                 record.visual_degrees = metadata_angle
                 record.save()
+                cache.clear()
                 model = SimpleNamespace(name=record.identifier, domain='vision', public=True,
                                         model_id=1, id=1, user=None, submitter=None, scores=[],
                                         model_meta={}, visual_degrees=evaluation_angle, layers={})
