@@ -320,6 +320,9 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Species benchmark metadata is uncurated (human only); set True once it is.
+SHOW_SPECIES_FILTER = False
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 

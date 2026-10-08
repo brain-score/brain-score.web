@@ -6,6 +6,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 import numpy as np
+from django.conf import settings
 from django.shortcuts import render
 
 from ..models import Model
@@ -752,6 +753,7 @@ def ag_grid_leaderboard_content(request, domain: str):
     context['include_public'] = include_public
     context['has_user'] = user is not None
     context['is_profile_view'] = user_view  # Flag to indicate if this is a profile view
+    context['show_species_filter'] = getattr(settings, 'SHOW_SPECIES_FILTER', False)
 
     # Return the full AG-Grid template
     return render(request, 'benchmarks/leaderboard/ag-grid-leaderboard-content.html', context)

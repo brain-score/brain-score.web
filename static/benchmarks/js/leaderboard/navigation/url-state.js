@@ -15,7 +15,8 @@ function parseURLFilters() {
   window.activeFilters.training_dataset = parseList('training_dataset');
   window.activeFilters.task_specialization = parseList('task_specialization');
   window.activeFilters.benchmark_regions = parseList('benchmark_regions');
-  window.activeFilters.benchmark_species = parseList('benchmark_species');
+  // A hidden Species filter must not apply from old links.
+  window.activeFilters.benchmark_species = document.querySelector('.species-checkbox') ? parseList('benchmark_species') : [];
   window.activeFilters.benchmark_tasks = parseList('benchmark_tasks');
 
   // Parse boolean filters
