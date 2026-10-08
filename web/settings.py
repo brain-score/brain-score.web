@@ -318,8 +318,6 @@ TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -371,6 +369,10 @@ LOGGING = {
             'handlers': ['file', 'console'],
             'level': log_level,
             'propagate': True,
+        },
+        # Missing template variables log a traceback each at DEBUG.
+        'django.template': {
+            'level': 'INFO',
         },
         # Host-probing scanners spam ERROR tracebacks; drop them.
         'django.security.DisallowedHost': {

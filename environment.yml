@@ -6,21 +6,21 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  - django=4.1
   - numpy
   - nodejs
   - boto3
   - pandas
   - pip:
+    - Django>=5.2,<5.3
     - psycopg2-binary
     - gunicorn==23.0.0
-    - whitenoise==6.6.0
-    - django_compressor==4.4
+    - whitenoise==6.9.0
+    - django_compressor==4.5.1
     - colour
     - tqdm
     - requests
     - PyJWT[crypto]>=2.10,<3
-    - django-redis==5.3.0
+    - django-redis==5.4.0
     - Markdown==3.8.2
     - Pygments==2.17.2
     - PyYAML==6.0.3
