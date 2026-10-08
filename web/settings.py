@@ -370,6 +370,10 @@ LOGGING = {
             'level': log_level,
             'propagate': True,
         },
+        # Missing template variables log a traceback each at DEBUG.
+        'django.template': {
+            'level': 'INFO',
+        },
         # Host-probing scanners spam ERROR tracebacks; drop them.
         'django.security.DisallowedHost': {
             'handlers': ['console'],
