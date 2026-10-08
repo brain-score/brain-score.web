@@ -68,17 +68,13 @@ Deployment Account Setup
 Metadata dependency in Docker builds
 ===================================
 
-The Dockerfile installs core's metadata module at the reviewed commit
-``a95e2a7fa30a7e99d845858d669b10373f2317ea`` by default. Normal ``eb deploy``
-commands include this dependency without an additional build argument.
-Dependency installation, metadata import or compatibility failures stop the build.
-An empty or invalid ``METADATA_CORE_REF`` also stops the build.
+The Dockerfile installs core's metadata module from ``requirements-metadata.txt``,
+which pins one full core commit SHA. Normal ``eb deploy`` commands include this
+dependency without a build argument. Dependency installation, metadata import or
+compatibility failures stop the build.
 
-When intentionally adopting another core revision, update the Dockerfile default
-together with infrastructure's ``ci/web/metadata-core-ref.txt`` and the
-``METADATA_CORE_REF`` repository variables in web, vision and language. Explicit
-Docker builds can override the default with ``--build-arg METADATA_CORE_REF=<full-SHA>``.
-An EB runtime environment variable does not override a Docker build argument.
+To adopt another core revision, change the SHA in ``requirements-metadata.txt`` by
+PR. Vision and language pin core in their own workflow files; bump those by PR too.
 
 Including the dependency does not enable metadata editing, import merged YAML,
 or activate automatic publication. Those remain separate operations.
