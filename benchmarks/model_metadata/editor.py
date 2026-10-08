@@ -135,6 +135,7 @@ def make_editor(entry, data=None):
         source_url = forms.URLField(
             label="Supporting source",
             max_length=2000,
+            assume_scheme="https",
             help_text="An HTTPS link supporting your changes.",
         )
         source_kind = forms.ChoiceField(
