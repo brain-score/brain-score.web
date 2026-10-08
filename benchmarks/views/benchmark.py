@@ -2,7 +2,7 @@ import logging
 from collections import namedtuple
 
 from django.db.models import F
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from benchmarks.models import BenchmarkInstance, Score
 from benchmarks.views.index import represent, representative_color, reference_identifier, ENGINEERING_ROOT
@@ -12,9 +12,8 @@ _logger = logging.getLogger(__name__)
 
 def view(request, id: int, domain: str):
     # benchmark
-    benchmark = (BenchmarkInstance.objects
-                 .select_related('benchmark_type', 'benchmark_type__reference', 'meta')
-                 .get(id=id))  # `benchmark_type__domain=domain` is not needed since ids are unique)
+    benchmark = get_object_or_404(  # `benchmark_type__domain=domain` is not needed since ids are unique
+        BenchmarkInstance.objects.select_related('benchmark_type', 'benchmark_type__reference', 'meta'), id=id)
     benchmark_identifier = benchmark.benchmark_type.identifier
     versioned_benchmark_identifier = f'{benchmark_identifier}_v{benchmark.version}'
     
