@@ -4,6 +4,8 @@ __pycache__
 brain_score.web.egg-info/
 build/
 db.sqlite3
+*.sqlite3
+*.sqlite
 dist/
 django.log
 node_modules/
