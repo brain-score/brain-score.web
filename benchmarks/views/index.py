@@ -341,7 +341,12 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
         return f"background-color: {color_None}"
     if max_value is not None and np.isnan(max_value):
         return f"background-color: {color_None}"
-    normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+    if min_value is not None and min_value == max_value:
+        normalized_value, normalized_alpha = .7, 1.  # one distinct score has no range; show it as the best
+    else:
+        normalized_value = normalize_value(value, min_value=min_value, max_value=max_value)  # normalize to range
+        normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
+            if min_value is not None else (100 * value)
     # Additional safety check in case normalized_value is NaN
     if np.isnan(normalized_value):
         return f"background-color: {color_None}"
@@ -352,8 +357,6 @@ def representative_color(value, min_value=None, max_value=None, colors=colors_re
         color = colors[-1]
     color = tuple(c * 255 for c in color.rgb)
     fallback_color = tuple(round(c) for c in color)
-    normalized_alpha = normalize_alpha(value, min_value=min_value, max_value=max_value) \
-        if min_value is not None else (100 * value)
     color += (normalized_alpha,)
     return f"background-color: rgb{fallback_color}; background-color: rgba{color};"
 
