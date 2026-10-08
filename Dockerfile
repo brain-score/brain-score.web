@@ -25,7 +25,7 @@ RUN echo "conda activate brain-score.web" >> ~/.bashrc
 SHELL ["/bin/bash", "-c"]
 
 # Keep the default aligned with infrastructure CI and METADATA_CORE_REF consumers.
-ARG METADATA_CORE_REF="b72a9652f2121d9fb5734dd4418823086d4e95ea"
+ARG METADATA_CORE_REF="a95e2a7fa30a7e99d845858d669b10373f2317ea"
 RUN [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'METADATA_CORE_REF must be a full core commit SHA'; exit 1; }; \
     export METADATA_CORE_REF; \
     /opt/conda/bin/conda run -n brain-score.web python -m pip install -r requirements-metadata.txt && \
