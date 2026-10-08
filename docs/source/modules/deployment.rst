@@ -69,7 +69,7 @@ Metadata dependency in Docker builds
 ===================================
 
 The Dockerfile installs core's metadata module at the reviewed commit
-``94e220611961de2ceec6a1cdac324d39575c6040`` by default. Normal ``eb deploy``
+``b72a9652f2121d9fb5734dd4418823086d4e95ea`` by default. Normal ``eb deploy``
 commands include this dependency without an additional build argument.
 Dependency installation, metadata import or compatibility failures stop the build.
 An empty or invalid ``METADATA_CORE_REF`` also stops the build.
