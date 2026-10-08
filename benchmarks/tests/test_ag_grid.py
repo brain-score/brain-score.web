@@ -724,6 +724,7 @@ class TestFilter:
         assert len(actual_models) == 5 and all(m.strip() for m in actual_models), \
             f"expected 5 model names, got {actual_models}"
 
+    @pytest.mark.skip(reason="Species filter is hidden while SHOW_SPECIES_FILTER is False")
     @pytest.mark.parametrize(
         "selected_species, absent_species, expected_ranks, expected_models, expected_scores",
         [
