@@ -70,4 +70,42 @@
         </div>
     </div>
 </div>
+
+{% if domain == 'language' %}
+<div id="model-size-limit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 8px; padding: 32px; max-width: 480px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative;">
+        <h2 style="font-size: 1.2em; font-weight: bold; margin-bottom: 12px; color: #e74c3c;">Model Size Not Supported</h2>
+        <p style="font-size: 0.95em; color: #333; line-height: 1.6; margin-bottom: 20px;">
+            Currently, only models with <strong>&lt;13B parameters (medium-sized and below)</strong> are supported for language submissions.
+            If you'd like to submit a larger model, please reach out to
+            <a href="mailto:kpradeep@mit.edu" style="color: #47B7DE;">Kartik</a>
+            and/or <a href="mailto:mferg@mit.edu" style="color: #47B7DE;">Mike</a>.
+        </p>
+        <div style="text-align: right;">
+            <button onclick="document.getElementById('model-size-limit-modal').style.display='none';" class="button" style="background: #47B7DE; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer;">Got it</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var select = document.getElementById('id_model_size');
+    if (!select) return;
+    var modal = document.getElementById('model-size-limit-modal');
+
+    select.addEventListener('change', function () {
+        if (this.value === 'large' || this.value === 'xlarge') {
+            modal.style.display = 'flex';
+            this.value = '';
+        }
+    });
+
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}());
+</script>
+{% endif %}
 {% endblock %}
