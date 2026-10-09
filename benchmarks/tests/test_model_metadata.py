@@ -505,12 +505,15 @@ class FinalModelContextV2MetadataTests(TestCase):
                                             visible=True, parent=kind)
         benchmark = BenchmarkInstance.objects.create(benchmark_type=leaf, version=0)
         rows = {
-            # name: (v1 architecture, v1 parameters, v2 family, v2 parameters)
-            'V2-Cnn': ('Transformer', 5, 'convolutional_neural_network', 25_000_000),
-            'v2-other': ('DCNN, RNN, SKIP_CONNECTIONS', 7, 'other', None),
-            'v1-only': ('Hybrid', 9, None, None),
+            # name: (v1 architecture, v1 parameters, v2 family, v2 parameters, v2 recurrent)
+            'V2-Cnn': ('Transformer', 5, 'convolutional_neural_network', 25_000_000, None),
+            'v2-hybrid': ('DCNN', 5, 'hybrid_convolutional_transformer', None, False),
+            'v2-rcnn': ('DCNN', 5, 'recurrent_convolutional_neural_network', None, True),
+            'v2-vone': ('DCNN', 5, 'hybrid_biological_convolutional', None, True),
+            'v2-other': ('DCNN, RNN, SKIP_CONNECTIONS', 7, 'other', None, True),
+            'v1-only': ('Hybrid', 9, None, None, None),
         }
-        for name, (architecture, parameters, family, v2_parameters) in rows.items():
+        for name, (architecture, parameters, family, v2_parameters, recurrent) in rows.items():
             model = Model.objects.create(name=name, owner=owner, public=True)
             ModelMeta.objects.create(model=model, architecture=architecture,
                                      total_parameter_count=parameters, total_layers=3,
@@ -520,7 +523,8 @@ class FinalModelContextV2MetadataTests(TestCase):
             if family:
                 ModelMetadataRecord.objects.create(domain='vision', identifier=name.lower(),
                                                    architecture_family=family,
-                                                   parameter_count=v2_parameters)
+                                                   parameter_count=v2_parameters,
+                                                   recurrent=recurrent)
         with connection.cursor() as cursor:
             cursor.execute('SELECT refresh_all_materialized_views()')
         cls.meta = {row.name: row.model_meta for row in FinalModelContext.objects.all()}
@@ -528,6 +532,11 @@ class FinalModelContextV2MetadataTests(TestCase):
     def test_v2_family_wins_and_keeps_the_filter_label(self):
         self.assertEqual(self.meta['V2-Cnn']['architecture'], 'DCNN')
         self.assertEqual(self.meta['V2-Cnn']['total_parameter_count'], 25_000_000)
+
+    def test_v2_family_expands_into_several_tags(self):
+        self.assertEqual(self.meta['v2-hybrid']['architecture'], 'DCNN, Transformer, Hybrid')
+        self.assertEqual(self.meta['v2-rcnn']['architecture'], 'DCNN, RNN')
+        self.assertEqual(self.meta['v2-vone']['architecture'], 'DCNN, RNN')
 
     def test_unmapped_family_and_missing_count_fall_back_to_v1(self):
         self.assertEqual(self.meta['v2-other']['architecture'], 'DCNN, RNN, SKIP_CONNECTIONS')

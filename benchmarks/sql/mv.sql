@@ -1303,14 +1303,17 @@ SELECT
   0 AS num_secondary_models,
   -- Model metadata for filters and cards: v2 record first, v1 brainscore_modelmeta as fallback
   jsonb_build_object(
-    -- v2 family mapped to the v1 filter labels (core legacy_projection); other families fall back to v1
-    'architecture', COALESCE(CASE md.architecture_family
-        WHEN 'convolutional_neural_network' THEN 'DCNN'
-        WHEN 'vision_transformer' THEN 'Transformer'
-        WHEN 'recurrent_convolutional_neural_network' THEN 'Recurrent'
-        WHEN 'hybrid_convolutional_transformer' THEN 'Hybrid'
-        WHEN 'raw_pixels' THEN 'Pixels'
-      END, mm2.architecture),
+    -- v2 family expanded into the v1 filter tags, plus RNN when v2 marks the model recurrent; unmapped families fall back to v1
+    'architecture', CASE WHEN md.architecture_family IN ('convolutional_neural_network', 'vision_transformer',
+        'hybrid_convolutional_transformer', 'recurrent_convolutional_neural_network', 'hybrid_biological_convolutional',
+        'raw_pixels')
+      THEN concat_ws(', ',
+        CASE WHEN md.architecture_family NOT IN ('vision_transformer', 'raw_pixels') THEN 'DCNN' END,
+        CASE WHEN md.architecture_family IN ('vision_transformer', 'hybrid_convolutional_transformer') THEN 'Transformer' END,
+        CASE WHEN md.architecture_family = 'hybrid_convolutional_transformer' THEN 'Hybrid' END,
+        CASE WHEN md.architecture_family = 'recurrent_convolutional_neural_network' OR md.recurrent THEN 'RNN' END,
+        CASE WHEN md.architecture_family = 'raw_pixels' THEN 'Pixels' END)
+      ELSE mm2.architecture END,
     'model_family', mm2.model_family,
     'total_parameter_count', COALESCE(md.parameter_count, mm2.total_parameter_count),
     'trainable_parameter_count', mm2.trainable_parameter_count,

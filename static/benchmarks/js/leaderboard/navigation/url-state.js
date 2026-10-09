@@ -10,7 +10,8 @@ function parseURLFilters() {
     return value ? value.split(',').map(v => v.trim()) : [];
   };
 
-  window.activeFilters.architecture = parseList('architecture');
+  // Old links may say Recurrent; v2 metadata tags recurrent models RNN.
+  window.activeFilters.architecture = [...new Set(parseList('architecture').map(a => a === 'Recurrent' ? 'RNN' : a))];
   window.activeFilters.model_family = parseList('model_family');
   window.activeFilters.training_dataset = parseList('training_dataset');
   window.activeFilters.task_specialization = parseList('task_specialization');
