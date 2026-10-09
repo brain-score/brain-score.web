@@ -18,14 +18,18 @@ class MaterializedViewMigrationTests(TestCase):
         )
 
     def test_latest_snapshot_matches_current_definition(self):
-        migration = import_module(
+        snapshot = import_module(
             'benchmarks.migrations.0027_refresh_materialized_view_definitions'
+        ).Migration.operations[0].sql
+        final_context = import_module(
+            'benchmarks.migrations.0034_final_model_context_reads_v2_metadata'
         )
         current_sql = (
             MIGRATIONS_DIR.parent / 'sql' / 'mv.sql'
         ).read_text(encoding='utf-8')
 
+        self.assertIn(final_context.REVERSE_SQL, snapshot)
         self.assertEqual(
-            migration.Migration.operations[0].sql.splitlines(),
+            snapshot.replace(final_context.REVERSE_SQL, final_context.FORWARD_SQL).splitlines(),
             current_sql.splitlines(),
         )

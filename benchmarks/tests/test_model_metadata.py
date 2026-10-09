@@ -490,6 +490,58 @@ class PublicLineageTests(TestCase):
         self.assertEqual(ModelMetadataRecord.objects.count(), 2)
 
 
+@skipIf(settings.TEST_RUNNER.endswith('ExistingDatabaseTestRunner'),
+        'Run metadata database tests with web.metadata_test_settings on disposable PostgreSQL')
+class FinalModelContextV2MetadataTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from django.db import connection
+        from django.utils import timezone
+        from benchmarks.models import (BenchmarkInstance, BenchmarkType, FinalModelContext, Model,
+                                       ModelMeta, Score, User)
+        owner = User.objects.create(email='filters-v2-test@example.invalid')
+        kind = BenchmarkType.objects.create(identifier='average_vision', owner=owner, visible=True)
+        leaf = BenchmarkType.objects.create(identifier='filters-v2-leaf', owner=owner,
+                                            visible=True, parent=kind)
+        benchmark = BenchmarkInstance.objects.create(benchmark_type=leaf, version=0)
+        rows = {
+            # name: (v1 architecture, v1 parameters, v2 family, v2 parameters)
+            'V2-Cnn': ('Transformer', 5, 'convolutional_neural_network', 25_000_000),
+            'v2-other': ('DCNN, RNN, SKIP_CONNECTIONS', 7, 'other', None),
+            'v1-only': ('Hybrid', 9, None, None),
+        }
+        for name, (architecture, parameters, family, v2_parameters) in rows.items():
+            model = Model.objects.create(name=name, owner=owner, public=True)
+            ModelMeta.objects.create(model=model, architecture=architecture,
+                                     total_parameter_count=parameters, total_layers=3,
+                                     model_size_mb=1.5, runnable=False)
+            Score.objects.create(model=model, benchmark=benchmark, score_ceiled=0.5,
+                                 start_timestamp=timezone.now())
+            if family:
+                ModelMetadataRecord.objects.create(domain='vision', identifier=name.lower(),
+                                                   architecture_family=family,
+                                                   parameter_count=v2_parameters)
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT refresh_all_materialized_views()')
+        cls.meta = {row.name: row.model_meta for row in FinalModelContext.objects.all()}
+
+    def test_v2_family_wins_and_keeps_the_filter_label(self):
+        self.assertEqual(self.meta['V2-Cnn']['architecture'], 'DCNN')
+        self.assertEqual(self.meta['V2-Cnn']['total_parameter_count'], 25_000_000)
+
+    def test_unmapped_family_and_missing_count_fall_back_to_v1(self):
+        self.assertEqual(self.meta['v2-other']['architecture'], 'DCNN, RNN, SKIP_CONNECTIONS')
+        self.assertEqual(self.meta['v2-other']['total_parameter_count'], 7)
+        self.assertEqual(self.meta['v1-only']['architecture'], 'Hybrid')
+        self.assertEqual(self.meta['v1-only']['total_parameter_count'], 9)
+
+    def test_runnable_size_and_layers_stay_on_v1(self):
+        for meta in self.meta.values():
+            self.assertIs(meta['runnable'], False)
+            self.assertEqual(meta['total_layers'], 3)
+            self.assertEqual(meta['model_size_mb'], 1.5)
+
+
 class MetadataEvidenceDisplayTests(SimpleTestCase):
     def test_input_uncertainty_survives_interface_evidence_in_either_order(self):
         from brainscore_core.metadata.storage import to_tables

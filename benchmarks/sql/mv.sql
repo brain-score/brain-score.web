@@ -1301,11 +1301,18 @@ SELECT
   u2.id AS user_id,
   NULL::INTEGER AS primary_model_id,
   0 AS num_secondary_models,
-  -- Additional columns from brainscore_modelmeta stored in a JSONB
+  -- Model metadata for filters and cards: v2 record first, v1 brainscore_modelmeta as fallback
   jsonb_build_object(
-    'architecture', mm2.architecture,
+    -- v2 family mapped to the v1 filter labels (core legacy_projection); other families fall back to v1
+    'architecture', COALESCE(CASE md.architecture_family
+        WHEN 'convolutional_neural_network' THEN 'DCNN'
+        WHEN 'vision_transformer' THEN 'Transformer'
+        WHEN 'recurrent_convolutional_neural_network' THEN 'Recurrent'
+        WHEN 'hybrid_convolutional_transformer' THEN 'Hybrid'
+        WHEN 'raw_pixels' THEN 'Pixels'
+      END, mm2.architecture),
     'model_family', mm2.model_family,
-    'total_parameter_count', mm2.total_parameter_count,
+    'total_parameter_count', COALESCE(md.parameter_count, mm2.total_parameter_count),
     'trainable_parameter_count', mm2.trainable_parameter_count,
     'total_layers', mm2.total_layers,
     'trainable_layers', mm2.trainable_layers,
@@ -1326,6 +1333,8 @@ LEFT JOIN mv_model_scores_json sc ON mm.id = sc.model_id
 LEFT JOIN reference_meta rm ON mm.reference_id = rm.reference_id
 LEFT JOIN final_layers fl ON mm.id = fl.model_id
 LEFT JOIN brainscore_modelmeta mm2 ON mm.id = mm2.model_id
+LEFT JOIN brainscore_model_metadata md
+  ON lower(md.domain) = lower(mm.domain) AND lower(md.identifier) = lower(mm.name)
 WHERE
   -- Remove models with no valid scores (to be consistent with legacy implementation)
   -- At least one score is valid (not '', not 'X', not NULL, not 'NaN')
