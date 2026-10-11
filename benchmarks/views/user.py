@@ -22,7 +22,6 @@ from benchmarks.forms import SignupForm, LoginForm, UploadFileForm
 from benchmarks.models import Model, BenchmarkInstance, BenchmarkType, FileUploadTracker
 from benchmarks.ratelimit import DAILY_LIMIT, check_and_record_upload, get_recent_upload_count
 from benchmarks.tokens import account_activation_token
-from benchmarks.utils import load_news
 from benchmarks.views.leaderboard import get_ag_grid_context
 from benchmarks.views.index import get_context
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -166,12 +165,6 @@ class Login(View):
         else:
             context = {"Incorrect": True, 'form': LoginForm}
             return render(request, 'benchmarks/login.html', context)
-
-
-class LandingPage(View):
-    def get(self, request):
-        news = load_news()
-        return render(request, 'benchmarks/landing_page.html', {'news_items': news})
 
 
 class Logout(View):
