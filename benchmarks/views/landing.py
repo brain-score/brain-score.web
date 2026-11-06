@@ -228,7 +228,7 @@ def landing_context():
     }
     cached_data = None
     try:
-        cached_data = cache.get("landing_dashboard_data_v2")
+        cached_data = cache.get("landing_dashboard_data_v3")
     except Exception as exc:
         _logger.warning("Could not read cached landing dashboard data: %s", exc)
     if cached_data:
@@ -236,9 +236,9 @@ def landing_context():
         return context
 
     try:
-        top_models = list(
+        public_models = list(
             FinalModelContext.objects.filter(domain="vision", public=True)
-            .order_by("rank")[:80]
+            .order_by("rank")
         )
         recent_models = list(
             FinalModelContext.objects.filter(
@@ -247,18 +247,16 @@ def landing_context():
         )
         dashboard_data = {
             "recent_models": [_model_summary(model) for model in recent_models],
-            "leaderboard_models": [_model_summary(model) for model in top_models[:5]],
-            "benchmark_space": build_benchmark_space(top_models),
-            "public_model_count": FinalModelContext.objects.filter(
-                domain="vision", public=True
-            ).count(),
+            "leaderboard_models": [_model_summary(model) for model in public_models[:5]],
+            "benchmark_space": build_benchmark_space(public_models),
+            "public_model_count": len(public_models),
             "benchmark_count": FinalBenchmarkContext.objects.filter(
                 domain="vision", visible=True
             ).count(),
         }
         context.update(dashboard_data)
         try:
-            cache.set("landing_dashboard_data_v2", dashboard_data, 15 * 60)
+            cache.set("landing_dashboard_data_v3", dashboard_data, 15 * 60)
         except Exception as exc:
             _logger.warning("Could not cache landing dashboard data: %s", exc)
     except DatabaseError as exc:

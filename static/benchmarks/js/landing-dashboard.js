@@ -447,8 +447,8 @@
             if (resetButton) resetButton.hidden = mode !== '3d';
             if (method) {
                 method.textContent = mode === '3d'
-                    ? 'A three-component preview of the highest-ranked public models with complete scores across the five displayed branches. Drag to rotate; hover or focus a point for model details.'
-                    : 'A two-component preview of the highest-ranked public models with complete scores across the five displayed branches. Hover or focus a point for model details.';
+                    ? 'A three-component preview of all public models with complete scores across the five displayed branches. Drag to rotate; hover or focus a point for model details.'
+                    : 'A two-component preview of all public models with complete scores across the five displayed branches. Hover or focus a point for model details.';
             }
             svg.setAttribute('aria-label', mode === '3d'
                 ? 'Interactive three-dimensional principal component map. Drag or use the arrow keys to rotate. Select a point to open its model page.'
