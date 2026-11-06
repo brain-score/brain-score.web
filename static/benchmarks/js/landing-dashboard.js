@@ -455,7 +455,6 @@
                 : 'Two-dimensional principal component map. Select a point to open its model page.');
             svg.classList.toggle('is-3d', mode === '3d');
             container.classList.toggle('is-2d', mode === '2d');
-            legend.hidden = mode === '2d';
             renderScene();
         }
 
