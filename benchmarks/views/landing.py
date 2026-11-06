@@ -194,7 +194,7 @@ def build_benchmark_space(models, leaf_ids=frozenset()):
         for value in (first_value, second_value, third_value)
     ]
     points = []
-    for (model, _), row in zip(rows, standardized):
+    for (model, values), row in zip(rows, standardized):
         summary = _model_summary(model)
         points.append({
             "id": summary["id"],
@@ -205,6 +205,8 @@ def build_benchmark_space(models, leaf_ids=frozenset()):
             "y": round(sum(row[index] * second[index] for index in range(dimension)), 5),
             "z": round(sum(row[index] * third[index] for index in range(dimension)), 5),
             "completed": _completed(model, leaf_ids),
+            "neural": _score_lookup(model).get("neural_vision"),
+            "behavior": values[identifiers.index("behavior_vision")],
         })
 
     return {
@@ -242,7 +244,7 @@ def landing_context():
     }
     cached_data = None
     try:
-        cached_data = cache.get("landing_dashboard_data_v5")
+        cached_data = cache.get("landing_dashboard_data_v6")
     except Exception as exc:
         _logger.warning("Could not read cached landing dashboard data: %s", exc)
     if cached_data:
@@ -278,7 +280,7 @@ def landing_context():
         }
         context.update(dashboard_data)
         try:
-            cache.set("landing_dashboard_data_v5", dashboard_data, 15 * 60)
+            cache.set("landing_dashboard_data_v6", dashboard_data, 15 * 60)
         except Exception as exc:
             _logger.warning("Could not cache landing dashboard data: %s", exc)
     except DatabaseError as exc:

@@ -131,8 +131,26 @@
         var mode = container.dataset.spaceMode === '3d' ? '3d' : '2d';
         var coordinateLimit3d = robustCoordinateLimit(points, '3d');
         var twoDimensionalMargin = {top: 24, right: 26, bottom: 49, left: 54};
-        var xDomain = paddedExtent(points.map(function (point) { return point.x; }));
-        var yDomain = paddedExtent(points.map(function (point) { return point.y; }));
+        var view = 'pca';
+        var VIEWS = {
+            pca: {
+                x: function (point) { return point.x; },
+                y: function (point) { return point.y; },
+                xLabel: function () { return 'PC1 (' + variance[0] + '% variance)'; },
+                yLabel: function () { return 'PC2 (' + variance[1] + '% variance)'; }
+            },
+            'neural-behavior': {
+                x: function (point) { return Number(point.neural); },
+                y: function (point) { return Number(point.behavior); },
+                xLabel: function () { return 'Neural score'; },
+                yLabel: function () { return 'Behavior score'; }
+            }
+        };
+        Object.keys(VIEWS).forEach(function (key) {
+            var definition = VIEWS[key];
+            definition.xDomain = paddedExtent(points.map(definition.x).filter(Number.isFinite));
+            definition.yDomain = paddedExtent(points.map(definition.y).filter(Number.isFinite));
+        });
         var finiteScores = points
             .map(function (point) { return Number(point.score); })
             .filter(Number.isFinite);
@@ -255,7 +273,9 @@
             tooltip.innerHTML = '<strong></strong><span></span>';
             tooltip.querySelector('strong').textContent = point.name;
             tooltip.querySelector('span').textContent =
-                'Rank ' + point.rank + (Number.isFinite(score) ? ' · Brain-Score ' + score.toFixed(3) : '');
+                'Rank ' + point.rank + (Number.isFinite(score) ? ' · Brain-Score ' + score.toFixed(3) : '') +
+                (view === 'pca' ? '' : ' · Neural ' + Number(point.neural).toFixed(3) +
+                    ' · Behavior ' + Number(point.behavior).toFixed(3));
             if (benchmarkTotal) {
                 var completed = Number(point.completed) || 0;
                 var completion = document.createElement('em');
@@ -296,7 +316,7 @@
                         {x: twoDimensionalMargin.left, y: xAxisY},
                         {x: width - twoDimensionalMargin.right, y: xAxisY}
                     );
-                    axis.label.textContent = 'PC1 (' + variance[0] + '% variance)';
+                    axis.label.textContent = VIEWS[view].xLabel();
                     axis.label.setAttribute('x', width / 2);
                     axis.label.setAttribute('y', height - 12);
                 } else {
@@ -305,7 +325,7 @@
                         {x: twoDimensionalMargin.left, y: twoDimensionalMargin.top},
                         {x: twoDimensionalMargin.left, y: xAxisY}
                     );
-                    axis.label.textContent = 'PC2 (' + variance[1] + '% variance)';
+                    axis.label.textContent = VIEWS[view].yLabel();
                     axis.label.setAttribute('x', 15);
                     axis.label.setAttribute('y', height / 2);
                     axis.label.setAttribute('transform', 'rotate(-90 15 ' + (height / 2) + ')');
@@ -316,14 +336,17 @@
                 return right.point.rank - left.point.rank;
             }).forEach(function (scenePoint) {
                 var point = scenePoint.point;
+                var x = VIEWS[view].x(point);
+                var y = VIEWS[view].y(point);
+                setSvgElementVisible(scenePoint.circle, Number.isFinite(x) && Number.isFinite(y));
                 scenePoint.circle.setAttribute('cx', scale(
-                    point.x,
-                    xDomain,
+                    x,
+                    VIEWS[view].xDomain,
                     [twoDimensionalMargin.left, width - twoDimensionalMargin.right]
                 ));
                 scenePoint.circle.setAttribute('cy', scale(
-                    point.y,
-                    yDomain,
+                    y,
+                    VIEWS[view].yDomain,
                     [xAxisY, twoDimensionalMargin.top]
                 ));
                 scenePoint.circle.setAttribute('r', point.rank <= 5 ? 6 : 4.5);
@@ -472,30 +495,62 @@
         var method = document.getElementById('landing-space-method');
         var modeButtons = document.querySelectorAll('.landing-space-toggle button[data-space-mode]');
 
+        var viewSelect = document.getElementById('landing-space-view');
+        var modeToggle = document.querySelector('.landing-space-toggle');
+
         function setMode(nextMode) {
-            mode = nextMode === '3d' ? '3d' : '2d';
+            mode = nextMode === '3d' && view === 'pca' ? '3d' : '2d';
             container.dataset.spaceMode = mode;
             modeButtons.forEach(function (button) {
                 button.setAttribute('aria-pressed', button.dataset.spaceMode === mode ? 'true' : 'false');
             });
-            if (title) title.textContent = 'The ' + mode.toUpperCase() + ' benchmark space';
+            if (modeToggle) modeToggle.hidden = view !== 'pca';
+            if (title) {
+                title.textContent = view === 'pca'
+                    ? 'The ' + mode.toUpperCase() + ' benchmark space'
+                    : 'Neural vs. behavioral alignment';
+            }
             if (hint) {
                 hint.innerHTML = mode === '3d'
                     ? '<i class="fa-regular fa-hand-pointer" aria-hidden="true"></i> Drag to rotate'
-                    : 'PC1 &times; PC2';
+                    : view === 'pca' ? 'PC1 &times; PC2' : 'Neural &times; Behavior';
             }
             if (resetButton) resetButton.hidden = mode !== '3d';
             if (method) {
-                method.textContent = mode === '3d'
+                method.textContent = view !== 'pca'
+                    ? 'Each public model placed by its aggregate neural and behavioral scores, colored by Brain-Score. Hover or focus a point for model details.'
+                    : mode === '3d'
                     ? 'A three-component preview of all public models with complete scores across the five displayed branches. Drag to rotate; hover or focus a point for model details.'
                     : 'A two-component preview of all public models with complete scores across the five displayed branches. Hover or focus a point for model details.';
             }
-            svg.setAttribute('aria-label', mode === '3d'
+            svg.setAttribute('aria-label', view !== 'pca'
+                ? 'Map of neural against behavioral scores. Select a point to open its model page.'
+                : mode === '3d'
                 ? 'Interactive three-dimensional principal component map. Drag or use the arrow keys to rotate. Select a point to open its model page.'
                 : 'Two-dimensional principal component map. Select a point to open its model page.');
             svg.classList.toggle('is-3d', mode === '3d');
             container.classList.toggle('is-2d', mode === '2d');
             renderScene();
+        }
+
+        // A native select is as wide as its longest option; fit it to the selected one.
+        function fitViewSelect() {
+            var probe = document.createElement('span');
+            probe.className = viewSelect.className;
+            probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
+            probe.textContent = viewSelect.options[viewSelect.selectedIndex].text;
+            viewSelect.parentNode.appendChild(probe);
+            viewSelect.style.width = probe.getBoundingClientRect().width + 'px';
+            probe.remove();
+        }
+
+        if (viewSelect) {
+            viewSelect.addEventListener('change', function () {
+                view = VIEWS[viewSelect.value] ? viewSelect.value : 'pca';
+                fitViewSelect();
+                setMode(mode);
+            });
+            fitViewSelect();
         }
 
         modeButtons.forEach(function (button) {

@@ -148,7 +148,10 @@
             <article class="landing-panel landing-panel--bridge landing-space-card">
                 <div class="landing-card-heading">
                     <div>
-                        <span class="landing-tag landing-tag--benchmark">Vision PCA</span>
+                        <select id="landing-space-view" class="landing-tag landing-tag-select" aria-label="Benchmark map view">
+                            <option value="pca" selected>Vision PCA</option>
+                            <option value="neural-behavior">Neural vs. behavior</option>
+                        </select>
                         <h3 id="landing-space-title">The 2D benchmark space</h3>
                     </div>
                     <div class="landing-card-heading__tools">

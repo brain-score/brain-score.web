@@ -75,6 +75,7 @@ class BenchmarkSpaceTests(SimpleTestCase):
 
         self.assertEqual([point["completed"] for point in projection["points"]], [1, 2, 0])
         self.assertEqual(projection["benchmark_total"], 2)
+        self.assertEqual(projection["points"][0]["behavior"], 0.40)
 
 
 class LandingPageTests(SimpleTestCase):
