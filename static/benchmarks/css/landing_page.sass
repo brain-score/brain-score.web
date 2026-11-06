@@ -1067,9 +1067,37 @@ button.simple_button
     color: #7b8990
     font-size: 0.52rem
 
-    &:last-child
+    & + small
       grid-column: 3
       text-align: right
+
+.landing-space__legend-completion
+  display: grid
+  grid-column: 1 / -1
+  grid-template-columns: repeat(4, 1fr)
+  gap: 2px 4px
+  margin-top: 5px
+  padding-top: 6px
+  border-top: 1px solid #e4ece8
+  text-align: center
+
+  > span
+    grid-column: 1 / -1
+    font-size: 0.61rem
+    font-weight: 700
+    text-align: left
+
+  b
+    display: block
+    width: 8px
+    height: 8px
+    margin: 0 auto 1px
+    border-radius: 50%
+    background: #2fa47a
+
+  small
+    color: #7b8990
+    font-size: 0.52rem
 
 .landing-space__tooltip
   position: absolute
@@ -1092,6 +1120,26 @@ button.simple_button
     margin-bottom: 3px
     text-overflow: ellipsis
     white-space: nowrap
+
+  em
+    display: block
+    margin-top: 4px
+    color: #64757d
+    font-style: normal
+    font-size: 0.64rem
+
+  i
+    display: block
+    height: 4px
+    margin-top: 3px
+    overflow: hidden
+    border-radius: 999px
+    background: #e4ece8
+
+    b
+      display: block
+      height: 100%
+      background: #2fa47a
 
 .landing-method
   margin-top: 12px !important

@@ -38,6 +38,18 @@ def _score_lookup(model):
     }
 
 
+def _completed(model, leaf_ids):
+    """Count leaf benchmarks with a numeric score (a score of 0 counts)."""
+    scored = set()
+    for score in model.scores or []:
+        try:
+            if math.isfinite(float(score.get("score_ceiled"))):
+                scored.add(score.get("benchmark_type_id"))
+        except (TypeError, ValueError):
+            pass
+    return len(scored & leaf_ids)
+
+
 def _normalize(vector):
     length = math.sqrt(sum(value * value for value in vector))
     if length <= 1e-12:
@@ -127,7 +139,7 @@ def _model_summary(model):
     }
 
 
-def build_benchmark_space(models):
+def build_benchmark_space(models, leaf_ids=frozenset()):
     """Project complete high-level vision scores onto three principal components."""
     identifiers = [identifier for identifier, _ in PCA_BENCHMARKS]
     rows = []
@@ -192,12 +204,14 @@ def build_benchmark_space(models):
             "x": round(sum(row[index] * first[index] for index in range(dimension)), 5),
             "y": round(sum(row[index] * second[index] for index in range(dimension)), 5),
             "z": round(sum(row[index] * third[index] for index in range(dimension)), 5),
+            "completed": _completed(model, leaf_ids),
         })
 
     return {
         "points": points,
         "variance": variance,
         "benchmarks": [label for _, label in PCA_BENCHMARKS],
+        "benchmark_total": len(leaf_ids),
     }
 
 
@@ -228,7 +242,7 @@ def landing_context():
     }
     cached_data = None
     try:
-        cached_data = cache.get("landing_dashboard_data_v3")
+        cached_data = cache.get("landing_dashboard_data_v5")
     except Exception as exc:
         _logger.warning("Could not read cached landing dashboard data: %s", exc)
     if cached_data:
@@ -245,10 +259,18 @@ def landing_context():
                 domain="vision", public=True, timestamp__isnull=False
             ).order_by("-timestamp")[:4]
         )
+        # average_vision holds only the neural and behavioral branches, so this
+        # leaves out the engineering benchmarks.
+        leaf_ids = set(
+            FinalBenchmarkContext.objects.filter(
+                domain="vision", visible=True, number_of_all_children=0,
+                root_parent="average_vision",
+            ).values_list("benchmark_type_id", flat=True)
+        )
         dashboard_data = {
             "recent_models": [_model_summary(model) for model in recent_models],
             "leaderboard_models": [_model_summary(model) for model in public_models[:5]],
-            "benchmark_space": build_benchmark_space(public_models),
+            "benchmark_space": build_benchmark_space(public_models, leaf_ids),
             "public_model_count": len(public_models),
             "benchmark_count": FinalBenchmarkContext.objects.filter(
                 domain="vision", visible=True
@@ -256,7 +278,7 @@ def landing_context():
         }
         context.update(dashboard_data)
         try:
-            cache.set("landing_dashboard_data_v3", dashboard_data, 15 * 60)
+            cache.set("landing_dashboard_data_v5", dashboard_data, 15 * 60)
         except Exception as exc:
             _logger.warning("Could not cache landing dashboard data: %s", exc)
     except DatabaseError as exc:

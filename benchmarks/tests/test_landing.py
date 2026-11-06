@@ -56,6 +56,26 @@ class BenchmarkSpaceTests(SimpleTestCase):
 
         self.assertEqual([point["id"] for point in projection["points"]], [1, 2, 3])
 
+    def test_reports_leaf_benchmark_completion_counts(self):
+        models = [
+            _model(1, [0.20, 0.24, 0.30, 0.35, 0.40]),
+            _model(2, [0.25, 0.29, 0.36, 0.41, 0.46]),
+            _model(3, [0.32, 0.37, 0.42, 0.48, 0.52]),
+        ]
+        models[0].scores += [
+            {"benchmark_type_id": "leaf-a", "score_ceiled": "0"},
+            {"benchmark_type_id": "leaf-b", "score_ceiled": "X"},
+        ]
+        models[1].scores += [
+            {"benchmark_type_id": "leaf-a", "score_ceiled": ".3"},
+            {"benchmark_type_id": "leaf-b", "score_ceiled": ".4"},
+        ]
+
+        projection = build_benchmark_space(models, {"leaf-a", "leaf-b"})
+
+        self.assertEqual([point["completed"] for point in projection["points"]], [1, 2, 0])
+        self.assertEqual(projection["benchmark_total"], 2)
+
 
 class LandingPageTests(SimpleTestCase):
     @patch("benchmarks.views.landing.landing_context")

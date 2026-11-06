@@ -29,6 +29,12 @@
         return [bounds[0] - padding, bounds[1] + padding];
     }
 
+    // Wide sigmoid on leaf-benchmark completion: ~1 above 80%, ~0.15 below 30%.
+    function completionOpacity(completion) {
+        if (!isFinite(completion)) return 1;
+        return 0.15 + 0.85 / (1 + Math.exp(-(completion - 0.55) / 0.072));
+    }
+
     function scale(value, domain, output) {
         if (domain[0] === domain[1]) return (output[0] + output[1]) / 2;
         var ratio = clamp((value - domain[0]) / (domain[1] - domain[0]), 0, 1);
@@ -132,6 +138,11 @@
             .filter(Number.isFinite);
         var scoreExtent = finiteScores.length ? extent(finiteScores) : [0, 1];
         var variance = data.variance || [0, 0, 0];
+        var benchmarkTotal = Number(data.benchmark_total) || 0;
+
+        function pointOpacity(point) {
+            return benchmarkTotal ? completionOpacity(Number(point.completed) / benchmarkTotal) : 1;
+        }
         var dragging = false;
         var dragMoved = false;
         var suppressClick = false;
@@ -191,6 +202,22 @@
         var legend = document.createElement('div');
         legend.className = 'landing-space__legend';
         legend.innerHTML = '<span>Brain-Score</span><i aria-hidden="true"></i><small>Lower</small><small>Higher</small>';
+        if (benchmarkTotal) {
+            var completionKey = document.createElement('div');
+            completionKey.className = 'landing-space__legend-completion';
+            completionKey.innerHTML = '<span>Benchmarks completed</span>';
+            [0.25, 0.5, 0.7, 0.95].forEach(function (completion) {
+                var step = document.createElement('div');
+                var dot = document.createElement('b');
+                var label = document.createElement('small');
+                dot.style.opacity = completionOpacity(completion);
+                label.textContent = Math.round(completion * 100) + '%';
+                step.appendChild(dot);
+                step.appendChild(label);
+                completionKey.appendChild(step);
+            });
+            legend.appendChild(completionKey);
+        }
         container.appendChild(svg);
         container.appendChild(tooltip);
         container.appendChild(legend);
@@ -229,12 +256,25 @@
             tooltip.querySelector('strong').textContent = point.name;
             tooltip.querySelector('span').textContent =
                 'Rank ' + point.rank + (Number.isFinite(score) ? ' · Brain-Score ' + score.toFixed(3) : '');
+            if (benchmarkTotal) {
+                var completed = Number(point.completed) || 0;
+                var completion = document.createElement('em');
+                var bar = document.createElement('i');
+                var fill = document.createElement('b');
+                completion.textContent = 'Completed ' + completed + ' of ' + benchmarkTotal +
+                    ' neural and behavioral benchmarks';
+                fill.style.width = Math.round(100 * completed / benchmarkTotal) + '%';
+                fill.style.opacity = pointOpacity(point);
+                bar.appendChild(fill);
+                tooltip.appendChild(completion);
+                tooltip.appendChild(bar);
+            }
             tooltip.hidden = false;
             var bounds = container.getBoundingClientRect();
             var left = clientX - bounds.left + 12;
             var top = clientY - bounds.top + 12;
             if (left > bounds.width - 250) left = Math.max(8, left - 250);
-            if (top > bounds.height - 75) top = Math.max(8, top - 75);
+            if (top > bounds.height - 100) top = Math.max(8, top - 100);
             tooltip.style.left = left + 'px';
             tooltip.style.top = top + 'px';
         }
@@ -287,7 +327,7 @@
                     [xAxisY, twoDimensionalMargin.top]
                 ));
                 scenePoint.circle.setAttribute('r', point.rank <= 5 ? 6 : 4.5);
-                scenePoint.circle.setAttribute('opacity', 0.78);
+                scenePoint.circle.setAttribute('opacity', pointOpacity(point));
                 pointsGroup.appendChild(scenePoint.circle);
             });
         }
@@ -332,7 +372,7 @@
                 item.scenePoint.circle.setAttribute('cx', projected.x);
                 item.scenePoint.circle.setAttribute('cy', projected.y);
                 item.scenePoint.circle.setAttribute('r', baseRadius * projected.perspective * (0.82 + depthRatio * 0.32));
-                item.scenePoint.circle.setAttribute('opacity', 0.48 + depthRatio * 0.43);
+                item.scenePoint.circle.setAttribute('opacity', pointOpacity(point) * (0.48 + depthRatio * 0.43));
                 pointsGroup.appendChild(item.scenePoint.circle);
             });
         }
