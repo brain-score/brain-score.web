@@ -14,6 +14,7 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
   const selectedSpecies = Array.from(document.querySelectorAll('.species-checkbox:checked')).map(cb => cb.value);
   const selectedTasks = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
   const publicDataOnly = document.getElementById('publicDataFilter')?.checked || false;
+  window.activeFilters.runnable_only = document.getElementById('runnableFilter')?.checked || false;
 
   // Update activeFilters
   window.activeFilters.benchmark_regions = selectedRegions;
@@ -45,6 +46,8 @@ function applyCombinedFilters(skipColumnToggle = false, skipAutoSort = false) {
 
   const filteredData = window.originalRowData.filter(row => {
     const metadata = row.metadata || {};
+
+    if (window.activeFilters.runnable_only && metadata.runnable !== true) return false;
 
     // Multi-select filters
     if (window.activeFilters.architecture.length > 0) {
@@ -696,6 +699,10 @@ function resetAllFilters() {
   const publicDataCheckbox = document.getElementById('publicDataFilter');
   if (publicDataCheckbox) {
     publicDataCheckbox.checked = false;
+  }
+  const runnableCheckbox = document.getElementById('runnableFilter');
+  if (runnableCheckbox) {
+    runnableCheckbox.checked = false;
   }
 
   // Reset filtered benchmarks

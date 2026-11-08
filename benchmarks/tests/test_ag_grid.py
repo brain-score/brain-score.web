@@ -606,6 +606,47 @@ class TestFilter:
         assert_rank_column_sorted(actual_ranks)
         assert_scores_descending(actual_scores)
 
+    def test_url_with_only_a_minimum_parameter_count_keeps_the_full_maximum(self, page):
+        """
+        A link may carry only one bound. The other must come from the slider's
+        full range: a fixed default of 100 M used to hide every larger model.
+        """
+        page.goto("http://127.0.0.1:8000/vision/leaderboard/?min_param_count=100")
+        page.wait_for_selector('.ag-root', timeout=60000)
+        page.wait_for_timeout(3000)
+
+        full_maximum = page.evaluate('() => window.filterOptions.parameter_ranges.max')
+        assert page.evaluate('() => window.activeFilters.max_param_count') == full_maximum
+        counts = page.evaluate("""
+        () => {
+          const counts = [];
+          window.globalGridApi.forEachNodeAfterFilter(node =>
+            counts.push((node.data.metadata || {}).total_parameter_count || 0));
+          return counts;
+        }
+        """)
+        assert counts, "a minimum of 100 M parameters returned no models"
+        assert all(count >= 100_000_000 for count in counts)
+
+    def test_runnable_only_filter(self, page):
+        """runnable_only in the URL ticks the checkbox and keeps only runnable models."""
+        total = page.evaluate("() => { let c = 0; window.globalGridApi.forEachNodeAfterFilter(() => c++); return c; }")
+        page.goto("http://127.0.0.1:8000/vision/leaderboard/?runnable_only=true")
+        page.wait_for_selector('.ag-root', timeout=60000)
+        page.wait_for_timeout(3000)
+
+        assert page.locator('#runnableFilter').is_checked()
+        runnable = page.evaluate("""
+        () => {
+          const values = [];
+          window.globalGridApi.forEachNodeAfterFilter(node =>
+            values.push((node.data.metadata || {}).runnable === true));
+          return values;
+        }
+        """)
+        assert runnable and all(runnable)
+        assert len(runnable) < total
+
     def test_public_data_filter(self, page):
         """
         Verifies that filtering to only publicly available benchmarks:
