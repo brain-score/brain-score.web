@@ -139,6 +139,37 @@ def _model_summary(model):
     }
 
 
+def _meta_list(meta, field):
+    """Split a comma-separated metadata field the way the leaderboard filters do."""
+    value = meta.get(field)
+    if not value:
+        return []
+    return [part.strip() for part in str(value).split(",") if part.strip()]
+
+
+def build_cohort_pool(models):
+    """One compact row per participant: the fields the cohort builder filters on.
+
+    Values mirror the leaderboard filters (filter-coordinator.js), so a cohort
+    counted here and the same cohort opened in the leaderboard agree.
+    """
+    pool = []
+    for model in models:
+        meta = model.model_meta or {}
+        parameters = meta.get("total_parameter_count") or 0
+        pool.append({
+            "id": model.model_id,
+            "name": model.name,
+            "rank": model.rank,
+            "score": _score_lookup(model).get("average_vision"),
+            "submitter": _submitter_name(model),
+            "architecture": _meta_list(meta, "architecture"),
+            "family": _meta_list(meta, "model_family"),
+            "parameters_m": round(parameters / 1_000_000, 3) if parameters else None,
+        })
+    return pool
+
+
 def build_benchmark_space(models, leaf_ids=frozenset()):
     """Project complete high-level vision scores onto three principal components."""
     identifiers = [identifier for identifier, _ in PCA_BENCHMARKS]
@@ -239,12 +270,13 @@ def landing_context():
         "recent_models": [],
         "leaderboard_models": [],
         "benchmark_space": {"points": [], "variance": [0, 0, 0], "benchmarks": []},
+        "cohort_pool": [],
         "public_model_count": None,
         "benchmark_count": None,
     }
     cached_data = None
     try:
-        cached_data = cache.get("landing_dashboard_data_v6")
+        cached_data = cache.get("landing_dashboard_data_v7")
     except Exception as exc:
         _logger.warning("Could not read cached landing dashboard data: %s", exc)
     if cached_data:
@@ -273,6 +305,7 @@ def landing_context():
             "recent_models": [_model_summary(model) for model in recent_models],
             "leaderboard_models": [_model_summary(model) for model in public_models[:5]],
             "benchmark_space": build_benchmark_space(public_models, leaf_ids),
+            "cohort_pool": build_cohort_pool(public_models),
             "public_model_count": len(public_models),
             "benchmark_count": FinalBenchmarkContext.objects.filter(
                 domain="vision", visible=True
@@ -280,7 +313,7 @@ def landing_context():
         }
         context.update(dashboard_data)
         try:
-            cache.set("landing_dashboard_data_v6", dashboard_data, 15 * 60)
+            cache.set("landing_dashboard_data_v7", dashboard_data, 15 * 60)
         except Exception as exc:
             _logger.warning("Could not cache landing dashboard data: %s", exc)
     except DatabaseError as exc:
