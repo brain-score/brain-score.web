@@ -1571,3 +1571,120 @@ button.simple_button
 
     nav
       grid-column: auto
+
+// Virtual laboratory: cohort selection on the benchmark map, and the toolbox tabs.
+.landing-onboarding__steps li a
+  text-decoration: none
+
+  &:hover, &:focus-visible
+    text-decoration: underline
+
+.landing-cohort-bar
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 8px
+  margin: -4px 0 12px
+
+.landing-cohort__reset, .landing-cohort__copy
+  padding: 0
+  border: 0
+  background: none
+  cursor: pointer
+  font-family: inherit
+
+  &[hidden]
+    display: none
+
+  &:disabled
+    opacity: 0.45
+    cursor: default
+
+.landing-cohort__copy
+  align-self: center
+  margin-top: 12px
+  font-size: 0.78rem
+
+  i
+    margin-right: 6px
+
+// Points outside the cohort fade; members get a dark ring. CSS overrides the
+// opacity attribute that landing-dashboard.js sets per point.
+.landing-space__point
+  transition: opacity 500ms ease, stroke 500ms ease
+
+.landing-space.has-cohort
+  .landing-space__point
+    opacity: 0.08
+
+    &.is-in-cohort
+      opacity: 1
+      stroke: #0f3b46
+      stroke-width: 1.6
+
+.landing-leaderboard-preview
+  display: flex
+  flex-direction: column
+
+.landing-cohort__summary
+  margin: -4px 0 8px !important
+  color: #5b6b78
+  font-size: 0.76rem
+
+.landing-cohort__gap
+  margin-top: 10px !important
+  color: #8a6d1f
+  font-size: 0.72rem
+  line-height: 1.5
+
+  &:empty
+    display: none
+
+.landing-tag.landing-tag--preview
+  margin-left: 6px
+  background: #fdf3dc
+  color: #8a6212
+  vertical-align: middle
+
+.landing-tool-tabs
+  display: flex
+  gap: 2px
+  overflow-x: auto
+  padding: 8px 10px 0
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+
+  button
+    flex: 0 0 auto
+    padding: 7px 11px
+    border: 0
+    border-bottom: 2px solid transparent
+    background: none
+    color: #9cb8b5
+    cursor: pointer
+    font-family: inherit
+    font-size: 0.72rem
+    font-weight: 700
+
+    &:hover
+      color: white
+
+    &:focus-visible
+      outline: 2px solid rgba(124, 221, 162, 0.6)
+      outline-offset: -2px
+
+    &[aria-selected="true"]
+      border-bottom-color: #7cdda2
+      color: white
+
+// tutorial.sass styles every <pre> (90% width, border, margin); undo that here.
+.landing-dashboard pre
+  width: auto
+  max-width: none
+  min-height: 190px
+  border: 0
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace
+  white-space: pre
+  word-wrap: normal
+
+  &[hidden]
+    display: none

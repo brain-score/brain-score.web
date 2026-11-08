@@ -5,6 +5,7 @@
 
 {% block page_head_scripts %}
 <script defer src="{% static 'benchmarks/js/landing-dashboard.js' %}"></script>
+<script defer src="{% static 'benchmarks/js/landing-lab.js' %}"></script>
 {% endblock %}
 
 {% block main %}
@@ -116,29 +117,30 @@
             </picture>
             <span class="landing-onboarding__icon" aria-hidden="true"><i class="fa-solid fa-compass"></i></span>
             <p class="landing-eyebrow">New here?</p>
-            <h2 id="landing-onboarding-title">Learn how Brain-Score works</h2>
+            <h2 id="landing-onboarding-title">How a study works</h2>
             <p>
-                Start with the scientific idea, then explore how benchmarks turn experimental
-                measurements into executable tests for models.
+                Brain-Score is a virtual laboratory. Every model is a participant
+                that you can test like a person or an animal in a lab.
             </p>
             <ol class="landing-onboarding__steps">
-                <li><span>1</span>Choose a model or benchmark</li>
-                <li><span>2</span>Inspect its scores and metadata</li>
-                <li><span>3</span>Compare it with the field</li>
+                <li><span>1</span><a href="#pool">Recruit participants from the pool</a></li>
+                <li><span>2</span><a href="#pool">Select a cohort by their records</a></li>
+                <li><span>3</span><a href="#toolbox">Run experiments with the toolbox</a></li>
+                <li><span>4</span><a href="#analyze">Analyze the results in Compare</a></li>
             </ol>
             <a class="button landing-button" href="/tutorials/">Start with Brain-Score</a>
             <a class="landing-text-link" href="/faq/">What is a Brain-Score?</a>
         </aside>
     </section>
 
-    <section class="landing-explore container my_container" aria-labelledby="landing-explore-title">
+    <section id="pool" class="landing-explore container my_container" aria-labelledby="landing-explore-title">
         <div class="landing-section-heading landing-section-heading--wide">
             <div>
-                <p class="landing-eyebrow">Explore the field</p>
-                <h2 id="landing-explore-title">A map of benchmark performance</h2>
+                <p class="landing-eyebrow">Recruit and select</p>
+                <h2 id="landing-explore-title">The participant pool</h2>
                 <p>
-                    Public vision models projected from their V1, V2, V4,
-                    IT, and behavioral scores. Nearby models have more similar benchmark profiles.
+                    Each point is a public vision model, placed by its V1, V2, V4, IT and behavioral
+                    scores. Choose inclusion criteria to form a cohort.
                 </p>
             </div>
             <a class="button landing-button landing-button--outline" href="/vision/compare/">Open Compare</a>
@@ -166,6 +168,18 @@
                         </button>
                     </div>
                 </div>
+                <form id="landing-cohort-form" class="landing-cohort-bar" aria-label="Cohort inclusion criteria">
+                    <select id="landing-cohort-architecture" class="landing-tag landing-tag-select" aria-label="Architecture">
+                        <option value="">Any architecture</option>
+                    </select>
+                    <select id="landing-cohort-family" class="landing-tag landing-tag-select" aria-label="Model family">
+                        <option value="">Any family</option>
+                    </select>
+                    <select id="landing-cohort-size" class="landing-tag landing-tag-select" aria-label="Size">
+                        <option value="">Any size</option>
+                    </select>
+                    <button type="reset" class="landing-text-link landing-cohort__reset" hidden>Clear</button>
+                </form>
                 <div id="landing-benchmark-space" class="landing-space" role="group" data-space-mode="2d"
                      aria-label="Two-dimensional principal component map of public vision models">
                     <div class="landing-space__empty">Loading benchmark space&hellip;</div>
@@ -179,11 +193,14 @@
             <aside class="landing-panel landing-panel--models landing-leaderboard-preview" aria-labelledby="landing-leaderboard-title">
                 <div class="landing-card-heading">
                     <div>
-                        <span class="landing-tag landing-tag--platform">Live ranking</span>
-                        <h3 id="landing-leaderboard-title">Leaderboard preview</h3>
+                        <span id="landing-cohort-tag" class="landing-tag landing-tag--platform">Live ranking</span>
+                        <h3 id="landing-leaderboard-title">Top of the pool</h3>
                     </div>
                 </div>
-                <div class="landing-leaderboard-list">
+                <p id="landing-cohort-summary" class="landing-cohort__summary" aria-live="polite">
+                    {% if public_model_count %}All {{ public_model_count }} public participants.{% endif %}
+                </p>
+                <div id="landing-cohort-list" class="landing-leaderboard-list">
                     {% for model in leaderboard_models %}
                     <a class="landing-leaderboard-row" href="/model/vision/{{ model.id }}">
                         <span class="landing-leaderboard-row__rank">{{ model.rank }}</span>
@@ -199,20 +216,16 @@
                     <p class="landing-empty">Leaderboard data is temporarily unavailable.</p>
                     {% endfor %}
                 </div>
-                <div class="landing-leaderboard-preview__footer">
-                    {% if public_model_count %}
-                    <span>{{ public_model_count }} public models</span>
-                    {% endif %}
-                    {% if benchmark_count %}
-                    <span>{{ benchmark_count }} active benchmark entries</span>
-                    {% endif %}
-                </div>
-                <a class="button landing-button landing-button--full" href="/vision/leaderboard/">Explore the full leaderboard</a>
+                <p id="landing-cohort-gap" class="landing-cohort__gap"></p>
+                <a id="landing-cohort-leaderboard" class="button landing-button landing-button--full" href="/vision/leaderboard/">Explore the full leaderboard</a>
+                <button id="landing-cohort-copy" class="landing-text-link landing-cohort__copy" type="button">
+                    <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy as a Python list
+                </button>
             </aside>
         </div>
     </section>
 
-    <section class="landing-compare container my_container" aria-labelledby="landing-compare-title">
+    <section id="analyze" class="landing-compare container my_container" aria-labelledby="landing-compare-title">
         <div class="landing-section-heading landing-section-heading--wide">
             <div>
                 <p class="landing-eyebrow">Look beyond a single score</p>
@@ -253,24 +266,61 @@
         </div>
     </section>
 
-    <section class="landing-participate container my_container" aria-labelledby="landing-participate-title">
+    <section id="toolbox" class="landing-participate container my_container" aria-labelledby="landing-participate-title">
         <div class="landing-participate__code">
             <div class="landing-code-heading">
-                <span><i class="fa-solid fa-terminal" aria-hidden="true"></i> Run locally</span>
-                <span>Python 3.11</span>
+                <span><i class="fa-solid fa-terminal" aria-hidden="true"></i> The lab toolbox</span>
+                <span class="landing-tag landing-tag--preview">Preview</span>
             </div>
-            <pre><code><span>git clone</span> https://github.com/brain-score/vision.git
-<span>pip install</span> ./vision
-<span>python brainscore_vision score</span> \
-  --model_identifier=pixels \
-  --benchmark_identifier=MajajHong2015public.IT-pls</code></pre>
+            <div class="landing-tool-tabs" role="tablist" aria-label="Lab tools">
+                <button type="button" role="tab" id="landing-tool-tab-install" aria-controls="landing-tool-install" aria-selected="true">Install</button>
+                <button type="button" role="tab" id="landing-tool-tab-stimuli" aria-controls="landing-tool-stimuli" aria-selected="false" tabindex="-1">Stimuli</button>
+                <button type="button" role="tab" id="landing-tool-tab-record" aria-controls="landing-tool-record" aria-selected="false" tabindex="-1">Record</button>
+                <button type="button" role="tab" id="landing-tool-tab-answers" aria-controls="landing-tool-answers" aria-selected="false" tabindex="-1">Answers</button>
+                <button type="button" role="tab" id="landing-tool-tab-intervene" aria-controls="landing-tool-intervene" aria-selected="false" tabindex="-1">Intervene</button>
+                <button type="button" role="tab" id="landing-tool-tab-loop" aria-controls="landing-tool-loop" aria-selected="false" tabindex="-1">Closed loop</button>
+                <button type="button" role="tab" id="landing-tool-tab-study" aria-controls="landing-tool-study" aria-selected="false" tabindex="-1">Study</button>
+            </div>
+<pre id="landing-tool-install" role="tabpanel" aria-labelledby="landing-tool-tab-install"><code><span># Install (Python 3.11)</span>
+<span>pip install</span> brainscore
+
+<span># Score one participant on one experiment</span>
+import brainscore
+brainscore.score('resnet50', 'MajajHong2015public.IT-pls')</code></pre>
+<pre id="landing-tool-stimuli" role="tabpanel" aria-labelledby="landing-tool-tab-stimuli" hidden><code><span># Images, sentences, sounds or video: the column says which</span>
+stimuli = StimulusSet({
+    'stimulus_id': ['cat', 'dog'],
+    'image_path': ['cat.png', 'dog.png'],
+})</code></pre>
+<pre id="landing-tool-record" role="tabpanel" aria-labelledby="landing-tool-tab-record" hidden><code><span># Record any layer as a brain region</span>
+participant = brainscore.load_model('resnet50')
+participant.start_recording(['V4', 'IT'])
+activity = participant.process(stimuli)</code></pre>
+<pre id="landing-tool-answers" role="tabpanel" aria-labelledby="landing-tool-tab-answers" hidden><code><span># Choices, ratings or free text, with reaction times</span>
+task = TaskContext(response=Choice(
+    ['animal', 'vehicle'],
+    reaction_time='evidence_margin'))</code></pre>
+<pre id="landing-tool-intervene" role="tabpanel" aria-labelledby="landing-tool-tab-intervene" hidden><code><span># Silence units, observe the effect, then undo it</span>
+lesion = StateChange(kind='ablation',
+    target=Selection(layer='layer4', indices=units),
+    perturbation=Perturbation(kind='zero'))</code></pre>
+<pre id="landing-tool-loop" role="tabpanel" aria-labelledby="landing-tool-tab-loop" hidden><code><span># Games, simulators and robot tasks</span>
+with EnvironmentSession(Corridor()) as session:
+    agent.participate(session)
+    actions = session.collect('motor')</code></pre>
+<pre id="landing-tool-study" role="tabpanel" aria-labelledby="landing-tool-tab-study" hidden><code><span># Conditions, repetitions and recorders in one saved record</span>
+experiment = Experiment(subject=participant,
+    protocol=TaskProtocol(stimuli, task),
+    tools=[RecordNeural(['IT']), RecordBehavior()])</code></pre>
         </div>
         <div class="landing-participate__copy">
-            <p class="landing-eyebrow">Build with us</p>
-            <h2 id="landing-participate-title">Use it locally. Add to it openly.</h2>
+            <p class="landing-eyebrow">Run experiments</p>
+            <h2 id="landing-participate-title">One toolbox for every participant.</h2>
             <p>
-                Run models against benchmarks on your own machine, contribute a new model or
-                measurement, and help define what the next generation of brain models should explain.
+                Present stimuli, record activity, ask for answers, silence units, or place a
+                participant in a game or a robot task. The same tools work on a vision network,
+                a language model, a vision-language model or a robot policy. Run them on your own
+                machine, and add new participants and experiments openly.
             </p>
             <div class="landing-participate__actions">
                 <a class="button landing-button" href="/tutorials/models/quickstart">Local quickstart</a>
@@ -293,4 +343,5 @@
 </div>
 
 {{ benchmark_space|json_script:"landing-benchmark-space-data" }}
+{{ cohort_pool|json_script:"landing-cohort-pool-data" }}
 {% endblock %}
