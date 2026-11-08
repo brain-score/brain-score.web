@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from benchmarks.views.landing import PCA_BENCHMARKS, build_benchmark_space
+from benchmarks.views.landing import PCA_BENCHMARKS, build_benchmark_space, build_cohort_pool
 
 
 def _model(model_id, values, rank=None):
@@ -78,6 +78,33 @@ class BenchmarkSpaceTests(SimpleTestCase):
         self.assertEqual(projection["points"][0]["behavior"], 0.40)
 
 
+class CohortPoolTests(SimpleTestCase):
+    def test_splits_metadata_like_the_leaderboard_filters(self):
+        model = _model(1, [0.5] * len(PCA_BENCHMARKS))
+        model.model_meta = {
+            "architecture": "DCNN, Transformer",
+            "model_family": "clip,vit",
+            "total_parameter_count": 25_000_000,
+        }
+
+        [row] = build_cohort_pool([model])
+
+        self.assertEqual(row["architecture"], ["DCNN", "Transformer"])
+        self.assertEqual(row["family"], ["clip", "vit"])
+        self.assertEqual(row["parameters_m"], 25.0)
+        self.assertEqual(row["score"], 0.5)
+
+    def test_missing_metadata_gives_empty_criteria(self):
+        model = _model(2, [0.5] * len(PCA_BENCHMARKS))
+        model.model_meta = None
+
+        [row] = build_cohort_pool([model])
+
+        self.assertEqual(row["architecture"], [])
+        self.assertEqual(row["family"], [])
+        self.assertIsNone(row["parameters_m"])
+
+
 class LandingPageTests(SimpleTestCase):
     @patch("benchmarks.views.landing.landing_context")
     def test_homepage_exposes_dashboard_entry_points(self, context):
@@ -87,6 +114,7 @@ class LandingPageTests(SimpleTestCase):
             "recent_models": [],
             "leaderboard_models": [],
             "benchmark_space": {"points": [], "variance": [0, 0, 0], "benchmarks": []},
+            "cohort_pool": [],
             "public_model_count": None,
             "benchmark_count": None,
         }
@@ -99,4 +127,8 @@ class LandingPageTests(SimpleTestCase):
         self.assertContains(response, 'data-space-mode="2d"')
         self.assertContains(response, "Compare benchmarks")
         self.assertContains(response, "Compare models")
-        self.assertContains(response, "Run locally")
+        self.assertContains(response, "How a study works")
+        self.assertContains(response, 'id="landing-cohort-form"')
+        self.assertContains(response, 'id="landing-cohort-pool-data"')
+        self.assertContains(response, "The lab toolbox")
+        self.assertContains(response, 'role="tablist"')
