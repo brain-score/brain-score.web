@@ -105,23 +105,25 @@ function applyFiltersToUI() {
   updateRangeInput('ceilingMin', window.activeFilters.min_ceiling);
   updateRangeInput('ceilingMax', window.activeFilters.max_ceiling);
 
-  // Update range sliders
+  // Update range sliders. A URL may carry only one bound; the other comes from the
+  // slider's full range, not a fixed default (100 M once hid every larger model).
+  const ranges = window.filterOptions || {};
   if (typeof window.LeaderboardRangeFilters?.setRangeValues === 'function') {
     if (window.activeFilters.min_param_count !== null || window.activeFilters.max_param_count !== null) {
       const min = window.activeFilters.min_param_count || 0;
-      const max = window.activeFilters.max_param_count || 100;
+      const max = window.activeFilters.max_param_count ?? ranges.parameter_ranges?.max ?? 100;
       window.LeaderboardRangeFilters.setRangeValues('paramCountMin', min, max);
     }
 
     if (window.activeFilters.min_model_size !== null || window.activeFilters.max_model_size !== null) {
       const min = window.activeFilters.min_model_size || 0;
-      const max = window.activeFilters.max_model_size || 1000;
+      const max = window.activeFilters.max_model_size ?? ranges.size_ranges?.max ?? 1000;
       window.LeaderboardRangeFilters.setRangeValues('modelSizeMin', min, max);
     }
 
     if (window.activeFilters.min_stimuli_count !== null || window.activeFilters.max_stimuli_count !== null) {
       const min = window.activeFilters.min_stimuli_count || 0;
-      const max = window.activeFilters.max_stimuli_count || 1000;
+      const max = window.activeFilters.max_stimuli_count ?? ranges.stimuli_ranges?.max ?? 1000;
       window.LeaderboardRangeFilters.setRangeValues('stimuliCountMin', min, max);
     }
 
