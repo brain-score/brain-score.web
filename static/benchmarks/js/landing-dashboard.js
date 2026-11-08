@@ -250,6 +250,7 @@
                 stroke: point.rank <= 5 ? '#ffffff' : 'rgba(255,255,255,0.82)',
                 'stroke-width': point.rank <= 5 ? 2.2 : 1,
                 class: 'landing-space__point',
+                'data-model-id': point.id,
                 tabindex: '0',
                 'aria-label': point.name + ', rank ' + point.rank
             });
