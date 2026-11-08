@@ -163,6 +163,10 @@ function setupDropdownHandlers() {
       });
     }
   });
+
+  document.getElementById('runnableFilter')?.addEventListener('change', () => {
+    if (typeof window.applyCombinedFilters === 'function') window.applyCombinedFilters();
+  });
 }
 
 // Export functions for use by other modules

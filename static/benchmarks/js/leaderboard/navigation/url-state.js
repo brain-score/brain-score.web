@@ -94,6 +94,10 @@ function applyFiltersToUI() {
   if (publicDataCheckbox) {
     publicDataCheckbox.checked = window.activeFilters.public_data_only;
   }
+  const runnableCheckbox = document.getElementById('runnableFilter');
+  if (runnableCheckbox) {
+    runnableCheckbox.checked = window.activeFilters.runnable_only;
+  }
 
   // Update range inputs
   updateRangeInput('paramCountMin', window.activeFilters.min_param_count);

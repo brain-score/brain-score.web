@@ -628,6 +628,25 @@ class TestFilter:
         assert counts, "a minimum of 100 M parameters returned no models"
         assert all(count >= 100_000_000 for count in counts)
 
+    def test_runnable_only_filter(self, page):
+        """runnable_only in the URL ticks the checkbox and keeps only runnable models."""
+        total = page.evaluate("() => { let c = 0; window.globalGridApi.forEachNodeAfterFilter(() => c++); return c; }")
+        page.goto("http://127.0.0.1:8000/vision/leaderboard/?runnable_only=true")
+        page.wait_for_selector('.ag-root', timeout=60000)
+        page.wait_for_timeout(3000)
+
+        assert page.locator('#runnableFilter').is_checked()
+        runnable = page.evaluate("""
+        () => {
+          const values = [];
+          window.globalGridApi.forEachNodeAfterFilter(node =>
+            values.push((node.data.metadata || {}).runnable === true));
+          return values;
+        }
+        """)
+        assert runnable and all(runnable)
+        assert len(runnable) < total
+
     def test_public_data_filter(self, page):
         """
         Verifies that filtering to only publicly available benchmarks:
