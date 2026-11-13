@@ -109,6 +109,7 @@ class PublicationTests(TestCase):
         unknown = document()
         unknown["models"]["unknown"] = unknown["models"].pop("example")
         Model.objects.create(name="unknown", domain="language", owner=self.owner)
+        models_before = Model.objects.count()
         result = publish_pull_request("vision", 10, FakeGitHub(unknown))
         self.assertEqual(
             result,
@@ -116,7 +117,10 @@ class PublicationTests(TestCase):
         )
         self.assertFalse(ModelMetadataPublication.objects.exists())
         self.assertFalse(ModelMetadataRecord.objects.exists())
-        self.assertEqual(Model.objects.count(), 2)
+        self.assertEqual(Model.objects.count(), models_before)
+        self.assertFalse(
+            Model.objects.filter(name__iexact="unknown", domain__iexact="vision").exists()
+        )
 
     def test_changes_to_published_identities_remain_rejected(self) -> None:
         from brainscore_core.metadata import dump
