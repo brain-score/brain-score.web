@@ -105,18 +105,170 @@ class PublicationTests(TestCase):
         self.assertEqual(revision.reviewer, "")
         self.assertEqual(revision.override_reviewer, "")
 
-    def test_unknown_models_and_changes_to_published_identities_rejected(self):
+    def test_unknown_models_are_deferred_without_creating_models(self) -> None:
         unknown = document()
         unknown["models"]["unknown"] = unknown["models"].pop("example")
-        with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, FakeGitHub(unknown))
+        Model.objects.create(name="unknown", domain="language", owner=self.owner)
+        result = publish_pull_request("vision", 10, FakeGitHub(unknown))
+        self.assertEqual(
+            result,
+            [{"path": PATH, "status": "deferred", "deferred_models": ["unknown"]}],
+        )
+        self.assertFalse(ModelMetadataPublication.objects.exists())
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+        self.assertEqual(Model.objects.count(), 2)
+
+    def test_changes_to_published_identities_remain_rejected(self) -> None:
+        from brainscore_core.metadata import dump
+
         publish_pull_request("vision", 10, FakeGitHub())
         Model.objects.create(name="second", domain="vision", owner=self.owner)
         added = document()
         added["models"]["second"] = deepcopy(added["models"]["example"])
+        api = FakeGitHub(added, blob="changed")
+        api.base_content = dump(document())
         with self.assertRaises(ProposalError):
-            publish_pull_request("vision", 10, FakeGitHub(added, blob="changed"))
+            publish_pull_request("vision", 10, api)
         self.assertEqual(ModelMetadataPublication.objects.count(), 1)
+
+    def test_partial_file_publishes_registered_models_then_retries(self) -> None:
+        mixed = document()
+        mixed["models"]["later"] = deepcopy(mixed["models"]["example"])
+        api = FakeGitHub(mixed)
+        result = publish_pull_request("vision", 10, api)
+        self.assertEqual(
+            result,
+            [
+                {
+                    "path": PATH,
+                    "status": "published",
+                    "models": 1,
+                    "deferred_models": ["later"],
+                }
+            ],
+        )
+        self.assertEqual(ModelMetadataRecord.objects.get().identifier, "example")
+        self.assertEqual(ModelMetadataRevision.objects.count(), 1)
+        repeated = publish_pull_request("vision", 10, api, paths=[PATH])
+        self.assertEqual(repeated[0]["status"], "unchanged")
+        self.assertEqual(repeated[0]["deferred_models"], ["later"])
+        Model.objects.create(name="LATER", domain="vision", owner=self.owner)
+        completed = publish_pull_request("vision", 10, api, paths=[PATH])
+        self.assertEqual(
+            completed,
+            [
+                {
+                    "path": PATH,
+                    "status": "published",
+                    "models": 2,
+                }
+            ],
+        )
+        self.assertEqual(ModelMetadataRecord.objects.count(), 2)
+        self.assertEqual(ModelMetadataPublication.objects.count(), 2)
+        self.assertEqual(ModelMetadataRevision.objects.count(), 2)
+        self.assertEqual(
+            publish_pull_request("vision", 10, api)[0]["status"], "unchanged"
+        )
+        self.assertEqual(ModelMetadataRevision.objects.count(), 2)
+
+    def test_deferred_file_does_not_block_other_files(self) -> None:
+        from brainscore_core.metadata import dump
+
+        api = FakeGitHub()
+        later_path = PATH.replace("/example/", "/later/")
+        later = document()
+        later["models"]["later"] = later["models"].pop("example")
+        api.pages = lambda *args: [
+            {"filename": path, "status": "added"} for path in [later_path, PATH]
+        ]
+        original = api.file
+        api.file = lambda repo, path, ref: (
+            (dump(later), "later-blob")
+            if path == later_path
+            else original(repo, path, ref)
+        )
+        result = publish_pull_request("vision", 10, api)
+        self.assertEqual(
+            [entry["status"] for entry in result], ["deferred", "published"]
+        )
+        self.assertEqual(ModelMetadataRecord.objects.get().identifier, "example")
+        Model.objects.create(name="later", domain="vision", owner=self.owner)
+        with patch.object(api, "file", wraps=api.file) as read:
+            result = publish_pull_request("vision", 10, api, paths=[later_path])
+        self.assertEqual(result[0]["status"], "published")
+        self.assertTrue(all(call.args[1] == later_path for call in read.call_args_list))
+        self.assertEqual(ModelMetadataRevision.objects.count(), 2)
+
+    def test_newer_pr_updates_partial_file_before_later_registration(self) -> None:
+        from brainscore_core.metadata import dump
+
+        initial = document()
+        initial["models"]["later"] = deepcopy(initial["models"]["example"])
+        publish_pull_request("vision", 10, FakeGitHub(initial))
+        newer = deepcopy(initial)
+        for entry in newer["models"].values():
+            entry["model"]["parameter_count"] = 200
+        api = FakeGitHub(newer, blob="newer")
+        api.base_content = dump(initial)
+        api.pr["merge_commit_sha"] = "b" * 40
+        original = api.file
+        api.file = lambda repo, path, ref: (
+            (dump(initial), "new") if ref == "a" * 40 else original(repo, path, ref)
+        )
+        result = publish_pull_request("vision", 11, api)
+        self.assertEqual(result[0]["deferred_models"], ["later"])
+        self.assertEqual(ModelMetadataRecord.objects.get().parameter_count, 200)
+        Model.objects.create(name="later", domain="vision", owner=self.owner)
+        result = publish_pull_request("vision", 11, api, paths=[PATH])
+        self.assertNotIn("deferred_models", result[0])
+        self.assertEqual(
+            list(ModelMetadataRecord.objects.values_list("parameter_count", flat=True)),
+            [200, 200],
+        )
+        self.assertEqual(ModelMetadataRevision.objects.count(), 3)
+
+    def test_partial_publication_keeps_original_deferred_identities(self) -> None:
+        from brainscore_core.metadata import dump
+
+        initial = document()
+        initial["models"]["later"] = deepcopy(initial["models"]["example"])
+        publish_pull_request("vision", 10, FakeGitHub(initial))
+        replacement = document()
+        api = FakeGitHub(replacement, blob="replacement")
+        # A stale legacy base cannot authorize a change to published identities.
+        api.pr["merge_commit_sha"] = "b" * 40
+        original = api.file
+        api.file = lambda repo, path, ref: (
+            (dump(initial), "new") if ref == "a" * 40 else original(repo, path, ref)
+        )
+        with self.assertRaisesRegex(ProposalError, "Adding or removing models"):
+            publish_pull_request("vision", 11, api)
+        self.assertEqual(ModelMetadataRevision.objects.count(), 1)
+
+    def test_retry_paths_cannot_bypass_pr_validation(self) -> None:
+        with self.assertRaisesRegex(ProposalError, "Retry paths"):
+            publish_pull_request("vision", 10, FakeGitHub(), paths=["other.yaml"])
+        api = FakeGitHub()
+        api.pages = lambda *args: [
+            {"filename": PATH, "status": "modified"},
+            {"filename": PATH.replace("/example/", "/removed/"), "status": "removed"},
+        ]
+        with self.assertRaisesRegex(ProposalError, "removal/rename"):
+            publish_pull_request("vision", 10, api, paths=[PATH])
+        self.assertFalse(ModelMetadataRecord.objects.exists())
+
+    def test_deferred_file_superseded_by_newer_metadata_is_not_published(self) -> None:
+        later = document()
+        later["models"]["later"] = later["models"].pop("example")
+        api = FakeGitHub(later)
+        self.assertEqual(
+            publish_pull_request("vision", 10, api)[0]["status"], "deferred"
+        )
+        api.current = "newer"
+        result = publish_pull_request("vision", 10, api, paths=[PATH])
+        self.assertEqual(result, [{"path": PATH, "status": "superseded"}])
+        self.assertFalse(ModelMetadataRecord.objects.exists())
 
     def test_unpublished_v2_identity_change_and_downgrade_rejected(self):
         from brainscore_core.metadata import dump

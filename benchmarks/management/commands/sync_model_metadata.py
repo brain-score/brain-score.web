@@ -82,11 +82,22 @@ class Command(BaseCommand):
                 report_run(success)
 
     @staticmethod
-    def publish(domain, number, github):
+    def publish(
+        domain: str, number: int, github: GitHub, paths: list[str] | None = None
+    ) -> list[dict]:
         previous = os.environ.get("METADATA_PUBLISH_GITHUB_TOKEN")
         os.environ["METADATA_PUBLISH_GITHUB_TOKEN"] = github.session.headers["Authorization"].split(" ", 1)[1]
         try:
-            call_command("publish_model_metadata_pr", domain=domain, pr=number, stdout=StringIO())
+            output = StringIO()
+            call_command(
+                "publish_model_metadata_pr",
+                domain=domain,
+                pr=number,
+                paths=paths,
+                format="json",
+                stdout=output,
+            )
+            return json.loads(output.getvalue())
         finally:
             if previous is None:
                 os.environ.pop("METADATA_PUBLISH_GITHUB_TOKEN", None)
