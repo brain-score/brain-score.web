@@ -1,3 +1,4 @@
+import json
 import os
 from django.core.management.base import BaseCommand, CommandError
 from benchmarks.model_metadata.github import GitHub, ProposalError
@@ -9,6 +10,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--domain", required=True)
         parser.add_argument("--pr", type=int, required=True)
+        parser.add_argument(
+            "--path",
+            dest="paths",
+            action="append",
+            help="Publish only this metadata path; repeat for multiple files.",
+        )
+        parser.add_argument("--format", choices=("text", "json"), default="text")
 
     def handle(self, *args, **options):
         from brainscore_core.metadata import MetadataError
@@ -21,7 +29,10 @@ class Command(BaseCommand):
             )
         try:
             results = publish_pull_request(
-                options["domain"], options["pr"], GitHub(token, read_only=True)
+                options["domain"],
+                options["pr"],
+                GitHub(token, read_only=True),
+                paths=options["paths"],
             )
         except (ProposalError, MetadataError) as exc:
             raise CommandError(str(exc)) from exc
@@ -36,5 +47,13 @@ class Command(BaseCommand):
             refresh = invalidate_domain_cache(options["domain"])
             if refresh.get("status") != "success":
                 raise CommandError("Metadata is published, but shared cache refresh failed. Retry publication.")
-        for result in results:
-            self.stdout.write(f"{result['path']}: {result['status']}")
+        if options["format"] == "json":
+            self.stdout.write(json.dumps(results, sort_keys=True))
+        else:
+            for result in results:
+                self.stdout.write(f"{result['path']}: {result['status']}")
+                if result.get("deferred_models"):
+                    self.stdout.write(
+                        "Deferred unregistered models: "
+                        + ", ".join(result["deferred_models"])
+                    )

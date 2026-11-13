@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 import json
+from typing import Any, Callable
 
 from .github import ProposalError, allowed_path
 
@@ -61,7 +62,17 @@ def merged_candidates(github, config, start, lower, now):
     raise ProposalError("Synchronization exceeded 1,000 closed PRs; narrow the catch-up window.")
 
 
-def sync_domain(domain, config, github, state, start, now, publish, dry_run=False):
+def sync_domain(
+    domain: str,
+    config: dict,
+    github: Any,
+    state: Any,
+    start: datetime,
+    now: datetime,
+    publish: Callable,
+    dry_run: bool = False,
+) -> dict:
+    """Publish new PRs and retry deferred files independently of the watermark."""
     previous = state.read(domain)
     if previous.get("start") != start.isoformat():
         previous = {}
@@ -70,32 +81,94 @@ def sync_domain(domain, config, github, state, start, now, publish, dry_run=Fals
         raise ProposalError("Synchronization checkpoint is in the future.")
     lower = max(start, cursor - OVERLAP)
     completed = previous.get("completed", {})
-    value = {"start": start.isoformat(), "cursor": cursor.isoformat(), "completed": completed}
-    result = {"domain": domain, "processed_prs": [], "candidate_prs": [], "errors": []}
-    for pr in merged_candidates(github, config, start, lower, now):
-        key = str(pr["number"])
+    deferred = previous.get("deferred", {})
+    value = {
+        "start": start.isoformat(),
+        "cursor": cursor.isoformat(),
+        "completed": completed,
+        "deferred": deferred,
+    }
+    result = {
+        "domain": domain,
+        "processed_prs": [],
+        "candidate_prs": [],
+        "deferred_prs": [],
+        "errors": [],
+    }
+    candidates = {
+        str(pr["number"]): pr
+        for pr in merged_candidates(github, config, start, lower, now)
+    }
+    # A pending registration can arrive after the discovery overlap has expired.
+    for key in deferred:
+        if key not in candidates:
+            try:
+                candidates[key] = github.request(
+                    "GET", f"/repos/{config['repository']}/pulls/{int(key)}"
+                )
+            except Exception as exc:
+                result["errors"].append({"pr": int(key), "error": type(exc).__name__})
+    for key, pr in sorted(
+        candidates.items(), key=lambda item: (item[1]["merged_at"], int(item[0]))
+    ):
+        number = int(key)
         identity = pr["merge_commit_sha"]
-        if completed.get(key, {}).get("sha") == identity:
+        pending = deferred.get(key)
+        if not pending and completed.get(key, {}).get("sha") == identity:
             continue
         try:
-            files = github.pages(f"/repos/{config['repository']}/pulls/{pr['number']}/files")
-            relevant = any(allowed_path(config, item["filename"])
-                           or allowed_path(config, item.get("previous_filename", "")) for item in files)
+            paths = None
+            if pending and pending["sha"] == identity:
+                paths = [item["path"] for item in pending["files"]]
+                relevant = True
+            else:
+                files = github.pages(
+                    f"/repos/{config['repository']}/pulls/{number}/files"
+                )
+                relevant = any(
+                    allowed_path(config, item["filename"])
+                    or allowed_path(config, item.get("previous_filename", ""))
+                    for item in files
+                )
             if relevant:
-                result["candidate_prs"].append(pr["number"])
+                result["candidate_prs"].append(number)
                 if dry_run:
+                    if pending:
+                        result["deferred_prs"].append(
+                            {"pr": number, "files": pending["files"]}
+                        )
                     continue
-                publish(domain, pr["number"], github)
-                result["processed_prs"].append(pr["number"])
+                if paths is None:
+                    publications = publish(domain, number, github)
+                else:
+                    publications = publish(domain, number, github, paths=paths)
+                result["processed_prs"].append(number)
+                pending_files = [
+                    {"path": item["path"], "deferred_models": item["deferred_models"]}
+                    for item in publications
+                    if item.get("deferred_models")
+                ]
+                if pending_files:
+                    deferred[key] = {"sha": identity, "files": pending_files}
+                    completed.pop(key, None)
+                    result["deferred_prs"].append(
+                        {"pr": number, "files": pending_files}
+                    )
+                    state.save(domain, value)
+                    continue
             if not dry_run:
+                deferred.pop(key, None)
                 completed[key] = {"sha": identity, "updated_at": pr["updated_at"]}
                 state.save(domain, value)
         except Exception as exc:
             # Do not retain token-bearing exception text or arbitrary API payloads.
-            result["errors"].append({"pr": pr["number"], "error": type(exc).__name__})
+            result["errors"].append({"pr": number, "error": type(exc).__name__})
     if not dry_run and not result["errors"]:
         value["cursor"] = now.isoformat()
-        value["completed"] = {key: record for key, record in completed.items()
-                              if timestamp(record["updated_at"]) >= now - OVERLAP}
+        value["completed"] = {
+            key: record
+            for key, record in completed.items()
+            if timestamp(record["updated_at"]) >= now - OVERLAP
+        }
         state.save(domain, value)
     return result

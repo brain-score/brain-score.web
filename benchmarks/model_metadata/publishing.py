@@ -1,7 +1,10 @@
 """Trusted publication entry point. Never called by the editor or preview."""
 
 import hashlib
+from typing import Any
+
 from django.db import connection, transaction
+from django.db.models.functions import Lower
 from .github import ProposalError, target, allowed_path
 from .writer import write_tables, lock_metadata_publication
 from benchmarks.models import (
@@ -13,7 +16,12 @@ from benchmarks.models import (
 
 
 @transaction.atomic
-def publish_pull_request(domain, number, github):
+def publish_pull_request(
+    domain: str,
+    number: int,
+    github: Any,
+    paths: list[str] | None = None,
+) -> list[dict[str, Any]]:
     from brainscore_core.metadata import load
     from brainscore_core.metadata.storage import to_tables, legacy_projection
 
@@ -39,7 +47,19 @@ def publish_pull_request(domain, number, github):
         raise ProposalError(
             "Metadata file removal/rename requires a separate reviewed migration."
         )
+    if paths is not None:
+        requested = set(paths)
+        if not requested <= {item["filename"] for item in candidates}:
+            raise ProposalError(
+                "Retry paths must be metadata files changed by this PR."
+            )
+        candidates = [item for item in candidates if item["filename"] in requested]
     lock_metadata_publication()
+    registered = set(
+        Model.objects.filter(domain__iexact=domain)
+        .annotate(metadata_name=Lower("name"))
+        .values_list("metadata_name", flat=True)
+    )
     result = []
     for item in candidates:
         path = item["filename"]
@@ -99,29 +119,47 @@ def publish_pull_request(domain, number, github):
                     repository=repo, path=path
                 )
             )
-            if (
-                existing
-                and len(existing) == len(document["models"])
-                and all(record.blob_sha == merged_blob for record in existing)
-            ):
-                result.append({"path": path, "status": "unchanged"})
+            identifiers = set(document["models"])
+            if existing and any(record.blob_sha != merged_blob for record in existing):
+                # A partial import has fewer publication rows than the full file.
+                # Compare the original file, not the number of published rows.
+                previous_content, _ = github.file(repo, path, existing[0].commit_sha)
+                if set(load(previous_content, domain)["models"]) != identifiers:
+                    raise ProposalError(
+                        "Adding or removing models in a published file requires a separate reviewed migration."
+                    )
+            deferred = sorted(
+                identifier
+                for identifier in identifiers
+                if identifier.lower() not in registered
+            )
+            outcome = {"path": path}
+            if deferred:
+                outcome["deferred_models"] = deferred
+            document = dict(
+                document,
+                models={
+                    identifier: entry
+                    for identifier, entry in document["models"].items()
+                    if identifier.lower() in registered
+                },
+            )
+            if not document["models"]:
+                result.append(dict(outcome, status="deferred"))
                 continue
-            if existing and {record.identifier for record in existing} != set(
-                document["models"]
-            ):
-                raise ProposalError(
-                    "Adding or removing models in a published file requires a separate reviewed migration."
+            if existing and all(
+                any(
+                    record.identifier == identifier and record.blob_sha == merged_blob
+                    for record in existing
                 )
+                for identifier in document["models"]
+            ):
+                result.append(dict(outcome, status="unchanged"))
+                continue
             previous_documents = {
                 record.identifier: record.document for record in existing
             }
             for identifier, entry in document["models"].items():
-                if not Model.objects.filter(
-                    domain__iexact=domain, name__iexact=identifier
-                ).exists():
-                    raise ProposalError(
-                        "Metadata must identify a registered model in the same domain."
-                    )
                 publication = (
                     ModelMetadataPublication.objects.select_for_update()
                     .filter(domain__iexact=domain, identifier__iexact=identifier)
@@ -187,6 +225,6 @@ def publish_pull_request(domain, number, github):
                     },
                 )
             result.append(
-                {"path": path, "status": "published", "models": len(document["models"])}
+                dict(outcome, status="published", models=len(document["models"]))
             )
     return result
